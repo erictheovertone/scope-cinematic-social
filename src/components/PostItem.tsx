@@ -19,8 +19,26 @@ interface Post {
   caption: string;
   media_urls: string[];
   layout_id: string;
+  aspect_ratio?: number | null;
+  grid_layout?: string | null;
   created_at: string;
   profile_image_url?: string | null;
+}
+
+function getAspectFromGridLayout(layoutId?: string | null): string {
+  switch (layoutId) {
+    case '2x-2.4:1': case '1x-2.4:1':
+    case '2x-super-wide': case '1x-super-wide':
+    case 'collage':
+      return '2.4';
+    case '2x-16:9': case '1x-16:9':
+    case '2x-regular-wide':
+      return String(16 / 9);
+    case '3x-4:3': case '3x-square':
+      return String(4 / 3);
+    default:
+      return String(16 / 9);
+  }
 }
 
 interface PostItemProps {
@@ -98,77 +116,46 @@ export default function PostItem({ post, onImageClick }: PostItemProps) {
     }
   };
 
+  const aspectRatio = getAspectFromGridLayout(post.grid_layout);
+
   return (
     <div style={{ marginBottom: 28 }}>
 
-      {/* ── Post header: avatar · @username · MC value ── */}
-      <div style={{ display: "flex", alignItems: "center", marginBottom: 5, padding: "0 2px" }}>
-        {/* Avatar — 24px circle, navigates to profile */}
-        <div
-          onClick={(e) => { e.stopPropagation(); router.push(`/profile/${post.username}`); }}
-          style={{ width: 24, height: 24, borderRadius: "50%", overflow: "hidden", background: "#333", flexShrink: 0, marginRight: 6, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
-        >
-          {post.profile_image_url ? (
-            <img src={post.profile_image_url} alt={post.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-          ) : (
-            <span style={{ ...MONO, fontSize: 9, color: "white", textTransform: "uppercase" }}>
-              {post.username?.[0] ?? "?"}
-            </span>
-          )}
-        </div>
-
-        {/* @username — navigates to profile */}
-        <span
-          onClick={(e) => { e.stopPropagation(); router.push(`/profile/${post.username}`); }}
-          style={{ ...MONO, fontSize: 7, color: "white", letterSpacing: "-0.14px", cursor: "pointer" }}
-        >
-          @{post.username}
-        </span>
-
-        {/* MC placeholder — right-aligned */}
-        <span style={{ ...MONO, fontSize: 7, color: "white", letterSpacing: "-0.14px", marginLeft: "auto" }}>
-          MC: —
-        </span>
-      </div>
-
-      {/* ── Image — 2.4:1 cinematic, full card width ── */}
+      {/* ── Image with overlaid avatar + username ── */}
       <div
         onClick={onImageClick}
         style={{
-          width: "100%",
-          aspectRatio: "2.4 / 1",
-          overflow: "hidden",
-          background: "#1a1a1a",
+          position: 'relative',
+          width: '100%',
+          aspectRatio,
+          overflow: 'hidden',
           cursor: onImageClick ? "pointer" : "default",
         }}
       >
-        {post.media_urls?.[0] ? (
-          <img
-            src={post.media_urls[0]}
-            alt={post.caption || "Post"}
-            style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-          />
-        ) : (
-          <div style={{ width: "100%", height: "100%", background: "#1a1a1a" }} />
-        )}
+        <img
+          src={post.media_urls?.[0]}
+          alt={post.caption || "Post"}
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', zIndex: 0 }}
+        />
+        <div style={{ position: 'absolute', top: '8px', left: '8px', display: 'flex', alignItems: 'center', gap: '6px', zIndex: 20, pointerEvents: 'auto' }}>
+          {post.profile_image_url && (
+            <img src={post.profile_image_url} style={{ width: '20px', height: '20px', borderRadius: '50%', objectFit: 'cover' }} />
+          )}
+          <span
+            onClick={(e) => { e.stopPropagation(); router.push('/profile/' + post.username); }}
+            style={{ fontFamily: 'IBM Plex Mono', fontSize: '11px', color: '#fff', cursor: 'pointer', textShadow: '0 1px 4px rgba(0,0,0,0.9)', backgroundColor: 'rgba(0,0,0,0.35)', padding: '1px 4px' }}
+          >
+            @{post.username}
+          </span>
+        </div>
       </div>
 
       {/* ── Below-image row: like · comment · COLLECT ── */}
       <div style={{ display: "flex", alignItems: "center", padding: "5px 2px 0", gap: 12 }}>
-        {/* Like */}
         <button
           onClick={handleLike}
           disabled={loading || !user}
-          style={{
-            background: "transparent",
-            border: "none",
-            cursor: user ? "pointer" : "default",
-            display: "flex",
-            alignItems: "center",
-            gap: 4,
-            padding: 0,
-            color: isLiked ? "#FF0000" : "rgba(255,255,255,0.6)",
-          }}
+          style={{ background: "transparent", border: "none", cursor: user ? "pointer" : "default", display: "flex", alignItems: "center", gap: 4, padding: 0, color: isLiked ? "#FF0000" : "rgba(255,255,255,0.6)" }}
         >
           <svg width="11" height="11" viewBox="0 0 24 24" fill={isLiked ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
@@ -176,19 +163,9 @@ export default function PostItem({ post, onImageClick }: PostItemProps) {
           <span style={{ ...MONO, fontSize: 7, color: "inherit" }}>{likes.length}</span>
         </button>
 
-        {/* Comment */}
         <button
           onClick={(e) => { e.stopPropagation(); setShowComments((v) => !v); }}
-          style={{
-            background: "transparent",
-            border: "none",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            gap: 4,
-            padding: 0,
-            color: "rgba(255,255,255,0.6)",
-          }}
+          style={{ background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 4, padding: 0, color: "rgba(255,255,255,0.6)" }}
         >
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
@@ -196,35 +173,22 @@ export default function PostItem({ post, onImageClick }: PostItemProps) {
           <span style={{ ...MONO, fontSize: 7, color: "inherit" }}>{comments.length}</span>
         </button>
 
-        {/* COLLECT — UI only, no blockchain yet */}
         <button
           onClick={(e) => e.stopPropagation()}
-          style={{
-            marginLeft: "auto",
-            background: "transparent",
-            border: "none",
-            cursor: "pointer",
-            padding: 0,
-          }}
+          style={{ marginLeft: "auto", background: "transparent", border: "none", cursor: "pointer", padding: 0 }}
         >
           <span style={{ ...MONO, fontSize: 7, color: "white", letterSpacing: "-0.14px" }}>COLLECT</span>
         </button>
       </div>
 
-      {/* ── Caption — below image, small white mono ── */}
       {post.caption && (
         <p style={{ ...MONO, fontSize: 8, color: "white", letterSpacing: "-0.1px", lineHeight: 1.5, margin: "5px 2px 0" }}>
           {post.caption}
         </p>
       )}
 
-      {/* ── Comments section ── */}
       {showComments && (
-        <div
-          onClick={(e) => e.stopPropagation()}
-          style={{ marginTop: 10, borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 10 }}
-        >
-          {/* Input */}
+        <div onClick={(e) => e.stopPropagation()} style={{ marginTop: 10, borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 10 }}>
           {user && (
             <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
               <input
@@ -233,37 +197,17 @@ export default function PostItem({ post, onImageClick }: PostItemProps) {
                 onChange={(e) => setNewComment(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleAddComment()}
                 placeholder="add a comment..."
-                style={{
-                  flex: 1,
-                  background: "transparent",
-                  border: "none",
-                  borderBottom: "1px solid rgba(255,255,255,0.15)",
-                  outline: "none",
-                  ...MONO,
-                  fontSize: 8,
-                  color: "white",
-                  padding: "2px 0",
-                }}
+                style={{ flex: 1, background: "transparent", border: "none", borderBottom: "1px solid rgba(255,255,255,0.15)", outline: "none", ...MONO, fontSize: 8, color: "white", padding: "2px 0" }}
               />
               <button
                 onClick={handleAddComment}
                 disabled={loading || !newComment.trim()}
-                style={{
-                  background: "transparent",
-                  border: "none",
-                  cursor: "pointer",
-                  ...MONO,
-                  fontSize: 8,
-                  color: newComment.trim() ? "white" : "rgba(255,255,255,0.25)",
-                  padding: 0,
-                }}
+                style={{ background: "transparent", border: "none", cursor: "pointer", ...MONO, fontSize: 8, color: newComment.trim() ? "white" : "rgba(255,255,255,0.25)", padding: 0 }}
               >
                 post
               </button>
             </div>
           )}
-
-          {/* Comment list */}
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {comments.map((c) => (
               <div key={c.id}>

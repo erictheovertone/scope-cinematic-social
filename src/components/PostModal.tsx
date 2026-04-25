@@ -12,6 +12,7 @@ import {
   getPostComments,
 } from "@/lib/postsService";
 import { getUserByPrivyId, getProfile } from "@/lib/userService";
+import DeckPickerSheet from "@/components/DeckPickerSheet";
 import { supabase } from "@/lib/supabase/client";
 
 interface Post {
@@ -49,6 +50,8 @@ export default function PostModal({ post, onClose }: PostModalProps) {
   const [showComments, setShowComments] = useState(false);
   const [newComment, setNewComment] = useState("");
   const [collectToast, setCollectToast] = useState(false);
+  const [showDeckPicker, setShowDeckPicker] = useState(false);
+  const [deckToast, setDeckToast] = useState("");
 
   // Viewer's own Supabase profile (for comment submission)
   const [viewerUsername, setViewerUsername] = useState<string>("");
@@ -283,8 +286,23 @@ export default function PostModal({ post, onClose }: PostModalProps) {
               </p>
             ) : null}
 
-            {/* COLLECT button — right-aligned */}
+            {/* ADD TO DECK + COLLECT */}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 12, marginBottom: 16 }}>
+              {deckToast && (
+                <span style={{ ...MONO, fontSize: 8, color: "rgba(255,255,255,0.55)", animation: "theater-fade-in 0.2s ease-out both" }}>
+                  Added to {deckToast}
+                </span>
+              )}
+              {user && (
+                <button
+                  onClick={() => setShowDeckPicker(true)}
+                  style={{ background: "transparent", border: "none", cursor: "pointer", padding: 0 }}
+                >
+                  <span style={{ ...MONO, fontSize: 8, color: "rgba(255,255,255,0.6)", letterSpacing: "-0.1px" }}>
+                    ADD TO DECK
+                  </span>
+                </button>
+              )}
               {collectToast && (
                 <span
                   style={{
@@ -431,6 +449,18 @@ export default function PostModal({ post, onClose }: PostModalProps) {
           </div>
         </div>
       </div>
+
+      {showDeckPicker && user && (
+        <DeckPickerSheet
+          postId={post.id}
+          onClose={() => setShowDeckPicker(false)}
+          onAdded={(deckTitle) => {
+            setShowDeckPicker(false);
+            setDeckToast(deckTitle);
+            setTimeout(() => setDeckToast(""), 2500);
+          }}
+        />
+      )}
     </>
   );
 }

@@ -18,7 +18,7 @@ doesn't support. Posts are minted as ERC-1155 tokens on Base, making content col
 - **Font**: IBM Plex Mono for all text — import via Google Fonts or local
 - **Colors**: Black `#000000` backgrounds, white `#FFFFFF` text, red `#FF0000` accent only
 - **Red dot**: The Scope logo is a 15x15px red circle, top-left at 10px from edges
-- **Layout**: Mobile-first, target 375px wide — currently fixed, needs to become responsive
+- **Layout**: Mobile-first, target 375px wide — responsive (fixed sizing largely resolved)
 - **Spacing**: Minimal. Let content breathe. No decorative borders or dividers.
 - **Buttons**: Transparent background, white text, thin borders where needed
 - **No rounded corners** on most UI elements — square/sharp is intentional
@@ -35,7 +35,7 @@ src/
       page.tsx                  # Own profile view
       setup/page.tsx            # Onboarding — username, bio, image, grid layout
       grid-layout/page.tsx      # Change grid layout after onboarding
-      [username]/page.tsx       # Public profile view (not yet built)
+      [username]/page.tsx       # Public profile view
       preferences/page.tsx      # Settings hub
       account/page.tsx
       data/page.tsx             # Analytics tab
@@ -103,10 +103,7 @@ Layout is saved in `profiles.grid_layout` and retrieved via `gridLayoutService.t
 1. **Auto-crop on upload** — images are not cropped to the selected layout's aspect ratio
    on upload. A photo larger or smaller than the target ratio should be center-cropped
    to fit correctly before being stored.
-2. **Public profile page empty** — `profile/[username]/page.tsx` exists but is not built.
-3. **Responsive sizing** — some pages still use fixed `w-[375px]` / `h-[812px]`. Needs
-   to be fully responsive.
-4. **Screening Room / discovery feed** — not yet built.
+2. **Screening Room / discovery feed** — not yet built.
 
 ### Fixed
 - ~~**Grid layout not applied**~~ — fixed. `profile/page.tsx` now reads `grid_layout`
@@ -118,6 +115,10 @@ Layout is saved in `profiles.grid_layout` and retrieved via `gridLayoutService.t
   fallback removed; shows inline error and blocks navigation on failure.
 - ~~**Username hardcoded**~~ — fixed. `CreatePostFlow.tsx` fetches real username from
   the user's Supabase profile before posting.
+- ~~**Responsive sizing**~~ — improved. Fixed `w-[375px]` / `h-[812px]` constraints
+  replaced with responsive sizing across pages.
+- ~~**Public profile page not built**~~ — built. `profile/[username]/page.tsx` now
+  renders a public profile with posts using the user's selected grid layout.
 
 ## Not Yet Built (do not attempt without being asked)
 - Onchain minting (ERC-1155 on Base)
@@ -127,6 +128,19 @@ Layout is saved in `profiles.grid_layout` and retrieved via `gridLayoutService.t
 - Trending feed filters
 - Follows / followers
 - Wallet balance with real token data
+
+## Deployed
+- **Production URL**: your-vercel-url.vercel.app
+- Privy allowed origins must include the Vercel URL (set in the Privy dashboard under App Settings → Allowed Origins)
+
+## Next Up
+- Follows / Following system
+- Notifications
+- Web3 minting (ERC-1155 on Base)
+- Collected page (blocked until Web3 minting is live)
+- Performance optimization
+- Screening Room (discovery feed)
+- Settings page
 
 ## Rules for This Codebase
 - **Always read files before editing them**

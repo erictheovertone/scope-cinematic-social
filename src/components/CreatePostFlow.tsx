@@ -4,7 +4,11 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useRouter } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
 import { createPost } from '@/lib/postsService';
-import { getUserByPrivyId, getProfile, uploadImage } from '@/lib/userService';
+import {
+  getUserByPrivyId, getProfile, uploadImage,
+  getUserDecks, createDeck, addPostToDeck,
+  type Deck,
+} from '@/lib/userService';
 
 // ── Client-side image compression via Canvas API ──────────────────
 // Max 1920px longest side, JPEG 0.82 quality, all formats → JPEG.
@@ -18,34 +22,38 @@ async function compressImage(file: File): Promise<File> {
 
     img.onload = () => {
       URL.revokeObjectURL(objectUrl);
-
-      let { width, height } = img;
-      if (width > MAX || height > MAX) {
-        if (width >= height) {
-          height = Math.round((height * MAX) / width);
-          width = MAX;
-        } else {
-          width = Math.round((width * MAX) / height);
-          height = MAX;
+      // Wrap everything so a canvas/toBlob failure never leaves the Promise hanging
+      try {
+        let { width, height } = img;
+        if (width > MAX || height > MAX) {
+          if (width >= height) {
+            height = Math.round((height * MAX) / width);
+            width = MAX;
+          } else {
+            width = Math.round((width * MAX) / height);
+            height = MAX;
+          }
         }
+
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) { resolve(file); return; }
+
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) { resolve(file); return; }
+            const base = file.name.replace(/\.[^.]+$/, "");
+            resolve(new File([blob], `${base}-compressed.jpg`, { type: "image/jpeg" }));
+          },
+          "image/jpeg",
+          QUALITY
+        );
+      } catch (e) {
+        resolve(file); // canvas failed — use original, never hang
       }
-
-      const canvas = document.createElement("canvas");
-      canvas.width = width;
-      canvas.height = height;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) { resolve(file); return; }
-
-      ctx.drawImage(img, 0, 0, width, height);
-      canvas.toBlob(
-        (blob) => {
-          if (!blob) { resolve(file); return; }
-          const base = file.name.replace(/\.[^.]+$/, "");
-          resolve(new File([blob], `${base}-compressed.jpg`, { type: "image/jpeg" }));
-        },
-        "image/jpeg",
-        QUALITY
-      );
     };
 
     img.onerror = () => { URL.revokeObjectURL(objectUrl); resolve(file); };
@@ -93,7 +101,7 @@ interface CreatePostFlowProps {
 }
 
 export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-square' }: CreatePostFlowProps) {
-  const [step, setStep] = useState<'media' | 'edit' | 'posting'>('media');
+  const [step, setStep] = useState<'media' | 'edit' | 'deck' | 'posting'>('media');
   const [selectedMedia, setSelectedMedia] = useState<MediaItem[]>([]);
   const [selectedLayout, setSelectedLayout] = useState<GridLayout>(GRID_LAYOUTS[0]);
   const [caption, setCaption] = useState('');
@@ -105,6 +113,15 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
   const router = useRouter();
   const { user } = usePrivy();
 
+  // Deck step state
+  const [userDecks, setUserDecks] = useState<(Deck & { item_count: number })[]>([]);
+  const [decksLoading, setDecksLoading] = useState(false);
+  const [selectedDeckId, setSelectedDeckId] = useState<string | null>(null);
+  const [deckUsername, setDeckUsername] = useState('');
+  const [showNewDeckForm, setShowNewDeckForm] = useState(false);
+  const [newDeckTitle, setNewDeckTitle] = useState('');
+  const [creatingDeck, setCreatingDeck] = useState(false);
+
   useEffect(() => {
     const mappedId = PROFILE_TO_POST_LAYOUT[userLayoutId] || 'single';
     const layout = GRID_LAYOUTS.find(l => l.id === mappedId) || GRID_LAYOUTS[0];
@@ -112,17 +129,27 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
   }, [userLayoutId, isOpen]);
 
   const handleMediaSelect = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (!files || files.length === 0) return;
-    // Reset input so the same file can be re-selected later
+    console.log('[handleMediaSelect] onChange fired');
+
+    // IMPORTANT: convert to Array *before* clearing the input.
+    // Setting value="" clears the FileList object in-place on Chrome/Firefox/Safari,
+    // so any FileList reference held after that point would be empty.
+    const files = Array.from(event.target.files || []);
     event.target.value = "";
+
+    if (files.length === 0) {
+      console.log('[handleMediaSelect] no files in event');
+      return;
+    }
+
+    console.log(`[handleMediaSelect] File selected: ${files.map(f => `${f.name} (${(f.size / 1024).toFixed(1)} KB, ${f.type || 'no type'})`).join(' | ')}`);
 
     setIsOptimising(true);
     setVideoError(null);
 
     const newMedia: MediaItem[] = [];
 
-    for (const file of Array.from(files)) {
+    for (const file of files) {
       if (file.type.startsWith("video/")) {
         if (file.size > VIDEO_MAX_BYTES) {
           setVideoError("Video must be under 50MB. Please trim or compress before uploading.");
@@ -135,18 +162,23 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
           type: "video",
         });
       } else if (file.type.startsWith("image/")) {
+        console.log(`[handleMediaSelect] Starting compression for ${file.name}…`);
         let processedFile = file;
         try {
           processedFile = await compressImage(file);
+          console.log(`[handleMediaSelect] Compression complete: ${(processedFile.size / 1024).toFixed(1)} KB (was ${(file.size / 1024).toFixed(1)} KB)`);
         } catch (e) {
-          console.error("Image compression failed, using original:", e);
+          console.error('[handleMediaSelect] Compression threw — using original:', e);
         }
+        console.log('[handleMediaSelect] Adding to selectedMedia');
         newMedia.push({
           id: `${Date.now()}-${Math.random()}`,
           file: processedFile,
           url: URL.createObjectURL(processedFile),
           type: "image",
         });
+      } else {
+        console.log(`[handleMediaSelect] Skipping unrecognised type: "${file.type}" (${file.name})`);
       }
     }
 
@@ -162,7 +194,27 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
     });
   }, []);
 
-  const handlePost = async () => {
+  const loadDecksForStep = async () => {
+    if (!user) return;
+    setDecksLoading(true);
+    try {
+      const [decks, sbUser] = await Promise.all([
+        getUserDecks(user.id),
+        getUserByPrivyId(user.id),
+      ]);
+      setUserDecks(decks);
+      if (sbUser) {
+        const profile = await getProfile(sbUser.id);
+        if (profile?.username) setDeckUsername(profile.username);
+      }
+    } catch (e) {
+      console.error('loadDecksForStep error:', e);
+    } finally {
+      setDecksLoading(false);
+    }
+  };
+
+  const handlePost = async (deckId?: string | null) => {
     if (!user || selectedMedia.length === 0) return;
 
     setIsUploading(true);
@@ -174,19 +226,40 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
       const profile = await getProfile(supabaseUser.id);
       if (!profile?.username) throw new Error('Profile or username not found');
 
+      // Measure the actual pixel ratio of the first image so PostItem can
+      // display it correctly without any layout_id inference.
+      let aspectRatio: number | undefined;
+      const firstImage = selectedMedia.find(m => m.type === 'image');
+      if (firstImage?.url) {
+        try {
+          const img = new Image();
+          img.src = firstImage.url;
+          await new Promise<void>(r => { img.onload = () => r(); img.onerror = () => r(); });
+          if (img.naturalWidth && img.naturalHeight) {
+            aspectRatio = parseFloat((img.naturalWidth / img.naturalHeight).toFixed(4));
+          }
+        } catch { /* non-fatal — falls back to default in PostItem */ }
+      }
+
       const mediaUrls: string[] = [];
       for (const media of selectedMedia) {
         const url = await uploadImage(media.file, 'post-media', user.id);
         mediaUrls.push(url);
       }
 
-      await createPost({
+      const newPost = await createPost({
         userId: user.id,
         username: profile.username,
         caption,
         mediaUrls,
-        layoutId: selectedLayout.id,
+        layoutId: (profile as any).grid_layout || selectedLayout.id,
+        aspectRatio,
       });
+
+      // Add to deck if one was selected
+      if (deckId && newPost?.id) {
+        addPostToDeck(deckId, newPost.id).catch(e => console.error('addPostToDeck error:', e));
+      }
 
       selectedMedia.forEach(item => URL.revokeObjectURL(item.url));
       setIsUploading(false);
@@ -194,11 +267,28 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
       setStep('media');
       setSelectedMedia([]);
       setCaption('');
+      setSelectedDeckId(null);
       router.push('/profile');
     } catch (error) {
       console.error('Error creating post:', error);
       setPostError('Failed to create post. Please try again.');
       setIsUploading(false);
+    }
+  };
+
+  const handleCreateDeckAndSelect = async () => {
+    if (!newDeckTitle.trim() || !user) return;
+    setCreatingDeck(true);
+    try {
+      const deck = await createDeck(user.id, deckUsername, newDeckTitle.trim(), '');
+      setUserDecks(prev => [{ ...deck, item_count: 0 }, ...prev]);
+      setSelectedDeckId(deck.id);
+      setShowNewDeckForm(false);
+      setNewDeckTitle('');
+    } catch (e) {
+      console.error('createDeck error:', e);
+    } finally {
+      setCreatingDeck(false);
     }
   };
 
@@ -293,17 +383,20 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
         <button onClick={() => setStep('media')} className="text-white text-lg">←</button>
         <h2 className="font-['IBM_Plex_Mono'] font-medium text-white text-[16px]">Edit & Post</h2>
         <button
-          onClick={handlePost}
+          onClick={() => { setStep('deck'); loadDecksForStep(); }}
           disabled={isUploading}
           className={`font-['IBM_Plex_Mono'] font-medium text-[14px] ${isUploading ? 'text-[#666666]' : 'text-[#FF0000] cursor-pointer'}`}
         >
-          {isUploading ? 'Posting...' : 'Share'}
+          Next
         </button>
       </div>
 
       <div className="flex-1 flex flex-col">
         <div className="flex-1 p-4">
-          <div className="w-full h-64 bg-[#1A1A1A] border border-[#333333] rounded-lg overflow-hidden mb-4">
+          <div
+            className="w-full bg-[#1A1A1A] border border-[#333333] overflow-hidden mb-4"
+            style={{ aspectRatio: selectedLayout.aspectRatio.replace(':', '/') }}
+          >
             {selectedMedia[0] && (
               <img src={selectedMedia[0].url} alt="Preview" className="w-full h-full object-contain" />
             )}
@@ -312,7 +405,8 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
             value={caption}
             onChange={(e) => setCaption(e.target.value)}
             placeholder="Write a caption..."
-            className="w-full bg-transparent text-white font-['IBM_Plex_Mono'] text-[14px] resize-none border-none outline-none placeholder-[#666666]"
+            className="w-full bg-transparent font-['IBM_Plex_Mono'] text-[14px] resize-none border-none outline-none placeholder-[#666666]"
+            style={{ color: '#FFFFFF', caretColor: '#FFFFFF', backgroundColor: 'transparent' }}
             rows={4}
           />
         </div>
@@ -334,6 +428,143 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
     </div>
   );
 
+  const renderDeckStep = () => {
+    const MONO_S: React.CSSProperties = { fontFamily: "'IBM Plex Mono', monospace" };
+    return (
+      <div className="h-full flex flex-col">
+        <div className="flex items-center justify-between p-4 border-b border-[#1a1a1a]">
+          <button onClick={() => setStep('edit')} className="text-white text-lg">←</button>
+          <span style={{ ...MONO_S, fontSize: 13, color: 'white' }}>Add to a deck?</span>
+          <button
+            onClick={() => handlePost(null)}
+            disabled={isUploading}
+            style={{ ...MONO_S, fontSize: 11, color: 'white', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}
+          >
+            Skip
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto">
+          {decksLoading ? (
+            <div className="flex items-center justify-center mt-8">
+              <div style={{ width: 8, height: 8, background: '#FF0000', borderRadius: '50%' }} />
+            </div>
+          ) : (
+            <>
+              {userDecks.length === 0 && !showNewDeckForm && (
+                <p style={{ ...MONO_S, fontSize: 8, color: 'rgba(255,255,255,0.35)', padding: '16px' }}>
+                  No decks yet — create one below
+                </p>
+              )}
+              {userDecks.map(deck => (
+                <button
+                  key={deck.id}
+                  onClick={() => setSelectedDeckId(selectedDeckId === deck.id ? null : deck.id)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    width: '100%', background: 'transparent', border: 'none', cursor: 'pointer',
+                    padding: '10px 16px',
+                    borderLeft: selectedDeckId === deck.id ? '2px solid #FF0000' : '2px solid transparent',
+                    borderBottom: '1px solid rgba(255,255,255,0.05)',
+                  }}
+                >
+                  <div style={{ width: 32, height: 32, background: '#1a1a1a', flexShrink: 0, overflow: 'hidden' }}>
+                    {deck.cover_image_url && (
+                      <img src={deck.cover_image_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                    )}
+                  </div>
+                  <div style={{ textAlign: 'left' }}>
+                    <p style={{ ...MONO_S, fontSize: 9, color: 'white', margin: 0 }}>{deck.title}</p>
+                    <p style={{ ...MONO_S, fontSize: 7, color: 'rgba(255,255,255,0.4)', margin: '2px 0 0' }}>
+                      {deck.item_count} frames
+                    </p>
+                  </div>
+                  {selectedDeckId === deck.id && (
+                    <span style={{ marginLeft: 'auto', ...MONO_S, fontSize: 9, color: '#FF0000' }}>✓</span>
+                  )}
+                </button>
+              ))}
+
+              {!showNewDeckForm ? (
+                <button
+                  onClick={() => setShowNewDeckForm(true)}
+                  style={{ display: 'block', width: '100%', background: 'transparent', border: 'none', cursor: 'pointer', padding: '14px 16px', textAlign: 'left' }}
+                >
+                  <span style={{ ...MONO_S, fontSize: 9, color: 'rgba(255,255,255,0.5)' }}>+ Create new deck</span>
+                </button>
+              ) : (
+                <div style={{ padding: '14px 16px' }}>
+                  <input
+                    autoFocus
+                    type="text"
+                    value={newDeckTitle}
+                    onChange={e => setNewDeckTitle(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && handleCreateDeckAndSelect()}
+                    placeholder="Deck title…"
+                    style={{
+                      display: 'block', width: '100%', background: 'transparent',
+                      border: 'none', borderBottom: '1px solid rgba(255,255,255,0.2)',
+                      outline: 'none', ...MONO_S, fontSize: 10, color: 'white',
+                      padding: '4px 0', marginBottom: 12, boxSizing: 'border-box',
+                    }}
+                  />
+                  <div style={{ display: 'flex', gap: 16 }}>
+                    <button
+                      onClick={handleCreateDeckAndSelect}
+                      disabled={!newDeckTitle.trim() || creatingDeck}
+                      style={{ background: 'transparent', border: 'none', cursor: 'pointer', ...MONO_S, fontSize: 9, color: newDeckTitle.trim() ? 'white' : 'rgba(255,255,255,0.3)', padding: 0 }}
+                    >
+                      {creatingDeck ? 'Creating…' : 'Create'}
+                    </button>
+                    <button
+                      onClick={() => { setShowNewDeckForm(false); setNewDeckTitle(''); }}
+                      style={{ background: 'transparent', border: 'none', cursor: 'pointer', ...MONO_S, fontSize: 9, color: 'rgba(255,255,255,0.4)', padding: 0 }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+
+        <div className="border-t border-[#1a1a1a] p-4">
+          {postError && (
+            <p style={{ ...MONO_S, fontSize: 10, color: '#FF0000', marginBottom: 10 }}>{postError}</p>
+          )}
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              onClick={() => handlePost(null)}
+              disabled={isUploading}
+              style={{
+                flex: 1, background: 'transparent', border: '1px solid white',
+                padding: '8px', cursor: isUploading ? 'default' : 'pointer',
+              }}
+            >
+              <span style={{ ...MONO_S, fontSize: 11, color: isUploading ? 'rgba(255,255,255,0.4)' : 'white' }}>
+                {isUploading ? 'Posting…' : 'Skip'}
+              </span>
+            </button>
+            <button
+              onClick={() => handlePost(selectedDeckId)}
+              disabled={isUploading || !selectedDeckId}
+              style={{
+                flex: 1, background: 'transparent', cursor: isUploading || !selectedDeckId ? 'default' : 'pointer',
+                border: selectedDeckId ? '1px solid white' : '1px solid rgba(255,255,255,0.25)',
+                padding: '8px',
+              }}
+            >
+              <span style={{ ...MONO_S, fontSize: 11, color: isUploading || !selectedDeckId ? 'rgba(255,255,255,0.4)' : 'white' }}>
+                {isUploading ? 'Posting…' : 'Add to deck'}
+              </span>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -341,6 +572,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
       <div className="bg-black border border-[#333333] w-[375px] h-[600px] relative overflow-hidden">
         {step === 'media' && renderMediaStep()}
         {step === 'edit' && renderEditStep()}
+        {step === 'deck' && renderDeckStep()}
       </div>
     </div>
   );

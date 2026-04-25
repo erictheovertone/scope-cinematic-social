@@ -5,6 +5,35 @@ import { useRouter } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
 import { saveProfile, uploadImage, getUserByPrivyId, getProfileByUsername, syncUserWithSupabase } from "@/lib/userService";
 
+async function compressImage(file: File): Promise<File> {
+  return new Promise((resolve) => {
+    const MAX = 1920, QUALITY = 0.82;
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      try {
+        let { width, height } = img;
+        if (width > MAX || height > MAX) {
+          if (width >= height) { height = Math.round((height * MAX) / width); width = MAX; }
+          else { width = Math.round((width * MAX) / height); height = MAX; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width; canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) { resolve(file); return; }
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob((blob) => {
+          if (!blob) { resolve(file); return; }
+          resolve(new File([blob], file.name.replace(/\.[^.]+$/, '') + '-compressed.jpg', { type: 'image/jpeg' }));
+        }, 'image/jpeg', QUALITY);
+      } catch { resolve(file); }
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
+    img.src = url;
+  });
+}
+
 export default function ProfileSetup() {
   const router = useRouter();
   const { user } = usePrivy();
@@ -17,6 +46,9 @@ export default function ProfileSetup() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [usernameError, setUsernameError] = useState<string | null>(null);
+  const [imageUploading, setImageUploading] = useState(false);
+  const [imageUploadError, setImageUploadError] = useState<string | null>(null);
+  const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const syncUser = async () => {
@@ -42,17 +74,25 @@ export default function ProfileSetup() {
         return;
       }
 
-      const supabaseUser = await getUserByPrivyId(user.id);
+      // Look up the user row; if missing, attempt a sync (handles RLS race on mount)
+      let supabaseUser = await getUserByPrivyId(user.id);
+      console.log('[ProfileSetup] getUserByPrivyId:', supabaseUser?.id ?? 'null', '(privy_id:', user.id, ')');
+
       if (!supabaseUser) {
-        setError('Could not find your account. Please try logging out and back in.');
+        console.log('[ProfileSetup] user row missing — attempting sync...');
+        const synced = await syncUserWithSupabase(user);
+        console.log('[ProfileSetup] syncUserWithSupabase result:', synced?.id ?? 'null');
+        supabaseUser = synced;
+      }
+
+      if (!supabaseUser) {
+        console.error('[ProfileSetup] FAILED TO CREATE USER — privy_id:', user.id,
+          '— likely an RLS policy issue on the users table (needs public INSERT policy)');
+        setError('Failed to create your account. Please try again or contact support.');
         return;
       }
 
-      let profileImageUrl: string | undefined = undefined;
-      if (profileImageFile) {
-        profileImageUrl = await uploadImage(profileImageFile, 'profile-images', user.id);
-      }
-
+      // Check username availability
       if (username) {
         const existing = await getProfileByUsername(username);
         if (existing && existing.user_id !== supabaseUser.id) {
@@ -61,33 +101,51 @@ export default function ProfileSetup() {
         }
       }
 
-      const profilePayload = { userId: supabaseUser.id, displayName, username, bio, profileImageUrl };
-      console.log('Saving profile to Supabase:', profilePayload);
-
+      // Save profile — image URL is already uploaded (or null if none selected)
+      console.log('[ProfileSetup] saving profile for user_id:', supabaseUser.id);
       await saveProfile(supabaseUser.id, {
         displayName,
         username,
         bio,
-        profileImageUrl,
+        profileImageUrl: uploadedImageUrl ?? undefined,
       });
 
-      router.push("/profile/grid-layout");
+      router.push('/profile/grid-layout');
     } catch (err) {
       const e = err && typeof err === 'object' ? err as Record<string, unknown> : {};
-      console.error('Error saving profile:', [e.message, e.code, e.details, e.hint].filter(Boolean).join(' | ') || String(err));
+      const detail = [e.message, e.code, e.details, e.hint].filter(Boolean).join(' | ') || String(err);
+      console.error('[ProfileSetup] handleContinue error:', detail);
       setError('Failed to save your profile. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
-      setProfileImageFile(file);
-      const reader = new FileReader();
-      reader.onload = (e) => setProfileImage(e.target?.result as string);
-      reader.readAsDataURL(file);
+    if (!file || !user) return;
+    event.target.value = '';
+
+    // Show preview immediately from local object URL
+    const previewUrl = URL.createObjectURL(file);
+    setProfileImage(previewUrl);
+    setProfileImageFile(file);
+    setImageUploadError(null);
+    setUploadedImageUrl(null);
+    setImageUploading(true);
+
+    try {
+      const compressed = await compressImage(file);
+      const url = await uploadImage(compressed, 'profile-images', user.id);
+      setUploadedImageUrl(url);
+    } catch (err) {
+      console.error('[ProfileSetup] image upload failed:', err);
+      setImageUploadError('Photo upload failed. Please try again.');
+      setProfileImage(null);
+      setProfileImageFile(null);
+    } finally {
+      URL.revokeObjectURL(previewUrl);
+      setImageUploading(false);
     }
   };
 
@@ -187,11 +245,27 @@ export default function ProfileSetup() {
         </div>
       )}
 
+      {/* Upload status */}
+      {imageUploading && (
+        <div className="absolute left-[50px] top-[620px] w-[275px]">
+          <p className="font-['IBM_Plex_Mono'] font-medium text-white text-[9px] tracking-[-0.18px] leading-[140%]">
+            Uploading photo…
+          </p>
+        </div>
+      )}
+      {imageUploadError && (
+        <div className="absolute left-[50px] top-[620px] w-[275px]">
+          <p className="font-['IBM_Plex_Mono'] font-medium text-[#FF0000] text-[9px] tracking-[-0.18px] leading-[140%]">
+            {imageUploadError}
+          </p>
+        </div>
+      )}
+
       {/* Continue Button */}
       <div className="absolute left-[122px] top-[760px] w-[130px] h-[45px] z-50">
         <button
           onClick={handleContinue}
-          disabled={isLoading}
+          disabled={isLoading || imageUploading || !!imageUploadError}
           className="w-full h-full border border-white bg-black text-white flex items-center justify-center cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <span className="font-['IBM_Plex_Mono'] font-medium text-[11px] tracking-[-0.22px] leading-[140%]">

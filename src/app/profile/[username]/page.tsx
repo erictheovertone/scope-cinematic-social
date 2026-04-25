@@ -2,9 +2,19 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { getProfileByUsername } from "@/lib/userService";
+import { usePrivy } from "@privy-io/react-auth";
+import {
+  getProfileByUsername,
+  getUserById,
+  followUser,
+  unfollowUser,
+  isFollowing,
+  getFollowerCount,
+  getFollowingCount,
+} from "@/lib/userService";
 import { getPostsByUsername } from "@/lib/postsService";
 import ProfilePostViewer from "@/components/ProfilePostViewer";
+import FollowListModal from "@/components/FollowListModal";
 
 const COLLAGE_ASPECTS = ["aspect-video", "aspect-[2.4/1]", "aspect-[4/3]", "aspect-square"];
 
@@ -43,6 +53,7 @@ const MONO: React.CSSProperties = { fontFamily: "'IBM Plex Mono', monospace" };
 export default function PublicProfilePage() {
   const params = useParams();
   const router = useRouter();
+  const { user } = usePrivy();
   const username = params?.username as string;
 
   const [profile, setProfile] = useState<any>(null);
@@ -52,6 +63,15 @@ export default function PublicProfilePage() {
   const [showViewer, setShowViewer] = useState(false);
   const [viewerIndex, setViewerIndex] = useState(0);
   const [activeTab, setActiveTab] = useState<"main" | "collected">("main");
+
+  // Follow state
+  const [targetPrivyId, setTargetPrivyId] = useState<string | null>(null);
+  const [followingUser, setFollowingUser] = useState(false);
+  const [followerCount, setFollowerCount] = useState(0);
+  const [followingCount, setFollowingCount] = useState(0);
+  const [followLoading, setFollowLoading] = useState(false);
+  const [showFollowersModal, setShowFollowersModal] = useState(false);
+  const [showFollowingModal, setShowFollowingModal] = useState(false);
 
   useEffect(() => {
     if (!username) return;
@@ -64,8 +84,27 @@ export default function PublicProfilePage() {
           return;
         }
         setProfile(p);
-        const userPosts = await getPostsByUsername(username);
+
+        const [userPosts, targetUser] = await Promise.all([
+          getPostsByUsername(username),
+          getUserById(p.user_id),
+        ]);
         setPosts(userPosts);
+
+        if (targetUser) {
+          setTargetPrivyId(targetUser.privy_id);
+          const [fc, fgc] = await Promise.all([
+            getFollowerCount(targetUser.privy_id),
+            getFollowingCount(targetUser.privy_id),
+          ]);
+          setFollowerCount(fc);
+          setFollowingCount(fgc);
+
+          if (user) {
+            const isF = await isFollowing(user.id, targetUser.privy_id);
+            setFollowingUser(isF);
+          }
+        }
       } catch (e) {
         console.error("Error loading public profile:", e);
         setNotFound(true);
@@ -74,8 +113,29 @@ export default function PublicProfilePage() {
       }
     };
     load();
-  }, [username]);
+  }, [username, user?.id]);
 
+  const handleFollow = async () => {
+    if (!user || !targetPrivyId || followLoading) return;
+    setFollowLoading(true);
+    try {
+      if (followingUser) {
+        await unfollowUser(user.id, targetPrivyId);
+        setFollowingUser(false);
+        setFollowerCount(c => c - 1);
+      } else {
+        await followUser(user.id, targetPrivyId);
+        setFollowingUser(true);
+        setFollowerCount(c => c + 1);
+      }
+    } catch (e) {
+      console.error("Follow error:", e);
+    } finally {
+      setFollowLoading(false);
+    }
+  };
+
+  const isOwnProfile = user && targetPrivyId && user.id === targetPrivyId;
   const layoutId = profile?.grid_layout || "1x-super-wide";
 
   /* ── Not found ── */
@@ -144,6 +204,66 @@ export default function PublicProfilePage() {
         ))}
       </div>
 
+      {/* Follow button + stats — right side of header */}
+      <div
+        className="absolute flex flex-col items-end"
+        style={{ right: 4, top: 35, gap: 6 }}
+      >
+        {/* Follow / Unfollow — hidden when viewing own profile or target privy_id unknown */}
+        {user && !isOwnProfile && targetPrivyId && (
+          <button
+            onClick={handleFollow}
+            disabled={followLoading}
+            style={{
+              ...MONO,
+              fontSize: 9,
+              color: "white",
+              letterSpacing: "-0.18px",
+              background: "transparent",
+              border: "1px solid white",
+              padding: "3px 8px",
+              cursor: followLoading ? "default" : "pointer",
+              opacity: followLoading ? 0.5 : 1,
+            }}
+          >
+            {followingUser ? "UNFOLLOW" : "FOLLOW"}
+          </button>
+        )}
+
+        {/* Follower count */}
+        <button
+          onClick={() => setShowFollowersModal(true)}
+          className="bg-transparent border-none cursor-pointer p-0"
+        >
+          <span style={{ ...MONO, fontSize: 7, color: "white", letterSpacing: "-0.14px" }}>
+            {followerCount.toLocaleString()} followers
+          </span>
+        </button>
+
+        {/* Following count */}
+        <button
+          onClick={() => setShowFollowingModal(true)}
+          className="bg-transparent border-none cursor-pointer p-0"
+        >
+          <span style={{ ...MONO, fontSize: 7, color: "white", letterSpacing: "-0.14px" }}>
+            {followingCount.toLocaleString()} following
+          </span>
+        </button>
+
+        {/* Decks icon */}
+        <button
+          onClick={() => router.push(`/profile/${username}/decks`)}
+          className="bg-transparent border-none cursor-pointer p-0"
+          aria-label="View decks"
+        >
+          <svg width="20" height="13" viewBox="0 0 20 13" fill="none">
+            <rect width="20" height="3" fill="rgba(255,255,255,0.7)" />
+            <rect y="5" width="20" height="3" fill="rgba(255,255,255,0.7)" />
+            <rect y="10" width="20" height="3" fill="rgba(255,255,255,0.7)" />
+          </svg>
+        </button>
+      </div>
+
       {/* MAIN / COLLECTED tabs — center-y=148 */}
       <div className="absolute left-[7px]" style={{ top: "148px", transform: "translateY(-50%)" }}>
         <button onClick={() => setActiveTab("main")} className="bg-transparent border-none p-0 cursor-pointer">
@@ -199,6 +319,22 @@ export default function PublicProfilePage() {
           ownerUsername={username}
           ownerAvatarUrl={profile?.profile_image_url}
           onClose={() => setShowViewer(false)}
+        />
+      )}
+
+      {showFollowersModal && targetPrivyId && (
+        <FollowListModal
+          type="followers"
+          privyUserId={targetPrivyId}
+          onClose={() => setShowFollowersModal(false)}
+        />
+      )}
+
+      {showFollowingModal && targetPrivyId && (
+        <FollowListModal
+          type="following"
+          privyUserId={targetPrivyId}
+          onClose={() => setShowFollowingModal(false)}
         />
       )}
 

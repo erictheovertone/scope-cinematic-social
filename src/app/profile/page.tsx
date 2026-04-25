@@ -3,12 +3,12 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
-import { getUserByPrivyId, getProfile } from "@/lib/userService";
+import { getUserByPrivyId, getProfile, getFollowerCount, getFollowingCount } from "@/lib/userService";
 import { getUserPosts } from '@/lib/postsService';
 import CreatePostFlow from "@/components/CreatePostFlow";
+import FollowListModal from "@/components/FollowListModal";
 import TheaterCarousel from "@/components/TheaterCarousel";
 import ProfilePostViewer from "@/components/ProfilePostViewer";
-import Link from "next/link";
 
 const COLLAGE_ASPECTS = ['aspect-video', 'aspect-[2.4/1]', 'aspect-[4/3]', 'aspect-square'];
 
@@ -66,10 +66,12 @@ export default function Profile() {
   const [analytics, setAnalytics] = useState({
     collectors: 1425,
     totalPosts: 0,
-    followers: 12345,
-    following: 122,
+    followers: 0,
+    following: 0,
     portfolioMc: 569900,
   });
+  const [showFollowersModal, setShowFollowersModal] = useState(false);
+  const [showFollowingModal, setShowFollowingModal] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -95,9 +97,13 @@ export default function Profile() {
         setLayoutLoaded(true);
       }
       try {
-        const posts = await getUserPosts(user.id);
+        const [posts, fc, fgc] = await Promise.all([
+          getUserPosts(user.id),
+          getFollowerCount(user.id),
+          getFollowingCount(user.id),
+        ]);
         setUserPosts(posts);
-        setAnalytics(prev => ({ ...prev, totalPosts: posts.length }));
+        setAnalytics(prev => ({ ...prev, totalPosts: posts.length, followers: fc, following: fgc }));
       } catch (error) {
         console.error('Error loading posts:', error);
       }
@@ -124,7 +130,7 @@ export default function Profile() {
       <div
         className="absolute cursor-pointer"
         onClick={() => setShowTheater(true)}
-        style={{ left: 0, top: 0, width: 28, height: 28, padding: '3px 0 0 2px', zIndex: 10 }}
+        style={{ left: -2, top: 0, width: 28, height: 28, padding: '3px 0 0 1px', zIndex: 10 }}
       >
         <div className="w-[11px] h-[11px] bg-[#FF0000] rounded-full" />
       </div>
@@ -134,9 +140,7 @@ export default function Profile() {
         {userProfile.profileImage ? (
           <img src={userProfile.profileImage} alt="Profile" className="w-full h-full object-cover" />
         ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <span className="text-white text-[24px] font-thin">+</span>
-          </div>
+          <div className="w-full h-full bg-[#222]" />
         )}
       </div>
 
@@ -174,24 +178,42 @@ export default function Profile() {
         </span>
       </button>
 
+      {/* Decks icon — visible only when stats panel is closed */}
+      {!isDataOpen && userProfile.username && (
+        <button
+          className="absolute bg-transparent border-none cursor-pointer p-0"
+          style={{ left: '50%', top: '148px', transform: 'translate(-50%, -50%)' }}
+          onClick={() => router.push(`/profile/${userProfile.username}/decks`)}
+          aria-label="View decks"
+        >
+          <svg width="12" height="16" viewBox="0 0 12 16" fill="none">
+            <rect x="0" y="0" width="2" height="16" fill="white" />
+            <rect x="5" y="0" width="2" height="16" fill="white" />
+            <rect x="10" y="0" width="2" height="16" fill="white" />
+          </svg>
+        </button>
+      )}
+
       {/* Stats cascade — ripples down one row at a time below VIEW DATA */}
       {isDataOpen && (
         <div className="absolute" style={{ right: '4px', top: '54px' }}>
           {([
-            ['Collectors',   fmt(analytics.collectors)],
-            ['Total Posts',  fmt(analytics.totalPosts)],
-            ['Followers',    fmt(analytics.followers)],
-            ['Following',    fmt(analytics.following)],
-            ['Portfolio MC', `$${fmt(analytics.portfolioMc)}`],
-          ] as [string, string][]).map(([label, value], i) => (
+            ['Collectors',   fmt(analytics.collectors),   null],
+            ['Total Posts',  fmt(analytics.totalPosts),   null],
+            ['Followers',    fmt(analytics.followers),    () => setShowFollowersModal(true)],
+            ['Following',    fmt(analytics.following),    () => setShowFollowingModal(true)],
+            ['Portfolio MC', `$${fmt(analytics.portfolioMc)}`, null],
+          ] as [string, string, (() => void) | null][]).map(([label, value, onClick], i) => (
             <div
               key={label}
+              onClick={onClick ?? undefined}
               style={{
                 display: 'flex',
                 justifyContent: 'space-between',
                 gap: '14px',
                 animation: 'ripple-down 0.18s ease-out both',
                 animationDelay: `${i * 50}ms`,
+                cursor: onClick ? 'pointer' : 'default',
               }}
             >
               <span style={{ ...MONO, fontSize: '7px', color: 'rgba(255,255,255,0.55)', letterSpacing: '-0.1px', lineHeight: 1.7 }}>{label}</span>
@@ -214,27 +236,39 @@ export default function Profile() {
         </button>
       </div>
 
-      {/* Settings link — top-left corner, small */}
-      <div className="absolute right-[4px] top-[3px]">
-        <Link href="/profile/preferences">
-          <span style={{ ...MONO, fontSize: '8px', color: '#555', letterSpacing: '-0.16px' }}>⚙</span>
-        </Link>
-      </div>
+      {/* Settings — top-right, 1px from both edges, plain button */}
+      <button
+        className="absolute bg-transparent border-none cursor-pointer p-0"
+        style={{ right: 1, top: 1 }}
+        onClick={() => router.push('/profile/preferences')}
+        aria-label="Settings"
+      >
+        <span style={{ fontSize: '20px', color: 'white', lineHeight: 1 }}>⚙</span>
+      </button>
 
-      {/* Posts grid — starts at y=160 matching Figma, 2px side padding, 1px gaps */}
+      {/* Posts grid — starts at y=160. Explicit height avoids min-height containing-block issue. */}
       {layoutLoaded && (
-        <div className="absolute left-0 right-0 bottom-[60px]" style={{ top: '160px' }}>
+        <div className="absolute left-0 right-0" style={{ top: '160px', height: 'calc(100vh - 220px)' }}>
           {userPosts.length === 0 ? (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-              <p style={{ ...MONO, fontSize: '8px', color: 'white', letterSpacing: '-0.16px' }}>
-                Create your first post
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flex: 1,
+                minHeight: '50vh',
+                cursor: 'pointer',
+                gap: '16px',
+              }}
+              onClick={() => setShowCreatePost(true)}
+            >
+              <p style={{ fontFamily: 'IBM Plex Mono', fontSize: '11px', color: 'white', margin: 0, lineHeight: '1.4' }}>
+                Create<br/>your<br/>first<br/>post
               </p>
-              <button onClick={() => setShowCreatePost(true)} className="cursor-pointer bg-transparent border-none p-0">
-                <div className="relative w-[63px] h-[63px]">
-                  <div className="absolute inset-x-0 top-1/2 h-px bg-white" />
-                  <div className="absolute inset-y-0 left-1/2 w-px bg-white" />
-                </div>
-              </button>
+              <div style={{ position: 'relative', width: '48px', height: '48px', flexShrink: 0 }}>
+                <div style={{ position: 'absolute', top: '50%', left: 0, right: 0, height: '1px', background: 'white', transform: 'translateY(-50%)' }} />
+                <div style={{ position: 'absolute', left: '50%', top: 0, bottom: 0, width: '1px', background: 'white', transform: 'translateX(-50%)' }} />
+              </div>
             </div>
           ) : (
             <div className="overflow-y-auto h-full px-[1px]">
@@ -287,6 +321,22 @@ export default function Profile() {
           onClose={() => setShowTheater(false)}
           supabaseUserId={supabaseUserId}
           viewerUsername={userProfile.username}
+        />
+      )}
+
+      {showFollowersModal && user && (
+        <FollowListModal
+          type="followers"
+          privyUserId={user.id}
+          onClose={() => setShowFollowersModal(false)}
+        />
+      )}
+
+      {showFollowingModal && user && (
+        <FollowListModal
+          type="following"
+          privyUserId={user.id}
+          onClose={() => setShowFollowingModal(false)}
         />
       )}
 

@@ -8,6 +8,7 @@ import {
   addComment, getPostComments,
 } from "@/lib/postsService";
 import { getUserByPrivyId, getProfile } from "@/lib/userService";
+import DeckPickerSheet from "@/components/DeckPickerSheet";
 import { supabase } from "@/lib/supabase/client";
 
 const MONO: React.CSSProperties = { fontFamily: "'IBM Plex Mono', monospace" };
@@ -44,6 +45,8 @@ function PostViewerItem({
   const [showComments, setShowComments] = useState(false);
   const [newComment, setNewComment] = useState("");
   const [collectToast, setCollectToast] = useState(false);
+  const [showDeckPicker, setShowDeckPicker] = useState(false);
+  const [deckToast, setDeckToast] = useState("");
 
   useEffect(() => {
     const load = async () => {
@@ -199,8 +202,21 @@ function PostViewerItem({
             </svg>
           </button>
 
-          {/* COLLECT — right-aligned, UI only */}
-          <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+          {/* ADD TO DECK + COLLECT — right-aligned */}
+          <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+            {deckToast && (
+              <span style={{ ...MONO, fontSize: 7, color: "rgba(255,255,255,0.5)", animation: "theater-fade-in 0.2s ease-out both" }}>
+                Added to {deckToast}
+              </span>
+            )}
+            {user && (
+              <button
+                onClick={() => setShowDeckPicker(true)}
+                style={{ background: "transparent", border: "none", cursor: "pointer", padding: 0 }}
+              >
+                <span style={{ ...MONO, fontSize: 7, color: "rgba(255,255,255,0.55)" }}>ADD TO DECK</span>
+              </button>
+            )}
             {collectToast && (
               <span style={{ ...MONO, fontSize: 7, color: "rgba(255,255,255,0.5)", animation: "theater-fade-in 0.2s ease-out both" }}>
                 Collecting coming soon
@@ -213,6 +229,18 @@ function PostViewerItem({
               <span style={{ ...MONO, fontSize: 7, color: "white" }}>COLLECT · 0.001 ETH</span>
             </button>
           </div>
+
+          {showDeckPicker && user && (
+            <DeckPickerSheet
+              postId={post.id}
+              onClose={() => setShowDeckPicker(false)}
+              onAdded={(deckTitle) => {
+                setShowDeckPicker(false);
+                setDeckToast(deckTitle);
+                setTimeout(() => setDeckToast(""), 2500);
+              }}
+            />
+          )}
         </div>
 
         {/* Divider */}

@@ -1,32 +1,73 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
-import Link from "next/link";
-import { getUserGridLayout } from "@/lib/gridLayoutService";
+import { getUserByPrivyId, getProfile, saveProfile, uploadImage } from "@/lib/userService";
+
+async function compressImage(file: File): Promise<File> {
+  return new Promise((resolve) => {
+    const MAX = 1920, QUALITY = 0.82;
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      try {
+        let { width, height } = img;
+        if (width > MAX || height > MAX) {
+          if (width >= height) { height = Math.round((height * MAX) / width); width = MAX; }
+          else { width = Math.round((width * MAX) / height); height = MAX; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width; canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) { resolve(file); return; }
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob((blob) => {
+          if (!blob) { resolve(file); return; }
+          resolve(new File([blob], file.name.replace(/\.[^.]+$/, '') + '-compressed.jpg', { type: 'image/jpeg' }));
+        }, 'image/jpeg', QUALITY);
+      } catch { resolve(file); }
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
+    img.src = url;
+  });
+}
+
+const MONO: React.CSSProperties = { fontFamily: "'IBM Plex Mono', monospace" };
 
 export default function Preferences() {
   const router = useRouter();
-  const { user, logout } = usePrivy();
-  const [userSettings, setUserSettings] = useState({
-    email: "",
-    displayName: "Eric",
-    username: "overtone",
-    bio: "I tell stories with visuals and sound.\nFilmmaker. Father. Anamorphic lover",
-    gridLayout: "3x-square"
-  });
+  const { logout } = usePrivy();
+  const { user } = usePrivy();
+  const photoInputRef = useRef<HTMLInputElement>(null);
+
+  const [sbUserId, setSbUserId] = useState("");
+  const [currentProfile, setCurrentProfile] = useState({ displayName: "", username: "", bio: "" });
+  const [photoUploading, setPhotoUploading] = useState(false);
+  const [photoSuccess, setPhotoSuccess] = useState(false);
+  const [photoError, setPhotoError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (user?.id) {
-      const currentLayout = getUserGridLayout(user.id);
-      if (currentLayout) {
-        setUserSettings(prev => ({
-          ...prev,
-          gridLayout: currentLayout.layoutName
-        }));
+    if (!user?.id) return;
+    const load = async () => {
+      try {
+        const sbUser = await getUserByPrivyId(user.id);
+        if (!sbUser) return;
+        setSbUserId(sbUser.id);
+        const profile = await getProfile(sbUser.id);
+        if (profile) {
+          setCurrentProfile({
+            displayName: profile.display_name || "",
+            username: profile.username || "",
+            bio: profile.bio || "",
+          });
+        }
+      } catch (e) {
+        console.error("Preferences load error:", e);
       }
-    }
+    };
+    load();
   }, [user?.id]);
 
   const handleLogout = async () => {
@@ -34,169 +75,83 @@ export default function Preferences() {
     router.push('/welcome');
   };
 
-  const settingsItems = [
-    {
-      label: '+Invite',
-      description: 'Share Scope with friends',
-      href: '/profile/invite',
-      icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.5">
-          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
-          <circle cx="9" cy="7" r="4"/>
-          <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
-          <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-        </svg>
-      )
-    },
-    {
-      label: 'Notifications',
-      description: 'Likes, comments, and trading activity',
-      href: '/profile/notifications',
-      icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.5">
-          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-          <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-        </svg>
-      )
-    },
-    {
-      label: 'Hidden Posts',
-      description: 'Manage your hidden content',
-      href: '/profile/hidden',
-      icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.5">
-          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-          <circle cx="12" cy="12" r="3"/>
-          <path d="M3 3l18 18"/>
-        </svg>
-      )
-    },
-    {
-      label: 'Account Settings',
-      description: 'Email, name, and bio',
-      href: '/profile/account',
-      icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.5">
-          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-          <circle cx="12" cy="7" r="4"/>
-        </svg>
-      )
-    },
-    {
-      label: 'Grid Layout',
-      description: `Current: ${userSettings.gridLayout}`,
-      href: '/profile/grid-layout',
-      icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.5">
-          <rect x="3" y="3" width="7" height="7"/>
-          <rect x="14" y="3" width="7" height="7"/>
-          <rect x="14" y="14" width="7" height="7"/>
-          <rect x="3" y="14" width="7" height="7"/>
-        </svg>
-      )
-    },
-    {
-      label: 'Contact Us',
-      description: 'Get help and support',
-      href: '/profile/contact',
-      icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.5">
-          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-          <polyline points="22,6 12,13 2,6"/>
-        </svg>
-      )
-    },
-    {
-      label: 'Terms of Service',
-      description: 'Legal agreement and policies',
-      href: '/profile/terms',
-      icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.5">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-          <polyline points="14,2 14,8 20,8"/>
-          <line x1="16" y1="13" x2="8" y2="13"/>
-          <line x1="16" y1="17" x2="8" y2="17"/>
-          <polyline points="10,9 9,9 8,9"/>
-        </svg>
-      )
-    },
-    {
-      label: 'Delete Account',
-      description: 'Permanently delete your account',
-      href: '/profile/delete-account',
-      danger: true,
-      icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FF0000" strokeWidth="1.5">
-          <polyline points="3,6 5,6 21,6"/>
-          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-          <line x1="10" y1="11" x2="10" y2="17"/>
-          <line x1="14" y1="11" x2="14" y2="17"/>
-        </svg>
-      )
+  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user || !sbUserId) return;
+    e.target.value = '';
+    setPhotoUploading(true);
+    setPhotoSuccess(false);
+    setPhotoError(null);
+    try {
+      const compressed = await compressImage(file);
+      const url = await uploadImage(compressed, 'profile-images', user.id);
+      await saveProfile(sbUserId, {
+        displayName: currentProfile.displayName,
+        username: currentProfile.username,
+        bio: currentProfile.bio,
+        profileImageUrl: url,
+      });
+      setPhotoSuccess(true);
+      setTimeout(() => setPhotoSuccess(false), 3000);
+    } catch (err) {
+      console.error("Photo update error:", err);
+      setPhotoError("Upload failed. Please try again.");
+    } finally {
+      setPhotoUploading(false);
     }
+  };
+
+  const photoLabel = photoUploading ? 'Uploading…' : photoSuccess ? 'Photo updated ✓' : photoError ?? 'Change Profile Photo';
+
+  const menuItems: { label: string; action: () => void; danger?: boolean }[] = [
+    { label: photoLabel, action: () => photoInputRef.current?.click() },
+    { label: 'Edit Profile', action: () => router.push('/profile/account') },
+    { label: 'Change Grid Layout', action: () => router.push('/profile/grid-layout') },
+    { label: 'Notifications', action: () => router.push('/profile/notifications') },
+    { label: 'Privacy', action: () => {} },
+    { label: 'Blocked Accounts', action: () => router.push('/profile/hidden') },
+    { label: 'Help & Support', action: () => router.push('/profile/contact') },
+    { label: 'Log Out', action: handleLogout, danger: true },
   ];
 
   return (
-    <div className="bg-black relative w-[375px] h-[812px] mx-auto">
+    <div style={{ position: 'fixed', inset: 0, backgroundColor: '#000', overflowY: 'auto' }}>
+
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-[#333333]">
-        <button 
-          onClick={() => router.back()} 
-          className="text-white text-lg"
+      <div style={{ position: 'relative', display: 'flex', alignItems: 'center', padding: '14px 16px' }}>
+        <div style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: '#FF0000', flexShrink: 0, marginRight: 10 }} />
+        <button
+          onClick={() => router.back()}
+          style={{ ...MONO, fontSize: 11, color: 'white', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
         >
-          ←
+          ← Back
         </button>
-        <h1 className="font-['IBM_Plex_Mono'] font-medium text-white text-[16px]">
-          Settings
-        </h1>
-        <div className="w-6" /> {/* Spacer */}
+        <span style={{ ...MONO, fontSize: 11, color: 'white', position: 'absolute', left: '50%', transform: 'translateX(-50%)', letterSpacing: '0.05em' }}>
+          SETTINGS
+        </span>
       </div>
 
-      {/* Settings List */}
-      <div className="flex-1 overflow-y-auto px-2">
-        {settingsItems.map((item, index) => (
-          <div key={item.label}>
-            <Link
-              href={item.href}
-              className="flex items-center px-6 py-6 hover:bg-[#1A1A1A] transition-colors rounded-lg mx-2 my-1"
-            >
-              <div className="mr-6 flex-shrink-0">
-                {item.icon}
-              </div>
-              <div className="flex-1">
-                <p className="font-['IBM_Plex_Mono'] font-medium text-white text-[16px] mb-2">
-                  {item.label}
-                </p>
-                <p className="font-['IBM_Plex_Mono'] font-normal text-[#888888] text-[13px] leading-relaxed">
-                  {item.description}
-                </p>
-              </div>
-              <div className="ml-4 text-[#666666]">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <polyline points="9,18 15,12 9,6"/>
-                </svg>
-              </div>
-            </Link>
-          </div>
-        ))}
+      <div style={{ height: 1, backgroundColor: 'rgba(255,255,255,0.12)' }} />
 
-        {/* Log Out Button - Separate at bottom */}
-        <div className="mt-12 px-6 pb-8">
+      {/* Menu items */}
+      {menuItems.map((item) => (
+        <div key={item.label}>
           <button
-            onClick={handleLogout}
-            className="w-full flex items-center justify-center py-5 bg-transparent border border-[#FF0000] rounded-lg hover:bg-[#FF0000] hover:bg-opacity-10 transition-colors"
+            onClick={item.action}
+            style={{
+              display: 'block', width: '100%', background: 'transparent',
+              border: 'none', cursor: 'pointer', padding: '18px 20px', textAlign: 'left',
+            }}
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FF0000" strokeWidth="1.5" className="mr-3">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-              <polyline points="16,17 21,12 16,7"/>
-              <line x1="21" y1="12" x2="9" y2="12"/>
-            </svg>
-            <span className="font-['IBM_Plex_Mono'] font-medium text-[#FF0000] text-[16px]">
-              Log Out
+            <span style={{ ...MONO, fontSize: 13, color: item.danger ? '#FF0000' : photoError && item.label === photoLabel ? '#FF0000' : 'white' }}>
+              {item.label}
             </span>
           </button>
+          <div style={{ height: 1, backgroundColor: 'rgba(255,255,255,0.12)', margin: '0 20px' }} />
         </div>
-      </div>
+      ))}
+
+      <input ref={photoInputRef} type="file" accept="image/*" onChange={handlePhotoChange} style={{ display: 'none' }} />
     </div>
   );
 }

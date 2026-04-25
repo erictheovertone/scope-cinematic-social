@@ -1,0 +1,329 @@
+"use client";
+
+import { useState, useEffect, useRef, useCallback } from "react";
+import {
+  getPostsPaginated,
+  getPostLikes,
+  getPostComments,
+} from "@/lib/postsService";
+import PostModal from "@/components/PostModal";
+
+const MONO: React.CSSProperties = { fontFamily: "'IBM Plex Mono', monospace" };
+
+// ── Mirage Lightbox ──────────────────────────────────────────────────────────
+
+function MirageLightbox({
+  post,
+  onClose,
+  onOpenModal,
+}: {
+  post: any;
+  onClose: () => void;
+  onOpenModal: () => void;
+}) {
+  const [likeCount, setLikeCount] = useState(0);
+  const [commentCount, setCommentCount] = useState(0);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setVisible(true));
+    Promise.all([getPostLikes(post.id), getPostComments(post.id)])
+      .then(([l, c]) => {
+        setLikeCount(l.length);
+        setCommentCount(c.length);
+      })
+      .catch(() => {});
+    return () => cancelAnimationFrame(id);
+  }, [post.id]);
+
+  const handleClose = () => {
+    setVisible(false);
+    setTimeout(onClose, 200);
+  };
+
+  return (
+    <div
+      className="bg-black"
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 70,
+        background: visible ? "rgba(0,0,0,0.96)" : "rgba(0,0,0,0)",
+        transition: "background 200ms ease",
+        overflowY: "auto",
+      }}
+      onClick={handleClose}
+    >
+      {/* ← back — sticky so it stays visible while scrolling the lightbox */}
+      <button
+        onClick={(e) => { e.stopPropagation(); handleClose(); }}
+        style={{
+          position: "sticky",
+          top: 16,
+          display: "flex",
+          alignItems: "center",
+          gap: 6,
+          marginLeft: 16,
+          marginTop: 16,
+          background: "transparent",
+          border: "none",
+          cursor: "pointer",
+          padding: 0,
+          zIndex: 1,
+        }}
+      >
+        <svg width="12" height="12" viewBox="0 0 13 13" fill="none">
+          <path
+            d="M8.5 1.5L3.5 6.5l5 5"
+            stroke="white"
+            strokeWidth="1.4"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+        <span style={{ ...MONO, fontSize: 9, color: "white", letterSpacing: "-0.1px" }}>
+          back
+        </span>
+      </button>
+
+      {/* Image + metadata — stopPropagation so tapping here doesn't close */}
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          minHeight: "calc(100vh - 80px)",
+          paddingTop: 20,
+          transform: visible ? "scale(1)" : "scale(0.95)",
+          transition: "transform 200ms ease",
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Tap image → open PostModal */}
+        <img
+          src={post.media_urls?.[0]}
+          alt=""
+          style={{ width: "100%", height: "auto", display: "block", cursor: "pointer" }}
+          onClick={onOpenModal}
+        />
+
+        <div style={{ padding: "10px 16px 76px" }}>
+          <span
+            style={{
+              ...MONO,
+              fontSize: 9,
+              color: "rgba(255,255,255,0.7)",
+              letterSpacing: "-0.1px",
+            }}
+          >
+            @{post.username} · ♡ {likeCount} · ○ {commentCount}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Main MirageView ──────────────────────────────────────────────────────────
+
+export default function MirageView({ onClose }: { onClose: () => void }) {
+  const [posts, setPosts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [lightboxPost, setLightboxPost] = useState<any>(null);
+  const [modalPost, setModalPost] = useState<any>(null);
+  const [exiting, setExiting] = useState(false);
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  const pageRef = useRef(0);
+  const hasMoreRef = useRef(true);
+  const loadingRef = useRef(false);
+  const lastTapRef = useRef({ time: 0, id: "" });
+
+  const loadMore = useCallback(async () => {
+    if (loadingRef.current || !hasMoreRef.current) return;
+    loadingRef.current = true;
+    setLoading(true);
+    try {
+      const batch = await getPostsPaginated(pageRef.current, 30);
+      if (batch.length < 30) hasMoreRef.current = false;
+      setPosts((prev) => [...prev, ...batch]);
+      pageRef.current += 1;
+    } finally {
+      loadingRef.current = false;
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { loadMore(); }, [loadMore]);
+
+  useEffect(() => {
+    console.log("[MirageView] Grid rendered with", posts.length, "posts");
+  }, [posts]);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    const sentinel = sentinelRef.current;
+    if (!container || !sentinel) return;
+    const observer = new IntersectionObserver(
+      (entries) => { if (entries[0].isIntersecting) loadMore(); },
+      { root: container, threshold: 0.1 },
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [loadMore]);
+
+  const handleItemTap = (post: any) => {
+    const now = Date.now();
+    if (now - lastTapRef.current.time < 300 && lastTapRef.current.id === post.id) {
+      // double tap → skip lightbox, go straight to PostModal
+      setLightboxPost(null);
+      setModalPost(post);
+    } else {
+      setLightboxPost(post);
+    }
+    lastTapRef.current = { time: now, id: post.id };
+  };
+
+  const handleClose = () => {
+    setExiting(true);
+    setTimeout(onClose, 380);
+  };
+
+  return (
+    <>
+      <style>{`
+        @keyframes mirage-item-in {
+          from { opacity: 0; transform: scale(0.9) translateY(-8px); }
+          to   { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        @keyframes mirage-view-out {
+          from { opacity: 1; }
+          to   { opacity: 0; }
+        }
+      `}</style>
+
+      <div
+        ref={containerRef}
+        className="bg-black"
+        style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 45,
+          background: "#000",
+          overflowY: "auto",
+          animation: exiting ? "mirage-view-out 380ms ease-in both" : "none",
+        }}
+      >
+        {/* Mirage logo — sticky close button, always top-right */}
+        <div
+          style={{
+            position: "sticky",
+            top: 0,
+            zIndex: 2,
+            display: "flex",
+            justifyContent: "flex-end",
+            padding: "4px 6px 0",
+            pointerEvents: "none",
+          }}
+        >
+          <button
+            onClick={handleClose}
+            aria-label="Close Mirage View"
+            style={{
+              pointerEvents: "auto",
+              background: "transparent",
+              border: "none",
+              cursor: "pointer",
+              padding: 0,
+              lineHeight: 0,
+            }}
+          >
+            <img
+              src="/mirage-logo.png"
+              alt="Mirage"
+              width={24}
+              height={24}
+              style={{
+                filter:
+                  "brightness(0) invert(1) drop-shadow(0 0 5px rgba(255,255,255,0.75))",
+                opacity: 1,
+              }}
+            />
+          </button>
+        </div>
+
+        {/* 3-column masonry grid (CSS multi-column — preserves natural aspect ratios) */}
+        <div style={{ columnCount: 3, columnGap: 1, padding: 0 }}>
+          {posts.map((post, index) =>
+            post.media_urls?.[0] ? (
+              <div
+                key={post.id}
+                style={{
+                  breakInside: "avoid",
+                  // @ts-ignore — webkit prefix for older Safari
+                  WebkitColumnBreakInside: "avoid",
+                  marginBottom: 1,
+                  cursor: "pointer",
+                  // Only stagger-animate the first visible batch; subsequent
+                  // scroll-loaded items share the max-stagger delay (240ms).
+                  animation: `mirage-item-in 400ms ease-out ${Math.min(index, 8) * 30}ms both`,
+                }}
+                onClick={() => handleItemTap(post)}
+              >
+                <img
+                  src={post.media_urls[0]}
+                  alt=""
+                  style={{ width: "100%", height: "auto", display: "block" }}
+                  loading="lazy"
+                />
+              </div>
+            ) : null,
+          )}
+        </div>
+
+        {/* Infinite scroll sentinel */}
+        <div ref={sentinelRef} style={{ height: 1 }} />
+
+        {loading && (
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              padding: "16px 0",
+            }}
+          >
+            <div
+              style={{
+                width: 6,
+                height: 6,
+                background: "#FF0000",
+                borderRadius: "50%",
+                opacity: 0.6,
+              }}
+            />
+          </div>
+        )}
+
+        {/* Spacer so content clears the bottom toolbar */}
+        <div style={{ height: 76 }} />
+      </div>
+
+      {lightboxPost && (
+        <MirageLightbox
+          post={lightboxPost}
+          onClose={() => setLightboxPost(null)}
+          onOpenModal={() => {
+            const p = lightboxPost;
+            setLightboxPost(null);
+            setModalPost(p);
+          }}
+        />
+      )}
+
+      {modalPost && (
+        <PostModal post={modalPost} onClose={() => setModalPost(null)} />
+      )}
+    </>
+  );
+}

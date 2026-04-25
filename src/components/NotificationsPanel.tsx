@@ -19,7 +19,11 @@ function timeAgo(iso: string): string {
   return `${Math.floor(diff / 86400)}d`;
 }
 
-export default function NotificationsPage() {
+interface Props {
+  onClose: () => void;
+}
+
+export default function NotificationsPanel({ onClose }: Props) {
   const router = useRouter();
   const { user } = usePrivy();
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
@@ -33,11 +37,11 @@ export default function NotificationsPage() {
     const load = async () => {
       try {
         const data = await getNotifications(user.id);
-        console.log('[NotificationsPage] fetched', data.length, 'notifications for', user.id, ':', data);
+        console.log('[NotificationsPanel] fetched', data.length, 'notifications for', user.id, ':', data);
         setNotifications(data);
         markAllNotificationsRead(user.id).catch(() => {});
       } catch (e) {
-        console.error("NotificationsPage load error:", e);
+        console.error("NotificationsPanel load error:", e);
       } finally {
         setLoading(false);
       }
@@ -46,6 +50,7 @@ export default function NotificationsPage() {
   }, [user?.id]);
 
   const handleClick = (n: AppNotification) => {
+    onClose();
     if (n.type === "follow") {
       if (n.sender_username) router.push(`/profile/${n.sender_username}`);
     } else {
@@ -54,14 +59,13 @@ export default function NotificationsPage() {
   };
 
   return (
-    <div className="bg-black w-full max-w-[375px] min-h-screen mx-auto flex flex-col">
-
+    <div
+      className="fixed inset-0 z-[100] flex flex-col"
+      style={{ background: "#000", maxWidth: 375, margin: "0 auto" }}
+    >
       {/* Header */}
       <div className="relative flex items-center px-[4px] pt-[12px] pb-[10px]">
-        <button
-          onClick={() => router.back()}
-          className="bg-transparent border-none cursor-pointer p-0"
-        >
+        <button onClick={onClose} className="bg-transparent border-none cursor-pointer p-0">
           <span style={{ ...MONO, fontSize: 9, color: "white", letterSpacing: "-0.18px" }}>
             ← Back
           </span>
@@ -153,7 +157,6 @@ export default function NotificationsPage() {
           ))
         )}
       </div>
-
     </div>
   );
 }
