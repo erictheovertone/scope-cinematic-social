@@ -16,11 +16,9 @@ function LoadingSpinner() {
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (
     <PrivyProvider appId={PRIVY_APP_ID} config={privyConfig}>
-      <div style={{ paddingBottom: 80 }}>
-        <Suspense fallback={<LoadingSpinner />}>
-          {children}
-        </Suspense>
-      </div>
+      <Suspense fallback={<LoadingSpinner />}>
+        {children}
+      </Suspense>
       <AppShell />
     </PrivyProvider>
   );

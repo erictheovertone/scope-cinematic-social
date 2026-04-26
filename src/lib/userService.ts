@@ -39,6 +39,7 @@ export const saveProfile = async (userId: string, profileData: {
   username: string
   bio: string
   profileImageUrl?: string
+  websiteUrl?: string
 }) => {
   const { data, error } = await supabase
     .from('profiles')
@@ -47,7 +48,8 @@ export const saveProfile = async (userId: string, profileData: {
       display_name: profileData.displayName,
       username: profileData.username,
       bio: profileData.bio,
-      profile_image_url: profileData.profileImageUrl
+      profile_image_url: profileData.profileImageUrl,
+      website_url: profileData.websiteUrl ?? null,
     }, { onConflict: 'user_id' })
     .select()
     .single()
@@ -377,7 +379,7 @@ export const createDeck = async (
   return data
 }
 
-export const getUserDecks = async (privyUserId: string): Promise<(Deck & { item_count: number })[]> => {
+export const getUserDecks = async (privyUserId: string): Promise<(Deck & { item_count: number; thumbnail_urls: string[] })[]> => {
   const { data: decks, error } = await supabase
     .from('decks')
     .select('*')
@@ -388,15 +390,39 @@ export const getUserDecks = async (privyUserId: string): Promise<(Deck & { item_
   const deckIds = decks.map((d: Deck) => d.id)
   const { data: items } = await supabase
     .from('deck_items')
-    .select('deck_id')
+    .select('deck_id, post_id, media_url, position')
     .in('deck_id', deckIds)
+    .order('position', { ascending: true })
 
   const countMap = new Map<string, number>()
+  const deckItemsMap = new Map<string, { post_id: string | null; media_url: string | null }[]>()
   for (const item of items || []) {
     countMap.set(item.deck_id, (countMap.get(item.deck_id) || 0) + 1)
+    if (!deckItemsMap.has(item.deck_id)) deckItemsMap.set(item.deck_id, [])
+    deckItemsMap.get(item.deck_id)!.push({ post_id: item.post_id, media_url: item.media_url })
   }
 
-  return decks.map((d: Deck) => ({ ...d, item_count: countMap.get(d.id) || 0 }))
+  // Batch-fetch post media_urls for items that don't have a direct media_url
+  const postIds = [...new Set(
+    (items || []).filter(i => i.post_id && !i.media_url).map(i => i.post_id as string)
+  )]
+  const postMediaMap = new Map<string, string>()
+  if (postIds.length > 0) {
+    const { data: posts } = await supabase
+      .from('posts').select('id, media_urls').in('id', postIds)
+    for (const p of posts || []) {
+      if (p.media_urls?.[0]) postMediaMap.set(p.id, p.media_urls[0])
+    }
+  }
+
+  return decks.map((d: Deck) => {
+    const deckItems = deckItemsMap.get(d.id) || []
+    const thumbnail_urls = deckItems
+      .slice(0, 9)
+      .map(i => i.media_url || (i.post_id ? postMediaMap.get(i.post_id) ?? null : null))
+      .filter((u): u is string => !!u)
+    return { ...d, item_count: countMap.get(d.id) || 0, thumbnail_urls }
+  })
 }
 
 export const getDecksByUsername = async (username: string): Promise<(Deck & { item_count: number })[]> => {
@@ -449,6 +475,14 @@ export const getDeckById = async (deckId: string): Promise<DeckWithItems | null>
 }
 
 export const addPostToDeck = async (deckId: string, postId: string): Promise<DeckItem> => {
+  const { data: duplicate } = await supabase
+    .from('deck_items')
+    .select('id')
+    .eq('deck_id', deckId)
+    .eq('post_id', postId)
+    .maybeSingle()
+  if (duplicate) throw new Error('This post is already in this deck')
+
   const { data: existing } = await supabase
     .from('deck_items')
     .select('position')

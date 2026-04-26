@@ -38,7 +38,8 @@ export default function AppShell() {
       .catch(() => {});
   }, [user?.id, pathname]);
 
-  if (!mounted) return <BottomToolbar page="home" unreadCount={0} />;
+  // Before mount: always render 3 icons (home, create, wallet) — no pathname logic
+  if (!mounted) return <BottomToolbar page="profile" unreadCount={0} />;
 
   if (HIDDEN.some(p => pathname === p)) return null;
 

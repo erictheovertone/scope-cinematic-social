@@ -114,10 +114,10 @@ function PostViewerItem({
   };
 
   return (
-    <div style={{ paddingBottom: 40, borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+    <div>
 
-      {/* Image — 2.4:1 full width */}
-      <div style={{ width: "100%", aspectRatio: "2.4 / 1", overflow: "hidden", background: "#0a0a0a" }}>
+      {/* ── IMAGE ── position:relative, overflow:hidden */}
+      <div style={{ position: "relative", width: "100%", aspectRatio: "2.4 / 1", overflow: "hidden", background: "#0a0a0a" }}>
         {post.media_urls?.[0] ? (
           <img
             src={post.media_urls[0]}
@@ -127,166 +127,132 @@ function PostViewerItem({
         ) : (
           <div style={{ width: "100%", height: "100%", background: "#111" }} />
         )}
-      </div>
 
-      <div style={{ padding: "12px 16px 0" }}>
-
-        {/* Avatar · @username · MC */}
-        <div style={{ display: "flex", alignItems: "center", marginBottom: 10 }}>
-          <div
-            onClick={onNavigateToProfile}
-            style={{ width: 24, height: 24, borderRadius: "50%", overflow: "hidden", background: "#333", flexShrink: 0, marginRight: 8, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
-          >
-            {ownerAvatarUrl ? (
-              <img src={ownerAvatarUrl} alt={ownerUsername} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-            ) : (
-              <span style={{ ...MONO, fontSize: 9, color: "white", textTransform: "uppercase" }}>{ownerUsername?.[0] ?? "?"}</span>
-            )}
-          </div>
-          <span onClick={onNavigateToProfile} style={{ ...MONO, fontSize: 9, color: "white", letterSpacing: "-0.14px", cursor: "pointer" }}>
+        {/* Avatar + username — flex row, top: 6, left: 6 */}
+        <div
+          className="absolute"
+          onClick={onNavigateToProfile}
+          style={{ top: 6, left: 6, display: "flex", alignItems: "center", gap: 4, cursor: "pointer" }}
+        >
+          <img
+            src={ownerAvatarUrl || undefined}
+            style={{ width: 14, height: 14, borderRadius: "50%", objectFit: "cover", flexShrink: 0, background: "#333" }}
+          />
+          <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 8, color: "white", textShadow: "0 1px 2px rgba(0,0,0,1)", lineHeight: 1 }}>
             @{ownerUsername}
           </span>
-          <span style={{ ...MONO, fontSize: 9, color: "rgba(255,255,255,0.4)", marginLeft: "auto" }}>MC: —</span>
         </div>
 
-        {/* Caption */}
-        {post.caption ? (
-          <p style={{ ...MONO, fontSize: 9, color: "white", letterSpacing: "-0.1px", lineHeight: 1.55, margin: "0 0 14px" }}>
-            {post.caption}
-          </p>
-        ) : null}
+        {/* MC — top: 6, right: 6 */}
+        <span
+          className="absolute"
+          style={{ top: 6, right: 6, ...MONO, fontSize: 9, color: "white", textShadow: "0 1px 2px rgba(0,0,0,1)", lineHeight: 1 }}
+        >
+          MC: —
+        </span>
+      </div>
 
-        {/* Action row — like · comment · share · save · COLLECT */}
-        <div style={{ display: "flex", alignItems: "center", gap: 18, marginBottom: 14 }}>
+      {/* ── ACTION ROW — marginTop: 4px ── */}
+      <div style={{ marginTop: 4, padding: "0 4px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
 
-          {/* ♡ Like */}
+        {/* Left: like · comment · share · save */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <button
             onClick={handleLike}
             disabled={loading || !user}
-            style={{ background: "transparent", border: "none", cursor: user ? "pointer" : "default", display: "flex", alignItems: "center", gap: 5, padding: 0 }}
+            style={{ background: "transparent", border: "none", cursor: user ? "pointer" : "default", display: "flex", alignItems: "center", gap: 4, padding: 0 }}
           >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none">
               <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
-                fill={isLiked ? "#FF0000" : "none"}
-                stroke={isLiked ? "#FF0000" : "white"}
-                strokeWidth="1.8"
+                fill={isLiked ? "#FF0000" : "none"} stroke={isLiked ? "#FF0000" : "white"} strokeWidth="1.8"
               />
             </svg>
-            <span style={{ ...MONO, fontSize: 8, color: isLiked ? "#FF0000" : "white" }}>{likes.length}</span>
+            <span style={{ ...MONO, fontSize: 9, color: isLiked ? "#FF0000" : "white" }}>{likes.length}</span>
           </button>
 
-          {/* ○ Comment */}
           <button
             onClick={() => setShowComments(v => !v)}
-            style={{ background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 5, padding: 0 }}
+            style={{ background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 4, padding: 0 }}
           >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8">
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
             </svg>
-            <span style={{ ...MONO, fontSize: 8, color: "white" }}>{comments.length}</span>
+            <span style={{ ...MONO, fontSize: 9, color: "white" }}>{comments.length}</span>
           </button>
 
-          {/* Share — UI only */}
           <button style={{ background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", padding: 0 }}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
               <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
               <polyline points="16 6 12 2 8 6" />
               <line x1="12" y1="2" x2="12" y2="15" />
             </svg>
           </button>
 
-          {/* Save — UI only */}
           <button style={{ background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", padding: 0 }}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
               <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
             </svg>
           </button>
-
-          {/* ADD TO DECK + COLLECT — right-aligned */}
-          <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
-            {deckToast && (
-              <span style={{ ...MONO, fontSize: 7, color: "rgba(255,255,255,0.5)", animation: "theater-fade-in 0.2s ease-out both" }}>
-                Added to {deckToast}
-              </span>
-            )}
-            {user && (
-              <button
-                onClick={() => setShowDeckPicker(true)}
-                style={{ background: "transparent", border: "none", cursor: "pointer", padding: 0 }}
-              >
-                <span style={{ ...MONO, fontSize: 7, color: "rgba(255,255,255,0.55)" }}>ADD TO DECK</span>
-              </button>
-            )}
-            {collectToast && (
-              <span style={{ ...MONO, fontSize: 7, color: "rgba(255,255,255,0.5)", animation: "theater-fade-in 0.2s ease-out both" }}>
-                Collecting coming soon
-              </span>
-            )}
-            <button
-              onClick={handleCollect}
-              style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.45)", cursor: "pointer", padding: "4px 8px" }}
-            >
-              <span style={{ ...MONO, fontSize: 7, color: "white" }}>COLLECT · 0.001 ETH</span>
-            </button>
-          </div>
-
-          {showDeckPicker && user && (
-            <DeckPickerSheet
-              postId={post.id}
-              onClose={() => setShowDeckPicker(false)}
-              onAdded={(deckTitle) => {
-                setShowDeckPicker(false);
-                setDeckToast(deckTitle);
-                setTimeout(() => setDeckToast(""), 2500);
-              }}
-            />
-          )}
         </div>
 
-        {/* Divider */}
-        <div style={{ height: 1, background: "rgba(255,255,255,0.08)", marginBottom: 12 }} />
+        {/* Right: add to deck · collect */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          {deckToast && (
+            <span style={{ ...MONO, fontSize: 9, color: "rgba(255,255,255,0.5)" }}>Added to {deckToast}</span>
+          )}
+          {user && post.user_id === user.id && (
+            <button onClick={() => setShowDeckPicker(true)} style={{ background: "transparent", border: "none", cursor: "pointer", padding: 0 }}>
+              <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 8, color: "rgba(255,255,255,0.6)" }}>ADD TO DECK</span>
+            </button>
+          )}
+          {collectToast && (
+            <span style={{ ...MONO, fontSize: 9, color: "rgba(255,255,255,0.5)" }}>Coming soon</span>
+          )}
+          <button onClick={handleCollect} style={{ background: "transparent", border: "1px solid white", cursor: "pointer", padding: "2px 4px" }}>
+            <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 8, color: "white" }}>COLLECT</span>
+          </button>
+        </div>
 
-        {/* Comments toggle label */}
-        <button
-          onClick={() => setShowComments(v => !v)}
-          style={{ background: "transparent", border: "none", cursor: "pointer", padding: 0, marginBottom: showComments ? 12 : 0 }}
-        >
-          <span style={{ ...MONO, fontSize: 8, color: "rgba(255,255,255,0.4)" }}>
-            {showComments ? "hide comments" : `tap to see comments (${comments.length})`}
-          </span>
-        </button>
+        {showDeckPicker && user && (
+          <DeckPickerSheet
+            postId={post.id}
+            onClose={() => setShowDeckPicker(false)}
+            onAdded={(deckTitle) => { setShowDeckPicker(false); setDeckToast(deckTitle); setTimeout(() => setDeckToast(""), 2500); }}
+          />
+        )}
+      </div>
 
-        {/* Comments ripple down */}
+      {/* ── CAPTION — marginTop: 3, marginBottom: 16 (separator) ── */}
+      <div style={{ padding: "0 4px", marginTop: 3, marginBottom: 31 }}>
+        {post.caption ? (
+          <p style={{ ...MONO, fontSize: 10, color: "white", margin: 0, lineHeight: 1.4 }}>
+            {post.caption}
+          </p>
+        ) : null}
+
+        {/* Comments */}
         {showComments && (
           <div style={{ marginTop: 8 }}>
             {comments.length === 0 ? (
-              <p style={{ ...MONO, fontSize: 8, color: "rgba(255,255,255,0.25)", animation: "ripple-down 0.2s ease-out both" }}>
-                no comments yet
-              </p>
+              <p style={{ ...MONO, fontSize: 9, color: "rgba(255,255,255,0.25)", margin: 0 }}>no comments yet</p>
             ) : (
               comments.map((c, i) => (
-                <div
-                  key={c.id}
-                  style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 10, animation: "ripple-down 0.2s ease-out both", animationDelay: `${i * 50}ms` }}
-                >
-                  <div style={{ width: 18, height: 18, borderRadius: "50%", background: "#2a2a2a", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
-                    {c.profile_image_url ? (
-                      <img src={c.profile_image_url} alt={c.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                    ) : (
-                      <span style={{ ...MONO, fontSize: 7, color: "white", textTransform: "uppercase" }}>{c.username?.[0] ?? "?"}</span>
-                    )}
+                <div key={c.id} style={{ display: "flex", alignItems: "flex-start", gap: 6, marginBottom: 8, animation: "ripple-down 0.2s ease-out both", animationDelay: `${i * 50}ms` }}>
+                  <div style={{ width: 16, height: 16, borderRadius: "50%", background: "#2a2a2a", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+                    {c.profile_image_url
+                      ? <img src={c.profile_image_url} alt={c.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      : <span style={{ ...MONO, fontSize: 6, color: "white", textTransform: "uppercase" }}>{c.username?.[0] ?? "?"}</span>
+                    }
                   </div>
                   <div>
-                    <span style={{ ...MONO, fontSize: 8, color: "white", marginRight: 6 }}>@{c.username}</span>
-                    <span style={{ ...MONO, fontSize: 8, color: "rgba(255,255,255,0.6)" }}>{c.content}</span>
+                    <span style={{ ...MONO, fontSize: 9, color: "white", marginRight: 5 }}>@{c.username}</span>
+                    <span style={{ ...MONO, fontSize: 9, color: "rgba(255,255,255,0.6)" }}>{c.content}</span>
                   </div>
                 </div>
               ))
             )}
-
-            {/* Comment input */}
             {user && (
-              <div style={{ display: "flex", gap: 10, alignItems: "center", borderTop: "1px solid rgba(255,255,255,0.07)", paddingTop: 10, marginTop: 6 }}>
+              <div style={{ display: "flex", gap: 8, alignItems: "center", borderTop: "1px solid rgba(255,255,255,0.07)", paddingTop: 8, marginTop: 4 }}>
                 <input
                   className="pm-input"
                   type="text"
@@ -299,7 +265,7 @@ function PostViewerItem({
                 <button
                   onClick={handleAddComment}
                   disabled={loading || !newComment.trim()}
-                  style={{ background: "transparent", border: "none", cursor: newComment.trim() ? "pointer" : "default", ...MONO, fontSize: 9, color: newComment.trim() ? "white" : "rgba(255,255,255,0.2)", padding: 0, transition: "color 0.15s ease" }}
+                  style={{ background: "transparent", border: "none", cursor: newComment.trim() ? "pointer" : "default", ...MONO, fontSize: 9, color: newComment.trim() ? "white" : "rgba(255,255,255,0.2)", padding: 0 }}
                 >
                   post
                 </button>

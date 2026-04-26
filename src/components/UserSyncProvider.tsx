@@ -51,8 +51,8 @@ export function UserSyncProvider({ children }: { children: React.ReactNode }) {
       );
 
       if (profile && profile.username) {
-        console.log('[UserSyncProvider] profile found with username → /profile');
-        router.replace('/profile');
+        console.log('[UserSyncProvider] profile found with username → /');
+        router.replace('/');
       } else {
         console.log('[UserSyncProvider] no profile or username missing → /profile/setup');
         router.replace('/profile/setup');

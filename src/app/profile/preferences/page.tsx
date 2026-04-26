@@ -42,11 +42,14 @@ export default function Preferences() {
   const { user } = usePrivy();
   const photoInputRef = useRef<HTMLInputElement>(null);
 
+  const [mounted, setMounted] = useState(false);
   const [sbUserId, setSbUserId] = useState("");
   const [currentProfile, setCurrentProfile] = useState({ displayName: "", username: "", bio: "" });
   const [photoUploading, setPhotoUploading] = useState(false);
   const [photoSuccess, setPhotoSuccess] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
+
+  useEffect(() => setMounted(true), []);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -101,6 +104,8 @@ export default function Preferences() {
     }
   };
 
+  if (!mounted) return <div className="bg-black" style={{ position: 'fixed', inset: 0 }} />;
+
   const photoLabel = photoUploading ? 'Uploading…' : photoSuccess ? 'Photo updated ✓' : photoError ?? 'Change Profile Photo';
 
   const menuItems: { label: string; action: () => void; danger?: boolean }[] = [
@@ -115,7 +120,7 @@ export default function Preferences() {
   ];
 
   return (
-    <div style={{ position: 'fixed', inset: 0, backgroundColor: '#000', overflowY: 'auto' }}>
+    <div className="bg-black" style={{ position: 'fixed', inset: 0, overflowY: 'auto' }}>
 
       {/* Header */}
       <div style={{ position: 'relative', display: 'flex', alignItems: 'center', padding: '14px 16px' }}>

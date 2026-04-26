@@ -216,6 +216,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
 
   const handlePost = async (deckId?: string | null) => {
     if (!user || selectedMedia.length === 0) return;
+    console.log('[handlePost] start — deckId:', deckId, 'media:', selectedMedia.length);
 
     setIsUploading(true);
     setPostError(null);
@@ -223,40 +224,31 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
     try {
       const supabaseUser = await getUserByPrivyId(user.id);
       if (!supabaseUser) throw new Error('User not found in database');
+      console.log('[handlePost] supabaseUser:', supabaseUser.id);
+
       const profile = await getProfile(supabaseUser.id);
       if (!profile?.username) throw new Error('Profile or username not found');
-
-      // Measure the actual pixel ratio of the first image so PostItem can
-      // display it correctly without any layout_id inference.
-      let aspectRatio: number | undefined;
-      const firstImage = selectedMedia.find(m => m.type === 'image');
-      if (firstImage?.url) {
-        try {
-          const img = new Image();
-          img.src = firstImage.url;
-          await new Promise<void>(r => { img.onload = () => r(); img.onerror = () => r(); });
-          if (img.naturalWidth && img.naturalHeight) {
-            aspectRatio = parseFloat((img.naturalWidth / img.naturalHeight).toFixed(4));
-          }
-        } catch { /* non-fatal — falls back to default in PostItem */ }
-      }
+      console.log('[handlePost] profile:', profile.username, 'grid_layout:', (profile as any).grid_layout);
 
       const mediaUrls: string[] = [];
       for (const media of selectedMedia) {
+        console.log('[handlePost] uploading:', media.file.name);
         const url = await uploadImage(media.file, 'post-media', user.id);
         mediaUrls.push(url);
+        console.log('[handlePost] uploaded:', url);
       }
 
-      const newPost = await createPost({
+      const postPayload = {
         userId: user.id,
         username: profile.username,
         caption,
         mediaUrls,
         layoutId: (profile as any).grid_layout || selectedLayout.id,
-        aspectRatio,
-      });
+      };
+      console.log('[handlePost] createPost payload:', postPayload);
+      const newPost = await createPost(postPayload);
+      console.log('[handlePost] post created:', newPost?.id);
 
-      // Add to deck if one was selected
       if (deckId && newPost?.id) {
         addPostToDeck(deckId, newPost.id).catch(e => console.error('addPostToDeck error:', e));
       }
@@ -270,7 +262,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
       setSelectedDeckId(null);
       router.push('/profile');
     } catch (error) {
-      console.error('Error creating post:', error);
+      console.error('[handlePost] FAILED:', error);
       setPostError('Failed to create post. Please try again.');
       setIsUploading(false);
     }

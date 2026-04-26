@@ -75,6 +75,18 @@ export default function BottomToolbar({ page, unreadCount = 0, onNotificationsCl
   const isHome = page === 'home';
 
   return (
+    <>
+      {/* Gradient fade behind toolbar */}
+      <div style={{
+        position: 'fixed',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        height: 50,
+        background: 'linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 100%)',
+        zIndex: 49,
+        pointerEvents: 'none',
+      }} />
     <div
       style={{
         position: 'fixed',
@@ -132,12 +144,26 @@ export default function BottomToolbar({ page, unreadCount = 0, onNotificationsCl
             {unreadCount > 0 && (
               <div
                 className="absolute"
-                style={{ top: 4, right: 4, width: 5, height: 5, background: '#FF0000', borderRadius: '50%' }}
-              />
+                style={{
+                  top: 2, right: 1,
+                  background: '#FF0000',
+                  color: 'white',
+                  fontFamily: "'IBM Plex Mono', monospace",
+                  fontSize: 8,
+                  lineHeight: 1,
+                  padding: '1px 3px',
+                  minWidth: 14,
+                  textAlign: 'center',
+                  borderRadius: 0,
+                }}
+              >
+                {unreadCount}
+              </div>
             )}
           </Link>
         )}
       </div>
     </div>
+    </>
   );
 }

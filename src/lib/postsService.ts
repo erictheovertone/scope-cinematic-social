@@ -47,14 +47,13 @@ export const createPost = async (postData: {
         caption: postData.caption,
         media_urls: postData.mediaUrls,
         layout_id: postData.layoutId,
-        aspect_ratio: postData.aspectRatio ?? null,
       }
     ])
     .select()
     .single();
 
   if (error) {
-    console.error('Error creating post:', error);
+    console.error('[createPost] Supabase error:', JSON.stringify(error));
     throw error;
   }
 

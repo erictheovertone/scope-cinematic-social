@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
-import { getUserByPrivyId, getProfile, getFollowerCount, getFollowingCount } from "@/lib/userService";
+import { getUserByPrivyId, getProfile, getFollowerCount, getFollowingCount, getUserDecks, createDeck, type Deck } from "@/lib/userService";
 import { getUserPosts } from '@/lib/postsService';
 import CreatePostFlow from "@/components/CreatePostFlow";
 import FollowListModal from "@/components/FollowListModal";
@@ -72,6 +72,13 @@ export default function Profile() {
   });
   const [showFollowersModal, setShowFollowersModal] = useState(false);
   const [showFollowingModal, setShowFollowingModal] = useState(false);
+  const [showDecks, setShowDecks] = useState(false);
+  const [userDecks, setUserDecks] = useState<(Deck & { item_count: number; thumbnail_urls: string[] })[]>([]);
+  const [decksLoading, setDecksLoading] = useState(false);
+  const [showNewDeckForm, setShowNewDeckForm] = useState(false);
+  const [newDeckTitle, setNewDeckTitle] = useState('');
+  const [newDeckDesc, setNewDeckDesc] = useState('');
+  const [creatingDeck, setCreatingDeck] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -121,7 +128,25 @@ export default function Profile() {
       .catch(console.error);
   }, [showCreatePost]);
 
+  useEffect(() => {
+    if (!showDecks || !user) return;
+    setDecksLoading(true);
+    getUserDecks(user.id)
+      .then(setUserDecks)
+      .catch(console.error)
+      .finally(() => setDecksLoading(false));
+  }, [showDecks, user?.id]);
+
   const fmt = (n: number) => n.toLocaleString();
+
+  const getDeckAspect = (gl?: string | null) => {
+    if (!gl) return '2.4 / 1';
+    if (gl.includes('2.4') || gl === 'collage') return '2.4 / 1';
+    if (gl.includes('16:9') || gl.includes('16-9')) return '16 / 9';
+    if (gl.includes('4:3') || gl.includes('4-3')) return '4 / 3';
+    return '2.4 / 1';
+  };
+  const thumbCols = (n: number) => n <= 1 ? '1fr' : n <= 4 ? '1fr 1fr' : '1fr 1fr 1fr';
 
   return (
     <div className="bg-black relative w-full max-w-[375px] min-h-screen mx-auto pb-[60px]">
@@ -130,7 +155,7 @@ export default function Profile() {
       <div
         className="absolute cursor-pointer"
         onClick={() => setShowTheater(true)}
-        style={{ left: -2, top: 0, width: 28, height: 28, padding: '3px 0 0 1px', zIndex: 10 }}
+        style={{ left: 10, top: 10, width: 11, height: 11, padding: 0, zIndex: 10 }}
       >
         <div className="w-[11px] h-[11px] bg-[#FF0000] rounded-full" />
       </div>
@@ -159,9 +184,9 @@ export default function Profile() {
       </div>
 
       {/* Bio — left=90, center-y=108 */}
-      <div className="absolute left-[90px]" style={{ top: '108px', transform: 'translateY(-50%)' }}>
+      <div className="absolute left-[90px]" style={{ top: '108px', transform: 'translateY(-50%)', maxWidth: '140px' }}>
         {userProfile.bio.split('\n').map((line, i) => (
-          <p key={i} style={{ ...MONO, fontSize: '6px', color: 'white', letterSpacing: '-0.12px', lineHeight: 1.4, margin: 0 }}>
+          <p key={i} style={{ ...MONO, fontSize: '8px', color: 'white', letterSpacing: '-0.12px', lineHeight: 1.4, margin: 0 }}>
             {line}
           </p>
         ))}
@@ -183,20 +208,21 @@ export default function Profile() {
         <button
           className="absolute bg-transparent border-none cursor-pointer p-0"
           style={{ left: '50%', top: '148px', transform: 'translate(-50%, -50%)' }}
-          onClick={() => router.push(`/profile/${userProfile.username}/decks`)}
+          onClick={() => setShowDecks(true)}
           aria-label="View decks"
         >
-          <svg width="12" height="16" viewBox="0 0 12 16" fill="none">
-            <rect x="0" y="0" width="2" height="16" fill="white" />
-            <rect x="5" y="0" width="2" height="16" fill="white" />
-            <rect x="10" y="0" width="2" height="16" fill="white" />
+          <svg width="21" height="6" viewBox="0 0 21 6" fill="none">
+            <rect x="0"  y="0" width="3" height="6" fill="white" />
+            <rect x="6"  y="0" width="3" height="6" fill="white" />
+            <rect x="12" y="0" width="3" height="6" fill="white" />
+            <rect x="18" y="0" width="3" height="6" fill="white" />
           </svg>
         </button>
       )}
 
       {/* Stats cascade — ripples down one row at a time below VIEW DATA */}
       {isDataOpen && (
-        <div className="absolute" style={{ right: '4px', top: '54px' }}>
+        <div className="absolute" style={{ right: '4px', top: '54px', backgroundColor: 'rgba(0,0,0,0.85)', borderRadius: 0, padding: 8 }}>
           {([
             ['Collectors',   fmt(analytics.collectors),   null],
             ['Total Posts',  fmt(analytics.totalPosts),   null],
@@ -239,7 +265,7 @@ export default function Profile() {
       {/* Settings — top-right, 1px from both edges, plain button */}
       <button
         className="absolute bg-transparent border-none cursor-pointer p-0"
-        style={{ right: 1, top: 1 }}
+        style={{ right: 2, top: 1 }}
         onClick={() => router.push('/profile/preferences')}
         aria-label="Settings"
       >
@@ -248,7 +274,7 @@ export default function Profile() {
 
       {/* Posts grid — starts at y=160. Explicit height avoids min-height containing-block issue. */}
       {layoutLoaded && (
-        <div className="absolute left-0 right-0" style={{ top: '160px', height: 'calc(100vh - 220px)' }}>
+        <div className="absolute left-0 right-0" style={{ top: '160px', height: 'calc(100vh - 160px)' }}>
           {userPosts.length === 0 ? (
             <div
               style={{
@@ -339,6 +365,132 @@ export default function Profile() {
           onClose={() => setShowFollowingModal(false)}
         />
       )}
+
+      {/* Decks bottom sheet overlay */}
+      {showDecks && (
+        <div
+          className="bg-black"
+          onClick={() => { setShowDecks(false); setShowNewDeckForm(false); setNewDeckTitle(''); setNewDeckDesc(''); }}
+          style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.75)', zIndex: 59 }}
+        />
+      )}
+
+      {/* Decks bottom sheet */}
+      <div
+        className="bg-black"
+        style={{
+          position: 'fixed', bottom: 0, left: 0, right: 0,
+          height: '70vh',
+          backgroundColor: '#000000',
+          borderTop: '1px solid white',
+          zIndex: 60,
+          transform: showDecks ? 'translateY(0)' : 'translateY(100%)',
+          transition: 'transform 300ms ease',
+          display: 'flex', flexDirection: 'column',
+        }}
+      >
+        {/* Header */}
+        <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px 16px 10px', flexShrink: 0 }}>
+          <div style={{ position: 'absolute', top: 8, left: '50%', transform: 'translateX(-50%)', width: 40, height: 3, backgroundColor: 'rgba(255,255,255,0.3)' }} />
+          <span style={{ ...MONO, fontSize: 11, color: 'white', letterSpacing: '0.05em' }}>DECKS</span>
+          <button
+            onClick={() => { setShowDecks(false); setShowNewDeckForm(false); setNewDeckTitle(''); setNewDeckDesc(''); }}
+            style={{ position: 'absolute', right: 16, fontSize: 18, color: 'white', background: 'none', border: 'none', cursor: 'pointer', lineHeight: 1, padding: 0 }}
+          >
+            ×
+          </button>
+        </div>
+
+        {/* Deck list */}
+        <div style={{ flex: 1, overflowY: 'auto', padding: '0 16px' }}>
+          {decksLoading ? (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '50%' }}>
+              <div style={{ width: 8, height: 8, background: '#FF0000', borderRadius: '50%' }} />
+            </div>
+          ) : userDecks.length === 0 ? (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '50%' }}>
+              <span style={{ ...MONO, fontSize: 11, color: 'white' }}>No decks yet</span>
+            </div>
+          ) : (
+            userDecks.map(deck => (
+              <div
+                key={deck.id}
+                onClick={() => { setShowDecks(false); router.push(`/profile/${userProfile.username}/decks/${deck.id}`); }}
+                style={{ marginBottom: 12, cursor: 'pointer' }}
+              >
+                {/* Thumbnail */}
+                <div style={{ width: '100%', aspectRatio: getDeckAspect(deck.grid_layout), overflow: 'hidden', background: '#1a1a1a' }}>
+                  {deck.thumbnail_urls.length > 0 ? (
+                    <div style={{ display: 'grid', gridTemplateColumns: thumbCols(deck.thumbnail_urls.length), width: '100%', height: '100%' }}>
+                      {deck.thumbnail_urls.map((url, i) => (
+                        <img key={i} src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+                {/* Title + count */}
+                <p style={{ ...MONO, fontSize: 10, color: 'white', margin: '4px 0 0' }}>{deck.title}</p>
+                <p style={{ ...MONO, fontSize: 9, color: 'rgba(255,255,255,0.5)', margin: '2px 0 0' }}>{deck.item_count} frames</p>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* NEW DECK footer — own profile only */}
+        <div style={{ flexShrink: 0, padding: '12px 16px', borderTop: '1px solid rgba(255,255,255,0.12)' }}>
+          {!showNewDeckForm ? (
+            <button
+              onClick={() => setShowNewDeckForm(true)}
+              style={{ display: 'block', width: '100%', border: '1px solid white', background: 'transparent', color: 'white', ...MONO, fontSize: 11, padding: '8px', cursor: 'pointer', borderRadius: 0 }}
+            >
+              ＋ NEW DECK
+            </button>
+          ) : (
+            <div>
+              <input
+                autoFocus
+                type="text"
+                placeholder="Deck title"
+                value={newDeckTitle}
+                onChange={e => setNewDeckTitle(e.target.value)}
+                style={{ display: 'block', width: '100%', background: 'transparent', border: '1px solid white', color: 'white', ...MONO, fontSize: 10, padding: '8px', marginBottom: 8, outline: 'none', boxSizing: 'border-box' }}
+              />
+              <input
+                type="text"
+                placeholder="Description (optional)"
+                value={newDeckDesc}
+                onChange={e => setNewDeckDesc(e.target.value)}
+                style={{ display: 'block', width: '100%', background: 'transparent', border: '1px solid white', color: 'white', ...MONO, fontSize: 10, padding: '8px', marginBottom: 8, outline: 'none', boxSizing: 'border-box' }}
+              />
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  onClick={async () => {
+                    if (!newDeckTitle.trim() || !user || creatingDeck) return;
+                    setCreatingDeck(true);
+                    try {
+                      await createDeck(user.id, userProfile.username, newDeckTitle.trim(), newDeckDesc.trim());
+                      setNewDeckTitle(''); setNewDeckDesc(''); setShowNewDeckForm(false);
+                      setDecksLoading(true);
+                      getUserDecks(user.id).then(setUserDecks).catch(console.error).finally(() => setDecksLoading(false));
+                    } catch (e) { console.error('createDeck error:', e); }
+                    finally { setCreatingDeck(false); }
+                  }}
+                  disabled={!newDeckTitle.trim() || creatingDeck}
+                  style={{ flex: 1, border: '1px solid white', background: 'transparent', color: 'white', ...MONO, fontSize: 10, padding: '8px', cursor: 'pointer', opacity: newDeckTitle.trim() ? 1 : 0.4 }}
+                >
+                  {creatingDeck ? 'Creating…' : 'CREATE'}
+                </button>
+                <button
+                  onClick={() => { setShowNewDeckForm(false); setNewDeckTitle(''); setNewDeckDesc(''); }}
+                  style={{ flex: 1, border: '1px solid rgba(255,255,255,0.4)', background: 'transparent', color: 'rgba(255,255,255,0.6)', ...MONO, fontSize: 10, padding: '8px', cursor: 'pointer' }}
+                >
+                  CANCEL
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
 
     </div>
   );

@@ -25,20 +25,13 @@ interface Post {
   profile_image_url?: string | null;
 }
 
-function getAspectFromGridLayout(layoutId?: string | null): string {
-  switch (layoutId) {
-    case '2x-2.4:1': case '1x-2.4:1':
-    case '2x-super-wide': case '1x-super-wide':
-    case 'collage':
-      return '2.4';
-    case '2x-16:9': case '1x-16:9':
-    case '2x-regular-wide':
-      return String(16 / 9);
-    case '3x-4:3': case '3x-square':
-      return String(4 / 3);
-    default:
-      return String(16 / 9);
-  }
+function getAspectFromGridLayout(gridLayout?: string | null): string {
+  if (!gridLayout) return '2.4 / 1';
+  if (gridLayout.includes('2.4')) return '2.4 / 1';
+  if (gridLayout.includes('16:9') || gridLayout.includes('16-9')) return '16 / 9';
+  if (gridLayout.includes('4:3') || gridLayout.includes('4-3')) return '4 / 3';
+  if (gridLayout.includes('square')) return '1 / 1';
+  return '2.4 / 1';
 }
 
 interface PostItemProps {
@@ -137,13 +130,13 @@ export default function PostItem({ post, onImageClick }: PostItemProps) {
           alt={post.caption || "Post"}
           style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', zIndex: 0 }}
         />
-        <div style={{ position: 'absolute', top: '8px', left: '8px', display: 'flex', alignItems: 'center', gap: '6px', zIndex: 20, pointerEvents: 'auto' }}>
+        <div style={{ position: 'absolute', top: '6px', left: '6px', display: 'flex', alignItems: 'center', gap: '4px', zIndex: 10 }}>
           {post.profile_image_url && (
-            <img src={post.profile_image_url} style={{ width: '20px', height: '20px', borderRadius: '50%', objectFit: 'cover' }} />
+            <img src={post.profile_image_url} style={{ width: '14px', height: '14px', borderRadius: '50%', objectFit: 'cover' }} />
           )}
           <span
             onClick={(e) => { e.stopPropagation(); router.push('/profile/' + post.username); }}
-            style={{ fontFamily: 'IBM Plex Mono', fontSize: '11px', color: '#fff', cursor: 'pointer', textShadow: '0 1px 4px rgba(0,0,0,0.9)', backgroundColor: 'rgba(0,0,0,0.35)', padding: '1px 4px' }}
+            style={{ fontFamily: 'IBM Plex Mono,monospace', fontSize: '8px', color: 'white', cursor: 'pointer', textShadow: '0 1px 2px rgba(0,0,0,1)' }}
           >
             @{post.username}
           </span>

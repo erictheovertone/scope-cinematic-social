@@ -293,7 +293,7 @@ export default function PostModal({ post, onClose }: PostModalProps) {
                   Added to {deckToast}
                 </span>
               )}
-              {user && (
+              {user && post.user_id === user.id && (
                 <button
                   onClick={() => setShowDeckPicker(true)}
                   style={{ background: "transparent", border: "none", cursor: "pointer", padding: 0 }}

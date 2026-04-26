@@ -11,6 +11,8 @@ import {
   isFollowing,
   getFollowerCount,
   getFollowingCount,
+  getDecksByUsername,
+  type Deck,
 } from "@/lib/userService";
 import { getPostsByUsername } from "@/lib/postsService";
 import ProfilePostViewer from "@/components/ProfilePostViewer";
@@ -72,6 +74,18 @@ export default function PublicProfilePage() {
   const [followLoading, setFollowLoading] = useState(false);
   const [showFollowersModal, setShowFollowersModal] = useState(false);
   const [showFollowingModal, setShowFollowingModal] = useState(false);
+  const [showDecks, setShowDecks] = useState(false);
+  const [publicDecks, setPublicDecks] = useState<(Deck & { item_count: number; thumbnail_urls: string[] })[]>([]);
+  const [decksLoading, setDecksLoading] = useState(false);
+
+  useEffect(() => {
+    if (!showDecks || !username) return;
+    setDecksLoading(true);
+    getDecksByUsername(username)
+      .then(setPublicDecks)
+      .catch(console.error)
+      .finally(() => setDecksLoading(false));
+  }, [showDecks, username]);
 
   useEffect(() => {
     if (!username) return;
@@ -137,6 +151,15 @@ export default function PublicProfilePage() {
 
   const isOwnProfile = user && targetPrivyId && user.id === targetPrivyId;
   const layoutId = profile?.grid_layout || "1x-super-wide";
+
+  const getDeckAspect = (gl?: string | null) => {
+    if (!gl) return '2.4 / 1';
+    if (gl.includes('2.4') || gl === 'collage') return '2.4 / 1';
+    if (gl.includes('16:9') || gl.includes('16-9')) return '16 / 9';
+    if (gl.includes('4:3') || gl.includes('4-3')) return '4 / 3';
+    return '2.4 / 1';
+  };
+  const thumbCols = (n: number) => n <= 1 ? '1fr' : n <= 4 ? '1fr 1fr' : '1fr 1fr 1fr';
 
   /* ── Not found ── */
   if (loaded && notFound) {
@@ -252,7 +275,7 @@ export default function PublicProfilePage() {
 
         {/* Decks icon */}
         <button
-          onClick={() => router.push(`/profile/${username}/decks`)}
+          onClick={() => setShowDecks(true)}
           className="bg-transparent border-none cursor-pointer p-0"
           aria-label="View decks"
         >
@@ -337,6 +360,75 @@ export default function PublicProfilePage() {
           onClose={() => setShowFollowingModal(false)}
         />
       )}
+
+      {/* Decks bottom sheet overlay */}
+      {showDecks && (
+        <div
+          className="bg-black"
+          onClick={() => setShowDecks(false)}
+          style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 59 }}
+        />
+      )}
+
+      {/* Decks bottom sheet */}
+      <div
+        className="bg-black"
+        style={{
+          position: 'fixed', bottom: 0, left: 0, right: 0,
+          height: '70vh',
+          backgroundColor: '#000000',
+          borderTop: '1px solid white',
+          zIndex: 60,
+          transform: showDecks ? 'translateY(0)' : 'translateY(100%)',
+          transition: 'transform 300ms ease',
+          display: 'flex', flexDirection: 'column',
+        }}
+      >
+        {/* Header */}
+        <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px 16px 10px', flexShrink: 0 }}>
+          <div style={{ position: 'absolute', top: 8, left: '50%', transform: 'translateX(-50%)', width: 40, height: 3, backgroundColor: 'rgba(255,255,255,0.3)' }} />
+          <span style={{ ...MONO, fontSize: 11, color: 'white', letterSpacing: '0.05em' }}>DECKS</span>
+          <button
+            onClick={() => setShowDecks(false)}
+            style={{ position: 'absolute', right: 16, fontSize: 18, color: 'white', background: 'none', border: 'none', cursor: 'pointer', lineHeight: 1, padding: 0 }}
+          >
+            ×
+          </button>
+        </div>
+
+        {/* Deck list */}
+        <div style={{ flex: 1, overflowY: 'auto', padding: '0 16px' }}>
+          {decksLoading ? (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '50%' }}>
+              <div style={{ width: 8, height: 8, background: '#FF0000', borderRadius: '50%' }} />
+            </div>
+          ) : publicDecks.length === 0 ? (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '50%' }}>
+              <span style={{ ...MONO, fontSize: 11, color: 'white' }}>No decks yet</span>
+            </div>
+          ) : (
+            publicDecks.map(deck => (
+              <div
+                key={deck.id}
+                onClick={() => { setShowDecks(false); router.push(`/profile/${username}/decks/${deck.id}`); }}
+                style={{ marginBottom: 12, cursor: 'pointer' }}
+              >
+                <div style={{ width: '100%', aspectRatio: getDeckAspect(deck.grid_layout), overflow: 'hidden', background: '#1a1a1a' }}>
+                  {deck.thumbnail_urls.length > 0 ? (
+                    <div style={{ display: 'grid', gridTemplateColumns: thumbCols(deck.thumbnail_urls.length), width: '100%', height: '100%' }}>
+                      {deck.thumbnail_urls.map((url, i) => (
+                        <img key={i} src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+                <p style={{ ...MONO, fontSize: 10, color: 'white', margin: '4px 0 0' }}>{deck.title}</p>
+                <p style={{ ...MONO, fontSize: 9, color: 'rgba(255,255,255,0.5)', margin: '2px 0 0' }}>{deck.item_count} frames</p>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
 
     </div>
   );
