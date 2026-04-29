@@ -128,8 +128,8 @@ export default function Home() {
       </button>
 
       {/* Feed */}
-      <div className="absolute left-[2px] right-[2px] top-[30px] bottom-[60px] overflow-y-auto">
-        <div style={{ paddingTop: 16, paddingBottom: 80 }}>
+      <div className="absolute left-[2px] right-[2px] top-[30px] bottom-0 overflow-y-auto">
+        <div style={{ paddingTop: 16, paddingBottom: 60 }}>
           {posts.map((post, index) => (
             <div key={post.id} style={getPostAnimStyle(index)}>
               <PostItem

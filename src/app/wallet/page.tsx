@@ -1,212 +1,417 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, useRef } from "react";
+import { usePrivy } from "@privy-io/react-auth";
+import { getEthBalance, getUsdcBalance, getTransactionHistory } from "@/lib/wallet";
 
+const MONO: React.CSSProperties = { fontFamily: "'IBM Plex Mono', monospace" };
+const ETH_USD = 3000;
 
-export default function Wallet() {
-  const router = useRouter();
-  const [activeTab, setActiveTab] = useState('balances');
+function shortAddr(addr: string): string {
+  return addr.slice(0, 6) + "..." + addr.slice(-4);
+}
+
+export default function WalletPage() {
+  const { user } = usePrivy();
+  const walletAddress = user?.wallet?.address ?? "";
+
+  const [activeTab, setActiveTab] = useState<"balances" | "holdings" | "activity">("balances");
+  const [ethBalance, setEthBalance] = useState<string | null>(null);
+  const [usdcBalance, setUsdcBalance] = useState<string | null>(null);
+  const [txHistory, setTxHistory] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [toast, setToast] = useState("");
+  const [showDeposit, setShowDeposit] = useState(false);
+  const [showSend, setShowSend] = useState(false);
+  const [sendToken, setSendToken] = useState<"ETH" | "USDC">("ETH");
+  const [sendTo, setSendTo] = useState("");
+  const [sendAmount, setSendAmount] = useState("");
+
+  // Pull-to-refresh
+  const touchStartY = useRef(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const showToast = (msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(""), 2000);
+  };
+
+  const fetchBalances = async () => {
+    if (!walletAddress) return;
+    setLoading(true);
+    try {
+      const [eth, usdc, txs] = await Promise.all([
+        getEthBalance(walletAddress),
+        getUsdcBalance(walletAddress),
+        getTransactionHistory(walletAddress),
+      ]);
+      setEthBalance(eth);
+      setUsdcBalance(usdc);
+      setTxHistory(txs);
+    } catch (e) {
+      console.error("fetchBalances error:", e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchBalances();
+  }, [walletAddress]);
+
+  const ethUsd = ethBalance != null ? (parseFloat(ethBalance) * ETH_USD).toFixed(2) : null;
+  const usdcUsd = usdcBalance != null ? parseFloat(usdcBalance).toFixed(2) : null;
+  const totalUsd =
+    ethBalance != null && usdcBalance != null
+      ? (parseFloat(ethBalance) * ETH_USD + parseFloat(usdcBalance)).toFixed(2)
+      : null;
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartY.current = e.touches[0].clientY;
+  };
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    const delta = e.changedTouches[0].clientY - touchStartY.current;
+    if (delta > 60 && !loading) fetchBalances();
+  };
 
   return (
-    <div className="bg-black relative w-[375px] h-[812px] mx-auto text-white">
+    <div
+      ref={containerRef}
+      className="bg-black"
+      style={{ position: "fixed", inset: 0, overflowY: "auto", color: "white" }}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
+      {/* Toast */}
+      {toast && (
+        <div style={{
+          position: "fixed", top: 20, left: "50%", transform: "translateX(-50%)",
+          background: "#111", border: "1px solid rgba(255,255,255,0.15)",
+          padding: "8px 16px", zIndex: 999,
+        }}>
+          <span style={{ ...MONO, fontSize: 10, color: "white" }}>{toast}</span>
+        </div>
+      )}
+
       {/* Header */}
-      <div className="flex items-center justify-between px-4 pt-12 pb-6">
-        <button onClick={() => router.push('/')} className="text-white">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-            <path d="M15 18L9 12L15 6" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        </button>
-        <h1 style={{ fontFamily: 'TestSöhne-Halbfett, IBM Plex Mono, monospace' }} className="font-medium text-white text-[18px] tracking-[-0.36px]">
-          SCOPE
-        </h1>
-        <button className="text-white">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-            <path d="M7 17L17 7M17 7H7M17 7V17" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        </button>
+      <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center", padding: "14px 16px 10px" }}>
+        <div style={{ position: "absolute", left: 16, top: "50%", transform: "translateY(-50%)", width: 10, height: 10, borderRadius: "50%", backgroundColor: "#FF0000" }} />
+        <img src="/scope-logo-1.png" alt="SCOPE" style={{ width: 120, height: "auto", display: "block" }} />
       </div>
 
-      {/* Profile Section */}
-      <div className="flex items-center justify-between px-4 mb-8">
-        <div className="flex items-center">
-          <div className="w-12 h-12 bg-[#FF0000] rounded-full mr-3 flex items-center justify-center">
-            <div className="w-8 h-8 bg-orange-500 rounded-full"></div>
-          </div>
-          <div>
-            <p style={{ fontFamily: 'TestSöhne-Halbfett, IBM Plex Mono, monospace' }} className="font-medium text-white text-[16px] tracking-[-0.32px]">
-              @whoisbert
-            </p>
-            <div className="flex items-center">
-              <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-              <p style={{ fontFamily: 'TestSöhne-Halbfett, IBM Plex Mono, monospace' }} className="font-normal text-[#888888] text-[12px] tracking-[-0.24px]">
-                0xc6b0...4cf9
-              </p>
-            </div>
-          </div>
-        </div>
-        <div className="w-16 h-16 bg-[#FF0000] rounded-full flex items-center justify-center">
-          <div className="w-12 h-12 bg-orange-500 rounded-full"></div>
-        </div>
-      </div>
+      <div style={{ height: 1, background: "rgba(255,255,255,0.1)" }} />
 
-      {/* Balance */}
-      <div className="text-center mb-8">
-        <p style={{ fontFamily: 'TestSöhne-Halbfett, IBM Plex Mono, monospace' }} className="font-normal text-[#888888] text-[14px] tracking-[-0.28px] mb-2">
+      {/* Total balance */}
+      <div style={{ textAlign: "center", padding: "28px 16px 20px" }}>
+        <p style={{ ...MONO, fontSize: 10, color: "white", opacity: 0.5, margin: "0 0 8px" }}>
           Total available balance
         </p>
-        <p style={{ fontFamily: 'TestSöhne-Halbfett, IBM Plex Mono, monospace' }} className="font-bold text-white text-[48px] tracking-[-0.96px] leading-[1.1]">
-          $4.01
+        <p style={{ ...MONO, fontSize: 32, color: "white", margin: "0 0 8px", lineHeight: 1 }}>
+          {loading && totalUsd == null ? "..." : `$${totalUsd ?? "0.00"}`}
         </p>
+        {walletAddress && (
+          <p
+            onClick={() => {
+              navigator.clipboard.writeText(walletAddress).then(() => showToast("Address copied"));
+            }}
+            style={{ ...MONO, fontSize: 9, color: "white", opacity: 0.4, margin: 0, cursor: "pointer" }}
+          >
+            {shortAddr(walletAddress)}
+          </p>
+        )}
       </div>
 
-      {/* Action Buttons */}
-      <div className="flex justify-center space-x-4 mb-8 px-4">
-        <button style={{ fontFamily: 'TestSöhne-Halbfett, IBM Plex Mono, monospace' }} className="bg-[#333333] text-white px-6 py-3 rounded-full font-medium text-[14px] tracking-[-0.28px] flex items-center hover:bg-[#444444] transition-colors">
-          <span className="mr-2">+</span>
-          Add money
-        </button>
-        <button style={{ fontFamily: 'TestSöhne-Halbfett, IBM Plex Mono, monospace' }} className="bg-[#333333] text-white px-6 py-3 rounded-full font-medium text-[14px] tracking-[-0.28px] flex items-center hover:bg-[#444444] transition-colors">
-          <span className="mr-2">$</span>
-          Cash out
-        </button>
-        <button style={{ fontFamily: 'TestSöhne-Halbfett, IBM Plex Mono, monospace' }} className="bg-[#333333] text-white px-6 py-3 rounded-full font-medium text-[14px] tracking-[-0.28px] flex items-center hover:bg-[#444444] transition-colors">
-          <span className="mr-2">↗</span>
-          Send
-        </button>
-      </div>
-
-      {/* Token Card */}
-      <div className="mx-4 mb-6">
-        <div className="bg-[#1A1A1A] rounded-lg p-4 flex items-center justify-between">
-          <div className="flex items-center">
-            <div className="w-12 h-12 bg-[#FF0000] rounded-full mr-3 flex items-center justify-center">
-              <div className="w-8 h-8 bg-orange-500 rounded-full"></div>
-            </div>
-            <div>
-              <p className="font-['IBM_Plex_Mono'] font-medium text-white text-[14px] tracking-[-0.28px]">
-                $whoisbert
-              </p>
-              <p className="font-['IBM_Plex_Mono'] font-normal text-[#888888] text-[12px] tracking-[-0.24px]">
-                2,530,707,763
-              </p>
-            </div>
-          </div>
-          <button className="bg-white text-black px-6 py-2 rounded-full font-['IBM_Plex_Mono'] font-medium text-[12px] tracking-[-0.24px]">
-            Claim
+      {/* Action buttons */}
+      <div style={{ display: "flex", justifyContent: "center", gap: 12, padding: "0 16px 24px" }}>
+        {[
+          { icon: "+", label: "DEPOSIT", action: () => setShowDeposit(true) },
+          { icon: "↗", label: "SEND",    action: () => setShowSend(true) },
+        ].map(({ icon, label, action }) => (
+          <button
+            key={label}
+            onClick={action}
+            style={{
+              display: "flex", flexDirection: "column", alignItems: "center",
+              gap: 4, background: "rgba(255,255,255,0.06)", border: "none",
+              cursor: "pointer", padding: "14px 28px",
+            }}
+          >
+            <span style={{ fontSize: 24, color: "white", lineHeight: 1 }}>{icon}</span>
+            <span style={{ ...MONO, fontSize: 9, color: "white" }}>{label}</span>
           </button>
-        </div>
+        ))}
       </div>
 
       {/* Tabs */}
-      <div className="flex border-b border-[#333333] mx-4 mb-6">
-        <button 
-          onClick={() => setActiveTab('balances')}
-          className={`flex-1 pb-3 font-['IBM_Plex_Mono'] font-medium text-[14px] tracking-[-0.28px] ${
-            activeTab === 'balances' 
-              ? 'text-white border-b-2 border-white' 
-              : 'text-[#888888]'
-          }`}
-        >
-          Balances
-        </button>
-        <button 
-          onClick={() => setActiveTab('holdings')}
-          className={`flex-1 pb-3 font-['IBM_Plex_Mono'] font-medium text-[14px] tracking-[-0.28px] ${
-            activeTab === 'holdings' 
-              ? 'text-white border-b-2 border-white' 
-              : 'text-[#888888]'
-          }`}
-        >
-          Holdings
-        </button>
+      <div style={{ display: "flex", borderBottom: "1px solid rgba(255,255,255,0.1)", padding: "0 16px" }}>
+        {(["balances", "holdings", "activity"] as const).map(tab => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            style={{
+              ...MONO, fontSize: 10, background: "none", border: "none",
+              cursor: "pointer", padding: "8px 0", marginRight: 20,
+              color: "white",
+              opacity: activeTab === tab ? 1 : 0.4,
+              borderBottom: activeTab === tab ? "1px solid white" : "1px solid transparent",
+              marginBottom: -1,
+            }}
+          >
+            {tab.toUpperCase()}
+          </button>
+        ))}
       </div>
 
-      {/* Available Balance Section */}
-      {activeTab === 'balances' && (
-        <div className="px-4">
-          <div className="mb-4">
-            <p className="font-['IBM_Plex_Mono'] font-medium text-white text-[16px] tracking-[-0.32px] mb-1">
-              Available balance
-            </p>
-            <p className="font-['IBM_Plex_Mono'] font-normal text-[#888888] text-[12px] tracking-[-0.24px]">
-              These contribute to your total available balance
+      {/* Tab content */}
+      <div style={{ padding: "16px" }}>
+
+        {/* BALANCES */}
+        {activeTab === "balances" && (
+          <div>
+            {/* ETH row */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 0", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#627EEA", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <span style={{ fontSize: 16, color: "white" }}>Ξ</span>
+                </div>
+                <div>
+                  <p style={{ ...MONO, fontSize: 11, color: "white", margin: 0 }}>ETH</p>
+                  <p style={{ ...MONO, fontSize: 9, color: "white", opacity: 0.5, margin: "2px 0 0" }}>
+                    {loading && ethBalance == null ? "..." : `${parseFloat(ethBalance ?? "0").toFixed(4)} ETH`}
+                  </p>
+                </div>
+              </div>
+              <p style={{ ...MONO, fontSize: 11, color: "white", margin: 0 }}>
+                {loading && ethUsd == null ? "..." : `$${ethUsd ?? "0.00"}`}
+              </p>
+            </div>
+
+            {/* USDC row */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 0" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#2775CA", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <span style={{ fontSize: 13, color: "white", fontWeight: "bold" }}>$</span>
+                </div>
+                <div>
+                  <p style={{ ...MONO, fontSize: 11, color: "white", margin: 0 }}>USDC</p>
+                  <p style={{ ...MONO, fontSize: 9, color: "white", opacity: 0.5, margin: "2px 0 0" }}>
+                    {loading && usdcBalance == null ? "..." : `${parseFloat(usdcBalance ?? "0").toFixed(2)} USDC`}
+                  </p>
+                </div>
+              </div>
+              <p style={{ ...MONO, fontSize: 11, color: "white", margin: 0 }}>
+                {loading && usdcUsd == null ? "..." : `$${usdcUsd ?? "0.00"}`}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* HOLDINGS */}
+        {activeTab === "holdings" && (
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "30vh" }}>
+            <p style={{ ...MONO, fontSize: 11, color: "white", opacity: 0.5, textAlign: "center", lineHeight: 1.6 }}>
+              Your collected post tokens<br />will appear here
             </p>
           </div>
+        )}
 
-          {/* Token List */}
-          <div className="space-y-4">
-            {/* ZORA Token */}
-            <div className="flex items-center justify-between py-2">
-              <div className="flex items-center">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full mr-3"></div>
-                <div>
-                  <p className="font-['IBM_Plex_Mono'] font-medium text-white text-[14px] tracking-[-0.28px]">
-                    ZORA
-                  </p>
-                  <p className="font-['IBM_Plex_Mono'] font-normal text-[#888888] text-[12px] tracking-[-0.24px]">
-                    59.235 ZORA
-                  </p>
-                </div>
-              </div>
-              <div className="text-right">
-                <p className="font-['IBM_Plex_Mono'] font-medium text-white text-[14px] tracking-[-0.28px]">
-                  $4.01
-                </p>
-                <p className="font-['IBM_Plex_Mono'] font-normal text-[#FF69B4] text-[12px] tracking-[-0.24px]">
-                  ♥ 3.8%
-                </p>
-              </div>
+        {/* ACTIVITY */}
+        {activeTab === "activity" && (
+          <div>
+            {loading && txHistory.length === 0 ? (
+              <p style={{ ...MONO, fontSize: 10, color: "white", opacity: 0.4, textAlign: "center", marginTop: 40 }}>Loading…</p>
+            ) : txHistory.length === 0 ? (
+              <p style={{ ...MONO, fontSize: 10, color: "white", opacity: 0.4, textAlign: "center", marginTop: 40 }}>No transactions yet</p>
+            ) : (
+              txHistory.map((tx: any, i: number) => {
+                const isSent = tx.from?.toLowerCase() === walletAddress.toLowerCase();
+                const amount = tx.value ? Number(tx.value).toFixed(4) : "—";
+                const asset = tx.asset || "ETH";
+                const counterpart = isSent ? tx.to : tx.from;
+                const date = tx.metadata?.blockTimestamp
+                  ? new Date(tx.metadata.blockTimestamp).toLocaleDateString()
+                  : "";
+                return (
+                  <div
+                    key={i}
+                    style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <span style={{ fontSize: 16, color: isSent ? "rgba(255,255,255,0.5)" : "white" }}>
+                        {isSent ? "↑" : "↓"}
+                      </span>
+                      <div>
+                        <p style={{ ...MONO, fontSize: 10, color: "white", margin: 0 }}>
+                          {isSent ? "To" : "From"} {counterpart ? shortAddr(counterpart) : "—"}
+                        </p>
+                        <p style={{ ...MONO, fontSize: 9, color: "white", opacity: 0.4, margin: "2px 0 0" }}>{date}</p>
+                      </div>
+                    </div>
+                    <p style={{ ...MONO, fontSize: 10, color: "white", margin: 0 }}>
+                      {isSent ? "-" : "+"}{amount} {asset}
+                    </p>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* ── DEPOSIT SHEET ── */}
+      <>
+        <div
+          onClick={() => setShowDeposit(false)}
+          style={{
+            position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.85)",
+            zIndex: 300, opacity: showDeposit ? 1 : 0,
+            pointerEvents: showDeposit ? "auto" : "none",
+            transition: "opacity 0.35s ease",
+          }}
+        />
+        <div
+          style={{
+            position: "fixed", bottom: 0, left: 0, right: 0, height: "50vh",
+            backgroundColor: "#0a0a0a", borderTop: "1px solid rgba(255,255,255,0.1)",
+            zIndex: 301, display: "flex", flexDirection: "column",
+            transform: showDeposit ? "translateY(0)" : "translateY(100%)",
+            transition: "transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)",
+          }}
+        >
+          {/* Drag handle + header */}
+          <div style={{ flexShrink: 0, position: "relative", display: "flex", alignItems: "center", justifyContent: "center", padding: "10px 16px 8px" }}>
+            <div style={{ position: "absolute", top: 8, left: "50%", transform: "translateX(-50%)", width: 40, height: 2, backgroundColor: "rgba(255,255,255,0.2)" }} />
+            <span style={{ ...MONO, fontSize: 11, color: "white", marginTop: 8 }}>DEPOSIT</span>
+            <button
+              onClick={() => setShowDeposit(false)}
+              style={{ position: "absolute", right: 16, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "white", fontSize: 18, lineHeight: 1, padding: 0, marginTop: 4 }}
+            >×</button>
+          </div>
+          <div style={{ height: 1, background: "rgba(255,255,255,0.08)" }} />
+
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "20px 24px", gap: 16 }}>
+            <p style={{ ...MONO, fontSize: 10, color: "white", opacity: 0.5, margin: 0, textAlign: "center" }}>
+              Send ETH or USDC to your Scope wallet
+            </p>
+
+            {/* QR placeholder */}
+            <div style={{ width: 120, height: 120, border: "1px solid rgba(255,255,255,0.3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <span style={{ ...MONO, fontSize: 10, color: "rgba(255,255,255,0.3)" }}>QR</span>
             </div>
 
-            {/* Sparks Token */}
-            <div className="flex items-center justify-between py-2">
-              <div className="flex items-center">
-                <div className="w-10 h-10 bg-[#333333] rounded-full mr-3 flex items-center justify-center">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
-                    <path d="M12 2L15.09 8.26L22 9L17 14L18.18 21L12 17.77L5.82 21L7 14L2 9L8.91 8.26L12 2Z"/>
-                  </svg>
-                </div>
-                <div>
-                  <p className="font-['IBM_Plex_Mono'] font-medium text-white text-[14px] tracking-[-0.28px]">
-                    Sparks
-                  </p>
-                  <p className="font-['IBM_Plex_Mono'] font-normal text-[#888888] text-[12px] tracking-[-0.24px]">
-                    ✧ 0
-                  </p>
-                </div>
-              </div>
-              <div className="text-right">
-                <p className="font-['IBM_Plex_Mono'] font-medium text-white text-[14px] tracking-[-0.28px]">
-                  &lt;$0.01
-                </p>
-              </div>
-            </div>
-
-            {/* USDC Token */}
-            <div className="flex items-center justify-between py-2">
-              <div className="flex items-center">
-                <div className="w-10 h-10 bg-blue-500 rounded-full mr-3 flex items-center justify-center">
-                  <span className="text-white font-bold text-[12px]">$</span>
-                </div>
-                <div>
-                  <p className="font-['IBM_Plex_Mono'] font-medium text-white text-[14px] tracking-[-0.28px]">
-                    USDC
-                  </p>
-                  <p className="font-['IBM_Plex_Mono'] font-normal text-[#888888] text-[12px] tracking-[-0.24px]">
-                    0 USDC
-                  </p>
-                </div>
-              </div>
-              <div className="text-right">
-                <p className="font-['IBM_Plex_Mono'] font-medium text-white text-[14px] tracking-[-0.28px]">
-                  $0
-                </p>
-              </div>
+            {/* Address + copy */}
+            <div
+              onClick={() => {
+                if (walletAddress) navigator.clipboard.writeText(walletAddress).then(() => showToast("Copied!"));
+              }}
+              style={{ textAlign: "center", cursor: "pointer" }}
+            >
+              <p style={{ ...MONO, fontSize: 11, color: "white", margin: "0 0 6px", wordBreak: "break-all", lineHeight: 1.5 }}>
+                {walletAddress || "—"}
+              </p>
+              <p style={{ ...MONO, fontSize: 9, color: "#FF0000", margin: 0 }}>TAP TO COPY</p>
             </div>
           </div>
         </div>
-      )}
+      </>
+
+      {/* ── SEND SHEET ── */}
+      <>
+        <div
+          onClick={() => setShowSend(false)}
+          style={{
+            position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.85)",
+            zIndex: 300, opacity: showSend ? 1 : 0,
+            pointerEvents: showSend ? "auto" : "none",
+            transition: "opacity 0.35s ease",
+          }}
+        />
+        <div
+          style={{
+            position: "fixed", bottom: 0, left: 0, right: 0, height: "60vh",
+            backgroundColor: "#0a0a0a", borderTop: "1px solid rgba(255,255,255,0.1)",
+            zIndex: 301, display: "flex", flexDirection: "column",
+            transform: showSend ? "translateY(0)" : "translateY(100%)",
+            transition: "transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)",
+          }}
+        >
+          {/* Header */}
+          <div style={{ flexShrink: 0, position: "relative", display: "flex", alignItems: "center", justifyContent: "center", padding: "10px 16px 8px" }}>
+            <div style={{ position: "absolute", top: 8, left: "50%", transform: "translateX(-50%)", width: 40, height: 2, backgroundColor: "rgba(255,255,255,0.2)" }} />
+            <span style={{ ...MONO, fontSize: 11, color: "white", marginTop: 8 }}>SEND</span>
+            <button
+              onClick={() => setShowSend(false)}
+              style={{ position: "absolute", right: 16, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "white", fontSize: 18, lineHeight: 1, padding: 0, marginTop: 4 }}
+            >×</button>
+          </div>
+          <div style={{ height: 1, background: "rgba(255,255,255,0.08)" }} />
+
+          <div style={{ flex: 1, overflowY: "auto", padding: "16px" }}>
+            {/* Token selector */}
+            <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
+              {(["ETH", "USDC"] as const).map(t => (
+                <button
+                  key={t}
+                  onClick={() => setSendToken(t)}
+                  style={{
+                    ...MONO, fontSize: 10, background: "transparent",
+                    border: `1px solid ${sendToken === t ? "white" : "rgba(255,255,255,0.3)"}`,
+                    color: "white", opacity: sendToken === t ? 1 : 0.4,
+                    cursor: "pointer", padding: "6px 16px",
+                  }}
+                >{t}</button>
+              ))}
+            </div>
+
+            {/* TO */}
+            <p style={{ ...MONO, fontSize: 9, color: "white", opacity: 0.5, margin: "0 0 6px" }}>TO</p>
+            <input
+              type="text"
+              value={sendTo}
+              onChange={e => setSendTo(e.target.value)}
+              placeholder="0x... wallet address"
+              style={{
+                ...MONO, fontSize: 11, color: "white", background: "transparent",
+                border: "none", borderBottom: "1px solid rgba(255,255,255,0.3)",
+                outline: "none", width: "100%", padding: "4px 0", marginBottom: 20,
+                boxSizing: "border-box",
+              }}
+            />
+
+            {/* AMOUNT */}
+            <p style={{ ...MONO, fontSize: 9, color: "white", opacity: 0.5, margin: "0 0 6px" }}>AMOUNT</p>
+            <input
+              type="number"
+              value={sendAmount}
+              onChange={e => setSendAmount(e.target.value)}
+              placeholder="0.00"
+              style={{
+                ...MONO, fontSize: 11, color: "white", background: "transparent",
+                border: "none", borderBottom: "1px solid rgba(255,255,255,0.3)",
+                outline: "none", width: "100%", padding: "4px 0", marginBottom: 8,
+                boxSizing: "border-box",
+              }}
+            />
+            <p style={{ ...MONO, fontSize: 9, color: "white", opacity: 0.5, margin: "0 0 20px" }}>
+              Available: {sendToken === "ETH"
+                ? `${parseFloat(ethBalance ?? "0").toFixed(4)} ETH`
+                : `${parseFloat(usdcBalance ?? "0").toFixed(2)} USDC`}
+            </p>
+
+            {/* SEND button */}
+            <button
+              onClick={() => showToast("Sending coming soon")}
+              style={{
+                ...MONO, fontSize: 11, color: "white", background: "transparent",
+                border: "1px solid white", cursor: "pointer", padding: "12px",
+                width: "100%",
+              }}
+            >
+              SEND
+            </button>
+          </div>
+        </div>
+      </>
 
     </div>
   );

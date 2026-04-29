@@ -112,6 +112,7 @@ export default function Preferences() {
     { label: photoLabel, action: () => photoInputRef.current?.click() },
     { label: 'Edit Profile', action: () => router.push('/profile/account') },
     { label: 'Change Grid Layout', action: () => router.push('/profile/grid-layout') },
+    { label: 'Link Manager', action: () => router.push('/profile/links') },
     { label: 'Notifications', action: () => router.push('/profile/notifications') },
     { label: 'Privacy', action: () => {} },
     { label: 'Blocked Accounts', action: () => router.push('/profile/hidden') },

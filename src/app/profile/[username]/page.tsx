@@ -12,8 +12,11 @@ import {
   getFollowerCount,
   getFollowingCount,
   getDecksByUsername,
+  getProfileLinks,
   type Deck,
+  type ProfileLink,
 } from "@/lib/userService";
+import LinksSheet from "@/components/LinksSheet";
 import { getPostsByUsername } from "@/lib/postsService";
 import ProfilePostViewer from "@/components/ProfilePostViewer";
 import FollowListModal from "@/components/FollowListModal";
@@ -74,15 +77,18 @@ export default function PublicProfilePage() {
   const [followLoading, setFollowLoading] = useState(false);
   const [showFollowersModal, setShowFollowersModal] = useState(false);
   const [showFollowingModal, setShowFollowingModal] = useState(false);
+  const [isDataOpen, setIsDataOpen] = useState(false);
   const [showDecks, setShowDecks] = useState(false);
   const [publicDecks, setPublicDecks] = useState<(Deck & { item_count: number; thumbnail_urls: string[] })[]>([]);
   const [decksLoading, setDecksLoading] = useState(false);
+  const [showLinks, setShowLinks] = useState(false);
+  const [profileLinks, setProfileLinks] = useState<ProfileLink[]>([]);
 
   useEffect(() => {
     if (!showDecks || !username) return;
     setDecksLoading(true);
     getDecksByUsername(username)
-      .then(setPublicDecks)
+      .then(d => setPublicDecks(d as any))
       .catch(console.error)
       .finally(() => setDecksLoading(false));
   }, [showDecks, username]);
@@ -107,6 +113,7 @@ export default function PublicProfilePage() {
 
         if (targetUser) {
           setTargetPrivyId(targetUser.privy_id);
+          getProfileLinks(targetUser.privy_id).then(setProfileLinks).catch(() => {});
           const [fc, fgc] = await Promise.all([
             getFollowerCount(targetUser.privy_id),
             getFollowingCount(targetUser.privy_id),
@@ -219,7 +226,7 @@ export default function PublicProfilePage() {
       </div>
 
       {/* Bio — left=90, center-y=108 */}
-      <div className="absolute left-[90px]" style={{ top: "108px", transform: "translateY(-50%)" }}>
+      <div className="absolute left-[90px]" style={{ top: "108px", transform: "translateY(-50%)", maxWidth: "140px" }}>
         {(profile?.bio || "").split("\n").map((line: string, i: number) => (
           <p key={i} style={{ ...MONO, fontSize: 6, color: "white", letterSpacing: "-0.12px", lineHeight: 1.4, margin: 0 }}>
             {line}
@@ -227,84 +234,91 @@ export default function PublicProfilePage() {
         ))}
       </div>
 
-      {/* Follow button + stats — right side of header */}
-      <div
-        className="absolute flex flex-col items-end"
-        style={{ right: 4, top: 35, gap: 6 }}
+      {/* Follow button — top right, only on other profiles */}
+      {user && !isOwnProfile && targetPrivyId && (
+        <button
+          onClick={handleFollow}
+          disabled={followLoading}
+          className="absolute"
+          style={{
+            ...MONO, fontSize: 9, color: "white", letterSpacing: "-0.18px",
+            background: "transparent", border: "1px solid white",
+            padding: "3px 8px", right: 4, top: 8,
+            cursor: followLoading ? "default" : "pointer",
+            opacity: followLoading ? 0.5 : 1,
+          }}
+        >
+          {followingUser ? "UNFOLLOW" : "FOLLOW"}
+        </button>
+      )}
+
+      {/* VIEW DATA — always visible */}
+      <button
+        className="absolute bg-transparent border-none cursor-pointer"
+        style={{ right: "4px", top: "44px", transform: "translateY(-50%)", padding: 0 }}
+        onClick={() => setIsDataOpen(v => !v)}
       >
-        {/* Follow / Unfollow — hidden when viewing own profile or target privy_id unknown */}
-        {user && !isOwnProfile && targetPrivyId && (
-          <button
-            onClick={handleFollow}
-            disabled={followLoading}
-            style={{
-              ...MONO,
-              fontSize: 9,
-              color: "white",
-              letterSpacing: "-0.18px",
-              background: "transparent",
-              border: "1px solid white",
-              padding: "3px 8px",
-              cursor: followLoading ? "default" : "pointer",
-              opacity: followLoading ? 0.5 : 1,
-            }}
-          >
-            {followingUser ? "UNFOLLOW" : "FOLLOW"}
-          </button>
-        )}
+        <span style={{ ...MONO, fontSize: "10px", color: "white", letterSpacing: "-0.2px", opacity: isDataOpen ? 0.45 : 1, transition: "opacity 0.15s ease" }}>
+          VIEW DATA
+        </span>
+      </button>
 
-        {/* Follower count */}
-        <button
-          onClick={() => setShowFollowersModal(true)}
-          className="bg-transparent border-none cursor-pointer p-0"
-        >
-          <span style={{ ...MONO, fontSize: 7, color: "white", letterSpacing: "-0.14px" }}>
-            {followerCount.toLocaleString()} followers
-          </span>
-        </button>
+      {/* Links arrow — always visible, below VIEW DATA */}
+      <span
+        onClick={() => setShowLinks(true)}
+        style={{ position: "absolute", right: "4px", top: "62px", fontSize: "16px", color: "white", opacity: 0.8, cursor: "pointer", fontWeight: 300, lineHeight: 1 }}
+      >↗</span>
 
-        {/* Following count */}
-        <button
-          onClick={() => setShowFollowingModal(true)}
-          className="bg-transparent border-none cursor-pointer p-0"
-        >
-          <span style={{ ...MONO, fontSize: 7, color: "white", letterSpacing: "-0.14px" }}>
-            {followingCount.toLocaleString()} following
-          </span>
-        </button>
+      {/* Stats cascade */}
+      {isDataOpen && (
+        <div className="absolute" style={{ right: "4px", top: "54px", backgroundColor: "rgba(0,0,0,0.85)", padding: 8 }}>
+          {([
+            ["Followers", followerCount.toLocaleString(), () => setShowFollowersModal(true)],
+            ["Following", followingCount.toLocaleString(), () => setShowFollowingModal(true)],
+          ] as [string, string, () => void][]).map(([label, value, onClick], i) => (
+            <div
+              key={label}
+              onClick={onClick}
+              style={{ display: "flex", justifyContent: "space-between", gap: "14px", animation: "ripple-down 0.18s ease-out both", animationDelay: `${i * 50}ms`, cursor: "pointer" }}
+            >
+              <span style={{ ...MONO, fontSize: "7px", color: "rgba(255,255,255,0.55)", letterSpacing: "-0.1px", lineHeight: 1.7 }}>{label}</span>
+              <span style={{ ...MONO, fontSize: "7px", color: "white", letterSpacing: "-0.1px", lineHeight: 1.7 }}>{value}</span>
+            </div>
+          ))}
+        </div>
+      )}
 
-        {/* Decks icon */}
-        <button
-          onClick={() => setShowDecks(true)}
-          className="bg-transparent border-none cursor-pointer p-0"
-          aria-label="View decks"
-        >
-          <svg width="20" height="13" viewBox="0 0 20 13" fill="none">
-            <rect width="20" height="3" fill="rgba(255,255,255,0.7)" />
-            <rect y="5" width="20" height="3" fill="rgba(255,255,255,0.7)" />
-            <rect y="10" width="20" height="3" fill="rgba(255,255,255,0.7)" />
-          </svg>
-        </button>
-      </div>
-
-      {/* MAIN / COLLECTED tabs — center-y=148 */}
+      {/* MAIN / COLLECTED tabs + decks icon — center-y=148 */}
       <div className="absolute left-[7px]" style={{ top: "148px", transform: "translateY(-50%)" }}>
         <button onClick={() => setActiveTab("main")} className="bg-transparent border-none p-0 cursor-pointer">
-          <span style={{ ...MONO, fontSize: 9, color: activeTab === "main" ? "#FF0000" : "#FFFFFF", letterSpacing: "-0.18px", lineHeight: 1.4 }}>
-            MAIN
-          </span>
-        </button>
-      </div>
-      <div className="absolute right-[4px]" style={{ top: "148px", transform: "translateY(-50%)" }}>
-        <button onClick={() => setActiveTab("collected")} className="bg-transparent border-none p-0 cursor-pointer">
-          <span style={{ ...MONO, fontSize: 9, color: activeTab === "collected" ? "#FF0000" : "#FFFFFF", letterSpacing: "-0.18px", lineHeight: 1.4 }}>
-            COLLECTED
-          </span>
+          <span style={{ ...MONO, fontSize: 9, color: activeTab === "main" ? "#FF0000" : "#FFFFFF", letterSpacing: "-0.18px", lineHeight: 1.4 }}>MAIN</span>
         </button>
       </div>
 
-      {/* Posts grid — starts at y=160, 1px side padding, 1px gaps */}
-      <div className="absolute left-0 right-0 bottom-[60px]" style={{ top: "160px" }}>
+      {!isDataOpen && (
+        <button
+          className="absolute bg-transparent border-none cursor-pointer p-0"
+          style={{ left: "50%", top: "148px", transform: "translate(-50%, -50%)" }}
+          onClick={() => setShowDecks(true)}
+          aria-label="View decks"
+        >
+          <svg width="21" height="11" viewBox="0 0 21 11" fill="none">
+            <rect x="0"  y="0" width="3" height="11" fill="white" />
+            <rect x="6"  y="0" width="3" height="11" fill="white" />
+            <rect x="12" y="0" width="3" height="11" fill="white" />
+            <rect x="18" y="0" width="3" height="11" fill="white" />
+          </svg>
+        </button>
+      )}
+
+      <div className="absolute right-[4px]" style={{ top: "148px", transform: "translateY(-50%)" }}>
+        <button onClick={() => setActiveTab("collected")} className="bg-transparent border-none p-0 cursor-pointer">
+          <span style={{ ...MONO, fontSize: 9, color: activeTab === "collected" ? "#FF0000" : "#FFFFFF", letterSpacing: "-0.18px", lineHeight: 1.4 }}>COLLECTED</span>
+        </button>
+      </div>
+
+      {/* Posts grid — starts at y=160 */}
+      <div className="absolute left-0 right-0" style={{ top: "160px", height: "calc(100vh - 160px)" }}>
         {posts.length === 0 ? (
           <div className="absolute inset-0 flex items-center justify-center">
             <p style={{ ...MONO, fontSize: 8, color: "rgba(255,255,255,0.4)" }}>No posts yet</p>
@@ -369,6 +383,13 @@ export default function PublicProfilePage() {
           style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 59 }}
         />
       )}
+
+      <LinksSheet
+        username={username}
+        links={profileLinks}
+        visible={showLinks}
+        onClose={() => setShowLinks(false)}
+      />
 
       {/* Decks bottom sheet */}
       <div

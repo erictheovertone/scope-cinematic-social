@@ -9,6 +9,7 @@ import {
 } from "@/lib/postsService";
 import { getUserByPrivyId, getProfile } from "@/lib/userService";
 import DeckPickerSheet from "@/components/DeckPickerSheet";
+import CollectSheet from "@/components/CollectSheet";
 import { supabase } from "@/lib/supabase/client";
 
 const MONO: React.CSSProperties = { fontFamily: "'IBM Plex Mono', monospace" };
@@ -21,6 +22,7 @@ interface Post {
   media_urls: string[];
   created_at: string;
   profile_image_url?: string | null;
+  grid_layout?: string | null;
 }
 
 // ── Single post card within the scrollable viewer ───────────────────
@@ -44,7 +46,7 @@ function PostViewerItem({
   const [loading, setLoading] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [newComment, setNewComment] = useState("");
-  const [collectToast, setCollectToast] = useState(false);
+  const [showCollectSheet, setShowCollectSheet] = useState(false);
   const [showDeckPicker, setShowDeckPicker] = useState(false);
   const [deckToast, setDeckToast] = useState("");
 
@@ -109,8 +111,7 @@ function PostViewerItem({
   };
 
   const handleCollect = () => {
-    setCollectToast(true);
-    setTimeout(() => setCollectToast(false), 2000);
+    setShowCollectSheet(true);
   };
 
   return (
@@ -132,7 +133,7 @@ function PostViewerItem({
         <div
           className="absolute"
           onClick={onNavigateToProfile}
-          style={{ top: 6, left: 6, display: "flex", alignItems: "center", gap: 4, cursor: "pointer" }}
+          style={{ top: 6, left: 6, display: "flex", alignItems: "center", gap: 4, cursor: "pointer", zIndex: 10, opacity: 0.85 }}
         >
           <img
             src={ownerAvatarUrl || undefined}
@@ -146,7 +147,7 @@ function PostViewerItem({
         {/* MC — top: 6, right: 6 */}
         <span
           className="absolute"
-          style={{ top: 6, right: 6, ...MONO, fontSize: 9, color: "white", textShadow: "0 1px 2px rgba(0,0,0,1)", lineHeight: 1 }}
+          style={{ top: 6, right: 6, ...MONO, fontSize: 8, color: "white", textShadow: "0 1px 2px rgba(0,0,0,1)", lineHeight: 1, opacity: 0.7 }}
         >
           MC: —
         </span>
@@ -155,42 +156,42 @@ function PostViewerItem({
       {/* ── ACTION ROW — marginTop: 4px ── */}
       <div style={{ marginTop: 4, padding: "0 4px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
 
-        {/* Left: like · comment · share · save */}
+        {/* Left: like · comment · bookmark · share */}
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <button
             onClick={handleLike}
             disabled={loading || !user}
             style={{ background: "transparent", border: "none", cursor: user ? "pointer" : "default", display: "flex", alignItems: "center", gap: 4, padding: 0 }}
           >
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" style={{ opacity: isLiked ? 1 : 0.7 }}>
               <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
                 fill={isLiked ? "#FF0000" : "none"} stroke={isLiked ? "#FF0000" : "white"} strokeWidth="1.8"
               />
             </svg>
-            <span style={{ ...MONO, fontSize: 9, color: isLiked ? "#FF0000" : "white" }}>{likes.length}</span>
+            <span style={{ ...MONO, fontSize: 8, color: isLiked ? "#FF0000" : "white", opacity: isLiked ? 1 : 0.7 }}>{likes.length}</span>
           </button>
 
           <button
             onClick={() => setShowComments(v => !v)}
             style={{ background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 4, padding: 0 }}
           >
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" style={{ opacity: 0.7 }}>
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
             </svg>
-            <span style={{ ...MONO, fontSize: 9, color: "white" }}>{comments.length}</span>
+            <span style={{ ...MONO, fontSize: 8, color: "white", opacity: 0.7 }}>{comments.length}</span>
           </button>
 
           <button style={{ background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", padding: 0 }}>
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.7 }}>
+              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+            </svg>
+          </button>
+
+          <button style={{ background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", padding: 0 }}>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.7 }}>
               <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
               <polyline points="16 6 12 2 8 6" />
               <line x1="12" y1="2" x2="12" y2="15" />
-            </svg>
-          </button>
-
-          <button style={{ background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", padding: 0 }}>
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
             </svg>
           </button>
         </div>
@@ -202,14 +203,23 @@ function PostViewerItem({
           )}
           {user && post.user_id === user.id && (
             <button onClick={() => setShowDeckPicker(true)} style={{ background: "transparent", border: "none", cursor: "pointer", padding: 0 }}>
-              <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 8, color: "rgba(255,255,255,0.6)" }}>ADD TO DECK</span>
+              <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 8, color: "white", opacity: 0.7 }}>ADD TO DECK</span>
             </button>
           )}
-          {collectToast && (
-            <span style={{ ...MONO, fontSize: 9, color: "rgba(255,255,255,0.5)" }}>Coming soon</span>
-          )}
-          <button onClick={handleCollect} style={{ background: "transparent", border: "1px solid white", cursor: "pointer", padding: "2px 4px" }}>
-            <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 8, color: "white" }}>COLLECT</span>
+          <button
+            onClick={handleCollect}
+            style={{
+              background: "transparent",
+              border: `1px solid ${showCollectSheet ? "#FF0000" : "rgba(255,255,255,0.7)"}`,
+              cursor: "pointer",
+              padding: "1px 5px",
+              lineHeight: 1,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 8, color: showCollectSheet ? "#FF0000" : "rgba(255,255,255,0.7)", lineHeight: 1 }}>COLLECT</span>
           </button>
         </div>
 
@@ -222,10 +232,16 @@ function PostViewerItem({
         )}
       </div>
 
+      <CollectSheet
+        post={post}
+        visible={showCollectSheet}
+        onClose={() => setShowCollectSheet(false)}
+      />
+
       {/* ── CAPTION — marginTop: 3, marginBottom: 16 (separator) ── */}
       <div style={{ padding: "0 4px", marginTop: 3, marginBottom: 31 }}>
         {post.caption ? (
-          <p style={{ ...MONO, fontSize: 10, color: "white", margin: 0, lineHeight: 1.4 }}>
+          <p style={{ ...MONO, fontSize: 8, color: "white", margin: 0, lineHeight: 1.4 }}>
             {post.caption}
           </p>
         ) : null}

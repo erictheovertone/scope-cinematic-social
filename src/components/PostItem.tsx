@@ -11,6 +11,8 @@ import {
   addComment,
   getPostComments,
 } from "@/lib/postsService";
+import { getUserByPrivyId, getProfile } from "@/lib/userService";
+import CollectSheet from "@/components/CollectSheet";
 
 interface Post {
   id: string;
@@ -50,6 +52,23 @@ export default function PostItem({ post, onImageClick }: PostItemProps) {
   const [showComments, setShowComments] = useState(false);
   const [newComment, setNewComment] = useState("");
   const [loading, setLoading] = useState(false);
+  const [viewerUsername, setViewerUsername] = useState("");
+  const [showCollectSheet, setShowCollectSheet] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    const loadViewer = async () => {
+      try {
+        const sbUser = await getUserByPrivyId(user.id);
+        if (!sbUser) return;
+        const profile = await getProfile(sbUser.id);
+        if (profile?.username) setViewerUsername(profile.username);
+      } catch (e) {
+        console.error("PostItem viewer profile error:", e);
+      }
+    };
+    loadViewer();
+  }, [user?.id]);
 
   useEffect(() => {
     const load = async () => {
@@ -97,7 +116,7 @@ export default function PostItem({ post, onImageClick }: PostItemProps) {
       const c = await addComment(
         post.id,
         user.id,
-        user.email ? String(user.email).split("@")[0] : "user",
+        viewerUsername || "user",
         newComment.trim()
       );
       setComments((prev) => [...prev, c]);
@@ -167,10 +186,20 @@ export default function PostItem({ post, onImageClick }: PostItemProps) {
         </button>
 
         <button
-          onClick={(e) => e.stopPropagation()}
-          style={{ marginLeft: "auto", background: "transparent", border: "none", cursor: "pointer", padding: 0 }}
+          onClick={(e) => { e.stopPropagation(); setShowCollectSheet(true); }}
+          style={{
+            marginLeft: "auto",
+            background: "transparent",
+            border: `1px solid ${showCollectSheet ? "#FF0000" : "rgba(255,255,255,0.7)"}`,
+            cursor: "pointer",
+            padding: "1px 5px",
+            lineHeight: 1,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
         >
-          <span style={{ ...MONO, fontSize: 7, color: "white", letterSpacing: "-0.14px" }}>COLLECT</span>
+          <span style={{ ...MONO, fontSize: 7, color: showCollectSheet ? "#FF0000" : "rgba(255,255,255,0.7)", lineHeight: 1 }}>COLLECT</span>
         </button>
       </div>
 
@@ -179,6 +208,12 @@ export default function PostItem({ post, onImageClick }: PostItemProps) {
           {post.caption}
         </p>
       )}
+
+      <CollectSheet
+        post={post}
+        visible={showCollectSheet}
+        onClose={() => setShowCollectSheet(false)}
+      />
 
       {showComments && (
         <div onClick={(e) => e.stopPropagation()} style={{ marginTop: 10, borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 10 }}>

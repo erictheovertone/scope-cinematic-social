@@ -13,6 +13,7 @@ import {
 } from "@/lib/postsService";
 import { getUserByPrivyId, getProfile } from "@/lib/userService";
 import DeckPickerSheet from "@/components/DeckPickerSheet";
+import CollectSheet from "@/components/CollectSheet";
 import { supabase } from "@/lib/supabase/client";
 
 interface Post {
@@ -50,8 +51,10 @@ export default function PostModal({ post, onClose }: PostModalProps) {
   const [showComments, setShowComments] = useState(false);
   const [newComment, setNewComment] = useState("");
   const [collectToast, setCollectToast] = useState(false);
+  const [showCollectSheet, setShowCollectSheet] = useState(false);
   const [showDeckPicker, setShowDeckPicker] = useState(false);
   const [deckToast, setDeckToast] = useState("");
+  const [bookmarked, setBookmarked] = useState(false);
 
   // Viewer's own Supabase profile (for comment submission)
   const [viewerUsername, setViewerUsername] = useState<string>("");
@@ -168,8 +171,16 @@ export default function PostModal({ post, onClose }: PostModalProps) {
   };
 
   const handleCollect = () => {
-    setCollectToast(true);
-    setTimeout(() => setCollectToast(false), 2000);
+    setShowCollectSheet(true);
+  };
+
+  const handleShare = async () => {
+    const url = window.location.href;
+    if (navigator.share) {
+      try { await navigator.share({ url }); } catch (_) {}
+    } else {
+      try { await navigator.clipboard.writeText(url); } catch (_) {}
+    }
   };
 
   return (
@@ -303,26 +314,16 @@ export default function PostModal({ post, onClose }: PostModalProps) {
                   </span>
                 </button>
               )}
-              {collectToast && (
-                <span
-                  style={{
-                    ...MONO, fontSize: 8, color: "rgba(255,255,255,0.55)",
-                    animation: "theater-fade-in 0.2s ease-out both",
-                  }}
-                >
-                  Collecting coming soon
-                </span>
-              )}
               <button
                 onClick={handleCollect}
                 style={{
                   background: "transparent",
-                  border: "1px solid rgba(255,255,255,0.6)",
+                  border: showCollectSheet ? "1px solid #FF0000" : "1px solid rgba(255,255,255,0.7)",
                   cursor: "pointer",
                   padding: "5px 10px",
                 }}
               >
-                <span style={{ ...MONO, fontSize: 8, color: "white", letterSpacing: "-0.1px" }}>
+                <span style={{ ...MONO, fontSize: 8, color: showCollectSheet ? "#FF0000" : "rgba(255,255,255,0.7)", letterSpacing: "-0.1px" }}>
                   COLLECT · 0.001 ETH
                 </span>
               </button>
@@ -363,6 +364,28 @@ export default function PostModal({ post, onClose }: PostModalProps) {
                 <span style={{ ...MONO, fontSize: 8, color: "rgba(255,255,255,0.4)", letterSpacing: "-0.1px" }}>
                   {showComments ? "hide comments" : `tap to see comments (${comments.length})`}
                 </span>
+              </button>
+
+              {/* Bookmark */}
+              <button
+                onClick={() => setBookmarked(v => !v)}
+                style={{ background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", padding: 0 }}
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill={bookmarked ? "white" : "none"} stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+                </svg>
+              </button>
+
+              {/* Share */}
+              <button
+                onClick={handleShare}
+                style={{ background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", padding: 0 }}
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                  <polyline points="16 6 12 2 8 6" />
+                  <line x1="12" y1="2" x2="12" y2="15" />
+                </svg>
               </button>
             </div>
 
@@ -461,6 +484,12 @@ export default function PostModal({ post, onClose }: PostModalProps) {
           }}
         />
       )}
+
+      <CollectSheet
+        post={post}
+        visible={showCollectSheet}
+        onClose={() => setShowCollectSheet(false)}
+      />
     </>
   );
 }

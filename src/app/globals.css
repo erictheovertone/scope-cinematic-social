@@ -2,26 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Hide Send button from browser extensions/overlays */
-*[aria-label*="Send" i]:not(.scope-auth-button),
-*[title*="Send" i]:not(.scope-auth-button),
-*[data-testid*="send" i]:not(.scope-auth-button),
-*[class*="send" i]:not(.scope-auth-button),
-div[style*="position: fixed"]:not([class*="bg-black"]),
-div[style*="position: absolute"]:not([class*="bg-black"]):not([class*="absolute w-"]),
-button[style*="position: fixed"]:not(.scope-auth-button),
-button[style*="position: absolute"]:not(.scope-auth-button),
-[role="button"]:not(.scope-auth-button),
-iframe:not([src*="scope"]) {
-  display: none !important;
-  visibility: hidden !important;
-  opacity: 0 !important;
-  pointer-events: none !important;
-  position: fixed !important;
-  left: -10000px !important;
-  top: -10000px !important;
-  z-index: -9999 !important;
-}
 
 @layer base {
   html {
@@ -114,6 +94,12 @@ iframe:not([src*="scope"]) {
 }
 *::-webkit-scrollbar {
   display: none;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg) scale(1); }
+  50%  { transform: rotate(180deg) scale(1.3); }
+  to   { transform: rotate(360deg) scale(1); }
 }
 
 @keyframes theater-fade-in {

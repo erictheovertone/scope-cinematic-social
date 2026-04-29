@@ -560,7 +560,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-90 z-[200] flex items-center justify-center">
+    <div style={{ position: 'fixed', inset: 0, backgroundColor: '#000000', opacity: 1, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div className="bg-black border border-[#333333] w-[375px] h-[600px] relative overflow-hidden">
         {step === 'media' && renderMediaStep()}
         {step === 'edit' && renderEditStep()}

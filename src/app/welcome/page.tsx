@@ -31,43 +31,53 @@ export default function Welcome() {
 
   if (isLoading) {
     return (
-      <div style={{ 
-        backgroundColor: '#000000', 
-        minHeight: '100vh', 
-        width: '100%', 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'center' 
+      <div style={{
+        backgroundColor: '#000000',
+        minHeight: '100vh',
+        width: '100%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
       }}>
         <div style={{
           width: '32px',
           height: '32px',
           backgroundColor: '#FF0000',
-          borderRadius: '50%',
-          animation: 'swift-bounce 0.4s infinite',
-          transform: 'translateY(-15px)'
+          borderRadius: '50%'
         }}></div>
       </div>
     );
   }
 
   return (
-    <div 
-      className="bg-black relative w-[375px] h-[812px] mx-auto opacity-0 animate-fade-in" 
-      data-name="Welcome Page" 
+    <div
+      data-name="Welcome Page"
       data-node-id="86:27"
-      style={{ animationDelay: '0.2s', animationFillMode: 'forwards' }}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        backgroundColor: '#000',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+        padding: '40px 24px 48px'
+      }}
     >
-      <div className="absolute left-1/2 top-1/4 transform -translate-x-1/2 -translate-y-1/2" style={{ marginLeft: '24px', marginTop: '30px' }}>
-        <img 
-          src="/logo.svg"
-          alt="Scope Logo"
-          className="w-[350px] h-auto"
+      <div>
+        <img
+          src="/scope-logo-1.png"
+          alt="SCOPE"
+          style={{
+            width: '280px',
+            height: 'auto',
+            display: 'block',
+            margin: '0 auto'
+          }}
         />
       </div>
-      
-      <div className="absolute w-[337px] h-[112px] border border-white" style={{ left: '19px', bottom: '80px' }}>
-        <button 
+
+      <div style={{ width: '100%', height: '112px', border: '1px solid white', position: 'relative' }}>
+        <button
           onClick={login}
           style={{
             position: 'absolute',
@@ -99,7 +109,7 @@ export default function Welcome() {
         >
           LOG IN
         </button>
-        <button 
+        <button
           onClick={login}
           style={{
             position: 'absolute',

@@ -563,6 +563,59 @@ export const deleteDeck = async (deckId: string): Promise<void> => {
   if (error) throw error
 }
 
+// ── Profile Links ────────────────────────────────────────────────────
+
+export interface ProfileLink {
+  id: string;
+  user_id: string;
+  title: string | null;
+  url: string;
+  thumbnail_url: string | null;
+  video_url: string | null;
+  is_video: boolean;
+  position: number;
+  description: string | null;
+  custom_thumbnail_url: string | null;
+  created_at: string;
+}
+
+export const getProfileLinks = async (privyUserId: string): Promise<ProfileLink[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('profile_links')
+      .select('*')
+      .eq('user_id', privyUserId)
+      .order('position', { ascending: true });
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Error fetching profile links:', sbErr(error));
+    return [];
+  }
+};
+
+export const saveProfileLinks = async (
+  privyUserId: string,
+  links: Omit<ProfileLink, 'id' | 'created_at'>[],
+): Promise<void> => {
+  // Delete existing then insert fresh (simplest for ordered list)
+  const { error: delError } = await supabase
+    .from('profile_links')
+    .delete()
+    .eq('user_id', privyUserId);
+  if (delError) throw delError;
+
+  if (links.length === 0) return;
+  const rows = links.map((l, i) => ({ ...l, user_id: privyUserId, position: i }));
+  const { error: insError } = await supabase.from('profile_links').insert(rows);
+  if (insError) throw insError;
+};
+
+export const deleteProfileLink = async (linkId: string): Promise<void> => {
+  const { error } = await supabase.from('profile_links').delete().eq('id', linkId);
+  if (error) throw error;
+};
+
 export const updateDeck = async (
   deckId: string,
   updates: Partial<Pick<Deck, 'title' | 'description' | 'grid_layout' | 'cover_image_url' | 'is_public'>>,

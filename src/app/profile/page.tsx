@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
-import { getUserByPrivyId, getProfile, getFollowerCount, getFollowingCount, getUserDecks, createDeck, type Deck } from "@/lib/userService";
+import { getUserByPrivyId, getProfile, getFollowerCount, getFollowingCount, getUserDecks, createDeck, getProfileLinks, type Deck, type ProfileLink } from "@/lib/userService";
+import LinksSheet from "@/components/LinksSheet";
 import { getUserPosts } from '@/lib/postsService';
 import CreatePostFlow from "@/components/CreatePostFlow";
 import FollowListModal from "@/components/FollowListModal";
@@ -49,6 +50,7 @@ export default function Profile() {
   const router = useRouter();
   const [isDataOpen, setIsDataOpen] = useState(false);
   const [showCreatePost, setShowCreatePost] = useState(false);
+  const [spinning, setSpinning] = useState(false);
   const [showTheater, setShowTheater] = useState(false);
   const [showViewer, setShowViewer] = useState(false);
   const [viewerIndex, setViewerIndex] = useState(0);
@@ -58,6 +60,7 @@ export default function Profile() {
     username: "",
     bio: "",
     profileImage: null as string | null,
+    websiteUrl: "",
   });
   const [userLayoutId, setUserLayoutId] = useState('1x-super-wide');
   const [layoutLoaded, setLayoutLoaded] = useState(false);
@@ -79,6 +82,8 @@ export default function Profile() {
   const [newDeckTitle, setNewDeckTitle] = useState('');
   const [newDeckDesc, setNewDeckDesc] = useState('');
   const [creatingDeck, setCreatingDeck] = useState(false);
+  const [showLinks, setShowLinks] = useState(false);
+  const [profileLinks, setProfileLinks] = useState<ProfileLink[]>([]);
 
   useEffect(() => {
     if (!user) return;
@@ -87,16 +92,18 @@ export default function Profile() {
         const supabaseUser = await getUserByPrivyId(user.id);
         if (supabaseUser) {
           setSupabaseUserId(supabaseUser.id);
-          const profile = await getProfile(supabaseUser.id);
+          const profile = await getProfile(supabaseUser.id) as any;
           if (profile) {
             setUserProfile({
               displayName: profile.display_name || "",
               username: profile.username || "",
               bio: profile.bio || "",
               profileImage: profile.profile_image_url || null,
+              websiteUrl: profile.website_url || "",
             });
             if (profile.grid_layout) setUserLayoutId(profile.grid_layout);
           }
+          getProfileLinks(user.id).then(setProfileLinks).catch(() => {});
         }
         setLayoutLoaded(true);
       } catch (error) {
@@ -171,14 +178,14 @@ export default function Profile() {
 
       {/* Name — left=91, center-y=41.5 */}
       <div className="absolute left-[91px]" style={{ top: '41.5px', transform: 'translateY(-50%)' }}>
-        <p style={{ ...MONO, fontSize: '11px', color: 'white', letterSpacing: '-0.22px', lineHeight: 1.4, margin: 0 }}>
+        <p style={{ ...MONO, fontSize: 11, color: 'white', letterSpacing: '-0.22px', lineHeight: 1.4, margin: 0 }}>
           {userProfile.displayName}
         </p>
       </div>
 
       {/* Handle — left=91, center-y=55.5 */}
       <div className="absolute left-[91px]" style={{ top: '55.5px', transform: 'translateY(-50%)' }}>
-        <p style={{ ...MONO, fontSize: '9px', color: 'white', letterSpacing: '-0.18px', lineHeight: 1.4, margin: 0 }}>
+        <p style={{ ...MONO, fontSize: 9, color: 'white', letterSpacing: '-0.18px', lineHeight: 1.4, margin: 0 }}>
           {userProfile.username ? `@${userProfile.username}` : ''}
         </p>
       </div>
@@ -186,22 +193,28 @@ export default function Profile() {
       {/* Bio — left=90, center-y=108 */}
       <div className="absolute left-[90px]" style={{ top: '108px', transform: 'translateY(-50%)', maxWidth: '140px' }}>
         {userProfile.bio.split('\n').map((line, i) => (
-          <p key={i} style={{ ...MONO, fontSize: '8px', color: 'white', letterSpacing: '-0.12px', lineHeight: 1.4, margin: 0 }}>
+          <p key={i} style={{ ...MONO, fontSize: 6, color: 'white', letterSpacing: '-0.12px', lineHeight: 1.4, margin: 0 }}>
             {line}
           </p>
         ))}
       </div>
 
-      {/* VIEW DATA — always visible, toggles the stats cascade below it */}
+      {/* VIEW DATA — always visible */}
       <button
         className="absolute bg-transparent border-none cursor-pointer"
-        style={{ right: '4px', top: '44px', transform: 'translateY(-50%)' }}
+        style={{ right: '4px', top: '44px', transform: 'translateY(-50%)', padding: 0 }}
         onClick={() => setIsDataOpen(v => !v)}
       >
         <span style={{ ...MONO, fontSize: '10px', color: 'white', letterSpacing: '-0.2px', opacity: isDataOpen ? 0.45 : 1, transition: 'opacity 0.15s ease' }}>
           VIEW DATA
         </span>
       </button>
+
+      {/* Links arrow — always visible, below VIEW DATA */}
+      <span
+        onClick={() => setShowLinks(true)}
+        style={{ position: 'absolute', right: '4px', top: '80px', fontSize: '20px', color: 'white', opacity: 0.8, cursor: 'pointer', fontWeight: 300, lineHeight: 1 }}
+      >↗</span>
 
       {/* Decks icon — visible only when stats panel is closed */}
       {!isDataOpen && userProfile.username && (
@@ -211,11 +224,11 @@ export default function Profile() {
           onClick={() => setShowDecks(true)}
           aria-label="View decks"
         >
-          <svg width="21" height="6" viewBox="0 0 21 6" fill="none">
-            <rect x="0"  y="0" width="3" height="6" fill="white" />
-            <rect x="6"  y="0" width="3" height="6" fill="white" />
-            <rect x="12" y="0" width="3" height="6" fill="white" />
-            <rect x="18" y="0" width="3" height="6" fill="white" />
+          <svg width="21" height="11" viewBox="0 0 21 11" fill="none">
+            <rect x="0"  y="0" width="3" height="11" fill="white" />
+            <rect x="6"  y="0" width="3" height="11" fill="white" />
+            <rect x="12" y="0" width="3" height="11" fill="white" />
+            <rect x="18" y="0" width="3" height="11" fill="white" />
           </svg>
         </button>
       )}
@@ -274,24 +287,32 @@ export default function Profile() {
 
       {/* Posts grid — starts at y=160. Explicit height avoids min-height containing-block issue. */}
       {layoutLoaded && (
-        <div className="absolute left-0 right-0" style={{ top: '160px', height: 'calc(100vh - 160px)' }}>
+        <div style={{ position: 'absolute', inset: 0, top: '160px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
           {userPosts.length === 0 ? (
             <div
               style={{
                 display: 'flex',
+                flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
+                width: '100%',
                 flex: 1,
                 minHeight: '50vh',
                 cursor: 'pointer',
                 gap: '16px',
               }}
-              onClick={() => setShowCreatePost(true)}
+              onClick={() => {
+                setSpinning(true);
+                setTimeout(() => {
+                  setSpinning(false);
+                  setShowCreatePost(true);
+                }, 600);
+              }}
             >
               <p style={{ fontFamily: 'IBM Plex Mono', fontSize: '11px', color: 'white', margin: 0, lineHeight: '1.4' }}>
                 Create<br/>your<br/>first<br/>post
               </p>
-              <div style={{ position: 'relative', width: '48px', height: '48px', flexShrink: 0 }}>
+              <div style={{ position: 'relative', width: '48px', height: '48px', flexShrink: 0, animation: spinning ? 'spin 0.6s cubic-bezier(0.4, 0, 0.2, 1)' : 'none' }}>
                 <div style={{ position: 'absolute', top: '50%', left: 0, right: 0, height: '1px', background: 'white', transform: 'translateY(-50%)' }} />
                 <div style={{ position: 'absolute', left: '50%', top: 0, bottom: 0, width: '1px', background: 'white', transform: 'translateX(-50%)' }} />
               </div>
@@ -491,6 +512,13 @@ export default function Profile() {
           )}
         </div>
       </div>
+
+      <LinksSheet
+        username={userProfile.username}
+        links={profileLinks}
+        visible={showLinks}
+        onClose={() => setShowLinks(false)}
+      />
 
     </div>
   );

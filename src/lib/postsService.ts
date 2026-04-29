@@ -123,6 +123,7 @@ export const getPostsByUsername = async (username: string): Promise<Post[]> => {
     return [];
   }
 
+  console.log(`getPostsByUsername("${username}") → ${data?.length ?? 0} posts`);
   return data || [];
 };
 
