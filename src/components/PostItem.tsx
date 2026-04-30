@@ -13,6 +13,8 @@ import {
 } from "@/lib/postsService";
 import { getUserByPrivyId, getProfile } from "@/lib/userService";
 import CollectSheet from "@/components/CollectSheet";
+import { getTokenPrice, getTokenHolders } from "@/lib/zora";
+import { formatEther } from "viem";
 
 interface Post {
   id: string;
@@ -25,6 +27,9 @@ interface Post {
   grid_layout?: string | null;
   created_at: string;
   profile_image_url?: string | null;
+  is_minted?: boolean;
+  contract_address?: string | null;
+  token_id?: string | null;
 }
 
 function getAspectFromGridLayout(gridLayout?: string | null): string {
@@ -54,6 +59,7 @@ export default function PostItem({ post, onImageClick }: PostItemProps) {
   const [loading, setLoading] = useState(false);
   const [viewerUsername, setViewerUsername] = useState("");
   const [showCollectSheet, setShowCollectSheet] = useState(false);
+  const [mc, setMc] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -87,6 +93,30 @@ export default function PostItem({ post, onImageClick }: PostItemProps) {
     };
     load();
   }, [post.id, user?.id]);
+
+  // Fetch market cap for minted posts
+  useEffect(() => {
+    if (!post.is_minted || !post.contract_address) return;
+    let cancelled = false;
+    const fetchMC = async () => {
+      try {
+        const tokenId = BigInt(post.token_id || "1");
+        const [supply, price] = await Promise.all([
+          getTokenHolders({ contractAddress: post.contract_address!, tokenId }),
+          getTokenPrice({ contractAddress: post.contract_address!, tokenId }),
+        ]);
+        if (cancelled) return;
+        const mcEth = Number(supply) * parseFloat(formatEther(price));
+        const mcUsd = mcEth * 3000;
+        setMc(`$${mcUsd < 1 ? mcUsd.toFixed(2) : Math.round(mcUsd).toLocaleString()}`);
+        console.log("[PostItem] MC fetched — supply:", supply.toString(), "priceETH:", formatEther(price));
+      } catch (e) {
+        console.error("[PostItem] MC fetch error:", e);
+      }
+    };
+    fetchMC();
+    return () => { cancelled = true; };
+  }, [post.id, post.is_minted, post.contract_address, post.token_id]);
 
   const handleLike = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -160,6 +190,9 @@ export default function PostItem({ post, onImageClick }: PostItemProps) {
             @{post.username}
           </span>
         </div>
+        <span style={{ position: 'absolute', top: '6px', right: '6px', fontFamily: 'IBM Plex Mono,monospace', fontSize: '8px', color: 'white', textShadow: '0 1px 2px rgba(0,0,0,1)', zIndex: 10, opacity: 0.85 }}>
+          MC: {mc ?? '—'}
+        </span>
       </div>
 
       {/* ── Below-image row: like · comment · COLLECT ── */}

@@ -2,8 +2,11 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useRouter } from "next/navigation";
-import { usePrivy } from "@privy-io/react-auth";
-import { createPost } from '@/lib/postsService';
+import { usePrivy, useWallets } from "@privy-io/react-auth";
+import { createWalletClient, custom } from "viem";
+import { baseSepolia } from "viem/chains";
+import { createPost, updatePostMintData } from '@/lib/postsService';
+import { mintNewPost } from '@/lib/zora';
 import {
   getUserByPrivyId, getProfile, uploadImage,
   getUserDecks, createDeck, addPostToDeck,
@@ -112,6 +115,8 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const { user } = usePrivy();
+  const { wallets } = useWallets();
+  const [mintStatus, setMintStatus] = useState<'idle' | 'minting' | 'minted' | 'mint-failed'>('idle');
 
   // Deck step state
   const [userDecks, setUserDecks] = useState<(Deck & { item_count: number })[]>([]);
@@ -253,14 +258,63 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
         addPostToDeck(deckId, newPost.id).catch(e => console.error('addPostToDeck error:', e));
       }
 
+      // Post saved — move to minting step
       selectedMedia.forEach(item => URL.revokeObjectURL(item.url));
       setIsUploading(false);
-      onClose();
-      setStep('media');
-      setSelectedMedia([]);
-      setCaption('');
-      setSelectedDeckId(null);
-      router.push('/profile');
+      setStep('posting');
+      setMintStatus('minting');
+
+      // Attempt mint — never blocks if it fails
+      try {
+        const embeddedWallet = wallets.find(w => w.walletClientType === 'privy');
+        if (!embeddedWallet) throw new Error('No embedded wallet found');
+
+        console.log('[mint] Switching to Base Sepolia...');
+        await embeddedWallet.switchChain(baseSepolia.id);
+
+        const provider = await embeddedWallet.getEthereumProvider();
+        const walletClient = createWalletClient({
+          account: embeddedWallet.address as `0x${string}`,
+          chain: baseSepolia,
+          transport: custom(provider),
+        });
+
+        console.log('[mint] Minting post:', newPost.id);
+        const { contractAddress, hash } = await mintNewPost({
+          walletClient,
+          creatorAddress: embeddedWallet.address,
+          postMetadata: {
+            name: caption || 'Scope Post',
+            description: caption,
+            image: mediaUrls[0],
+          },
+        });
+        console.log('[mint] Success — contract:', contractAddress, 'hash:', hash);
+
+        await updatePostMintData(newPost.id, {
+          contract_address: contractAddress as string,
+          token_id: '1',
+          tx_hash: hash as string,
+          is_minted: true,
+        });
+
+        setMintStatus('minted');
+      } catch (mintError) {
+        console.error('[mint] Failed:', mintError);
+        setMintStatus('mint-failed');
+      }
+
+      // Navigate regardless of mint result
+      setTimeout(() => {
+        onClose();
+        setStep('media');
+        setSelectedMedia([]);
+        setCaption('');
+        setSelectedDeckId(null);
+        setMintStatus('idle');
+        router.push('/profile');
+      }, 2200);
+
     } catch (error) {
       console.error('[handlePost] FAILED:', error);
       setPostError('Failed to create post. Please try again.');
@@ -282,6 +336,32 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
     } finally {
       setCreatingDeck(false);
     }
+  };
+
+  const renderPostingStep = () => {
+    const S: React.CSSProperties = { fontFamily: "'IBM Plex Mono', monospace" };
+    return (
+      <div className="h-full flex flex-col items-center justify-center gap-4 p-6">
+        {mintStatus === 'minting' && (
+          <>
+            <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#FF0000' }} />
+            <p style={{ ...S, fontSize: 10, color: 'white', textAlign: 'center', lineHeight: 1.6 }}>
+              Your post is being minted on Base...
+            </p>
+          </>
+        )}
+        {mintStatus === 'minted' && (
+          <p style={{ ...S, fontSize: 10, color: 'white', textAlign: 'center' }}>
+            Posted &amp; minted ✓
+          </p>
+        )}
+        {mintStatus === 'mint-failed' && (
+          <p style={{ ...S, fontSize: 10, color: 'rgba(255,255,255,0.6)', textAlign: 'center', lineHeight: 1.6 }}>
+            Posted (mint failed — retry later)
+          </p>
+        )}
+      </div>
+    );
   };
 
   const renderMediaStep = () => (
@@ -565,6 +645,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
         {step === 'media' && renderMediaStep()}
         {step === 'edit' && renderEditStep()}
         {step === 'deck' && renderDeckStep()}
+        {step === 'posting' && renderPostingStep()}
       </div>
     </div>
   );

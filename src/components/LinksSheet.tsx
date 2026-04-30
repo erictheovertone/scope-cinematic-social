@@ -14,6 +14,13 @@ function getYouTubeId(url: string): string | null {
   return match?.[1] || null;
 }
 
+function getYouTubeThumbnail(url: string): string | null {
+  const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/))([^&\n?#]+)/);
+  const videoId = match?.[1];
+  if (!videoId) return null;
+  return `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+}
+
 function getVimeoId(url: string): string | null {
   const match = url.match(/vimeo\.com\/(\d+)/);
   return match?.[1] || null;
@@ -132,7 +139,9 @@ export default function LinksSheet({ username, links, visible, onClose }: LinksS
 
               if (link.is_video && link.video_url) {
                 // ── Video card: thumbnail behind autoplay iframe ──
-                const thumbSrc = link.thumbnail_url || null;
+                const ytId = getYouTubeId(link.video_url);
+                const thumbSrc = link.thumbnail_url || getYouTubeThumbnail(link.video_url) || null;
+                const usingAutoThumb = !link.thumbnail_url && !!ytId;
                 return (
                   <div
                     key={link.id}
@@ -152,7 +161,13 @@ export default function LinksSheet({ username, links, visible, onClose }: LinksS
                         <img
                           src={thumbSrc}
                           alt=""
-                          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", display: "block" }}
+                          onError={usingAutoThumb ? (e) => {
+                            const img = e.target as HTMLImageElement;
+                            if (img.src.includes("maxresdefault")) {
+                              img.src = `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
+                            }
+                          } : undefined}
                         />
                       )}
                       <iframe

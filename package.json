@@ -11,13 +11,16 @@
   "dependencies": {
     "@privy-io/react-auth": "^2.25.0",
     "@supabase/supabase-js": "^2.78.0",
+    "@wagmi/core": "^3.4.7",
+    "@zoralabs/protocol-sdk": "^0.13.21",
     "bs58": "^6.0.0",
     "framer-motion": "^12.23.12",
     "next": "^16.2.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "vercel": "^50.43.0",
-    "viem": "^2.48.4"
+    "viem": "^2.48.4",
+    "wagmi": "^3.6.8"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

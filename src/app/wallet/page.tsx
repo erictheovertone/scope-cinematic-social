@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { usePrivy } from "@privy-io/react-auth";
+import { usePrivy, useFundWallet } from "@privy-io/react-auth";
+import { baseSepolia } from "viem/chains";
 import { getEthBalance, getUsdcBalance, getTransactionHistory } from "@/lib/wallet";
 
 const MONO: React.CSSProperties = { fontFamily: "'IBM Plex Mono', monospace" };
@@ -13,6 +14,7 @@ function shortAddr(addr: string): string {
 
 export default function WalletPage() {
   const { user } = usePrivy();
+  const { fundWallet } = useFundWallet();
   const walletAddress = user?.wallet?.address ?? "";
 
   const [activeTab, setActiveTab] = useState<"balances" | "holdings" | "activity">("balances");
@@ -21,7 +23,6 @@ export default function WalletPage() {
   const [txHistory, setTxHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState("");
-  const [showDeposit, setShowDeposit] = useState(false);
   const [showSend, setShowSend] = useState(false);
   const [sendToken, setSendToken] = useState<"ETH" | "USDC">("ETH");
   const [sendTo, setSendTo] = useState("");
@@ -94,9 +95,8 @@ export default function WalletPage() {
       )}
 
       {/* Header */}
-      <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center", padding: "14px 16px 10px" }}>
-        <div style={{ position: "absolute", left: 16, top: "50%", transform: "translateY(-50%)", width: 10, height: 10, borderRadius: "50%", backgroundColor: "#FF0000" }} />
-        <img src="/scope-logo-1.png" alt="SCOPE" style={{ width: 120, height: "auto", display: "block" }} />
+      <div style={{ padding: "14px 16px 10px" }}>
+        <img src="/scope-logo-1.png" alt="SCOPE" style={{ width: 80, height: "auto", display: "block", margin: "0 auto" }} />
       </div>
 
       <div style={{ height: 1, background: "rgba(255,255,255,0.1)" }} />
@@ -122,25 +122,35 @@ export default function WalletPage() {
       </div>
 
       {/* Action buttons */}
-      <div style={{ display: "flex", justifyContent: "center", gap: 12, padding: "0 16px 24px" }}>
-        {[
-          { icon: "+", label: "DEPOSIT", action: () => setShowDeposit(true) },
-          { icon: "↗", label: "SEND",    action: () => setShowSend(true) },
-        ].map(({ icon, label, action }) => (
-          <button
-            key={label}
-            onClick={action}
-            style={{
-              display: "flex", flexDirection: "column", alignItems: "center",
-              gap: 4, background: "rgba(255,255,255,0.06)", border: "none",
-              cursor: "pointer", padding: "14px 28px",
-            }}
-          >
-            <span style={{ fontSize: 24, color: "white", lineHeight: 1 }}>{icon}</span>
-            <span style={{ ...MONO, fontSize: 9, color: "white" }}>{label}</span>
-          </button>
-        ))}
+      <div style={{ display: "flex", justifyContent: "center", gap: 12, padding: "0 16px 12px" }}>
+        <button
+          onClick={() => walletAddress && fundWallet(walletAddress, { chain: baseSepolia, amount: "0.01" })}
+          style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "rgba(255,255,255,0.06)", border: "none", cursor: "pointer", padding: "14px 28px" }}
+        >
+          <span style={{ fontSize: 24, color: "white", lineHeight: 1 }}>+</span>
+          <span style={{ ...MONO, fontSize: 9, color: "white" }}>DEPOSIT</span>
+        </button>
+        <button
+          onClick={() => setShowSend(true)}
+          style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "rgba(255,255,255,0.06)", border: "none", cursor: "pointer", padding: "14px 28px" }}
+        >
+          <span style={{ fontSize: 24, color: "white", lineHeight: 1 }}>↗</span>
+          <span style={{ ...MONO, fontSize: 9, color: "white" }}>SEND</span>
+        </button>
       </div>
+
+      {/* Or deposit directly */}
+      {walletAddress && (
+        <div style={{ textAlign: "center", padding: "0 16px 20px" }}>
+          <p style={{ ...MONO, fontSize: 8, color: "white", opacity: 0.3, margin: "0 0 4px" }}>or deposit directly</p>
+          <p
+            onClick={() => navigator.clipboard.writeText(walletAddress).then(() => showToast("Address copied"))}
+            style={{ ...MONO, fontSize: 9, color: "white", opacity: 0.5, margin: 0, cursor: "pointer", wordBreak: "break-all" }}
+          >
+            {walletAddress}
+          </p>
+        </div>
+      )}
 
       {/* Tabs */}
       <div style={{ display: "flex", borderBottom: "1px solid rgba(255,255,255,0.1)", padding: "0 16px" }}>
@@ -257,63 +267,6 @@ export default function WalletPage() {
           </div>
         )}
       </div>
-
-      {/* ── DEPOSIT SHEET ── */}
-      <>
-        <div
-          onClick={() => setShowDeposit(false)}
-          style={{
-            position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.85)",
-            zIndex: 300, opacity: showDeposit ? 1 : 0,
-            pointerEvents: showDeposit ? "auto" : "none",
-            transition: "opacity 0.35s ease",
-          }}
-        />
-        <div
-          style={{
-            position: "fixed", bottom: 0, left: 0, right: 0, height: "50vh",
-            backgroundColor: "#0a0a0a", borderTop: "1px solid rgba(255,255,255,0.1)",
-            zIndex: 301, display: "flex", flexDirection: "column",
-            transform: showDeposit ? "translateY(0)" : "translateY(100%)",
-            transition: "transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)",
-          }}
-        >
-          {/* Drag handle + header */}
-          <div style={{ flexShrink: 0, position: "relative", display: "flex", alignItems: "center", justifyContent: "center", padding: "10px 16px 8px" }}>
-            <div style={{ position: "absolute", top: 8, left: "50%", transform: "translateX(-50%)", width: 40, height: 2, backgroundColor: "rgba(255,255,255,0.2)" }} />
-            <span style={{ ...MONO, fontSize: 11, color: "white", marginTop: 8 }}>DEPOSIT</span>
-            <button
-              onClick={() => setShowDeposit(false)}
-              style={{ position: "absolute", right: 16, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "white", fontSize: 18, lineHeight: 1, padding: 0, marginTop: 4 }}
-            >×</button>
-          </div>
-          <div style={{ height: 1, background: "rgba(255,255,255,0.08)" }} />
-
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "20px 24px", gap: 16 }}>
-            <p style={{ ...MONO, fontSize: 10, color: "white", opacity: 0.5, margin: 0, textAlign: "center" }}>
-              Send ETH or USDC to your Scope wallet
-            </p>
-
-            {/* QR placeholder */}
-            <div style={{ width: 120, height: 120, border: "1px solid rgba(255,255,255,0.3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <span style={{ ...MONO, fontSize: 10, color: "rgba(255,255,255,0.3)" }}>QR</span>
-            </div>
-
-            {/* Address + copy */}
-            <div
-              onClick={() => {
-                if (walletAddress) navigator.clipboard.writeText(walletAddress).then(() => showToast("Copied!"));
-              }}
-              style={{ textAlign: "center", cursor: "pointer" }}
-            >
-              <p style={{ ...MONO, fontSize: 11, color: "white", margin: "0 0 6px", wordBreak: "break-all", lineHeight: 1.5 }}>
-                {walletAddress || "—"}
-              </p>
-              <p style={{ ...MONO, fontSize: 9, color: "#FF0000", margin: 0 }}>TAP TO COPY</p>
-            </div>
-          </div>
-        </div>
-      </>
 
       {/* ── SEND SHEET ── */}
       <>

@@ -10,6 +10,10 @@ interface Post {
   aspect_ratio: number | null;
   created_at: string;
   updated_at: string;
+  contract_address?: string | null;
+  token_id?: string | null;
+  tx_hash?: string | null;
+  is_minted?: boolean;
 }
 
 interface Like {
@@ -339,6 +343,27 @@ export const getPostsPaginated = async (
     profile_image_url: avatarMap.get(post.username) ?? null,
     grid_layout: gridLayoutMap.get(post.username) ?? null,
   }));
+};
+
+export const updatePostMintData = async (
+  postId: string,
+  data: {
+    contract_address: string;
+    token_id: string;
+    tx_hash: string;
+    is_minted: boolean;
+  }
+): Promise<void> => {
+  const { error } = await supabase
+    .from('posts')
+    .update(data)
+    .eq('id', postId);
+
+  if (error) {
+    console.error('[updatePostMintData] Supabase error:', JSON.stringify(error));
+    throw error;
+  }
+  console.log('[updatePostMintData] updated post:', postId, data.contract_address);
 };
 
 export const deleteComment = async (commentId: string, userId: string): Promise<void> => {

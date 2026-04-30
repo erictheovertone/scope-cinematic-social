@@ -23,6 +23,9 @@ interface Post {
   created_at: string;
   profile_image_url?: string | null;
   grid_layout?: string | null;
+  is_minted?: boolean;
+  contract_address?: string | null;
+  token_id?: string | null;
 }
 
 // ── Single post card within the scrollable viewer ───────────────────

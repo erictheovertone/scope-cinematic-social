@@ -25,6 +25,9 @@ interface Post {
   layout_id?: string;
   created_at: string;
   profile_image_url?: string | null;
+  is_minted?: boolean;
+  contract_address?: string | null;
+  token_id?: string | null;
 }
 
 interface PostModalProps {
@@ -401,28 +404,28 @@ export default function PostModal({ post, onClose }: PostModalProps) {
                     <div
                       key={c.id}
                       style={{
-                        display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 10,
+                        display: "flex", alignItems: "flex-start", gap: 7, marginBottom: 8,
                         animation: "ripple-down 0.2s ease-out both",
                         animationDelay: `${i * 50}ms`,
                       }}
                     >
                       <div
                         style={{
-                          width: 18, height: 18, borderRadius: "50%", background: "#2a2a2a",
+                          width: 16, height: 16, borderRadius: "50%", background: "#2a2a2a",
                           flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center",
                           overflow: "hidden",
                         }}
                       >
                         {c.profile_image_url ? (
-                          <img src={c.profile_image_url} alt={c.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                          <img src={c.profile_image_url} alt={c.username} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                         ) : (
-                          <span style={{ ...MONO, fontSize: 7, color: "white", textTransform: "uppercase" }}>
+                          <span style={{ ...MONO, fontSize: 7, color: "white", textTransform: "uppercase", lineHeight: 1 }}>
                             {c.username?.[0] ?? "?"}
                           </span>
                         )}
                       </div>
-                      <div>
-                        <span style={{ ...MONO, fontSize: 8, color: "white", marginRight: 6 }}>@{c.username}</span>
+                      <div style={{ lineHeight: 1.1 }}>
+                        <span style={{ ...MONO, fontSize: 8, color: "white", marginRight: 5 }}>@{c.username}</span>
                         <span style={{ ...MONO, fontSize: 8, color: "rgba(255,255,255,0.6)" }}>{c.content}</span>
                       </div>
                     </div>
