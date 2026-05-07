@@ -34,7 +34,7 @@ async function compressImage(file: File): Promise<File> {
   });
 }
 
-const MONO: React.CSSProperties = { fontFamily: "'IBM Plex Mono', monospace" };
+const MONO: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 
 export default function Preferences() {
   const router = useRouter();
@@ -128,11 +128,11 @@ export default function Preferences() {
         <div style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: '#FF0000', flexShrink: 0, marginRight: 10 }} />
         <button
           onClick={() => router.back()}
-          style={{ ...MONO, fontSize: 11, color: 'white', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+          style={{ ...MONO, fontSize: 11, color: 'white', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textTransform: 'uppercase', letterSpacing: '0.06em' }}
         >
           ← Back
         </button>
-        <span style={{ ...MONO, fontSize: 11, color: 'white', position: 'absolute', left: '50%', transform: 'translateX(-50%)', letterSpacing: '0.05em' }}>
+        <span style={{ ...MONO, fontSize: 11, color: 'white', position: 'absolute', left: '50%', transform: 'translateX(-50%)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
           SETTINGS
         </span>
       </div>
@@ -149,7 +149,7 @@ export default function Preferences() {
               border: 'none', cursor: 'pointer', padding: '18px 20px', textAlign: 'left',
             }}
           >
-            <span style={{ ...MONO, fontSize: 13, color: item.danger ? '#FF0000' : photoError && item.label === photoLabel ? '#FF0000' : 'white' }}>
+            <span style={{ ...MONO, fontSize: 11, color: item.danger ? '#FF0000' : photoError && item.label === photoLabel ? '#FF0000' : 'white', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
               {item.label}
             </span>
           </button>

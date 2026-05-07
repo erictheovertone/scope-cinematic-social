@@ -339,24 +339,24 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
   };
 
   const renderPostingStep = () => {
-    const S: React.CSSProperties = { fontFamily: "'IBM Plex Mono', monospace" };
+    const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
     return (
       <div className="h-full flex flex-col items-center justify-center gap-4 p-6">
         {mintStatus === 'minting' && (
           <>
             <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#FF0000' }} />
-            <p style={{ ...S, fontSize: 10, color: 'white', textAlign: 'center', lineHeight: 1.6 }}>
+            <p style={{ ...SKB, fontSize: 10, color: 'white', textAlign: 'center', lineHeight: 1.6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
               Your post is being minted on Base...
             </p>
           </>
         )}
         {mintStatus === 'minted' && (
-          <p style={{ ...S, fontSize: 10, color: 'white', textAlign: 'center' }}>
+          <p style={{ ...SKB, fontSize: 10, color: 'white', textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
             Posted &amp; minted ✓
           </p>
         )}
         {mintStatus === 'mint-failed' && (
-          <p style={{ ...S, fontSize: 10, color: 'rgba(255,255,255,0.6)', textAlign: 'center', lineHeight: 1.6 }}>
+          <p style={{ ...SKB, fontSize: 10, color: 'rgba(255,255,255,0.6)', textAlign: 'center', lineHeight: 1.6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
             Posted (mint failed — retry later)
           </p>
         )}
@@ -368,11 +368,11 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
     <div className="h-full flex flex-col">
       <div className="flex items-center justify-between p-4 border-b border-[#333333]">
         <button onClick={onClose} className="text-white text-lg">×</button>
-        <h2 className="font-['IBM_Plex_Mono'] font-medium text-white text-[16px]">New Post</h2>
+        <h2 style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 16, color: 'white', textTransform: 'uppercase', letterSpacing: '0.04em', margin: 0 }}>New Post</h2>
         <button
           onClick={() => setStep('edit')}
           disabled={selectedMedia.length === 0}
-          className={`font-['IBM_Plex_Mono'] font-medium text-[14px] ${selectedMedia.length > 0 ? 'text-[#FF0000] cursor-pointer' : 'text-[#666666]'}`}
+          style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: '0.04em', background: 'none', border: 'none', cursor: selectedMedia.length > 0 ? 'pointer' : 'default', color: selectedMedia.length > 0 ? '#FF0000' : '#666666' }}
         >
           Next
         </button>
@@ -381,14 +381,14 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
       <div className="flex-1 p-4 flex flex-col">
         {/* Optimising indicator */}
         {isOptimising && (
-          <p className="font-['IBM_Plex_Mono'] text-[#888888] text-[11px] mb-3 text-center">
+          <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 11, color: '#888888', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 12, textAlign: 'center' }}>
             Optimising…
           </p>
         )}
 
         {/* Video error */}
         {videoError && (
-          <p className="font-['IBM_Plex_Mono'] text-[#FF0000] text-[11px] mb-3">
+          <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 11, color: '#FF0000', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 12 }}>
             {videoError}
           </p>
         )}
@@ -400,15 +400,15 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
                 <path d="M21 19V5C21 3.9 20.1 3 19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19ZM8.5 13.5L11 16.51L14.5 12L19 18H5L8.5 13.5Z" fill="#666666"/>
               </svg>
             </div>
-            <p className="font-['IBM_Plex_Mono'] font-medium text-[#666666] text-[14px] mb-2 text-center">
+            <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 11, color: '#666666', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 8, textAlign: 'center' }}>
               Select photos and videos from your library
             </p>
-            <p className="font-['IBM_Plex_Mono'] text-[#444444] text-[10px] mb-6 text-center">
+            <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 9, color: '#444444', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 24, textAlign: 'center' }}>
               Videos up to 50MB · MP4 recommended
             </p>
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="bg-[#FF0000] text-white px-6 py-3 rounded-full font-['IBM_Plex_Mono'] font-medium text-[14px] hover:bg-[#CC0000] transition-colors"
+              style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.06em', background: '#FF0000', color: 'white', border: 'none', padding: '12px 24px', cursor: 'pointer' }}
             >
               Choose from Library
             </button>
@@ -439,7 +439,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
                 <span className="text-[#666666] text-2xl">+</span>
               </button>
             </div>
-            <p className="font-['IBM_Plex_Mono'] text-[#444444] text-[10px] text-center">
+            <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 9, color: '#444444', textTransform: 'uppercase', letterSpacing: '0.04em', textAlign: 'center' }}>
               Videos up to 50MB · MP4 recommended
             </p>
             <input ref={fileInputRef} type="file" multiple accept="image/*,video/*" onChange={handleMediaSelect} className="hidden" />
@@ -453,11 +453,11 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
     <div className="h-full flex flex-col">
       <div className="flex items-center justify-between p-4 border-b border-[#333333]">
         <button onClick={() => setStep('media')} className="text-white text-lg">←</button>
-        <h2 className="font-['IBM_Plex_Mono'] font-medium text-white text-[16px]">Edit & Post</h2>
+        <h2 style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 14, color: 'white', textTransform: 'uppercase', letterSpacing: '0.04em', margin: 0 }}>Edit & Post</h2>
         <button
           onClick={() => { setStep('deck'); loadDecksForStep(); }}
           disabled={isUploading}
-          className={`font-['IBM_Plex_Mono'] font-medium text-[14px] ${isUploading ? 'text-[#666666]' : 'text-[#FF0000] cursor-pointer'}`}
+          style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: '0.04em', background: 'none', border: 'none', cursor: isUploading ? 'default' : 'pointer', color: isUploading ? '#666666' : '#FF0000' }}
         >
           Next
         </button>
@@ -484,14 +484,14 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
         </div>
 
         <div className="border-t border-[#333333] p-4">
-          <p className="font-['IBM_Plex_Mono'] font-medium text-[#666666] text-[12px] mb-1">
+          <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 10, color: '#666666', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 4 }}>
             Layout: {selectedLayout.name} ({selectedLayout.aspectRatio})
           </p>
-          <p className="font-['IBM_Plex_Mono'] font-normal text-[#666666] text-[10px]">
+          <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 9, color: '#666666', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
             {selectedMedia.length} media item{selectedMedia.length !== 1 ? 's' : ''} selected
           </p>
           {postError && (
-            <p className="font-['IBM_Plex_Mono'] font-medium text-[#FF0000] text-[11px] mt-2">
+            <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 10, color: '#FF0000', textTransform: 'uppercase', letterSpacing: '0.04em', marginTop: 8 }}>
               {postError}
             </p>
           )}
@@ -501,16 +501,16 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
   );
 
   const renderDeckStep = () => {
-    const MONO_S: React.CSSProperties = { fontFamily: "'IBM Plex Mono', monospace" };
+    const MONO_S: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
     return (
       <div className="h-full flex flex-col">
         <div className="flex items-center justify-between p-4 border-b border-[#1a1a1a]">
           <button onClick={() => setStep('edit')} className="text-white text-lg">←</button>
-          <span style={{ ...MONO_S, fontSize: 13, color: 'white' }}>Add to a deck?</span>
+          <span style={{ ...MONO_S, fontSize: 11, color: 'white', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Add to a deck?</span>
           <button
             onClick={() => handlePost(null)}
             disabled={isUploading}
-            style={{ ...MONO_S, fontSize: 11, color: 'white', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}
+            style={{ ...MONO_S, fontSize: 11, color: 'white', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, textTransform: 'uppercase', letterSpacing: '0.04em' }}
           >
             Skip
           </button>
@@ -524,7 +524,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
           ) : (
             <>
               {userDecks.length === 0 && !showNewDeckForm && (
-                <p style={{ ...MONO_S, fontSize: 8, color: 'rgba(255,255,255,0.35)', padding: '16px' }}>
+                <p style={{ ...MONO_S, fontSize: 8, color: 'rgba(255,255,255,0.35)', padding: '16px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                   No decks yet — create one below
                 </p>
               )}
@@ -546,8 +546,8 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
                     )}
                   </div>
                   <div style={{ textAlign: 'left' }}>
-                    <p style={{ ...MONO_S, fontSize: 9, color: 'white', margin: 0 }}>{deck.title}</p>
-                    <p style={{ ...MONO_S, fontSize: 7, color: 'rgba(255,255,255,0.4)', margin: '2px 0 0' }}>
+                    <p style={{ ...MONO_S, fontSize: 9, color: 'white', margin: 0, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{deck.title}</p>
+                    <p style={{ ...MONO_S, fontSize: 7, color: 'rgba(255,255,255,0.4)', margin: '2px 0 0', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                       {deck.item_count} frames
                     </p>
                   </div>
@@ -562,7 +562,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
                   onClick={() => setShowNewDeckForm(true)}
                   style={{ display: 'block', width: '100%', background: 'transparent', border: 'none', cursor: 'pointer', padding: '14px 16px', textAlign: 'left' }}
                 >
-                  <span style={{ ...MONO_S, fontSize: 9, color: 'rgba(255,255,255,0.5)' }}>+ Create new deck</span>
+                  <span style={{ ...MONO_S, fontSize: 9, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>+ Create new deck</span>
                 </button>
               ) : (
                 <div style={{ padding: '14px 16px' }}>
@@ -584,13 +584,13 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
                     <button
                       onClick={handleCreateDeckAndSelect}
                       disabled={!newDeckTitle.trim() || creatingDeck}
-                      style={{ background: 'transparent', border: 'none', cursor: 'pointer', ...MONO_S, fontSize: 9, color: newDeckTitle.trim() ? 'white' : 'rgba(255,255,255,0.3)', padding: 0 }}
+                      style={{ background: 'transparent', border: 'none', cursor: 'pointer', ...MONO_S, fontSize: 9, color: newDeckTitle.trim() ? 'white' : 'rgba(255,255,255,0.3)', padding: 0, textTransform: 'uppercase', letterSpacing: '0.04em' }}
                     >
                       {creatingDeck ? 'Creating…' : 'Create'}
                     </button>
                     <button
                       onClick={() => { setShowNewDeckForm(false); setNewDeckTitle(''); }}
-                      style={{ background: 'transparent', border: 'none', cursor: 'pointer', ...MONO_S, fontSize: 9, color: 'rgba(255,255,255,0.4)', padding: 0 }}
+                      style={{ background: 'transparent', border: 'none', cursor: 'pointer', ...MONO_S, fontSize: 9, color: 'rgba(255,255,255,0.4)', padding: 0, textTransform: 'uppercase', letterSpacing: '0.04em' }}
                     >
                       Cancel
                     </button>
@@ -614,7 +614,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
                 padding: '8px', cursor: isUploading ? 'default' : 'pointer',
               }}
             >
-              <span style={{ ...MONO_S, fontSize: 11, color: isUploading ? 'rgba(255,255,255,0.4)' : 'white' }}>
+              <span style={{ ...MONO_S, fontSize: 11, color: isUploading ? 'rgba(255,255,255,0.4)' : 'white', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                 {isUploading ? 'Posting…' : 'Skip'}
               </span>
             </button>
@@ -627,7 +627,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
                 padding: '8px',
               }}
             >
-              <span style={{ ...MONO_S, fontSize: 11, color: isUploading || !selectedDeckId ? 'rgba(255,255,255,0.4)' : 'white' }}>
+              <span style={{ ...MONO_S, fontSize: 11, color: isUploading || !selectedDeckId ? 'rgba(255,255,255,0.4)' : 'white', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                 {isUploading ? 'Posting…' : 'Add to deck'}
               </span>
             </button>

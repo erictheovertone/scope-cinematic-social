@@ -115,21 +115,77 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
         </div>
 
         {/* Header */}
-        <p style={{ ...BOLD, fontSize: 10, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.15em', margin: '0 0 24px' }}>
-          SCOPE BADGES
-        </p>
+        <img
+          src="/badges-on-scope-logo.png"
+          alt="Badges on Scope"
+          style={{ height: 96, display: 'block', margin: '0 auto 55px' }}
+        />
 
         {/* Tier list */}
         {tiers.map((tier, i) => (
           <div key={tier.key}>
             <div onClick={() => { onClose(); router.push(`/badge/${tier.key}`); }} style={{ display: 'flex', gap: 16, marginBottom: 24, alignItems: 'flex-start', cursor: 'pointer' }}>
-              <div style={{ position: 'relative', flexShrink: 0 }}>
-                <img src={tier.img} style={{ width: tier.size, height: tier.size, display: 'block', marginTop: 2 }} alt={tier.label} />
+              <div style={{
+                perspective: 300,
+                perspectiveOrigin: 'center center',
+                flexShrink: 0,
+                marginTop: 2,
+                position: 'relative',
+                width: tier.size,
+                height: tier.size,
+              }}>
+                {/* Glow */}
+                <div style={{
+                  position: 'absolute',
+                  inset: -8,
+                  borderRadius: '50%',
+                  background: `radial-gradient(circle, ${tier.color}44 0%, transparent 70%)`,
+                  animation: `glowPulse 2.5s ease-in-out ${i * 0.4}s infinite`,
+                  pointerEvents: 'none',
+                }} />
+                {/* 3D coin */}
+                <div style={{
+                  width: '100%',
+                  height: '100%',
+                  position: 'relative',
+                  transformStyle: 'preserve-3d',
+                  animation: `coinFlip 6s ease-in-out ${i * 0.8}s infinite`,
+                }}>
+                  <img
+                    src={tier.img}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      display: 'block',
+                      position: 'absolute',
+                      backfaceVisibility: 'hidden',
+                      filter: `drop-shadow(0 0 6px ${tier.color}88)`,
+                      borderRadius: '50%',
+                    }}
+                    alt={tier.label}
+                  />
+                  {/* Back face — same image mirrored */}
+                  <img
+                    src={tier.img}
+                    alt=""
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      display: 'block',
+                      position: 'absolute',
+                      backfaceVisibility: 'hidden',
+                      transform: 'rotateY(180deg)',
+                      filter: `drop-shadow(0 0 6px ${tier.color}88)`,
+                      borderRadius: '50%',
+                    }}
+                  />
+                </div>
                 {currentTier === tier.key && (
                   <div style={{
                     position: 'absolute', top: -3, right: -3,
                     width: 6, height: 6, borderRadius: '50%',
                     backgroundColor: '#FF0000',
+                    zIndex: 2,
                   }} />
                 )}
               </div>
@@ -140,7 +196,7 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
                     <span style={{ ...REG, fontSize: 8, color: 'rgba(255,255,255,0.4)', marginLeft: 8 }}>· YOUR TIER</span>
                   )}
                 </p>
-                <p style={{ ...REG, fontSize: 11, color: 'rgba(255,255,255,0.65)', lineHeight: 1.6, margin: '0 0 6px' }}>
+                <p style={{ ...REG, fontSize: 11, color: 'rgba(255,255,255,0.65)', lineHeight: 1.3, margin: '0 0 6px' }}>
                   {tier.description}
                 </p>
                 <button
@@ -180,6 +236,19 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
           </span>
         </button>
       </div>
+      <style>{`
+        @keyframes coinFlip {
+          0% { transform: rotateY(0deg); }
+          40% { transform: rotateY(160deg); }
+          50% { transform: rotateY(180deg); }
+          90% { transform: rotateY(340deg); }
+          100% { transform: rotateY(360deg); }
+        }
+        @keyframes glowPulse {
+          0%, 100% { opacity: 0.4; }
+          50% { opacity: 1; }
+        }
+      `}</style>
     </>
   );
 }

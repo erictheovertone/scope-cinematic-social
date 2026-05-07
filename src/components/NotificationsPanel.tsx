@@ -9,7 +9,7 @@ import {
   type AppNotification,
 } from "@/lib/userService";
 
-const MONO: React.CSSProperties = { fontFamily: "'IBM Plex Mono', monospace" };
+const MONO: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 
 function timeAgo(iso: string): string {
   const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
@@ -66,13 +66,13 @@ export default function NotificationsPanel({ onClose }: Props) {
       {/* Header */}
       <div className="relative flex items-center px-[4px] pt-[12px] pb-[10px]">
         <button onClick={onClose} className="bg-transparent border-none cursor-pointer p-0">
-          <span style={{ ...MONO, fontSize: 9, color: "white", letterSpacing: "-0.18px" }}>
+          <span style={{ ...MONO, fontSize: 9, color: "white", textTransform: "uppercase", letterSpacing: "0.06em" }}>
             ← Back
           </span>
         </button>
         <span
           className="absolute left-1/2"
-          style={{ ...MONO, fontSize: 9, color: "white", letterSpacing: "-0.18px", transform: "translateX(-50%)" }}
+          style={{ ...MONO, fontSize: 9, color: "white", textTransform: "uppercase", letterSpacing: "0.08em", transform: "translateX(-50%)" }}
         >
           NOTIFICATIONS
         </span>
@@ -86,13 +86,13 @@ export default function NotificationsPanel({ onClose }: Props) {
           </div>
         ) : !user ? (
           <div className="flex items-center justify-center mt-12">
-            <p style={{ ...MONO, fontSize: 9, color: "rgba(255,255,255,0.4)" }}>
+            <p style={{ ...MONO, fontSize: 9, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
               Sign in to see notifications
             </p>
           </div>
         ) : notifications.length === 0 ? (
           <div className="flex items-center justify-center mt-12">
-            <p style={{ ...MONO, fontSize: 9, color: "rgba(255,255,255,0.4)" }}>
+            <p style={{ ...MONO, fontSize: 9, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
               No notifications yet
             </p>
           </div>
@@ -139,10 +139,10 @@ export default function NotificationsPanel({ onClose }: Props) {
 
               {/* Message + timestamp */}
               <div className="flex-1 min-w-0">
-                <p style={{ ...MONO, fontSize: 8, color: "white", letterSpacing: "-0.16px", lineHeight: 1.4, margin: 0, wordBreak: "break-word" }}>
+                <p style={{ ...MONO, fontSize: 8, color: "white", textTransform: "uppercase", letterSpacing: "0.04em", lineHeight: 1.4, margin: 0, wordBreak: "break-word" }}>
                   {n.message}
                 </p>
-                <p style={{ ...MONO, fontSize: 6, color: "rgba(255,255,255,0.4)", letterSpacing: "-0.1px", margin: "2px 0 0" }}>
+                <p style={{ ...MONO, fontSize: 6, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.06em", margin: "2px 0 0" }}>
                   {timeAgo(n.created_at)}
                 </p>
               </div>

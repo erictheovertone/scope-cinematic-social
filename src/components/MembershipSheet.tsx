@@ -24,16 +24,19 @@ const USDC_ABI = [
   },
 ] as const;
 
-type Plan = "monthly_crypto" | "annual_crypto" | "monthly_stripe";
+type Plan = "monthly_crypto" | "annual_crypto" | "monthly_stripe" | "annual_stripe";
 type TxStatus = "idle" | "confirming" | "success" | "error";
 
 interface MembershipSheetProps {
   visible: boolean;
   onClose: () => void;
   onSuccess: (plan: Plan, txHash?: string) => void;
+  isPaidMember?: boolean;
+  paidMemberUntil?: Date | null;
 }
 
-export default function MembershipSheet({ visible, onClose, onSuccess }: MembershipSheetProps) {
+export default function MembershipSheet({ visible, onClose, onSuccess, isPaidMember, paidMemberUntil }: MembershipSheetProps) {
+  const { user } = usePrivy();
   const { wallets } = useWallets();
   const [selectedPlan, setSelectedPlan] = useState<Plan>("monthly_crypto");
   const [txStatus, setTxStatus] = useState<TxStatus>("idle");
@@ -52,7 +55,7 @@ export default function MembershipSheet({ visible, onClose, onSuccess }: Members
       id: "annual_crypto" as Plan,
       label: "ANNUAL",
       price: "$50 USDC",
-      sub: "BEST VALUE · ONE PAYMENT · CRYPTO",
+      sub: "BEST VALUE · CRYPTO",
       amount: "50",
     },
     {
@@ -61,6 +64,13 @@ export default function MembershipSheet({ visible, onClose, onSuccess }: Members
       price: "$5 / MO",
       sub: "AUTO-RENEWS · CARD",
       amount: "5",
+    },
+    {
+      id: "annual_stripe" as Plan,
+      label: "ANNUAL",
+      price: "$50 / YR",
+      sub: "BEST VALUE · CARD",
+      amount: "50",
     },
   ];
 
@@ -100,14 +110,18 @@ export default function MembershipSheet({ visible, onClose, onSuccess }: Members
   };
 
   const handleStripePayment = async () => {
-    // Stripe flow — redirect to Stripe checkout
-    // Will be wired up once Stripe keys are configured
+    if (!user) return;
+    localStorage.setItem('scope_privy_id', user.id);
     const res = await fetch("/api/stripe/create-checkout", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ plan: "monthly_stripe" }),
+      body: JSON.stringify({
+        plan: selectedPlan,
+        privyUserId: user.id,
+      }),
     });
-    const { url } = await res.json();
+    const { url, error } = await res.json();
+    if (error) throw new Error(error);
     if (url) window.location.href = url;
   };
 
@@ -117,24 +131,31 @@ export default function MembershipSheet({ visible, onClose, onSuccess }: Members
     setTxError(null);
 
     try {
-      if (selectedPlan === "monthly_stripe") {
+      if (selectedPlan === "monthly_stripe" || selectedPlan === "annual_stripe") {
         await handleStripePayment();
         return;
       }
 
       const plan = plans.find(p => p.id === selectedPlan)!;
+      console.log("[membership] 1. starting crypto payment, plan:", selectedPlan, "user:", user?.id);
       const hash = await handleCryptoPayment(plan.amount);
-      console.log("[membership] payment confirmed, hash:", hash);
+      console.log("[membership] 2. hash returned:", hash);
 
-      // Notify server to update paid_member_until
-      await fetch("/api/membership/confirm", {
+      console.log("[membership] 3. calling /api/membership/confirm with privyUserId:", user?.id);
+      const confirmRes = await fetch("/api/membership/confirm", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan: selectedPlan, txHash: hash }),
+        body: JSON.stringify({ plan: selectedPlan, txHash: hash, privyUserId: user?.id }),
       });
+      const confirmBody = await confirmRes.json();
+      console.log("[membership] 4. confirm response status:", confirmRes.status, "body:", confirmBody);
 
+      console.log("[membership] 5. calling onSuccess");
       setTxStatus("success");
       onSuccess(selectedPlan, hash as string);
+      setTimeout(() => {
+        window.location.href = `/membership/success?plan=${selectedPlan}`;
+      }, 800);
     } catch (e: any) {
       console.error("[membership] payment failed:", e);
       setTxStatus("error");
@@ -166,6 +187,70 @@ export default function MembershipSheet({ visible, onClose, onSuccess }: Members
         }}
       />
 
+      {/* Floating badge above sheet */}
+      <div style={{
+        position: 'fixed',
+        bottom: 'calc(90vh - 48px)',
+        left: '50%',
+        transform: visible ? 'translateX(-50%) translateY(0)' : 'translateX(-50%) translateY(100px)',
+        transition: 'transform 0.4s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.35s ease',
+        zIndex: 502,
+        opacity: visible ? 1 : 0,
+        pointerEvents: visible ? 'auto' : 'none',
+      }}>
+        <div style={{
+          perspective: 400,
+          perspectiveOrigin: "center center",
+          width: 80,
+          height: 80,
+          position: "relative",
+        }}>
+          <div style={{
+            position: "absolute",
+            inset: -12,
+            borderRadius: "50%",
+            background: "radial-gradient(circle, rgba(255,0,0,0.35) 0%, transparent 70%)",
+            animation: "glowPulse 2.5s ease-in-out infinite",
+            pointerEvents: "none",
+          }} />
+          <div style={{
+            width: "100%",
+            height: "100%",
+            position: "relative",
+            transformStyle: "preserve-3d",
+            animation: "coinFlip 5s ease-in-out infinite",
+          }}>
+            <img
+              src="/scope-pro-icon-aperture.png"
+              alt="Scope Pro"
+              style={{
+                width: "100%",
+                height: "100%",
+                display: "block",
+                position: "absolute",
+                backfaceVisibility: "hidden",
+                filter: "drop-shadow(0 0 12px rgba(255,0,0,0.8))",
+                borderRadius: "50%",
+              }}
+            />
+            <img
+              src="/scope-pro-icon-aperture.png"
+              alt=""
+              style={{
+                width: "100%",
+                height: "100%",
+                display: "block",
+                position: "absolute",
+                backfaceVisibility: "hidden",
+                transform: "rotateY(180deg)",
+                filter: "drop-shadow(0 0 12px rgba(255,0,0,0.8))",
+                borderRadius: "50%",
+              }}
+            />
+          </div>
+        </div>
+      </div>
+
       {/* Sheet */}
       <div style={{
         position: "fixed", bottom: 0, left: 0, right: 0,
@@ -174,12 +259,37 @@ export default function MembershipSheet({ visible, onClose, onSuccess }: Members
         zIndex: 501,
         transform: visible ? "translateY(0)" : "translateY(100%)",
         transition: "transform 0.4s cubic-bezier(0.32, 0.72, 0, 1)",
-        padding: "28px 24px 48px",
+        padding: "32px 24px 48px",
+        maxHeight: "90vh",
+        overflowY: "auto",
       }}>
         {/* Drag handle */}
-        <div style={{ display: "flex", justifyContent: "center", marginBottom: 28 }}>
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: 8 }}>
           <div style={{ width: 36, height: 2, backgroundColor: "rgba(255,255,255,0.12)" }} />
         </div>
+
+        {/* Active member guard */}
+        {isPaidMember && paidMemberUntil && (
+          <div style={{ padding: '20px 0', textAlign: 'center', marginBottom: 16 }}>
+            <div style={{ height: 1, backgroundColor: 'rgba(255,255,255,0.06)', marginBottom: 20 }} />
+            <p style={{ ...BOLD, fontSize: 10, color: '#FF0000', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 8px' }}>
+              ACTIVE MEMBER
+            </p>
+            <p style={{ ...REG, fontSize: 11, color: 'rgba(255,255,255,0.5)', margin: '0 0 4px' }}>
+              Your membership is active until
+            </p>
+            <p style={{ ...BOLD, fontSize: 13, color: 'white', margin: '0 0 16px' }}>
+              {paidMemberUntil.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+            </p>
+            <button
+              onClick={onClose}
+              style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', cursor: 'pointer', padding: '10px 32px' }}
+            >
+              <span style={{ ...BOLD, fontSize: 10, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>CLOSE</span>
+            </button>
+            <div style={{ height: 1, backgroundColor: 'rgba(255,255,255,0.06)', marginTop: 20 }} />
+          </div>
+        )}
 
         {/* Header */}
         <div style={{ marginBottom: 28 }}>
@@ -208,28 +318,27 @@ export default function MembershipSheet({ visible, onClose, onSuccess }: Members
           ))}
         </div>
 
-        {/* Plan selector */}
-        <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
+        {/* Plan selector — 2x2 grid */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 20 }}>
           {plans.map(plan => (
             <button
               key={plan.id}
               onClick={() => setSelectedPlan(plan.id)}
               style={{
-                flex: 1,
-                background: "transparent",
-                border: `1px solid ${selectedPlan === plan.id ? "white" : "rgba(255,255,255,0.15)"}`,
-                padding: "10px 4px",
-                cursor: "pointer",
-                textAlign: "center",
+                background: 'transparent',
+                border: `1px solid ${selectedPlan === plan.id ? 'white' : 'rgba(255,255,255,0.15)'}`,
+                padding: '10px 8px',
+                cursor: 'pointer',
+                textAlign: 'center',
               }}
             >
-              <p style={{ ...BOLD, fontSize: 8, color: selectedPlan === plan.id ? "white" : "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 4px" }}>
+              <p style={{ ...BOLD, fontSize: 8, color: selectedPlan === plan.id ? 'white' : 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 4px' }}>
                 {plan.label}
               </p>
-              <p style={{ ...BOLD, fontSize: 13, color: selectedPlan === plan.id ? "white" : "rgba(255,255,255,0.4)", margin: "0 0 4px" }}>
+              <p style={{ ...BOLD, fontSize: 13, color: selectedPlan === plan.id ? 'white' : 'rgba(255,255,255,0.4)', margin: '0 0 4px' }}>
                 {plan.price}
               </p>
-              <p style={{ ...REG, fontSize: 7, color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.04em", margin: 0 }}>
+              <p style={{ ...REG, fontSize: 7, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.04em', margin: 0 }}>
                 {plan.sub}
               </p>
             </button>
@@ -246,7 +355,7 @@ export default function MembershipSheet({ visible, onClose, onSuccess }: Members
         {/* CTA */}
         <button
           onClick={handleSubscribe}
-          disabled={working || txStatus === "success"}
+          disabled={working || txStatus === "success" || isPaidMember}
           style={{
             width: "100%",
             background: working ? "rgba(255,0,0,0.4)" : "#FF0000",
@@ -264,6 +373,20 @@ export default function MembershipSheet({ visible, onClose, onSuccess }: Members
           CRYPTO PAYMENTS SENT TO SCOPE TREASURY ON BASE. CARD PAYMENTS PROCESSED BY STRIPE.
         </p>
       </div>
+
+      <style>{`
+        @keyframes coinFlip {
+          0% { transform: rotateY(0deg); }
+          40% { transform: rotateY(160deg); }
+          50% { transform: rotateY(180deg); }
+          90% { transform: rotateY(340deg); }
+          100% { transform: rotateY(360deg); }
+        }
+        @keyframes glowPulse {
+          0%, 100% { opacity: 0.4; }
+          50% { opacity: 0.9; }
+        }
+      `}</style>
     </>
   );
 }

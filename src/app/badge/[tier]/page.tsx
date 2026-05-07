@@ -156,7 +156,62 @@ export default function BadgeDetailPage() {
 
       {/* Badge hero */}
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '40px 20px 32px' }}>
-        <img src={detail.img} alt={detail.label} style={{ width: detail.size, height: detail.size, display: 'block', marginBottom: 20 }} />
+        <div style={{
+          perspective: 500,
+          perspectiveOrigin: 'center center',
+          width: detail.size,
+          height: detail.size,
+          marginBottom: 20,
+          position: 'relative',
+        }}>
+          {/* Glow */}
+          <div style={{
+            position: 'absolute',
+            inset: -24,
+            borderRadius: '50%',
+            background: `radial-gradient(circle, ${detail.color}55 0%, transparent 65%)`,
+            animation: 'glowPulse 2.5s ease-in-out infinite',
+            pointerEvents: 'none',
+          }} />
+          {/* 3D coin wrapper */}
+          <div style={{
+            width: '100%',
+            height: '100%',
+            position: 'relative',
+            transformStyle: 'preserve-3d',
+            animation: 'coinFlip 5s ease-in-out infinite',
+          }}>
+            {/* Front face */}
+            <img
+              src={detail.img}
+              alt={detail.label}
+              style={{
+                width: '100%',
+                height: '100%',
+                display: 'block',
+                position: 'absolute',
+                backfaceVisibility: 'hidden',
+                filter: `drop-shadow(0 0 12px ${detail.color}) drop-shadow(2px 4px 8px rgba(0,0,0,0.8))`,
+                borderRadius: '50%',
+              }}
+            />
+            {/* Back face — same image mirrored */}
+            <img
+              src={detail.img}
+              alt=""
+              style={{
+                width: '100%',
+                height: '100%',
+                display: 'block',
+                position: 'absolute',
+                backfaceVisibility: 'hidden',
+                transform: 'rotateY(180deg)',
+                filter: `drop-shadow(0 0 12px ${detail.color}) drop-shadow(2px 4px 8px rgba(0,0,0,0.8))`,
+                borderRadius: '50%',
+              }}
+            />
+          </div>
+        </div>
         <p style={{ ...BOLD, fontSize: 18, color: detail.color, textTransform: 'uppercase', letterSpacing: '-0.02em', margin: '0 0 12px', textAlign: 'center' }}>
           {detail.label}
         </p>
@@ -174,7 +229,7 @@ export default function BadgeDetailPage() {
           <p style={{ ...BOLD, fontSize: 9, color: detail.color, textTransform: 'uppercase', letterSpacing: '0.15em', margin: '0 0 10px' }}>
             {section.title}
           </p>
-          <p style={{ ...REG, fontSize: 13, color: 'rgba(255,255,255,0.75)', lineHeight: 1.7, margin: 0 }}>
+          <p style={{ ...REG, fontSize: 13, color: 'rgba(255,255,255,0.75)', lineHeight: 1.4, margin: 0 }}>
             {section.body}
           </p>
           {i < detail.sections.length - 1 && (
@@ -187,7 +242,7 @@ export default function BadgeDetailPage() {
       {(tier === 'free' || tier === 'pro') && (
         <div style={{ padding: '0 20px' }}>
           <button
-            onClick={() => router.back()}
+            onClick={() => router.push('/profile?showMembership=true')}
             style={{ width: '100%', background: '#FF0000', border: 'none', cursor: 'pointer', padding: '14px 0' }}
           >
             <span style={{ ...BOLD, fontSize: 12, color: 'white', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
@@ -196,6 +251,20 @@ export default function BadgeDetailPage() {
           </button>
         </div>
       )}
+
+      <style>{`
+        @keyframes coinFlip {
+          0% { transform: rotateY(0deg); }
+          40% { transform: rotateY(160deg); }
+          50% { transform: rotateY(180deg); }
+          90% { transform: rotateY(340deg); }
+          100% { transform: rotateY(360deg); }
+        }
+        @keyframes glowPulse {
+          0%, 100% { opacity: 0.4; }
+          50% { opacity: 0.9; }
+        }
+      `}</style>
     </div>
   );
 }

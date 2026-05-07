@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
 import { saveProfile, uploadImage, getUserByPrivyId, getProfileByUsername, syncUserWithSupabase } from "@/lib/userService";
 
+const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
+
 async function compressImage(file: File): Promise<File> {
   return new Promise((resolve) => {
     const MAX = 1920, QUALITY = 0.82;
@@ -160,8 +162,8 @@ export default function ProfileSetup() {
 
       {/* Title */}
       <div className="absolute left-[50px] top-[75px]">
-        <p className="font-['IBM_Plex_Mono'] font-medium text-white text-[11px] tracking-[-0.22px] leading-[140%]">Profile</p>
-        <p className="font-['IBM_Plex_Mono'] font-medium text-white text-[11px] tracking-[-0.22px] leading-[140%]">Setup</p>
+        <p style={{ ...SKB, fontSize: 11, color: 'white', textTransform: 'uppercase', letterSpacing: '0.06em', lineHeight: '140%', margin: 0 }}>Profile</p>
+        <p style={{ ...SKB, fontSize: 11, color: 'white', textTransform: 'uppercase', letterSpacing: '0.06em', lineHeight: '140%', margin: 0 }}>Setup</p>
       </div>
 
       {/* Profile Picture Upload */}
@@ -183,12 +185,12 @@ export default function ProfileSetup() {
           type="text"
           value={displayName}
           onChange={(e) => setDisplayName(e.target.value)}
-          className="w-full h-full bg-transparent text-white outline-none px-[5px] font-['IBM_Plex_Mono'] font-medium text-[9px] tracking-[-0.18px] leading-[140%]"
+          className="w-full h-full bg-transparent text-white outline-none px-[5px] font-['SK-Modernist'] font-bold text-[9px] leading-[140%]"
           style={{ color: 'white' }}
         />
         {!displayName && (
           <div className="absolute left-[5px] top-[14.5px] transform -translate-y-1/2 pointer-events-none">
-            <span className="font-['IBM_Plex_Mono'] font-medium text-[#818181] text-[9px] tracking-[-0.18px] leading-[140%]">Name</span>
+            <span style={{ ...SKB, fontSize: 9, color: '#818181', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Name</span>
           </div>
         )}
       </div>
@@ -196,25 +198,25 @@ export default function ProfileSetup() {
       {/* Username Input */}
       <div className="absolute left-[50px] top-[365px] w-[275px] h-[45px] border border-white bg-transparent">
         <div className="relative w-full h-full flex items-center">
-          <span className="absolute left-[5px] font-['IBM_Plex_Mono'] font-medium text-white text-[9px] tracking-[-0.18px] leading-[140%] pointer-events-none z-10">@</span>
+          <span className="absolute left-[5px] pointer-events-none z-10" style={{ ...SKB, fontSize: 9, color: 'white' }}>@</span>
           <input
             type="text"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            className="w-full h-full bg-transparent text-white outline-none pl-[15px] pr-[5px] font-['IBM_Plex_Mono'] font-medium text-[9px] tracking-[-0.18px] leading-[140%]"
+            className="w-full h-full bg-transparent text-white outline-none pl-[15px] pr-[5px] font-['SK-Modernist'] font-bold text-[9px] leading-[140%]"
             style={{ color: 'white' }}
           />
         </div>
         {!username && (
           <div className="absolute left-[15px] top-[14.5px] transform -translate-y-1/2 pointer-events-none">
-            <span className="font-['IBM_Plex_Mono'] font-medium text-[#818181] text-[9px] tracking-[-0.18px] leading-[140%]">Username</span>
+            <span style={{ ...SKB, fontSize: 9, color: '#818181', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Username</span>
           </div>
         )}
       </div>
 
       {usernameError && (
         <div className="absolute left-[50px] top-[412px]">
-          <span className="font-['IBM_Plex_Mono'] font-medium text-[#FF0000] text-[9px] tracking-[-0.18px] leading-[140%]">
+          <span style={{ ...SKB, fontSize: 9, color: '#FF0000', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
             {usernameError}
           </span>
         </div>
@@ -226,12 +228,12 @@ export default function ProfileSetup() {
           value={bio}
           onChange={(e) => setBio(e.target.value)}
           maxLength={160}
-          className="w-full h-full bg-transparent text-white outline-none px-[5px] py-[14.5px] font-['IBM_Plex_Mono'] font-medium text-[9px] tracking-[-0.18px] leading-[140%] resize-none"
+          className="w-full h-full bg-transparent text-white outline-none px-[5px] py-[14.5px] font-['SK-Modernist'] font-bold text-[9px] leading-[140%] resize-none"
           style={{ color: 'white' }}
         />
         {!bio && (
           <div className="absolute left-[5px] top-[14.5px] transform -translate-y-1/2 pointer-events-none">
-            <span className="font-['IBM_Plex_Mono'] font-medium text-[#818181] text-[9px] tracking-[-0.18px] leading-[140%]">Bio [ 160 character max ]</span>
+            <span style={{ ...SKB, fontSize: 9, color: '#818181', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Bio [ 160 character max ]</span>
           </div>
         )}
       </div>
@@ -239,7 +241,7 @@ export default function ProfileSetup() {
       {/* Error message */}
       {error && (
         <div className="absolute left-[50px] top-[590px] w-[275px]">
-          <p className="font-['IBM_Plex_Mono'] font-medium text-[#FF0000] text-[9px] tracking-[-0.18px] leading-[140%]">
+          <p style={{ ...SKB, fontSize: 9, color: '#FF0000', textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>
             {error}
           </p>
         </div>
@@ -248,14 +250,14 @@ export default function ProfileSetup() {
       {/* Upload status */}
       {imageUploading && (
         <div className="absolute left-[50px] top-[620px] w-[275px]">
-          <p className="font-['IBM_Plex_Mono'] font-medium text-white text-[9px] tracking-[-0.18px] leading-[140%]">
+          <p style={{ ...SKB, fontSize: 9, color: 'white', textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>
             Uploading photo…
           </p>
         </div>
       )}
       {imageUploadError && (
         <div className="absolute left-[50px] top-[620px] w-[275px]">
-          <p className="font-['IBM_Plex_Mono'] font-medium text-[#FF0000] text-[9px] tracking-[-0.18px] leading-[140%]">
+          <p style={{ ...SKB, fontSize: 9, color: '#FF0000', textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>
             {imageUploadError}
           </p>
         </div>
@@ -268,7 +270,7 @@ export default function ProfileSetup() {
           disabled={isLoading || imageUploading || !!imageUploadError}
           className="w-full h-full border border-white bg-black text-white flex items-center justify-center cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <span className="font-['IBM_Plex_Mono'] font-medium text-[11px] tracking-[-0.22px] leading-[140%]">
+          <span style={{ ...SKB, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
             {isLoading ? 'Saving...' : 'Continue'}
           </span>
         </button>

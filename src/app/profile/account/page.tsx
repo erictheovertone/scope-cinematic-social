@@ -5,13 +5,14 @@ import { useRouter } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
 import { getUserByPrivyId, getProfile, saveProfile } from "@/lib/userService";
 
-const MONO: React.CSSProperties = { fontFamily: "'IBM Plex Mono', monospace" };
+const MONO: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const INPUT: React.CSSProperties = {
   width: '100%',
   background: 'transparent',
   border: '1px solid rgba(255,255,255,0.8)',
   color: '#fff',
-  fontFamily: "'IBM Plex Mono', monospace",
+  fontFamily: "'SK-Modernist', sans-serif",
+  fontWeight: 700,
   fontSize: 13,
   padding: '10px 12px',
   outline: 'none',
@@ -88,11 +89,11 @@ export default function AccountSettings() {
         <div style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: '#FF0000', flexShrink: 0, marginRight: 10 }} />
         <button
           onClick={() => router.back()}
-          style={{ ...MONO, fontSize: 11, color: 'white', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+          style={{ ...MONO, fontSize: 11, color: 'white', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textTransform: 'uppercase', letterSpacing: '0.06em' }}
         >
           ← Back
         </button>
-        <span style={{ ...MONO, fontSize: 11, color: 'white', position: 'absolute', left: '50%', transform: 'translateX(-50%)', letterSpacing: '0.05em' }}>
+        <span style={{ ...MONO, fontSize: 11, color: 'white', position: 'absolute', left: '50%', transform: 'translateX(-50%)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
           EDIT PROFILE
         </span>
       </div>
@@ -147,20 +148,22 @@ export default function AccountSettings() {
         </div>
 
         {error && (
-          <p style={{ ...MONO, fontSize: 11, color: '#FF0000', marginBottom: 12 }}>{error}</p>
+          <p style={{ ...MONO, fontSize: 11, color: '#FF0000', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{error}</p>
         )}
 
         <button
           onClick={handleSave}
           disabled={saving || saved}
           style={{
-            ...MONO, fontSize: 13,
+            ...MONO, fontSize: 12,
             color: saved ? '#4CAF50' : 'white',
             background: 'transparent',
             border: `1px solid ${saved ? '#4CAF50' : 'white'}`,
             padding: '12px',
             width: '100%',
             cursor: saving || saved ? 'default' : 'pointer',
+            textTransform: 'uppercase',
+            letterSpacing: '0.06em',
           }}
         >
           {saving ? 'Saving…' : saved ? 'Profile updated' : 'Save'}

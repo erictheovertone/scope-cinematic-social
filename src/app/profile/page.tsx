@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
 import { getUserByPrivyId, getProfile, getFollowerCount, getFollowingCount, getUserDecks, createDeck, getProfileLinks, type Deck, type ProfileLink } from "@/lib/userService";
 import LinksSheet from "@/components/LinksSheet";
@@ -11,6 +11,7 @@ import FollowListModal from "@/components/FollowListModal";
 import TheaterCarousel from "@/components/TheaterCarousel";
 import ProfilePostViewer from "@/components/ProfilePostViewer";
 import BadgeExplainerSheet from "@/components/BadgeExplainerSheet";
+import MembershipSheet from "@/components/MembershipSheet";
 import BottomToolbar from "@/components/BottomToolbar";
 
 const COLLAGE_ASPECTS = ['aspect-video', 'aspect-[2.4/1]', 'aspect-[4/3]', 'aspect-square'];
@@ -52,6 +53,7 @@ const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fon
 export default function Profile() {
   const { user } = usePrivy();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isDataOpen, setIsDataOpen] = useState(false);
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [spinning, setSpinning] = useState(false);
@@ -71,11 +73,11 @@ export default function Profile() {
   const [activeTab, setActiveTab] = useState<'main' | 'collected' | 'decks' | 'theatre'>('main');
   const [userPosts, setUserPosts] = useState<any[]>([]);
   const [analytics, setAnalytics] = useState({
-    collectors: 1425,
+    collectors: 0,
     totalPosts: 0,
     followers: 0,
     following: 0,
-    portfolioMc: 569900,
+    portfolioMc: 0,
   });
   const [showFollowersModal, setShowFollowersModal] = useState(false);
   const [showFollowingModal, setShowFollowingModal] = useState(false);
@@ -96,6 +98,7 @@ export default function Profile() {
   const [foundingMemberNumber, setFoundingMemberNumber] = useState<number | null>(null);
   const [paidMemberUntil, setPaidMemberUntil] = useState<Date | null>(null);
   const [showMembershipSheet, setShowMembershipSheet] = useState(false);
+  const [badgeJustUnlocked, setBadgeJustUnlocked] = useState(false);
   const [gridScrollY, setGridScrollY] = useState(0);
   const headerOpacity = Math.max(0, 1 - gridScrollY / 80);
   const gridTop = Math.max(30, 140 - gridScrollY);
@@ -150,6 +153,30 @@ export default function Profile() {
     };
     loadData();
   }, [user]);
+
+  useEffect(() => {
+    if (searchParams?.get('showMembership') === 'true') {
+      setShowMembershipSheet(true);
+    }
+    if (searchParams?.get('upgraded') === 'true') {
+      setBadgeJustUnlocked(true);
+      setTimeout(() => setBadgeJustUnlocked(false), 3000);
+      setTimeout(() => {
+        if (user) {
+          getUserByPrivyId(user.id).then(async (supabaseUser) => {
+            if (supabaseUser) {
+              const profile = await getProfile(supabaseUser.id) as any;
+              if (profile) {
+                const memberUntil = profile.paid_member_until ? new Date(profile.paid_member_until) : null;
+                const isActiveMember = memberUntil ? memberUntil > new Date() : false;
+                setIsPaidMember(isActiveMember);
+              }
+            }
+          });
+        }
+      }, 1500);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (!user || showCreatePost) return;
@@ -210,7 +237,12 @@ export default function Profile() {
           <div style={{ position: 'absolute', right: 0, top: 0, width: 1, height: '100%', backgroundColor: '#C9A84C', zIndex: 2 }} />
         )}
         {isPaidMember && !isTopCollector && !isFoundingMember && (
-          <div style={{ position: 'absolute', right: 0, top: 0, width: 1, height: '100%', backgroundColor: '#FF0000', zIndex: 2 }} />
+          <div style={{
+            position: 'absolute', right: 0, top: 0, width: 1, height: '100%',
+            backgroundColor: '#FF0000',
+            zIndex: 2,
+            animation: badgeJustUnlocked ? 'stripeShine 1.5s ease forwards' : 'none',
+          }} />
         )}
         {isInHouseCreator && !isPaidMember && !isTopCollector && !isFoundingMember && (
           <div style={{ position: 'absolute', right: 0, top: 0, width: 1, height: '100%', backgroundColor: 'rgba(255,255,255,0.4)', zIndex: 2 }} />
@@ -226,21 +258,37 @@ export default function Profile() {
           else if (isInHouseCreator) { src = '/in-house-creator-logo-grey.png'; size = 21; }
           else { src = '/free-tier-aperture-logo-red.png'; size = 21; }
           return (
-            <img
-              src={src}
-              alt="Badge"
-              onClick={(e) => { e.stopPropagation(); setShowBadgeSheet(true); }}
-              style={{
-                position: 'absolute',
-                top: -10,
-                left: -10,
-                width: size,
-                height: size,
-                zIndex: 10,
-                cursor: 'pointer',
-                display: 'block',
-              }}
-            />
+            <>
+              <img
+                src={src}
+                alt="Badge"
+                onClick={(e) => { e.stopPropagation(); setShowBadgeSheet(true); }}
+                style={{
+                  position: 'absolute',
+                  top: -10,
+                  left: -10,
+                  width: size,
+                  height: size,
+                  zIndex: 10,
+                  cursor: 'pointer',
+                  display: 'block',
+                }}
+              />
+              {badgeJustUnlocked && (
+                <div style={{
+                  position: 'absolute',
+                  top: -10,
+                  left: -10,
+                  width: '140%',
+                  height: '140%',
+                  borderRadius: '50%',
+                  background: 'radial-gradient(circle, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.3) 30%, transparent 70%)',
+                  animation: 'badgeFlare 1.8s ease forwards',
+                  pointerEvents: 'none',
+                  zIndex: 11,
+                }} />
+              )}
+            </>
           );
         })()}
       </div>
@@ -311,11 +359,11 @@ export default function Profile() {
       {isDataOpen && (
         <div className="absolute" style={{ right: '4px', top: '30px', backgroundColor: 'rgba(0,0,0,0.85)', borderRadius: 0, padding: 8 }}>
           {([
-            ['Collectors',   fmt(analytics.collectors),   null],
-            ['Total Posts',  fmt(analytics.totalPosts),   null],
-            ['Followers',    fmt(analytics.followers),    () => setShowFollowersModal(true)],
-            ['Following',    fmt(analytics.following),    () => setShowFollowingModal(true)],
-            ['Portfolio MC', `$${fmt(analytics.portfolioMc)}`, null],
+            ['COLLECTORS',   fmt(analytics.collectors),   null],
+            ['TOTAL POSTS',  fmt(analytics.totalPosts),   null],
+            ['FOLLOWERS',    fmt(analytics.followers),    () => setShowFollowersModal(true)],
+            ['FOLLOWING',    fmt(analytics.following),    () => setShowFollowingModal(true)],
+            ['PORTFOLIO MC', `$${fmt(analytics.portfolioMc)}`, null],
           ] as [string, string, (() => void) | null][]).map(([label, value, onClick], i) => (
             <div
               key={label}
@@ -413,7 +461,7 @@ export default function Profile() {
                 }, 600);
               }}
             >
-              <p style={{ fontFamily: 'IBM Plex Mono', fontSize: '11px', color: 'white', margin: 0, lineHeight: '1.4' }}>
+              <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: '11px', color: 'white', margin: 0, lineHeight: '1.4', textTransform: 'uppercase' }}>
                 Create<br/>your<br/>first<br/>post
               </p>
               <div style={{ position: 'relative', width: '48px', height: '48px', flexShrink: 0, animation: spinning ? 'spin 0.6s cubic-bezier(0.4, 0, 0.2, 1)' : 'none' }}>
@@ -641,6 +689,19 @@ export default function Profile() {
           isTopCollector,
           isFoundingMember,
           foundingMemberNumber,
+        }}
+      />
+
+      <MembershipSheet
+        visible={showMembershipSheet}
+        onClose={() => setShowMembershipSheet(false)}
+        isPaidMember={isPaidMember}
+        paidMemberUntil={paidMemberUntil}
+        onSuccess={(plan, txHash) => {
+          setShowMembershipSheet(false);
+          setIsPaidMember(true);
+          const foundingParam = isFoundingMember ? `&founding=true&founding_number=${foundingMemberNumber || 1}` : '';
+          window.location.href = `/membership/success?plan=${plan}${foundingParam}`;
         }}
       />
 
