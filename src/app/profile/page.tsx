@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
 import { getUserByPrivyId, getProfile, getFollowerCount, getFollowingCount, getUserDecks, createDeck, getProfileLinks, type Deck, type ProfileLink } from "@/lib/userService";
@@ -10,6 +10,8 @@ import CreatePostFlow from "@/components/CreatePostFlow";
 import FollowListModal from "@/components/FollowListModal";
 import TheaterCarousel from "@/components/TheaterCarousel";
 import ProfilePostViewer from "@/components/ProfilePostViewer";
+import BadgeExplainerSheet from "@/components/BadgeExplainerSheet";
+import BottomToolbar from "@/components/BottomToolbar";
 
 const COLLAGE_ASPECTS = ['aspect-video', 'aspect-[2.4/1]', 'aspect-[4/3]', 'aspect-square'];
 
@@ -44,6 +46,8 @@ function getPostAspect(layoutId: string, index: number): string {
 }
 
 const MONO: React.CSSProperties = { fontFamily: "'IBM Plex Mono', monospace" };
+const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
+const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
 
 export default function Profile() {
   const { user } = usePrivy();
@@ -64,7 +68,7 @@ export default function Profile() {
   });
   const [userLayoutId, setUserLayoutId] = useState('1x-super-wide');
   const [layoutLoaded, setLayoutLoaded] = useState(false);
-  const [activeTab, setActiveTab] = useState<'main' | 'collected'>('main');
+  const [activeTab, setActiveTab] = useState<'main' | 'collected' | 'decks' | 'theatre'>('main');
   const [userPosts, setUserPosts] = useState<any[]>([]);
   const [analytics, setAnalytics] = useState({
     collectors: 1425,
@@ -84,6 +88,19 @@ export default function Profile() {
   const [creatingDeck, setCreatingDeck] = useState(false);
   const [showLinks, setShowLinks] = useState(false);
   const [profileLinks, setProfileLinks] = useState<ProfileLink[]>([]);
+  const [showBadgeSheet, setShowBadgeSheet] = useState(false);
+  const [isPaidMember, setIsPaidMember] = useState(false);
+  const [isTopCollector, setIsTopCollector] = useState(false);
+  const [isInHouseCreator, setIsInHouseCreator] = useState(false);
+  const [isFoundingMember, setIsFoundingMember] = useState(false);
+  const [foundingMemberNumber, setFoundingMemberNumber] = useState<number | null>(null);
+  const [paidMemberUntil, setPaidMemberUntil] = useState<Date | null>(null);
+  const [showMembershipSheet, setShowMembershipSheet] = useState(false);
+  const [gridScrollY, setGridScrollY] = useState(0);
+  const headerOpacity = Math.max(0, 1 - gridScrollY / 80);
+  const gridTop = Math.max(30, 140 - gridScrollY);
+  const tabRowOffset = Math.min(gridScrollY, 101);
+  const gridScrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -102,6 +119,15 @@ export default function Profile() {
               websiteUrl: profile.website_url || "",
             });
             if (profile.grid_layout) setUserLayoutId(profile.grid_layout);
+            const memberUntil = profile.paid_member_until ? new Date(profile.paid_member_until) : null;
+            const isActiveMember = memberUntil ? memberUntil > new Date() : false;
+            setIsPaidMember(isActiveMember);
+            setPaidMemberUntil(memberUntil);
+            setIsTopCollector(profile.is_top_collector || false);
+            setIsInHouseCreator(profile.is_in_house_creator || false);
+            setIsFoundingMember(profile.is_founding_member || false);
+            setFoundingMemberNumber(profile.founding_member_number || null);
+            console.log('[profile] paid_member_until:', profile.paid_member_until, 'isActiveMember:', isActiveMember);
           }
           getProfileLinks(user.id).then(setProfileLinks).catch(() => {});
         }
@@ -158,84 +184,132 @@ export default function Profile() {
   return (
     <div className="bg-black relative w-full max-w-[375px] min-h-screen mx-auto pb-[60px]">
 
-      {/* Red dot — opens Theater Carousel */}
-      <div
-        className="absolute cursor-pointer"
-        onClick={() => setShowTheater(true)}
-        style={{ left: 10, top: 10, width: 11, height: 11, padding: 0, zIndex: 10 }}
-      >
-        <div className="w-[11px] h-[11px] bg-[#FF0000] rounded-full" />
-      </div>
+      {/* PFP container — left:11px, top:11px, 75×75px */}
+      <div style={{ position: 'absolute', left: 11, top: 11, width: 75, height: 75, opacity: headerOpacity, pointerEvents: headerOpacity < 0.1 ? 'none' : 'auto' }}>
 
-      {/* Avatar — x=4, y=35, 80×80 */}
-      <div className="absolute left-[4px] top-[35px] w-[80px] h-[80px] overflow-hidden bg-[#222]">
-        {userProfile.profileImage ? (
-          <img src={userProfile.profileImage} alt="Profile" className="w-full h-full object-cover" />
-        ) : (
-          <div className="w-full h-full bg-[#222]" />
+        {/* PFP image — fills container exactly */}
+        <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', zIndex: 1 }}>
+          {userProfile.profileImage ? (
+            <img src={userProfile.profileImage} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+          ) : (
+            <div style={{ width: '100%', height: '100%', backgroundColor: '#222' }} />
+          )}
+        </div>
+
+        {/* Right-edge stripe only */}
+        {isFoundingMember && (
+          <div style={{
+            position: 'absolute', right: 0, top: 0, width: 1, height: '100%',
+            background: 'linear-gradient(180deg, #ff0080, #ffe100, #00cfff, #cc00ff)',
+            backgroundSize: '100% 300%',
+            animation: 'holoShift 4s linear infinite',
+            zIndex: 2,
+          }} />
         )}
+        {isTopCollector && !isFoundingMember && (
+          <div style={{ position: 'absolute', right: 0, top: 0, width: 1, height: '100%', backgroundColor: '#C9A84C', zIndex: 2 }} />
+        )}
+        {isPaidMember && !isTopCollector && !isFoundingMember && (
+          <div style={{ position: 'absolute', right: 0, top: 0, width: 1, height: '100%', backgroundColor: '#FF0000', zIndex: 2 }} />
+        )}
+        {isInHouseCreator && !isPaidMember && !isTopCollector && !isFoundingMember && (
+          <div style={{ position: 'absolute', right: 0, top: 0, width: 1, height: '100%', backgroundColor: 'rgba(255,255,255,0.4)', zIndex: 2 }} />
+        )}
+
+        {/* Badge — bleeds outside top-left corner of PFP */}
+        {(() => {
+          let src = '';
+          let size = 21;
+          if (isFoundingMember) { src = '/augmented-member-founding-500-aperture.png'; size = 23.5; }
+          else if (isTopCollector) { src = '/top-1k-collector-aperture-gold.png'; size = 23; }
+          else if (isPaidMember) { src = '/scope-pro-icon-aperture.png'; size = 23; }
+          else if (isInHouseCreator) { src = '/in-house-creator-logo-grey.png'; size = 21; }
+          else { src = '/free-tier-aperture-logo-red.png'; size = 21; }
+          return (
+            <img
+              src={src}
+              alt="Badge"
+              onClick={(e) => { e.stopPropagation(); setShowBadgeSheet(true); }}
+              style={{
+                position: 'absolute',
+                top: -10,
+                left: -10,
+                width: size,
+                height: size,
+                zIndex: 10,
+                cursor: 'pointer',
+                display: 'block',
+              }}
+            />
+          );
+        })()}
       </div>
 
-      {/* Name — left=91, center-y=41.5 */}
-      <div className="absolute left-[91px]" style={{ top: '41.5px', transform: 'translateY(-50%)' }}>
-        <p style={{ ...MONO, fontSize: 11, color: 'white', letterSpacing: '-0.22px', lineHeight: 1.4, margin: 0 }}>
+      {/* Name */}
+      <div style={{ position: 'absolute', left: 100, top: 11, opacity: headerOpacity, pointerEvents: headerOpacity < 0.1 ? 'none' : 'auto' }}>
+        <p style={{ ...SKB, fontSize: 11, color: 'white', letterSpacing: '-0.22px', lineHeight: 1.4, margin: 0, textTransform: 'uppercase' }}>
           {userProfile.displayName}
         </p>
       </div>
 
-      {/* Handle — left=91, center-y=55.5 */}
-      <div className="absolute left-[91px]" style={{ top: '55.5px', transform: 'translateY(-50%)' }}>
-        <p style={{ ...MONO, fontSize: 9, color: 'white', letterSpacing: '-0.18px', lineHeight: 1.4, margin: 0 }}>
+      {/* Username */}
+      <div style={{ position: 'absolute', left: 100, top: 24, display: 'flex', alignItems: 'center', gap: 0, opacity: headerOpacity, pointerEvents: headerOpacity < 0.1 ? 'none' : 'auto' }}>
+        <p style={{ ...SKB, fontSize: 6, color: 'white', letterSpacing: '-0.12px', lineHeight: 1.4, margin: 0, textTransform: 'uppercase' }}>
           {userProfile.username ? `@${userProfile.username}` : ''}
         </p>
       </div>
 
-      {/* Bio — left=90, center-y=108 */}
-      <div className="absolute left-[90px]" style={{ top: '108px', transform: 'translateY(-50%)', maxWidth: '140px' }}>
-        {userProfile.bio.split('\n').map((line, i) => (
-          <p key={i} style={{ ...MONO, fontSize: 6, color: 'white', letterSpacing: '-0.12px', lineHeight: 1.4, margin: 0 }}>
-            {line}
-          </p>
-        ))}
+      {/* Bio */}
+      <div style={{ position: 'absolute', left: 98, top: 13, height: 73, width: 155, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', overflow: 'hidden', paddingBottom: 0, opacity: headerOpacity, pointerEvents: headerOpacity < 0.1 ? 'none' : 'auto' }}>
+        {(() => {
+          const bioTruncated = userProfile.bio.slice(0, 72);
+          const words = bioTruncated.toUpperCase().split(' ');
+          let line1 = '';
+          let line2 = '';
+          for (const word of words) {
+            if (!line1) {
+              line1 = word;
+            } else if ((line1 + ' ' + word).length <= 36) {
+              line1 += ' ' + word;
+            } else if (!line2) {
+              line2 = word;
+            } else if ((line2 + ' ' + word).length <= 36) {
+              line2 += ' ' + word;
+            } else {
+              break;
+            }
+          }
+          const bioLine1 = line1;
+          const bioLine2 = line2;
+          return (
+            <>
+              <p style={{ ...SKR, fontSize: 6, color: 'white', letterSpacing: '-0.12px', lineHeight: 1.4, margin: 0 }}>{bioLine1}</p>
+              {bioLine2 && <p style={{ ...SKR, fontSize: 6, color: 'white', letterSpacing: '-0.12px', lineHeight: 1.4, margin: 0 }}>{bioLine2}</p>}
+            </>
+          );
+        })()}
       </div>
 
-      {/* VIEW DATA — always visible */}
+      {/* VIEW DATA */}
       <button
         className="absolute bg-transparent border-none cursor-pointer"
-        style={{ right: '4px', top: '44px', transform: 'translateY(-50%)', padding: 0 }}
+        style={{ right: '4px', top: '11px', padding: 0, opacity: headerOpacity, pointerEvents: headerOpacity < 0.1 ? 'none' : 'auto' }}
         onClick={() => setIsDataOpen(v => !v)}
       >
-        <span style={{ ...MONO, fontSize: '10px', color: 'white', letterSpacing: '-0.2px', opacity: isDataOpen ? 0.45 : 1, transition: 'opacity 0.15s ease' }}>
+        <span style={{ ...SKB, fontSize: 8, color: 'white', letterSpacing: '-0.2px', opacity: isDataOpen ? 0.45 : 1, transition: 'opacity 0.15s ease', textTransform: 'uppercase' }}>
           VIEW DATA
         </span>
       </button>
 
-      {/* Links arrow — always visible, below VIEW DATA */}
+      {/* Links arrow */}
       <span
         onClick={() => setShowLinks(true)}
-        style={{ position: 'absolute', right: '4px', top: '80px', fontSize: '20px', color: 'white', opacity: 0.8, cursor: 'pointer', fontWeight: 300, lineHeight: 1 }}
+        style={{ position: 'absolute', left: 98, top: 44, fontSize: 24, fontFamily: "'SK-Modernist', sans-serif", fontWeight: 300, color: 'white', opacity: headerOpacity * 0.8, cursor: 'pointer', lineHeight: 1, pointerEvents: headerOpacity < 0.1 ? 'none' : 'auto' }}
       >↗</span>
-
-      {/* Decks icon — visible only when stats panel is closed */}
-      {!isDataOpen && userProfile.username && (
-        <button
-          className="absolute bg-transparent border-none cursor-pointer p-0"
-          style={{ left: '50%', top: '148px', transform: 'translate(-50%, -50%)' }}
-          onClick={() => setShowDecks(true)}
-          aria-label="View decks"
-        >
-          <svg width="21" height="11" viewBox="0 0 21 11" fill="none">
-            <rect x="0"  y="0" width="3" height="11" fill="white" />
-            <rect x="6"  y="0" width="3" height="11" fill="white" />
-            <rect x="12" y="0" width="3" height="11" fill="white" />
-            <rect x="18" y="0" width="3" height="11" fill="white" />
-          </svg>
-        </button>
-      )}
 
       {/* Stats cascade — ripples down one row at a time below VIEW DATA */}
       {isDataOpen && (
-        <div className="absolute" style={{ right: '4px', top: '54px', backgroundColor: 'rgba(0,0,0,0.85)', borderRadius: 0, padding: 8 }}>
+        <div className="absolute" style={{ right: '4px', top: '30px', backgroundColor: 'rgba(0,0,0,0.85)', borderRadius: 0, padding: 8 }}>
           {([
             ['Collectors',   fmt(analytics.collectors),   null],
             ['Total Posts',  fmt(analytics.totalPosts),   null],
@@ -255,39 +329,69 @@ export default function Profile() {
                 cursor: onClick ? 'pointer' : 'default',
               }}
             >
-              <span style={{ ...MONO, fontSize: '7px', color: 'rgba(255,255,255,0.55)', letterSpacing: '-0.1px', lineHeight: 1.7 }}>{label}</span>
-              <span style={{ ...MONO, fontSize: '7px', color: 'white', letterSpacing: '-0.1px', lineHeight: 1.7 }}>{value}</span>
+              <span style={{ ...SKB, fontSize: '7px', color: 'rgba(255,255,255,0.55)', letterSpacing: '-0.1px', lineHeight: 1.7, textTransform: 'uppercase' }}>{label}</span>
+              <span style={{ ...SKB, fontSize: '7px', color: 'white', letterSpacing: '-0.1px', lineHeight: 1.7 }}>{value}</span>
             </div>
           ))}
         </div>
       )}
 
-      {/* MAIN / DATA / COLLECTED tabs — center-y=148 in Figma */}
-      <div className="absolute left-[7px]" style={{ top: '148px', transform: 'translateY(-50%)' }}>
-        <button onClick={() => setActiveTab('main')} className="bg-transparent border-none p-0 cursor-pointer">
-          <span style={{ ...MONO, fontSize: '9px', color: activeTab === 'main' ? '#FF0000' : '#FFFFFF', letterSpacing: '-0.18px', lineHeight: 1.4 }}>MAIN</span>
-        </button>
+      {/* Tab row — absolute until scrolled past 101px, then fixed */}
+      <div style={{
+        position: gridScrollY > 101 ? 'fixed' : 'absolute',
+        top: gridScrollY > 101 ? 2 : `${103 - tabRowOffset}px`,
+        left: gridScrollY > 101 ? '50%' : 0,
+        right: gridScrollY > 101 ? 'auto' : 0,
+        transform: gridScrollY > 101 ? 'translateX(-50%)' : 'none',
+        width: gridScrollY > 101 ? '100%' : 'auto',
+        maxWidth: 375,
+        zIndex: 40,
+        background: gridScrollY > 20
+          ? 'linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.3) 70%, transparent 100%)'
+          : 'transparent',
+        paddingTop: 10,
+        paddingBottom: 12,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 8px', height: 20 }}>
+          <button
+            onClick={() => setActiveTab('main')}
+            style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer' }}
+          >
+            <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 8, color: activeTab === 'main' ? '#FF0000' : 'white', textTransform: 'uppercase', letterSpacing: '-0.16px' }}>MAIN</span>
+          </button>
+
+          <button
+            onClick={() => { setActiveTab('decks'); setShowDecks(true); }}
+            style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', position: 'relative', left: 35 }}
+          >
+            <img src="/decks-logo.png" style={{ height: 14, display: 'block', filter: activeTab === 'decks' ? 'invert(27%) sepia(100%) saturate(7000%) hue-rotate(0deg) brightness(100%) contrast(100%)' : 'none' }} alt="Decks" />
+          </button>
+
+          <button
+            onClick={() => setActiveTab('theatre')}
+            style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', position: 'relative', left: 15 }}
+          >
+            <img src="/theatre-view-logo.png" style={{ height: 16, display: 'block', filter: activeTab === 'theatre' ? 'invert(27%) sepia(100%) saturate(7000%) hue-rotate(0deg) brightness(100%) contrast(100%)' : 'none' }} alt="Theatre" />
+          </button>
+
+          <button
+            onClick={() => setActiveTab('collected')}
+            style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer' }}
+          >
+            <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 8, color: activeTab === 'collected' ? '#FF0000' : 'white', textTransform: 'uppercase', letterSpacing: '-0.16px' }}>COLLECTED</span>
+          </button>
+        </div>
       </div>
 
-      <div className="absolute right-[4px]" style={{ top: '148px', transform: 'translateY(-50%)' }}>
-        <button onClick={() => setActiveTab('collected')} className="bg-transparent border-none p-0 cursor-pointer">
-          <span style={{ ...MONO, fontSize: '9px', color: activeTab === 'collected' ? '#FF0000' : '#FFFFFF', letterSpacing: '-0.18px', lineHeight: 1.4 }}>COLLECTED</span>
-        </button>
-      </div>
+      {activeTab === 'collected' && (
+        <div style={{ position: 'absolute', top: 140, left: 0, right: 0, bottom: 60, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 10, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', textAlign: 'center', letterSpacing: '0.05em' }}>NO COLLECTED POSTS YET</p>
+        </div>
+      )}
 
-      {/* Settings — top-right, 1px from both edges, plain button */}
-      <button
-        className="absolute bg-transparent border-none cursor-pointer p-0"
-        style={{ right: 2, top: 1 }}
-        onClick={() => router.push('/profile/preferences')}
-        aria-label="Settings"
-      >
-        <span style={{ fontSize: '20px', color: 'white', lineHeight: 1 }}>⚙</span>
-      </button>
-
-      {/* Posts grid — starts at y=160. Explicit height avoids min-height containing-block issue. */}
-      {layoutLoaded && (
-        <div style={{ position: 'absolute', inset: 0, top: '160px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+      {/* Posts grid — top moves up as header fades. Only shown on main tab. */}
+      {layoutLoaded && activeTab === 'main' && (
+        <div style={{ position: 'absolute', inset: 0, top: `${gridTop}px`, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
           {userPosts.length === 0 ? (
             <div
               style={{
@@ -318,8 +422,14 @@ export default function Profile() {
               </div>
             </div>
           ) : (
-            <div className="overflow-y-auto h-full px-[1px]">
-              <div className={`grid ${getGridCols(userLayoutId)} gap-[1px] auto-rows-min`}>
+            <div
+              ref={gridScrollRef}
+              className="overflow-y-auto h-full px-[1px]"
+              onScroll={(e) => {
+                setGridScrollY((e.target as HTMLElement).scrollTop);
+              }}
+            >
+              <div className={`grid ${getGridCols(userLayoutId)} gap-x-[1px] gap-y-[2px] auto-rows-min`}>
                 {userPosts.map((post, index) => (
                   <div
                     key={post.id}
@@ -519,6 +629,27 @@ export default function Profile() {
         visible={showLinks}
         onClose={() => setShowLinks(false)}
       />
+
+      <BadgeExplainerSheet
+        visible={showBadgeSheet}
+        onClose={() => setShowBadgeSheet(false)}
+        onJoinPress={() => { setShowBadgeSheet(false); setShowMembershipSheet(true); }}
+        userTiers={{
+          isFree: !isPaidMember && !isTopCollector && !isFoundingMember && !isInHouseCreator,
+          isInHouseCreator,
+          isPaidMember,
+          isTopCollector,
+          isFoundingMember,
+          foundingMemberNumber,
+        }}
+      />
+
+      <BottomToolbar
+        page="profile"
+        onHamburgerPress={() => router.push('/profile/preferences')}
+      />
+
+
 
     </div>
   );

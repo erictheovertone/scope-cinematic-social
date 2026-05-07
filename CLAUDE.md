@@ -11,7 +11,9 @@ doesn't support. Posts are minted as ERC-1155 tokens on Base, making content col
 - **Auth**: Privy — email, Google, Farcaster, X login; auto-creates embedded wallet on Base
 - **Database**: Supabase (Postgres with RLS)
 - **Storage**: Supabase Storage (bucket: `post-media`, public)
-- **Blockchain**: Base mainnet, ERC-1155 tokens (not yet implemented)
+- **Blockchain**: Base Sepolia testnet (active), Base mainnet (when ready)
+- **Web3**: `@zoralabs/protocol-sdk` for ERC-1155 minting/collecting; `viem` for RPC
+- **Onramp**: Privy `useFundWallet` — card, Apple Pay, Google Pay, Coinbase Pay
 - **Deployment**: Vercel (target), Netlify (current config)
 
 ## Design System
@@ -59,15 +61,23 @@ src/
     ProfileMenu.tsx             # Settings dropdown
     AnimatedContainer.tsx       # Page transition wrapper
     UserSyncProvider.tsx        # Syncs Privy user to Supabase on login
+  components/
+    CollectSheet.tsx            # Collect bottom sheet — live price, quantity, Zora tx
+    LinksSheet.tsx              # Profile links sheet — YouTube autoplay + smart preview
+    ProfilePostViewer.tsx       # Full-screen post viewer with collect/action row
+    PostModal.tsx               # Home feed post modal with comments + collect
+    DeckPickerSheet.tsx         # Add post to deck bottom sheet
   lib/
     types.ts                    # Shared TypeScript types
     supabase/client.ts          # Supabase client (browser)
     supabase.ts                 # Legacy supabase import (use client.ts)
-    userService.ts              # getUserByPrivyId, getProfile, updateProfile
-    postsService.ts             # createPost, getAllPosts, getUserPosts, likes, comments
+    userService.ts              # getUserByPrivyId, getProfile, updateProfile, decks, links
+    postsService.ts             # createPost, getAllPosts, getUserPosts, likes, comments, updatePostMintData
     gridLayoutService.ts        # getUserGridLayout, saveUserGridLayout
+    zora.ts                     # Zora protocol: mintNewPost, collectPost, getTokenPrice, getTokenHolders
     storage.ts                  # Media upload helpers
     privy.ts                    # Privy app ID and config
+    wallet.ts                   # ETH/USDC balance + tx history via Alchemy
     database.sql                # Schema (run in Supabase SQL editor)
     mockBlockchain.ts           # Placeholder for onchain features
     mockData.ts                 # Sample data for development
@@ -78,9 +88,17 @@ src/
 ```sql
 users         — id, privy_id, wallet_address, created_at
 profiles      — id, user_id, display_name, username, bio, profile_image_url, grid_layout, created_at
-posts         — id, user_id, username, caption, media_urls (text[]), layout_id, created_at
+posts         — id, user_id, username, caption, media_urls (text[]), layout_id, created_at,
+                contract_address, token_id, tx_hash, is_minted (bool, default false)
 likes         — id, post_id, user_id, username, created_at
 comments      — id, post_id, user_id, username, content, created_at
+notifications — id, recipient_id, sender_id, sender_username, sender_avatar, type, post_id,
+                post_image_url, message, is_read, created_at
+follows       — id, follower_id, following_id, created_at
+decks         — id, user_id, username, title, cover_image_url, created_at
+deck_items    — id, deck_id, post_id, created_at
+profile_links — id, user_id, url, title, description, thumbnail_url, custom_thumbnail_url,
+                is_video, video_url, sort_order, created_at
 ```
 RLS is enabled on all tables. Users can only write their own data. All content is publicly readable.
 
@@ -105,42 +123,42 @@ Layout is saved in `profiles.grid_layout` and retrieved via `gridLayoutService.t
    to fit correctly before being stored.
 2. **Screening Room / discovery feed** — not yet built.
 
-### Fixed
-- ~~**Grid layout not applied**~~ — fixed. `profile/page.tsx` now reads `grid_layout`
-  from Supabase and applies correct columns and aspect ratios via `getGridCols` /
-  `getPostAspect`.
-- ~~**Media stored as base64**~~ — fixed. `CreatePostFlow.tsx` uploads to Supabase
-  Storage bucket `post-media` and stores public URLs.
-- ~~**Profile setup doesn't reliably save to Supabase**~~ — fixed. Silent localStorage
-  fallback removed; shows inline error and blocks navigation on failure.
-- ~~**Username hardcoded**~~ — fixed. `CreatePostFlow.tsx` fetches real username from
-  the user's Supabase profile before posting.
-- ~~**Responsive sizing**~~ — improved. Fixed `w-[375px]` / `h-[812px]` constraints
-  replaced with responsive sizing across pages.
-- ~~**Public profile page not built**~~ — built. `profile/[username]/page.tsx` now
-  renders a public profile with posts using the user's selected grid layout.
+### Fixed / Completed
+- ~~**Grid layout not applied**~~ — fixed.
+- ~~**Media stored as base64**~~ — fixed. Uploads to Supabase Storage `post-media`.
+- ~~**Profile setup doesn't reliably save**~~ — fixed.
+- ~~**Username hardcoded**~~ — fixed.
+- ~~**Responsive sizing**~~ — improved.
+- ~~**Public profile page not built**~~ — built. `profile/[username]/page.tsx`.
+- ~~**Zora SDK integrated**~~ — `src/lib/zora.ts`; posts mint as ERC-1155 on Base Sepolia after creation; mint status shown inline in CreatePostFlow.
+- ~~**Collect sheet**~~ — live token price via `getTokenPrice()`; quantity selector; real `collectPost()` tx; "Not yet available" guard for unminted posts.
+- ~~**Wallet page**~~ — ETH + USDC balances from Alchemy RPC; transaction history; Privy `useFundWallet` onramp (card / Apple Pay / Google Pay / Coinbase).
+- ~~**Links sheet**~~ — YouTube autoplay iframe + smart thumbnail fallback (maxresdefault → hqdefault); Vimeo support; custom thumbnails.
+- ~~**Decks bottom sheet**~~ — create, browse, add posts to decks from profile.
+- ~~**Notifications system**~~ — like + comment notifications; unread badge; mark-read.
+- ~~**Follows / Following system**~~ — follow/unfollow; follower + following counts on profile.
+- ~~**Mirage View**~~ — cinematic home feed mode.
+- ~~**Profile post viewer**~~ — full-screen scroll viewer with collect/action row, comments, deck picker.
+- ~~**Gradient footer**~~ — all pages.
 
 ## Not Yet Built (do not attempt without being asked)
-- Onchain minting (ERC-1155 on Base)
-- Liquidity pool mechanics
+- Switch to Base mainnet (currently Base Sepolia)
+- Liquidity pool / bonding curve mechanics (Zora WoW — requires SDK prerelease)
 - 3% transaction fee smart contract
-- Collect / buy post tokens
 - Trending feed filters
-- Follows / followers
-- Wallet balance with real token data
+- Screening Room (discovery feed)
+- Collected page (wallet holdings of post tokens)
 
 ## Deployed
 - **Production URL**: your-vercel-url.vercel.app
 - Privy allowed origins must include the Vercel URL (set in the Privy dashboard under App Settings → Allowed Origins)
 
 ## Next Up
-- Follows / Following system
-- Notifications
-- Web3 minting (ERC-1155 on Base)
-- Collected page (blocked until Web3 minting is live)
+- Test full mint flow end to end on Base Sepolia
+- Switch to Base mainnet when ready
+- Collector rewards system (architecture documented)
+- Responsive design pass
 - Performance optimization
-- Screening Room (discovery feed)
-- Settings page
 
 ## Rules for This Codebase
 - **Always read files before editing them**

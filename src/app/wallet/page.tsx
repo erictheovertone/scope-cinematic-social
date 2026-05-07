@@ -96,7 +96,7 @@ export default function WalletPage() {
 
       {/* Header */}
       <div style={{ padding: "14px 16px 10px" }}>
-        <img src="/scope-logo-1.png" alt="SCOPE" style={{ width: 80, height: "auto", display: "block", margin: "0 auto" }} />
+        <img src="/scope-logo-new.png" alt="Scope" style={{ height: 28, display: "block", margin: "0 auto" }} />
       </div>
 
       <div style={{ height: 1, background: "rgba(255,255,255,0.1)" }} />

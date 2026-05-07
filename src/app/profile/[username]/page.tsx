@@ -288,33 +288,42 @@ export default function PublicProfilePage() {
         </div>
       )}
 
-      {/* MAIN / COLLECTED tabs + decks icon — center-y=148 */}
-      <div className="absolute left-[7px]" style={{ top: "148px", transform: "translateY(-50%)" }}>
-        <button onClick={() => setActiveTab("main")} className="bg-transparent border-none p-0 cursor-pointer">
-          <span style={{ ...MONO, fontSize: 9, color: activeTab === "main" ? "#FF0000" : "#FFFFFF", letterSpacing: "-0.18px", lineHeight: 1.4 }}>MAIN</span>
-        </button>
-      </div>
+      {/* Spacer for absolutely-positioned header */}
+      <div style={{ height: 142 }} />
 
-      {!isDataOpen && (
-        <button
-          className="absolute bg-transparent border-none cursor-pointer p-0"
-          style={{ left: "50%", top: "148px", transform: "translate(-50%, -50%)" }}
-          onClick={() => setShowDecks(true)}
-          aria-label="View decks"
-        >
-          <svg width="21" height="11" viewBox="0 0 21 11" fill="none">
-            <rect x="0"  y="0" width="3" height="11" fill="white" />
-            <rect x="6"  y="0" width="3" height="11" fill="white" />
-            <rect x="12" y="0" width="3" height="11" fill="white" />
-            <rect x="18" y="0" width="3" height="11" fill="white" />
-          </svg>
-        </button>
-      )}
+      {/* Tab row — sticky */}
+      <div style={{
+        position: 'sticky',
+        top: 0,
+        zIndex: 40,
+        background: 'linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.3) 60%, transparent 100%)',
+        paddingTop: 8,
+        paddingBottom: 8,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 7px', height: 20 }}>
+          <button onClick={() => setActiveTab("main")} className="bg-transparent border-none p-0 cursor-pointer">
+            <span style={{ ...MONO, fontSize: 9, color: activeTab === "main" ? "#FF0000" : "#FFFFFF", letterSpacing: "-0.18px", lineHeight: 1.4 }}>MAIN</span>
+          </button>
 
-      <div className="absolute right-[4px]" style={{ top: "148px", transform: "translateY(-50%)" }}>
-        <button onClick={() => setActiveTab("collected")} className="bg-transparent border-none p-0 cursor-pointer">
-          <span style={{ ...MONO, fontSize: 9, color: activeTab === "collected" ? "#FF0000" : "#FFFFFF", letterSpacing: "-0.18px", lineHeight: 1.4 }}>COLLECTED</span>
-        </button>
+          {!isDataOpen && (
+            <button
+              className="bg-transparent border-none cursor-pointer p-0"
+              onClick={() => setShowDecks(true)}
+              aria-label="View decks"
+            >
+              <svg width="21" height="11" viewBox="0 0 21 11" fill="none">
+                <rect x="0"  y="0" width="3" height="11" fill="white" />
+                <rect x="6"  y="0" width="3" height="11" fill="white" />
+                <rect x="12" y="0" width="3" height="11" fill="white" />
+                <rect x="18" y="0" width="3" height="11" fill="white" />
+              </svg>
+            </button>
+          )}
+
+          <button onClick={() => setActiveTab("collected")} className="bg-transparent border-none p-0 cursor-pointer">
+            <span style={{ ...MONO, fontSize: 9, color: activeTab === "collected" ? "#FF0000" : "#FFFFFF", letterSpacing: "-0.18px", lineHeight: 1.4 }}>COLLECTED</span>
+          </button>
+        </div>
       </div>
 
       {/* Posts grid — starts at y=160 */}

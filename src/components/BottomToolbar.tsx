@@ -67,11 +67,22 @@ interface Props {
   page: Page;
   unreadCount?: number;
   onNotificationsClick?: () => void;
+  onHamburgerPress?: () => void;
+}
+
+function HamburgerIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 18 18" fill="none">
+      <rect x="0" y="3" width="18" height="1.5" fill="white"/>
+      <rect x="0" y="8.25" width="18" height="1.5" fill="white"/>
+      <rect x="0" y="13.5" width="18" height="1.5" fill="white"/>
+    </svg>
+  );
 }
 
 // Pure render component — no hooks, no state, no async.
 // All routing logic lives in AppShell; this component only displays.
-export default function BottomToolbar({ page, unreadCount = 0, onNotificationsClick }: Props) {
+export default function BottomToolbar({ page, unreadCount = 0, onNotificationsClick, onHamburgerPress }: Props) {
   const isHome = page === 'home';
 
   return (
@@ -93,21 +104,31 @@ export default function BottomToolbar({ page, unreadCount = 0, onNotificationsCl
         bottom: 0,
         left: 0,
         right: 0,
-        height: 60,
+        height: isHome ? 60 : 'auto',
         zIndex: 50,
-        background: 'transparent',
+        background: isHome ? 'transparent' : 'linear-gradient(to top, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.3) 60%, transparent 100%)',
       }}
     >
       <div
-        style={{
+        style={isHome ? {
           maxWidth: 375,
           width: '100%',
           height: '100%',
           margin: '0 auto',
           display: 'flex',
-          justifyContent: 'space-between',
+          justifyContent: 'space-around',
           alignItems: 'flex-end',
           padding: '0 2px 2px',
+        } : {
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-end',
+          paddingLeft: 2,
+          paddingRight: 2,
+          paddingBottom: 2,
+          paddingTop: 8,
+          width: '100%',
+          boxSizing: 'border-box' as const,
         }}
       >
         {/* 1 — Home */}
@@ -120,18 +141,28 @@ export default function BottomToolbar({ page, unreadCount = 0, onNotificationsCl
           <CreateIcon />
         </Link>
 
-        {/* 3 — Profile (home) | Wallet (profile / public-profile) */}
+        {/* 3 — Profile (home) | Hamburger (profile / public-profile) */}
         {isHome ? (
           <Link href="/profile" style={{ ...BTN, opacity: 0.7 }} aria-label="Profile">
             <ProfileIcon />
           </Link>
         ) : (
+          <button
+            onClick={onHamburgerPress}
+            style={{ ...BTN, opacity: 0.7 }}
+            aria-label="Menu"
+          >
+            <HamburgerIcon />
+          </button>
+        )}
+
+        {/* 4 — Bell (home) | Wallet (profile / public-profile) */}
+        {!isHome && (
           <Link href="/wallet" style={{ ...BTN, opacity: 0.7 }} aria-label="Wallet">
             <WalletIcon />
           </Link>
         )}
 
-        {/* 4 — Bell with unread dot (home only) */}
         {isHome && (
           <Link
             href="/profile/notifications"

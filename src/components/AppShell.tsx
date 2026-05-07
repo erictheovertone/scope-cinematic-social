@@ -9,6 +9,7 @@ import BottomToolbar from "@/components/BottomToolbar";
 const HIDDEN = [
   '/welcome',
   '/auth/callback',
+  '/profile',
   '/transition',
   '/profile/setup',
   '/profile/grid-layout',

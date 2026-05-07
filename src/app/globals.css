@@ -1,3 +1,19 @@
+@font-face {
+  font-family: 'SK-Modernist';
+  src: url('/fonts/Sk-Modernist-Bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'SK-Modernist';
+  src: url('/fonts/Sk-Modernist-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -10,9 +26,10 @@
   }
   
   body {
+    font-family: 'SK-Modernist', sans-serif;
+    font-weight: 700;
     background-color: #000000;
     color: #ffffff;
-    font-family: 'IBM Plex Mono', 'Menlo', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', monospace;
   }
 }
 
@@ -105,6 +122,18 @@
 @keyframes theater-fade-in {
   from { opacity: 0; }
   to   { opacity: 1; }
+}
+
+@keyframes holoShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes goldShimmer {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
 .animate-swift-bounce {

@@ -63,20 +63,19 @@ export default function Welcome() {
         padding: '40px 24px 48px'
       }}
     >
-      <div>
+      <div style={{ marginTop: 'calc(33vh - 18px)' }}>
         <img
-          src="/scope-logo-1.png"
-          alt="SCOPE"
+          src="/scope-logo-new.png"
+          alt="Scope"
           style={{
-            width: '280px',
-            height: 'auto',
+            height: 45,
             display: 'block',
             margin: '0 auto'
           }}
         />
       </div>
 
-      <div style={{ width: '100%', height: '112px', border: '1px solid white', position: 'relative' }}>
+      <div style={{ width: '100%', height: '112px', border: '1px solid rgba(255,255,255,0.5)', position: 'relative' }}>
         <button
           onClick={login}
           style={{
@@ -84,8 +83,9 @@ export default function Welcome() {
             top: '2px',
             left: '2px',
             color: 'white',
-            fontSize: '14px',
-            fontFamily: 'Menlo, monospace',
+            fontSize: '12px',
+            fontFamily: "'SK-Modernist', sans-serif",
+            fontWeight: 700,
             textDecoration: 'none',
             background: 'transparent',
             border: 'none',
@@ -116,8 +116,9 @@ export default function Welcome() {
             bottom: '2px',
             right: '2px',
             color: 'white',
-            fontSize: '14px',
-            fontFamily: 'Menlo, monospace',
+            fontSize: '12px',
+            fontFamily: "'SK-Modernist', sans-serif",
+            fontWeight: 700,
             textDecoration: 'none',
             background: 'transparent',
             border: 'none',
