@@ -493,9 +493,9 @@ export default function Profile() {
                         mediaType={post.media_type}
                         caption={post.caption || 'Post'}
                         thumbnailUrl={post.thumbnail_url}
-                        autoplay={false}
-                        showSoundToggle={false}
-                        className="w-full h-full object-cover"
+                        autoplay={true}
+                        showSoundToggle={true}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                       />
                     ) : (
                       <div className="w-full h-full bg-[#222] flex items-center justify-center">

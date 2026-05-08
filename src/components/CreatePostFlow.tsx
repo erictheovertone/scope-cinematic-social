@@ -6,6 +6,7 @@ import { usePrivy, useWallets } from "@privy-io/react-auth";
 import { createWalletClient, custom } from "viem";
 import { baseSepolia } from "viem/chains";
 import { createPost, updatePostMintData } from '@/lib/postsService';
+import MediaRenderer from '@/components/MediaRenderer';
 import { mintNewPost } from '@/lib/zora';
 import {
   getUserByPrivyId, getProfile, uploadImage,
@@ -481,7 +482,14 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
             style={{ aspectRatio: selectedLayout.aspectRatio.replace(':', '/') }}
           >
             {selectedMedia[0] && (
-              <img src={selectedMedia[0].url} alt="Preview" className="w-full h-full object-contain" />
+              <MediaRenderer
+                url={selectedMedia[0].url}
+                mediaType={selectedMedia[0].type}
+                caption={caption}
+                autoplay={true}
+                showSoundToggle={true}
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
             )}
           </div>
           <textarea
