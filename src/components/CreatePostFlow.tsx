@@ -117,6 +117,8 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
   const { user } = usePrivy();
   const { wallets } = useWallets();
   const [mintStatus, setMintStatus] = useState<'idle' | 'minting' | 'minted' | 'mint-failed'>('idle');
+  const [customThumbnail, setCustomThumbnail] = useState<File | null>(null);
+  const thumbnailInputRef = useRef<HTMLInputElement>(null);
 
   // Deck step state
   const [userDecks, setUserDecks] = useState<(Deck & { item_count: number })[]>([]);
@@ -243,12 +245,20 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
         console.log('[handlePost] uploaded:', url);
       }
 
+      let thumbnailUrl: string | null = null;
+      if (customThumbnail) {
+        thumbnailUrl = await uploadImage(customThumbnail, 'post-media', user.id);
+        console.log('[handlePost] thumbnail uploaded:', thumbnailUrl);
+      }
+
       const postPayload = {
         userId: user.id,
         username: profile.username,
         caption,
         mediaUrls,
         layoutId: (profile as any).grid_layout || selectedLayout.id,
+        mediaType: selectedMedia[0]?.type || 'image',
+        thumbnailUrl,
       };
       console.log('[handlePost] createPost payload:', postPayload);
       const newPost = await createPost(postPayload);
@@ -312,6 +322,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
         setCaption('');
         setSelectedDeckId(null);
         setMintStatus('idle');
+        setCustomThumbnail(null);
         router.push('/profile');
       }, 2200);
 
@@ -481,6 +492,30 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
             style={{ color: '#FFFFFF', caretColor: '#FFFFFF', backgroundColor: 'transparent' }}
             rows={4}
           />
+          {selectedMedia[0]?.type === 'video' && (
+            <div style={{ marginTop: 12 }}>
+              <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 9, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 8px' }}>
+                CUSTOM THUMBNAIL (OPTIONAL)
+              </p>
+              {customThumbnail ? (
+                <div style={{ position: 'relative', width: 80, height: 45 }}>
+                  <img src={URL.createObjectURL(customThumbnail)} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                  <button
+                    onClick={() => setCustomThumbnail(null)}
+                    style={{ position: 'absolute', top: -6, right: -6, width: 16, height: 16, borderRadius: '50%', background: '#FF0000', border: 'none', cursor: 'pointer', color: 'white', fontSize: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  >×</button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => thumbnailInputRef.current?.click()}
+                  style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', padding: '6px 12px', cursor: 'pointer' }}
+                >
+                  <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 9, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase' }}>+ ADD THUMBNAIL</span>
+                </button>
+              )}
+              <input ref={thumbnailInputRef} type="file" accept="image/*" onChange={(e) => { const f = e.target.files?.[0]; if (f) setCustomThumbnail(f); e.target.value = ''; }} style={{ display: 'none' }} />
+            </div>
+          )}
         </div>
 
         <div className="border-t border-[#333333] p-4">

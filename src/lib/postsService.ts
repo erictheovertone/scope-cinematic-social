@@ -14,6 +14,8 @@ interface Post {
   token_id?: string | null;
   tx_hash?: string | null;
   is_minted?: boolean;
+  media_type?: string;
+  thumbnail_url?: string | null;
 }
 
 interface Like {
@@ -41,6 +43,8 @@ export const createPost = async (postData: {
   mediaUrls: string[];
   layoutId: string;
   aspectRatio?: number;
+  mediaType?: string;
+  thumbnailUrl?: string | null;
 }): Promise<Post> => {
   const { data, error } = await supabase
     .from('posts')
@@ -51,6 +55,8 @@ export const createPost = async (postData: {
         caption: postData.caption,
         media_urls: postData.mediaUrls,
         layout_id: postData.layoutId,
+        media_type: postData.mediaType || 'image',
+        thumbnail_url: postData.thumbnailUrl || null,
       }
     ])
     .select()
@@ -68,6 +74,7 @@ export const getAllPosts = async (): Promise<(Post & { profile_image_url?: strin
   const { data: posts, error } = await supabase
     .from('posts')
     .select('*')
+    .eq('is_deleted', false)
     .order('created_at', { ascending: false });
 
   if (error || !posts) {
@@ -105,6 +112,7 @@ export const getUserPosts = async (userId: string): Promise<Post[]> => {
     .from('posts')
     .select('*')
     .eq('user_id', userId)
+    .eq('is_deleted', false)
     .order('created_at', { ascending: false });
 
   if (error) {
@@ -120,6 +128,7 @@ export const getPostsByUsername = async (username: string): Promise<Post[]> => {
     .from('posts')
     .select('*')
     .eq('username', username)
+    .eq('is_deleted', false)
     .order('created_at', { ascending: false });
 
   if (error) {
@@ -315,6 +324,7 @@ export const getPostsPaginated = async (
   const { data: posts, error } = await supabase
     .from('posts')
     .select('*')
+    .eq('is_deleted', false)
     .order('created_at', { ascending: false })
     .range(from, to);
 
@@ -378,3 +388,18 @@ export const deleteComment = async (commentId: string, userId: string): Promise<
     throw error;
   }
 };
+
+export async function softDeletePost(postId: string, userId: string): Promise<boolean> {
+  const { error } = await supabase
+    .from('posts')
+    .update({ is_deleted: true })
+    .eq('id', postId)
+    .eq('user_id', userId);
+
+  if (error) {
+    console.error('[softDeletePost] error:', error);
+    return false;
+  }
+  console.log('[softDeletePost] post hidden:', postId);
+  return true;
+}

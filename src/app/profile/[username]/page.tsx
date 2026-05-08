@@ -15,6 +15,7 @@ import FollowListModal from "@/components/FollowListModal";
 import BadgeExplainerSheet from "@/components/BadgeExplainerSheet";
 import MembershipSheet from "@/components/MembershipSheet";
 import BottomToolbar from "@/components/BottomToolbar";
+import MediaRenderer from "@/components/MediaRenderer";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -205,7 +206,7 @@ export default function PublicProfilePage() {
           else if (isTopCollector) { src = '/top-1k-collector-aperture-gold.png'; size = 23; }
           else if (isPaidMember) { src = '/scope-pro-icon-aperture.png'; size = 23; }
           else if (isInHouseCreator) { src = '/in-house-creator-logo-grey.png'; size = 21; }
-          return <img src={src} alt="Badge" onClick={(e) => { e.stopPropagation(); setShowBadgeSheet(true); }} style={{ position: 'absolute', top: -10, left: -10, width: size, height: size, zIndex: 10, cursor: 'pointer', display: 'block' }} />;
+          return <img src={src} alt="Badge" onClick={(e) => { e.stopPropagation(); setShowBadgeSheet(true); }} style={{ position: 'absolute', top: -10, left: -10, width: size, height: size, zIndex: 10, cursor: 'pointer', display: 'block', filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.9)) drop-shadow(0 0 3px rgba(0,0,0,0.8))' }} />;
         })()}
       </div>
 
@@ -300,7 +301,7 @@ export default function PublicProfilePage() {
               {posts.map((post, index) => (
                 <div key={post.id} className={`bg-[#222] overflow-hidden ${getPostAspect(layoutId, index)}`} style={{ cursor: 'pointer' }} onClick={() => { setViewerIndex(index); setShowViewer(true); }}>
                   {post.media_urls?.[0]
-                    ? <img src={post.media_urls[0]} alt={post.caption || 'Post'} className="w-full h-full object-cover" />
+                    ? <MediaRenderer url={post.media_urls[0]} mediaType={post.media_type} caption={post.caption || 'Post'} thumbnailUrl={post.thumbnail_url} autoplay={false} showSoundToggle={false} className="w-full h-full object-cover" />
                     : <div className="w-full h-full bg-[#222]" />
                   }
                 </div>

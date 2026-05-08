@@ -13,6 +13,7 @@ import ProfilePostViewer from "@/components/ProfilePostViewer";
 import BadgeExplainerSheet from "@/components/BadgeExplainerSheet";
 import MembershipSheet from "@/components/MembershipSheet";
 import BottomToolbar from "@/components/BottomToolbar";
+import MediaRenderer from "@/components/MediaRenderer";
 
 const COLLAGE_ASPECTS = ['aspect-video', 'aspect-[2.4/1]', 'aspect-[4/3]', 'aspect-square'];
 
@@ -272,6 +273,7 @@ export default function Profile() {
                   zIndex: 10,
                   cursor: 'pointer',
                   display: 'block',
+                  filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.9)) drop-shadow(0 0 3px rgba(0,0,0,0.8))',
                 }}
               />
               {badgeJustUnlocked && (
@@ -486,9 +488,13 @@ export default function Profile() {
                     onClick={() => { setViewerIndex(index); setShowViewer(true); }}
                   >
                     {post.media_urls?.[0] ? (
-                      <img
-                        src={post.media_urls[0]}
-                        alt={post.caption || 'Post'}
+                      <MediaRenderer
+                        url={post.media_urls[0]}
+                        mediaType={post.media_type}
+                        caption={post.caption || 'Post'}
+                        thumbnailUrl={post.thumbnail_url}
+                        autoplay={false}
+                        showSoundToggle={false}
                         className="w-full h-full object-cover"
                       />
                     ) : (
@@ -517,6 +523,7 @@ export default function Profile() {
           ownerUsername={userProfile.username}
           ownerAvatarUrl={userProfile.profileImage}
           onClose={() => setShowViewer(false)}
+          isOwnProfile={true}
         />
       )}
 

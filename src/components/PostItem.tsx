@@ -13,6 +13,7 @@ import {
 } from "@/lib/postsService";
 import { getUserByPrivyId, getProfile } from "@/lib/userService";
 import CollectSheet from "@/components/CollectSheet";
+import MediaRenderer from "@/components/MediaRenderer";
 import { getTokenPrice, getTokenHolders } from "@/lib/zora";
 import { formatEther } from "viem";
 
@@ -30,6 +31,8 @@ interface Post {
   is_minted?: boolean;
   contract_address?: string | null;
   token_id?: string | null;
+  media_type?: string;
+  thumbnail_url?: string | null;
 }
 
 function getAspectFromGridLayout(gridLayout?: string | null): string {
@@ -174,10 +177,15 @@ export default function PostItem({ post, onImageClick }: PostItemProps) {
           cursor: onImageClick ? "pointer" : "default",
         }}
       >
-        <img
-          src={post.media_urls?.[0]}
-          alt={post.caption || "Post"}
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', zIndex: 0 }}
+        <MediaRenderer
+          url={post.media_urls?.[0]}
+          mediaType={post.media_type}
+          caption={post.caption}
+          thumbnailUrl={post.thumbnail_url}
+          autoplay={true}
+          showSoundToggle={true}
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+          onClick={onImageClick}
         />
         <div style={{ position: 'absolute', top: '6px', left: '6px', display: 'flex', alignItems: 'center', gap: '4px', zIndex: 10 }}>
           {post.profile_image_url && (

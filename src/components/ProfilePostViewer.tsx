@@ -10,6 +10,7 @@ import {
 import { getUserByPrivyId, getProfile } from "@/lib/userService";
 import DeckPickerSheet from "@/components/DeckPickerSheet";
 import CollectSheet from "@/components/CollectSheet";
+import DeletePostSheet from "@/components/DeletePostSheet";
 import { supabase } from "@/lib/supabase/client";
 
 const MONO: React.CSSProperties = { fontFamily: "'IBM Plex Mono', monospace" };
@@ -37,10 +38,12 @@ interface ItemProps {
   viewerUsername: string;
   viewerAvatar: string | null;
   onNavigateToProfile: () => void;
+  isOwnProfile?: boolean;
+  onDeletePress?: (postId: string) => void;
 }
 
 function PostViewerItem({
-  post, ownerUsername, ownerAvatarUrl, viewerUsername, viewerAvatar, onNavigateToProfile,
+  post, ownerUsername, ownerAvatarUrl, viewerUsername, viewerAvatar, onNavigateToProfile, isOwnProfile, onDeletePress,
 }: ItemProps) {
   const { user } = usePrivy();
   const [likes, setLikes] = useState<any[]>([]);
@@ -224,6 +227,19 @@ function PostViewerItem({
           >
             <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 8, color: showCollectSheet ? "#FF0000" : "rgba(255,255,255,0.7)", lineHeight: 1 }}>COLLECT</span>
           </button>
+
+          {isOwnProfile && (
+            <button
+              onClick={() => onDeletePress?.(post.id)}
+              style={{ background: "transparent", border: "none", cursor: "pointer", padding: "8px", display: "flex", alignItems: "center", justifyContent: "center" }}
+            >
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                <circle cx="3" cy="9" r="1.5" fill="white" opacity="0.7" />
+                <circle cx="9" cy="9" r="1.5" fill="white" opacity="0.7" />
+                <circle cx="15" cy="9" r="1.5" fill="white" opacity="0.7" />
+              </svg>
+            </button>
+          )}
         </div>
 
         {showDeckPicker && user && (
@@ -305,16 +321,20 @@ interface ProfilePostViewerProps {
   ownerUsername: string;
   ownerAvatarUrl?: string | null;
   onClose: () => void;
+  isOwnProfile?: boolean;
 }
 
 export default function ProfilePostViewer({
-  posts, initialIndex = 0, ownerUsername, ownerAvatarUrl, onClose,
+  posts: initialPosts, initialIndex = 0, ownerUsername, ownerAvatarUrl, onClose, isOwnProfile,
 }: ProfilePostViewerProps) {
   const router = useRouter();
   const { user } = usePrivy();
   const [visible, setVisible] = useState(false);
   const [viewerUsername, setViewerUsername] = useState("");
   const [viewerAvatar, setViewerAvatar] = useState<string | null>(null);
+  const [localPosts, setLocalPosts] = useState(initialPosts);
+  const [showDeleteSheet, setShowDeleteSheet] = useState(false);
+  const [deletePostId, setDeletePostId] = useState<string>('');
   const scrollRef = useRef<HTMLDivElement>(null);
   const postRefs = useRef<(HTMLDivElement | null)[]>([]);
 
@@ -407,7 +427,7 @@ export default function ProfilePostViewer({
           WebkitOverflowScrolling: "touch",
         }}
       >
-        {posts.map((post, i) => (
+        {localPosts.map((post, i) => (
           <div
             key={post.id}
             ref={el => { postRefs.current[i] = el; }}
@@ -420,10 +440,24 @@ export default function ProfilePostViewer({
               viewerUsername={viewerUsername}
               viewerAvatar={viewerAvatar}
               onNavigateToProfile={goToProfile}
+              isOwnProfile={isOwnProfile}
+              onDeletePress={(postId) => { setDeletePostId(postId); setShowDeleteSheet(true); }}
             />
           </div>
         ))}
       </div>
+
+      <DeletePostSheet
+        visible={showDeleteSheet}
+        postId={deletePostId}
+        userId={user?.id || ''}
+        onClose={() => setShowDeleteSheet(false)}
+        onDeleted={(deletedPostId) => {
+          const newPosts = localPosts.filter(p => p.id !== deletedPostId);
+          setLocalPosts(newPosts);
+          if (newPosts.length === 0) onClose();
+        }}
+      />
     </div>
   );
 }
