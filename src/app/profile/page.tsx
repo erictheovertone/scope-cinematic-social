@@ -14,8 +14,9 @@ import BadgeExplainerSheet from "@/components/BadgeExplainerSheet";
 import MembershipSheet from "@/components/MembershipSheet";
 import BottomToolbar from "@/components/BottomToolbar";
 import MediaRenderer from "@/components/MediaRenderer";
+import VideoLightbox from "@/components/VideoLightbox";
 
-const COLLAGE_ASPECTS = ['aspect-video', 'aspect-[2.4/1]', 'aspect-[4/3]', 'aspect-square'];
+const COLLAGE_ASPECTS = ['aspect-video', 'aspect-[2.39/1]', 'aspect-[4/3]', 'aspect-square'];
 
 function getGridCols(layoutId: string): string {
   switch (layoutId) {
@@ -35,7 +36,7 @@ function getPostAspect(layoutId: string, index: number): string {
   switch (layoutId) {
     case '2x-super-wide':
     case '1x-super-wide':
-      return 'aspect-[2.4/1]';
+      return 'aspect-[2.39/1]';
     case '2x-regular-wide':
       return 'aspect-video';
     case '3x-square':
@@ -43,7 +44,7 @@ function getPostAspect(layoutId: string, index: number): string {
     case 'collage':
       return COLLAGE_ASPECTS[index % COLLAGE_ASPECTS.length];
     default:
-      return 'aspect-[2.4/1]';
+      return 'aspect-[2.39/1]';
   }
 }
 
@@ -60,7 +61,10 @@ export default function Profile() {
   const [spinning, setSpinning] = useState(false);
   const [showTheater, setShowTheater] = useState(false);
   const [showViewer, setShowViewer] = useState(false);
+  console.log('[profile] showViewer state declared');
   const [viewerIndex, setViewerIndex] = useState(0);
+  const [showLightbox, setShowLightbox] = useState(false);
+  const [lightboxPost, setLightboxPost] = useState<any>(null);
   const [supabaseUserId, setSupabaseUserId] = useState<string | undefined>();
   const [userProfile, setUserProfile] = useState({
     displayName: "",
@@ -201,11 +205,11 @@ export default function Profile() {
   const fmt = (n: number) => n.toLocaleString();
 
   const getDeckAspect = (gl?: string | null) => {
-    if (!gl) return '2.4 / 1';
-    if (gl.includes('2.4') || gl === 'collage') return '2.4 / 1';
+    if (!gl) return '2.39 / 1';
+    if (gl.includes('2.4') || gl.includes('2.39') || gl === 'collage') return '2.39 / 1';
     if (gl.includes('16:9') || gl.includes('16-9')) return '16 / 9';
     if (gl.includes('4:3') || gl.includes('4-3')) return '4 / 3';
-    return '2.4 / 1';
+    return '2.39 / 1';
   };
   const thumbCols = (n: number) => n <= 1 ? '1fr' : n <= 4 ? '1fr 1fr' : '1fr 1fr 1fr';
 
@@ -485,7 +489,20 @@ export default function Profile() {
                     key={post.id}
                     className={`bg-[#222] overflow-hidden ${getPostAspect(userLayoutId, index)}`}
                     style={{ cursor: 'pointer' }}
-                    onClick={() => { setViewerIndex(index); setShowViewer(true); }}
+                    onClick={() => {
+                      const post = userPosts[index];
+                      const isVid = post.media_type === 'video' ||
+                        ['mp4','mov','webm','mp4'].includes(
+                          post.media_urls?.[0]?.split('?')[0].split('.').pop()?.toLowerCase() || ''
+                        );
+                      if (isVid) {
+                        setLightboxPost(post);
+                        setShowLightbox(true);
+                      } else {
+                        setViewerIndex(index);
+                        setShowViewer(true);
+                      }
+                    }}
                   >
                     {post.media_urls?.[0] ? (
                       <MediaRenderer
@@ -493,9 +510,23 @@ export default function Profile() {
                         mediaType={post.media_type}
                         caption={post.caption || 'Post'}
                         thumbnailUrl={post.thumbnail_url}
-                        autoplay={true}
-                        showSoundToggle={true}
+                        autoplay={false}
+                        showSoundToggle={false}
                         style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                        onClick={() => {
+                          const p = userPosts[index];
+                          const isVid = p.media_type === 'video' ||
+                            ['mp4','mov','webm','mp4'].includes(
+                              p.media_urls?.[0]?.split('?')[0].split('.').pop()?.toLowerCase() || ''
+                            );
+                          if (isVid) {
+                            setLightboxPost(p);
+                            setShowLightbox(true);
+                          } else {
+                            setViewerIndex(index);
+                            setShowViewer(true);
+                          }
+                        }}
                       />
                     ) : (
                       <div className="w-full h-full bg-[#222] flex items-center justify-center">
@@ -517,13 +548,33 @@ export default function Profile() {
       />
 
       {showViewer && (
-        <ProfilePostViewer
-          posts={userPosts}
-          initialIndex={viewerIndex}
-          ownerUsername={userProfile.username}
-          ownerAvatarUrl={userProfile.profileImage}
-          onClose={() => setShowViewer(false)}
-          isOwnProfile={true}
+        <>
+          {console.log('[profile] rendering ProfilePostViewer')}
+          <ProfilePostViewer
+            posts={userPosts}
+            initialIndex={viewerIndex}
+            ownerUsername={userProfile.username}
+            ownerAvatarUrl={userProfile.profileImage}
+            onClose={() => {
+              console.log('[profile] ProfilePostViewer onClose called');
+              setShowViewer(false);
+            }}
+            isOwnProfile={true}
+          />
+        </>
+      )}
+
+      {showLightbox && lightboxPost && (
+        <VideoLightbox
+          post={lightboxPost}
+          onClose={() => { setShowLightbox(false); setLightboxPost(null); }}
+          onScrollDown={() => {
+            setShowLightbox(false);
+            setLightboxPost(null);
+            const idx = userPosts.findIndex(p => p.id === lightboxPost.id);
+            setViewerIndex(idx >= 0 ? idx : 0);
+            setShowViewer(true);
+          }}
         />
       )}
 
@@ -556,7 +607,7 @@ export default function Profile() {
       {showDecks && (
         <div
           className="bg-black"
-          onClick={() => { setShowDecks(false); setShowNewDeckForm(false); setNewDeckTitle(''); setNewDeckDesc(''); }}
+          onClick={() => { setShowDecks(false); setActiveTab('main'); setShowNewDeckForm(false); setNewDeckTitle(''); setNewDeckDesc(''); }}
           style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.75)', zIndex: 59 }}
         />
       )}
@@ -578,9 +629,9 @@ export default function Profile() {
         {/* Header */}
         <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px 16px 10px', flexShrink: 0 }}>
           <div style={{ position: 'absolute', top: 8, left: '50%', transform: 'translateX(-50%)', width: 40, height: 3, backgroundColor: 'rgba(255,255,255,0.3)' }} />
-          <span style={{ ...MONO, fontSize: 11, color: 'white', letterSpacing: '0.05em' }}>DECKS</span>
+          <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 11, color: 'white', letterSpacing: '0.05em', textTransform: 'uppercase' }}>DECKS</span>
           <button
-            onClick={() => { setShowDecks(false); setShowNewDeckForm(false); setNewDeckTitle(''); setNewDeckDesc(''); }}
+            onClick={() => { setShowDecks(false); setActiveTab('main'); setShowNewDeckForm(false); setNewDeckTitle(''); setNewDeckDesc(''); }}
             style={{ position: 'absolute', right: 16, fontSize: 18, color: 'white', background: 'none', border: 'none', cursor: 'pointer', lineHeight: 1, padding: 0 }}
           >
             ×
@@ -595,7 +646,7 @@ export default function Profile() {
             </div>
           ) : userDecks.length === 0 ? (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '50%' }}>
-              <span style={{ ...MONO, fontSize: 11, color: 'white' }}>No decks yet</span>
+              <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 11, color: 'white', textTransform: 'uppercase' }}>No decks yet</span>
             </div>
           ) : (
             userDecks.map(deck => (
@@ -615,8 +666,8 @@ export default function Profile() {
                   ) : null}
                 </div>
                 {/* Title + count */}
-                <p style={{ ...MONO, fontSize: 10, color: 'white', margin: '4px 0 0' }}>{deck.title}</p>
-                <p style={{ ...MONO, fontSize: 9, color: 'rgba(255,255,255,0.5)', margin: '2px 0 0' }}>{deck.item_count} frames</p>
+                <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 10, color: 'white', margin: '4px 0 0', textTransform: 'uppercase' }}>{deck.title}</p>
+                <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: 9, color: 'rgba(255,255,255,0.5)', margin: '2px 0 0' }}>{deck.item_count} frames</p>
               </div>
             ))
           )}
@@ -627,7 +678,7 @@ export default function Profile() {
           {!showNewDeckForm ? (
             <button
               onClick={() => setShowNewDeckForm(true)}
-              style={{ display: 'block', width: '100%', border: '1px solid white', background: 'transparent', color: 'white', ...MONO, fontSize: 11, padding: '8px', cursor: 'pointer', borderRadius: 0 }}
+              style={{ display: 'block', width: '100%', border: '1px solid white', background: 'transparent', color: 'white', fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 11, textTransform: 'uppercase', padding: '8px', cursor: 'pointer', borderRadius: 0 }}
             >
               ＋ NEW DECK
             </button>

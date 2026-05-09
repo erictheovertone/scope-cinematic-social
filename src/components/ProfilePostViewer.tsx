@@ -11,6 +11,7 @@ import { getUserByPrivyId, getProfile } from "@/lib/userService";
 import DeckPickerSheet from "@/components/DeckPickerSheet";
 import CollectSheet from "@/components/CollectSheet";
 import DeletePostSheet from "@/components/DeletePostSheet";
+import MediaRenderer from "@/components/MediaRenderer";
 import { supabase } from "@/lib/supabase/client";
 
 const MONO: React.CSSProperties = { fontFamily: "'IBM Plex Mono', monospace" };
@@ -124,11 +125,18 @@ function PostViewerItem({
     <div>
 
       {/* ── IMAGE ── position:relative, overflow:hidden */}
-      <div style={{ position: "relative", width: "100%", aspectRatio: "2.4 / 1", overflow: "hidden", background: "#0a0a0a" }}>
+      <div
+        style={{ position: "relative", width: "100%", aspectRatio: "2.4 / 1", overflow: "hidden", background: "#0a0a0a" }}
+        onClick={(e) => e.stopPropagation()}
+      >
         {post.media_urls?.[0] ? (
-          <img
-            src={post.media_urls[0]}
-            alt={post.caption || ""}
+          <MediaRenderer
+            url={post.media_urls[0]}
+            mediaType={(post as any).media_type}
+            caption={post.caption || ""}
+            thumbnailUrl={(post as any).thumbnail_url}
+            autoplay={true}
+            showSoundToggle={true}
             style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
           />
         ) : (
@@ -138,7 +146,7 @@ function PostViewerItem({
         {/* Avatar + username — flex row, top: 6, left: 6 */}
         <div
           className="absolute"
-          onClick={onNavigateToProfile}
+          onClick={(e) => { e.stopPropagation(); onNavigateToProfile(); }}
           style={{ top: 6, left: 6, display: "flex", alignItems: "center", gap: 4, cursor: "pointer", zIndex: 10, opacity: 0.85 }}
         >
           <img

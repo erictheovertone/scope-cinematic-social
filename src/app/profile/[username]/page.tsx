@@ -21,7 +21,7 @@ const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fon
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
 const MONO: React.CSSProperties = { fontFamily: "'IBM Plex Mono', monospace" };
 
-const COLLAGE_ASPECTS = ["aspect-video", "aspect-[2.4/1]", "aspect-[4/3]", "aspect-square"];
+const COLLAGE_ASPECTS = ["aspect-video", "aspect-[2.39/1]", "aspect-[4/3]", "aspect-square"];
 
 function getGridCols(layoutId: string): string {
   switch (layoutId) {
@@ -33,11 +33,11 @@ function getGridCols(layoutId: string): string {
 
 function getPostAspect(layoutId: string, index: number): string {
   switch (layoutId) {
-    case "2x-super-wide": case "1x-super-wide": return "aspect-[2.4/1]";
+    case "2x-super-wide": case "1x-super-wide": return "aspect-[2.39/1]";
     case "2x-regular-wide": return "aspect-video";
     case "3x-square": return "aspect-square";
     case "collage": return COLLAGE_ASPECTS[index % COLLAGE_ASPECTS.length];
-    default: return "aspect-[2.4/1]";
+    default: return "aspect-[2.39/1]";
   }
 }
 
@@ -157,7 +157,7 @@ export default function PublicProfilePage() {
 
   const isOwnProfile = user && targetPrivyId && user.id === targetPrivyId;
   const layoutId = profile?.grid_layout || "1x-super-wide";
-  const getDeckAspect = (gl?: string | null) => { if (!gl) return '2.4 / 1'; if (gl.includes('2.4') || gl === 'collage') return '2.4 / 1'; if (gl.includes('16:9') || gl.includes('16-9')) return '16 / 9'; if (gl.includes('4:3') || gl.includes('4-3')) return '4 / 3'; return '2.4 / 1'; };
+  const getDeckAspect = (gl?: string | null) => { if (!gl) return '2.39 / 1'; if (gl.includes('2.4') || gl.includes('2.39') || gl === 'collage') return '2.39 / 1'; if (gl.includes('16:9') || gl.includes('16-9')) return '16 / 9'; if (gl.includes('4:3') || gl.includes('4-3')) return '4 / 3'; return '2.39 / 1'; };
   const thumbCols = (n: number) => n <= 1 ? '1fr' : n <= 4 ? '1fr 1fr' : '1fr 1fr 1fr';
 
   const bioTruncated = (profile?.bio || '').slice(0, 72).toUpperCase();
@@ -316,14 +316,14 @@ export default function PublicProfilePage() {
       {showFollowingModal && targetPrivyId && <FollowListModal type="following" privyUserId={targetPrivyId} onClose={() => setShowFollowingModal(false)} />}
 
       {/* Decks overlay */}
-      {showDecks && <div onClick={() => setShowDecks(false)} style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.75)', zIndex: 59 }} />}
+      {showDecks && <div onClick={() => { setShowDecks(false); setActiveTab('main'); }} style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.75)', zIndex: 59 }} />}
 
       {/* Decks sheet */}
       <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, height: '70vh', backgroundColor: '#000', borderTop: '1px solid white', zIndex: 60, transform: showDecks ? 'translateY(0)' : 'translateY(100%)', transition: 'transform 300ms ease', display: 'flex', flexDirection: 'column' }}>
         <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px 16px 10px', flexShrink: 0 }}>
           <div style={{ position: 'absolute', top: 8, left: '50%', transform: 'translateX(-50%)', width: 40, height: 3, backgroundColor: 'rgba(255,255,255,0.3)' }} />
           <span style={{ ...SKB, fontSize: 11, color: 'white', letterSpacing: '0.05em', textTransform: 'uppercase' }}>DECKS</span>
-          <button onClick={() => setShowDecks(false)} style={{ position: 'absolute', right: 16, fontSize: 18, color: 'white', background: 'none', border: 'none', cursor: 'pointer' }}>×</button>
+          <button onClick={() => { setShowDecks(false); setActiveTab('main'); }} style={{ position: 'absolute', right: 16, fontSize: 18, color: 'white', background: 'none', border: 'none', cursor: 'pointer' }}>×</button>
         </div>
         <div style={{ flex: 1, overflowY: 'auto', padding: '0 16px' }}>
           {decksLoading ? <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '50%' }}><div style={{ width: 8, height: 8, background: '#FF0000', borderRadius: '50%' }} /></div>

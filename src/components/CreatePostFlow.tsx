@@ -84,7 +84,7 @@ interface GridLayout {
 
 const GRID_LAYOUTS: GridLayout[] = [
   { id: 'single', name: 'Single', aspectRatio: '1:1', gridTemplate: 'grid-cols-1 grid-rows-1', preview: '□' },
-  { id: 'horizontal', name: 'Horizontal', aspectRatio: '21:9', gridTemplate: 'grid-cols-1 grid-rows-1', preview: '▬' },
+  { id: 'horizontal', name: 'Horizontal', aspectRatio: '2.39:1', gridTemplate: 'grid-cols-1 grid-rows-1', preview: '▬' },
   { id: 'vertical', name: 'Vertical', aspectRatio: '9:16', gridTemplate: 'grid-cols-1 grid-rows-1', preview: '▮' },
   { id: 'grid2x2', name: '2x2 Grid', aspectRatio: '1:1', gridTemplate: 'grid-cols-2 grid-rows-2', preview: '⊞' },
   { id: 'grid3x1', name: '3x1 Strip', aspectRatio: '3:1', gridTemplate: 'grid-cols-3 grid-rows-1', preview: '⊟' }
@@ -120,6 +120,12 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
   const [mintStatus, setMintStatus] = useState<'idle' | 'minting' | 'minted' | 'mint-failed'>('idle');
   const [customThumbnail, setCustomThumbnail] = useState<File | null>(null);
   const thumbnailInputRef = useRef<HTMLInputElement>(null);
+
+  // Crop overlay state
+  const [cropY, setCropY] = useState(0.15);
+  const [cropHeight, setCropHeight] = useState(0.70);
+  const cropContainerRef = useRef<HTMLDivElement>(null);
+  const cropDragRef = useRef<{ startY: number; startCropY: number; startCropH: number; mode: 'move' | 'top' | 'bottom' } | null>(null);
 
   // Deck step state
   const [userDecks, setUserDecks] = useState<(Deck & { item_count: number })[]>([]);
@@ -192,7 +198,36 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
 
     setSelectedMedia(prev => [...prev, ...newMedia]);
     setIsOptimising(false);
+    setCropY(0.15);
+    setCropHeight(0.70);
   }, []);
+
+  const clampCrop = (val: number, min: number, max: number) => Math.min(max, Math.max(min, val));
+
+  const handleCropPointerDown = (e: React.PointerEvent, mode: 'move' | 'top' | 'bottom') => {
+    e.stopPropagation();
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    cropDragRef.current = { startY: e.clientY, startCropY: cropY, startCropH: cropHeight, mode };
+  };
+
+  const handleCropPointerMove = (e: React.PointerEvent) => {
+    if (!cropDragRef.current || !cropContainerRef.current) return;
+    const containerH = cropContainerRef.current.getBoundingClientRect().height;
+    if (containerH === 0) return;
+    const deltaFrac = (e.clientY - cropDragRef.current.startY) / containerH;
+    const { startCropY, startCropH, mode } = cropDragRef.current;
+    if (mode === 'move') {
+      setCropY(clampCrop(startCropY + deltaFrac, 0, 1 - cropHeight));
+    } else if (mode === 'top') {
+      const newY = clampCrop(startCropY + deltaFrac, 0, startCropY + startCropH - 0.1);
+      setCropY(newY);
+      setCropHeight(clampCrop(startCropH - deltaFrac, 0.1, 1 - newY));
+    } else {
+      setCropHeight(clampCrop(startCropH + deltaFrac, 0.1, 1 - startCropY));
+    }
+  };
+
+  const handleCropPointerUp = () => { cropDragRef.current = null; };
 
   const handleRemoveMedia = useCallback((id: string) => {
     setSelectedMedia(prev => {
@@ -477,27 +512,79 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
 
       <div className="flex-1 flex flex-col">
         <div className="flex-1 p-4">
-          <div
-            className="w-full bg-[#1A1A1A] border border-[#333333] overflow-hidden mb-4"
-            style={{ aspectRatio: selectedLayout.aspectRatio.replace(':', '/') }}
-          >
-            {selectedMedia[0] && (
-              <MediaRenderer
-                url={selectedMedia[0].url}
-                mediaType={selectedMedia[0].type}
-                caption={caption}
-                autoplay={true}
-                showSoundToggle={true}
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-              />
+          <div style={{ position: 'relative', width: '100%', marginBottom: 16, backgroundColor: '#000' }}>
+            {selectedMedia[0]?.type === 'video' ? (
+              <div
+                ref={cropContainerRef}
+                style={{ position: 'relative', width: '100%', backgroundColor: '#000', marginBottom: 16, touchAction: 'none' }}
+                onPointerMove={handleCropPointerMove}
+                onPointerUp={handleCropPointerUp}
+                onPointerLeave={handleCropPointerUp}
+              >
+                <video
+                  src={selectedMedia[0].url}
+                  autoPlay muted loop playsInline
+                  style={{ width: '100%', display: 'block', objectFit: 'contain', maxHeight: '60vh' }}
+                />
+                {/* Dark bars — non-interactive overlay */}
+                <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 5 }}>
+                  <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: `${cropY * 100}%`, background: 'rgba(0,0,0,0.72)' }} />
+                  <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: `${(1 - cropY - cropHeight) * 100}%`, background: 'rgba(0,0,0,0.72)' }} />
+                </div>
+                {/* Crop box — interactive */}
+                <div
+                  style={{ position: 'absolute', left: 0, right: 0, top: `${cropY * 100}%`, height: `${cropHeight * 100}%`, zIndex: 6, cursor: 'grab', pointerEvents: 'auto' }}
+                  onPointerDown={(e) => handleCropPointerDown(e, 'move')}
+                >
+                  {/* Top handle */}
+                  <div
+                    onPointerDown={(e) => handleCropPointerDown(e, 'top')}
+                    style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 24, cursor: 'ns-resize', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'auto' }}
+                  >
+                    <div style={{ width: 32, height: 1.5, backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: 1 }} />
+                  </div>
+                  {/* Bottom handle */}
+                  <div
+                    onPointerDown={(e) => handleCropPointerDown(e, 'bottom')}
+                    style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 24, cursor: 'ns-resize', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'auto' }}
+                  >
+                    <div style={{ width: 32, height: 1.5, backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: 1 }} />
+                  </div>
+                  {/* Corner markers */}
+                  {([
+                    { top: 0, left: 0, borderTop: '1px solid rgba(255,255,255,0.7)', borderLeft: '1px solid rgba(255,255,255,0.7)' },
+                    { top: 0, right: 0, borderTop: '1px solid rgba(255,255,255,0.7)', borderRight: '1px solid rgba(255,255,255,0.7)' },
+                    { bottom: 0, left: 0, borderBottom: '1px solid rgba(255,255,255,0.7)', borderLeft: '1px solid rgba(255,255,255,0.7)' },
+                    { bottom: 0, right: 0, borderBottom: '1px solid rgba(255,255,255,0.7)', borderRight: '1px solid rgba(255,255,255,0.7)' },
+                  ] as React.CSSProperties[]).map((corner, i) => (
+                    <div key={i} style={{ position: 'absolute', width: 12, height: 12, ...corner }} />
+                  ))}
+                  {/* Aspect ratio label */}
+                  <div style={{ position: 'absolute', bottom: 28, right: 8, background: 'rgba(0,0,0,0.55)', padding: '2px 5px' }}>
+                    <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 8, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase' }}>
+                      {selectedLayout.aspectRatio}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div style={{ width: '100%', aspectRatio: selectedLayout.aspectRatio.replace(':', '/'), overflow: 'hidden', backgroundColor: '#1A1A1A', border: '1px solid #333' }}>
+                {selectedMedia[0] && (
+                  <img
+                    src={selectedMedia[0].url}
+                    alt="Preview"
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                  />
+                )}
+              </div>
             )}
           </div>
           <textarea
             value={caption}
             onChange={(e) => setCaption(e.target.value)}
             placeholder="Write a caption..."
-            className="w-full bg-transparent font-['IBM_Plex_Mono'] text-[14px] resize-none border-none outline-none placeholder-[#666666]"
-            style={{ color: '#FFFFFF', caretColor: '#FFFFFF', backgroundColor: 'transparent' }}
+            className="w-full bg-transparent text-[14px] resize-none border-none outline-none placeholder-[#666666]"
+            style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, color: '#FFFFFF', caretColor: '#FFFFFF', backgroundColor: 'transparent' }}
             rows={4}
           />
           {selectedMedia[0]?.type === 'video' && (

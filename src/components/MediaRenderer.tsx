@@ -62,7 +62,7 @@ export default function MediaRenderer({
   }
 
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100%' }} onClick={onClick}>
+    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
       <video
         ref={videoRef}
         src={url}
@@ -73,6 +73,7 @@ export default function MediaRenderer({
         autoPlay={autoplay}
         className={className}
         style={{ ...style, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+        onClick={(e) => { e.stopPropagation(); onClick?.(); }}
       />
       {showSoundToggle && (
         <button

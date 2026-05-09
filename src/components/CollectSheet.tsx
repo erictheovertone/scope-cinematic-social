@@ -11,12 +11,12 @@ const MONO: React.CSSProperties = { fontFamily: "'IBM Plex Mono', monospace" };
 const QUANTITIES = [1, 5, 10, 100];
 
 function getAspect(gridLayout?: string | null): string {
-  if (!gridLayout) return "2.4 / 1";
-  if (gridLayout.includes("2.4") || gridLayout === "collage") return "2.4 / 1";
+  if (!gridLayout) return "2.39 / 1";
+  if (gridLayout.includes("2.4") || gridLayout.includes("2.39") || gridLayout === "collage") return "2.39 / 1";
   if (gridLayout.includes("16:9") || gridLayout.includes("16-9") || gridLayout.includes("regular-wide")) return "16 / 9";
   if (gridLayout.includes("4:3") || gridLayout.includes("4-3")) return "4 / 3";
   if (gridLayout.includes("square")) return "1 / 1";
-  return "2.4 / 1";
+  return "2.39 / 1";
 }
 
 type Mode = "buy" | "sell";
