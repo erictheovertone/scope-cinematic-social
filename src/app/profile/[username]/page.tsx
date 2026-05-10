@@ -21,23 +21,27 @@ const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fon
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
 const MONO: React.CSSProperties = { fontFamily: "'IBM Plex Mono', monospace" };
 
-const COLLAGE_ASPECTS = ["aspect-video", "aspect-[2.39/1]", "aspect-[4/3]", "aspect-square"];
-
 function getGridCols(layoutId: string): string {
-  switch (layoutId) {
-    case "2x-super-wide": case "2x-regular-wide": case "collage": return "grid-cols-2";
-    case "1x-super-wide": return "grid-cols-1";
-    case "3x-square": default: return "grid-cols-3";
-  }
+  if (layoutId.startsWith('2x-')) return 'grid-cols-2';
+  if (layoutId.startsWith('3x-')) return 'grid-cols-3';
+  if (layoutId.startsWith('1x-')) return 'grid-cols-1';
+  if (layoutId === 'collage') return 'grid-cols-2';
+  if (layoutId === '2x-super-wide' || layoutId === '2x-regular-wide') return 'grid-cols-2';
+  if (layoutId === '3x-square') return 'grid-cols-3';
+  return 'grid-cols-1';
 }
 
 function getPostAspect(layoutId: string, index: number): string {
   switch (layoutId) {
-    case "2x-super-wide": case "1x-super-wide": return "aspect-[2.39/1]";
-    case "2x-regular-wide": return "aspect-video";
-    case "3x-square": return "aspect-square";
-    case "collage": return COLLAGE_ASPECTS[index % COLLAGE_ASPECTS.length];
-    default: return "aspect-[2.39/1]";
+    case '2x-pana': case '1x-pana': return 'aspect-[2.75/1]';
+    case '2x-scope': case '1x-scope': return 'aspect-[2.39/1]';
+    case '2x-cine': case '1x-cine': return 'aspect-[1.85/1]';
+    case '3x-legacy': return 'aspect-[4/3]';
+    case 'collage': return ['aspect-[2.39/1]','aspect-[2.75/1]','aspect-[4/3]','aspect-[1.85/1]'][index % 4];
+    case '2x-super-wide': case '1x-super-wide': return 'aspect-[2.39/1]';
+    case '2x-regular-wide': return 'aspect-video';
+    case '3x-square': return 'aspect-square';
+    default: return 'aspect-[2.39/1]';
   }
 }
 
@@ -156,8 +160,20 @@ export default function PublicProfilePage() {
   };
 
   const isOwnProfile = user && targetPrivyId && user.id === targetPrivyId;
-  const layoutId = profile?.grid_layout || "1x-super-wide";
-  const getDeckAspect = (gl?: string | null) => { if (!gl) return '2.39 / 1'; if (gl.includes('2.4') || gl.includes('2.39') || gl === 'collage') return '2.39 / 1'; if (gl.includes('16:9') || gl.includes('16-9')) return '16 / 9'; if (gl.includes('4:3') || gl.includes('4-3')) return '4 / 3'; return '2.39 / 1'; };
+  const layoutId = profile?.grid_layout || "1x-scope";
+  const getDeckAspect = (gl?: string | null) => {
+    if (!gl) return '2.39 / 1';
+    switch (gl) {
+      case '2x-pana': case '1x-pana': return '2.75 / 1';
+      case '2x-scope': case '1x-scope': return '2.39 / 1';
+      case '2x-cine': case '1x-cine': return '1.85 / 1';
+      case '3x-legacy': return '4 / 3';
+      default:
+        if (gl.includes('16:9') || gl.includes('16-9')) return '16 / 9';
+        if (gl.includes('4:3') || gl.includes('4-3')) return '4 / 3';
+        return '2.39 / 1';
+    }
+  };
   const thumbCols = (n: number) => n <= 1 ? '1fr' : n <= 4 ? '1fr 1fr' : '1fr 1fr 1fr';
 
   const bioTruncated = (profile?.bio || '').slice(0, 72).toUpperCase();
@@ -273,11 +289,18 @@ export default function PublicProfilePage() {
           <button onClick={() => setActiveTab('main')} style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer' }}>
             <span style={{ ...SKB, fontSize: 8, color: activeTab === 'main' ? '#FF0000' : 'white', textTransform: 'uppercase', letterSpacing: '-0.16px' }}>MAIN</span>
           </button>
-          <button onClick={() => { setActiveTab('decks'); setShowDecks(true); }} style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer' }}>
-            <img src="/decks-logo.png" style={{ height: 14, display: 'block', filter: activeTab === 'decks' ? 'invert(27%) sepia(100%) saturate(7000%) hue-rotate(0deg) brightness(100%) contrast(100%)' : 'none' }} alt="Decks" />
+          <button onClick={() => { setActiveTab('decks'); setShowDecks(true); }} style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', position: 'relative', left: -30 }}>
+            <img src="/decks-logo-new-lg.png" style={{ height: 8, width: 'auto', display: 'block', filter: activeTab === 'decks' ? 'invert(27%) sepia(100%) saturate(7000%) hue-rotate(0deg) brightness(100%) contrast(100%)' : 'none' }} alt="Decks" />
           </button>
-          <button onClick={() => setActiveTab('theatre')} style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer' }}>
-            <img src="/theatre-view-logo.png" style={{ height: 16, display: 'block', filter: activeTab === 'theatre' ? 'invert(27%) sepia(100%) saturate(7000%) hue-rotate(0deg) brightness(100%) contrast(100%)' : 'none' }} alt="Theatre" />
+          <button
+            onClick={() => setActiveTab('theatre')}
+            style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer' }}
+          >
+            <img
+              src="/theatre-mode-logo-new-lg.png"
+              style={{ height: 26, width: 'auto', display: 'block', opacity: activeTab === 'theatre' ? 1 : 0.7, position: 'relative', left: 10 }}
+              alt="Theatre"
+            />
           </button>
           <button onClick={() => setActiveTab('collected')} style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer' }}>
             <span style={{ ...SKB, fontSize: 8, color: activeTab === 'collected' ? '#FF0000' : 'white', textTransform: 'uppercase', letterSpacing: '-0.16px' }}>COLLECTED</span>
@@ -301,7 +324,7 @@ export default function PublicProfilePage() {
               {posts.map((post, index) => (
                 <div key={post.id} className={`bg-[#222] overflow-hidden ${getPostAspect(layoutId, index)}`} style={{ cursor: 'pointer' }} onClick={() => { setViewerIndex(index); setShowViewer(true); }}>
                   {post.media_urls?.[0]
-                    ? <MediaRenderer url={post.media_urls[0]} mediaType={post.media_type} caption={post.caption || 'Post'} thumbnailUrl={post.thumbnail_url} autoplay={false} showSoundToggle={false} className="w-full h-full object-cover" />
+                    ? <MediaRenderer url={post.media_urls[0]} mediaType={post.media_type} caption={post.caption || 'Post'} thumbnailUrl={post.thumbnail_url} autoplay={post.autoplay !== false} showSoundToggle={false} className="w-full h-full object-cover" />
                     : <div className="w-full h-full bg-[#222]" />
                   }
                 </div>

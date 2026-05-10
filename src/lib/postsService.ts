@@ -16,6 +16,7 @@ interface Post {
   is_minted?: boolean;
   media_type?: string;
   thumbnail_url?: string | null;
+  autoplay?: boolean;
 }
 
 interface Like {
@@ -45,6 +46,7 @@ export const createPost = async (postData: {
   aspectRatio?: number;
   mediaType?: string;
   thumbnailUrl?: string | null;
+  autoplay?: boolean;
 }): Promise<Post> => {
   const { data, error } = await supabase
     .from('posts')
@@ -57,6 +59,7 @@ export const createPost = async (postData: {
         layout_id: postData.layoutId,
         media_type: postData.mediaType || 'image',
         thumbnail_url: postData.thumbnailUrl || null,
+        autoplay: postData.autoplay !== false,
       }
     ])
     .select()

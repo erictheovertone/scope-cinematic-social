@@ -14,6 +14,40 @@ import {
   type Deck,
 } from '@/lib/userService';
 
+function captureVideoThumbnail(videoUrl: string): Promise<string | null> {
+  return new Promise((resolve) => {
+    const video = document.createElement('video');
+    video.muted = true;
+    video.src = videoUrl;
+    video.onloadedmetadata = () => { video.currentTime = 0.5; };
+    video.onseeked = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth || 640;
+        canvas.height = video.videoHeight || 360;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) { resolve(null); return; }
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL('image/jpeg', 0.8));
+      } catch { resolve(null); }
+    };
+    video.onerror = () => resolve(null);
+    setTimeout(() => resolve(null), 5000);
+  });
+}
+
+async function uploadAutoThumbnail(dataUrl: string, userId: string): Promise<string | null> {
+  try {
+    const res = await fetch(dataUrl);
+    const blob = await res.blob();
+    const file = new File([blob], 'auto-thumb.jpg', { type: 'image/jpeg' });
+    return await uploadImage(file, 'post-media', userId);
+  } catch (e) {
+    console.error('[uploadAutoThumbnail] error:', e);
+    return null;
+  }
+}
+
 // ── Client-side image compression via Canvas API ──────────────────
 // Max 1920px longest side, JPEG 0.82 quality, all formats → JPEG.
 // Falls back to the original file on any error so uploads never break.
@@ -120,6 +154,8 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
   const [mintStatus, setMintStatus] = useState<'idle' | 'minting' | 'minted' | 'mint-failed'>('idle');
   const [customThumbnail, setCustomThumbnail] = useState<File | null>(null);
   const thumbnailInputRef = useRef<HTMLInputElement>(null);
+  const [videoAutoplay, setVideoAutoplay] = useState(true);
+  const [autoThumbnail, setAutoThumbnail] = useState<string | null>(null);
 
   // Crop overlay state
   const [cropY, setCropY] = useState(0.15);
@@ -169,12 +205,9 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
           setVideoError("Video must be under 50MB. Please trim or compress before uploading.");
           continue;
         }
-        newMedia.push({
-          id: `${Date.now()}-${Math.random()}`,
-          file,
-          url: URL.createObjectURL(file),
-          type: "video",
-        });
+        const objUrl = URL.createObjectURL(file);
+        newMedia.push({ id: `${Date.now()}-${Math.random()}`, file, url: objUrl, type: "video" });
+        captureVideoThumbnail(objUrl).then(thumb => { if (thumb) setAutoThumbnail(thumb); });
       } else if (file.type.startsWith("image/")) {
         console.log(`[handleMediaSelect] Starting compression for ${file.name}…`);
         let processedFile = file;
@@ -200,6 +233,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
     setIsOptimising(false);
     setCropY(0.15);
     setCropHeight(0.70);
+    if (!newMedia.some(m => m.type === 'video')) setAutoThumbnail(null);
   }, []);
 
   const clampCrop = (val: number, min: number, max: number) => Math.min(max, Math.max(min, val));
@@ -285,6 +319,9 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
       if (customThumbnail) {
         thumbnailUrl = await uploadImage(customThumbnail, 'post-media', user.id);
         console.log('[handlePost] thumbnail uploaded:', thumbnailUrl);
+      } else if (selectedMedia[0]?.type === 'video' && autoThumbnail) {
+        thumbnailUrl = await uploadAutoThumbnail(autoThumbnail, user.id);
+        console.log('[handlePost] auto thumbnail uploaded:', thumbnailUrl);
       }
 
       const postPayload = {
@@ -295,6 +332,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
         layoutId: (profile as any).grid_layout || selectedLayout.id,
         mediaType: selectedMedia[0]?.type || 'image',
         thumbnailUrl,
+        autoplay: selectedMedia[0]?.type === 'video' ? videoAutoplay : true,
       };
       console.log('[handlePost] createPost payload:', postPayload);
       const newPost = await createPost(postPayload);
@@ -359,6 +397,8 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
         setSelectedDeckId(null);
         setMintStatus('idle');
         setCustomThumbnail(null);
+        setVideoAutoplay(true);
+        setAutoThumbnail(null);
         router.push('/profile');
       }, 2200);
 
@@ -588,6 +628,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
             rows={4}
           />
           {selectedMedia[0]?.type === 'video' && (
+            <>
             <div style={{ marginTop: 12 }}>
               <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 9, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 8px' }}>
                 CUSTOM THUMBNAIL (OPTIONAL)
@@ -610,6 +651,18 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
               )}
               <input ref={thumbnailInputRef} type="file" accept="image/*" onChange={(e) => { const f = e.target.files?.[0]; if (f) setCustomThumbnail(f); e.target.value = ''; }} style={{ display: 'none' }} />
             </div>
+            <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 9, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>
+                AUTOPLAY
+              </p>
+              <button
+                onClick={() => setVideoAutoplay(v => !v)}
+                style={{ width: 36, height: 20, borderRadius: 0, background: videoAutoplay ? '#FF0000' : 'rgba(255,255,255,0.15)', border: 'none', cursor: 'pointer', position: 'relative', transition: 'background 0.2s ease', padding: 0 }}
+              >
+                <div style={{ position: 'absolute', top: 2, left: videoAutoplay ? 18 : 2, width: 16, height: 16, borderRadius: 0, background: 'white', transition: 'left 0.2s ease' }} />
+              </button>
+            </div>
+            </>
           )}
         </div>
 

@@ -96,8 +96,8 @@ export default function MediaRenderer({
           )}
         </button>
       )}
-      {!showSoundToggle && (
-        <div style={{ position: 'absolute', bottom: 6, right: 6, background: 'rgba(0,0,0,0.6)', padding: '2px 5px' }}>
+      {!autoplay && !showSoundToggle && (
+        <div style={{ position: 'absolute', top: 6, right: 6, width: 24, height: 24, borderRadius: '50%', background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
           <svg width="10" height="10" viewBox="0 0 24 24" fill="white">
             <path d="M8 5v14l11-7z"/>
           </svg>

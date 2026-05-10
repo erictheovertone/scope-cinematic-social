@@ -33,15 +33,21 @@ interface Post {
   token_id?: string | null;
   media_type?: string;
   thumbnail_url?: string | null;
+  autoplay?: boolean;
 }
 
 function getAspectFromGridLayout(gridLayout?: string | null): string {
-  if (!gridLayout) return '2.4 / 1';
-  if (gridLayout.includes('2.4')) return '2.4 / 1';
-  if (gridLayout.includes('16:9') || gridLayout.includes('16-9')) return '16 / 9';
-  if (gridLayout.includes('4:3') || gridLayout.includes('4-3')) return '4 / 3';
-  if (gridLayout.includes('square')) return '1 / 1';
-  return '2.4 / 1';
+  if (!gridLayout) return '2.39 / 1';
+  switch (gridLayout) {
+    case '2x-pana': case '1x-pana': return '2.75 / 1';
+    case '2x-scope': case '1x-scope': return '2.39 / 1';
+    case '2x-cine': case '1x-cine': return '1.85 / 1';
+    case '3x-legacy': return '4 / 3';
+    default:
+      if (gridLayout.includes('16:9') || gridLayout.includes('16-9')) return '16 / 9';
+      if (gridLayout.includes('4:3') || gridLayout.includes('4-3')) return '4 / 3';
+      return '2.39 / 1';
+  }
 }
 
 interface PostItemProps {
@@ -182,7 +188,7 @@ export default function PostItem({ post, onImageClick }: PostItemProps) {
           mediaType={post.media_type}
           caption={post.caption}
           thumbnailUrl={post.thumbnail_url}
-          autoplay={true}
+          autoplay={post.autoplay !== false}
           showSoundToggle={true}
           style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
           onClick={onImageClick}

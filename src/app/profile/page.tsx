@@ -16,35 +16,29 @@ import BottomToolbar from "@/components/BottomToolbar";
 import MediaRenderer from "@/components/MediaRenderer";
 import VideoLightbox from "@/components/VideoLightbox";
 
-const COLLAGE_ASPECTS = ['aspect-video', 'aspect-[2.39/1]', 'aspect-[4/3]', 'aspect-square'];
-
 function getGridCols(layoutId: string): string {
-  switch (layoutId) {
-    case '2x-super-wide':
-    case '2x-regular-wide':
-    case 'collage':
-      return 'grid-cols-2';
-    case '1x-super-wide':
-      return 'grid-cols-1';
-    case '3x-square':
-    default:
-      return 'grid-cols-3';
-  }
+  if (layoutId.startsWith('2x-')) return 'grid-cols-2';
+  if (layoutId.startsWith('3x-')) return 'grid-cols-3';
+  if (layoutId.startsWith('1x-')) return 'grid-cols-1';
+  if (layoutId === 'collage') return 'grid-cols-2';
+  // legacy
+  if (layoutId === '2x-super-wide' || layoutId === '2x-regular-wide') return 'grid-cols-2';
+  if (layoutId === '3x-square') return 'grid-cols-3';
+  return 'grid-cols-1';
 }
 
 function getPostAspect(layoutId: string, index: number): string {
   switch (layoutId) {
-    case '2x-super-wide':
-    case '1x-super-wide':
-      return 'aspect-[2.39/1]';
-    case '2x-regular-wide':
-      return 'aspect-video';
-    case '3x-square':
-      return 'aspect-square';
-    case 'collage':
-      return COLLAGE_ASPECTS[index % COLLAGE_ASPECTS.length];
-    default:
-      return 'aspect-[2.39/1]';
+    case '2x-pana': case '1x-pana': return 'aspect-[2.75/1]';
+    case '2x-scope': case '1x-scope': return 'aspect-[2.39/1]';
+    case '2x-cine': case '1x-cine': return 'aspect-[1.85/1]';
+    case '3x-legacy': return 'aspect-[4/3]';
+    case 'collage': return ['aspect-[2.39/1]','aspect-[2.75/1]','aspect-[4/3]','aspect-[1.85/1]'][index % 4];
+    // legacy
+    case '2x-super-wide': case '1x-super-wide': return 'aspect-[2.39/1]';
+    case '2x-regular-wide': return 'aspect-video';
+    case '3x-square': return 'aspect-square';
+    default: return 'aspect-[2.39/1]';
   }
 }
 
@@ -73,7 +67,7 @@ export default function Profile() {
     profileImage: null as string | null,
     websiteUrl: "",
   });
-  const [userLayoutId, setUserLayoutId] = useState('1x-super-wide');
+  const [userLayoutId, setUserLayoutId] = useState('1x-scope');
   const [layoutLoaded, setLayoutLoaded] = useState(false);
   const [activeTab, setActiveTab] = useState<'main' | 'collected' | 'decks' | 'theatre'>('main');
   const [userPosts, setUserPosts] = useState<any[]>([]);
@@ -105,8 +99,19 @@ export default function Profile() {
   const [showMembershipSheet, setShowMembershipSheet] = useState(false);
   const [badgeJustUnlocked, setBadgeJustUnlocked] = useState(false);
   const [gridScrollY, setGridScrollY] = useState(0);
+  const [headerSnapped, setHeaderSnapped] = useState(false);
+  const [headerUnsnapping, setHeaderUnsnapping] = useState(false);
+  const [snapAnimKey, setSnapAnimKey] = useState(0);
+  const snapScrollYRef = useRef(0);
+  const dismissSnapMenu = () => {
+    setHeaderUnsnapping(true);
+    setTimeout(() => {
+      setHeaderSnapped(false);
+      setTimeout(() => setHeaderUnsnapping(false), 50);
+    }, 500);
+  };
   const headerOpacity = Math.max(0, 1 - gridScrollY / 80);
-  const gridTop = Math.max(30, 140 - gridScrollY);
+  const gridTop = Math.max(0, 140 * (1 - gridScrollY / 20));
   const tabRowOffset = Math.min(gridScrollY, 101);
   const gridScrollRef = useRef<HTMLDivElement>(null);
 
@@ -206,18 +211,42 @@ export default function Profile() {
 
   const getDeckAspect = (gl?: string | null) => {
     if (!gl) return '2.39 / 1';
-    if (gl.includes('2.4') || gl.includes('2.39') || gl === 'collage') return '2.39 / 1';
-    if (gl.includes('16:9') || gl.includes('16-9')) return '16 / 9';
-    if (gl.includes('4:3') || gl.includes('4-3')) return '4 / 3';
-    return '2.39 / 1';
+    switch (gl) {
+      case '2x-pana': case '1x-pana': return '2.75 / 1';
+      case '2x-scope': case '1x-scope': return '2.39 / 1';
+      case '2x-cine': case '1x-cine': return '1.85 / 1';
+      case '3x-legacy': return '4 / 3';
+      default:
+        if (gl.includes('16:9') || gl.includes('16-9')) return '16 / 9';
+        if (gl.includes('4:3') || gl.includes('4-3')) return '4 / 3';
+        return '2.39 / 1';
+    }
   };
   const thumbCols = (n: number) => n <= 1 ? '1fr' : n <= 4 ? '1fr 1fr' : '1fr 1fr 1fr';
+
+  useEffect(() => {
+    if (headerSnapped && !headerUnsnapping && (gridScrollY > snapScrollYRef.current + 30 || gridScrollY < 20)) setHeaderSnapped(false);
+  }, [gridScrollY, headerSnapped, headerUnsnapping]);
 
   return (
     <div className="bg-black relative w-full max-w-[375px] min-h-screen mx-auto pb-[60px]">
 
+      {/* Header wrapper — fades out on scroll only */}
+      <div style={{
+        position: 'absolute',
+        left: 0,
+        right: 0,
+        top: 0,
+        height: 0,
+        overflow: 'visible',
+        opacity: Math.max(0, 1 - gridScrollY / 20),
+        pointerEvents: gridScrollY < 20 ? 'auto' : 'none',
+        transition: 'opacity 0.25s ease',
+        zIndex: 10,
+      }}>
+
       {/* PFP container — left:11px, top:11px, 75×75px */}
-      <div style={{ position: 'absolute', left: 11, top: 11, width: 75, height: 75, opacity: headerOpacity, pointerEvents: headerOpacity < 0.1 ? 'none' : 'auto' }}>
+      <div style={{ position: 'absolute', left: 11, top: 11, width: 75, height: 75 }}>
 
         {/* PFP image — fills container exactly */}
         <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', zIndex: 1 }}>
@@ -300,21 +329,21 @@ export default function Profile() {
       </div>
 
       {/* Name */}
-      <div style={{ position: 'absolute', left: 100, top: 11, opacity: headerOpacity, pointerEvents: headerOpacity < 0.1 ? 'none' : 'auto' }}>
+      <div style={{ position: 'absolute', left: 100, top: 11 }}>
         <p style={{ ...SKB, fontSize: 11, color: 'white', letterSpacing: '-0.22px', lineHeight: 1.4, margin: 0, textTransform: 'uppercase' }}>
           {userProfile.displayName}
         </p>
       </div>
 
       {/* Username */}
-      <div style={{ position: 'absolute', left: 100, top: 24, display: 'flex', alignItems: 'center', gap: 0, opacity: headerOpacity, pointerEvents: headerOpacity < 0.1 ? 'none' : 'auto' }}>
+      <div style={{ position: 'absolute', left: 100, top: 24, display: 'flex', alignItems: 'center', gap: 0 }}>
         <p style={{ ...SKB, fontSize: 6, color: 'white', letterSpacing: '-0.12px', lineHeight: 1.4, margin: 0, textTransform: 'uppercase' }}>
           {userProfile.username ? `@${userProfile.username}` : ''}
         </p>
       </div>
 
       {/* Bio */}
-      <div style={{ position: 'absolute', left: 98, top: 13, height: 73, width: 155, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', overflow: 'hidden', paddingBottom: 0, opacity: headerOpacity, pointerEvents: headerOpacity < 0.1 ? 'none' : 'auto' }}>
+      <div style={{ position: 'absolute', left: 98, top: 13, height: 73, width: 155, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', overflow: 'hidden', paddingBottom: 0 }}>
         {(() => {
           const bioTruncated = userProfile.bio.slice(0, 72);
           const words = bioTruncated.toUpperCase().split(' ');
@@ -347,7 +376,7 @@ export default function Profile() {
       {/* VIEW DATA */}
       <button
         className="absolute bg-transparent border-none cursor-pointer"
-        style={{ right: '4px', top: '11px', padding: 0, opacity: headerOpacity, pointerEvents: headerOpacity < 0.1 ? 'none' : 'auto' }}
+        style={{ right: '4px', top: '11px', padding: 0 }}
         onClick={() => setIsDataOpen(v => !v)}
       >
         <span style={{ ...SKB, fontSize: 8, color: 'white', letterSpacing: '-0.2px', opacity: isDataOpen ? 0.45 : 1, transition: 'opacity 0.15s ease', textTransform: 'uppercase' }}>
@@ -358,7 +387,7 @@ export default function Profile() {
       {/* Links arrow */}
       <span
         onClick={() => setShowLinks(true)}
-        style={{ position: 'absolute', left: 98, top: 44, fontSize: 24, fontFamily: "'SK-Modernist', sans-serif", fontWeight: 300, color: 'white', opacity: headerOpacity * 0.8, cursor: 'pointer', lineHeight: 1, pointerEvents: headerOpacity < 0.1 ? 'none' : 'auto' }}
+        style={{ position: 'absolute', left: 98, top: 44, fontSize: 24, fontFamily: "'SK-Modernist', sans-serif", fontWeight: 300, color: 'white', opacity: 0.8, cursor: 'pointer', lineHeight: 1 }}
       >↗</span>
 
       {/* Stats cascade — ripples down one row at a time below VIEW DATA */}
@@ -390,47 +419,104 @@ export default function Profile() {
         </div>
       )}
 
-      {/* Tab row — absolute until scrolled past 101px, then fixed */}
+      </div>{/* end header wrapper */}
+
+      {/* Frame icon — appears when header is hidden, tapping snaps header back */}
+      {!headerSnapped && gridScrollY > 20 && (
+        <div
+          onClick={(e) => { e.stopPropagation(); e.preventDefault(); snapScrollYRef.current = gridScrollY; setHeaderSnapped(true); setSnapAnimKey(k => k + 1); }}
+          style={{
+            position: 'fixed',
+            top: 8,
+            left: 8,
+            zIndex: 50,
+            cursor: 'pointer',
+            pointerEvents: 'auto',
+            opacity: Math.min(1, (gridScrollY - 20) / 20),
+            transition: 'opacity 0.2s ease',
+            filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.85))',
+          }}
+        >
+          <svg width="28" height="14" viewBox="0 0 32 16" fill="none">
+            <line x1="1" y1="1" x2="1" y2="6" stroke="#FF0000" strokeWidth="1.1"/>
+            <line x1="1" y1="1" x2="7" y2="1" stroke="#FF0000" strokeWidth="0.85"/>
+            <line x1="31" y1="1" x2="31" y2="6" stroke="#FF0000" strokeWidth="1.1"/>
+            <line x1="25" y1="1" x2="31" y2="1" stroke="#FF0000" strokeWidth="0.85"/>
+            <line x1="1" y1="15" x2="1" y2="10" stroke="#FF0000" strokeWidth="1.1"/>
+            <line x1="1" y1="15" x2="7" y2="15" stroke="#FF0000" strokeWidth="0.85"/>
+            <line x1="31" y1="15" x2="31" y2="10" stroke="#FF0000" strokeWidth="1.1"/>
+            <line x1="25" y1="15" x2="31" y2="15" stroke="#FF0000" strokeWidth="0.85"/>
+          </svg>
+        </div>
+      )}
+
+      {/* Tab row — absolute until scrolled past 101px, then fixed. When snapped, always fixed + aligned with frame icon. */}
       <div style={{
-        position: gridScrollY > 101 ? 'fixed' : 'absolute',
-        top: gridScrollY > 101 ? 2 : `${103 - tabRowOffset}px`,
-        left: gridScrollY > 101 ? '50%' : 0,
-        right: gridScrollY > 101 ? 'auto' : 0,
-        transform: gridScrollY > 101 ? 'translateX(-50%)' : 'none',
-        width: gridScrollY > 101 ? '100%' : 'auto',
+        position: (headerSnapped || headerUnsnapping || gridScrollY > 101) ? 'fixed' : 'absolute',
+        top: (headerSnapped || headerUnsnapping) ? 0 : gridScrollY > 101 ? 2 : `${103 - tabRowOffset}px`,
+        left: (headerSnapped || headerUnsnapping || gridScrollY > 101) ? '50%' : 0,
+        right: (headerSnapped || headerUnsnapping || gridScrollY > 101) ? 'auto' : 0,
+        transform: (headerSnapped || headerUnsnapping || gridScrollY > 101) ? 'translateX(-50%)' : 'none',
+        width: (headerSnapped || headerUnsnapping || gridScrollY > 101) ? '100%' : 'auto',
         maxWidth: 375,
         zIndex: 40,
-        background: gridScrollY > 20
-          ? 'linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.3) 70%, transparent 100%)'
+        background: (headerSnapped || headerUnsnapping)
+          ? 'linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.25) 80%, transparent 100%)'
           : 'transparent',
-        paddingTop: 10,
-        paddingBottom: 12,
+        paddingTop: (headerSnapped || headerUnsnapping) ? 6 : 10,
+        paddingBottom: (headerSnapped || headerUnsnapping) ? 8 : 12,
+        opacity: headerSnapped ? 1 : Math.max(0, 1 - gridScrollY / 20),
+        transition: (headerUnsnapping && !headerSnapped) ? 'none' : 'opacity 0.25s ease',
+        pointerEvents: (headerSnapped || gridScrollY < 20) ? 'auto' : 'none',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 8px', height: 20 }}>
-          <button
-            onClick={() => setActiveTab('main')}
-            style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer' }}
-          >
-            <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 8, color: activeTab === 'main' ? '#FF0000' : 'white', textTransform: 'uppercase', letterSpacing: '-0.16px' }}>MAIN</span>
-          </button>
+        <div key={snapAnimKey} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 8px', height: 20 }}>
+          {/* First slot: frame icon when snapped or unsnapping (dismiss), MAIN text when at top */}
+          {(headerSnapped || headerUnsnapping) ? (
+            <button
+              onClick={dismissSnapMenu}
+              style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', animation: headerUnsnapping ? 'snapOutLeft 0.28s cubic-bezier(0.16,1,0.3,1) 165ms both' : 'snapInLeft 0.32s cubic-bezier(0.16,1,0.3,1) 0ms both' }}
+            >
+              <svg width="28" height="14" viewBox="0 0 32 16" fill="none">
+                <line x1="1" y1="1" x2="1" y2="6" stroke="#FF0000" strokeWidth="1.1"/>
+                <line x1="1" y1="1" x2="7" y2="1" stroke="#FF0000" strokeWidth="0.85"/>
+                <line x1="31" y1="1" x2="31" y2="6" stroke="#FF0000" strokeWidth="1.1"/>
+                <line x1="25" y1="1" x2="31" y2="1" stroke="#FF0000" strokeWidth="0.85"/>
+                <line x1="1" y1="15" x2="1" y2="10" stroke="#FF0000" strokeWidth="1.1"/>
+                <line x1="1" y1="15" x2="7" y2="15" stroke="#FF0000" strokeWidth="0.85"/>
+                <line x1="31" y1="15" x2="31" y2="10" stroke="#FF0000" strokeWidth="1.1"/>
+                <line x1="25" y1="15" x2="31" y2="15" stroke="#FF0000" strokeWidth="0.85"/>
+              </svg>
+            </button>
+          ) : (
+            <button
+              onClick={() => setActiveTab('main')}
+              style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer' }}
+            >
+              <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 8, color: activeTab === 'main' ? '#FF0000' : 'white', textTransform: 'uppercase', letterSpacing: '-0.16px' }}>MAIN</span>
+            </button>
+          )}
 
           <button
             onClick={() => { setActiveTab('decks'); setShowDecks(true); }}
-            style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', position: 'relative', left: 35 }}
+            style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', position: 'relative', left: (headerSnapped || headerUnsnapping) ? -8 : 5, animation: headerUnsnapping ? 'snapOutUp 0.28s cubic-bezier(0.16,1,0.3,1) 110ms both' : headerSnapped ? 'snapInUp 0.32s cubic-bezier(0.16,1,0.3,1) 55ms both' : 'none' }}
           >
-            <img src="/decks-logo.png" style={{ height: 14, display: 'block', filter: activeTab === 'decks' ? 'invert(27%) sepia(100%) saturate(7000%) hue-rotate(0deg) brightness(100%) contrast(100%)' : 'none' }} alt="Decks" />
+            <img src="/decks-logo-new-lg.png" style={{ height: 8, width: 'auto', display: 'block', filter: activeTab === 'decks' ? 'invert(27%) sepia(100%) saturate(7000%) hue-rotate(0deg) brightness(100%) contrast(100%)' : 'none' }} alt="Decks" />
           </button>
 
           <button
             onClick={() => setActiveTab('theatre')}
-            style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', position: 'relative', left: 15 }}
+            style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', animation: headerUnsnapping ? 'snapOutUp 0.28s cubic-bezier(0.16,1,0.3,1) 55ms both' : headerSnapped ? 'snapInUp 0.32s cubic-bezier(0.16,1,0.3,1) 110ms both' : 'none' }}
           >
-            <img src="/theatre-view-logo.png" style={{ height: 16, display: 'block', filter: activeTab === 'theatre' ? 'invert(27%) sepia(100%) saturate(7000%) hue-rotate(0deg) brightness(100%) contrast(100%)' : 'none' }} alt="Theatre" />
+            <img
+              src="/theatre-mode-logo-new-lg.png"
+              style={{ height: 26, width: 'auto', display: 'block', opacity: activeTab === 'theatre' ? 1 : 0.7, position: 'relative', left: (headerSnapped || headerUnsnapping) ? 0 : 10 }}
+              alt="Theatre"
+            />
           </button>
 
           <button
             onClick={() => setActiveTab('collected')}
-            style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer' }}
+            style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', animation: headerUnsnapping ? 'snapOutRight 0.28s cubic-bezier(0.16,1,0.3,1) 0ms both' : headerSnapped ? 'snapInRight 0.32s cubic-bezier(0.16,1,0.3,1) 165ms both' : 'none' }}
           >
             <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 8, color: activeTab === 'collected' ? '#FF0000' : 'white', textTransform: 'uppercase', letterSpacing: '-0.16px' }}>COLLECTED</span>
           </button>
@@ -510,7 +596,7 @@ export default function Profile() {
                         mediaType={post.media_type}
                         caption={post.caption || 'Post'}
                         thumbnailUrl={post.thumbnail_url}
-                        autoplay={false}
+                        autoplay={post.autoplay !== false}
                         showSoundToggle={false}
                         style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                         onClick={() => {
