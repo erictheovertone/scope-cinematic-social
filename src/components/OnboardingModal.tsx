@@ -1,0 +1,138 @@
+"use client";
+import { useState, useEffect } from "react";
+import { usePrivy } from "@privy-io/react-auth";
+
+const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
+const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
+
+const SCREENS = [
+  {
+    label: '01 / 03',
+    title: 'CINEMA\nFOR THE\nINTERNET.',
+    body: 'Scope is where filmmakers, photographers, and visual artists share cinematic work — and get paid for it. Every post is a token. Every collector is a fan with skin in the game.',
+    cta: 'NEXT',
+  },
+  {
+    label: '02 / 03',
+    title: 'YOU HAVE\nA WALLET.',
+    body: "When you signed up, Scope created a crypto wallet in your name on Base. It's yours — no seed phrase, no setup. Your ETH earnings go here automatically. Find it under the wallet icon.",
+    cta: 'NEXT',
+  },
+  {
+    label: '03 / 03',
+    title: 'POST.\nMINT.\nEARN.',
+    body: 'Every time someone collects your post, you earn ETH. Every trade of your token earns you a royalty. The more you create, the more you can earn. It starts with your first post.',
+    cta: 'START CREATING',
+  },
+];
+
+export default function OnboardingModal() {
+  const { user } = usePrivy();
+  const [visible, setVisible] = useState(false);
+  const [screen, setScreen] = useState(0);
+  const [exiting, setExiting] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    const key = `scope_onboarded_${user.id}`;
+    if (!localStorage.getItem(key)) {
+      setTimeout(() => setVisible(true), 800);
+    }
+  }, [user]);
+
+  const handleNext = () => {
+    if (screen < SCREENS.length - 1) {
+      setScreen(s => s + 1);
+    } else {
+      handleDone();
+    }
+  };
+
+  const handleDone = () => {
+    if (user) localStorage.setItem(`scope_onboarded_${user.id}`, 'true');
+    setExiting(true);
+    setTimeout(() => setVisible(false), 400);
+  };
+
+  if (!visible) return null;
+
+  const current = SCREENS[screen];
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 600,
+      backgroundColor: '#000',
+      display: 'flex', flexDirection: 'column',
+      justifyContent: 'space-between',
+      padding: '48px 28px 56px',
+      opacity: exiting ? 0 : 1,
+      transition: 'opacity 0.4s ease',
+    }}>
+      {/* Top row: progress dots + logo */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', gap: 6 }}>
+          {SCREENS.map((_, i) => (
+            <div key={i} style={{
+              width: i === screen ? 20 : 6,
+              height: 2,
+              backgroundColor: i === screen ? '#FF0000' : 'rgba(255,255,255,0.2)',
+              transition: 'width 0.3s ease, background-color 0.3s ease',
+              borderRadius: 1,
+            }} />
+          ))}
+        </div>
+        <img src="/scope-logo-new.png" alt="Scope" style={{ height: 22, width: 'auto', opacity: 0.9 }} />
+      </div>
+
+      {/* Content */}
+      <div>
+        <p style={{ ...SKB, fontSize: 9, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.15em', margin: '0 0 24px' }}>
+          {current.label}
+        </p>
+        <p style={{
+          ...SKB,
+          fontSize: 36,
+          color: 'white',
+          lineHeight: 1.1,
+          letterSpacing: '-0.03em',
+          margin: '0 0 28px',
+          whiteSpace: 'pre-line',
+        }}>
+          {current.title}
+        </p>
+        <p style={{ ...SKR, fontSize: 14, color: 'rgba(255,255,255,0.6)', lineHeight: 1.65, margin: 0 }}>
+          {current.body}
+        </p>
+      </div>
+
+      {/* Actions */}
+      <div>
+        <button
+          onClick={handleNext}
+          style={{
+            width: '100%',
+            background: '#FF0000',
+            border: 'none',
+            cursor: 'pointer',
+            padding: '16px 0',
+            marginBottom: 12,
+          }}
+        >
+          <span style={{ ...SKB, fontSize: 12, color: 'white', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+            {current.cta}
+          </span>
+        </button>
+        {screen < SCREENS.length - 1 && (
+          <button
+            onClick={handleDone}
+            style={{ width: '100%', background: 'transparent', border: 'none', cursor: 'pointer', padding: '10px 0' }}
+          >
+            <span style={{ ...SKB, fontSize: 9, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+              SKIP
+            </span>
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}

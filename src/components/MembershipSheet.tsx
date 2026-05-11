@@ -3,13 +3,13 @@
 import { useState } from "react";
 import { usePrivy, useWallets } from "@privy-io/react-auth";
 import { createPublicClient, http, parseUnits } from "viem";
-import { baseSepolia } from "viem/chains";
+import { base } from "viem/chains";
 
 const BOLD: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const REG: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
 
 const TREASURY = "0xEEb05D9aa4B73af461E820CCC6BA5d97c64cC1c5";
-const USDC_ADDRESS = "0x036CbD53842c5426634e7929541eC2318f3dCF7e"; // Base Sepolia USDC
+const USDC_ADDRESS = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
 
 const USDC_ABI = [
   {
@@ -78,13 +78,13 @@ export default function MembershipSheet({ visible, onClose, onSuccess, isPaidMem
     const embeddedWallet = wallets.find(w => w.walletClientType === "privy");
     if (!embeddedWallet) throw new Error("No wallet found");
 
-    await embeddedWallet.switchChain(baseSepolia.id);
+    await embeddedWallet.switchChain(base.id);
     const provider = await embeddedWallet.getEthereumProvider();
 
     const { createWalletClient, custom } = await import("viem");
     const walletClient = createWalletClient({
       account: embeddedWallet.address as `0x${string}`,
-      chain: baseSepolia,
+      chain: base,
       transport: custom(provider),
     });
 
@@ -95,14 +95,14 @@ export default function MembershipSheet({ visible, onClose, onSuccess, isPaidMem
       abi: USDC_ABI,
       functionName: "transfer",
       args: [TREASURY as `0x${string}`, amountInUnits],
-      chain: baseSepolia,
+      chain: base,
       account: embeddedWallet.address as `0x${string}`,
     });
 
     // Wait for confirmation
     const publicClient = createPublicClient({
-      chain: baseSepolia,
-      transport: http(process.env.NEXT_PUBLIC_ALCHEMY_BASE_URL || "https://sepolia.base.org"),
+      chain: base,
+      transport: http(process.env.NEXT_PUBLIC_ALCHEMY_BASE_URL || "https://mainnet.base.org"),
     });
     await publicClient.waitForTransactionReceipt({ hash });
 

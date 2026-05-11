@@ -1,8 +1,8 @@
 import { createPublicClient, http, formatEther, formatUnits } from 'viem'
-import { baseSepolia } from 'viem/chains'
+import { base } from 'viem/chains'
 
 const client = createPublicClient({
-  chain: baseSepolia,
+  chain: base,
   transport: http(process.env.NEXT_PUBLIC_ALCHEMY_BASE_URL),
 })
 
@@ -23,7 +23,7 @@ const USDC_ABI = [
   },
 ] as const
 
-const USDC_ADDRESS = '0x036CbD53842c5426634e7929541eC2318f3dCF7e'
+const USDC_ADDRESS = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913'
 
 export async function getUsdcBalance(address: string): Promise<string> {
   const balance = await client.readContract({

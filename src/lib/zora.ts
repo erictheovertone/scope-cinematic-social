@@ -1,18 +1,18 @@
 import { createCreatorClient } from "@zoralabs/protocol-sdk";
 import { createPublicClient, http } from "viem";
-import { baseSepolia } from "viem/chains";
+import { base } from "viem/chains";
 
 export const publicClient = createPublicClient({
-  chain: baseSepolia,
+  chain: base,
   transport: http(
-    process.env.NEXT_PUBLIC_ALCHEMY_BASE_URL || "https://sepolia.base.org"
+    process.env.NEXT_PUBLIC_ALCHEMY_BASE_URL || "https://mainnet.base.org"
   ),
 });
 
 // ZoraTimedSaleStrategy mint fee is 0.000111 ETH per token
 const ZORA_MINT_FEE_WEI = BigInt("111000000000000");
 
-// ZoraTimedSaleStrategy — default minter on all chains including Base Sepolia
+// ZoraTimedSaleStrategy — default minter on all chains including Base
 const ZORA_MINTER_ADDRESS = "0x777777722D078c97c6ad07d9f36801e653E356Ae" as `0x${string}`;
 
 const MINT_ABI = [
@@ -81,7 +81,7 @@ export async function mintNewPost({
   console.log("[zora] mintNewPost — creator:", creatorAddress);
 
   const creatorClient = createCreatorClient({
-    chainId: baseSepolia.id,
+    chainId: base.id,
     publicClient: publicClient as any,
   });
 
@@ -202,7 +202,7 @@ export async function collectPost({
       minterArguments,
     ],
     value: totalValue,
-    chain: baseSepolia,
+    chain: base,
     account: collectorAddress as `0x${string}`,
   });
 
@@ -225,7 +225,7 @@ export async function getTokenPrice({
   quantity?: number;
 }): Promise<bigint> {
   console.log("[zora] getTokenPrice — contract:", contractAddress, "qty:", quantity);
-  // On Base Sepolia all Zora 1155 tokens use the fixed platform fee only
+  // On Base all Zora 1155 tokens use the fixed platform fee only
   const total = ZORA_MINT_FEE_WEI * BigInt(quantity);
   console.log("[zora] getTokenPrice — total (wei):", total.toString());
   return total;
@@ -253,7 +253,7 @@ export async function sellPost({
     abi: BURN_ABI,
     functionName: "burn",
     args: [holderAddress as `0x${string}`, tokenId, BigInt(quantity)],
-    chain: baseSepolia,
+    chain: base,
     account: holderAddress as `0x${string}`,
   });
 

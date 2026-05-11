@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { usePrivy, useFundWallet } from "@privy-io/react-auth";
-import { baseSepolia } from "viem/chains";
+import { base } from "viem/chains";
 import { getEthBalance, getUsdcBalance, getTransactionHistory } from "@/lib/wallet";
 
 const MONO: React.CSSProperties = { fontFamily: "'IBM Plex Mono', monospace" };
@@ -125,7 +125,7 @@ export default function WalletPage() {
       {/* Action buttons */}
       <div style={{ display: "flex", justifyContent: "center", gap: 12, padding: "0 16px 12px" }}>
         <button
-          onClick={() => walletAddress && fundWallet(walletAddress, { chain: baseSepolia, amount: "0.01" })}
+          onClick={() => walletAddress && fundWallet(walletAddress, { chain: base })}
           style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "rgba(255,255,255,0.06)", border: "none", cursor: "pointer", padding: "14px 28px" }}
         >
           <span style={{ fontSize: 24, color: "white", lineHeight: 1 }}>+</span>

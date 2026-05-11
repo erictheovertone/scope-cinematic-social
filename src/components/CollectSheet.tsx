@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { usePrivy, useWallets } from "@privy-io/react-auth";
 import { createWalletClient, custom, formatEther } from "viem";
-import { baseSepolia } from "viem/chains";
+import { base } from "viem/chains";
 import { collectPost, sellPost, getTokenPrice, getHolderBalance, diagnoseContract, getSaleConfig } from "@/lib/zora";
 import { getLiveEthPrice } from "@/lib/coingecko";
 
@@ -117,11 +117,11 @@ export default function CollectSheet({ post, visible, onClose }: CollectSheetPro
   const getWalletClient = async () => {
     const embeddedWallet = wallets.find(w => w.walletClientType === "privy");
     if (!embeddedWallet) throw new Error("No embedded wallet found");
-    await embeddedWallet.switchChain(baseSepolia.id);
+    await embeddedWallet.switchChain(base.id);
     const provider = await embeddedWallet.getEthereumProvider();
     const walletClient = createWalletClient({
       account: embeddedWallet.address as `0x${string}`,
-      chain: baseSepolia,
+      chain: base,
       transport: custom(provider),
     });
     return { walletClient, address: embeddedWallet.address };
@@ -331,7 +331,7 @@ export default function CollectSheet({ post, visible, onClose }: CollectSheetPro
 
               {mode === "sell" && (
                 <p style={{ ...MONO, fontSize: 8, color: "rgba(255,255,255,0.35)", margin: "10px 16px 0", lineHeight: 1.5 }}>
-                  SELL burns your token. On testnet no ETH is returned. Mainnet will route through secondary markets.
+                  SELL burns your token and routes through secondary markets.
                 </p>
               )}
             </>

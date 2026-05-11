@@ -12,6 +12,7 @@ import {
   getPostComments,
 } from "@/lib/postsService";
 import { getUserByPrivyId, getProfile } from "@/lib/userService";
+import { addBookmark, removeBookmark, isBookmarked } from "@/lib/bookmarksService";
 import CollectSheet from "@/components/CollectSheet";
 import MediaRenderer from "@/components/MediaRenderer";
 import { getTokenPrice, getTokenHolders } from "@/lib/zora";
@@ -69,6 +70,7 @@ export default function PostItem({ post, onImageClick }: PostItemProps) {
   const [viewerUsername, setViewerUsername] = useState("");
   const [showCollectSheet, setShowCollectSheet] = useState(false);
   const [mc, setMc] = useState<string | null>(null);
+  const [isSaved, setIsSaved] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -88,14 +90,16 @@ export default function PostItem({ post, onImageClick }: PostItemProps) {
   useEffect(() => {
     const load = async () => {
       try {
-        const [l, c, liked] = await Promise.all([
+        const [l, c, liked, saved] = await Promise.all([
           getPostLikes(post.id),
           getPostComments(post.id),
           user ? isPostLikedByUser(post.id, user.id) : Promise.resolve(false),
+          user ? isBookmarked(user.id, post.id) : Promise.resolve(false),
         ]);
         setLikes(l);
         setComments(c);
         setIsLiked(liked);
+        setIsSaved(saved);
       } catch (e) {
         console.error("Error loading post data:", e);
       }
@@ -167,6 +171,22 @@ export default function PostItem({ post, onImageClick }: PostItemProps) {
     }
   };
 
+  const handleSave = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!user) return;
+    try {
+      if (isSaved) {
+        await removeBookmark(user.id, post.id);
+        setIsSaved(false);
+      } else {
+        await addBookmark(user.id, post.id);
+        setIsSaved(true);
+      }
+    } catch (err) {
+      console.error("Error toggling bookmark:", err);
+    }
+  };
+
   const aspectRatio = getAspectFromGridLayout(post.grid_layout);
 
   return (
@@ -230,6 +250,16 @@ export default function PostItem({ post, onImageClick }: PostItemProps) {
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
           </svg>
           <span style={{ ...MONO, fontSize: 7, color: "inherit" }}>{comments.length}</span>
+        </button>
+
+        <button
+          onClick={handleSave}
+          disabled={!user}
+          style={{ background: "transparent", border: "none", cursor: user ? "pointer" : "default", display: "flex", alignItems: "center", padding: 0, color: isSaved ? "#FF0000" : "rgba(255,255,255,0.6)" }}
+        >
+          <svg width="11" height="11" viewBox="0 0 24 24" fill={isSaved ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
+            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+          </svg>
         </button>
 
         <button

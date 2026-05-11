@@ -227,12 +227,12 @@ export default function PublicProfilePage() {
       </div>
 
       {/* Name */}
-      <div style={{ position: 'absolute', left: 100, top: 7, opacity: headerOpacity }}>
+      <div style={{ position: 'absolute', left: 100, top: 4, opacity: headerOpacity }}>
         <p style={{ ...SKB, fontSize: 11, color: 'white', letterSpacing: '-0.22px', lineHeight: 1.4, margin: 0, textTransform: 'uppercase' }}>{profile?.display_name || username}</p>
       </div>
 
       {/* Username + badges */}
-      <div style={{ position: 'absolute', left: 100, top: 24.5, display: 'flex', alignItems: 'center', opacity: headerOpacity }}>
+      <div style={{ position: 'absolute', left: 100, top: 21.5, display: 'flex', alignItems: 'center', opacity: headerOpacity }}>
         <p style={{ ...SKB, fontSize: 6, color: 'white', letterSpacing: '-0.12px', lineHeight: 1.4, margin: 0, textTransform: 'uppercase' }}>@{username}</p>
       </div>
 
@@ -242,13 +242,13 @@ export default function PublicProfilePage() {
       </div>
 
       {/* Bio */}
-      <div style={{ position: 'absolute', left: 98, top: 11, height: 75, width: 155, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', overflow: 'hidden', paddingBottom: 1, opacity: headerOpacity }}>
+      <div style={{ position: 'absolute', left: 98, top: 13, height: 75, width: 155, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', overflow: 'hidden', paddingBottom: 1, opacity: headerOpacity }}>
         <p style={{ ...SKR, fontSize: 6, color: 'white', letterSpacing: '-0.12px', lineHeight: 1.4, margin: 0, textTransform: 'uppercase' }}>{bioLine1}</p>
         {bioLine2 && <p style={{ ...SKR, fontSize: 6, color: 'white', letterSpacing: '-0.12px', lineHeight: 1.4, margin: 0, textTransform: 'uppercase' }}>{bioLine2}</p>}
       </div>
 
       {/* VIEW DATA */}
-      <button className="absolute bg-transparent border-none cursor-pointer" style={{ right: '4px', top: 11, padding: 0, opacity: headerOpacity }} onClick={() => setIsDataOpen(v => !v)}>
+      <button className="absolute bg-transparent border-none cursor-pointer" style={{ right: '4px', top: 6, padding: 0, opacity: headerOpacity }} onClick={() => setIsDataOpen(v => !v)}>
         <span style={{ ...SKB, fontSize: 8, color: 'white', letterSpacing: '-0.2px', opacity: isDataOpen ? 0.45 : 1, transition: 'opacity 0.15s ease', textTransform: 'uppercase' }}>VIEW DATA</span>
       </button>
 

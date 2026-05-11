@@ -15,6 +15,7 @@ import MembershipSheet from "@/components/MembershipSheet";
 import BottomToolbar from "@/components/BottomToolbar";
 import MediaRenderer from "@/components/MediaRenderer";
 import VideoLightbox from "@/components/VideoLightbox";
+import OnboardingModal from "@/components/OnboardingModal";
 
 function getGridCols(layoutId: string): string {
   if (layoutId.startsWith('2x-')) return 'grid-cols-2';
@@ -230,6 +231,7 @@ export default function Profile() {
 
   return (
     <div className="bg-black relative w-full max-w-[375px] min-h-screen mx-auto pb-[60px]">
+      <OnboardingModal />
 
       {/* Header wrapper — fades out on scroll only */}
       <div style={{
@@ -329,21 +331,21 @@ export default function Profile() {
       </div>
 
       {/* Name */}
-      <div style={{ position: 'absolute', left: 100, top: 11 }}>
+      <div style={{ position: 'absolute', left: 100, top: 8 }}>
         <p style={{ ...SKB, fontSize: 11, color: 'white', letterSpacing: '-0.22px', lineHeight: 1.4, margin: 0, textTransform: 'uppercase' }}>
           {userProfile.displayName}
         </p>
       </div>
 
       {/* Username */}
-      <div style={{ position: 'absolute', left: 100, top: 24, display: 'flex', alignItems: 'center', gap: 0 }}>
+      <div style={{ position: 'absolute', left: 100, top: 21, display: 'flex', alignItems: 'center', gap: 0 }}>
         <p style={{ ...SKB, fontSize: 6, color: 'white', letterSpacing: '-0.12px', lineHeight: 1.4, margin: 0, textTransform: 'uppercase' }}>
           {userProfile.username ? `@${userProfile.username}` : ''}
         </p>
       </div>
 
       {/* Bio */}
-      <div style={{ position: 'absolute', left: 98, top: 13, height: 73, width: 155, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', overflow: 'hidden', paddingBottom: 0 }}>
+      <div style={{ position: 'absolute', left: 98, top: 15, height: 73, width: 155, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', overflow: 'hidden', paddingBottom: 0 }}>
         {(() => {
           const bioTruncated = userProfile.bio.slice(0, 72);
           const words = bioTruncated.toUpperCase().split(' ');
@@ -376,7 +378,7 @@ export default function Profile() {
       {/* VIEW DATA */}
       <button
         className="absolute bg-transparent border-none cursor-pointer"
-        style={{ right: '4px', top: '11px', padding: 0 }}
+        style={{ right: '4px', top: '6px', padding: 0 }}
         onClick={() => setIsDataOpen(v => !v)}
       >
         <span style={{ ...SKB, fontSize: 8, color: 'white', letterSpacing: '-0.2px', opacity: isDataOpen ? 0.45 : 1, transition: 'opacity 0.15s ease', textTransform: 'uppercase' }}>

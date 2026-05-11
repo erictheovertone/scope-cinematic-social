@@ -4,10 +4,11 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useRouter } from "next/navigation";
 import { usePrivy, useWallets } from "@privy-io/react-auth";
 import { createWalletClient, custom } from "viem";
-import { baseSepolia } from "viem/chains";
+import { base } from "viem/chains";
 import { createPost, updatePostMintData } from '@/lib/postsService';
 import MediaRenderer from '@/components/MediaRenderer';
 import { mintNewPost } from '@/lib/zora';
+import MintPromptSheet from '@/components/MintPromptSheet';
 import {
   getUserByPrivyId, getProfile, uploadImage,
   getUserDecks, createDeck, addPostToDeck,
@@ -221,6 +222,11 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
   const imageCropContainerRef = useRef<HTMLDivElement>(null);
   const imageCropDragRef = useRef<{ startY: number; startCropY: number } | null>(null);
 
+  // Mint prompt state
+  const [showMintPrompt, setShowMintPrompt] = useState(false);
+  const [justPostedId, setJustPostedId] = useState<string | null>(null);
+  const [pendingMintData, setPendingMintData] = useState<{ postId: string; mediaUrls: string[]; postCaption: string } | null>(null);
+
   // Deck step state
   const [userDecks, setUserDecks] = useState<(Deck & { item_count: number })[]>([]);
   const [decksLoading, setDecksLoading] = useState(false);
@@ -426,71 +432,81 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
         addPostToDeck(deckId, newPost.id).catch(e => console.error('addPostToDeck error:', e));
       }
 
-      // Post saved — move to minting step
+      // Post saved — show mint prompt instead of auto-minting
+      // Minting now triggered manually by user via MintPromptSheet
       selectedMedia.forEach(item => URL.revokeObjectURL(item.url));
       setIsUploading(false);
-      setStep('posting');
-      setMintStatus('minting');
-
-      // Attempt mint — never blocks if it fails
-      try {
-        const embeddedWallet = wallets.find(w => w.walletClientType === 'privy');
-        if (!embeddedWallet) throw new Error('No embedded wallet found');
-
-        console.log('[mint] Switching to Base Sepolia...');
-        await embeddedWallet.switchChain(baseSepolia.id);
-
-        const provider = await embeddedWallet.getEthereumProvider();
-        const walletClient = createWalletClient({
-          account: embeddedWallet.address as `0x${string}`,
-          chain: baseSepolia,
-          transport: custom(provider),
-        });
-
-        console.log('[mint] Minting post:', newPost.id);
-        const { contractAddress, hash } = await mintNewPost({
-          walletClient,
-          creatorAddress: embeddedWallet.address,
-          postMetadata: {
-            name: caption || 'Scope Post',
-            description: caption,
-            image: mediaUrls[0],
-          },
-        });
-        console.log('[mint] Success — contract:', contractAddress, 'hash:', hash);
-
-        await updatePostMintData(newPost.id, {
-          contract_address: contractAddress as string,
-          token_id: '1',
-          tx_hash: hash as string,
-          is_minted: true,
-        });
-
-        setMintStatus('minted');
-      } catch (mintError) {
-        console.error('[mint] Failed:', mintError);
-        setMintStatus('mint-failed');
-      }
-
-      // Navigate regardless of mint result
-      setTimeout(() => {
-        onClose();
-        setStep('media');
-        setSelectedMedia([]);
-        setCaption('');
-        setSelectedDeckId(null);
-        setMintStatus('idle');
-        setCustomThumbnail(null);
-        setVideoAutoplay(true);
-        setAutoThumbnail(null);
-        router.push('/profile');
-      }, 2200);
+      setPendingMintData({ postId: newPost.id, mediaUrls, postCaption: caption });
+      setJustPostedId(newPost.id);
+      setShowMintPrompt(true);
 
     } catch (error) {
       console.error('[handlePost] FAILED:', error);
       setPostError('Failed to create post. Please try again.');
       setIsUploading(false);
     }
+  };
+
+  const completeFlow = () => {
+    onClose();
+    setStep('media');
+    setSelectedMedia([]);
+    setCaption('');
+    setSelectedDeckId(null);
+    setMintStatus('idle');
+    setCustomThumbnail(null);
+    setVideoAutoplay(true);
+    setAutoThumbnail(null);
+    setPendingMintData(null);
+    setShowMintPrompt(false);
+    setJustPostedId(null);
+    router.push('/profile');
+  };
+
+  const handleDoMint = async () => {
+    if (!pendingMintData) return;
+    setShowMintPrompt(false);
+    setStep('posting');
+    setMintStatus('minting');
+    try {
+      const embeddedWallet = wallets.find(w => w.walletClientType === 'privy');
+      if (!embeddedWallet) throw new Error('No embedded wallet found');
+      console.log('[mint] Switching to Base...');
+      await embeddedWallet.switchChain(base.id);
+      const provider = await embeddedWallet.getEthereumProvider();
+      const walletClient = createWalletClient({
+        account: embeddedWallet.address as `0x${string}`,
+        chain: base,
+        transport: custom(provider),
+      });
+      console.log('[mint] Minting post:', pendingMintData.postId);
+      const { contractAddress, hash } = await mintNewPost({
+        walletClient,
+        creatorAddress: embeddedWallet.address,
+        postMetadata: {
+          name: pendingMintData.postCaption || 'Scope Post',
+          description: pendingMintData.postCaption,
+          image: pendingMintData.mediaUrls[0],
+        },
+      });
+      console.log('[mint] Success — contract:', contractAddress, 'hash:', hash);
+      await updatePostMintData(pendingMintData.postId, {
+        contract_address: contractAddress as string,
+        token_id: '1',
+        tx_hash: hash as string,
+        is_minted: true,
+      });
+      setMintStatus('minted');
+    } catch (mintError) {
+      console.error('[mint] Failed:', mintError);
+      setMintStatus('mint-failed');
+    }
+    setTimeout(() => completeFlow(), 2200);
+  };
+
+  const handleSkipMint = () => {
+    setShowMintPrompt(false);
+    completeFlow();
   };
 
   const handleCreateDeckAndSelect = async () => {
@@ -957,13 +973,20 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
   if (!isOpen) return null;
 
   return (
-    <div style={{ position: 'fixed', inset: 0, backgroundColor: '#000000', opacity: 1, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div className="bg-black border border-[#333333] w-[375px] h-[600px] relative overflow-hidden">
-        {step === 'media' && renderMediaStep()}
-        {step === 'edit' && renderEditStep()}
-        {step === 'deck' && renderDeckStep()}
-        {step === 'posting' && renderPostingStep()}
+    <>
+      <div style={{ position: 'fixed', inset: 0, backgroundColor: '#000000', opacity: 1, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div className="bg-black border border-[#333333] w-[375px] h-[600px] relative overflow-hidden">
+          {step === 'media' && renderMediaStep()}
+          {step === 'edit' && renderEditStep()}
+          {step === 'deck' && renderDeckStep()}
+          {step === 'posting' && renderPostingStep()}
+        </div>
       </div>
-    </div>
+      <MintPromptSheet
+        visible={showMintPrompt}
+        onMint={handleDoMint}
+        onSkip={handleSkipMint}
+      />
+    </>
   );
 }
