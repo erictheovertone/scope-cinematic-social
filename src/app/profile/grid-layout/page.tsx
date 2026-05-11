@@ -75,11 +75,13 @@ function CellOverlay({
   selected,
   width,
   height,
+  isFirst,
 }: {
   layout: typeof LAYOUTS[0];
   selected: boolean;
   width: number;
   height: number;
+  isFirst: boolean;
 }) {
   const border = selected ? "1px solid #FF0000" : "1px solid #ffffff";
   const ratioLS = layout.ratioLabel === "4:3" ? "2.17px" : "1.33px";
@@ -93,82 +95,100 @@ function CellOverlay({
         border,
         background: "transparent",
         flexShrink: 0,
+        overflow: "visible",
       }}
     >
-      <span
-        style={{
-          position: "absolute",
-          top: 5,
-          left: 6,
-          background: "#d9d9d9",
-          height: 11,
-          padding: "0 3px",
-          display: "flex",
-          alignItems: "center",
-          fontFamily: "'Sk-Modernist', sans-serif",
-          fontWeight: 700,
-          fontSize: 8,
-          color: "#000000",
-          letterSpacing: "-0.16px",
-          whiteSpace: "nowrap",
-          lineHeight: 1,
-        }}
-      >
-        {layout.label}
-      </span>
+      {isFirst && (
+        <>
+          <span
+            style={{
+              position: "absolute",
+              top: 5,
+              left: 6,
+              background: "#d9d9d9",
+              height: 11,
+              padding: "0 3px",
+              display: "flex",
+              alignItems: "center",
+              fontFamily: "'Sk-Modernist', sans-serif",
+              fontWeight: 700,
+              fontSize: 8,
+              color: "#000000",
+              letterSpacing: "-0.16px",
+              whiteSpace: "nowrap",
+              lineHeight: 1,
+              zIndex: 1,
+            }}
+          >
+            {layout.label}
+          </span>
 
-      <div
-        style={{
-          position: "absolute",
-          top: 18,
-          left: 6,
-          display: "flex",
-          alignItems: "center",
-          gap: 0,
-        }}
-      >
-        <span
-          style={{
-            fontFamily: "'Sk-Modernist', sans-serif",
-            fontWeight: 700,
-            fontSize: 7,
-            color: "#ffffff",
-            letterSpacing: "-0.14px",
-          }}
-        >
-          AR{"     "}
-        </span>
-        <span
-          style={{
-            fontFamily: "'Sk-Modernist', sans-serif",
-            fontWeight: 700,
-            fontSize: 7,
-            color: "#FF0000",
-            letterSpacing: ratioLS,
-            marginLeft: 4,
-          }}
-        >
-          {layout.ratioLabel}
-        </span>
-      </div>
+          <div
+            style={{
+              position: "absolute",
+              top: 19,
+              left: 6,
+              display: "flex",
+              alignItems: "center",
+            }}
+          >
+            <span
+              style={{
+                fontFamily: "'Sk-Modernist', sans-serif",
+                fontWeight: 700,
+                fontSize: 7,
+                color: "#ffffff",
+                letterSpacing: "-0.14px",
+              }}
+            >
+              {"AR     "}
+            </span>
+            <span
+              style={{
+                fontFamily: "'Sk-Modernist', sans-serif",
+                fontWeight: 700,
+                fontSize: 7,
+                color: "#FF0000",
+                letterSpacing: ratioLS,
+                marginLeft: 4,
+              }}
+            >
+              {layout.ratioLabel}
+            </span>
+          </div>
 
-      {layout.resolution && (
-        <span
-          style={{
-            position: "absolute",
-            top: "50%",
-            transform: "translateY(-50%)",
-            left: 128,
-            fontFamily: "'Sk-Modernist', sans-serif",
-            fontWeight: 700,
-            fontSize: 7,
-            color: "rgba(255,255,255,0.29)",
-            letterSpacing: "11.69px",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {layout.resolution}
-        </span>
+          {layout.resolution && (() => {
+            const [lp, rp] = layout.resolution.split("x");
+            const ts: React.CSSProperties = {
+              fontFamily: "'Sk-Modernist', sans-serif",
+              fontWeight: 700,
+              fontSize: 7,
+              color: "rgba(255,255,255,0.5)",
+              letterSpacing: "22px",
+              whiteSpace: "nowrap",
+              lineHeight: 1,
+            };
+            return (
+              <div style={{
+                position: "absolute",
+                top: "50%",
+                transform: "translateY(-50%)",
+                left: 7,
+                width: 371,
+                display: "flex",
+                alignItems: "center",
+                overflow: "visible",
+              }}>
+                {/* right-align into the left half — trailing letter-spacing handled by flex */}
+                <span style={{ ...ts, flex: 1, textAlign: "right" }}>{lp}</span>
+                {/* letterSpacing:0 so flex sizes dot to glyph width only → dot centre = flex midpoint = page centre */}
+                <span style={{ ...ts, letterSpacing: 0 }}>·</span>
+                {/* paddingLeft replaces the gap that x's letter-spacing would have given */}
+                <span style={{ ...ts, flex: 1, paddingLeft: "22px" }}>{rp}</span>
+              </div>
+            );
+          })()}
+        </>
       )}
     </div>
   );
@@ -306,6 +326,7 @@ function LayoutSection({
             selected={selected}
             width={cell.width}
             height={cell.height}
+            isFirst={i === 0}
           />
         ))}
       </div>
@@ -356,18 +377,6 @@ export default function GridLayoutPage() {
         paddingBottom: selectedLayout ? 80 : 24,
       }}
     >
-      <div
-        style={{
-          position: "fixed",
-          top: 10,
-          left: 10,
-          width: 15,
-          height: 15,
-          borderRadius: "50%",
-          background: "#FF0000",
-          zIndex: 20,
-        }}
-      />
 
       <div
         style={{

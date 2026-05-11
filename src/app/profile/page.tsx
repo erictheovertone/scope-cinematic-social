@@ -434,7 +434,7 @@ export default function Profile() {
             pointerEvents: 'auto',
             opacity: Math.min(1, (gridScrollY - 20) / 20),
             transition: 'opacity 0.2s ease',
-            filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.85))',
+            filter: 'drop-shadow(0 0 8px rgba(0,0,0,0.9)) drop-shadow(0 2px 12px rgba(0,0,0,0.75))',
           }}
         >
           <svg width="28" height="14" viewBox="0 0 32 16" fill="none">

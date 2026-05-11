@@ -14,6 +14,58 @@ import {
   type Deck,
 } from '@/lib/userService';
 
+function profileLayoutToAspect(layoutId: string): number {
+  switch (layoutId) {
+    case '2x-pana': case '1x-pana': return 2.75;
+    case '2x-scope': case '1x-scope': return 2.39;
+    case '2x-cine': case '1x-cine': return 1.85;
+    case '3x-legacy': return 4 / 3;
+    default: return 2.39;
+  }
+}
+
+function profileLayoutLabel(layoutId: string): string {
+  switch (layoutId) {
+    case '2x-pana': case '1x-pana': return '2.75:1';
+    case '2x-scope': case '1x-scope': return '2.39:1';
+    case '2x-cine': case '1x-cine': return '1.85:1';
+    case '3x-legacy': return '4:3';
+    default: return '2.39:1';
+  }
+}
+
+async function cropImageToAspect(file: File, cropYFrac: number, naturalAr: number, targetAr: number): Promise<File> {
+  return new Promise((resolve) => {
+    const objectUrl = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      try {
+        const nW = img.naturalWidth;
+        const nH = img.naturalHeight;
+        const cropBoxHFrac = Math.min(1, naturalAr / targetAr);
+        const sh = Math.round(cropBoxHFrac * nH);
+        const sy = Math.round(Math.min(cropYFrac * nH, nH - sh));
+        const outW = nW;
+        const outH = Math.round(nW / targetAr);
+        const canvas = document.createElement('canvas');
+        canvas.width = outW;
+        canvas.height = outH;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) { resolve(file); return; }
+        ctx.drawImage(img, 0, sy, nW, sh, 0, 0, outW, outH);
+        canvas.toBlob((blob) => {
+          if (!blob) { resolve(file); return; }
+          const base = file.name.replace(/\.[^.]+$/, '');
+          resolve(new File([blob], `${base}-cropped.jpg`, { type: 'image/jpeg' }));
+        }, 'image/jpeg', 0.9);
+      } catch { resolve(file); }
+    };
+    img.onerror = () => { URL.revokeObjectURL(objectUrl); resolve(file); };
+    img.src = objectUrl;
+  });
+}
+
 function captureVideoThumbnail(videoUrl: string): Promise<string | null> {
   return new Promise((resolve) => {
     const video = document.createElement('video');
@@ -157,11 +209,17 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
   const [videoAutoplay, setVideoAutoplay] = useState(true);
   const [autoThumbnail, setAutoThumbnail] = useState<string | null>(null);
 
-  // Crop overlay state
+  // Video crop state
   const [cropY, setCropY] = useState(0.15);
   const [cropHeight, setCropHeight] = useState(0.70);
   const cropContainerRef = useRef<HTMLDivElement>(null);
   const cropDragRef = useRef<{ startY: number; startCropY: number; startCropH: number; mode: 'move' | 'top' | 'bottom' } | null>(null);
+
+  // Image crop state
+  const [imageCropY, setImageCropY] = useState(0);
+  const [imgNaturalAr, setImgNaturalAr] = useState(0);
+  const imageCropContainerRef = useRef<HTMLDivElement>(null);
+  const imageCropDragRef = useRef<{ startY: number; startCropY: number } | null>(null);
 
   // Deck step state
   const [userDecks, setUserDecks] = useState<(Deck & { item_count: number })[]>([]);
@@ -233,6 +291,8 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
     setIsOptimising(false);
     setCropY(0.15);
     setCropHeight(0.70);
+    setImageCropY(0);
+    setImgNaturalAr(0);
     if (!newMedia.some(m => m.type === 'video')) setAutoThumbnail(null);
   }, []);
 
@@ -262,6 +322,25 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
   };
 
   const handleCropPointerUp = () => { cropDragRef.current = null; };
+
+  const handleImageCropPointerDown = (e: React.PointerEvent) => {
+    e.stopPropagation();
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    imageCropDragRef.current = { startY: e.clientY, startCropY: imageCropY };
+  };
+
+  const handleImageCropPointerMove = (e: React.PointerEvent) => {
+    if (!imageCropDragRef.current || !imageCropContainerRef.current) return;
+    const containerH = imageCropContainerRef.current.getBoundingClientRect().height;
+    if (containerH === 0) return;
+    const deltaFrac = (e.clientY - imageCropDragRef.current.startY) / containerH;
+    const targetAR = profileLayoutToAspect(userLayoutId);
+    const cropBoxH = Math.min(1, imgNaturalAr / targetAR);
+    const maxCropY = Math.max(0, 1 - cropBoxH);
+    setImageCropY(Math.min(maxCropY, Math.max(0, imageCropDragRef.current.startCropY + deltaFrac)));
+  };
+
+  const handleImageCropPointerUp = () => { imageCropDragRef.current = null; };
 
   const handleRemoveMedia = useCallback((id: string) => {
     setSelectedMedia(prev => {
@@ -310,7 +389,12 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
       const mediaUrls: string[] = [];
       for (const media of selectedMedia) {
         console.log('[handlePost] uploading:', media.file.name);
-        const url = await uploadImage(media.file, 'post-media', user.id);
+        let fileToUpload = media.file;
+        if (media.type === 'image' && imgNaturalAr > 0) {
+          fileToUpload = await cropImageToAspect(media.file, imageCropY, imgNaturalAr, profileLayoutToAspect(userLayoutId));
+          console.log('[handlePost] image cropped to', profileLayoutToAspect(userLayoutId).toFixed(2), ':1');
+        }
+        const url = await uploadImage(fileToUpload, 'post-media', user.id);
         mediaUrls.push(url);
         console.log('[handlePost] uploaded:', url);
       }
@@ -608,14 +692,64 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
                 </div>
               </div>
             ) : (
-              <div style={{ width: '100%', aspectRatio: selectedLayout.aspectRatio.replace(':', '/'), overflow: 'hidden', backgroundColor: '#1A1A1A', border: '1px solid #333' }}>
+              <div
+                ref={imageCropContainerRef}
+                style={{ position: 'relative', width: '100%', backgroundColor: '#000', touchAction: 'none', marginBottom: 16 }}
+                onPointerMove={handleImageCropPointerMove}
+                onPointerUp={handleImageCropPointerUp}
+                onPointerLeave={handleImageCropPointerUp}
+              >
                 {selectedMedia[0] && (
                   <img
                     src={selectedMedia[0].url}
                     alt="Preview"
-                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                    onLoad={(e) => {
+                      const img = e.currentTarget;
+                      const ar = img.naturalWidth / img.naturalHeight;
+                      setImgNaturalAr(ar);
+                      const targetAR = profileLayoutToAspect(userLayoutId);
+                      const frac = Math.min(1, ar / targetAR);
+                      setImageCropY((1 - frac) / 2);
+                    }}
+                    style={{ width: '100%', height: 'auto', display: 'block', maxHeight: '65vh', objectFit: 'contain' }}
                   />
                 )}
+                {imgNaturalAr > 0 && (() => {
+                  const targetAR = profileLayoutToAspect(userLayoutId);
+                  const cropBoxH = Math.min(1, imgNaturalAr / targetAR);
+                  const topH = imageCropY;
+                  const bottomH = Math.max(0, 1 - imageCropY - cropBoxH);
+                  return (
+                    <>
+                      <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 5 }}>
+                        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: `${topH * 100}%`, background: 'rgba(0,0,0,0.72)' }} />
+                        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: `${bottomH * 100}%`, background: 'rgba(0,0,0,0.72)' }} />
+                      </div>
+                      <div
+                        onPointerDown={handleImageCropPointerDown}
+                        style={{
+                          position: 'absolute', left: 0, right: 0,
+                          top: `${topH * 100}%`, height: `${cropBoxH * 100}%`,
+                          zIndex: 6, cursor: 'grab', pointerEvents: 'auto',
+                        }}
+                      >
+                        {([
+                          { top: 0, left: 0, borderTop: '1px solid rgba(255,255,255,0.7)', borderLeft: '1px solid rgba(255,255,255,0.7)' },
+                          { top: 0, right: 0, borderTop: '1px solid rgba(255,255,255,0.7)', borderRight: '1px solid rgba(255,255,255,0.7)' },
+                          { bottom: 0, left: 0, borderBottom: '1px solid rgba(255,255,255,0.7)', borderLeft: '1px solid rgba(255,255,255,0.7)' },
+                          { bottom: 0, right: 0, borderBottom: '1px solid rgba(255,255,255,0.7)', borderRight: '1px solid rgba(255,255,255,0.7)' },
+                        ] as React.CSSProperties[]).map((corner, i) => (
+                          <div key={i} style={{ position: 'absolute', width: 12, height: 12, ...corner }} />
+                        ))}
+                        <div style={{ position: 'absolute', bottom: 8, right: 8, background: 'rgba(0,0,0,0.55)', padding: '2px 5px' }}>
+                          <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 8, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase' }}>
+                            {profileLayoutLabel(userLayoutId)}
+                          </span>
+                        </div>
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
             )}
           </div>
@@ -668,7 +802,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
 
         <div className="border-t border-[#333333] p-4">
           <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 10, color: '#666666', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 4 }}>
-            Layout: {selectedLayout.name} ({selectedLayout.aspectRatio})
+            Layout: {userLayoutId.toUpperCase()} ({profileLayoutLabel(userLayoutId)})
           </p>
           <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 9, color: '#666666', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
             {selectedMedia.length} media item{selectedMedia.length !== 1 ? 's' : ''} selected
