@@ -17,6 +17,7 @@ import CollectSheet from "@/components/CollectSheet";
 import MediaRenderer from "@/components/MediaRenderer";
 import { getTokenPrice, getTokenHolders } from "@/lib/zora";
 import { formatEther } from "viem";
+import { getAspectRatio, ratioPadding } from "@/lib/aspectRatio";
 
 interface Post {
   id: string;
@@ -37,19 +38,6 @@ interface Post {
   autoplay?: boolean;
 }
 
-function getAspectFromGridLayout(gridLayout?: string | null): string {
-  if (!gridLayout) return '2.39 / 1';
-  switch (gridLayout) {
-    case '2x-pana': case '1x-pana': return '2.75 / 1';
-    case '2x-scope': case '1x-scope': return '2.39 / 1';
-    case '2x-cine': case '1x-cine': return '1.85 / 1';
-    case '3x-legacy': return '4 / 3';
-    default:
-      if (gridLayout.includes('16:9') || gridLayout.includes('16-9')) return '16 / 9';
-      if (gridLayout.includes('4:3') || gridLayout.includes('4-3')) return '4 / 3';
-      return '2.39 / 1';
-  }
-}
 
 interface PostItemProps {
   post: Post;
@@ -187,7 +175,7 @@ export default function PostItem({ post, onImageClick }: PostItemProps) {
     }
   };
 
-  const aspectRatio = getAspectFromGridLayout(post.grid_layout);
+  const paddingPercent = ratioPadding(getAspectRatio(post.grid_layout ?? ''));
 
   return (
     <div style={{ marginBottom: 28 }}>
@@ -198,21 +186,24 @@ export default function PostItem({ post, onImageClick }: PostItemProps) {
         style={{
           position: 'relative',
           width: '100%',
-          aspectRatio,
+          paddingTop: `${paddingPercent}%`,
           overflow: 'hidden',
           cursor: onImageClick ? "pointer" : "default",
+          backgroundColor: '#222',
         }}
       >
-        <MediaRenderer
-          url={post.media_urls?.[0]}
-          mediaType={post.media_type}
-          caption={post.caption}
-          thumbnailUrl={post.thumbnail_url}
-          autoplay={post.autoplay !== false}
-          showSoundToggle={true}
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
-          onClick={onImageClick}
-        />
+        <div style={{ position: 'absolute', inset: 0 }}>
+          <MediaRenderer
+            url={post.media_urls?.[0]}
+            mediaType={post.media_type}
+            caption={post.caption}
+            thumbnailUrl={post.thumbnail_url}
+            autoplay={post.autoplay !== false}
+            showSoundToggle={true}
+            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+            onClick={onImageClick}
+          />
+        </div>
         <div style={{ position: 'absolute', top: '6px', left: '6px', display: 'flex', alignItems: 'center', gap: '4px', zIndex: 10 }}>
           {post.profile_image_url && (
             <img src={post.profile_image_url} style={{ width: '14px', height: '14px', borderRadius: '50%', objectFit: 'cover' }} />

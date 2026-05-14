@@ -31,14 +31,27 @@ export default function OnboardingModal() {
   const [visible, setVisible] = useState(false);
   const [screen, setScreen] = useState(0);
   const [exiting, setExiting] = useState(false);
+  const [shouldShow, setShouldShow] = useState(false);
 
+  // Step 1: Capture ?new=1 immediately on mount before anything clears it
   useEffect(() => {
-    if (!user) return;
-    const key = `scope_onboarded_${user.id}`;
-    if (!localStorage.getItem(key)) {
-      setTimeout(() => setVisible(true), 800);
+    const params = new URLSearchParams(window.location.search);
+    const isNew = params.get('new') === '1';
+    console.log('[onboarding] mount — isNew:', isNew);
+    if (isNew) {
+      setShouldShow(true);
+      window.history.replaceState({}, '', '/profile');
     }
-  }, [user]);
+  }, []);
+
+  // Step 2: Once user ID resolves and we know we should show, show modal directly
+  useEffect(() => {
+    console.log('[onboarding] user/shouldShow — user:', user?.id, 'shouldShow:', shouldShow);
+    if (!shouldShow || !user?.id) return;
+    localStorage.setItem(`scope_onboarded_${user.id}`, 'true');
+    console.log('[onboarding] SHOWING MODAL');
+    setVisible(true);
+  }, [user?.id, shouldShow]);
 
   const handleNext = () => {
     if (screen < SCREENS.length - 1) {
@@ -49,7 +62,6 @@ export default function OnboardingModal() {
   };
 
   const handleDone = () => {
-    if (user) localStorage.setItem(`scope_onboarded_${user.id}`, 'true');
     setExiting(true);
     setTimeout(() => setVisible(false), 400);
   };
@@ -60,7 +72,7 @@ export default function OnboardingModal() {
 
   return (
     <div style={{
-      position: 'fixed', inset: 0, zIndex: 600,
+      position: 'fixed', inset: 0, zIndex: 900,
       backgroundColor: '#000',
       display: 'flex', flexDirection: 'column',
       justifyContent: 'space-between',
@@ -68,7 +80,7 @@ export default function OnboardingModal() {
       opacity: exiting ? 0 : 1,
       transition: 'opacity 0.4s ease',
     }}>
-      {/* Top row: progress dots + logo */}
+      {/* Top row: progress + logo */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', gap: 6 }}>
           {SCREENS.map((_, i) => (
@@ -90,13 +102,9 @@ export default function OnboardingModal() {
           {current.label}
         </p>
         <p style={{
-          ...SKB,
-          fontSize: 36,
-          color: 'white',
-          lineHeight: 1.1,
-          letterSpacing: '-0.03em',
-          margin: '0 0 28px',
-          whiteSpace: 'pre-line',
+          ...SKB, fontSize: 36, color: 'white',
+          lineHeight: 1.1, letterSpacing: '-0.03em',
+          margin: '0 0 28px', whiteSpace: 'pre-line',
         }}>
           {current.title}
         </p>
@@ -107,26 +115,19 @@ export default function OnboardingModal() {
 
       {/* Actions */}
       <div>
-        <button
-          onClick={handleNext}
-          style={{
-            width: '100%',
-            background: '#FF0000',
-            border: 'none',
-            cursor: 'pointer',
-            padding: '16px 0',
-            marginBottom: 12,
-          }}
-        >
+        <button onClick={handleNext} style={{
+          width: '100%', background: '#FF0000', border: 'none',
+          cursor: 'pointer', padding: '16px 0', marginBottom: 12,
+        }}>
           <span style={{ ...SKB, fontSize: 12, color: 'white', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
             {current.cta}
           </span>
         </button>
         {screen < SCREENS.length - 1 && (
-          <button
-            onClick={handleDone}
-            style={{ width: '100%', background: 'transparent', border: 'none', cursor: 'pointer', padding: '10px 0' }}
-          >
+          <button onClick={handleDone} style={{
+            width: '100%', background: 'transparent', border: 'none',
+            cursor: 'pointer', padding: '10px 0',
+          }}>
             <span style={{ ...SKB, fontSize: 9, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
               SKIP
             </span>

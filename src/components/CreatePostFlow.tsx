@@ -197,6 +197,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
   const [selectedLayout, setSelectedLayout] = useState<GridLayout>(GRID_LAYOUTS[0]);
   const [caption, setCaption] = useState('');
   const [isUploading, setIsUploading] = useState(false);
+  const [isPosting, setIsPosting] = useState(false);
   const [isOptimising, setIsOptimising] = useState(false);
   const [videoError, setVideoError] = useState<string | null>(null);
   const [postError, setPostError] = useState<string | null>(null);
@@ -380,16 +381,19 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
     if (!user || selectedMedia.length === 0) return;
     console.log('[handlePost] start — deckId:', deckId, 'media:', selectedMedia.length);
 
+    setIsPosting(true);
     setIsUploading(true);
     setPostError(null);
 
     try {
       const supabaseUser = await getUserByPrivyId(user.id);
       if (!supabaseUser) throw new Error('User not found in database');
-      console.log('[handlePost] supabaseUser:', supabaseUser.id);
+      console.log('[handlePost] supabaseUser:', supabaseUser.id, '| privy_id:', (supabaseUser as any).privy_id);
 
       const profile = await getProfile(supabaseUser.id);
-      if (!profile?.username) throw new Error('Profile or username not found');
+      console.log('[handlePost] profile result — id:', profile?.id, '| user_id:', (profile as any)?.user_id, '| username:', profile?.username);
+      if (!profile) throw new Error('Profile not found — please complete profile setup at /profile/setup');
+      if (!profile.username) throw new Error('Username not set — please add a username at /profile/setup');
       console.log('[handlePost] profile:', profile.username, 'grid_layout:', (profile as any).grid_layout);
 
       const mediaUrls: string[] = [];
@@ -415,7 +419,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
       }
 
       const postPayload = {
-        userId: user.id,
+        userId: supabaseUser.id,
         username: profile.username,
         caption,
         mediaUrls,
@@ -440,8 +444,11 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
       setJustPostedId(newPost.id);
       setShowMintPrompt(true);
 
-    } catch (error) {
-      console.error('[handlePost] FAILED:', error);
+    } catch (e: any) {
+      console.error('[handlePost] FAILED:', e);
+      console.error('[handlePost] error message:', e?.message);
+      console.error('[handlePost] error code:', e?.code);
+      console.error('[handlePost] error details:', JSON.stringify(e, null, 2));
       setPostError('Failed to create post. Please try again.');
       setIsUploading(false);
     }
@@ -460,6 +467,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
     setPendingMintData(null);
     setShowMintPrompt(false);
     setJustPostedId(null);
+    setIsPosting(false);
     router.push('/profile');
   };
 
@@ -505,7 +513,6 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
   };
 
   const handleSkipMint = () => {
-    setShowMintPrompt(false);
     completeFlow();
   };
 
@@ -945,10 +952,14 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
               style={{
                 flex: 1, background: 'transparent', border: '1px solid white',
                 padding: '8px', cursor: isUploading ? 'default' : 'pointer',
+                transition: 'transform 0.1s ease',
               }}
+              onPointerDown={(e) => { if (!isUploading) e.currentTarget.style.transform = 'scale(0.96)'; }}
+              onPointerUp={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
+              onPointerLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
             >
               <span style={{ ...MONO_S, fontSize: 11, color: isUploading ? 'rgba(255,255,255,0.4)' : 'white', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                {isUploading ? 'Posting…' : 'Skip'}
+                {isPosting ? 'POSTING...' : 'Skip'}
               </span>
             </button>
             <button
@@ -987,6 +998,18 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
         onMint={handleDoMint}
         onSkip={handleSkipMint}
       />
+      {isPosting && !showMintPrompt && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 600,
+          backgroundColor: '#000',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          animation: 'fadeInBlack 0.2s ease forwards',
+        }}>
+          <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 12, color: 'white', textTransform: 'uppercase', letterSpacing: '0.15em' }}>
+            POSTING...
+          </p>
+        </div>
+      )}
     </>
   );
 }

@@ -112,7 +112,7 @@ export default function ProfileSetup() {
         profileImageUrl: uploadedImageUrl ?? undefined,
       });
 
-      router.push('/profile/grid-layout');
+      router.push('/profile/grid-layout?from=setup');
     } catch (err) {
       const e = err && typeof err === 'object' ? err as Record<string, unknown> : {};
       const detail = [e.message, e.code, e.details, e.hint].filter(Boolean).join(' | ') || String(err);
@@ -154,127 +154,113 @@ export default function ProfileSetup() {
   const triggerFileInput = () => fileInputRef.current?.click();
 
   return (
-    <div className="bg-black relative w-[375px] h-[900px] mx-auto">
-      {/* Red dot logo */}
-      <div className="absolute left-[10px] top-[10px] w-[15px] h-[15px]">
-        <div className="w-[15px] h-[15px] bg-[#FF0000] rounded-full" />
+    <div style={{ background: '#000', position: 'relative', width: 375, minHeight: 820, margin: '0 auto' }}>
+
+      {/* Scope logo — top right */}
+      <img
+        src="/scope-logo-new.png"
+        alt="Scope"
+        style={{ position: 'absolute', top: 7, right: 6, height: 23, width: 'auto' }}
+      />
+
+      {/* "PROFILE / SETUP" — left of photo box */}
+      <div style={{ position: 'absolute', left: 40, top: 163, transform: 'translateY(-50%)' }}>
+        <p style={{ ...SKB, fontSize: 14, color: 'white', textTransform: 'uppercase', letterSpacing: '-0.28px', lineHeight: 1.4, margin: 0 }}>PROFILE</p>
+        <p style={{ ...SKB, fontSize: 14, color: 'white', textTransform: 'uppercase', letterSpacing: '-0.28px', lineHeight: 1.4, margin: 0 }}>SETUP</p>
       </div>
 
-      {/* Title */}
-      <div className="absolute left-[50px] top-[75px]">
-        <p style={{ ...SKB, fontSize: 11, color: 'white', textTransform: 'uppercase', letterSpacing: '0.06em', lineHeight: '140%', margin: 0 }}>Profile</p>
-        <p style={{ ...SKB, fontSize: 11, color: 'white', textTransform: 'uppercase', letterSpacing: '0.06em', lineHeight: '140%', margin: 0 }}>Setup</p>
-      </div>
-
-      {/* Profile Picture Upload */}
-      <div className="absolute left-[130px] top-[143px] w-[114px] h-[114px] border border-white bg-transparent cursor-pointer" onClick={triggerFileInput}>
+      {/* Profile photo box — 130×130 with crosshair */}
+      <div
+        onClick={triggerFileInput}
+        style={{ position: 'absolute', left: 122, top: 146, width: 130, height: 130, border: '1px solid white', background: 'transparent', cursor: 'pointer', overflow: 'hidden' }}
+      >
         {profileImage ? (
-          <img src={profileImage} alt="Profile" className="w-full h-full object-cover" />
+          <img src={profileImage} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
         ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <span className="text-white text-[60px] font-thin select-none" style={{ lineHeight: '1', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</span>
+          <>
+            {/* Vertical line */}
+            <div style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', width: 1, height: 82, background: '#d9d9d9' }} />
+            {/* Horizontal line */}
+            <div style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', width: 82, height: 1, background: '#d9d9d9' }} />
+          </>
+        )}
+        {imageUploading && (
+          <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#FF0000' }} />
           </div>
         )}
       </div>
 
-      <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+      <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} style={{ display: 'none' }} />
 
-      {/* Name Input */}
-      <div className="absolute left-[50px] top-[300px] w-[275px] h-[45px] border border-white bg-transparent">
+      {/* Username field */}
+      <div style={{ position: 'absolute', left: 38, top: 349, width: 298, height: 25, border: '1px solid white', background: 'transparent', display: 'flex', alignItems: 'center' }}>
+        <span style={{ ...SKB, fontSize: 9, color: 'white', paddingLeft: 6, flexShrink: 0 }}>@</span>
+        <input
+          type="text"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          placeholder="USERNAME"
+          style={{ flex: 1, height: '100%', background: 'transparent', border: 'none', outline: 'none', ...SKB, fontSize: 9, color: 'white', letterSpacing: '-0.18px', paddingLeft: 3, paddingRight: 6 }}
+        />
+      </div>
+      {usernameError && (
+        <div style={{ position: 'absolute', left: 38, top: 378 }}>
+          <span style={{ ...SKB, fontSize: 9, color: '#FF0000', textTransform: 'uppercase', letterSpacing: '-0.18px' }}>{usernameError}</span>
+        </div>
+      )}
+
+      {/* Display name field */}
+      <div style={{ position: 'absolute', left: 38, top: 406, width: 298, height: 24, border: '1px solid white', background: 'transparent', display: 'flex', alignItems: 'center' }}>
         <input
           type="text"
           value={displayName}
           onChange={(e) => setDisplayName(e.target.value)}
-          className="w-full h-full bg-transparent text-white outline-none px-[5px] font-['SK-Modernist'] font-bold text-[9px] leading-[140%]"
-          style={{ color: 'white' }}
+          placeholder="DISPLAY NAME"
+          style={{ width: '100%', height: '100%', background: 'transparent', border: 'none', outline: 'none', ...SKB, fontSize: 9, color: 'white', letterSpacing: '-0.18px', paddingLeft: 6, paddingRight: 6 }}
         />
-        {!displayName && (
-          <div className="absolute left-[5px] top-[14.5px] transform -translate-y-1/2 pointer-events-none">
-            <span style={{ ...SKB, fontSize: 9, color: '#818181', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Name</span>
-          </div>
-        )}
       </div>
 
-      {/* Username Input */}
-      <div className="absolute left-[50px] top-[365px] w-[275px] h-[45px] border border-white bg-transparent">
-        <div className="relative w-full h-full flex items-center">
-          <span className="absolute left-[5px] pointer-events-none z-10" style={{ ...SKB, fontSize: 9, color: 'white' }}>@</span>
-          <input
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            className="w-full h-full bg-transparent text-white outline-none pl-[15px] pr-[5px] font-['SK-Modernist'] font-bold text-[9px] leading-[140%]"
-            style={{ color: 'white' }}
-          />
-        </div>
-        {!username && (
-          <div className="absolute left-[15px] top-[14.5px] transform -translate-y-1/2 pointer-events-none">
-            <span style={{ ...SKB, fontSize: 9, color: '#818181', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Username</span>
-          </div>
-        )}
-      </div>
-
-      {usernameError && (
-        <div className="absolute left-[50px] top-[412px]">
-          <span style={{ ...SKB, fontSize: 9, color: '#FF0000', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-            {usernameError}
-          </span>
-        </div>
-      )}
-
-      {/* Bio Input */}
-      <div className="absolute left-[50px] top-[430px] w-[275px] h-[130px] border border-white bg-transparent">
+      {/* Bio field */}
+      <div style={{ position: 'absolute', left: 38, top: 462, width: 298, height: 83, border: '1px solid white', background: 'transparent' }}>
         <textarea
           value={bio}
           onChange={(e) => setBio(e.target.value)}
           maxLength={160}
-          className="w-full h-full bg-transparent text-white outline-none px-[5px] py-[14.5px] font-['SK-Modernist'] font-bold text-[9px] leading-[140%] resize-none"
-          style={{ color: 'white' }}
+          placeholder="BIO [ 160 CHARACTER MAX ]"
+          style={{ width: '100%', height: '100%', background: 'transparent', border: 'none', outline: 'none', resize: 'none', ...SKB, fontSize: 9, color: 'white', letterSpacing: '-0.18px', padding: '6px 6px', boxSizing: 'border-box' }}
         />
-        {!bio && (
-          <div className="absolute left-[5px] top-[14.5px] transform -translate-y-1/2 pointer-events-none">
-            <span style={{ ...SKB, fontSize: 9, color: '#818181', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Bio [ 160 character max ]</span>
-          </div>
-        )}
       </div>
 
-      {/* Error message */}
-      {error && (
-        <div className="absolute left-[50px] top-[590px] w-[275px]">
-          <p style={{ ...SKB, fontSize: 9, color: '#FF0000', textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>
-            {error}
-          </p>
-        </div>
-      )}
-
-      {/* Upload status */}
-      {imageUploading && (
-        <div className="absolute left-[50px] top-[620px] w-[275px]">
-          <p style={{ ...SKB, fontSize: 9, color: 'white', textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>
-            Uploading photo…
-          </p>
-        </div>
-      )}
+      {/* Image upload error */}
       {imageUploadError && (
-        <div className="absolute left-[50px] top-[620px] w-[275px]">
-          <p style={{ ...SKB, fontSize: 9, color: '#FF0000', textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>
-            {imageUploadError}
-          </p>
+        <div style={{ position: 'absolute', left: 38, top: 556 }}>
+          <span style={{ ...SKB, fontSize: 9, color: '#FF0000', textTransform: 'uppercase', letterSpacing: '-0.18px' }}>{imageUploadError}</span>
         </div>
       )}
 
-      {/* Continue Button */}
-      <div className="absolute left-[122px] top-[760px] w-[130px] h-[45px] z-50">
-        <button
-          onClick={handleContinue}
-          disabled={isLoading || imageUploading || !!imageUploadError}
-          className="w-full h-full border border-white bg-black text-white flex items-center justify-center cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <span style={{ ...SKB, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-            {isLoading ? 'Saving...' : 'Continue'}
-          </span>
-        </button>
-      </div>
+      {/* General error */}
+      {error && (
+        <div style={{ position: 'absolute', left: 38, top: 572, width: 298 }}>
+          <span style={{ ...SKB, fontSize: 9, color: '#FF0000', textTransform: 'uppercase', letterSpacing: '-0.18px' }}>{error}</span>
+        </div>
+      )}
+
+      {/* Continue button */}
+      <button
+        onClick={handleContinue}
+        disabled={isLoading || imageUploading || !!imageUploadError}
+        style={{
+          position: 'absolute', left: 122, top: 736, width: 130, height: 45,
+          border: '1px solid white', background: 'transparent', cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          opacity: (isLoading || imageUploading || !!imageUploadError) ? 0.4 : 1,
+        }}
+      >
+        <span style={{ ...SKB, fontSize: 10, color: 'white', textTransform: 'uppercase', letterSpacing: '-0.2px' }}>
+          {isLoading ? 'SAVING...' : 'CONTINUE'}
+        </span>
+      </button>
     </div>
   );
 }

@@ -16,34 +16,12 @@ import BadgeExplainerSheet from "@/components/BadgeExplainerSheet";
 import MembershipSheet from "@/components/MembershipSheet";
 import BottomToolbar from "@/components/BottomToolbar";
 import MediaRenderer from "@/components/MediaRenderer";
+import PostCell from "@/components/PostCell";
+import { getColCount } from "@/lib/aspectRatio";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
 const MONO: React.CSSProperties = { fontFamily: "'IBM Plex Mono', monospace" };
-
-function getGridCols(layoutId: string): string {
-  if (layoutId.startsWith('2x-')) return 'grid-cols-2';
-  if (layoutId.startsWith('3x-')) return 'grid-cols-3';
-  if (layoutId.startsWith('1x-')) return 'grid-cols-1';
-  if (layoutId === 'collage') return 'grid-cols-2';
-  if (layoutId === '2x-super-wide' || layoutId === '2x-regular-wide') return 'grid-cols-2';
-  if (layoutId === '3x-square') return 'grid-cols-3';
-  return 'grid-cols-1';
-}
-
-function getPostAspect(layoutId: string, index: number): string {
-  switch (layoutId) {
-    case '2x-pana': case '1x-pana': return 'aspect-[2.75/1]';
-    case '2x-scope': case '1x-scope': return 'aspect-[2.39/1]';
-    case '2x-cine': case '1x-cine': return 'aspect-[1.85/1]';
-    case '3x-legacy': return 'aspect-[4/3]';
-    case 'collage': return ['aspect-[2.39/1]','aspect-[2.75/1]','aspect-[4/3]','aspect-[1.85/1]'][index % 4];
-    case '2x-super-wide': case '1x-super-wide': return 'aspect-[2.39/1]';
-    case '2x-regular-wide': return 'aspect-video';
-    case '3x-square': return 'aspect-square';
-    default: return 'aspect-[2.39/1]';
-  }
-}
 
 export default function PublicProfilePage() {
   const params = useParams();
@@ -222,7 +200,7 @@ export default function PublicProfilePage() {
           else if (isTopCollector) { src = '/top-1k-collector-aperture-gold.png'; size = 23; }
           else if (isPaidMember) { src = '/scope-pro-icon-aperture.png'; size = 23; }
           else if (isInHouseCreator) { src = '/in-house-creator-logo-grey.png'; size = 21; }
-          return <img src={src} alt="Badge" onClick={(e) => { e.stopPropagation(); setShowBadgeSheet(true); }} style={{ position: 'absolute', top: -10, left: -10, width: size, height: size, zIndex: 10, cursor: 'pointer', display: 'block', filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.9)) drop-shadow(0 0 3px rgba(0,0,0,0.8))' }} />;
+          return <img src={src} alt="Badge" onClick={(e) => { e.stopPropagation(); setShowBadgeSheet(true); }} style={{ position: 'absolute', top: -10, left: -10, width: size, height: size, zIndex: 10, cursor: 'pointer', display: 'block', filter: 'drop-shadow(0 3px 6px rgba(0,0,0,0.85)) drop-shadow(0 1px 2px rgba(0,0,0,0.5))' }} />;
         })()}
       </div>
 
@@ -320,14 +298,15 @@ export default function PublicProfilePage() {
           </div>
         ) : (
           <div ref={gridScrollRef} className="overflow-y-auto h-full px-[1px]" onScroll={(e) => { setGridScrollY((e.target as HTMLElement).scrollTop); }}>
-            <div className={`grid ${getGridCols(layoutId)} gap-x-[1px] gap-y-[2px] auto-rows-min`}>
+            <div className={`grid ${getColCount(layoutId)} gap-x-[1px] gap-y-[2px]`}>
               {posts.map((post, index) => (
-                <div key={post.id} className={`bg-[#222] overflow-hidden ${getPostAspect(layoutId, index)}`} style={{ cursor: 'pointer' }} onClick={() => { setViewerIndex(index); setShowViewer(true); }}>
-                  {post.media_urls?.[0]
-                    ? <MediaRenderer url={post.media_urls[0]} mediaType={post.media_type} caption={post.caption || 'Post'} thumbnailUrl={post.thumbnail_url} autoplay={post.autoplay !== false} showSoundToggle={false} className="w-full h-full object-cover" />
-                    : <div className="w-full h-full bg-[#222]" />
-                  }
-                </div>
+                <PostCell
+                  key={post.id}
+                  post={post}
+                  layoutId={layoutId}
+                  index={index}
+                  onClick={() => { setViewerIndex(index); setShowViewer(true); }}
+                />
               ))}
             </div>
           </div>

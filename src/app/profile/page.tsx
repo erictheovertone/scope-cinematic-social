@@ -16,6 +16,8 @@ import BottomToolbar from "@/components/BottomToolbar";
 import MediaRenderer from "@/components/MediaRenderer";
 import VideoLightbox from "@/components/VideoLightbox";
 import OnboardingModal from "@/components/OnboardingModal";
+import PostCell from "@/components/PostCell";
+import { getColCount } from "@/lib/aspectRatio";
 
 function getGridCols(layoutId: string): string {
   if (layoutId.startsWith('2x-')) return 'grid-cols-2';
@@ -119,9 +121,11 @@ export default function Profile() {
   useEffect(() => {
     if (!user) return;
     const loadData = async () => {
+      let sbId: string | null = null;
       try {
         const supabaseUser = await getUserByPrivyId(user.id);
         if (supabaseUser) {
+          sbId = supabaseUser.id;
           setSupabaseUserId(supabaseUser.id);
           const profile = await getProfile(supabaseUser.id) as any;
           if (profile) {
@@ -133,6 +137,7 @@ export default function Profile() {
               websiteUrl: profile.website_url || "",
             });
             if (profile.grid_layout) setUserLayoutId(profile.grid_layout);
+            setLayoutLoaded(true);
             const memberUntil = profile.paid_member_until ? new Date(profile.paid_member_until) : null;
             const isActiveMember = memberUntil ? memberUntil > new Date() : false;
             setIsPaidMember(isActiveMember);
@@ -152,7 +157,7 @@ export default function Profile() {
       }
       try {
         const [posts, fc, fgc] = await Promise.all([
-          getUserPosts(user.id),
+          getUserPosts(sbId ?? user.id),
           getFollowerCount(user.id),
           getFollowingCount(user.id),
         ]);
@@ -190,14 +195,14 @@ export default function Profile() {
   }, [searchParams]);
 
   useEffect(() => {
-    if (!user || showCreatePost) return;
-    getUserPosts(user.id)
+    if (!user || showCreatePost || !supabaseUserId) return;
+    getUserPosts(supabaseUserId)
       .then(posts => {
         setUserPosts(posts);
         setAnalytics(prev => ({ ...prev, totalPosts: posts.length }));
       })
       .catch(console.error);
-  }, [showCreatePost]);
+  }, [showCreatePost, supabaseUserId]);
 
   useEffect(() => {
     if (!showDecks || !user) return;
@@ -533,7 +538,7 @@ export default function Profile() {
 
       {/* Posts grid — top moves up as header fades. Only shown on main tab. */}
       {layoutLoaded && activeTab === 'main' && (
-        <div style={{ position: 'absolute', inset: 0, top: `${gridTop}px`, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ position: 'absolute', inset: 0, top: `${gridTop}px` }}>
           {userPosts.length === 0 ? (
             <div
               style={{
@@ -571,16 +576,16 @@ export default function Profile() {
                 setGridScrollY((e.target as HTMLElement).scrollTop);
               }}
             >
-              <div className={`grid ${getGridCols(userLayoutId)} gap-x-[1px] gap-y-[2px] auto-rows-min`}>
+              <div className={`grid ${getColCount(userLayoutId)} gap-x-[1px] gap-y-[2px]`}>
                 {userPosts.map((post, index) => (
-                  <div
+                  <PostCell
                     key={post.id}
-                    className={`bg-[#222] overflow-hidden ${getPostAspect(userLayoutId, index)}`}
-                    style={{ cursor: 'pointer' }}
+                    post={post}
+                    layoutId={userLayoutId}
+                    index={index}
                     onClick={() => {
-                      const post = userPosts[index];
                       const isVid = post.media_type === 'video' ||
-                        ['mp4','mov','webm','mp4'].includes(
+                        ['mp4','mov','webm'].includes(
                           post.media_urls?.[0]?.split('?')[0].split('.').pop()?.toLowerCase() || ''
                         );
                       if (isVid) {
@@ -591,37 +596,7 @@ export default function Profile() {
                         setShowViewer(true);
                       }
                     }}
-                  >
-                    {post.media_urls?.[0] ? (
-                      <MediaRenderer
-                        url={post.media_urls[0]}
-                        mediaType={post.media_type}
-                        caption={post.caption || 'Post'}
-                        thumbnailUrl={post.thumbnail_url}
-                        autoplay={post.autoplay !== false}
-                        showSoundToggle={false}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                        onClick={() => {
-                          const p = userPosts[index];
-                          const isVid = p.media_type === 'video' ||
-                            ['mp4','mov','webm','mp4'].includes(
-                              p.media_urls?.[0]?.split('?')[0].split('.').pop()?.toLowerCase() || ''
-                            );
-                          if (isVid) {
-                            setLightboxPost(p);
-                            setShowLightbox(true);
-                          } else {
-                            setViewerIndex(index);
-                            setShowViewer(true);
-                          }
-                        }}
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-[#222] flex items-center justify-center">
-                        <span style={{ color: '#555', fontSize: '10px' }}>No media</span>
-                      </div>
-                    )}
-                  </div>
+                  />
                 ))}
               </div>
             </div>
@@ -663,6 +638,12 @@ export default function Profile() {
             setViewerIndex(idx >= 0 ? idx : 0);
             setShowViewer(true);
           }}
+          isOwner={true}
+          supabaseUserId={supabaseUserId}
+          onCollect={() => { setShowLightbox(false); }}
+          onAddToDeck={() => { setShowDecks(true); }}
+          onTheaterMode={() => { setShowLightbox(false); setLightboxPost(null); setActiveTab('theatre'); }}
+          layoutId={userLayoutId}
         />
       )}
 
@@ -696,7 +677,7 @@ export default function Profile() {
         <div
           className="bg-black"
           onClick={() => { setShowDecks(false); setActiveTab('main'); setShowNewDeckForm(false); setNewDeckTitle(''); setNewDeckDesc(''); }}
-          style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.75)', zIndex: 59 }}
+          style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.75)', zIndex: 200 }}
         />
       )}
 
@@ -708,7 +689,7 @@ export default function Profile() {
           height: '70vh',
           backgroundColor: '#000000',
           borderTop: '1px solid white',
-          zIndex: 60,
+          zIndex: 201,
           transform: showDecks ? 'translateY(0)' : 'translateY(100%)',
           transition: 'transform 300ms ease',
           display: 'flex', flexDirection: 'column',
@@ -836,6 +817,9 @@ export default function Profile() {
           isFoundingMember,
           foundingMemberNumber,
         }}
+        isPaidMember={isPaidMember}
+        paidMemberUntil={paidMemberUntil}
+        onManageMembership={() => { setShowBadgeSheet(false); router.push('/membership/manage'); }}
       />
 
       <MembershipSheet

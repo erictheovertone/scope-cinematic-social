@@ -17,6 +17,10 @@ interface Post {
   media_type?: string;
   thumbnail_url?: string | null;
   autoplay?: boolean;
+  crop_x?: number;
+  crop_y?: number;
+  crop_width?: number;
+  crop_height?: number;
 }
 
 interface Like {
@@ -116,6 +120,7 @@ export const getUserPosts = async (userId: string): Promise<Post[]> => {
     .select('*')
     .eq('user_id', userId)
     .eq('is_deleted', false)
+    .order('is_pinned', { ascending: false })
     .order('created_at', { ascending: false });
 
   if (error) {

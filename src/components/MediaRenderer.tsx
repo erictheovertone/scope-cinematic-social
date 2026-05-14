@@ -12,6 +12,10 @@ interface MediaRendererProps {
   style?: React.CSSProperties;
   onClick?: () => void;
   thumbnailUrl?: string | null;
+  cropX?: number;
+  cropY?: number;
+  cropWidth?: number;
+  cropHeight?: number;
 }
 
 function isVideo(url: string, mediaType?: string): boolean {
@@ -21,9 +25,26 @@ function isVideo(url: string, mediaType?: string): boolean {
   return ['mp4', 'mov', 'webm', 'avi', 'mkv'].includes(ext || '');
 }
 
+function getCropStyle(cropX = 0, cropY = 0, cropWidth = 1, cropHeight = 1): React.CSSProperties {
+  if (cropX === 0 && cropY === 0 && cropWidth === 1 && cropHeight === 1) {
+    return { objectFit: 'cover', objectPosition: 'center' };
+  }
+  const scaleX = 1 / cropWidth;
+  const scaleY = 1 / cropHeight;
+  const posX = (cropX + cropWidth / 2) * 100;
+  const posY = (cropY + cropHeight / 2) * 100;
+  return {
+    objectFit: 'cover',
+    objectPosition: `${posX}% ${posY}%`,
+    transform: `scale(${Math.max(scaleX, scaleY)})`,
+    transformOrigin: `${posX}% ${posY}%`,
+  };
+}
+
 export default function MediaRenderer({
   url, mediaType, caption, autoplay = false,
   showSoundToggle = false, className, style, onClick, thumbnailUrl,
+  cropX, cropY, cropWidth, cropHeight,
 }: MediaRendererProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [muted, setMuted] = useState(true);
@@ -55,7 +76,7 @@ export default function MediaRenderer({
         src={url}
         alt={caption || "Post"}
         className={className}
-        style={style}
+        style={{ width: '100%', height: '100%', display: 'block', ...getCropStyle(cropX, cropY, cropWidth, cropHeight), ...style }}
         onClick={onClick}
       />
     );
@@ -72,7 +93,7 @@ export default function MediaRenderer({
         playsInline
         autoPlay={autoplay}
         className={className}
-        style={{ ...style, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+        style={{ width: '100%', height: '100%', display: 'block', ...getCropStyle(cropX, cropY, cropWidth, cropHeight), ...style }}
         onClick={(e) => { e.stopPropagation(); onClick?.(); }}
       />
       {showSoundToggle && (

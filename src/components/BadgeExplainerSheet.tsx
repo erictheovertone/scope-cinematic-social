@@ -18,6 +18,9 @@ interface BadgeExplainerSheetProps {
     isFoundingMember: boolean;
     foundingMemberNumber?: number | null;
   };
+  isPaidMember?: boolean;
+  paidMemberUntil?: Date | null;
+  onManageMembership?: () => void;
 }
 
 const tiers = [
@@ -73,7 +76,7 @@ const tiers = [
   },
 ];
 
-export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, userTiers }: BadgeExplainerSheetProps) {
+export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, userTiers, isPaidMember, paidMemberUntil, onManageMembership }: BadgeExplainerSheetProps) {
   const router = useRouter();
   useEffect(() => {
     if (visible) document.body.style.overflow = 'hidden';
@@ -113,6 +116,53 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 28 }}>
           <div style={{ width: 36, height: 2, backgroundColor: 'rgba(255,255,255,0.12)' }} />
         </div>
+
+        {/* Active membership status */}
+        {isPaidMember && (
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '12px 16px',
+            marginBottom: 16,
+            border: '1px solid rgba(255,0,0,0.25)',
+            backgroundColor: 'rgba(255,0,0,0.05)',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <img
+                src="/scope-pro-icon-aperture.png"
+                alt="Scope Pro"
+                style={{ width: 23, height: 23 }}
+              />
+              <div>
+                <p style={{ ...BOLD, fontSize: 9, color: '#FF0000', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 2px' }}>
+                  ACTIVE MEMBERSHIP
+                </p>
+                <p style={{ ...BOLD, fontSize: 11, color: 'white', textTransform: 'uppercase', margin: 0 }}>
+                  SCOPE PRO
+                </p>
+                {paidMemberUntil && (
+                  <p style={{ ...REG, fontSize: 8, color: 'rgba(255,255,255,0.4)', margin: '2px 0 0', textTransform: 'uppercase' }}>
+                    RENEWS {paidMemberUntil.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase()}
+                  </p>
+                )}
+              </div>
+            </div>
+            <button
+              onClick={onManageMembership}
+              style={{
+                background: 'transparent',
+                border: '1px solid rgba(255,255,255,0.2)',
+                cursor: 'pointer',
+                padding: '6px 12px',
+              }}
+            >
+              <span style={{ ...BOLD, fontSize: 9, color: 'rgba(255,255,255,0.7)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                MANAGE
+              </span>
+            </button>
+          </div>
+        )}
 
         {/* Header */}
         <img
