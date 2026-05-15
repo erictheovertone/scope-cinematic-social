@@ -267,7 +267,7 @@ export default function PublicProfilePage() {
           <button onClick={() => setActiveTab('main')} style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer' }}>
             <span style={{ ...SKB, fontSize: 8, color: activeTab === 'main' ? '#FF0000' : 'white', textTransform: 'uppercase', letterSpacing: '-0.16px' }}>MAIN</span>
           </button>
-          <button onClick={() => { setActiveTab('decks'); setShowDecks(true); }} style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', position: 'relative', left: -30 }}>
+          <button onClick={() => { setActiveTab('decks'); setShowDecks(true); }} style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer' }}>
             <img src="/decks-logo-new-lg.png" style={{ height: 8, width: 'auto', display: 'block', filter: activeTab === 'decks' ? 'invert(27%) sepia(100%) saturate(7000%) hue-rotate(0deg) brightness(100%) contrast(100%)' : 'none' }} alt="Decks" />
           </button>
           <button
@@ -287,7 +287,7 @@ export default function PublicProfilePage() {
       </div>
 
       {/* Posts grid */}
-      <div style={{ position: 'absolute', inset: 0, top: `${gridTop}px`, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ position: 'absolute', inset: 0, top: `${gridTop}px` }}>
         {activeTab === 'collected' ? (
           <div style={{ position: 'absolute', top: 50, left: 0, right: 0, bottom: 60, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <p style={{ ...SKB, fontSize: 10, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', textAlign: 'center', letterSpacing: '0.05em' }}>NO COLLECTED POSTS YET</p>

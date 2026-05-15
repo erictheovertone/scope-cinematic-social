@@ -76,6 +76,14 @@ const tiers = [
   },
 ];
 
+function getCurrentBadge(userTiers: BadgeExplainerSheetProps['userTiers']) {
+  if (userTiers.isFoundingMember) return { key: 'founding', label: 'FOUNDING 500', image: '/augmented-member-founding-500-aperture.png' };
+  if (userTiers.isTopCollector)   return { key: 'top1k',    label: 'TOP 1K COLLECTOR', image: '/top-1k-collector-aperture-gold.png' };
+  if (userTiers.isPaidMember)     return { key: 'pro',      label: 'SCOPE PRO', image: '/scope-pro-icon-aperture.png' };
+  if (userTiers.isInHouseCreator) return { key: 'creator',  label: 'IN-HOUSE CREATOR', image: '/in-house-creator-logo-grey.png' };
+  return { key: 'free', label: 'FREE TIER', image: '/free-tier-aperture-logo-red.png' };
+}
+
 export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, userTiers, isPaidMember, paidMemberUntil, onManageMembership }: BadgeExplainerSheetProps) {
   const router = useRouter();
   useEffect(() => {
@@ -89,6 +97,8 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
     : userTiers.isPaidMember ? 'pro'
     : userTiers.isInHouseCreator ? 'creator'
     : 'free';
+
+  const currentBadge = getCurrentBadge(userTiers);
 
   return (
     <>
@@ -112,57 +122,50 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
         maxHeight: '85vh',
         overflowY: 'auto',
       }}>
-        {/* Drag handle */}
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 28 }}>
-          <div style={{ width: 36, height: 2, backgroundColor: 'rgba(255,255,255,0.12)' }} />
+        {/* Status rows */}
+        {/* Row 1 — Membership */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <img src={currentBadge.image} alt="" style={{ width: 16, height: 16 }} />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <span style={{ ...BOLD, fontSize: 7, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.15em' }}>MEMBERSHIP</span>
+              <span style={{ ...BOLD, fontSize: 9, color: '#FFFFFF', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                {isPaidMember
+                  ? `SCOPE PRO · RENEWS ${paidMemberUntil ? paidMemberUntil.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase() : ''}`
+                  : 'FREE'}
+              </span>
+            </div>
+          </div>
+          <button
+            onClick={isPaidMember ? onManageMembership : onJoinPress}
+            style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}
+          >
+            <span style={{ ...BOLD, fontSize: 8, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+              {isPaidMember ? 'MANAGE →' : 'UPGRADE →'}
+            </span>
+          </button>
         </div>
 
-        {/* Active membership status */}
-        {isPaidMember && (
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '12px 16px',
-            marginBottom: 16,
-            border: '1px solid rgba(255,0,0,0.25)',
-            backgroundColor: 'rgba(255,0,0,0.05)',
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <img
-                src="/scope-pro-icon-aperture.png"
-                alt="Scope Pro"
-                style={{ width: 23, height: 23 }}
-              />
-              <div>
-                <p style={{ ...BOLD, fontSize: 9, color: '#FF0000', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 2px' }}>
-                  ACTIVE MEMBERSHIP
-                </p>
-                <p style={{ ...BOLD, fontSize: 11, color: 'white', textTransform: 'uppercase', margin: 0 }}>
-                  SCOPE PRO
-                </p>
-                {paidMemberUntil && (
-                  <p style={{ ...REG, fontSize: 8, color: 'rgba(255,255,255,0.4)', margin: '2px 0 0', textTransform: 'uppercase' }}>
-                    RENEWS {paidMemberUntil.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase()}
-                  </p>
-                )}
-              </div>
-            </div>
-            <button
-              onClick={onManageMembership}
-              style={{
-                background: 'transparent',
-                border: '1px solid rgba(255,255,255,0.2)',
-                cursor: 'pointer',
-                padding: '6px 12px',
-              }}
-            >
-              <span style={{ ...BOLD, fontSize: 9, color: 'rgba(255,255,255,0.7)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                MANAGE
+        {/* Row 2 — Current Badge */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.08)', marginBottom: 20 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <img src={currentBadge.image} alt="" style={{ width: 16, height: 16 }} />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <span style={{ ...BOLD, fontSize: 7, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.15em' }}>CURRENT BADGE</span>
+              <span style={{ ...BOLD, fontSize: 9, color: '#FFFFFF', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                {currentBadge.label}
               </span>
-            </button>
+            </div>
           </div>
-        )}
+          <button
+            onClick={() => document.getElementById(`badge-tier-${currentBadge.key}`)?.scrollIntoView({ behavior: 'smooth' })}
+            style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}
+          >
+            <span style={{ ...BOLD, fontSize: 8, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+              DETAILS →
+            </span>
+          </button>
+        </div>
 
         {/* Header */}
         <img
@@ -173,7 +176,7 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
 
         {/* Tier list */}
         {tiers.map((tier, i) => (
-          <div key={tier.key}>
+          <div key={tier.key} id={`badge-tier-${tier.key}`}>
             <div onClick={() => { onClose(); router.push(`/badge/${tier.key}`); }} style={{ display: 'flex', gap: 16, marginBottom: 24, alignItems: 'flex-start', cursor: 'pointer' }}>
               <div style={{
                 perspective: 300,
@@ -242,9 +245,6 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
               <div style={{ flex: 1 }}>
                 <p style={{ ...BOLD, fontSize: 12, color: tier.color, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 6px' }}>
                   {tier.title}
-                  {currentTier === tier.key && (
-                    <span style={{ ...REG, fontSize: 8, color: 'rgba(255,255,255,0.4)', marginLeft: 8 }}>· YOUR TIER</span>
-                  )}
                 </p>
                 <p style={{ ...REG, fontSize: 11, color: 'rgba(255,255,255,0.65)', lineHeight: 1.3, margin: '0 0 6px' }}>
                   {tier.description}

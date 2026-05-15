@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 
-type Page = 'home' | 'profile' | 'public-profile';
+type Page = 'home' | 'profile' | 'public-profile' | 'wallet';
 
 const BTN: React.CSSProperties = {
   background: 'transparent',
@@ -141,8 +141,8 @@ export default function BottomToolbar({ page, unreadCount = 0, onNotificationsCl
           <CreateIcon />
         </Link>
 
-        {/* 3 — Profile (home) | Hamburger (profile / public-profile) */}
-        {isHome ? (
+        {/* 3 — Profile (home/wallet) | Hamburger (profile / public-profile) */}
+        {isHome || page === 'wallet' || page === 'public-profile' ? (
           <Link href="/profile" style={{ ...BTN, opacity: 0.7 }} aria-label="Profile">
             <ProfileIcon />
           </Link>

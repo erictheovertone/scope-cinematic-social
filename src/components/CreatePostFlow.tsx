@@ -35,7 +35,7 @@ function profileLayoutLabel(layoutId: string): string {
   }
 }
 
-async function cropImageToAspect(file: File, cropYFrac: number, naturalAr: number, targetAr: number): Promise<File> {
+async function cropImageToAspect(file: File, cropXFrac: number, cropYFrac: number, cropWidthFrac: number, naturalAr: number, targetAr: number): Promise<File> {
   return new Promise((resolve) => {
     const objectUrl = URL.createObjectURL(file);
     const img = new Image();
@@ -44,17 +44,18 @@ async function cropImageToAspect(file: File, cropYFrac: number, naturalAr: numbe
       try {
         const nW = img.naturalWidth;
         const nH = img.naturalHeight;
-        const cropBoxHFrac = Math.min(1, naturalAr / targetAr);
-        const sh = Math.round(cropBoxHFrac * nH);
+        const sw = Math.round(cropWidthFrac * nW);
+        const sh = Math.round(sw / targetAr);
+        const sx = Math.round(cropXFrac * nW);
         const sy = Math.round(Math.min(cropYFrac * nH, nH - sh));
-        const outW = nW;
-        const outH = Math.round(nW / targetAr);
+        const outW = Math.min(nW, 2048);
+        const outH = Math.round(outW / targetAr);
         const canvas = document.createElement('canvas');
         canvas.width = outW;
         canvas.height = outH;
         const ctx = canvas.getContext('2d');
         if (!ctx) { resolve(file); return; }
-        ctx.drawImage(img, 0, sy, nW, sh, 0, 0, outW, outH);
+        ctx.drawImage(img, sx, sy, sw, sh, 0, 0, outW, outH);
         canvas.toBlob((blob) => {
           if (!blob) { resolve(file); return; }
           const base = file.name.replace(/\.[^.]+$/, '');
@@ -212,16 +213,22 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
   const [autoThumbnail, setAutoThumbnail] = useState<string | null>(null);
 
   // Video crop state
-  const [cropY, setCropY] = useState(0.15);
-  const [cropHeight, setCropHeight] = useState(0.70);
+  const [cropX, setCropX] = useState(0);
+  const [cropY, setCropY] = useState(0);
+  const [cropWidth, setCropWidth] = useState(1);
+  const [cropHeight, setCropHeight] = useState(1);
+  const [videoNaturalAr, setVideoNaturalAr] = useState(0);
   const cropContainerRef = useRef<HTMLDivElement>(null);
-  const cropDragRef = useRef<{ startY: number; startCropY: number; startCropH: number; mode: 'move' | 'top' | 'bottom' } | null>(null);
+  const cropDragRef = useRef<{ startX: number; startY: number; startCropX: number; startCropY: number; startCropW: number; startCropH: number; mode: 'move' | 'nw' | 'ne' | 'sw' | 'se'; cW: number; cH: number } | null>(null);
 
   // Image crop state
+  const [imageCropX, setImageCropX] = useState(0);
   const [imageCropY, setImageCropY] = useState(0);
+  const [imageCropWidth, setImageCropWidth] = useState(1);
+  const [imageCropHeight, setImageCropHeight] = useState(1);
   const [imgNaturalAr, setImgNaturalAr] = useState(0);
   const imageCropContainerRef = useRef<HTMLDivElement>(null);
-  const imageCropDragRef = useRef<{ startY: number; startCropY: number } | null>(null);
+  const imageCropDragRef = useRef<{ startX: number; startY: number; startCropX: number; startCropY: number; startCropW: number; startCropH: number; mode: 'move' | 'nw' | 'ne' | 'sw' | 'se'; cW: number; cH: number } | null>(null);
 
   // Mint prompt state
   const [showMintPrompt, setShowMintPrompt] = useState(false);
@@ -296,55 +303,100 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
 
     setSelectedMedia(prev => [...prev, ...newMedia]);
     setIsOptimising(false);
-    setCropY(0.15);
-    setCropHeight(0.70);
-    setImageCropY(0);
-    setImgNaturalAr(0);
+    setCropX(0); setCropY(0); setCropWidth(1); setCropHeight(1); setVideoNaturalAr(0);
+    setImageCropX(0); setImageCropY(0); setImageCropWidth(1); setImageCropHeight(1); setImgNaturalAr(0);
     if (!newMedia.some(m => m.type === 'video')) setAutoThumbnail(null);
   }, []);
 
-  const clampCrop = (val: number, min: number, max: number) => Math.min(max, Math.max(min, val));
+  const clampCrop = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
 
-  const handleCropPointerDown = (e: React.PointerEvent, mode: 'move' | 'top' | 'bottom') => {
+  const handleCropPointerDown = (e: React.PointerEvent, mode: 'move' | 'nw' | 'ne' | 'sw' | 'se') => {
     e.stopPropagation();
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-    cropDragRef.current = { startY: e.clientY, startCropY: cropY, startCropH: cropHeight, mode };
+    const rect = cropContainerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    cropDragRef.current = { startX: e.clientX, startY: e.clientY, startCropX: cropX, startCropY: cropY, startCropW: cropWidth, startCropH: cropHeight, mode, cW: rect.width, cH: rect.height };
   };
 
   const handleCropPointerMove = (e: React.PointerEvent) => {
-    if (!cropDragRef.current || !cropContainerRef.current) return;
-    const containerH = cropContainerRef.current.getBoundingClientRect().height;
-    if (containerH === 0) return;
-    const deltaFrac = (e.clientY - cropDragRef.current.startY) / containerH;
-    const { startCropY, startCropH, mode } = cropDragRef.current;
+    if (!cropDragRef.current) return;
+    const { startX, startY, startCropX: scX, startCropY: scY, startCropW: scW, startCropH: scH, mode, cW, cH } = cropDragRef.current;
+    const dx = (e.clientX - startX) / cW;
+    const dy = (e.clientY - startY) / cH;
+    const tAR = profileLayoutToAspect(userLayoutId);
+    const natAr = videoNaturalAr || tAR;
+    const MIN = 0.08;
+    let nX = scX, nY = scY, nW = scW, nH = scH;
     if (mode === 'move') {
-      setCropY(clampCrop(startCropY + deltaFrac, 0, 1 - cropHeight));
-    } else if (mode === 'top') {
-      const newY = clampCrop(startCropY + deltaFrac, 0, startCropY + startCropH - 0.1);
-      setCropY(newY);
-      setCropHeight(clampCrop(startCropH - deltaFrac, 0.1, 1 - newY));
-    } else {
-      setCropHeight(clampCrop(startCropH + deltaFrac, 0.1, 1 - startCropY));
+      nX = clampCrop(scX + dx, 0, 1 - scW);
+      nY = clampCrop(scY + dy, 0, 1 - scH);
+    } else if (mode === 'se') {
+      nW = clampCrop(scW + dx, MIN, 1 - scX);
+      nH = nW * natAr / tAR;
+      if (scY + nH > 1) { nH = 1 - scY; nW = nH * tAR / natAr; }
+    } else if (mode === 'sw') {
+      nW = clampCrop(scW - dx, MIN, scX + scW);
+      nH = nW * natAr / tAR;
+      if (scY + nH > 1) { nH = 1 - scY; nW = nH * tAR / natAr; }
+      nX = scX + scW - nW;
+    } else if (mode === 'ne') {
+      nW = clampCrop(scW + dx, MIN, 1 - scX);
+      nH = nW * natAr / tAR;
+      nY = scY + scH - nH;
+      if (nY < 0) { nY = 0; nH = scY + scH; nW = nH * tAR / natAr; }
+    } else if (mode === 'nw') {
+      nW = clampCrop(scW - dx, MIN, scX + scW);
+      nH = nW * natAr / tAR;
+      nX = scX + scW - nW; nY = scY + scH - nH;
+      if (nX < 0) { nX = 0; nW = scX + scW; nH = nW * natAr / tAR; nY = scY + scH - nH; }
+      if (nY < 0) { nY = 0; nH = scY + scH; nW = nH * tAR / natAr; nX = scX + scW - nW; }
     }
+    setCropX(nX); setCropY(nY); setCropWidth(nW); setCropHeight(nH);
   };
 
   const handleCropPointerUp = () => { cropDragRef.current = null; };
 
-  const handleImageCropPointerDown = (e: React.PointerEvent) => {
+  const handleImageCropPointerDown = (e: React.PointerEvent, mode: 'move' | 'nw' | 'ne' | 'sw' | 'se') => {
     e.stopPropagation();
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-    imageCropDragRef.current = { startY: e.clientY, startCropY: imageCropY };
+    const rect = imageCropContainerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    imageCropDragRef.current = { startX: e.clientX, startY: e.clientY, startCropX: imageCropX, startCropY: imageCropY, startCropW: imageCropWidth, startCropH: imageCropHeight, mode, cW: rect.width, cH: rect.height };
   };
 
   const handleImageCropPointerMove = (e: React.PointerEvent) => {
-    if (!imageCropDragRef.current || !imageCropContainerRef.current) return;
-    const containerH = imageCropContainerRef.current.getBoundingClientRect().height;
-    if (containerH === 0) return;
-    const deltaFrac = (e.clientY - imageCropDragRef.current.startY) / containerH;
-    const targetAR = profileLayoutToAspect(userLayoutId);
-    const cropBoxH = Math.min(1, imgNaturalAr / targetAR);
-    const maxCropY = Math.max(0, 1 - cropBoxH);
-    setImageCropY(Math.min(maxCropY, Math.max(0, imageCropDragRef.current.startCropY + deltaFrac)));
+    if (!imageCropDragRef.current) return;
+    const { startX, startY, startCropX: scX, startCropY: scY, startCropW: scW, startCropH: scH, mode, cW, cH } = imageCropDragRef.current;
+    const dx = (e.clientX - startX) / cW;
+    const dy = (e.clientY - startY) / cH;
+    const tAR = profileLayoutToAspect(userLayoutId);
+    const MIN = 0.08;
+    let nX = scX, nY = scY, nW = scW, nH = scH;
+    if (mode === 'move') {
+      nX = clampCrop(scX + dx, 0, 1 - scW);
+      nY = clampCrop(scY + dy, 0, 1 - scH);
+    } else if (mode === 'se') {
+      nW = clampCrop(scW + dx, MIN, 1 - scX);
+      nH = nW * imgNaturalAr / tAR;
+      if (scY + nH > 1) { nH = 1 - scY; nW = nH * tAR / imgNaturalAr; }
+    } else if (mode === 'sw') {
+      nW = clampCrop(scW - dx, MIN, scX + scW);
+      nH = nW * imgNaturalAr / tAR;
+      if (scY + nH > 1) { nH = 1 - scY; nW = nH * tAR / imgNaturalAr; }
+      nX = scX + scW - nW;
+    } else if (mode === 'ne') {
+      nW = clampCrop(scW + dx, MIN, 1 - scX);
+      nH = nW * imgNaturalAr / tAR;
+      nY = scY + scH - nH;
+      if (nY < 0) { nY = 0; nH = scY + scH; nW = nH * tAR / imgNaturalAr; }
+    } else if (mode === 'nw') {
+      nW = clampCrop(scW - dx, MIN, scX + scW);
+      nH = nW * imgNaturalAr / tAR;
+      nX = scX + scW - nW; nY = scY + scH - nH;
+      if (nX < 0) { nX = 0; nW = scX + scW; nH = nW * imgNaturalAr / tAR; nY = scY + scH - nH; }
+      if (nY < 0) { nY = 0; nH = scY + scH; nW = nH * tAR / imgNaturalAr; nX = scX + scW - nW; }
+    }
+    setImageCropX(nX); setImageCropY(nY); setImageCropWidth(nW); setImageCropHeight(nH);
   };
 
   const handleImageCropPointerUp = () => { imageCropDragRef.current = null; };
@@ -401,7 +453,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
         console.log('[handlePost] uploading:', media.file.name);
         let fileToUpload = media.file;
         if (media.type === 'image' && imgNaturalAr > 0) {
-          fileToUpload = await cropImageToAspect(media.file, imageCropY, imgNaturalAr, profileLayoutToAspect(userLayoutId));
+          fileToUpload = await cropImageToAspect(media.file, imageCropX, imageCropY, imageCropWidth, imgNaturalAr, profileLayoutToAspect(userLayoutId));
           console.log('[handlePost] image cropped to', profileLayoutToAspect(userLayoutId).toFixed(2), ':1');
         }
         const url = await uploadImage(fileToUpload, 'post-media', user.id);
@@ -663,7 +715,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
             {selectedMedia[0]?.type === 'video' ? (
               <div
                 ref={cropContainerRef}
-                style={{ position: 'relative', width: '100%', backgroundColor: '#000', marginBottom: 16, touchAction: 'none' }}
+                style={{ position: 'relative', width: '100%', backgroundColor: '#000', marginBottom: 16, touchAction: 'none', overflow: 'hidden' }}
                 onPointerMove={handleCropPointerMove}
                 onPointerUp={handleCropPointerUp}
                 onPointerLeave={handleCropPointerUp}
@@ -672,52 +724,53 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
                   src={selectedMedia[0].url}
                   autoPlay muted loop playsInline
                   style={{ width: '100%', display: 'block', objectFit: 'contain', maxHeight: '60vh' }}
+                  onLoadedMetadata={(e) => {
+                    const v = e.currentTarget as HTMLVideoElement;
+                    const natAr = v.videoWidth / v.videoHeight;
+                    setVideoNaturalAr(natAr);
+                    const tAR = profileLayoutToAspect(userLayoutId);
+                    if (natAr > tAR) {
+                      const cw = tAR / natAr;
+                      setCropX((1 - cw) / 2); setCropY(0); setCropWidth(cw); setCropHeight(1);
+                    } else {
+                      const ch = natAr / tAR;
+                      setCropX(0); setCropY((1 - ch) / 2); setCropWidth(1); setCropHeight(ch);
+                    }
+                  }}
                 />
-                {/* Dark bars — non-interactive overlay */}
-                <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 5 }}>
-                  <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: `${cropY * 100}%`, background: 'rgba(0,0,0,0.72)' }} />
-                  <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: `${(1 - cropY - cropHeight) * 100}%`, background: 'rgba(0,0,0,0.72)' }} />
-                </div>
-                {/* Crop box — interactive */}
-                <div
-                  style={{ position: 'absolute', left: 0, right: 0, top: `${cropY * 100}%`, height: `${cropHeight * 100}%`, zIndex: 6, cursor: 'grab', pointerEvents: 'auto' }}
-                  onPointerDown={(e) => handleCropPointerDown(e, 'move')}
-                >
-                  {/* Top handle */}
+                {videoNaturalAr > 0 && (
                   <div
-                    onPointerDown={(e) => handleCropPointerDown(e, 'top')}
-                    style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 24, cursor: 'ns-resize', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'auto' }}
+                    onPointerDown={(e) => handleCropPointerDown(e, 'move')}
+                    style={{
+                      position: 'absolute', zIndex: 6,
+                      left: `${cropX * 100}%`, top: `${cropY * 100}%`,
+                      width: `${cropWidth * 100}%`, height: `${cropHeight * 100}%`,
+                      boxShadow: '0 0 0 9999px rgba(0,0,0,0.72)',
+                      outline: '1px solid rgba(255,255,255,0.45)',
+                      cursor: 'grab', pointerEvents: 'auto', touchAction: 'none',
+                    }}
                   >
-                    <div style={{ width: 32, height: 1.5, backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: 1 }} />
+                    {([
+                      { id: 'nw', s: { top: 0, left: 0 }, tf: 'translate(-50%,-50%)', bt: true, bl: true, br: false, bb: false },
+                      { id: 'ne', s: { top: 0, right: 0 }, tf: 'translate(50%,-50%)', bt: true, br: true, bl: false, bb: false },
+                      { id: 'sw', s: { bottom: 0, left: 0 }, tf: 'translate(-50%,50%)', bb: true, bl: true, bt: false, br: false },
+                      { id: 'se', s: { bottom: 0, right: 0 }, tf: 'translate(50%,50%)', bb: true, br: true, bt: false, bl: false },
+                    ] as any[]).map(({ id, s, tf, bt, br, bb, bl }) => (
+                      <div key={id} onPointerDown={(e) => { e.stopPropagation(); handleCropPointerDown(e, id); }}
+                        style={{ position: 'absolute', width: 28, height: 28, cursor: `${id}-resize`, touchAction: 'none', transform: tf, ...s, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <div style={{ width: 14, height: 14, borderTop: bt ? '2px solid white' : 'none', borderRight: br ? '2px solid white' : 'none', borderBottom: bb ? '2px solid white' : 'none', borderLeft: bl ? '2px solid white' : 'none' }} />
+                      </div>
+                    ))}
+                    <div style={{ position: 'absolute', bottom: 6, right: 6, background: 'rgba(0,0,0,0.55)', padding: '2px 5px' }}>
+                      <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 8, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase' }}>{selectedLayout.aspectRatio}</span>
+                    </div>
                   </div>
-                  {/* Bottom handle */}
-                  <div
-                    onPointerDown={(e) => handleCropPointerDown(e, 'bottom')}
-                    style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 24, cursor: 'ns-resize', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'auto' }}
-                  >
-                    <div style={{ width: 32, height: 1.5, backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: 1 }} />
-                  </div>
-                  {/* Corner markers */}
-                  {([
-                    { top: 0, left: 0, borderTop: '1px solid rgba(255,255,255,0.7)', borderLeft: '1px solid rgba(255,255,255,0.7)' },
-                    { top: 0, right: 0, borderTop: '1px solid rgba(255,255,255,0.7)', borderRight: '1px solid rgba(255,255,255,0.7)' },
-                    { bottom: 0, left: 0, borderBottom: '1px solid rgba(255,255,255,0.7)', borderLeft: '1px solid rgba(255,255,255,0.7)' },
-                    { bottom: 0, right: 0, borderBottom: '1px solid rgba(255,255,255,0.7)', borderRight: '1px solid rgba(255,255,255,0.7)' },
-                  ] as React.CSSProperties[]).map((corner, i) => (
-                    <div key={i} style={{ position: 'absolute', width: 12, height: 12, ...corner }} />
-                  ))}
-                  {/* Aspect ratio label */}
-                  <div style={{ position: 'absolute', bottom: 28, right: 8, background: 'rgba(0,0,0,0.55)', padding: '2px 5px' }}>
-                    <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 8, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase' }}>
-                      {selectedLayout.aspectRatio}
-                    </span>
-                  </div>
-                </div>
+                )}
               </div>
             ) : (
               <div
                 ref={imageCropContainerRef}
-                style={{ position: 'relative', width: '100%', backgroundColor: '#000', touchAction: 'none', marginBottom: 16 }}
+                style={{ position: 'relative', width: '100%', backgroundColor: '#000', touchAction: 'none', marginBottom: 16, overflow: 'hidden' }}
                 onPointerMove={handleImageCropPointerMove}
                 onPointerUp={handleImageCropPointerUp}
                 onPointerLeave={handleImageCropPointerUp}
@@ -730,49 +783,46 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
                       const img = e.currentTarget;
                       const ar = img.naturalWidth / img.naturalHeight;
                       setImgNaturalAr(ar);
-                      const targetAR = profileLayoutToAspect(userLayoutId);
-                      const frac = Math.min(1, ar / targetAR);
-                      setImageCropY((1 - frac) / 2);
+                      const tAR = profileLayoutToAspect(userLayoutId);
+                      if (ar > tAR) {
+                        const cw = tAR / ar;
+                        setImageCropX((1 - cw) / 2); setImageCropY(0); setImageCropWidth(cw); setImageCropHeight(1);
+                      } else {
+                        const ch = ar / tAR;
+                        setImageCropX(0); setImageCropY((1 - ch) / 2); setImageCropWidth(1); setImageCropHeight(ch);
+                      }
                     }}
                     style={{ width: '100%', height: 'auto', display: 'block', maxHeight: '65vh', objectFit: 'contain' }}
                   />
                 )}
-                {imgNaturalAr > 0 && (() => {
-                  const targetAR = profileLayoutToAspect(userLayoutId);
-                  const cropBoxH = Math.min(1, imgNaturalAr / targetAR);
-                  const topH = imageCropY;
-                  const bottomH = Math.max(0, 1 - imageCropY - cropBoxH);
-                  return (
-                    <>
-                      <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 5 }}>
-                        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: `${topH * 100}%`, background: 'rgba(0,0,0,0.72)' }} />
-                        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: `${bottomH * 100}%`, background: 'rgba(0,0,0,0.72)' }} />
+                {imgNaturalAr > 0 && (
+                  <div
+                    onPointerDown={(e) => handleImageCropPointerDown(e, 'move')}
+                    style={{
+                      position: 'absolute', zIndex: 6,
+                      left: `${imageCropX * 100}%`, top: `${imageCropY * 100}%`,
+                      width: `${imageCropWidth * 100}%`, height: `${imageCropHeight * 100}%`,
+                      boxShadow: '0 0 0 9999px rgba(0,0,0,0.72)',
+                      outline: '1px solid rgba(255,255,255,0.45)',
+                      cursor: 'grab', pointerEvents: 'auto', touchAction: 'none',
+                    }}
+                  >
+                    {([
+                      { id: 'nw', s: { top: 0, left: 0 }, tf: 'translate(-50%,-50%)', bt: true, bl: true, br: false, bb: false },
+                      { id: 'ne', s: { top: 0, right: 0 }, tf: 'translate(50%,-50%)', bt: true, br: true, bl: false, bb: false },
+                      { id: 'sw', s: { bottom: 0, left: 0 }, tf: 'translate(-50%,50%)', bb: true, bl: true, bt: false, br: false },
+                      { id: 'se', s: { bottom: 0, right: 0 }, tf: 'translate(50%,50%)', bb: true, br: true, bt: false, bl: false },
+                    ] as any[]).map(({ id, s, tf, bt, br, bb, bl }) => (
+                      <div key={id} onPointerDown={(e) => { e.stopPropagation(); handleImageCropPointerDown(e, id); }}
+                        style={{ position: 'absolute', width: 28, height: 28, cursor: `${id}-resize`, touchAction: 'none', transform: tf, ...s, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <div style={{ width: 14, height: 14, borderTop: bt ? '2px solid white' : 'none', borderRight: br ? '2px solid white' : 'none', borderBottom: bb ? '2px solid white' : 'none', borderLeft: bl ? '2px solid white' : 'none' }} />
                       </div>
-                      <div
-                        onPointerDown={handleImageCropPointerDown}
-                        style={{
-                          position: 'absolute', left: 0, right: 0,
-                          top: `${topH * 100}%`, height: `${cropBoxH * 100}%`,
-                          zIndex: 6, cursor: 'grab', pointerEvents: 'auto',
-                        }}
-                      >
-                        {([
-                          { top: 0, left: 0, borderTop: '1px solid rgba(255,255,255,0.7)', borderLeft: '1px solid rgba(255,255,255,0.7)' },
-                          { top: 0, right: 0, borderTop: '1px solid rgba(255,255,255,0.7)', borderRight: '1px solid rgba(255,255,255,0.7)' },
-                          { bottom: 0, left: 0, borderBottom: '1px solid rgba(255,255,255,0.7)', borderLeft: '1px solid rgba(255,255,255,0.7)' },
-                          { bottom: 0, right: 0, borderBottom: '1px solid rgba(255,255,255,0.7)', borderRight: '1px solid rgba(255,255,255,0.7)' },
-                        ] as React.CSSProperties[]).map((corner, i) => (
-                          <div key={i} style={{ position: 'absolute', width: 12, height: 12, ...corner }} />
-                        ))}
-                        <div style={{ position: 'absolute', bottom: 8, right: 8, background: 'rgba(0,0,0,0.55)', padding: '2px 5px' }}>
-                          <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 8, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase' }}>
-                            {profileLayoutLabel(userLayoutId)}
-                          </span>
-                        </div>
-                      </div>
-                    </>
-                  );
-                })()}
+                    ))}
+                    <div style={{ position: 'absolute', bottom: 6, right: 6, background: 'rgba(0,0,0,0.55)', padding: '2px 5px' }}>
+                      <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 8, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase' }}>{profileLayoutLabel(userLayoutId)}</span>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>

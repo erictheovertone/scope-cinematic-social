@@ -16,6 +16,8 @@ import BottomToolbar from "@/components/BottomToolbar";
 import MediaRenderer from "@/components/MediaRenderer";
 import VideoLightbox from "@/components/VideoLightbox";
 import OnboardingModal from "@/components/OnboardingModal";
+import AddToHomeScreenSheet from "@/components/AddToHomeScreenSheet";
+import { shouldShowA2HS } from "@/lib/pwaUtils";
 import PostCell from "@/components/PostCell";
 import { getColCount } from "@/lib/aspectRatio";
 
@@ -100,6 +102,7 @@ export default function Profile() {
   const [foundingMemberNumber, setFoundingMemberNumber] = useState<number | null>(null);
   const [paidMemberUntil, setPaidMemberUntil] = useState<Date | null>(null);
   const [showMembershipSheet, setShowMembershipSheet] = useState(false);
+  const [showA2HS, setShowA2HS] = useState(false);
   const [badgeJustUnlocked, setBadgeJustUnlocked] = useState(false);
   const [gridScrollY, setGridScrollY] = useState(0);
   const [headerSnapped, setHeaderSnapped] = useState(false);
@@ -236,7 +239,18 @@ export default function Profile() {
 
   return (
     <div className="bg-black relative w-full max-w-[375px] min-h-screen mx-auto pb-[60px]">
-      <OnboardingModal />
+      <OnboardingModal
+        onComplete={() => {
+          if (user?.id && shouldShowA2HS(user.id)) {
+            setShowA2HS(true);
+          }
+        }}
+      />
+      <AddToHomeScreenSheet
+        isOpen={showA2HS}
+        onClose={() => setShowA2HS(false)}
+        privyId={user?.id ?? ''}
+      />
 
       {/* Header wrapper — fades out on scroll only */}
       <div style={{

@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
 import { getUnreadNotificationCount } from "@/lib/userService";
 import BottomToolbar from "@/components/BottomToolbar";
+import { isStandalone, setInstalled } from "@/lib/pwaUtils";
 
 const HIDDEN = [
   '/welcome',
@@ -32,6 +33,29 @@ export default function AppShell() {
 
   useEffect(() => setMounted(true), []);
 
+  // Capture beforeinstallprompt early so AddToHomeScreenSheet can call .prompt() later
+  useEffect(() => {
+    const a2hsHandler = (e: Event) => {
+      e.preventDefault();
+      (window as any).__deferredA2HSPrompt = e;
+    };
+    const installedHandler = () => {
+      window.dispatchEvent(new CustomEvent('scope:app-installed'));
+    };
+    window.addEventListener('beforeinstallprompt', a2hsHandler);
+    window.addEventListener('appinstalled', installedHandler);
+    return () => {
+      window.removeEventListener('beforeinstallprompt', a2hsHandler);
+      window.removeEventListener('appinstalled', installedHandler);
+    };
+  }, []);
+
+  // If app is already running as installed PWA, mark installed flag retroactively
+  useEffect(() => {
+    if (!user?.id) return;
+    if (isStandalone()) setInstalled(user.id);
+  }, [user?.id]);
+
   useEffect(() => {
     if (!user?.id) return;
     getUnreadNotificationCount(user.id)
@@ -44,8 +68,10 @@ export default function AppShell() {
 
   if (HIDDEN.some(p => pathname === p)) return null;
 
-  const page: 'home' | 'profile' | 'public-profile' =
-    pathname === '/profile'
+  const page: 'home' | 'profile' | 'public-profile' | 'wallet' =
+    pathname === '/wallet'
+      ? 'wallet'
+      : pathname === '/profile'
       ? 'profile'
       : pathname?.startsWith('/profile/') && !pathname.includes('/decks')
       ? 'public-profile'

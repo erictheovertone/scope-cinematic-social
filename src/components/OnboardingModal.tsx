@@ -26,7 +26,11 @@ const SCREENS = [
   },
 ];
 
-export default function OnboardingModal() {
+interface Props {
+  onComplete?: () => void;
+}
+
+export default function OnboardingModal({ onComplete }: Props) {
   const { user } = usePrivy();
   const [visible, setVisible] = useState(false);
   const [screen, setScreen] = useState(0);
@@ -63,7 +67,10 @@ export default function OnboardingModal() {
 
   const handleDone = () => {
     setExiting(true);
-    setTimeout(() => setVisible(false), 400);
+    setTimeout(() => {
+      setVisible(false);
+      onComplete?.();
+    }, 400);
   };
 
   if (!visible) return null;
