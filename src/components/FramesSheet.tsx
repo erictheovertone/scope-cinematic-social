@@ -67,7 +67,18 @@ export default function FramesSheet({
       const file = new File([blob], `scope-frames-${deck.title.toLowerCase().replace(/\s+/g, '-')}.jpg`, { type: 'image/jpeg' });
 
       if (navigator.canShare?.({ files: [file] })) {
-        await navigator.share({ files: [file], title: `${deck.title} · FRAMES` });
+        try {
+          await navigator.share({ files: [file], title: `${deck.title} · FRAMES` });
+          setExportDone(true);
+          setTimeout(() => { setExportDone(false); setExporting(false); onClose(); }, 1500);
+        } catch (shareErr: any) {
+          if (shareErr?.name === 'AbortError') {
+            // User dismissed the share sheet — not an error, keep sheet open with selection intact
+            setExporting(false);
+            return;
+          }
+          throw shareErr;
+        }
       } else {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -75,17 +86,14 @@ export default function FramesSheet({
         a.download = file.name;
         a.click();
         URL.revokeObjectURL(url);
+        setExportDone(true);
+        setTimeout(() => { setExportDone(false); setExporting(false); onClose(); }, 1500);
       }
-
-      setExportDone(true);
-      setTimeout(() => {
-        setExportDone(false);
-        setExporting(false);
-        onClose();
-      }, 1500);
     } catch (e: any) {
-      console.error('Frames export error:', e);
-      setExportError('EXPORT FAILED — TRY AGAIN');
+      if (e?.name !== 'AbortError') {
+        console.error('Frames export error:', e);
+        setExportError('EXPORT FAILED — TRY AGAIN');
+      }
       setExporting(false);
     }
   };

@@ -60,7 +60,6 @@ export default function Profile() {
   const [spinning, setSpinning] = useState(false);
   const [showTheater, setShowTheater] = useState(false);
   const [showViewer, setShowViewer] = useState(false);
-  console.log('[profile] showViewer state declared');
   const [viewerIndex, setViewerIndex] = useState(0);
   const [showLightbox, setShowLightbox] = useState(false);
   const [lightboxPost, setLightboxPost] = useState<any>(null);
@@ -149,7 +148,6 @@ export default function Profile() {
             setIsInHouseCreator(profile.is_in_house_creator || false);
             setIsFoundingMember(profile.is_founding_member || false);
             setFoundingMemberNumber(profile.founding_member_number || null);
-            console.log('[profile] paid_member_until:', profile.paid_member_until, 'isActiveMember:', isActiveMember);
           }
           getProfileLinks(user.id).then(setProfileLinks).catch(() => {});
         }
@@ -626,16 +624,12 @@ export default function Profile() {
 
       {showViewer && (
         <>
-          {console.log('[profile] rendering ProfilePostViewer')}
           <ProfilePostViewer
             posts={userPosts}
             initialIndex={viewerIndex}
             ownerUsername={userProfile.username}
             ownerAvatarUrl={userProfile.profileImage}
-            onClose={() => {
-              console.log('[profile] ProfilePostViewer onClose called');
-              setShowViewer(false);
-            }}
+            onClose={() => setShowViewer(false)}
             isOwnProfile={true}
           />
         </>
