@@ -1,14 +1,20 @@
-export type Platform = 'ios-safari' | 'android-chrome' | 'unsupported';
+export type Platform = 'ios-safari' | 'ios-chrome' | 'android-chrome' | 'unsupported';
 
 export function detectPlatform(): Platform {
   if (typeof window === 'undefined') return 'unsupported';
   const ua = window.navigator.userAgent;
   const isIOS = /iPad|iPhone|iPod/.test(ua) && !(window as any).MSStream;
-  const isSafari = /Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS/.test(ua);
-  if (isIOS && isSafari) return 'ios-safari';
+
+  if (isIOS) {
+    if (/CriOS/.test(ua)) return 'ios-chrome';
+    if (/Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS/.test(ua)) return 'ios-safari';
+    return 'unsupported';
+  }
+
   const isAndroid = /Android/.test(ua);
   const isChromium = /Chrome|Edg/.test(ua) && !/EdgiOS|CriOS/.test(ua);
   if (isAndroid && isChromium) return 'android-chrome';
+
   return 'unsupported';
 }
 

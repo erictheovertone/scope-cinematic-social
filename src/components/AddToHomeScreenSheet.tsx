@@ -9,15 +9,17 @@ interface Props {
   isOpen: boolean;
   onClose: () => void;
   privyId: string;
+  forceShow?: boolean; // bypasses shouldShowA2HS check — use when opened from settings
 }
 
-export default function AddToHomeScreenSheet({ isOpen, onClose, privyId }: Props) {
+export default function AddToHomeScreenSheet({ isOpen, onClose, privyId, forceShow }: Props) {
   const [canShow, setCanShow] = useState(false);
+  const [copied, setCopied] = useState(false);
   const platform = useRef<Platform>(detectPlatform());
 
   useEffect(() => {
     if (isOpen && privyId) {
-      if (shouldShowA2HS(privyId)) {
+      if (forceShow || shouldShowA2HS(privyId)) {
         setCanShow(true);
       } else {
         onClose();
@@ -25,7 +27,7 @@ export default function AddToHomeScreenSheet({ isOpen, onClose, privyId }: Props
     } else {
       setCanShow(false);
     }
-  }, [isOpen, privyId]);
+  }, [isOpen, privyId, forceShow]);
 
   // Listen for the custom event dispatched by the global appinstalled handler
   useEffect(() => {
@@ -51,6 +53,14 @@ export default function AddToHomeScreenSheet({ isOpen, onClose, privyId }: Props
   const handleIOSAdded = () => {
     setInstalled(privyId);
     onClose();
+  };
+
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.origin);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {}
   };
 
   const handleSnooze = () => {
@@ -113,16 +123,13 @@ export default function AddToHomeScreenSheet({ isOpen, onClose, privyId }: Props
         </div>
 
         {/* Description */}
-        <p style={{
-          ...SKR, fontSize: 12, color: 'rgba(255,255,255,0.7)', lineHeight: 1.5,
-          margin: '0 0 28px',
-        }}>
-          {plt === 'ios-safari'
-            ? 'Watch Scope in full frame. No browser, no chrome — just the work.'
-            : 'Add Scope to your home screen and launch full-screen with no browser bar.'}
+        <p style={{ ...SKR, fontSize: 12, color: 'rgba(255,255,255,0.7)', lineHeight: 1.5, margin: '0 0 28px' }}>
+          {plt === 'android-chrome'
+            ? 'Add Scope to your home screen and launch full-screen with no browser bar.'
+            : 'Watch Scope in full frame. No browser, no chrome — just the work.'}
         </p>
 
-        {/* iOS step rows — display only, not interactive */}
+        {/* iOS Safari — numbered step rows (display only) */}
         {plt === 'ios-safari' && (
           <div>
             {[
@@ -176,25 +183,53 @@ export default function AddToHomeScreenSheet({ isOpen, onClose, privyId }: Props
           </div>
         )}
 
+        {/* iOS Chrome — redirect to Safari instructional block */}
+        {plt === 'ios-chrome' && (
+          <div style={{ marginBottom: 28 }}>
+            <p style={{ ...SKB, fontSize: 11, color: '#FFFFFF', letterSpacing: '0.1em', textTransform: 'uppercase', lineHeight: 1.4, margin: '0 0 8px' }}>
+              OPEN IN SAFARI TO INSTALL
+            </p>
+            <p style={{ ...SKR, fontSize: 12, color: 'rgba(255,255,255,0.7)', lineHeight: 1.5, margin: 0 }}>
+              Chrome on iPhone can't install apps the same way. For the full experience, copy this link and open it in Safari.
+            </p>
+          </div>
+        )}
+
         {/* Buttons */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <button
-            onClick={plt === 'ios-safari' ? handleIOSAdded : handleInstallAndroid}
-            style={{
-              width: '100%', padding: '14px 0',
-              background: '#FF0000', border: 'none', cursor: 'pointer',
-            }}
-          >
-            <span style={{ ...SKB, fontSize: 11, color: '#FFFFFF', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-              {plt === 'ios-safari' ? 'GOT IT' : 'INSTALL SCOPE'}
-            </span>
-          </button>
+          {plt === 'ios-safari' && (
+            <button
+              onClick={handleIOSAdded}
+              style={{ width: '100%', padding: '14px 0', background: '#FF0000', border: 'none', cursor: 'pointer' }}
+            >
+              <span style={{ ...SKB, fontSize: 11, color: '#FFFFFF', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                GOT IT
+              </span>
+            </button>
+          )}
+          {plt === 'android-chrome' && (
+            <button
+              onClick={handleInstallAndroid}
+              style={{ width: '100%', padding: '14px 0', background: '#FF0000', border: 'none', cursor: 'pointer' }}
+            >
+              <span style={{ ...SKB, fontSize: 11, color: '#FFFFFF', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                INSTALL SCOPE
+              </span>
+            </button>
+          )}
+          {plt === 'ios-chrome' && (
+            <button
+              onClick={handleCopyLink}
+              style={{ width: '100%', padding: '14px 0', background: '#FF0000', border: 'none', cursor: 'pointer' }}
+            >
+              <span style={{ ...SKB, fontSize: 11, color: '#FFFFFF', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                {copied ? 'COPIED ✓' : 'COPY LINK'}
+              </span>
+            </button>
+          )}
           <button
             onClick={handleSnooze}
-            style={{
-              width: '100%', padding: '14px 0',
-              background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', cursor: 'pointer',
-            }}
+            style={{ width: '100%', padding: '14px 0', background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', cursor: 'pointer' }}
           >
             <span style={{ ...SKB, fontSize: 11, color: 'rgba(255,255,255,0.7)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
               REMIND ME LATER

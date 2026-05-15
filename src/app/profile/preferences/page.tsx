@@ -4,6 +4,8 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
 import { getUserByPrivyId, getProfile, saveProfile, uploadImage } from "@/lib/userService";
+import AddToHomeScreenSheet from "@/components/AddToHomeScreenSheet";
+import { isStandalone } from "@/lib/pwaUtils";
 
 async function compressImage(file: File): Promise<File> {
   return new Promise((resolve) => {
@@ -44,6 +46,7 @@ export default function Preferences() {
 
   const [mounted, setMounted] = useState(false);
   const [sbUserId, setSbUserId] = useState("");
+  const [showA2HS, setShowA2HS] = useState(false);
   const [currentProfile, setCurrentProfile] = useState({ displayName: "", username: "", bio: "" });
   const [photoUploading, setPhotoUploading] = useState(false);
   const [photoSuccess, setPhotoSuccess] = useState(false);
@@ -112,6 +115,7 @@ export default function Preferences() {
     { label: photoLabel, action: () => photoInputRef.current?.click() },
     { label: 'Edit Profile', action: () => router.push('/profile/account') },
     { label: 'Change Grid Layout', action: () => router.push('/profile/grid-layout') },
+    ...(mounted && !isStandalone() ? [{ label: 'ADD TO HOME SCREEN', action: () => setShowA2HS(true) }] : []),
     { label: 'Link Manager', action: () => router.push('/profile/links') },
     { label: 'Saved', action: () => router.push('/profile/bookmarks') },
     { label: 'Notifications', action: () => router.push('/profile/notifications') },
@@ -122,6 +126,7 @@ export default function Preferences() {
   ];
 
   return (
+    <>
     <div className="bg-black" style={{ position: 'fixed', inset: 0, overflowY: 'auto' }}>
 
       {/* Header */}
@@ -160,5 +165,12 @@ export default function Preferences() {
 
       <input ref={photoInputRef} type="file" accept="image/*" onChange={handlePhotoChange} style={{ display: 'none' }} />
     </div>
+    <AddToHomeScreenSheet
+      isOpen={showA2HS}
+      onClose={() => setShowA2HS(false)}
+      privyId={user?.id ?? ''}
+      forceShow
+    />
+    </>
   );
 }
