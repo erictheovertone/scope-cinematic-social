@@ -5,10 +5,12 @@ import { useParams, useRouter } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
 import {
   getDeckById, removeFromDeck, updateDeck, addMediaToDeck, uploadImage,
+  getUserByPrivyId, getProfile,
   type DeckWithItems, type DeckItemWithMedia,
 } from "@/lib/userService";
 import { getAspectRatio, getColCount } from "@/lib/aspectRatio";
 import PostModal from "@/components/PostModal";
+import FramesSheet from "@/components/FramesSheet";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -81,6 +83,11 @@ export default function DeckDetailPage() {
   const [collectToast, setCollectToast] = useState(false);
   const [theatreToast, setTheatreToast] = useState(false);
 
+  // Frames
+  const [showFrames, setShowFrames] = useState(false);
+  const [isPro, setIsPro] = useState(false);
+  const [viewerUsername, setViewerUsername] = useState("");
+
   // Media upload
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -95,7 +102,25 @@ export default function DeckDetailPage() {
         setEditTitle(d.title);
         setEditDesc(d.description || "");
         setEditLayout(d.grid_layout || "scope");
-        setIsOwn(!!(user?.id && user.id === d.user_id));
+        const own = !!(user?.id && user.id === d.user_id);
+        setIsOwn(own);
+
+        // Load viewer's Pro status
+        if (user?.id) {
+          try {
+            const sbUser = await getUserByPrivyId(user.id);
+            if (sbUser) {
+              const profile = await getProfile(sbUser.id);
+              if (profile) {
+                const paidUntil = (profile as any).paid_member_until
+                  ? new Date((profile as any).paid_member_until)
+                  : null;
+                setIsPro(!!(paidUntil && paidUntil > new Date()));
+                setViewerUsername((profile as any).username || "");
+              }
+            }
+          } catch {}
+        }
       } catch (e) {
         console.error("DeckDetailPage load error:", e);
       } finally {
@@ -232,6 +257,18 @@ export default function DeckDetailPage() {
           </button>
 
           <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 16 }}>
+            {/* FRAMES button — Pro owners only */}
+            {isPro && isOwn && (
+              <button
+                onClick={() => setShowFrames(true)}
+                style={{ background: "transparent", border: "none", cursor: "pointer", padding: 0, display: "flex", alignItems: "center", gap: 6 }}
+              >
+                <img src="/icons/frames-icon.svg" alt="" style={{ width: 24, height: 24, display: "block", filter: "brightness(0) invert(1)" }} />
+                <span style={{ ...SKB, fontSize: 10, letterSpacing: "0.1em", color: "rgba(255,255,255,0.7)", textTransform: "uppercase" }}>
+                  FRAMES
+                </span>
+              </button>
+            )}
             {/* EDIT text link — owner only */}
             {isOwn && (
               <button
@@ -607,6 +644,19 @@ export default function DeckDetailPage() {
             </div>
           </div>
         </>
+      )}
+
+      {/* Frames sheet */}
+      {showFrames && deck && (
+        <FramesSheet
+          isOpen={showFrames}
+          onClose={() => setShowFrames(false)}
+          deck={deck}
+          items={deck.items}
+          deckCreatorUsername={deck.username || username}
+          currentUserUsername={viewerUsername}
+          isOwnDeck={isOwn}
+        />
       )}
 
     </div>
