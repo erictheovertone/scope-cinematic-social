@@ -115,61 +115,62 @@ export default function AddToHomeScreenSheet({ isOpen, onClose, privyId }: Props
         {/* Description */}
         <p style={{
           ...SKR, fontSize: 12, color: 'rgba(255,255,255,0.7)', lineHeight: 1.5,
-          margin: plt === 'ios-safari' ? '0 0 24px' : '0 0 28px',
+          margin: '0 0 28px',
         }}>
           {plt === 'ios-safari'
-            ? "Launch full-screen with no browser bar. Two taps and you're done."
+            ? 'Watch Scope in full frame. No browser, no chrome — just the work.'
             : 'Add Scope to your home screen and launch full-screen with no browser bar.'}
         </p>
 
-        {/* iOS step rows */}
+        {/* iOS step rows — display only, not interactive */}
         {plt === 'ios-safari' && (
-          <div style={{ marginBottom: 24 }}>
+          <div>
             {[
               {
                 num: '01',
+                label: 'TAP THE SHARE ICON',
+                subtitle: 'Bottom of your Safari window',
                 icon: (
-                  <svg width="16" height="20" viewBox="0 0 16 20" fill="none">
+                  <svg width="20" height="26" viewBox="0 0 16 20" fill="none">
                     <path d="M8 1 L8 13" stroke="#FFFFFF" strokeWidth="1.5"/>
                     <path d="M4 5 L8 1 L12 5" stroke="#FFFFFF" strokeWidth="1.5" fill="none"/>
                     <path d="M2 8 L2 18 L14 18 L14 8" stroke="#FFFFFF" strokeWidth="1.5" fill="none"/>
                   </svg>
                 ),
-                label: 'TAP THE SHARE ICON',
               },
               {
                 num: '02',
+                label: 'ADD TO HOME SCREEN',
+                subtitle: 'Scroll down in the share menu',
                 icon: (
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <svg width="20" height="20" viewBox="0 0 16 16" fill="none">
                     <rect x="1" y="1" width="14" height="14" stroke="#FFFFFF" strokeWidth="1.5" fill="none"/>
                     <path d="M8 4 L8 12 M4 8 L12 8" stroke="#FFFFFF" strokeWidth="1.5"/>
                   </svg>
                 ),
-                label: 'ADD TO HOME SCREEN',
               },
             ].map((row, i) => (
               <div
                 key={row.num}
                 style={{
-                  display: 'flex', alignItems: 'center', gap: 14,
-                  padding: 12,
-                  border: '1px solid rgba(255,255,255,0.08)',
-                  marginBottom: i === 0 ? 14 : 0,
+                  display: 'flex', alignItems: 'center', gap: 16,
+                  marginBottom: i === 0 ? 22 : 28,
                 }}
               >
-                <span style={{ ...SKB, fontSize: 10, color: '#FF0000', letterSpacing: '0.1em', textTransform: 'uppercase', minWidth: 32 }}>
+                <span style={{ ...SKB, fontSize: 28, color: '#FF0000', letterSpacing: '0.02em', lineHeight: 1, minWidth: 36 }}>
                   {row.num}
                 </span>
-                <div style={{
-                  width: 32, height: 32, flexShrink: 0,
-                  border: '1px solid rgba(255,255,255,0.2)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}>
+                <div style={{ flex: 1 }}>
+                  <p style={{ ...SKB, fontSize: 11, color: '#FFFFFF', letterSpacing: '0.1em', textTransform: 'uppercase', lineHeight: 1.4, margin: '0 0 4px' }}>
+                    {row.label}
+                  </p>
+                  <p style={{ ...SKR, fontSize: 11, color: 'rgba(255,255,255,0.5)', lineHeight: 1.4, margin: 0 }}>
+                    {row.subtitle}
+                  </p>
+                </div>
+                <div style={{ flexShrink: 0 }}>
                   {row.icon}
                 </div>
-                <span style={{ ...SKB, fontSize: 11, color: '#FFFFFF', letterSpacing: '0.08em', textTransform: 'uppercase', lineHeight: 1.4 }}>
-                  {row.label}
-                </span>
               </div>
             ))}
           </div>
@@ -185,7 +186,7 @@ export default function AddToHomeScreenSheet({ isOpen, onClose, privyId }: Props
             }}
           >
             <span style={{ ...SKB, fontSize: 11, color: '#FFFFFF', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-              {plt === 'ios-safari' ? 'I ADDED IT' : 'INSTALL SCOPE'}
+              {plt === 'ios-safari' ? 'GOT IT' : 'INSTALL SCOPE'}
             </span>
           </button>
           <button
