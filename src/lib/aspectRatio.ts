@@ -7,18 +7,21 @@ export function getAspectRatio(layoutId: string, index = 0): string {
     case '1x-pana':
     case 'pana-wide':
     case 'pana-wide-2x':
+    case 'pana-wide-2col':
       return '2.75 / 1';
 
     case '2x-scope':
     case '1x-scope':
     case 'scope':
     case 'scope-2x':
+    case 'scope-2col':
       return '2.39 / 1';
 
     case '2x-cine':
     case '1x-cine':
     case 'cine-wide':
     case 'cine-wide-2x':
+    case 'cine-wide-2col':
       return '1.85 / 1';
 
     case '3x-legacy':
@@ -54,6 +57,9 @@ export function getColCount(layoutId: string): string {
     case 'pana-wide-2x':
     case 'scope-2x':
     case 'cine-wide-2x':
+    case 'pana-wide-2col':
+    case 'scope-2col':
+    case 'cine-wide-2col':
     case '2x-super-wide':
     case '2x-regular-wide':
     case 'collage':

@@ -8,7 +8,8 @@ import {
   createDeck, type Deck,
 } from "@/lib/userService";
 
-const MONO: React.CSSProperties = { fontFamily: "'IBM Plex Mono', monospace" };
+const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
+const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
 
 export default function DecksPage() {
   const params = useParams();
@@ -63,6 +64,7 @@ export default function DecksPage() {
       setShowCreate(false);
       setNewTitle("");
       setNewDesc("");
+      router.push(`/profile/${username}/decks/${deck.id}`);
     } catch (e) {
       console.error("createDeck error:", e);
     } finally {
@@ -81,7 +83,7 @@ export default function DecksPage() {
   if (notFound) {
     return (
       <div className="bg-black w-full max-w-[375px] min-h-screen mx-auto flex items-center justify-center">
-        <p style={{ ...MONO, fontSize: 10, color: "white" }}>Profile not found</p>
+        <p style={{ ...SKB, fontSize: 10, color: "white" }}>Profile not found</p>
       </div>
     );
   }
@@ -104,11 +106,11 @@ export default function DecksPage() {
           onClick={() => router.back()}
           style={{ background: "transparent", border: "none", cursor: "pointer", padding: 0 }}
         >
-          <span style={{ ...MONO, fontSize: 9, color: "white", letterSpacing: "-0.18px" }}>← Back</span>
+          <span style={{ ...SKB, fontSize: 9, color: "white", letterSpacing: "-0.18px" }}>← Back</span>
         </button>
         <span
           style={{
-            ...MONO, fontSize: 9, color: "white", letterSpacing: "-0.18px",
+            ...SKB, fontSize: 9, color: "white", letterSpacing: "-0.18px",
             position: "absolute", left: "50%", transform: "translateX(-50%)",
             whiteSpace: "nowrap",
           }}
@@ -120,7 +122,7 @@ export default function DecksPage() {
             onClick={() => setShowCreate(true)}
             style={{ marginLeft: "auto", background: "transparent", border: "1px solid rgba(255,255,255,0.35)", cursor: "pointer", padding: "3px 8px" }}
           >
-            <span style={{ ...MONO, fontSize: 8, color: "white" }}>+ NEW DECK</span>
+            <span style={{ ...SKB, fontSize: 8, color: "white" }}>+ NEW DECK</span>
           </button>
         )}
       </div>
@@ -128,7 +130,7 @@ export default function DecksPage() {
       {/* Deck list */}
       {decks.length === 0 ? (
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: 200 }}>
-          <p style={{ ...MONO, fontSize: 9, color: "rgba(255,255,255,0.4)" }}>No decks yet</p>
+          <p style={{ ...SKB, fontSize: 9, color: "rgba(255,255,255,0.4)" }}>No decks yet</p>
         </div>
       ) : (
         <div style={{ padding: "0 0 8px" }}>
@@ -138,7 +140,7 @@ export default function DecksPage() {
               onClick={() => router.push(`/profile/${username}/decks/${deck.id}`)}
               style={{ cursor: "pointer", marginBottom: 1 }}
             >
-              {/* Cover image — 2.4:1 */}
+              {/* Cover image */}
               <div style={{ width: "100%", aspectRatio: "2.4 / 1", background: "#111", overflow: "hidden" }}>
                 {deck.cover_image_url ? (
                   <img
@@ -158,10 +160,10 @@ export default function DecksPage() {
               </div>
               {/* Meta */}
               <div style={{ padding: "6px 4px 10px" }}>
-                <p style={{ ...MONO, fontSize: 9, color: "white", margin: 0, letterSpacing: "-0.18px" }}>
+                <p style={{ ...SKB, fontSize: 9, color: "white", margin: 0, letterSpacing: "-0.18px" }}>
                   {deck.title}
                 </p>
-                <p style={{ ...MONO, fontSize: 7, color: "rgba(255,255,255,0.4)", margin: "2px 0 0" }}>
+                <p style={{ ...SKR, fontSize: 7, color: "rgba(255,255,255,0.4)", margin: "2px 0 0" }}>
                   {deck.item_count} {deck.item_count === 1 ? "frame" : "frames"}
                 </p>
               </div>
@@ -174,62 +176,77 @@ export default function DecksPage() {
       {showCreate && (
         <>
           <div
-            className="bg-black"
             style={{ position: "fixed", inset: 0, zIndex: 80, background: "rgba(0,0,0,0.7)" }}
             onClick={() => setShowCreate(false)}
           />
           <div
-            className="bg-black"
             style={{
               position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 81,
               maxWidth: 375, margin: "0 auto",
-              background: "#000",
-              borderTop: "1px solid rgba(255,255,255,0.1)",
-              padding: "20px 16px 48px",
+              background: "#080808",
+              borderTop: "1px solid rgba(255,255,255,0.12)",
+              padding: "20px 20px 36px",
             }}
           >
-            <p style={{ ...MONO, fontSize: 9, color: "white", letterSpacing: "-0.18px", marginBottom: 16 }}>
+            {/* Sheet title */}
+            <p style={{ ...SKB, fontSize: 11, letterSpacing: "0.15em", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", margin: "0 0 8px" }}>
               NEW DECK
             </p>
+
+            {/* Deck name input */}
             <input
               autoFocus
               type="text"
               value={newTitle}
               onChange={e => setNewTitle(e.target.value)}
               onKeyDown={e => e.key === "Enter" && handleCreate()}
-              placeholder="Title"
+              placeholder="Deck name"
               style={{
                 display: "block", width: "100%", background: "transparent",
                 border: "none", borderBottom: "1px solid rgba(255,255,255,0.2)",
-                outline: "none", ...MONO, fontSize: 11, color: "white",
-                padding: "4px 0", marginBottom: 14, boxSizing: "border-box",
+                outline: "none",
+                ...SKB, fontSize: 24, letterSpacing: "0.02em", color: "white",
+                textTransform: "uppercase",
+                padding: "4px 0", marginBottom: 16, boxSizing: "border-box",
               }}
             />
+
+            {/* Description input */}
+            <p style={{ ...SKB, fontSize: 9, letterSpacing: "0.15em", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", margin: "0 0 6px" }}>
+              DESCRIPTION
+            </p>
             <input
               type="text"
               value={newDesc}
               onChange={e => setNewDesc(e.target.value)}
-              placeholder="Description (optional)"
+              placeholder="Optional"
               style={{
                 display: "block", width: "100%", background: "transparent",
                 border: "none", borderBottom: "1px solid rgba(255,255,255,0.12)",
-                outline: "none", ...MONO, fontSize: 9, color: "white",
-                padding: "4px 0", marginBottom: 20, boxSizing: "border-box",
+                outline: "none",
+                ...SKR, fontSize: 14, color: "white",
+                padding: "4px 0", marginBottom: 24, boxSizing: "border-box",
               }}
             />
-            <div style={{ display: "flex", gap: 20 }}>
+
+            {/* Buttons */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               <button
                 onClick={handleCreate}
                 disabled={!newTitle.trim() || creating}
-                style={{ background: "transparent", border: "none", cursor: "pointer", ...MONO, fontSize: 9, color: newTitle.trim() ? "white" : "rgba(255,255,255,0.3)", padding: 0 }}
+                style={{ width: "100%", padding: "14px 0", background: "#FF0000", border: "none", cursor: newTitle.trim() && !creating ? "pointer" : "default", opacity: newTitle.trim() ? 1 : 0.5 }}
               >
-                {creating ? "Creating…" : "Create"}
+                <span style={{ ...SKB, fontSize: 11, color: "white", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+                  {creating ? "CREATING…" : "CREATE DECK"}
+                </span>
               </button>
               <button
                 onClick={() => { setShowCreate(false); setNewTitle(""); setNewDesc(""); }}
-                style={{ background: "transparent", border: "none", cursor: "pointer", ...MONO, fontSize: 9, color: "rgba(255,255,255,0.4)", padding: 0 }}
+                style={{ width: "100%", padding: "14px 0", background: "transparent", border: "1px solid rgba(255,255,255,0.2)", cursor: "pointer" }}
               >
-                Cancel
+                <span style={{ ...SKB, fontSize: 11, color: "rgba(255,255,255,0.7)", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+                  CANCEL
+                </span>
               </button>
             </div>
           </div>

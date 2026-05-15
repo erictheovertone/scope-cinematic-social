@@ -12,7 +12,7 @@ import MirageView from "@/components/MirageView";
 type FeedState = "normal" | "exiting" | "entering";
 
 export default function Home() {
-  const { authenticated } = usePrivy();
+  const { authenticated, ready } = usePrivy();
   const router = useRouter();
   const [posts, setPosts] = useState<any[]>([]);
   const [lightboxPost, setLightboxPost] = useState<any>(null);
@@ -76,6 +76,10 @@ export default function Home() {
     }
     return {};
   };
+
+  if (!ready || !authenticated) {
+    return <div style={{ position: 'fixed', inset: 0, background: '#000000' }} />;
+  }
 
   return (
     <div className="bg-black relative w-[375px] min-h-screen mx-auto">
