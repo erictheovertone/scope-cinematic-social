@@ -49,15 +49,17 @@ async function drawWatermarkBand(
   ctx.fillRect(0, bandY, FRAMES_CANVAS_WIDTH, bandHeight);
 
   try {
+    console.log('[frames-export] watermark: loading logo');
     const logo = await loadImage('/scope-logo-new-no-black.png');
+    console.log('[frames-export] watermark: logo loaded', logo.naturalWidth, 'x', logo.naturalHeight);
     const logoTargetWidth = 280;
     const logoAspect = logo.naturalWidth / logo.naturalHeight;
     const logoTargetHeight = logoTargetWidth / logoAspect;
     const logoX = (FRAMES_CANVAS_WIDTH - logoTargetWidth) / 2;
     const logoY = bandY + bandHeight * 0.3 - logoTargetHeight / 2;
     ctx.drawImage(logo, logoX, logoY, logoTargetWidth, logoTargetHeight);
-  } catch {
-    // Logo load failed — fall back to text
+  } catch (logoErr: any) {
+    console.warn('[frames-export] watermark: logo load failed, falling back to text:', logoErr?.message);
     ctx.fillStyle = 'rgba(255,255,255,0.6)';
     ctx.font = 'bold 32px sans-serif';
     ctx.textAlign = 'center';
@@ -83,22 +85,38 @@ export async function generateFramesExport(params: {
   currentUserUsername: string;
   isOwnDeck: boolean;
 }): Promise<Blob> {
+  console.log('[frames-export] A. Function entered, items:', params.selectedItems.length);
+
   const canvas = document.createElement('canvas');
   canvas.width = FRAMES_CANVAS_WIDTH;
   canvas.height = FRAMES_CANVAS_HEIGHT;
   const ctx = canvas.getContext('2d');
-  if (!ctx) throw new Error('Canvas context unavailable');
+  if (!ctx) {
+    console.error('[frames-export] B. Canvas context unavailable');
+    throw new Error('Canvas context unavailable');
+  }
+  console.log('[frames-export] B. Canvas created', FRAMES_CANVAS_WIDTH, 'x', FRAMES_CANVAS_HEIGHT);
 
   ctx.fillStyle = '#000000';
   ctx.fillRect(0, 0, FRAMES_CANVAS_WIDTH, FRAMES_CANVAS_HEIGHT);
+  console.log('[frames-export] C. Background filled');
 
   const { cols, imageHeight } = params.layoutConfig;
   const cellWidth = FRAMES_CANVAS_WIDTH / cols;
+  console.log('[frames-export] D. Loading', params.selectedItems.length, 'images, cols:', cols, 'cellW:', cellWidth, 'cellH:', imageHeight);
 
-  const imagePromises = params.selectedItems.map(item =>
-    item.media_url ? loadImage(item.media_url).catch(() => null) : Promise.resolve(null)
-  );
+  const imagePromises = params.selectedItems.map((item, i) => {
+    if (!item.media_url) {
+      console.log('[frames-export] D.' + i + ' No media_url, skipping');
+      return Promise.resolve(null);
+    }
+    console.log('[frames-export] D.' + i + ' Loading:', item.media_url);
+    return loadImage(item.media_url)
+      .then(img => { console.log('[frames-export] D.' + i + ' Loaded:', img.naturalWidth, 'x', img.naturalHeight); return img; })
+      .catch(err => { console.warn('[frames-export] D.' + i + ' Load failed:', err?.message); return null; });
+  });
   const images = await Promise.all(imagePromises);
+  console.log('[frames-export] E. All images settled, loaded:', images.filter(Boolean).length, '/', images.length);
 
   images.forEach((img, idx) => {
     if (!img) return;
@@ -108,18 +126,27 @@ export async function generateFramesExport(params: {
     const y = row * imageHeight;
     drawCroppedImage(ctx, img, x, y, cellWidth, imageHeight);
   });
+  console.log('[frames-export] F. Images drawn to canvas');
 
   const bandY = FRAMES_CANVAS_HEIGHT - params.layoutConfig.watermarkBandHeight;
+  console.log('[frames-export] G. Drawing watermark band at y:', bandY, 'height:', params.layoutConfig.watermarkBandHeight);
   await drawWatermarkBand(ctx, bandY, params.layoutConfig.watermarkBandHeight, {
     isOwnDeck: params.isOwnDeck,
     deckOwnerUsername: params.deckOwnerUsername,
     currentUserUsername: params.currentUserUsername,
   });
+  console.log('[frames-export] H. Watermark drawn');
 
+  console.log('[frames-export] I. Converting canvas to blob');
   return new Promise((resolve, reject) => {
     canvas.toBlob(blob => {
-      if (blob) resolve(blob);
-      else reject(new Error('Canvas toBlob failed'));
+      if (!blob) {
+        console.error('[frames-export] J. toBlob returned null');
+        reject(new Error('Canvas toBlob returned null'));
+        return;
+      }
+      console.log('[frames-export] J. Blob ready, size:', blob.size);
+      resolve(blob);
     }, 'image/jpeg', 0.92);
   });
 }

@@ -51,11 +51,29 @@ export default function FramesSheet({
   }, [maxImages]);
 
   const handleExport = async () => {
-    if (selectedItems.length === 0) return;
+    console.log('[frames] 1. Export handler entered');
+    console.log('[frames] 2. selectedItems:', selectedItems.length, selectedItems.map(i => i.id));
+    console.log('[frames] 3. deck:', deck?.id, 'layout:', deck?.grid_layout);
+    console.log('[frames] 4. exporting:', exporting);
+
+    if (selectedItems.length === 0) {
+      console.warn('[frames] EXIT: No items selected');
+      return;
+    }
+    if (exporting) {
+      console.warn('[frames] EXIT: Already exporting');
+      return;
+    }
+
+    console.log('[frames] 5. Setting exporting=true');
     setExporting(true);
     setExportError(null);
     setExportDone(false);
+
     try {
+      console.log('[frames] 6. Calling generateFramesExport');
+      console.log('[frames] 7. layoutConfig:', layoutConfig);
+
       const blob = await generateFramesExport({
         selectedItems,
         layoutConfig,
@@ -63,38 +81,56 @@ export default function FramesSheet({
         currentUserUsername,
         isOwnDeck,
       });
+      console.log('[frames] 8. Blob created, size:', blob?.size, 'type:', blob?.type);
 
-      const file = new File([blob], `scope-frames-${deck.title.toLowerCase().replace(/\s+/g, '-')}.jpg`, { type: 'image/jpeg' });
+      const filename = `scope-frames-${deck.title.toLowerCase().replace(/\s+/g, '-')}.jpg`;
+      const file = new File([blob], filename, { type: 'image/jpeg' });
+      console.log('[frames] 9. File created:', file.name, file.size);
 
-      if (navigator.canShare?.({ files: [file] })) {
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      const useNativeShare = isMobile && !!navigator.canShare?.({ files: [file] });
+      console.log('[frames] 10. isMobile:', isMobile, 'useNativeShare:', useNativeShare);
+
+      if (useNativeShare) {
+        console.log('[frames] 11a. Triggering native share');
         try {
           await navigator.share({ files: [file], title: `${deck.title} · FRAMES` });
+          console.log('[frames] 12a. Share completed');
           setExportDone(true);
           setTimeout(() => { setExportDone(false); setExporting(false); onClose(); }, 1500);
         } catch (shareErr: any) {
+          console.log('[frames] Share error:', shareErr?.name, shareErr?.message);
           if (shareErr?.name === 'AbortError') {
-            // User dismissed the share sheet — not an error, keep sheet open with selection intact
             setExporting(false);
             return;
           }
           throw shareErr;
         }
       } else {
+        console.log('[frames] 11b. Triggering download fallback');
         const url = URL.createObjectURL(blob);
+        console.log('[frames] 12b. Object URL created:', url);
         const a = document.createElement('a');
         a.href = url;
-        a.download = file.name;
+        a.download = filename;
+        document.body.appendChild(a);
+        console.log('[frames] 13b. Anchor appended, clicking');
         a.click();
+        console.log('[frames] 14b. Click fired, removing anchor');
+        document.body.removeChild(a);
         URL.revokeObjectURL(url);
+        console.log('[frames] 15b. Download flow complete');
         setExportDone(true);
         setTimeout(() => { setExportDone(false); setExporting(false); onClose(); }, 1500);
       }
     } catch (e: any) {
+      console.error('[frames] CAUGHT ERROR:', e?.name, e?.message, e);
       if (e?.name !== 'AbortError') {
-        console.error('Frames export error:', e);
         setExportError('EXPORT FAILED — TRY AGAIN');
       }
       setExporting(false);
+    } finally {
+      console.log('[frames] 16. Handler complete');
     }
   };
 
