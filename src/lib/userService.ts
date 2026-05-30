@@ -327,6 +327,9 @@ export interface Deck {
   grid_layout: string
   cover_image_url: string | null
   is_public: boolean
+  camera?: string | null
+  lens?: string | null
+  additional_notes?: string | null
   created_at: string
   updated_at: string
 }
@@ -618,7 +621,7 @@ export const deleteProfileLink = async (linkId: string): Promise<void> => {
 
 export const updateDeck = async (
   deckId: string,
-  updates: Partial<Pick<Deck, 'title' | 'description' | 'grid_layout' | 'cover_image_url' | 'is_public'>>,
+  updates: Partial<Pick<Deck, 'title' | 'description' | 'grid_layout' | 'cover_image_url' | 'is_public' | 'camera' | 'lens' | 'additional_notes'>>,
 ): Promise<Deck> => {
   const { data, error } = await supabase
     .from('decks')
@@ -629,3 +632,47 @@ export const updateDeck = async (
   if (error) throw error
   return data
 }
+
+export const updateProfileFields = async (
+  supabaseUserId: string,
+  fields: Partial<{
+    display_name: string;
+    username: string;
+    bio: string;
+    profile_image_url: string;
+    kit_camera: string;
+    kit_lens: string;
+    kit_favorite_tool: string;
+    contact_email: string;
+    contact_email_public: boolean;
+  }>
+): Promise<void> => {
+  const { error } = await supabase
+    .from('profiles')
+    .update({ ...fields, updated_at: new Date().toISOString() })
+    .eq('user_id', supabaseUserId);
+  if (error) throw error;
+};
+
+export const addProfileLink = async (
+  privyUserId: string,
+  link: { url: string; title?: string | null; position: number }
+): Promise<ProfileLink> => {
+  const { data, error } = await supabase
+    .from('profile_links')
+    .insert([{
+      user_id: privyUserId,
+      url: link.url,
+      title: link.title ?? null,
+      position: link.position,
+      is_video: false,
+      thumbnail_url: null,
+      video_url: null,
+      description: null,
+      custom_thumbnail_url: null,
+    }])
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+};

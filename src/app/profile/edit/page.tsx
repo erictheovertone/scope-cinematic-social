@@ -1,0 +1,407 @@
+"use client";
+
+import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
+import { usePrivy } from "@privy-io/react-auth";
+import {
+  getUserByPrivyId, getProfile, saveProfile, updateProfileFields, uploadImage,
+  getProfileLinks, addProfileLink, deleteProfileLink,
+  type ProfileLink,
+} from "@/lib/userService";
+
+const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
+const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
+
+const INPUT: React.CSSProperties = {
+  display: 'block', width: '100%', background: 'transparent',
+  border: '1px solid rgba(255,255,255,0.2)', color: 'white',
+  fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400,
+  fontSize: 12, padding: '10px 12px', outline: 'none',
+  boxSizing: 'border-box',
+};
+
+const LABEL: React.CSSProperties = {
+  ...SKB, fontSize: 9, letterSpacing: '0.12em',
+  color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase',
+  display: 'block', marginBottom: 6,
+};
+
+const BTN: React.CSSProperties = {
+  width: '100%', padding: '12px 0',
+  background: 'transparent', border: '1px solid rgba(255,255,255,0.3)',
+  color: 'white', cursor: 'pointer',
+  ...SKB, fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase',
+};
+
+const DIVIDER = () => <div style={{ height: 1, background: '#FF0000', margin: '28px 0 20px' }} />;
+const SECTION = ({ label }: { label: string }) => (
+  <p style={{ ...SKB, fontSize: 9, letterSpacing: '0.15em', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', margin: '0 0 16px' }}>{label}</p>
+);
+
+export default function EditProfilePage() {
+  const router = useRouter();
+  const { user } = usePrivy();
+  const photoInputRef = useRef<HTMLInputElement>(null);
+
+  const [sbUserId, setSbUserId] = useState('');
+  const [loaded, setLoaded] = useState(false);
+
+  // PROFILE BASICS
+  const [displayName, setDisplayName] = useState('');
+  const [username, setUsername] = useState('');
+  const [bio, setBio] = useState('');
+  const [profileImageUrl, setProfileImageUrl] = useState('');
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [profileSaved, setProfileSaved] = useState(false);
+  const [profileError, setProfileError] = useState<string | null>(null);
+  const [photoUploading, setPhotoUploading] = useState(false);
+
+  // KIT
+  const [kitCamera, setKitCamera] = useState('');
+  const [kitLens, setKitLens] = useState('');
+  const [kitTool, setKitTool] = useState('');
+  const [savingKit, setSavingKit] = useState(false);
+  const [kitSaved, setKitSaved] = useState(false);
+  const [kitError, setKitError] = useState<string | null>(null);
+
+  // CONTACT
+  const [contactEmail, setContactEmail] = useState('');
+  const [contactPublic, setContactPublic] = useState(false);
+  const [savingContact, setSavingContact] = useState(false);
+  const [contactSaved, setContactSaved] = useState(false);
+  const [contactError, setContactError] = useState<string | null>(null);
+
+  // LINKS
+  const [links, setLinks] = useState<ProfileLink[]>([]);
+  const [showAddLink, setShowAddLink] = useState(false);
+  const [newLinkUrl, setNewLinkUrl] = useState('');
+  const [newLinkTitle, setNewLinkTitle] = useState('');
+  const [addingLink, setAddingLink] = useState(false);
+  const [linkError, setLinkError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    const load = async () => {
+      try {
+        const sbUser = await getUserByPrivyId(user.id);
+        if (!sbUser) return;
+        setSbUserId(sbUser.id);
+        const [profile, fetchedLinks] = await Promise.all([
+          getProfile(sbUser.id) as Promise<any>,
+          getProfileLinks(user.id),
+        ]);
+        if (profile) {
+          setDisplayName(profile.display_name || '');
+          setUsername(profile.username || '');
+          setBio(profile.bio || '');
+          setProfileImageUrl(profile.profile_image_url || '');
+          setKitCamera(profile.kit_camera || '');
+          setKitLens(profile.kit_lens || '');
+          setKitTool(profile.kit_favorite_tool || '');
+          setContactEmail(profile.contact_email || '');
+          setContactPublic(profile.contact_email_public || false);
+        }
+        setLinks(fetchedLinks);
+      } catch (e) {
+        console.error('Edit profile load error:', e);
+      } finally {
+        setLoaded(true);
+      }
+    };
+    load();
+  }, [user?.id]);
+
+  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user || !sbUserId) return;
+    e.target.value = '';
+    setPhotoUploading(true);
+    try {
+      const url = await uploadImage(file, 'profile-images', user.id);
+      await saveProfile(sbUserId, { displayName, username, bio, profileImageUrl: url });
+      setProfileImageUrl(url);
+    } catch (err) {
+      console.error('Photo upload error:', err);
+    } finally {
+      setPhotoUploading(false);
+    }
+  };
+
+  const handleSaveProfile = async () => {
+    if (!sbUserId || savingProfile) return;
+    setSavingProfile(true);
+    setProfileError(null);
+    setProfileSaved(false);
+    try {
+      await saveProfile(sbUserId, { displayName, username, bio, profileImageUrl: profileImageUrl || undefined });
+      setProfileSaved(true);
+      setTimeout(() => setProfileSaved(false), 2500);
+    } catch (e: any) {
+      setProfileError(e?.message || 'SAVE FAILED');
+    } finally {
+      setSavingProfile(false);
+    }
+  };
+
+  const handleSaveKit = async () => {
+    if (!sbUserId || savingKit) return;
+    setSavingKit(true);
+    setKitError(null);
+    setKitSaved(false);
+    try {
+      await updateProfileFields(sbUserId, {
+        kit_camera: kitCamera.trim() || undefined,
+        kit_lens: kitLens.trim() || undefined,
+        kit_favorite_tool: kitTool.trim() || undefined,
+      } as any);
+      setKitSaved(true);
+      setTimeout(() => setKitSaved(false), 2500);
+    } catch (e: any) {
+      setKitError(e?.message || 'SAVE FAILED');
+    } finally {
+      setSavingKit(false);
+    }
+  };
+
+  const handleSaveContact = async () => {
+    if (!sbUserId || savingContact) return;
+    setSavingContact(true);
+    setContactError(null);
+    setContactSaved(false);
+    try {
+      await updateProfileFields(sbUserId, {
+        contact_email: contactEmail.trim() || undefined,
+        contact_email_public: contactPublic,
+      } as any);
+      setContactSaved(true);
+      setTimeout(() => setContactSaved(false), 2500);
+    } catch (e: any) {
+      setContactError(e?.message || 'SAVE FAILED');
+    } finally {
+      setSavingContact(false);
+    }
+  };
+
+  const handleAddLink = async () => {
+    if (!newLinkUrl.trim() || !user || addingLink) return;
+    setAddingLink(true);
+    setLinkError(null);
+    try {
+      const url = newLinkUrl.trim().startsWith('http') ? newLinkUrl.trim() : `https://${newLinkUrl.trim()}`;
+      const added = await addProfileLink(user.id, {
+        url,
+        title: newLinkTitle.trim() || null,
+        position: links.length,
+      });
+      setLinks(prev => [...prev, added]);
+      setNewLinkUrl('');
+      setNewLinkTitle('');
+      setShowAddLink(false);
+    } catch (e: any) {
+      setLinkError(e?.message || 'ADD FAILED');
+    } finally {
+      setAddingLink(false);
+    }
+  };
+
+  const handleDeleteLink = async (linkId: string) => {
+    try {
+      await deleteProfileLink(linkId);
+      setLinks(prev => prev.filter(l => l.id !== linkId));
+    } catch (e) {
+      console.error('Delete link error:', e);
+    }
+  };
+
+  if (!loaded) return (
+    <div className="bg-black" style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ width: 11, height: 11, background: '#FF0000', borderRadius: '50%' }} />
+    </div>
+  );
+
+  return (
+    <div className="bg-black" style={{ position: 'fixed', inset: 0, overflowY: 'auto' }}>
+      <div style={{ maxWidth: 375, margin: '0 auto', padding: '0 20px 60px' }}>
+
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'center', padding: '16px 0 20px', position: 'relative' }}>
+          <button onClick={() => router.back()} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+            <span style={{ ...SKB, fontSize: 10, color: 'white', letterSpacing: '0.1em', textTransform: 'uppercase' }}>← BACK</span>
+          </button>
+          <span style={{ ...SKB, fontSize: 10, color: 'white', position: 'absolute', left: '50%', transform: 'translateX(-50%)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>EDIT PROFILE</span>
+        </div>
+
+        <div style={{ height: 1, background: '#FF0000', marginBottom: 24 }} />
+
+        {/* PROFILE BASICS */}
+        <SECTION label="PROFILE" />
+
+        {/* PFP */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 20 }}>
+          <div style={{ width: 56, height: 56, flexShrink: 0, overflow: 'hidden', background: '#222', cursor: 'pointer' }} onClick={() => photoInputRef.current?.click()}>
+            {profileImageUrl
+              ? <img src={profileImageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span style={{ ...SKB, fontSize: 22, color: 'white' }}>{(displayName || username || '?')[0].toUpperCase()}</span></div>
+            }
+          </div>
+          <button
+            onClick={() => photoInputRef.current?.click()}
+            disabled={photoUploading}
+            style={{ ...BTN, width: 'auto', padding: '8px 16px', opacity: photoUploading ? 0.5 : 1 }}
+          >
+            {photoUploading ? 'UPLOADING...' : 'CHANGE PHOTO'}
+          </button>
+        </div>
+        <input ref={photoInputRef} type="file" accept="image/*" onChange={handlePhotoChange} style={{ display: 'none' }} />
+
+        <div style={{ marginBottom: 14 }}>
+          <label style={LABEL}>DISPLAY NAME</label>
+          <input style={INPUT} value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder="Your name" />
+        </div>
+        <div style={{ marginBottom: 14 }}>
+          <label style={LABEL}>USERNAME</label>
+          <input style={INPUT} value={username} onChange={e => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))} placeholder="username" />
+        </div>
+        <div style={{ marginBottom: 18 }}>
+          <label style={LABEL}>BIO</label>
+          <textarea
+            style={{ ...INPUT, resize: 'none', minHeight: 72, lineHeight: 1.5 } as React.CSSProperties}
+            value={bio}
+            onChange={e => setBio(e.target.value)}
+            placeholder="Tell your story"
+          />
+        </div>
+
+        {profileError && <p style={{ ...SKB, fontSize: 9, color: '#FF0000', margin: '0 0 10px', letterSpacing: '0.06em' }}>{profileError}</p>}
+        <button
+          onClick={handleSaveProfile}
+          disabled={savingProfile}
+          style={{ ...BTN, marginBottom: 4, border: profileSaved ? '1px solid #FF0000' : BTN.border }}
+        >
+          {savingProfile ? 'SAVING...' : profileSaved ? 'SAVED ✓' : 'SAVE PROFILE'}
+        </button>
+
+        <DIVIDER />
+
+        {/* KIT */}
+        <SECTION label="KIT" />
+        <div style={{ marginBottom: 14 }}>
+          <label style={LABEL}>CAMERA</label>
+          <input style={INPUT} value={kitCamera} onChange={e => setKitCamera(e.target.value)} placeholder="e.g. Sony A7R IV" />
+        </div>
+        <div style={{ marginBottom: 14 }}>
+          <label style={LABEL}>LENS</label>
+          <input style={INPUT} value={kitLens} onChange={e => setKitLens(e.target.value)} placeholder="e.g. Sigma 35mm f/1.4" />
+        </div>
+        <div style={{ marginBottom: 18 }}>
+          <label style={LABEL}>FAVORITE TOOL</label>
+          <input style={INPUT} value={kitTool} onChange={e => setKitTool(e.target.value)} placeholder="e.g. Lightroom, DaVinci" />
+        </div>
+
+        {kitError && <p style={{ ...SKB, fontSize: 9, color: '#FF0000', margin: '0 0 10px', letterSpacing: '0.06em' }}>{kitError}</p>}
+        <button
+          onClick={handleSaveKit}
+          disabled={savingKit}
+          style={{ ...BTN, marginBottom: 4, border: kitSaved ? '1px solid #FF0000' : BTN.border }}
+        >
+          {savingKit ? 'SAVING...' : kitSaved ? 'SAVED ✓' : 'SAVE KIT'}
+        </button>
+
+        <DIVIDER />
+
+        {/* LINKS */}
+        <SECTION label="LINKS" />
+
+        {links.length > 0 && (
+          <div style={{ marginBottom: 16 }}>
+            {links.map(link => {
+              const domain = (() => { try { return new URL(link.url).hostname.replace('www.', ''); } catch { return link.url; } })();
+              return (
+                <div key={link.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ ...SKB, fontSize: 10, color: 'white', margin: '0 0 2px', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {link.title || domain}
+                    </p>
+                    <p style={{ ...SKR, fontSize: 9, color: 'rgba(255,255,255,0.4)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {domain}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => handleDeleteLink(link.id)}
+                    style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '0 0 0 14px', ...SKB, fontSize: 16, color: 'rgba(255,255,255,0.35)', lineHeight: 1, flexShrink: 0 }}
+                  >
+                    ×
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {showAddLink ? (
+          <div style={{ marginBottom: 16 }}>
+            <input
+              autoFocus
+              style={{ ...INPUT, marginBottom: 8 }}
+              value={newLinkUrl}
+              onChange={e => setNewLinkUrl(e.target.value)}
+              placeholder="https://..."
+              type="url"
+            />
+            <input
+              style={{ ...INPUT, marginBottom: 10 }}
+              value={newLinkTitle}
+              onChange={e => setNewLinkTitle(e.target.value)}
+              placeholder="Title (optional)"
+            />
+            {linkError && <p style={{ ...SKB, fontSize: 9, color: '#FF0000', margin: '0 0 8px', letterSpacing: '0.06em' }}>{linkError}</p>}
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button onClick={handleAddLink} disabled={!newLinkUrl.trim() || addingLink} style={{ ...BTN, flex: 1, opacity: newLinkUrl.trim() ? 1 : 0.4 }}>
+                {addingLink ? 'ADDING...' : 'ADD'}
+              </button>
+              <button onClick={() => { setShowAddLink(false); setNewLinkUrl(''); setNewLinkTitle(''); setLinkError(null); }} style={{ ...BTN, flex: 1, border: '1px solid rgba(255,255,255,0.15)' }}>
+                CANCEL
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button onClick={() => setShowAddLink(true)} style={{ ...BTN, marginBottom: 10 }}>
+            + ADD LINK
+          </button>
+        )}
+
+        <a href="/profile/links" style={{ display: 'block', marginTop: 8, marginBottom: 4 }}>
+          <span style={{ ...SKR, fontSize: 9, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.06em' }}>Advanced link settings ↗</span>
+        </a>
+
+        <DIVIDER />
+
+        {/* CONTACT */}
+        <SECTION label="CONTACT" />
+        <div style={{ marginBottom: 14 }}>
+          <label style={LABEL}>EMAIL</label>
+          <input style={INPUT} value={contactEmail} onChange={e => setContactEmail(e.target.value)} placeholder="your@email.com" type="email" />
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 18 }}>
+          <button
+            onClick={() => setContactPublic(v => !v)}
+            style={{ width: 32, height: 18, background: contactPublic ? '#FF0000' : 'rgba(255,255,255,0.15)', border: 'none', cursor: 'pointer', position: 'relative', flexShrink: 0, transition: 'background 0.2s' }}
+          >
+            <div style={{ position: 'absolute', top: 3, left: contactPublic ? 16 : 3, width: 12, height: 12, background: 'white', transition: 'left 0.2s' }} />
+          </button>
+          <span style={{ ...SKR, fontSize: 10, color: 'rgba(255,255,255,0.6)' }}>Show publicly on profile</span>
+        </div>
+
+        {contactError && <p style={{ ...SKB, fontSize: 9, color: '#FF0000', margin: '0 0 10px', letterSpacing: '0.06em' }}>{contactError}</p>}
+        <button
+          onClick={handleSaveContact}
+          disabled={savingContact}
+          style={{ ...BTN, marginBottom: 4, border: contactSaved ? '1px solid #FF0000' : BTN.border }}
+        >
+          {savingContact ? 'SAVING...' : contactSaved ? 'SAVED ✓' : 'SAVE CONTACT'}
+        </button>
+
+      </div>
+    </div>
+  );
+}

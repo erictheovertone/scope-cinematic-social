@@ -22,6 +22,12 @@ export interface Profile {
   bio: string
   profile_image_url?: string
   grid_layout?: string
+  kit_camera?: string
+  kit_lens?: string
+  kit_favorite_tool?: string
+  contact_email?: string
+  contact_email_public?: boolean
+  portfolio_mc?: number
   created_at: string
   updated_at: string
 }

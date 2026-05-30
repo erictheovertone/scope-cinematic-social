@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
 import { getUserByPrivyId, getProfile, getFollowerCount, getFollowingCount, getUserDecks, createDeck, getProfileLinks, type Deck, type ProfileLink } from "@/lib/userService";
-import LinksSheet from "@/components/LinksSheet";
+import ProfileDataSheet from "@/components/ProfileDataSheet";
 import { getUserPosts } from '@/lib/postsService';
 import CreatePostFlow from "@/components/CreatePostFlow";
 import FollowListModal from "@/components/FollowListModal";
@@ -55,7 +55,8 @@ export default function Profile() {
   const { user } = usePrivy();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [isDataOpen, setIsDataOpen] = useState(false);
+  const [profileDataOpen, setProfileDataOpen] = useState(false);
+  const [rawProfile, setRawProfile] = useState<any>(null);
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [spinning, setSpinning] = useState(false);
   const [showTheater, setShowTheater] = useState(false);
@@ -91,7 +92,6 @@ export default function Profile() {
   const [newDeckTitle, setNewDeckTitle] = useState('');
   const [newDeckDesc, setNewDeckDesc] = useState('');
   const [creatingDeck, setCreatingDeck] = useState(false);
-  const [showLinks, setShowLinks] = useState(false);
   const [profileLinks, setProfileLinks] = useState<ProfileLink[]>([]);
   const [showBadgeSheet, setShowBadgeSheet] = useState(false);
   const [isPaidMember, setIsPaidMember] = useState(false);
@@ -131,6 +131,7 @@ export default function Profile() {
           setSupabaseUserId(supabaseUser.id);
           const profile = await getProfile(supabaseUser.id) as any;
           if (profile) {
+            setRawProfile(profile);
             setUserProfile({
               displayName: profile.display_name || "",
               username: profile.username || "",
@@ -250,29 +251,27 @@ export default function Profile() {
         privyId={user?.id ?? ''}
       />
 
-      {/* Header wrapper — fades out on scroll only */}
+      {/* Header */}
       <div style={{
-        position: 'absolute',
-        left: 0,
-        right: 0,
-        top: 0,
-        height: 0,
-        overflow: 'visible',
+        position: 'relative',
+        height: 124,
+        background: '#000',
+        paddingTop: 'env(safe-area-inset-top, 0px)',
+        boxSizing: 'content-box',
         opacity: Math.max(0, 1 - gridScrollY / 20),
         pointerEvents: gridScrollY < 20 ? 'auto' : 'none',
         transition: 'opacity 0.25s ease',
         zIndex: 10,
       }}>
 
-      {/* PFP container — left:11px, top:11px, 75×75px */}
-      <div style={{ position: 'absolute', left: 11, top: 11, width: 75, height: 75 }}>
+      {/* PFP container */}
+      <div style={{ position: 'absolute', left: 8, top: 10, width: 80, height: 80 }}>
 
-        {/* PFP image — fills container exactly */}
         <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', zIndex: 1 }}>
           {userProfile.profileImage ? (
-            <img src={userProfile.profileImage} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+            <img src={userProfile.profileImage} alt="Profile" style={{ width: 80, height: 80, objectFit: 'cover', display: 'block' }} />
           ) : (
-            <div style={{ width: '100%', height: '100%', backgroundColor: '#222' }} />
+            <div style={{ width: 80, height: 80, backgroundColor: '#222' }} />
           )}
         </div>
 
@@ -348,97 +347,34 @@ export default function Profile() {
       </div>
 
       {/* Name */}
-      <div style={{ position: 'absolute', left: 100, top: 8 }}>
-        <p style={{ ...SKB, fontSize: 11, color: 'white', letterSpacing: '-0.22px', lineHeight: 1.4, margin: 0, textTransform: 'uppercase' }}>
+      <div style={{ position: 'absolute', left: 98, top: 10 }}>
+        <p style={{ ...SKB, fontSize: 13, color: 'white', letterSpacing: '-0.02em', lineHeight: 1.2, margin: 0, textTransform: 'uppercase' }}>
           {userProfile.displayName}
         </p>
       </div>
 
-      {/* Username */}
-      <div style={{ position: 'absolute', left: 100, top: 21, display: 'flex', alignItems: 'center', gap: 0 }}>
-        <p style={{ ...SKB, fontSize: 6, color: 'white', letterSpacing: '-0.12px', lineHeight: 1.4, margin: 0, textTransform: 'uppercase' }}>
+      {/* Handle */}
+      <div style={{ position: 'absolute', left: 98, top: 26 }}>
+        <p style={{ ...SKB, fontSize: 10, color: 'rgba(255,255,255,0.6)', letterSpacing: '-0.02em', lineHeight: 1.2, margin: 0, textTransform: 'uppercase' }}>
           {userProfile.username ? `@${userProfile.username}` : ''}
         </p>
       </div>
 
-      {/* Bio */}
-      <div style={{ position: 'absolute', left: 98, top: 15, height: 73, width: 155, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', overflow: 'hidden', paddingBottom: 0 }}>
-        {(() => {
-          const bioTruncated = userProfile.bio.slice(0, 72);
-          const words = bioTruncated.toUpperCase().split(' ');
-          let line1 = '';
-          let line2 = '';
-          for (const word of words) {
-            if (!line1) {
-              line1 = word;
-            } else if ((line1 + ' ' + word).length <= 36) {
-              line1 += ' ' + word;
-            } else if (!line2) {
-              line2 = word;
-            } else if ((line2 + ' ' + word).length <= 36) {
-              line2 += ' ' + word;
-            } else {
-              break;
-            }
-          }
-          const bioLine1 = line1;
-          const bioLine2 = line2;
-          return (
-            <>
-              <p style={{ ...SKR, fontSize: 6, color: 'white', letterSpacing: '-0.12px', lineHeight: 1.4, margin: 0 }}>{bioLine1}</p>
-              {bioLine2 && <p style={{ ...SKR, fontSize: 6, color: 'white', letterSpacing: '-0.12px', lineHeight: 1.4, margin: 0 }}>{bioLine2}</p>}
-            </>
-          );
-        })()}
-      </div>
-
-      {/* VIEW DATA */}
+      {/* Info sheet trigger */}
       <button
-        className="absolute bg-transparent border-none cursor-pointer"
-        style={{ right: '4px', top: '6px', padding: 0 }}
-        onClick={() => setIsDataOpen(v => !v)}
-      >
-        <span style={{ ...SKB, fontSize: 8, color: 'white', letterSpacing: '-0.2px', opacity: isDataOpen ? 0.45 : 1, transition: 'opacity 0.15s ease', textTransform: 'uppercase' }}>
-          VIEW DATA
-        </span>
-      </button>
+        onClick={() => setProfileDataOpen(true)}
+        style={{
+          position: 'absolute', top: 0, right: 0,
+          width: 40, height: 40,
+          background: 'transparent', border: 'none', cursor: 'pointer', padding: 0,
+          color: 'white', fontFamily: "'SK-Modernist', sans-serif", fontWeight: 300,
+          fontSize: 28, lineHeight: 1,
+          display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end',
+          paddingTop: 2, paddingRight: 6,
+        }}
+      >+</button>
 
-      {/* Links arrow */}
-      <span
-        onClick={() => setShowLinks(true)}
-        style={{ position: 'absolute', left: 98, top: 44, fontSize: 24, fontFamily: "'SK-Modernist', sans-serif", fontWeight: 300, color: 'white', opacity: 0.8, cursor: 'pointer', lineHeight: 1 }}
-      >↗</span>
-
-      {/* Stats cascade — ripples down one row at a time below VIEW DATA */}
-      {isDataOpen && (
-        <div className="absolute" style={{ right: '4px', top: '30px', backgroundColor: 'rgba(0,0,0,0.85)', borderRadius: 0, padding: 8 }}>
-          {([
-            ['COLLECTORS',   fmt(analytics.collectors),   null],
-            ['TOTAL POSTS',  fmt(analytics.totalPosts),   null],
-            ['FOLLOWERS',    fmt(analytics.followers),    () => setShowFollowersModal(true)],
-            ['FOLLOWING',    fmt(analytics.following),    () => setShowFollowingModal(true)],
-            ['PORTFOLIO MC', `$${fmt(analytics.portfolioMc)}`, null],
-          ] as [string, string, (() => void) | null][]).map(([label, value, onClick], i) => (
-            <div
-              key={label}
-              onClick={onClick ?? undefined}
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                gap: '14px',
-                animation: 'ripple-down 0.18s ease-out both',
-                animationDelay: `${i * 50}ms`,
-                cursor: onClick ? 'pointer' : 'default',
-              }}
-            >
-              <span style={{ ...SKB, fontSize: '7px', color: 'rgba(255,255,255,0.55)', letterSpacing: '-0.1px', lineHeight: 1.7, textTransform: 'uppercase' }}>{label}</span>
-              <span style={{ ...SKB, fontSize: '7px', color: 'white', letterSpacing: '-0.1px', lineHeight: 1.7 }}>{value}</span>
-            </div>
-          ))}
-        </div>
-      )}
-
-      </div>{/* end header wrapper */}
+      </div>{/* end header */}
 
       {/* Frame icon — appears when header is hidden, tapping snaps header back */}
       {!headerSnapped && gridScrollY > 20 && (
@@ -806,11 +742,17 @@ export default function Profile() {
         </div>
       </div>
 
-      <LinksSheet
-        username={userProfile.username}
+      <ProfileDataSheet
+        isOpen={profileDataOpen}
+        onClose={() => setProfileDataOpen(false)}
+        profile={rawProfile}
         links={profileLinks}
-        visible={showLinks}
-        onClose={() => setShowLinks(false)}
+        isOwnProfile={true}
+        followers={analytics.followers}
+        following={analytics.following}
+        totalPosts={analytics.totalPosts}
+        collectors={analytics.collectors}
+        portfolioMc={analytics.portfolioMc}
       />
 
       <BadgeExplainerSheet

@@ -8,7 +8,7 @@ import {
   isFollowing, getFollowerCount, getFollowingCount,
   getDecksByUsername, getProfileLinks, type Deck, type ProfileLink,
 } from "@/lib/userService";
-import LinksSheet from "@/components/LinksSheet";
+import ProfileDataSheet from "@/components/ProfileDataSheet";
 import { getPostsByUsername } from "@/lib/postsService";
 import ProfilePostViewer from "@/components/ProfilePostViewer";
 import FollowListModal from "@/components/FollowListModal";
@@ -21,7 +21,6 @@ import { getColCount } from "@/lib/aspectRatio";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
-const MONO: React.CSSProperties = { fontFamily: "'IBM Plex Mono', monospace" };
 
 export default function PublicProfilePage() {
   const params = useParams();
@@ -36,11 +35,10 @@ export default function PublicProfilePage() {
   const [showViewer, setShowViewer] = useState(false);
   const [viewerIndex, setViewerIndex] = useState(0);
   const [activeTab, setActiveTab] = useState<"main" | "decks" | "theatre" | "collected">("main");
-  const [isDataOpen, setIsDataOpen] = useState(false);
+  const [profileDataOpen, setProfileDataOpen] = useState(false);
   const [showDecks, setShowDecks] = useState(false);
   const [publicDecks, setPublicDecks] = useState<(Deck & { item_count: number; thumbnail_urls: string[] })[]>([]);
   const [decksLoading, setDecksLoading] = useState(false);
-  const [showLinks, setShowLinks] = useState(false);
   const [profileLinks, setProfileLinks] = useState<ProfileLink[]>([]);
   const [showBadgeSheet, setShowBadgeSheet] = useState(false);
   const [showMembershipSheet, setShowMembershipSheet] = useState(false);
@@ -154,17 +152,6 @@ export default function PublicProfilePage() {
   };
   const thumbCols = (n: number) => n <= 1 ? '1fr' : n <= 4 ? '1fr 1fr' : '1fr 1fr 1fr';
 
-  const bioTruncated = (profile?.bio || '').slice(0, 72).toUpperCase();
-  const words = bioTruncated.split(' ');
-  let bioLine1 = ''; let bioLine2 = '';
-  for (const word of words) {
-    if (!bioLine1) { bioLine1 = word; }
-    else if ((bioLine1 + ' ' + word).length <= 36) { bioLine1 += ' ' + word; }
-    else if (!bioLine2) { bioLine2 = word; }
-    else if ((bioLine2 + ' ' + word).length <= 36) { bioLine2 += ' ' + word; }
-    else break;
-  }
-
   if (loaded && notFound) return (
     <div className="bg-black w-full max-w-[375px] min-h-screen mx-auto flex items-center justify-center">
       <p style={{ ...SKB, fontSize: 11, color: "white" }}>PROFILE NOT FOUND</p>
@@ -180,80 +167,73 @@ export default function PublicProfilePage() {
   return (
     <div className="bg-black relative w-full max-w-[375px] min-h-screen mx-auto pb-[60px]">
 
-      {/* PFP */}
-      <div style={{ position: 'absolute', left: 11, top: 11, width: 75, height: 75, opacity: headerOpacity }}>
-        {isFoundingMember && <div style={{ position: 'absolute', inset: -1, background: 'linear-gradient(135deg, #ff0080, #ff8c00, #ffe100, #00ff80, #00cfff, #cc00ff, #ff0080)', backgroundSize: '300% 300%', animation: 'holoShift 4s linear infinite', zIndex: 0 }} />}
-        {isTopCollector && !isFoundingMember && <div style={{ position: 'absolute', inset: -1, background: 'linear-gradient(135deg, #BF953F, #FCF6BA, #B38728, #FBF5B7, #AA771C)', backgroundSize: '200% 200%', animation: 'goldShimmer 3s ease infinite', zIndex: 0 }} />}
-        <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', zIndex: 1 }}>
-          {profile?.profile_image_url
-            ? <img src={profile.profile_image_url} alt={username} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-            : <div style={{ width: '100%', height: '100%', backgroundColor: '#222', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span style={{ ...SKB, fontSize: 28, color: 'white' }}>{username?.[0]?.toUpperCase() ?? '?'}</span></div>
-          }
+      {/* Header */}
+      <div style={{
+        position: 'relative', height: 124, background: '#000',
+        paddingTop: 'env(safe-area-inset-top, 0px)',
+        boxSizing: 'content-box',
+        opacity: headerOpacity,
+        transition: 'opacity 0.25s ease',
+        pointerEvents: gridScrollY < 20 ? 'auto' : 'none',
+        zIndex: 10,
+      }}>
+
+        {/* PFP container */}
+        <div style={{ position: 'absolute', top: 10, left: 8, width: 80, height: 80 }}>
+          {isFoundingMember && <div style={{ position: 'absolute', inset: -1, background: 'linear-gradient(135deg, #ff0080, #ff8c00, #ffe100, #00ff80, #00cfff, #cc00ff, #ff0080)', backgroundSize: '300% 300%', animation: 'holoShift 4s linear infinite', zIndex: 0 }} />}
+          {isTopCollector && !isFoundingMember && <div style={{ position: 'absolute', inset: -1, background: 'linear-gradient(135deg, #BF953F, #FCF6BA, #B38728, #FBF5B7, #AA771C)', backgroundSize: '200% 200%', animation: 'goldShimmer 3s ease infinite', zIndex: 0 }} />}
+          <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', zIndex: 1 }}>
+            {profile?.profile_image_url
+              ? <img src={profile.profile_image_url} alt={username} style={{ width: 80, height: 80, objectFit: 'cover', display: 'block' }} />
+              : <div style={{ width: 80, height: 80, backgroundColor: '#222', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span style={{ ...SKB, fontSize: 28, color: 'white' }}>{username?.[0]?.toUpperCase() ?? '?'}</span></div>
+            }
+          </div>
+          {isFoundingMember && <div style={{ position: 'absolute', right: 0, top: 0, width: 1, height: '100%', background: 'linear-gradient(180deg, #ff0080, #ffe100, #00cfff, #cc00ff)', backgroundSize: '100% 300%', animation: 'holoShift 4s linear infinite', zIndex: 2 }} />}
+          {isTopCollector && !isFoundingMember && <div style={{ position: 'absolute', right: 0, top: 0, width: 1, height: '100%', backgroundColor: '#C9A84C', zIndex: 2 }} />}
+          {isPaidMember && !isTopCollector && !isFoundingMember && <div style={{ position: 'absolute', right: 0, top: 0, width: 1, height: '100%', backgroundColor: '#FF0000', zIndex: 2 }} />}
+          {isInHouseCreator && !isPaidMember && !isTopCollector && !isFoundingMember && <div style={{ position: 'absolute', right: 0, top: 0, width: 1, height: '100%', backgroundColor: 'rgba(255,255,255,0.4)', zIndex: 2 }} />}
+          {(() => {
+            let src = '/free-tier-aperture-logo-red.png'; let size = 20;
+            if (isFoundingMember) { src = '/augmented-member-founding-500-aperture.png'; size = 23.5; }
+            else if (isTopCollector) { src = '/top-1k-collector-aperture-gold.png'; size = 23; }
+            else if (isPaidMember) { src = '/scope-pro-icon-aperture.png'; size = 23; }
+            else if (isInHouseCreator) { src = '/in-house-creator-logo-grey.png'; size = 21; }
+            return <img src={src} alt="Badge" onClick={(e) => { e.stopPropagation(); setShowBadgeSheet(true); }} style={{ position: 'absolute', top: -10, left: -10, width: size, height: size, zIndex: 10, cursor: 'pointer', display: 'block', filter: 'drop-shadow(0 3px 6px rgba(0,0,0,0.85)) drop-shadow(0 1px 2px rgba(0,0,0,0.5))' }} />;
+          })()}
         </div>
-        {isFoundingMember && <div style={{ position: 'absolute', right: 0, top: 0, width: 1, height: '100%', background: 'linear-gradient(180deg, #ff0080, #ffe100, #00cfff, #cc00ff)', backgroundSize: '100% 300%', animation: 'holoShift 4s linear infinite', zIndex: 2 }} />}
-        {isTopCollector && !isFoundingMember && <div style={{ position: 'absolute', right: 0, top: 0, width: 1, height: '100%', backgroundColor: '#C9A84C', zIndex: 2 }} />}
-        {isPaidMember && !isTopCollector && !isFoundingMember && <div style={{ position: 'absolute', right: 0, top: 0, width: 1, height: '100%', backgroundColor: '#FF0000', zIndex: 2 }} />}
-        {isInHouseCreator && !isPaidMember && !isTopCollector && !isFoundingMember && <div style={{ position: 'absolute', right: 0, top: 0, width: 1, height: '100%', backgroundColor: 'rgba(255,255,255,0.4)', zIndex: 2 }} />}
-        {(() => {
-          let src = '/free-tier-aperture-logo-red.png'; let size = 20;
-          if (isFoundingMember) { src = '/augmented-member-founding-500-aperture.png'; size = 23.5; }
-          else if (isTopCollector) { src = '/top-1k-collector-aperture-gold.png'; size = 23; }
-          else if (isPaidMember) { src = '/scope-pro-icon-aperture.png'; size = 23; }
-          else if (isInHouseCreator) { src = '/in-house-creator-logo-grey.png'; size = 21; }
-          return <img src={src} alt="Badge" onClick={(e) => { e.stopPropagation(); setShowBadgeSheet(true); }} style={{ position: 'absolute', top: -10, left: -10, width: size, height: size, zIndex: 10, cursor: 'pointer', display: 'block', filter: 'drop-shadow(0 3px 6px rgba(0,0,0,0.85)) drop-shadow(0 1px 2px rgba(0,0,0,0.5))' }} />;
-        })()}
-      </div>
 
-      {/* Name */}
-      <div style={{ position: 'absolute', left: 100, top: 4, opacity: headerOpacity }}>
-        <p style={{ ...SKB, fontSize: 11, color: 'white', letterSpacing: '-0.22px', lineHeight: 1.4, margin: 0, textTransform: 'uppercase' }}>{profile?.display_name || username}</p>
-      </div>
-
-      {/* Username + badges */}
-      <div style={{ position: 'absolute', left: 100, top: 21.5, display: 'flex', alignItems: 'center', opacity: headerOpacity }}>
-        <p style={{ ...SKB, fontSize: 6, color: 'white', letterSpacing: '-0.12px', lineHeight: 1.4, margin: 0, textTransform: 'uppercase' }}>@{username}</p>
-      </div>
-
-      {/* Arrow */}
-      <div style={{ position: 'absolute', left: 98, top: 48, opacity: headerOpacity }}>
-        <span onClick={() => setShowLinks(true)} style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 300, fontSize: 24, color: 'white', opacity: 0.8, cursor: 'pointer', lineHeight: 1 }}>↗</span>
-      </div>
-
-      {/* Bio */}
-      <div style={{ position: 'absolute', left: 98, top: 13, height: 75, width: 155, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', overflow: 'hidden', paddingBottom: 1, opacity: headerOpacity }}>
-        <p style={{ ...SKR, fontSize: 6, color: 'white', letterSpacing: '-0.12px', lineHeight: 1.4, margin: 0, textTransform: 'uppercase' }}>{bioLine1}</p>
-        {bioLine2 && <p style={{ ...SKR, fontSize: 6, color: 'white', letterSpacing: '-0.12px', lineHeight: 1.4, margin: 0, textTransform: 'uppercase' }}>{bioLine2}</p>}
-      </div>
-
-      {/* VIEW DATA */}
-      <button className="absolute bg-transparent border-none cursor-pointer" style={{ right: '4px', top: 6, padding: 0, opacity: headerOpacity }} onClick={() => setIsDataOpen(v => !v)}>
-        <span style={{ ...SKB, fontSize: 8, color: 'white', letterSpacing: '-0.2px', opacity: isDataOpen ? 0.45 : 1, transition: 'opacity 0.15s ease', textTransform: 'uppercase' }}>VIEW DATA</span>
-      </button>
-
-      {/* Stats dropdown */}
-      {isDataOpen && (
-        <div className="absolute" style={{ right: '4px', top: '28px', backgroundColor: 'rgba(0,0,0,0.85)', padding: 8, zIndex: 20 }}>
-          {([
-            ['COLLECTORS', '0', null],
-            ['TOTAL POSTS', posts.length.toLocaleString(), null],
-            ['FOLLOWERS', followerCount.toLocaleString(), () => setShowFollowersModal(true)],
-            ['FOLLOWING', followingCount.toLocaleString(), () => setShowFollowingModal(true)],
-            ['PORTFOLIO MC', '$0', null],
-          ] as [string, string, (() => void) | null][]).map(([label, value, onClick], i) => (
-            <div key={label} onClick={onClick ?? undefined} style={{ display: 'flex', justifyContent: 'space-between', gap: '14px', animation: 'ripple-down 0.18s ease-out both', animationDelay: `${i * 50}ms`, cursor: onClick ? 'pointer' : 'default' }}>
-              <span style={{ ...MONO, fontSize: '7px', color: 'rgba(255,255,255,0.55)', letterSpacing: '-0.1px', lineHeight: 1.7 }}>{label}</span>
-              <span style={{ ...MONO, fontSize: '7px', color: 'white', letterSpacing: '-0.1px', lineHeight: 1.7 }}>{value}</span>
-            </div>
-          ))}
+        {/* Name */}
+        <div style={{ position: 'absolute', left: 98, top: 10 }}>
+          <p style={{ ...SKB, fontSize: 13, color: 'white', letterSpacing: '-0.02em', lineHeight: 1.2, margin: 0, textTransform: 'uppercase' }}>{profile?.display_name || username}</p>
         </div>
-      )}
 
-      {/* Follow button */}
-      {user && !isOwnProfile && targetPrivyId && (
-        <button onClick={handleFollow} disabled={followLoading} style={{ position: 'absolute', ...SKB, fontSize: 8, color: followingUser ? 'rgba(255,255,255,0.5)' : 'white', letterSpacing: '-0.18px', background: 'transparent', border: `1px solid ${followingUser ? 'rgba(255,255,255,0.3)' : 'white'}`, padding: '3px 8px', right: 4, top: 60, cursor: followLoading ? 'default' : 'pointer', opacity: headerOpacity, textTransform: 'uppercase' }}>
-          {followingUser ? 'UNFOLLOW' : 'FOLLOW'}
-        </button>
-      )}
+        {/* Handle */}
+        <div style={{ position: 'absolute', left: 98, top: 26 }}>
+          <p style={{ ...SKB, fontSize: 10, color: 'white', letterSpacing: '-0.02em', lineHeight: 1.2, margin: 0 }}>@{username}</p>
+        </div>
+
+        {/* Info sheet trigger */}
+        <button
+          onClick={() => setProfileDataOpen(true)}
+          style={{
+            position: 'absolute', top: 0, right: 0,
+            width: 40, height: 40,
+            background: 'transparent', border: 'none', cursor: 'pointer', padding: 0,
+            color: 'white', fontFamily: "'SK-Modernist', sans-serif", fontWeight: 300,
+            fontSize: 28, lineHeight: 1,
+            display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end',
+            paddingTop: 2, paddingRight: 6,
+          }}
+        >+</button>
+
+        {/* Follow button */}
+        {user && !isOwnProfile && targetPrivyId && (
+          <button onClick={handleFollow} disabled={followLoading} style={{ position: 'absolute', ...SKB, fontSize: 8, color: followingUser ? 'rgba(255,255,255,0.5)' : 'white', letterSpacing: '-0.18px', background: 'transparent', border: `1px solid ${followingUser ? 'rgba(255,255,255,0.3)' : 'white'}`, padding: '3px 8px', right: 4, top: 60, cursor: followLoading ? 'default' : 'pointer', textTransform: 'uppercase' }}>
+            {followingUser ? 'UNFOLLOW' : 'FOLLOW'}
+          </button>
+        )}
+
+      </div>{/* end header */}
 
       {/* Tab row */}
       <div style={{
@@ -342,7 +322,18 @@ export default function PublicProfilePage() {
         </div>
       </div>
 
-      <LinksSheet username={username} links={profileLinks} visible={showLinks} onClose={() => setShowLinks(false)} />
+      <ProfileDataSheet
+        isOpen={profileDataOpen}
+        onClose={() => setProfileDataOpen(false)}
+        profile={profile}
+        links={profileLinks}
+        isOwnProfile={!!isOwnProfile}
+        followers={followerCount}
+        following={followingCount}
+        totalPosts={posts.length}
+        collectors={0}
+        portfolioMc={profile?.portfolio_mc || 0}
+      />
 
       <BadgeExplainerSheet
         visible={showBadgeSheet}

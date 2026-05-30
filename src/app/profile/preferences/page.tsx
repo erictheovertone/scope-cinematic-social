@@ -113,10 +113,10 @@ export default function Preferences() {
 
   const menuItems: { label: string; action: () => void; danger?: boolean }[] = [
     { label: photoLabel, action: () => photoInputRef.current?.click() },
-    { label: 'Edit Profile', action: () => router.push('/profile/account') },
+    { label: 'Edit Profile', action: () => router.push('/profile/edit') },
     { label: 'Change Grid Layout', action: () => router.push('/profile/grid-layout') },
     ...(mounted && !isStandalone() ? [{ label: 'ADD TO HOME SCREEN', action: () => setShowA2HS(true) }] : []),
-    { label: 'Link Manager', action: () => router.push('/profile/links') },
+    { label: 'Link Manager', action: () => router.push('/profile/edit') },
     { label: 'Saved', action: () => router.push('/profile/bookmarks') },
     { label: 'Notifications', action: () => router.push('/profile/notifications') },
     { label: 'Privacy', action: () => {} },
