@@ -365,14 +365,29 @@ export default function Profile() {
         onClick={() => setProfileDataOpen(true)}
         style={{
           position: 'absolute', top: 0, right: 0,
-          width: 40, height: 40,
-          background: 'transparent', border: 'none', cursor: 'pointer', padding: 0,
-          color: 'white', fontFamily: "'SK-Modernist', sans-serif", fontWeight: 300,
-          fontSize: 28, lineHeight: 1,
+          background: 'transparent', border: 'none', cursor: 'pointer', padding: 7,
           display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end',
-          paddingTop: 2, paddingRight: 6,
         }}
-      >+</button>
+        aria-label="View profile info"
+      >
+        <div style={{
+          width: 13, height: 10,
+          border: '0.5px solid #FFFFFF',
+          background: profileDataOpen ? '#FFFFFF' : 'transparent',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          boxSizing: 'border-box',
+          transition: 'background 200ms ease',
+        }}>
+          <span style={{
+            fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700,
+            fontSize: 14, letterSpacing: '-0.02em',
+            color: profileDataOpen ? '#000000' : '#FFFFFF',
+            lineHeight: 1, display: 'block',
+            transform: 'translateY(-1px)',
+            transition: 'color 200ms ease',
+          }}>i</span>
+        </div>
+      </button>
 
       </div>{/* end header */}
 

@@ -48,7 +48,7 @@ export default function ProfileDataSheet({
   const hasBio = !!profile?.bio;
   const hasKit = !!(profile?.kit_camera || profile?.kit_lens || profile?.kit_favorite_tool);
   const hasLinks = links.length > 0;
-  const showContact = !isOwnProfile && !!(profile?.contact_email && profile?.contact_email_public);
+  const showContact = !!profile;
   const numLinks = Math.min(links.length, 3);
 
   const sec = (delay: number): React.CSSProperties => ({
@@ -76,6 +76,7 @@ export default function ProfileDataSheet({
 
   return (
     <div
+      onClick={onClose}
       style={{
         position: 'fixed', inset: 0, zIndex: 100,
         background: `rgba(0,0,0,${bgVisible ? 0.95 : 0})`,
@@ -89,7 +90,7 @@ export default function ProfileDataSheet({
         <div style={{ position: 'relative', height: 161, ...sec(0) }}>
 
           {/* PFP */}
-          <div style={{ position: 'absolute', top: 8, left: 7, width: 80, height: 80, overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', top: 8, left: 12, width: 80, height: 80, overflow: 'hidden' }}>
             {profile?.profile_image_url
               ? <img src={profile.profile_image_url} alt="" style={{ width: 80, height: 80, objectFit: 'cover', display: 'block' }} />
               : <div style={{ width: 80, height: 80, background: '#222', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -102,12 +103,12 @@ export default function ProfileDataSheet({
           <div style={{ position: 'absolute', top: 8, left: 89, width: 1, height: 66, background: '#FF0000' }} />
 
           {/* Name */}
-          <div style={{ position: 'absolute', top: 80, left: 7, ...SKB, fontSize: 13, letterSpacing: '-0.02em', color: '#FFF', textTransform: 'uppercase', lineHeight: 1.4 }}>
+          <div style={{ position: 'absolute', top: 80, left: 12, ...SKB, fontSize: 13, letterSpacing: '-0.02em', color: '#FFF', textTransform: 'uppercase', lineHeight: 1.4 }}>
             {profile?.display_name || profile?.username}
           </div>
 
           {/* Handle */}
-          <div style={{ position: 'absolute', top: 95, left: 6, ...SKB, fontSize: 10, letterSpacing: '-0.02em', color: '#FFF', lineHeight: 1.4 }}>
+          <div style={{ position: 'absolute', top: 95, left: 11, ...SKB, fontSize: 10, letterSpacing: '-0.02em', color: '#FFF', lineHeight: 1.4 }}>
             @{profile?.username}
           </div>
 
@@ -179,12 +180,10 @@ export default function ProfileDataSheet({
               const thumb = link.custom_thumbnail_url || link.thumbnail_url;
               const domain = (() => { try { return new URL(link.url).hostname.replace('www.', ''); } catch { return link.url; } })();
               return (
-                <a
+                <div
                   key={link.id}
-                  href={link.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{ textDecoration: 'none', position: 'relative', display: 'block', zIndex: 1 }}
+                  onClick={e => { e.stopPropagation(); window.open(link.url, '_blank', 'noopener,noreferrer'); }}
+                  style={{ position: 'relative', display: 'block', zIndex: 1, cursor: 'pointer' }}
                 >
                   {/* Card title */}
                   <div style={{ position: 'absolute', top: localLabelTop, right: 8, ...SKB, fontSize: 10, letterSpacing: '-0.02em', color: '#FFF', textTransform: 'uppercase', textAlign: 'right', lineHeight: 1.12 }}>
@@ -199,7 +198,7 @@ export default function ProfileDataSheet({
                       </div>
                     )}
                   </div>
-                </a>
+                </div>
               );
             })}
 
@@ -207,20 +206,26 @@ export default function ProfileDataSheet({
           </div>
         )}
 
-        {/* ── CONTACT ── hidden on own profile */}
+        {/* ── CONTACT ── */}
+        {console.log('[contact-debug]', { isOwnProfile, contact_email: profile?.contact_email, contact_email_public: profile?.contact_email_public, publicType: typeof profile?.contact_email_public }) as any}
         {showContact && (
           <div style={{ position: 'relative', height: 139, marginTop: 100, ...sec(320) }}>
             {/* Big section label */}
             <div style={{ position: 'absolute', top: 0, left: 4, ...SKB, fontSize: 40, letterSpacing: '-0.05em', color: '#FFF', textTransform: 'uppercase', lineHeight: 1.12 }}>
               CONTACT
             </div>
-            {/* Email */}
-            <div style={{ position: 'absolute', top: 6, right: 8, ...SKB, fontSize: 10, letterSpacing: '-0.02em', textAlign: 'right', lineHeight: 1.4 }}>
-              <span style={{ color: '#FF0000' }}>EMAIL:</span>
-              <span style={{ color: '#FFF' }}> {(profile.contact_email || '').toUpperCase()}</span>
-            </div>
+            {/* Email — only when public and set */}
+            {profile?.contact_email_public && profile?.contact_email && (
+              <div style={{ position: 'absolute', top: 6, right: 8, ...SKB, fontSize: 10, letterSpacing: '-0.02em', textAlign: 'right', lineHeight: 1.4 }}>
+                <span style={{ color: '#FF0000' }}>EMAIL:</span>
+                <span style={{ color: '#FFF' }}> {profile.contact_email.toUpperCase()}</span>
+              </div>
+            )}
             {/* DM row */}
-            <div style={{ position: 'absolute', top: 28, right: 8, ...SKB, fontSize: 10, letterSpacing: '-0.02em', color: '#FFF', textAlign: 'right', textTransform: 'uppercase', lineHeight: 1.12 }}>
+            <div
+              onClick={e => e.stopPropagation()}
+              style={{ position: 'absolute', top: 28, right: 8, ...SKB, fontSize: 10, letterSpacing: '-0.02em', color: '#FFF', textAlign: 'right', textTransform: 'uppercase', lineHeight: 1.12, cursor: 'pointer' }}
+            >
               DIRECT MESSAGE ON SCOPE
             </div>
             <RULE />
