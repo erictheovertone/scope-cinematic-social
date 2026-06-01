@@ -175,7 +175,7 @@ export default function PostItem({ post, onImageClick }: PostItemProps) {
     }
   };
 
-  const paddingPercent = ratioPadding(getAspectRatio(post.grid_layout ?? ''));
+  const paddingPercent = ratioPadding(getAspectRatio(post.layout_id ?? ''));
 
   return (
     <div style={{ marginBottom: 28 }}>

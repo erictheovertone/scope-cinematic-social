@@ -207,7 +207,6 @@ export default function ProfileDataSheet({
         )}
 
         {/* ── CONTACT ── */}
-        {console.log('[contact-debug]', { isOwnProfile, contact_email: profile?.contact_email, contact_email_public: profile?.contact_email_public, publicType: typeof profile?.contact_email_public }) as any}
         {showContact && (
           <div style={{ position: 'relative', height: 139, marginTop: 100, ...sec(320) }}>
             {/* Big section label */}

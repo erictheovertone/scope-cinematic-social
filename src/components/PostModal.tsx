@@ -15,6 +15,7 @@ import { getUserByPrivyId, getProfile } from "@/lib/userService";
 import DeckPickerSheet from "@/components/DeckPickerSheet";
 import CollectSheet from "@/components/CollectSheet";
 import { supabase } from "@/lib/supabase/client";
+import { getAspectRatio } from "@/lib/aspectRatio";
 
 interface Post {
   id: string;
@@ -247,8 +248,7 @@ export default function PostModal({ post, onClose }: PostModalProps) {
             WebkitOverflowScrolling: "touch",
           }}
         >
-          {/* Image — full width, 2.4:1 */}
-          <div style={{ width: "100%", aspectRatio: "2.4 / 1", overflow: "hidden", background: "#0a0a0a" }}>
+          <div style={{ width: "100%", aspectRatio: getAspectRatio(post.layout_id ?? ''), overflow: "hidden", background: "#0a0a0a" }}>
             {post.media_urls?.[0] ? (
               <img
                 src={post.media_urls[0]}

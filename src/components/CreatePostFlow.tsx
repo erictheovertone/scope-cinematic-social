@@ -17,21 +17,43 @@ import {
 
 function profileLayoutToAspect(layoutId: string): number {
   switch (layoutId) {
-    case '2x-pana': case '1x-pana': return 2.75;
-    case '2x-scope': case '1x-scope': return 2.39;
-    case '2x-cine': case '1x-cine': return 1.85;
-    case '3x-legacy': return 4 / 3;
+    case '2x-pana': case '1x-pana': case 'pana-wide': case 'pana-wide-2col': case 'pana-wide-2x': return 2.75;
+    case '2x-scope': case '1x-scope': case 'scope': case 'scope-2col': case 'scope-2x': return 2.39;
+    case '2x-cine': case '1x-cine': case 'cine-wide': case 'cine-wide-2col': case 'cine-wide-2x': return 1.85;
+    case '3x-legacy': case 'legacy': return 4 / 3;
+    case '3x-square': case 'collage': return 1;
+    case '2x-super-wide': case '1x-super-wide': return 2.39;
+    case '2x-regular-wide': return 16 / 9;
     default: return 2.39;
   }
 }
 
 function profileLayoutLabel(layoutId: string): string {
   switch (layoutId) {
-    case '2x-pana': case '1x-pana': return '2.75:1';
-    case '2x-scope': case '1x-scope': return '2.39:1';
-    case '2x-cine': case '1x-cine': return '1.85:1';
-    case '3x-legacy': return '4:3';
+    case '2x-pana': case '1x-pana': case 'pana-wide': case 'pana-wide-2col': case 'pana-wide-2x': return '2.75:1';
+    case '2x-scope': case '1x-scope': case 'scope': case 'scope-2col': case 'scope-2x': return '2.39:1';
+    case '2x-cine': case '1x-cine': case 'cine-wide': case 'cine-wide-2col': case 'cine-wide-2x': return '1.85:1';
+    case '3x-legacy': case 'legacy': return '4:3';
+    case '3x-square': case 'collage': return '1:1';
+    case '2x-regular-wide': return '16:9';
     default: return '2.39:1';
+  }
+}
+
+function profileLayoutName(layoutId: string): string {
+  switch (layoutId) {
+    case 'pana-wide': case '1x-pana': return '1X ULTRA-PAN';
+    case 'pana-wide-2col': case 'pana-wide-2x': case '2x-pana': return '2X ULTRA-PAN';
+    case 'scope': case '1x-scope': return '1X SCOPE';
+    case 'scope-2col': case 'scope-2x': case '2x-scope': return '2X SCOPE';
+    case 'cine-wide': case '1x-cine': return '1X CINE WIDE';
+    case 'cine-wide-2col': case 'cine-wide-2x': case '2x-cine': return '2X CINE WIDE';
+    case '3x-legacy': case 'legacy': return '3X LEGACY';
+    case '3x-square': return '3X SQUARE';
+    case 'collage': return 'COLLAGE';
+    case '2x-super-wide': case '1x-super-wide': return 'SUPER WIDE';
+    case '2x-regular-wide': return 'REGULAR WIDE';
+    default: return layoutId.toUpperCase();
   }
 }
 
@@ -162,28 +184,14 @@ interface MediaItem {
   type: 'image' | 'video';
 }
 
-interface GridLayout {
-  id: string;
-  name: string;
-  aspectRatio: string;
-  gridTemplate: string;
-  preview: string;
-}
-
-const GRID_LAYOUTS: GridLayout[] = [
-  { id: 'single', name: 'Single', aspectRatio: '1:1', gridTemplate: 'grid-cols-1 grid-rows-1', preview: '□' },
-  { id: 'horizontal', name: 'Horizontal', aspectRatio: '2.39:1', gridTemplate: 'grid-cols-1 grid-rows-1', preview: '▬' },
-  { id: 'vertical', name: 'Vertical', aspectRatio: '9:16', gridTemplate: 'grid-cols-1 grid-rows-1', preview: '▮' },
-  { id: 'grid2x2', name: '2x2 Grid', aspectRatio: '1:1', gridTemplate: 'grid-cols-2 grid-rows-2', preview: '⊞' },
-  { id: 'grid3x1', name: '3x1 Strip', aspectRatio: '3:1', gridTemplate: 'grid-cols-3 grid-rows-1', preview: '⊟' }
-];
-
-const PROFILE_TO_POST_LAYOUT: { [key: string]: string } = {
-  '2x-super-wide': 'horizontal',
-  '1x-super-wide': 'horizontal',
-  '2x-regular-wide': 'horizontal',
-  '3x-square': 'single',
-  'collage': 'grid2x2'
+// Normalises legacy prefixed layout IDs (e.g. '2x-cine', '1x-pana') to canonical form.
+// Used at post-write time so posts.layout_id is always canonical regardless of
+// what value is still stored in profiles.grid_layout.
+const LEGACY_TO_CANONICAL: Record<string, string> = {
+  '2x-pana': 'pana-wide-2col', '1x-pana': 'pana-wide',
+  '2x-scope': 'scope-2col',    '1x-scope': 'scope',
+  '2x-cine': 'cine-wide-2col', '1x-cine': 'cine-wide',
+  '3x-legacy': 'legacy',
 };
 
 interface CreatePostFlowProps {
@@ -192,10 +200,9 @@ interface CreatePostFlowProps {
   userLayoutId?: string;
 }
 
-export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-square' }: CreatePostFlowProps) {
+export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope' }: CreatePostFlowProps) {
   const [step, setStep] = useState<'media' | 'edit' | 'deck' | 'posting'>('media');
   const [selectedMedia, setSelectedMedia] = useState<MediaItem[]>([]);
-  const [selectedLayout, setSelectedLayout] = useState<GridLayout>(GRID_LAYOUTS[0]);
   const [caption, setCaption] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const [isPosting, setIsPosting] = useState(false);
@@ -245,10 +252,35 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
   const [creatingDeck, setCreatingDeck] = useState(false);
 
   useEffect(() => {
-    const mappedId = PROFILE_TO_POST_LAYOUT[userLayoutId] || 'single';
-    const layout = GRID_LAYOUTS.find(l => l.id === mappedId) || GRID_LAYOUTS[0];
-    setSelectedLayout(layout);
-  }, [userLayoutId, isOpen]);
+    console.log('[crop-tool-diagnostic]', {
+      userLayoutIdProp: userLayoutId,
+      rawProfileGridLayout: undefined, // profile not fetched at component level
+      computedAspect: profileLayoutToAspect(userLayoutId),
+      computedDisplayLabel: profileLayoutName(userLayoutId),
+      computedARString: profileLayoutLabel(userLayoutId),
+      imgNaturalAr,
+      videoNaturalAr,
+    });
+    const tAR = profileLayoutToAspect(userLayoutId);
+    if (imgNaturalAr > 0) {
+      if (imgNaturalAr > tAR) {
+        const cw = tAR / imgNaturalAr;
+        setImageCropX((1 - cw) / 2); setImageCropY(0); setImageCropWidth(cw); setImageCropHeight(1);
+      } else {
+        const ch = imgNaturalAr / tAR;
+        setImageCropX(0); setImageCropY((1 - ch) / 2); setImageCropWidth(1); setImageCropHeight(ch);
+      }
+    }
+    if (videoNaturalAr > 0) {
+      if (videoNaturalAr > tAR) {
+        const cw = tAR / videoNaturalAr;
+        setCropX((1 - cw) / 2); setCropY(0); setCropWidth(cw); setCropHeight(1);
+      } else {
+        const ch = videoNaturalAr / tAR;
+        setCropX(0); setCropY((1 - ch) / 2); setCropWidth(1); setCropHeight(ch);
+      }
+    }
+  }, [userLayoutId, isOpen, imgNaturalAr, videoNaturalAr]);
 
   const handleMediaSelect = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     console.log('[handleMediaSelect] onChange fired');
@@ -470,12 +502,16 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
         console.log('[handlePost] auto thumbnail uploaded:', thumbnailUrl);
       }
 
+      const rawLayoutId: string = (profile as any).grid_layout || userLayoutId;
+      const canonicalLayoutId = LEGACY_TO_CANONICAL[rawLayoutId] ?? rawLayoutId;
+      console.log('[handlePost] layout — raw:', rawLayoutId, '→ canonical:', canonicalLayoutId);
+
       const postPayload = {
         userId: supabaseUser.id,
         username: profile.username,
         caption,
         mediaUrls,
-        layoutId: (profile as any).grid_layout || selectedLayout.id,
+        layoutId: canonicalLayoutId,
         mediaType: selectedMedia[0]?.type || 'image',
         thumbnailUrl,
         autoplay: selectedMedia[0]?.type === 'video' ? videoAutoplay : true,
@@ -726,16 +762,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
                   style={{ width: '100%', display: 'block', objectFit: 'contain', maxHeight: '60vh' }}
                   onLoadedMetadata={(e) => {
                     const v = e.currentTarget as HTMLVideoElement;
-                    const natAr = v.videoWidth / v.videoHeight;
-                    setVideoNaturalAr(natAr);
-                    const tAR = profileLayoutToAspect(userLayoutId);
-                    if (natAr > tAR) {
-                      const cw = tAR / natAr;
-                      setCropX((1 - cw) / 2); setCropY(0); setCropWidth(cw); setCropHeight(1);
-                    } else {
-                      const ch = natAr / tAR;
-                      setCropX(0); setCropY((1 - ch) / 2); setCropWidth(1); setCropHeight(ch);
-                    }
+                    setVideoNaturalAr(v.videoWidth / v.videoHeight);
                   }}
                 />
                 {videoNaturalAr > 0 && (
@@ -762,7 +789,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
                       </div>
                     ))}
                     <div style={{ position: 'absolute', bottom: 6, right: 6, background: 'rgba(0,0,0,0.55)', padding: '2px 5px' }}>
-                      <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 8, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase' }}>{selectedLayout.aspectRatio}</span>
+                      <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 8, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase' }}>{profileLayoutLabel(userLayoutId)}</span>
                     </div>
                   </div>
                 )}
@@ -781,16 +808,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
                     alt="Preview"
                     onLoad={(e) => {
                       const img = e.currentTarget;
-                      const ar = img.naturalWidth / img.naturalHeight;
-                      setImgNaturalAr(ar);
-                      const tAR = profileLayoutToAspect(userLayoutId);
-                      if (ar > tAR) {
-                        const cw = tAR / ar;
-                        setImageCropX((1 - cw) / 2); setImageCropY(0); setImageCropWidth(cw); setImageCropHeight(1);
-                      } else {
-                        const ch = ar / tAR;
-                        setImageCropX(0); setImageCropY((1 - ch) / 2); setImageCropWidth(1); setImageCropHeight(ch);
-                      }
+                      setImgNaturalAr(img.naturalWidth / img.naturalHeight);
                     }}
                     style={{ width: '100%', height: 'auto', display: 'block', maxHeight: '65vh', objectFit: 'contain' }}
                   />
@@ -875,7 +893,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = '3x-squ
 
         <div className="border-t border-[#333333] p-4">
           <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 10, color: '#666666', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 4 }}>
-            Layout: {userLayoutId.toUpperCase()} ({profileLayoutLabel(userLayoutId)})
+            LAYOUT: {profileLayoutName(userLayoutId)} ({profileLayoutLabel(userLayoutId)})
           </p>
           <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 9, color: '#666666', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
             {selectedMedia.length} media item{selectedMedia.length !== 1 ? 's' : ''} selected

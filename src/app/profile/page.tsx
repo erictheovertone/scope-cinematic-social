@@ -72,7 +72,8 @@ export default function Profile() {
     profileImage: null as string | null,
     websiteUrl: "",
   });
-  const [userLayoutId, setUserLayoutId] = useState('1x-scope');
+ const [stableLayoutId, setStableLayoutId] = useState<string>('scope');
+const userLayoutId = stableLayoutId;
   const [layoutLoaded, setLayoutLoaded] = useState(false);
   const [activeTab, setActiveTab] = useState<'main' | 'collected' | 'decks' | 'theatre'>('main');
   const [userPosts, setUserPosts] = useState<any[]>([]);
@@ -139,7 +140,6 @@ export default function Profile() {
               profileImage: profile.profile_image_url || null,
               websiteUrl: profile.website_url || "",
             });
-            if (profile.grid_layout) setUserLayoutId(profile.grid_layout);
             setLayoutLoaded(true);
             const memberUntil = profile.paid_member_until ? new Date(profile.paid_member_until) : null;
             const isActiveMember = memberUntil ? memberUntil > new Date() : false;
@@ -171,6 +171,14 @@ export default function Profile() {
     };
     loadData();
   }, [user]);
+
+  useEffect(() => {
+    console.log('[crop-tool-parent-diagnostic]', {
+      profile_grid_layout: rawProfile?.grid_layout,
+      what_im_passing_to_crop: userLayoutId,
+      showCreatePost,
+    });
+  }, [userLayoutId, showCreatePost, rawProfile]);
 
   useEffect(() => {
     if (searchParams?.get('showMembership') === 'true') {
@@ -205,6 +213,12 @@ export default function Profile() {
       })
       .catch(console.error);
   }, [showCreatePost, supabaseUserId]);
+
+  useEffect(() => {
+  if (rawProfile?.grid_layout) {
+    setStableLayoutId(rawProfile.grid_layout); 
+  }
+  }, [rawProfile?.grid_layout]);
 
   useEffect(() => {
     if (!showDecks || !user) return;

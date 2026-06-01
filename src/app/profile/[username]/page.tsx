@@ -80,7 +80,6 @@ export default function PublicProfilePage() {
       try {
         const p = await getProfileByUsername(username);
         if (!p) { setNotFound(true); setLoaded(true); return; }
-        console.log('[public-profile-fetch]', { username, contact_email: p.contact_email, contact_email_public: p.contact_email_public, fetchedProfile: p });
         setProfile(p);
 
         // Badge flags

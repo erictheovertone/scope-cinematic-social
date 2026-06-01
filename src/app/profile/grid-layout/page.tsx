@@ -10,36 +10,36 @@ import WelcomeTransition from "@/components/WelcomeTransition";
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 
 const LAYOUTS = [
-  { id: "2x-pana",   label: "2X ULTRA-PAN", ratio: 2.75, ratioLabel: "2.75:1", cols: 2, resolution: "4096x1551" },
-  { id: "1x-pana",   label: "1X ULTRA-PAN", ratio: 2.75, ratioLabel: "2.75:1", cols: 1, resolution: "4096x1551" },
-  { id: "2x-scope",  label: "2X SCOPE",     ratio: 2.39, ratioLabel: "2.39:1", cols: 2, resolution: "4096x1716" },
-  { id: "1x-scope",  label: "1X SCOPE",     ratio: 2.39, ratioLabel: "2.39:1", cols: 1, resolution: "4096x1716" },
-  { id: "2x-cine",   label: "2X CINE WIDE", ratio: 1.85, ratioLabel: "1.85:1", cols: 2, resolution: "4096x2214" },
-  { id: "1x-cine",   label: "1X CINE WIDE", ratio: 1.85, ratioLabel: "1.85:1", cols: 1, resolution: "4096x2214" },
-  { id: "3x-legacy", label: "3X LEGACY",    ratio: 4/3,  ratioLabel: "4:3",    cols: 3, resolution: "1024x768"  },
-  { id: "collage",   label: "COLLAGE",       ratio: 0,    ratioLabel: "mixed",  cols: 0, resolution: null        },
+  { id: "pana-wide-2col", label: "2X ULTRA-PAN", ratio: 2.75, ratioLabel: "2.75:1", cols: 2, resolution: "4096x1551" },
+  { id: "pana-wide",      label: "1X ULTRA-PAN", ratio: 2.75, ratioLabel: "2.75:1", cols: 1, resolution: "4096x1551" },
+  { id: "scope-2col",     label: "2X SCOPE",     ratio: 2.39, ratioLabel: "2.39:1", cols: 2, resolution: "4096x1716" },
+  { id: "scope",          label: "1X SCOPE",     ratio: 2.39, ratioLabel: "2.39:1", cols: 1, resolution: "4096x1716" },
+  { id: "cine-wide-2col", label: "2X CINE WIDE", ratio: 1.85, ratioLabel: "1.85:1", cols: 2, resolution: "4096x2214" },
+  { id: "cine-wide",      label: "1X CINE WIDE", ratio: 1.85, ratioLabel: "1.85:1", cols: 1, resolution: "4096x2214" },
+  { id: "legacy",         label: "3X LEGACY",    ratio: 4/3,  ratioLabel: "4:3",    cols: 3, resolution: "1024x768"  },
+  { id: "collage",        label: "COLLAGE",       ratio: 0,    ratioLabel: "mixed",  cols: 0, resolution: null        },
 ];
 
 const names: Record<string, string> = {
-  "2x-pana":   "PANA WIDE 2x",
-  "1x-pana":   "PANA WIDE 1x",
-  "2x-scope":  "SCOPE 2x",
-  "1x-scope":  "SCOPE 1x",
-  "2x-cine":   "CINE WIDE 2x",
-  "1x-cine":   "CINE WIDE 1x",
-  "3x-legacy": "LEGACY 3x",
-  "collage":   "COLLAGE",
+  "pana-wide-2col": "2X ULTRA-PAN",
+  "pana-wide":      "1X ULTRA-PAN",
+  "scope-2col":     "2X SCOPE",
+  "scope":          "1X SCOPE",
+  "cine-wide-2col": "2X CINE WIDE",
+  "cine-wide":      "1X CINE WIDE",
+  "legacy":         "3X LEGACY",
+  "collage":        "COLLAGE",
 };
 
 const ratios: Record<string, string> = {
-  "2x-pana":   "2.75:1",
-  "1x-pana":   "2.75:1",
-  "2x-scope":  "2.39:1",
-  "1x-scope":  "2.39:1",
-  "2x-cine":   "1.85:1",
-  "1x-cine":   "1.85:1",
-  "3x-legacy": "4:3",
-  "collage":   "mixed",
+  "pana-wide-2col": "2.75:1",
+  "pana-wide":      "2.75:1",
+  "scope-2col":     "2.39:1",
+  "scope":          "2.39:1",
+  "cine-wide-2col": "1.85:1",
+  "cine-wide":      "1.85:1",
+  "legacy":         "4:3",
+  "collage":        "mixed",
 };
 
 function cellDimensions(layout: typeof LAYOUTS[0]): { width: number; height: number }[] {
@@ -323,13 +323,29 @@ export default function GridLayoutPage() {
   useEffect(() => {
     if (!user?.id) return;
 
+    // Normalize legacy prefixed IDs to canonical form
+    const LEGACY_MAP: Record<string, string> = {
+      '2x-pana': 'pana-wide-2col', '1x-pana': 'pana-wide',
+      '2x-scope': 'scope-2col',    '1x-scope': 'scope',
+      '2x-cine': 'cine-wide-2col', '1x-cine': 'cine-wide',
+      '3x-legacy': 'legacy',
+    };
+
     const pref = getUserGridLayout(user.id);
-    if (pref) setSelectedLayout(pref.layoutId);
+    if (pref) {
+      const canonical = LEGACY_MAP[pref.layoutId] ?? pref.layoutId;
+      setSelectedLayout(canonical);
+    }
 
     getUserByPrivyId(user.id).then(async (dbUser) => {
       if (!dbUser) return;
       const profile = await getProfile(dbUser.id);
       if (profile?.username) setUsername(profile.username.toUpperCase());
+      // Also seed selectedLayout from DB (source of truth over localStorage)
+      if (profile?.grid_layout) {
+        const canonical = LEGACY_MAP[profile.grid_layout] ?? profile.grid_layout;
+        setSelectedLayout(canonical);
+      }
     });
   }, [user?.id]);
 

@@ -13,6 +13,7 @@ import CollectSheet from "@/components/CollectSheet";
 import DeletePostSheet from "@/components/DeletePostSheet";
 import MediaRenderer from "@/components/MediaRenderer";
 import { supabase } from "@/lib/supabase/client";
+import { getAspectRatio } from "@/lib/aspectRatio";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -24,9 +25,9 @@ interface Post {
   username: string;
   caption: string;
   media_urls: string[];
+  layout_id?: string | null;
   created_at: string;
   profile_image_url?: string | null;
-  grid_layout?: string | null;
   is_minted?: boolean;
   contract_address?: string | null;
   token_id?: string | null;
@@ -128,7 +129,7 @@ function PostViewerItem({
 
       {/* ── IMAGE ── position:relative, overflow:hidden */}
       <div
-        style={{ position: "relative", width: "100%", aspectRatio: "2.4 / 1", overflow: "hidden", background: "#0a0a0a" }}
+        style={{ position: "relative", width: "100%", aspectRatio: getAspectRatio(post.layout_id ?? ''), overflow: "hidden", background: "#0a0a0a" }}
         onClick={(e) => e.stopPropagation()}
       >
         {post.media_urls?.[0] ? (
