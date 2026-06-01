@@ -252,15 +252,6 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
   const [creatingDeck, setCreatingDeck] = useState(false);
 
   useEffect(() => {
-    console.log('[crop-tool-diagnostic]', {
-      userLayoutIdProp: userLayoutId,
-      rawProfileGridLayout: undefined, // profile not fetched at component level
-      computedAspect: profileLayoutToAspect(userLayoutId),
-      computedDisplayLabel: profileLayoutName(userLayoutId),
-      computedARString: profileLayoutLabel(userLayoutId),
-      imgNaturalAr,
-      videoNaturalAr,
-    });
     const tAR = profileLayoutToAspect(userLayoutId);
     if (imgNaturalAr > 0) {
       if (imgNaturalAr > tAR) {
@@ -504,7 +495,6 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
 
       const rawLayoutId: string = (profile as any).grid_layout || userLayoutId;
       const canonicalLayoutId = LEGACY_TO_CANONICAL[rawLayoutId] ?? rawLayoutId;
-      console.log('[handlePost] layout — raw:', rawLayoutId, '→ canonical:', canonicalLayoutId);
 
       const postPayload = {
         userId: supabaseUser.id,

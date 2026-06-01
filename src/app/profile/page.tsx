@@ -173,14 +173,6 @@ const userLayoutId = stableLayoutId;
   }, [user]);
 
   useEffect(() => {
-    console.log('[crop-tool-parent-diagnostic]', {
-      profile_grid_layout: rawProfile?.grid_layout,
-      what_im_passing_to_crop: userLayoutId,
-      showCreatePost,
-    });
-  }, [userLayoutId, showCreatePost, rawProfile]);
-
-  useEffect(() => {
     if (searchParams?.get('showMembership') === 'true') {
       setShowMembershipSheet(true);
     }

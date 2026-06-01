@@ -1,12 +1,28 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { usePrivy } from "@privy-io/react-auth";
+import { getUserByPrivyId, getProfile } from "@/lib/userService";
 import CreatePostFlow from "@/components/CreatePostFlow";
 
 export default function CreatePage() {
   const [showCreateFlow, setShowCreateFlow] = useState(true);
+  const [userLayoutId, setUserLayoutId] = useState<string>('scope');
   const router = useRouter();
+  const { user } = usePrivy();
+
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const supabaseUser = await getUserByPrivyId(user.id);
+      if (!supabaseUser) return;
+      const profile = await getProfile(supabaseUser.id) as any;
+      if (profile?.grid_layout) {
+        setUserLayoutId(profile.grid_layout);
+      }
+    })();
+  }, [user]);
 
   const handleClose = () => {
     setShowCreateFlow(false);
@@ -15,12 +31,11 @@ export default function CreatePage() {
 
   return (
     <div className="bg-black relative w-[375px] h-[812px] mx-auto">
-      {/* Create Post Flow */}
-      <CreatePostFlow 
-        isOpen={showCreateFlow} 
-        onClose={handleClose} 
+      <CreatePostFlow
+        isOpen={showCreateFlow}
+        onClose={handleClose}
+        userLayoutId={userLayoutId}
       />
-      
     </div>
   );
 }
