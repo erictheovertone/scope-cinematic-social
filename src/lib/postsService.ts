@@ -91,27 +91,28 @@ export const getAllPosts = async (): Promise<(Post & { profile_image_url?: strin
 
   console.log('[getAllPosts] first post:', JSON.stringify(posts?.[0]));
 
-  // Batch-fetch profile images for all unique usernames in one query
-  const usernames = [...new Set(posts.map((p) => p.username).filter(Boolean))];
-  if (usernames.length === 0) return posts;
+  // Batch-fetch profiles by stable user_id so display + routing use the live handle
+  const userIds = [...new Set(posts.map((p) => p.user_id).filter(Boolean))];
+  if (userIds.length === 0) return posts;
 
   const { data: profiles } = await supabase
     .from('profiles')
-    .select('username, profile_image_url, grid_layout')
-    .in('username', usernames);
+    .select('user_id, username, profile_image_url, grid_layout')
+    .in('user_id', userIds);
 
-  const avatarMap = new Map(
-    (profiles || []).map((p) => [p.username, p.profile_image_url as string | null])
-  );
-  const gridLayoutMap = new Map(
-    (profiles || []).map((p) => [p.username, p.grid_layout as string | null])
+  const profileMap = new Map(
+    (profiles || []).map((p) => [p.user_id, p])
   );
 
-  return posts.map((post) => ({
-    ...post,
-    profile_image_url: avatarMap.get(post.username) ?? null,
-    grid_layout: gridLayoutMap.get(post.username) ?? null,
-  }));
+  return posts.map((post) => {
+    const prof = profileMap.get(post.user_id);
+    return {
+      ...post,
+      username: prof?.username ?? post.username,
+      profile_image_url: prof?.profile_image_url ?? null,
+      grid_layout: prof?.grid_layout ?? null,
+    };
+  });
 };
 
 export const getUserPosts = async (userId: string): Promise<Post[]> => {
@@ -341,26 +342,27 @@ export const getPostsPaginated = async (
     return [];
   }
 
-  const usernames = [...new Set(posts.map((p) => p.username).filter(Boolean))];
-  if (usernames.length === 0) return posts;
+  const userIds = [...new Set(posts.map((p) => p.user_id).filter(Boolean))];
+  if (userIds.length === 0) return posts;
 
   const { data: profiles } = await supabase
     .from('profiles')
-    .select('username, profile_image_url, grid_layout')
-    .in('username', usernames);
+    .select('user_id, username, profile_image_url, grid_layout')
+    .in('user_id', userIds);
 
-  const avatarMap = new Map(
-    (profiles ?? []).map((p) => [p.username, p.profile_image_url as string | null]),
-  );
-  const gridLayoutMap = new Map(
-    (profiles ?? []).map((p) => [p.username, p.grid_layout as string | null]),
+  const profileMap = new Map(
+    (profiles ?? []).map((p) => [p.user_id, p]),
   );
 
-  return posts.map((post) => ({
-    ...post,
-    profile_image_url: avatarMap.get(post.username) ?? null,
-    grid_layout: gridLayoutMap.get(post.username) ?? null,
-  }));
+  return posts.map((post) => {
+    const prof = profileMap.get(post.user_id);
+    return {
+      ...post,
+      username: prof?.username ?? post.username,
+      profile_image_url: prof?.profile_image_url ?? null,
+      grid_layout: prof?.grid_layout ?? null,
+    };
+  });
 };
 
 export const updatePostMintData = async (

@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { getFollowers, getFollowing } from "@/lib/userService";
 
-const MONO: React.CSSProperties = { fontFamily: "'IBM Plex Mono', monospace" };
+const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
+const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
 
 interface Props {
   type: "followers" | "following";
@@ -44,11 +45,11 @@ export default function FollowListModal({ type, privyUserId, onClose }: Props) {
           onClick={onClose}
           className="bg-transparent border-none cursor-pointer p-0"
         >
-          <span style={{ ...MONO, fontSize: 9, color: "white", letterSpacing: "-0.18px" }}>
+          <span style={{ ...SKR, fontSize: 9, color: "white", letterSpacing: "-0.18px" }}>
             ← Back
           </span>
         </button>
-        <span style={{ ...MONO, fontSize: 9, color: "white", letterSpacing: "-0.18px" }}>
+        <span style={{ ...SKB, fontSize: 9, color: "white", letterSpacing: "-0.18px" }}>
           {type === "followers" ? "Followers" : "Following"}
         </span>
       </div>
@@ -60,7 +61,7 @@ export default function FollowListModal({ type, privyUserId, onClose }: Props) {
             <div style={{ width: 11, height: 11, background: "#FF0000", borderRadius: "50%" }} />
           </div>
         ) : profiles.length === 0 ? (
-          <p style={{ ...MONO, fontSize: 9, color: "rgba(255,255,255,0.4)", marginTop: 24 }}>
+          <p style={{ ...SKR, fontSize: 9, color: "rgba(255,255,255,0.4)", marginTop: 24 }}>
             {type === "followers" ? "No followers yet" : "Not following anyone yet"}
           </p>
         ) : (
@@ -81,12 +82,12 @@ export default function FollowListModal({ type, privyUserId, onClose }: Props) {
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <span style={{ ...MONO, fontSize: 10, color: "white" }}>
+                  <span style={{ ...SKB, fontSize: 10, color: "white" }}>
                     {p.username?.[0]?.toUpperCase() ?? "?"}
                   </span>
                 )}
               </div>
-              <span style={{ ...MONO, fontSize: 9, color: "white", letterSpacing: "-0.18px" }}>
+              <span style={{ ...SKR, fontSize: 9, color: "white", letterSpacing: "-0.18px" }}>
                 @{p.username}
               </span>
             </button>

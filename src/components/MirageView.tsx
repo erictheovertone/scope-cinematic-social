@@ -7,8 +7,9 @@ import {
   getPostComments,
 } from "@/lib/postsService";
 import PostModal from "@/components/PostModal";
+import PillarboxFrame from "@/components/PillarboxFrame";
 
-const MONO: React.CSSProperties = { fontFamily: "'IBM Plex Mono', monospace" };
+const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
 
 // ── Mirage Lightbox ──────────────────────────────────────────────────────────
 
@@ -81,7 +82,7 @@ function MirageLightbox({
             strokeLinejoin="round"
           />
         </svg>
-        <span style={{ ...MONO, fontSize: 9, color: "white", letterSpacing: "-0.1px" }}>
+        <span style={{ ...SKR, fontSize: 9, color: "white", letterSpacing: "-0.1px" }}>
           back
         </span>
       </button>
@@ -100,17 +101,23 @@ function MirageLightbox({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Tap image → open PostModal */}
-        <img
-          src={post.media_urls?.[0]}
-          alt=""
-          style={{ width: "100%", height: "auto", display: "block", cursor: "pointer" }}
-          onClick={onOpenModal}
-        />
+        {post.layout_id === 'legacy' ? (
+          <PillarboxFrame onClick={onOpenModal} cursor="pointer">
+            <img src={post.media_urls?.[0]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+          </PillarboxFrame>
+        ) : (
+          <img
+            src={post.media_urls?.[0]}
+            alt=""
+            style={{ width: "100%", height: "auto", display: "block", cursor: "pointer" }}
+            onClick={onOpenModal}
+          />
+        )}
 
         <div style={{ padding: "10px 16px 76px" }}>
           <span
             style={{
-              ...MONO,
+              ...SKR,
               fontSize: 9,
               color: "rgba(255,255,255,0.7)",
               letterSpacing: "-0.1px",
@@ -265,18 +272,27 @@ export default function MirageView({ onClose }: { onClose: () => void }) {
                   WebkitColumnBreakInside: "avoid",
                   marginBottom: 1,
                   cursor: "pointer",
-                  // Only stagger-animate the first visible batch; subsequent
-                  // scroll-loaded items share the max-stagger delay (240ms).
                   animation: `mirage-item-in 400ms ease-out ${Math.min(index, 8) * 30}ms both`,
                 }}
                 onClick={() => handleItemTap(post)}
               >
-                <img
-                  src={post.media_urls[0]}
-                  alt=""
-                  style={{ width: "100%", height: "auto", display: "block" }}
-                  loading="lazy"
-                />
+                {post.layout_id === 'legacy' ? (
+                  <PillarboxFrame>
+                    <img
+                      src={post.media_urls[0]}
+                      alt=""
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                      loading="lazy"
+                    />
+                  </PillarboxFrame>
+                ) : (
+                  <img
+                    src={post.media_urls[0]}
+                    alt=""
+                    style={{ width: "100%", height: "auto", display: "block" }}
+                    loading="lazy"
+                  />
+                )}
               </div>
             ) : null,
           )}

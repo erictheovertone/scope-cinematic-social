@@ -1,6 +1,6 @@
 "use client";
 
-const MONO: React.CSSProperties = { fontFamily: "'IBM Plex Mono', monospace" };
+const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
 
 interface Props {
   imageUrls: string[];
@@ -24,7 +24,7 @@ export default function DeckThumbnail({ imageUrls, title }: Props) {
     return (
       <div style={wrap}>
         <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <span style={{ ...MONO, fontSize: 8, color: 'rgba(255,255,255,0.2)' }}>{title ?? ''}</span>
+          <span style={{ ...SKR, fontSize: 8, color: 'rgba(255,255,255,0.2)' }}>{title ?? ''}</span>
         </div>
       </div>
     );

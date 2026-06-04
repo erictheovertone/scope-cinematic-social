@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import MediaRenderer from "@/components/MediaRenderer";
 import ReframeOverlay from "@/components/ReframeOverlay";
+import PillarboxFrame from "@/components/PillarboxFrame";
 
 interface VideoLightboxProps {
   post: any;
@@ -80,17 +81,31 @@ export default function VideoLightbox({ post, onClose, onScrollDown, isOwner, su
       <div
         onTouchStart={(e) => e.stopPropagation()}
         onTouchEnd={(e) => e.stopPropagation()}
-        style={{ width: '92%', maxHeight: '70vh', position: 'relative' }}
+        style={{ width: '92%', position: 'relative' }}
       >
-        <MediaRenderer
-          url={post.media_urls?.[0]}
-          mediaType={post.media_type}
-          caption={post.caption}
-          autoplay={true}
-          showSoundToggle={true}
-          thumbnailUrl={post.thumbnail_url}
-          style={{ width: '100%', maxHeight: '70vh', objectFit: 'contain', display: 'block' }}
-        />
+        {post.layout_id === 'legacy' ? (
+          <PillarboxFrame>
+            <MediaRenderer
+              url={post.media_urls?.[0]}
+              mediaType={post.media_type}
+              caption={post.caption}
+              autoplay={true}
+              showSoundToggle={true}
+              thumbnailUrl={post.thumbnail_url}
+              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+            />
+          </PillarboxFrame>
+        ) : (
+          <MediaRenderer
+            url={post.media_urls?.[0]}
+            mediaType={post.media_type}
+            caption={post.caption}
+            autoplay={true}
+            showSoundToggle={true}
+            thumbnailUrl={post.thumbnail_url}
+            style={{ width: '100%', maxHeight: '70vh', objectFit: 'contain', display: 'block' }}
+          />
+        )}
       </div>
 
       {/* Info panel — below video, left aligned */}

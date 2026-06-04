@@ -67,11 +67,11 @@ function ThreeDotsIcon() {
 
 function DataRow({ label, value }: { label: string; value: string }) {
   return (
-    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
-      <span style={{ ...SKB, fontSize: 10, letterSpacing: "-0.02em", color: "#FF0000", textTransform: "uppercase", flexShrink: 0 }}>
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, lineHeight: 1.4, marginBottom: 4 }}>
+      <span style={{ ...SKB, fontSize: 10, letterSpacing: "-0.2px", color: "#FF0000", textTransform: "uppercase", flexShrink: 0, whiteSpace: "nowrap" }}>
         {label}
       </span>
-      <span style={{ ...SKB, fontSize: 10, letterSpacing: "-0.02em", color: "#FFFFFF", textTransform: "uppercase", textAlign: "right" }}>
+      <span style={{ ...SKB, fontSize: 10, letterSpacing: "-0.2px", color: "#FFFFFF", textTransform: "uppercase", textAlign: "right" }}>
         {value}
       </span>
     </div>
@@ -409,7 +409,7 @@ export default function DeckDetailPage() {
 
   if (loading) {
     return (
-      <div className="bg-black w-full max-w-[375px] min-h-screen mx-auto flex items-center justify-center">
+      <div className="bg-black w-full max-w-[375px] min-h-[100dvh] mx-auto flex items-center justify-center">
         <div style={{ width: 11, height: 11, background: "#FF0000", borderRadius: "50%" }} />
       </div>
     );
@@ -417,7 +417,7 @@ export default function DeckDetailPage() {
 
   if (!deck) {
     return (
-      <div className="bg-black w-full max-w-[375px] min-h-screen mx-auto flex items-center justify-center">
+      <div className="bg-black w-full max-w-[375px] min-h-[100dvh] mx-auto flex items-center justify-center">
         <p style={{ ...SKB, fontSize: 10, color: "white" }}>Deck not found</p>
       </div>
     );
@@ -463,7 +463,7 @@ export default function DeckDetailPage() {
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="bg-black w-full max-w-[375px] min-h-screen mx-auto pb-[80px]">
+    <div className="bg-black w-full max-w-[375px] min-h-[100dvh] mx-auto" style={{ paddingBottom: 'calc(80px + env(safe-area-inset-bottom, 0px))' }}>
 
       {/* ── Backdrops ────────────────────────────────────────────────────── */}
 
@@ -618,58 +618,65 @@ export default function DeckDetailPage() {
           style={{
             position: "fixed",
             top: 56,
-            left: "max(0px, calc(50vw - 187.5px))",
-            width: 212,
+            left: 0,
+            right: 0,
+            minHeight: 437,
             zIndex: 16,
             background: "rgba(0,0,0,0.74)",
-            padding: 16,
+            boxSizing: "border-box",
+            paddingTop: 20,
+            paddingLeft: 28,
+            paddingRight: 27,
+            paddingBottom: 24,
             animation: "panelFadeIn 200ms ease both",
           }}
         >
           {/* Data rows */}
-          {panelRows.map((row, i) => {
-            if (row.spacer !== undefined) {
-              return <div key={`sp-${i}`} style={{ height: row.spacer }} />;
-            }
-            return (
-              <div
-                key={i}
-                style={{
-                  animation: `rippleRow 160ms cubic-bezier(0.16,1,0.3,1) both`,
-                  animationDelay: `${row.delay}ms`,
-                  marginBottom: 0,
-                }}
-                className="ripple-row"
-              >
-                {row.node}
-              </div>
-            );
-          })}
+          <div>
+            {panelRows.map((row, i) => {
+              if (row.spacer !== undefined) {
+                return <div key={`sp-${i}`} style={{ height: row.spacer }} />;
+              }
+              return (
+                <div
+                  key={i}
+                  style={{
+                    animation: `rippleRow 160ms cubic-bezier(0.16,1,0.3,1) both`,
+                    animationDelay: `${row.delay}ms`,
+                  }}
+                  className="ripple-row"
+                >
+                  {row.node}
+                </div>
+              );
+            })}
+          </div>
 
-          {/* Description block */}
+          {/* DECK DESCRIPTION */}
           {deck.description && (
             <div
               style={{
-                marginTop: 16,
+                marginTop: 24,
                 animation: `rippleRow 160ms cubic-bezier(0.16,1,0.3,1) both`,
                 animationDelay: `${descDelay}ms`,
               }}
               className="ripple-row"
             >
-              <p style={{ ...SKB, fontSize: 10, letterSpacing: "-0.02em", color: "#FF0000", textTransform: "uppercase", margin: "0 0 8px" }}>
+              <p style={{ ...SKB, fontSize: 10, letterSpacing: "-0.2px", color: "#FF0000", textTransform: "uppercase", margin: "0 0 8px" }}>
                 DECK DESCRIPTION
               </p>
-              <p style={{ ...SKB, fontSize: 11, letterSpacing: "-0.02em", lineHeight: 1.5, color: "#FFFFFF", textTransform: "uppercase", margin: 0 }}>
+              <p style={{ ...SKB, fontSize: 10, letterSpacing: "-0.2px", lineHeight: 1.4, color: "#FFFFFF", textTransform: "uppercase", margin: 0 }}>
                 {deck.description}
               </p>
             </div>
           )}
 
-          {/* Bottom action */}
+          {/* EDIT DECK (bordered) / COLLECT */}
           <div
             style={{
-              display: "flex", justifyContent: "flex-end",
-              marginTop: 16,
+              marginTop: 24,
+              display: "flex",
+              justifyContent: "flex-end",
               animation: `rippleRow 160ms cubic-bezier(0.16,1,0.3,1) both`,
               animationDelay: `${actionDelay}ms`,
             }}
@@ -678,21 +685,25 @@ export default function DeckDetailPage() {
             {isOwner ? (
               <button
                 onClick={openEditDialog}
-                style={{ background: "transparent", border: "none", cursor: "pointer", padding: 0 }}
+                style={{
+                  width: 62, height: 22,
+                  background: "transparent",
+                  border: "1px solid #FFFFFF",
+                  cursor: "pointer",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  padding: 0,
+                }}
               >
-                <span style={{ ...SKB, fontSize: 11, letterSpacing: "-0.02em", color: "#FFFFFF", textTransform: "uppercase" }}>
+                <span style={{ ...SKB, fontSize: 11, letterSpacing: "-0.22px", color: "#FFFFFF", textTransform: "uppercase" }}>
                   EDIT DECK
                 </span>
               </button>
             ) : (
               <button
-                onClick={() => {
-                  console.log("Collect deck:", deck.id);
-                  closeInfo();
-                }}
+                onClick={closeInfo}
                 style={{ background: "transparent", border: "none", cursor: "pointer", padding: 0 }}
               >
-                <span style={{ ...SKB, fontSize: 11, letterSpacing: "-0.02em", color: "#FFFFFF", textTransform: "uppercase" }}>
+                <span style={{ ...SKB, fontSize: 10, letterSpacing: "-0.2px", color: "#FFFFFF", textTransform: "uppercase" }}>
                   COLLECT
                 </span>
               </button>

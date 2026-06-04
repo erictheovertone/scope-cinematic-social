@@ -33,7 +33,7 @@ const BTN: React.CSSProperties = {
   ...SKB, fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase',
 };
 
-const DIVIDER = () => <div style={{ height: 1, background: '#FF0000', margin: '28px 0 20px' }} />;
+const DIVIDER = () => <div style={{ height: 1, background: '#FF0000', margin: '28px -20px 20px' }} />;
 const SECTION = ({ label }: { label: string }) => (
   <p style={{ ...SKB, fontSize: 9, letterSpacing: '0.15em', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', margin: '0 0 16px' }}>{label}</p>
 );
@@ -45,6 +45,8 @@ export default function EditProfilePage() {
 
   const [sbUserId, setSbUserId] = useState('');
   const [loaded, setLoaded] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
+  const [floatingSaving, setFloatingSaving] = useState(false);
 
   // PROFILE BASICS
   const [displayName, setDisplayName] = useState('');
@@ -127,8 +129,8 @@ export default function EditProfilePage() {
     }
   };
 
-  const handleSaveProfile = async () => {
-    if (!sbUserId || savingProfile) return;
+  const handleSaveProfile = async (): Promise<boolean> => {
+    if (!sbUserId || savingProfile) return false;
     setSavingProfile(true);
     setProfileError(null);
     setProfileSaved(false);
@@ -136,15 +138,17 @@ export default function EditProfilePage() {
       await saveProfile(sbUserId, { displayName, username, bio, profileImageUrl: profileImageUrl || undefined });
       setProfileSaved(true);
       setTimeout(() => setProfileSaved(false), 2500);
+      return true;
     } catch (e: any) {
       setProfileError(e?.message || 'SAVE FAILED');
+      return false;
     } finally {
       setSavingProfile(false);
     }
   };
 
-  const handleSaveKit = async () => {
-    if (!sbUserId || savingKit) return;
+  const handleSaveKit = async (): Promise<boolean> => {
+    if (!sbUserId || savingKit) return false;
     setSavingKit(true);
     setKitError(null);
     setKitSaved(false);
@@ -156,15 +160,17 @@ export default function EditProfilePage() {
       } as any);
       setKitSaved(true);
       setTimeout(() => setKitSaved(false), 2500);
+      return true;
     } catch (e: any) {
       setKitError(e?.message || 'SAVE FAILED');
+      return false;
     } finally {
       setSavingKit(false);
     }
   };
 
-  const handleSaveContact = async () => {
-    if (!sbUserId || savingContact) return;
+  const handleSaveContact = async (): Promise<boolean> => {
+    if (!sbUserId || savingContact) return false;
     setSavingContact(true);
     setContactError(null);
     setContactSaved(false);
@@ -175,11 +181,20 @@ export default function EditProfilePage() {
       } as any);
       setContactSaved(true);
       setTimeout(() => setContactSaved(false), 2500);
+      return true;
     } catch (e: any) {
       setContactError(e?.message || 'SAVE FAILED');
+      return false;
     } finally {
       setSavingContact(false);
     }
+  };
+
+  const handleSaveAll = async () => {
+    setFloatingSaving(true);
+    const [a, b, c] = await Promise.all([handleSaveProfile(), handleSaveKit(), handleSaveContact()]);
+    setFloatingSaving(false);
+    if (a && b && c) { setIsDirty(false); router.push('/profile'); }
   };
 
   const handleAddLink = async () => {
@@ -221,7 +236,23 @@ export default function EditProfilePage() {
 
   return (
     <div className="bg-black" style={{ position: 'fixed', inset: 0, overflowY: 'auto' }}>
-      <div style={{ maxWidth: 375, margin: '0 auto', padding: '0 20px 60px' }}>
+
+      {isDirty && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 200, background: '#000', borderBottom: '1px solid rgba(255,255,255,0.15)', padding: '10px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span style={{ ...SKB, fontSize: 9, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>UNSAVED CHANGES</span>
+          <button
+            onClick={handleSaveAll}
+            disabled={floatingSaving}
+            style={{ background: '#FF0000', border: 'none', cursor: floatingSaving ? 'default' : 'pointer', padding: '8px 18px' }}
+          >
+            <span style={{ ...SKB, fontSize: 9, color: 'white', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+              {floatingSaving ? 'SAVING…' : 'SAVE'}
+            </span>
+          </button>
+        </div>
+      )}
+
+      <div style={{ maxWidth: 375, margin: '0 auto', padding: isDirty ? '44px 20px 60px' : '0 20px 60px' }}>
 
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', padding: '16px 0 20px', position: 'relative' }}>
@@ -231,7 +262,7 @@ export default function EditProfilePage() {
           <span style={{ ...SKB, fontSize: 10, color: 'white', position: 'absolute', left: '50%', transform: 'translateX(-50%)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>EDIT PROFILE</span>
         </div>
 
-        <div style={{ height: 1, background: '#FF0000', marginBottom: 24 }} />
+        <div style={{ height: 1, background: '#FF0000', margin: '0 -20px 24px' }} />
 
         {/* PROFILE BASICS */}
         <SECTION label="PROFILE" />
@@ -256,18 +287,18 @@ export default function EditProfilePage() {
 
         <div style={{ marginBottom: 14 }}>
           <label style={LABEL}>DISPLAY NAME</label>
-          <input style={INPUT} value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder="Your name" />
+          <input style={INPUT} value={displayName} onChange={e => { setDisplayName(e.target.value); setIsDirty(true); }} placeholder="Your name" />
         </div>
         <div style={{ marginBottom: 14 }}>
           <label style={LABEL}>USERNAME</label>
-          <input style={INPUT} value={username} onChange={e => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))} placeholder="username" />
+          <input style={INPUT} value={username} onChange={e => { setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '')); setIsDirty(true); }} placeholder="username" />
         </div>
         <div style={{ marginBottom: 18 }}>
           <label style={LABEL}>BIO</label>
           <textarea
             style={{ ...INPUT, resize: 'none', minHeight: 72, lineHeight: 1.5 } as React.CSSProperties}
             value={bio}
-            onChange={e => setBio(e.target.value)}
+            onChange={e => { setBio(e.target.value); setIsDirty(true); }}
             placeholder="Tell your story"
           />
         </div>
@@ -287,15 +318,15 @@ export default function EditProfilePage() {
         <SECTION label="KIT" />
         <div style={{ marginBottom: 14 }}>
           <label style={LABEL}>CAMERA</label>
-          <input style={INPUT} value={kitCamera} onChange={e => setKitCamera(e.target.value)} placeholder="e.g. Sony A7R IV" />
+          <input style={INPUT} value={kitCamera} onChange={e => { setKitCamera(e.target.value); setIsDirty(true); }} placeholder="e.g. Sony A7R IV" />
         </div>
         <div style={{ marginBottom: 14 }}>
           <label style={LABEL}>LENS</label>
-          <input style={INPUT} value={kitLens} onChange={e => setKitLens(e.target.value)} placeholder="e.g. Sigma 35mm f/1.4" />
+          <input style={INPUT} value={kitLens} onChange={e => { setKitLens(e.target.value); setIsDirty(true); }} placeholder="e.g. Sigma 35mm f/1.4" />
         </div>
         <div style={{ marginBottom: 18 }}>
           <label style={LABEL}>FAVORITE TOOL</label>
-          <input style={INPUT} value={kitTool} onChange={e => setKitTool(e.target.value)} placeholder="e.g. Lightroom, DaVinci" />
+          <input style={INPUT} value={kitTool} onChange={e => { setKitTool(e.target.value); setIsDirty(true); }} placeholder="e.g. Lightroom, DaVinci" />
         </div>
 
         {kitError && <p style={{ ...SKB, fontSize: 9, color: '#FF0000', margin: '0 0 10px', letterSpacing: '0.06em' }}>{kitError}</p>}
@@ -371,7 +402,7 @@ export default function EditProfilePage() {
         )}
 
         <a href="/profile/links" style={{ display: 'block', marginTop: 8, marginBottom: 4 }}>
-          <span style={{ ...SKR, fontSize: 9, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.06em' }}>Advanced link settings ↗</span>
+          <span style={{ ...SKB, fontSize: 11, color: 'rgba(255,255,255,0.6)', letterSpacing: '0.06em' }}>Advanced link settings ↗</span>
         </a>
 
         <DIVIDER />
@@ -380,11 +411,11 @@ export default function EditProfilePage() {
         <SECTION label="CONTACT" />
         <div style={{ marginBottom: 14 }}>
           <label style={LABEL}>EMAIL</label>
-          <input style={INPUT} value={contactEmail} onChange={e => setContactEmail(e.target.value)} placeholder="your@email.com" type="email" />
+          <input style={INPUT} value={contactEmail} onChange={e => { setContactEmail(e.target.value); setIsDirty(true); }} placeholder="your@email.com" type="email" />
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 18 }}>
           <button
-            onClick={() => setContactPublic(v => !v)}
+            onClick={() => { setContactPublic(v => !v); setIsDirty(true); }}
             style={{ width: 32, height: 18, background: contactPublic ? '#FF0000' : 'rgba(255,255,255,0.15)', border: 'none', cursor: 'pointer', position: 'relative', flexShrink: 0, transition: 'background 0.2s' }}
           >
             <div style={{ position: 'absolute', top: 3, left: contactPublic ? 16 : 3, width: 12, height: 12, background: 'white', transition: 'left 0.2s' }} />

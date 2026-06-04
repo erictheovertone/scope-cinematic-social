@@ -16,7 +16,7 @@ const LAYOUTS = [
   { id: "scope",          label: "1X SCOPE",     ratio: 2.39, ratioLabel: "2.39:1", cols: 1, resolution: "4096x1716" },
   { id: "cine-wide-2col", label: "2X CINE WIDE", ratio: 1.85, ratioLabel: "1.85:1", cols: 2, resolution: "4096x2214" },
   { id: "cine-wide",      label: "1X CINE WIDE", ratio: 1.85, ratioLabel: "1.85:1", cols: 1, resolution: "4096x2214" },
-  { id: "legacy",         label: "3X LEGACY",    ratio: 4/3,  ratioLabel: "4:3",    cols: 3, resolution: "1024x768"  },
+  { id: "legacy",         label: "2X LEGACY",    ratio: 4/3,  ratioLabel: "4:3",    cols: 2, resolution: "1024x768"  },
   { id: "collage",        label: "COLLAGE",       ratio: 0,    ratioLabel: "mixed",  cols: 0, resolution: null        },
 ];
 
@@ -27,7 +27,7 @@ const names: Record<string, string> = {
   "scope":          "1X SCOPE",
   "cine-wide-2col": "2X CINE WIDE",
   "cine-wide":      "1X CINE WIDE",
-  "legacy":         "3X LEGACY",
+  "legacy":         "2X LEGACY",
   "collage":        "COLLAGE",
 };
 

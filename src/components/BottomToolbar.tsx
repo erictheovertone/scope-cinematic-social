@@ -94,7 +94,7 @@ export default function BottomToolbar({ page, unreadCount = 0, onNotificationsCl
         left: 0,
         right: 0,
         height: 50,
-        background: 'linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 100%)',
+        background: 'linear-gradient(to top, rgba(0,0,0,0.54) 0%, rgba(0,0,0,0) 100%)',
         zIndex: 49,
         pointerEvents: 'none',
       }} />
@@ -106,7 +106,7 @@ export default function BottomToolbar({ page, unreadCount = 0, onNotificationsCl
         right: 0,
         height: isHome ? 60 : 'auto',
         zIndex: 50,
-        background: isHome ? 'transparent' : 'linear-gradient(to top, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.3) 60%, transparent 100%)',
+        background: isHome ? 'transparent' : 'linear-gradient(to top, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.18) 60%, transparent 100%)',
       }}
     >
       <div
@@ -116,9 +116,11 @@ export default function BottomToolbar({ page, unreadCount = 0, onNotificationsCl
           height: '100%',
           margin: '0 auto',
           display: 'flex',
-          justifyContent: 'space-around',
+          justifyContent: 'space-between',
           alignItems: 'flex-end',
-          padding: '0 2px 2px',
+          paddingLeft: 8,
+          paddingRight: 8,
+          paddingBottom: 2,
         } : {
           display: 'flex',
           justifyContent: 'space-between',
@@ -179,7 +181,8 @@ export default function BottomToolbar({ page, unreadCount = 0, onNotificationsCl
                   top: 2, right: 1,
                   background: '#FF0000',
                   color: 'white',
-                  fontFamily: "'IBM Plex Mono', monospace",
+                  fontFamily: "'SK-Modernist', sans-serif",
+                  fontWeight: 700,
                   fontSize: 8,
                   lineHeight: 1,
                   padding: '1px 3px',

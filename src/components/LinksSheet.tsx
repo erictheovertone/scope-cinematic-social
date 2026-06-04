@@ -3,7 +3,7 @@
 import { useState } from "react";
 import type { ProfileLink } from "@/lib/userService";
 
-const MONO: React.CSSProperties = { fontFamily: "'IBM Plex Mono', monospace" };
+const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
 
 function getDomain(url: string): string {
   try { return new URL(url).hostname.replace('www.', ''); } catch { return url; }
@@ -92,7 +92,7 @@ export default function LinksSheet({ username, links, visible, onClose }: LinksS
         {/* Header */}
         <div style={{ flexShrink: 0, position: "relative", display: "flex", alignItems: "center", justifyContent: "center", padding: "10px 16px 8px" }}>
           <div style={{ position: "absolute", top: 8, left: "50%", transform: "translateX(-50%)", width: 40, height: 2, backgroundColor: "rgba(255,255,255,0.2)" }} />
-          <span style={{ ...MONO, fontSize: 10, color: "white", opacity: 0.6, marginTop: 8 }}>@{username}</span>
+          <span style={{ ...SKR, fontSize: 10, color: "white", opacity: 0.6, marginTop: 8 }}>@{username}</span>
           <button
             onClick={() => { setActiveVideo(null); onClose(); }}
             style={{ position: "absolute", right: 16, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "white", fontSize: 18, lineHeight: 1, padding: 0, marginTop: 4 }}
@@ -131,7 +131,7 @@ export default function LinksSheet({ username, links, visible, onClose }: LinksS
         <div style={{ flex: 1, overflowY: "auto", padding: "8px 12px" }}>
           {links.length === 0 ? (
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "60%" }}>
-              <span style={{ ...MONO, fontSize: 10, color: "rgba(255,255,255,0.3)" }}>No links yet</span>
+              <span style={{ ...SKR, fontSize: 10, color: "rgba(255,255,255,0.3)" }}>No links yet</span>
             </div>
           ) : (
             links.map(link => {
@@ -183,15 +183,15 @@ export default function LinksSheet({ username, links, visible, onClose }: LinksS
                     {/* Title + description + domain */}
                     <div style={{ padding: "8px 0" }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8 }}>
-                        <p style={{ ...MONO, fontSize: 10, color: "white", margin: 0, lineHeight: 1.3, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis", flex: 1 }}>
+                        <p style={{ ...SKR, fontSize: 10, color: "white", margin: 0, lineHeight: 1.3, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis", flex: 1 }}>
                           {link.title || getDomain(link.url)}
                         </p>
-                        <p style={{ ...MONO, fontSize: 9, color: "white", opacity: 0.5, margin: 0, flexShrink: 0 }}>
+                        <p style={{ ...SKR, fontSize: 9, color: "white", opacity: 0.5, margin: 0, flexShrink: 0 }}>
                           {getDomain(link.url)}
                         </p>
                       </div>
                       {link.description && (
-                        <p style={{ ...MONO, fontSize: 9, color: "white", opacity: 0.6, margin: "3px 0 0", lineHeight: 1.4, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
+                        <p style={{ ...SKR, fontSize: 9, color: "white", opacity: 0.6, margin: "3px 0 0", lineHeight: 1.4, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
                           {link.description}
                         </p>
                       )}
@@ -225,15 +225,15 @@ export default function LinksSheet({ username, links, visible, onClose }: LinksS
                     </div>
                     <div style={{ padding: "8px 0" }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8 }}>
-                        <p style={{ ...MONO, fontSize: 10, color: "white", margin: 0, lineHeight: 1.3, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis", flex: 1 }}>
+                        <p style={{ ...SKR, fontSize: 10, color: "white", margin: 0, lineHeight: 1.3, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis", flex: 1 }}>
                           {link.title || getDomain(link.url)}
                         </p>
-                        <p style={{ ...MONO, fontSize: 9, color: "white", opacity: 0.5, margin: 0, flexShrink: 0 }}>
+                        <p style={{ ...SKR, fontSize: 9, color: "white", opacity: 0.5, margin: 0, flexShrink: 0 }}>
                           {getDomain(link.url)}
                         </p>
                       </div>
                       {link.description && (
-                        <p style={{ ...MONO, fontSize: 9, color: "white", opacity: 0.6, margin: "3px 0 0", lineHeight: 1.4, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
+                        <p style={{ ...SKR, fontSize: 9, color: "white", opacity: 0.6, margin: "3px 0 0", lineHeight: 1.4, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
                           {link.description}
                         </p>
                       )}
@@ -269,14 +269,14 @@ export default function LinksSheet({ username, links, visible, onClose }: LinksS
 
                   {/* Text */}
                   <div style={{ flex: 1, overflow: "hidden" }}>
-                    <p style={{ ...MONO, fontSize: 10, color: "white", margin: 0, lineHeight: 1.3, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>
+                    <p style={{ ...SKR, fontSize: 10, color: "white", margin: 0, lineHeight: 1.3, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>
                       {link.title || getDomain(link.url)}
                     </p>
-                    <p style={{ ...MONO, fontSize: 9, color: "white", opacity: 0.4, margin: "2px 0 0", overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>
+                    <p style={{ ...SKR, fontSize: 9, color: "white", opacity: 0.4, margin: "2px 0 0", overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>
                       {getDomain(link.url)}
                     </p>
                     {link.description && (
-                      <p style={{ ...MONO, fontSize: 9, color: "white", opacity: 0.6, margin: "4px 0 0", lineHeight: 1.4, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
+                      <p style={{ ...SKR, fontSize: 9, color: "white", opacity: 0.6, margin: "4px 0 0", lineHeight: 1.4, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
                         {link.description}
                       </p>
                     )}

@@ -41,6 +41,20 @@ export const saveProfile = async (userId: string, profileData: {
   profileImageUrl?: string
   websiteUrl?: string
 }) => {
+  // Record old handle before overwriting so old URLs redirect to the new one
+  if (profileData.username) {
+    const { data: current } = await supabase
+      .from('profiles')
+      .select('username')
+      .eq('user_id', userId)
+      .maybeSingle()
+    if (current?.username && current.username !== profileData.username) {
+      await supabase
+        .from('handle_history')
+        .upsert({ old_username: current.username, user_id: userId }, { onConflict: 'old_username' })
+    }
+  }
+
   const { data, error } = await supabase
     .from('profiles')
     .upsert({
@@ -101,6 +115,34 @@ export const getProfileByUsername = async (username: string): Promise<Profile | 
     console.error('Error fetching profile by username:', sbErr(error))
     return null
   }
+}
+
+// Resolves a username that may be current or historical (after a handle change).
+// Returns the profile + a redirectTo handle if the requested username is stale.
+export const resolveProfileByUsername = async (
+  username: string
+): Promise<{ profile: Profile | null; redirectTo: string | null }> => {
+  const profile = await getProfileByUsername(username)
+  if (profile) return { profile, redirectTo: null }
+
+  // Check handle history for a renamed user
+  const { data: history } = await supabase
+    .from('handle_history')
+    .select('user_id')
+    .eq('old_username', username)
+    .maybeSingle()
+
+  if (!history) return { profile: null, redirectTo: null }
+
+  const { data: current } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('user_id', history.user_id)
+    .maybeSingle()
+
+  if (!current?.username) return { profile: null, redirectTo: null }
+
+  return { profile: current as Profile, redirectTo: current.username }
 }
 
 export const uploadImage = async (file: File, bucket: string = 'profile-images', privyUserId?: string): Promise<string> => {
@@ -647,6 +689,20 @@ export const updateProfileFields = async (
     contact_email_public: boolean;
   }>
 ): Promise<void> => {
+  // Record old handle before overwriting so old URLs redirect to the new one
+  if (fields.username) {
+    const { data: current } = await supabase
+      .from('profiles')
+      .select('username')
+      .eq('user_id', supabaseUserId)
+      .maybeSingle()
+    if (current?.username && current.username !== fields.username) {
+      await supabase
+        .from('handle_history')
+        .upsert({ old_username: current.username, user_id: supabaseUserId }, { onConflict: 'old_username' })
+    }
+  }
+
   const { error } = await supabase
     .from('profiles')
     .update({ ...fields, updated_at: new Date().toISOString() })

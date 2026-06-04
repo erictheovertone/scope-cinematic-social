@@ -67,8 +67,10 @@ export function getColCount(layoutId: string): string {
 
     case '3x-legacy':
     case '3x-square':
-    case 'legacy':
       return 'grid-cols-3';
+
+    case 'legacy':
+      return 'grid-cols-2';
 
     default:
       return 'grid-cols-1';

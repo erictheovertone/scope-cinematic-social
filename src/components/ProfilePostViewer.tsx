@@ -14,10 +14,10 @@ import DeletePostSheet from "@/components/DeletePostSheet";
 import MediaRenderer from "@/components/MediaRenderer";
 import { supabase } from "@/lib/supabase/client";
 import { getAspectRatio } from "@/lib/aspectRatio";
+import PillarboxFrame from "@/components/PillarboxFrame";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
-const MONO: React.CSSProperties = { fontFamily: "'IBM Plex Mono', monospace" };
 
 interface Post {
   id: string;
@@ -127,12 +127,10 @@ function PostViewerItem({
   return (
     <div>
 
-      {/* ── IMAGE ── position:relative, overflow:hidden */}
-      <div
-        style={{ position: "relative", width: "100%", aspectRatio: getAspectRatio(post.layout_id ?? ''), overflow: "hidden", background: "#0a0a0a" }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {post.media_urls?.[0] ? (
+      {/* ── IMAGE ── */}
+      {(() => {
+        const is43 = (post.layout_id ?? '') === 'legacy';
+        const mediaEl = post.media_urls?.[0] ? (
           <MediaRenderer
             url={post.media_urls[0]}
             mediaType={(post as any).media_type}
@@ -144,31 +142,41 @@ function PostViewerItem({
           />
         ) : (
           <div style={{ width: "100%", height: "100%", background: "#111" }} />
-        )}
-
-        {/* Avatar + username — flex row, top: 6, left: 6 */}
-        <div
-          className="absolute"
-          onClick={(e) => { e.stopPropagation(); onNavigateToProfile(); }}
-          style={{ top: 6, left: 6, display: "flex", alignItems: "center", gap: 4, cursor: "pointer", zIndex: 10, opacity: 0.85 }}
-        >
-          <img
-            src={ownerAvatarUrl || undefined}
-            style={{ width: 14, height: 14, borderRadius: "50%", objectFit: "cover", flexShrink: 0, background: "#333" }}
-          />
-          <span style={{ ...SKB, fontSize: 8, color: "white", textShadow: "0 1px 2px rgba(0,0,0,1)", lineHeight: 1, textTransform: "uppercase" }}>
-            @{ownerUsername}
-          </span>
-        </div>
-
-        {/* MC — top: 6, right: 6 */}
-        <span
-          className="absolute"
-          style={{ top: 6, right: 6, ...SKB, fontSize: 8, color: "white", textShadow: "0 1px 2px rgba(0,0,0,1)", lineHeight: 1, opacity: 0.7, textTransform: "uppercase" }}
-        >
-          MC: —
-        </span>
-      </div>
+        );
+        const overlayEls = (
+          <>
+            <div
+              className="absolute"
+              onClick={(e) => { e.stopPropagation(); onNavigateToProfile(); }}
+              style={{ top: 6, left: 6, display: "flex", alignItems: "center", gap: 4, cursor: "pointer", zIndex: 10, opacity: 0.85 }}
+            >
+              <img src={ownerAvatarUrl || undefined} style={{ width: 14, height: 14, borderRadius: "50%", objectFit: "cover", flexShrink: 0, background: "#333" }} />
+              <span style={{ ...SKB, fontSize: 8, color: "white", textShadow: "0 1px 2px rgba(0,0,0,1)", lineHeight: 1, textTransform: "uppercase" }}>
+                @{ownerUsername}
+              </span>
+            </div>
+            <span
+              className="absolute"
+              style={{ top: 6, right: 6, ...SKB, fontSize: 8, color: "white", textShadow: "0 1px 2px rgba(0,0,0,1)", lineHeight: 1, opacity: 0.7, textTransform: "uppercase" }}
+            >
+              MC: —
+            </span>
+          </>
+        );
+        return is43 ? (
+          <PillarboxFrame onClick={(e) => e.stopPropagation()} overlays={overlayEls}>
+            {mediaEl}
+          </PillarboxFrame>
+        ) : (
+          <div
+            style={{ position: "relative", width: "100%", aspectRatio: getAspectRatio(post.layout_id ?? ''), overflow: "hidden", background: "#0a0a0a" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {mediaEl}
+            {overlayEls}
+          </div>
+        );
+      })()}
 
       {/* ── ACTION ROW — marginTop: 2px ── */}
       <div style={{ marginTop: 2, padding: "0 4px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -269,9 +277,9 @@ function PostViewerItem({
       />
 
       {/* ── CAPTION — marginTop: 3, marginBottom: 16 (separator) ── */}
-      <div style={{ padding: "0 4px", marginTop: 3, marginBottom: 31 }}>
+      <div style={{ padding: "0 4px", marginTop: 2, marginBottom: 31 }}>
         {post.caption ? (
-          <p style={{ ...SKR, fontSize: 8, color: "white", margin: 0, lineHeight: 1.4 }}>
+          <p style={{ ...SKR, fontSize: 10, color: "white", margin: 0, lineHeight: 1.4 }}>
             {post.caption}
           </p>
         ) : null}
@@ -287,7 +295,7 @@ function PostViewerItem({
                   <div style={{ width: 16, height: 16, borderRadius: "50%", background: "#2a2a2a", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
                     {c.profile_image_url
                       ? <img src={c.profile_image_url} alt={c.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                      : <span style={{ ...MONO, fontSize: 6, color: "white", textTransform: "uppercase" }}>{c.username?.[0] ?? "?"}</span>
+                      : <span style={{ ...SKB, fontSize: 6, color: "white", textTransform: "uppercase" }}>{c.username?.[0] ?? "?"}</span>
                     }
                   </div>
                   <div>

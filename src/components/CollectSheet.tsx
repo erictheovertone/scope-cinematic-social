@@ -7,7 +7,8 @@ import { base } from "viem/chains";
 import { collectPost, sellPost, getTokenPrice, getHolderBalance, diagnoseContract, getSaleConfig } from "@/lib/zora";
 import { getLiveEthPrice } from "@/lib/coingecko";
 
-const MONO: React.CSSProperties = { fontFamily: "'IBM Plex Mono', monospace" };
+const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
+const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
 const QUANTITIES = [1, 5, 10, 100];
 
 function getAspect(gridLayout?: string | null): string {
@@ -229,11 +230,11 @@ export default function CollectSheet({ post, visible, onClose }: CollectSheetPro
         </div>
 
         <div style={{ padding: "8px 16px 0", flexShrink: 0 }}>
-          <p style={{ ...MONO, fontSize: 9, color: "white", opacity: 0.6, margin: 0 }}>
+          <p style={{ ...SKR, fontSize: 9, color: "white", opacity: 0.6, margin: 0 }}>
             @{post.username}
           </p>
           {post.caption && (
-            <p style={{ ...MONO, fontSize: 9, color: "white", opacity: 0.5, margin: "2px 0 0", overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>
+            <p style={{ ...SKR, fontSize: 9, color: "white", opacity: 0.5, margin: "2px 0 0", overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>
               {post.caption}
             </p>
           )}
@@ -251,7 +252,8 @@ export default function CollectSheet({ post, visible, onClose }: CollectSheetPro
                   border: `1px solid ${mode === m ? "white" : "rgba(255,255,255,0.15)"}`,
                   cursor: "pointer",
                   padding: "8px 0",
-                  fontFamily: "'IBM Plex Mono', monospace",
+                  fontFamily: "'SK-Modernist', sans-serif",
+                  fontWeight: 700,
                   fontSize: 10,
                   color: mode === m ? "white" : "rgba(255,255,255,0.4)",
                   letterSpacing: "0.08em",
@@ -266,22 +268,22 @@ export default function CollectSheet({ post, visible, onClose }: CollectSheetPro
         <div style={{ flex: 1, overflowY: "auto" }}>
           {notMinted ? (
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: 80 }}>
-              <p style={{ ...MONO, fontSize: 10, color: "rgba(255,255,255,0.4)", margin: 0, textAlign: "center" }}>
+              <p style={{ ...SKR, fontSize: 10, color: "rgba(255,255,255,0.4)", margin: 0, textAlign: "center" }}>
                 Not yet available to collect
               </p>
             </div>
           ) : (
             <>
-              <p style={{ ...MONO, fontSize: 10, color: "white", opacity: 0.4, margin: 0, padding: "12px 16px 0", letterSpacing: "0.08em" }}>
+              <p style={{ ...SKB, fontSize: 10, color: "white", opacity: 0.4, margin: 0, padding: "12px 16px 0", letterSpacing: "0.08em" }}>
                 {mode === "buy" ? "BUY" : `SELL · YOU HOLD ${holderBalance.toString()}`}
               </p>
 
               <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", padding: "6px 16px 0" }}>
                 <div>
-                  <p style={{ ...MONO, fontSize: 32, color: "white", margin: 0, lineHeight: 1 }}>
+                  <p style={{ ...SKB, fontSize: 32, color: "white", margin: 0, lineHeight: 1 }}>
                     {priceLoading ? "..." : (totalEth ?? "—")}
                   </p>
-                  <p style={{ ...MONO, fontSize: 9, color: "white", opacity: 0.5, margin: "4px 0 0" }}>
+                  <p style={{ ...SKR, fontSize: 9, color: "white", opacity: 0.5, margin: "4px 0 0" }}>
                     ≈ ${priceLoading ? "..." : (totalUsd ?? "—")} · live rate
                   </p>
                 </div>
@@ -290,7 +292,7 @@ export default function CollectSheet({ post, visible, onClose }: CollectSheetPro
                     <path d="M11.944 17.97L4.58 13.62 11.943 24l7.37-10.38-7.372 4.35z" fill="white" />
                     <path d="M12.056 0L4.69 12.223l7.365 4.354 7.365-4.35L12.056 0z" fill="white" opacity="0.7" />
                   </svg>
-                  <span style={{ ...MONO, fontSize: 10, color: "white" }}>ETH · BASE</span>
+                  <span style={{ ...SKR, fontSize: 10, color: "white" }}>ETH · BASE</span>
                 </div>
               </div>
 
@@ -308,7 +310,8 @@ export default function CollectSheet({ post, visible, onClose }: CollectSheetPro
                         border: `1px solid ${overBalance ? "rgba(255,255,255,0.08)" : selectedQty === qty ? "white" : "rgba(255,255,255,0.2)"}`,
                         cursor: overBalance ? "not-allowed" : "pointer",
                         padding: "5px 2px",
-                        fontFamily: "'IBM Plex Mono', monospace",
+                        fontFamily: "'SK-Modernist', sans-serif",
+                        fontWeight: 400,
                         fontSize: 8,
                         color: overBalance ? "rgba(255,255,255,0.2)" : "white",
                         opacity: selectedQty === qty && !overBalance ? 1 : 0.6,
@@ -323,14 +326,14 @@ export default function CollectSheet({ post, visible, onClose }: CollectSheetPro
               </div>
 
               <div style={{ padding: "12px 16px 0" }}>
-                <p style={{ ...MONO, fontSize: 9, color: "white", opacity: 0.5, margin: 0 }}>PRICE / TOKEN</p>
-                <p style={{ ...MONO, fontSize: 9, color: "white", margin: "2px 0 0" }}>
+                <p style={{ ...SKB, fontSize: 9, color: "white", opacity: 0.5, margin: 0 }}>PRICE / TOKEN</p>
+                <p style={{ ...SKR, fontSize: 9, color: "white", margin: "2px 0 0" }}>
                   {priceLoading ? "..." : pricePerTokenEth != null ? `${pricePerTokenEth.toFixed(6)} ETH` : "—"}
                 </p>
               </div>
 
               {mode === "sell" && (
-                <p style={{ ...MONO, fontSize: 8, color: "rgba(255,255,255,0.35)", margin: "10px 16px 0", lineHeight: 1.5 }}>
+                <p style={{ ...SKR, fontSize: 8, color: "rgba(255,255,255,0.35)", margin: "10px 16px 0", lineHeight: 1.5 }}>
                   SELL burns your token and routes through secondary markets.
                 </p>
               )}
@@ -340,7 +343,7 @@ export default function CollectSheet({ post, visible, onClose }: CollectSheetPro
 
         <div style={{ flexShrink: 0, padding: "12px 16px 32px", display: "flex", flexDirection: "column", gap: 8 }}>
           {txStatus === "confirming" && (
-            <p style={{ ...MONO, fontSize: 9, color: "rgba(255,255,255,0.5)", margin: 0, textAlign: "center" }}>
+            <p style={{ ...SKB, fontSize: 9, color: "rgba(255,255,255,0.5)", margin: 0, textAlign: "center" }}>
               CONFIRMING TRANSACTION...
             </p>
           )}
@@ -354,12 +357,12 @@ export default function CollectSheet({ post, visible, onClose }: CollectSheetPro
                 }}
                 style={{ width: "100%", background: "transparent", border: "1px solid #FF0000", cursor: "pointer", padding: "10px 0" }}
               >
-                <span style={{ ...MONO, fontSize: 10, color: "#FF0000", letterSpacing: "0.06em" }}>
+                <span style={{ ...SKB, fontSize: 10, color: "#FF0000", letterSpacing: "0.06em" }}>
                   INSUFFICIENT FUNDS · TAP TO FUND WALLET
                 </span>
               </button>
             ) : (
-              <p style={{ ...MONO, fontSize: 9, color: "#FF0000", margin: 0, textAlign: "center", lineHeight: 1.4 }}>
+              <p style={{ ...SKR, fontSize: 9, color: "#FF0000", margin: 0, textAlign: "center", lineHeight: 1.4 }}>
                 {txError.slice(0, 80)}
               </p>
             )
@@ -377,7 +380,7 @@ export default function CollectSheet({ post, visible, onClose }: CollectSheetPro
                 padding: "14px 0",
               }}
             >
-              <span style={{ ...MONO, fontSize: 11, color: "white", letterSpacing: "0.06em" }}>
+              <span style={{ ...SKB, fontSize: 11, color: "white", letterSpacing: "0.06em" }}>
                 {working
                   ? mode === "buy" ? "BUYING..." : "SELLING..."
                   : txStatus === "success"
@@ -397,7 +400,7 @@ export default function CollectSheet({ post, visible, onClose }: CollectSheetPro
               }}
               style={{ width: "100%", background: "transparent", border: "1px solid rgba(255,255,255,0.15)", cursor: "pointer", padding: "10px 0" }}
             >
-              <span style={{ ...MONO, fontSize: 10, color: "rgba(255,255,255,0.5)", letterSpacing: "0.06em" }}>FUND WALLET</span>
+              <span style={{ ...SKB, fontSize: 10, color: "rgba(255,255,255,0.5)", letterSpacing: "0.06em" }}>FUND WALLET</span>
             </button>
           )}
         </div>

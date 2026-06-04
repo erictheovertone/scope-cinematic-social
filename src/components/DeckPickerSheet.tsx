@@ -7,8 +7,11 @@ import {
   getUserByPrivyId, getProfile,
   type Deck,
 } from "@/lib/userService";
+import { getScopeLimitType } from '@/lib/limits';
+import { useUpsell } from '@/components/UpsellProvider';
 
-const MONO: React.CSSProperties = { fontFamily: "'IBM Plex Mono', monospace" };
+const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
+const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
 
 interface Props {
   postId: string;
@@ -18,6 +21,7 @@ interface Props {
 
 export default function DeckPickerSheet({ postId, onClose, onAdded }: Props) {
   const { user } = usePrivy();
+  const { showUpsell } = useUpsell();
   const [decks, setDecks] = useState<(Deck & { item_count: number })[]>([]);
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState<string | null>(null);
@@ -69,7 +73,9 @@ export default function DeckPickerSheet({ postId, onClose, onAdded }: Props) {
       const deck = await createDeck(user.id, username, newTitle.trim(), "");
       await addPostToDeck(deck.id, postId);
       onAdded(deck.title);
-    } catch (e) {
+    } catch (e: any) {
+      const lt = getScopeLimitType(e);
+      if (lt) { setCreating(false); showUpsell(lt); return; }
       console.error("createDeck error:", e);
       setCreating(false);
     }
@@ -111,10 +117,10 @@ export default function DeckPickerSheet({ postId, onClose, onAdded }: Props) {
       >
         {/* Header */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 12px 12px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-          <span style={{ ...MONO, fontSize: 9, color: "white", letterSpacing: "-0.18px" }}>ADD TO DECK</span>
+          <span style={{ ...SKB, fontSize: 9, color: "white", letterSpacing: "-0.18px" }}>ADD TO DECK</span>
           <button
             onClick={handleClose}
-            style={{ background: "transparent", border: "none", cursor: "pointer", ...MONO, fontSize: 11, color: "rgba(255,255,255,0.5)", padding: 0, lineHeight: 1 }}
+            style={{ background: "transparent", border: "none", cursor: "pointer", ...SKB, fontSize: 11, color: "rgba(255,255,255,0.5)", padding: 0, lineHeight: 1 }}
           >
             ✕
           </button>
@@ -127,7 +133,7 @@ export default function DeckPickerSheet({ postId, onClose, onAdded }: Props) {
         ) : (
           <>
             {decks.length === 0 && !showNewDeck && (
-              <p style={{ ...MONO, fontSize: 8, color: "rgba(255,255,255,0.35)", padding: "14px 12px 0" }}>
+              <p style={{ ...SKR, fontSize: 8, color: "rgba(255,255,255,0.35)", padding: "14px 12px 0" }}>
                 No decks yet — create one below
               </p>
             )}
@@ -152,14 +158,14 @@ export default function DeckPickerSheet({ postId, onClose, onAdded }: Props) {
                     )}
                   </div>
                   <div style={{ textAlign: "left" }}>
-                    <p style={{ ...MONO, fontSize: 9, color: "white", margin: 0 }}>{deck.title}</p>
-                    <p style={{ ...MONO, fontSize: 7, color: "rgba(255,255,255,0.4)", margin: "2px 0 0" }}>
+                    <p style={{ ...SKB, fontSize: 9, color: "white", margin: 0 }}>{deck.title}</p>
+                    <p style={{ ...SKR, fontSize: 7, color: "rgba(255,255,255,0.4)", margin: "2px 0 0" }}>
                       {deck.item_count} frames
                     </p>
                   </div>
                 </div>
                 {adding === deck.id && (
-                  <span style={{ ...MONO, fontSize: 7, color: "rgba(255,255,255,0.45)" }}>adding…</span>
+                  <span style={{ ...SKR, fontSize: 7, color: "rgba(255,255,255,0.45)" }}>adding…</span>
                 )}
               </button>
             ))}
@@ -169,7 +175,7 @@ export default function DeckPickerSheet({ postId, onClose, onAdded }: Props) {
                 onClick={() => setShowNewDeck(true)}
                 style={{ display: "block", width: "100%", background: "transparent", border: "none", cursor: "pointer", padding: "14px 12px", textAlign: "left" }}
               >
-                <span style={{ ...MONO, fontSize: 9, color: "rgba(255,255,255,0.5)" }}>+ Create new deck</span>
+                <span style={{ ...SKR, fontSize: 9, color: "rgba(255,255,255,0.5)" }}>+ Create new deck</span>
               </button>
             ) : (
               <div style={{ padding: "14px 12px" }}>
@@ -183,7 +189,7 @@ export default function DeckPickerSheet({ postId, onClose, onAdded }: Props) {
                   style={{
                     width: "100%", background: "transparent",
                     border: "none", borderBottom: "1px solid rgba(255,255,255,0.2)",
-                    outline: "none", ...MONO, fontSize: 10, color: "white",
+                    outline: "none", ...SKR, fontSize: 10, color: "white",
                     padding: "4px 0", boxSizing: "border-box",
                   }}
                 />
@@ -191,13 +197,13 @@ export default function DeckPickerSheet({ postId, onClose, onAdded }: Props) {
                   <button
                     onClick={handleCreateAndAdd}
                     disabled={!newTitle.trim() || creating}
-                    style={{ background: "transparent", border: "none", cursor: "pointer", ...MONO, fontSize: 9, color: newTitle.trim() ? "white" : "rgba(255,255,255,0.3)", padding: 0 }}
+                    style={{ background: "transparent", border: "none", cursor: "pointer", ...SKB, fontSize: 9, color: newTitle.trim() ? "white" : "rgba(255,255,255,0.3)", padding: 0 }}
                   >
                     {creating ? "Creating…" : "Create & add"}
                   </button>
                   <button
                     onClick={() => { setShowNewDeck(false); setNewTitle(""); }}
-                    style={{ background: "transparent", border: "none", cursor: "pointer", ...MONO, fontSize: 9, color: "rgba(255,255,255,0.4)", padding: 0 }}
+                    style={{ background: "transparent", border: "none", cursor: "pointer", ...SKR, fontSize: 9, color: "rgba(255,255,255,0.4)", padding: 0 }}
                   >
                     Cancel
                   </button>

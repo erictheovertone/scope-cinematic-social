@@ -14,6 +14,8 @@ import {
   getUserDecks, createDeck, addPostToDeck,
   type Deck,
 } from '@/lib/userService';
+import { getScopeLimitType } from '@/lib/limits';
+import { useUpsell } from '@/components/UpsellProvider';
 
 function profileLayoutToAspect(layoutId: string): number {
   switch (layoutId) {
@@ -201,6 +203,7 @@ interface CreatePostFlowProps {
 }
 
 export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope' }: CreatePostFlowProps) {
+  const { showUpsell } = useUpsell();
   const [step, setStep] = useState<'media' | 'edit' | 'deck' | 'posting'>('media');
   const [selectedMedia, setSelectedMedia] = useState<MediaItem[]>([]);
   const [caption, setCaption] = useState('');
@@ -523,6 +526,8 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
       setShowMintPrompt(true);
 
     } catch (e: any) {
+      const lt = getScopeLimitType(e);
+      if (lt) { setIsPosting(false); setIsUploading(false); showUpsell(lt); return; }
       console.error('[handlePost] FAILED:', e);
       console.error('[handlePost] error message:', e?.message);
       console.error('[handlePost] error code:', e?.code);
@@ -603,7 +608,9 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
       setSelectedDeckId(deck.id);
       setShowNewDeckForm(false);
       setNewDeckTitle('');
-    } catch (e) {
+    } catch (e: any) {
+      const lt = getScopeLimitType(e);
+      if (lt) { setCreatingDeck(false); showUpsell(lt); return; }
       console.error('createDeck error:', e);
     } finally {
       setCreatingDeck(false);

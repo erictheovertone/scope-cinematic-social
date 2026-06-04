@@ -131,14 +131,13 @@ export default function Preferences() {
 
       {/* Header */}
       <div style={{ position: 'relative', display: 'flex', alignItems: 'center', padding: '14px 16px' }}>
-        <div style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: '#FF0000', flexShrink: 0, marginRight: 10 }} />
         <button
           onClick={() => router.back()}
           style={{ ...MONO, fontSize: 11, color: 'white', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textTransform: 'uppercase', letterSpacing: '0.06em' }}
         >
           ← Back
         </button>
-        <span style={{ ...MONO, fontSize: 11, color: 'white', position: 'absolute', left: '50%', transform: 'translateX(-50%)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+        <span style={{ ...MONO, fontSize: 15, color: 'white', position: 'absolute', left: '50%', transform: 'translateX(-50%)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
           SETTINGS
         </span>
       </div>

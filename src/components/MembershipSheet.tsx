@@ -297,7 +297,7 @@ export default function MembershipSheet({ visible, onClose, onSuccess, isPaidMem
             BECOME A SCOPE MEMBER
           </p>
           <p style={{ ...REG, fontSize: 11, color: "rgba(255,255,255,0.5)", lineHeight: 1.6, margin: 0 }}>
-            Unlock unlimited posts, decks, analytics, and your place in the Scope ecosystem. Membership is debited directly from your wallet.
+            Unlock unlimited posts, unlimited decks, more links, and the full cinematic editing suite. Membership is debited directly from your wallet.
           </p>
         </div>
 
@@ -305,11 +305,9 @@ export default function MembershipSheet({ visible, onClose, onSuccess, isPaidMem
         <div style={{ marginBottom: 28, borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: 20 }}>
           {[
             "UNLIMITED POSTS",
-            "DECKS & COLLECTIONS",
-            "FULL ANALYTICS PER POST",
-            "SCOPE MEMBER BADGE",
-            "EARLY ACCESS TO NEW FEATURES",
-            "PRIORITY SUPPORT",
+            "UNLIMITED DECKS",
+            "UP TO 5 LINKS",
+            "FULL EDITING SUITE",
           ].map(benefit => (
             <div key={benefit} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
               <div style={{ width: 4, height: 4, borderRadius: "50%", backgroundColor: "#FF0000", flexShrink: 0 }} />

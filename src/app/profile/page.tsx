@@ -20,6 +20,8 @@ import AddToHomeScreenSheet from "@/components/AddToHomeScreenSheet";
 import { shouldShowA2HS } from "@/lib/pwaUtils";
 import PostCell from "@/components/PostCell";
 import { getColCount } from "@/lib/aspectRatio";
+import { getScopeLimitType } from "@/lib/limits";
+import { useUpsell } from "@/components/UpsellProvider";
 
 function getGridCols(layoutId: string): string {
   if (layoutId.startsWith('2x-')) return 'grid-cols-2';
@@ -29,6 +31,7 @@ function getGridCols(layoutId: string): string {
   // legacy
   if (layoutId === '2x-super-wide' || layoutId === '2x-regular-wide') return 'grid-cols-2';
   if (layoutId === '3x-square') return 'grid-cols-3';
+  if (layoutId === 'legacy') return 'grid-cols-2';
   return 'grid-cols-1';
 }
 
@@ -47,13 +50,13 @@ function getPostAspect(layoutId: string, index: number): string {
   }
 }
 
-const MONO: React.CSSProperties = { fontFamily: "'IBM Plex Mono', monospace" };
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
 
 export default function Profile() {
   const { user } = usePrivy();
   const router = useRouter();
+  const { showUpsell } = useUpsell();
   const searchParams = useSearchParams();
   const [profileDataOpen, setProfileDataOpen] = useState(false);
   const [rawProfile, setRawProfile] = useState<any>(null);
@@ -117,9 +120,9 @@ const userLayoutId = stableLayoutId;
     }, 500);
   };
   const headerOpacity = Math.max(0, 1 - gridScrollY / 80);
-  const gridTop = Math.max(0, 140 * (1 - gridScrollY / 20));
   const tabRowOffset = Math.min(gridScrollY, 101);
   const gridScrollRef = useRef<HTMLDivElement>(null);
+  const rafPendingRef = useRef(false);
 
   useEffect(() => {
     if (!user) return;
@@ -258,20 +261,23 @@ const userLayoutId = stableLayoutId;
       />
 
       {/* Header */}
-      <div style={{
-        position: 'relative',
-        height: 124,
-        background: '#000',
-        paddingTop: 'env(safe-area-inset-top, 0px)',
-        boxSizing: 'content-box',
-        opacity: Math.max(0, 1 - gridScrollY / 20),
-        pointerEvents: gridScrollY < 20 ? 'auto' : 'none',
-        transition: 'opacity 0.25s ease',
-        zIndex: 10,
-      }}>
+      <div
+        onClick={profileDataOpen ? () => setProfileDataOpen(false) : undefined}
+        style={{
+          position: 'relative',
+          height: 124,
+          background: '#000',
+          paddingTop: 'env(safe-area-inset-top, 0px)',
+          boxSizing: 'content-box',
+          opacity: profileDataOpen ? 1 : Math.max(0, 1 - gridScrollY / 20),
+          pointerEvents: (profileDataOpen || gridScrollY < 20) ? 'auto' : 'none',
+          transition: 'opacity 0.25s ease',
+          zIndex: profileDataOpen ? 200 : 10,
+        }}
+      >
 
       {/* PFP container */}
-      <div style={{ position: 'absolute', left: 8, top: 10, width: 80, height: 80 }}>
+      <div style={{ position: 'absolute', left: 12, top: 10, width: 80, height: 80 }}>
 
         <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', zIndex: 1 }}>
           {userProfile.profileImage ? (
@@ -353,14 +359,14 @@ const userLayoutId = stableLayoutId;
       </div>
 
       {/* Name */}
-      <div style={{ position: 'absolute', left: 98, top: 10 }}>
+      <div style={{ position: 'absolute', left: 102, top: 10 }}>
         <p style={{ ...SKB, fontSize: 13, color: 'white', letterSpacing: '-0.02em', lineHeight: 1.2, margin: 0, textTransform: 'uppercase' }}>
           {userProfile.displayName}
         </p>
       </div>
 
       {/* Handle */}
-      <div style={{ position: 'absolute', left: 98, top: 26 }}>
+      <div style={{ position: 'absolute', left: 102, top: 26 }}>
         <p style={{ ...SKB, fontSize: 10, color: 'rgba(255,255,255,0.6)', letterSpacing: '-0.02em', lineHeight: 1.2, margin: 0, textTransform: 'uppercase' }}>
           {userProfile.username ? `@${userProfile.username}` : ''}
         </p>
@@ -373,11 +379,14 @@ const userLayoutId = stableLayoutId;
           position: 'absolute', top: 0, right: 0,
           background: 'transparent', border: 'none', cursor: 'pointer', padding: 7,
           display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end',
+          opacity: profileDataOpen ? 0 : 1,
+          pointerEvents: profileDataOpen ? 'none' : 'auto',
+          transition: 'opacity 200ms ease',
         }}
         aria-label="View profile info"
       >
         <div style={{
-          width: 13, height: 10,
+          width: 14.6, height: 11.2,
           border: '0.5px solid #FFFFFF',
           background: profileDataOpen ? '#FFFFFF' : 'transparent',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -386,7 +395,7 @@ const userLayoutId = stableLayoutId;
         }}>
           <span style={{
             fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700,
-            fontSize: 14, letterSpacing: '-0.02em',
+            fontSize: 15.7, letterSpacing: '-0.02em',
             color: profileDataOpen ? '#000000' : '#FFFFFF',
             lineHeight: 1, display: 'block',
             transform: 'translateY(-1px)',
@@ -505,9 +514,9 @@ const userLayoutId = stableLayoutId;
         </div>
       )}
 
-      {/* Posts grid — top moves up as header fades. Only shown on main tab. */}
+      {/* Posts grid — header space reserved by spacer in scroll content, not by moving the container. */}
       {layoutLoaded && activeTab === 'main' && (
-        <div style={{ position: 'absolute', inset: 0, top: `${gridTop}px` }}>
+        <div style={{ position: 'absolute', inset: 0 }}>
           {userPosts.length === 0 ? (
             <div
               style={{
@@ -520,6 +529,7 @@ const userLayoutId = stableLayoutId;
                 minHeight: '50vh',
                 cursor: 'pointer',
                 gap: '16px',
+                paddingTop: 140,
               }}
               onClick={() => {
                 setSpinning(true);
@@ -542,9 +552,16 @@ const userLayoutId = stableLayoutId;
               ref={gridScrollRef}
               className="overflow-y-auto h-full px-[1px]"
               onScroll={(e) => {
-                setGridScrollY((e.target as HTMLElement).scrollTop);
+                if (rafPendingRef.current) return;
+                rafPendingRef.current = true;
+                const el = e.currentTarget;
+                requestAnimationFrame(() => {
+                  setGridScrollY(Math.max(0, el.scrollTop));
+                  rafPendingRef.current = false;
+                });
               }}
             >
+              <div style={{ height: 140, flexShrink: 0 }} />
               <div className={`grid ${getColCount(userLayoutId)} gap-x-[1px] gap-y-[2px]`}>
                 {userPosts.map((post, index) => (
                   <PostCell
@@ -724,14 +741,14 @@ const userLayoutId = stableLayoutId;
                 placeholder="Deck title"
                 value={newDeckTitle}
                 onChange={e => setNewDeckTitle(e.target.value)}
-                style={{ display: 'block', width: '100%', background: 'transparent', border: '1px solid white', color: 'white', ...MONO, fontSize: 10, padding: '8px', marginBottom: 8, outline: 'none', boxSizing: 'border-box' }}
+                style={{ display: 'block', width: '100%', background: 'transparent', border: '1px solid white', color: 'white', ...SKR, fontSize: 10, padding: '8px', marginBottom: 8, outline: 'none', boxSizing: 'border-box' }}
               />
               <input
                 type="text"
                 placeholder="Description (optional)"
                 value={newDeckDesc}
                 onChange={e => setNewDeckDesc(e.target.value)}
-                style={{ display: 'block', width: '100%', background: 'transparent', border: '1px solid white', color: 'white', ...MONO, fontSize: 10, padding: '8px', marginBottom: 8, outline: 'none', boxSizing: 'border-box' }}
+                style={{ display: 'block', width: '100%', background: 'transparent', border: '1px solid white', color: 'white', ...SKR, fontSize: 10, padding: '8px', marginBottom: 8, outline: 'none', boxSizing: 'border-box' }}
               />
               <div style={{ display: 'flex', gap: 8 }}>
                 <button
@@ -743,17 +760,20 @@ const userLayoutId = stableLayoutId;
                       setNewDeckTitle(''); setNewDeckDesc(''); setShowNewDeckForm(false);
                       setDecksLoading(true);
                       getUserDecks(user.id).then(setUserDecks).catch(console.error).finally(() => setDecksLoading(false));
-                    } catch (e) { console.error('createDeck error:', e); }
-                    finally { setCreatingDeck(false); }
+                    } catch (e: any) {
+                      const lt = getScopeLimitType(e);
+                      if (lt) { setCreatingDeck(false); showUpsell(lt); return; }
+                      console.error('createDeck error:', e);
+                    } finally { setCreatingDeck(false); }
                   }}
                   disabled={!newDeckTitle.trim() || creatingDeck}
-                  style={{ flex: 1, border: '1px solid white', background: 'transparent', color: 'white', ...MONO, fontSize: 10, padding: '8px', cursor: 'pointer', opacity: newDeckTitle.trim() ? 1 : 0.4 }}
+                  style={{ flex: 1, border: '1px solid white', background: 'transparent', color: 'white', ...SKR, fontSize: 10, padding: '8px', cursor: 'pointer', opacity: newDeckTitle.trim() ? 1 : 0.4, textTransform: 'uppercase' }}
                 >
                   {creatingDeck ? 'Creating…' : 'CREATE'}
                 </button>
                 <button
                   onClick={() => { setShowNewDeckForm(false); setNewDeckTitle(''); setNewDeckDesc(''); }}
-                  style={{ flex: 1, border: '1px solid rgba(255,255,255,0.4)', background: 'transparent', color: 'rgba(255,255,255,0.6)', ...MONO, fontSize: 10, padding: '8px', cursor: 'pointer' }}
+                  style={{ flex: 1, border: '1px solid rgba(255,255,255,0.4)', background: 'transparent', color: 'rgba(255,255,255,0.6)', ...SKR, fontSize: 10, padding: '8px', cursor: 'pointer', textTransform: 'uppercase' }}
                 >
                   CANCEL
                 </button>

@@ -7,6 +7,8 @@ import {
   getProfileByUsername, getUserById, getUserDecks, getDecksByUsername,
   createDeck, type Deck,
 } from "@/lib/userService";
+import { getScopeLimitType } from "@/lib/limits";
+import { useUpsell } from "@/components/UpsellProvider";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -15,6 +17,7 @@ export default function DecksPage() {
   const params = useParams();
   const router = useRouter();
   const { user } = usePrivy();
+  const { showUpsell } = useUpsell();
   const username = params?.username as string;
 
   const [decks, setDecks] = useState<(Deck & { item_count: number })[]>([]);
@@ -65,7 +68,9 @@ export default function DecksPage() {
       setNewTitle("");
       setNewDesc("");
       router.push(`/profile/${username}/decks/${deck.id}`);
-    } catch (e) {
+    } catch (e: any) {
+      const lt = getScopeLimitType(e);
+      if (lt) { setCreating(false); showUpsell(lt); return; }
       console.error("createDeck error:", e);
     } finally {
       setCreating(false);

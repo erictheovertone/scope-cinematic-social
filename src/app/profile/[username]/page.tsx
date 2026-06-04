@@ -4,12 +4,12 @@ import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
 import {
-  getProfileByUsername, getUserById, followUser, unfollowUser,
+  resolveProfileByUsername, getUserById, followUser, unfollowUser,
   isFollowing, getFollowerCount, getFollowingCount,
   getDecksByUsername, getProfileLinks, type Deck, type ProfileLink,
 } from "@/lib/userService";
 import ProfileDataSheet from "@/components/ProfileDataSheet";
-import { getPostsByUsername } from "@/lib/postsService";
+import { getUserPosts } from "@/lib/postsService";
 import ProfilePostViewer from "@/components/ProfilePostViewer";
 import FollowListModal from "@/components/FollowListModal";
 import BadgeExplainerSheet from "@/components/BadgeExplainerSheet";
@@ -62,11 +62,21 @@ export default function PublicProfilePage() {
 
   // Scroll animation
   const [gridScrollY, setGridScrollY] = useState(0);
+  const [headerSnapped, setHeaderSnapped] = useState(false);
+  const [headerUnsnapping, setHeaderUnsnapping] = useState(false);
+  const [snapAnimKey, setSnapAnimKey] = useState(0);
   const gridScrollRef = useRef<HTMLDivElement>(null);
+  const rafPendingRef = useRef(false);
+  const snapScrollYRef = useRef(0);
+  const dismissSnapMenu = () => {
+    setHeaderUnsnapping(true);
+    setTimeout(() => {
+      setHeaderSnapped(false);
+      setTimeout(() => setHeaderUnsnapping(false), 50);
+    }, 500);
+  };
   const headerOpacity = Math.max(0, 1 - gridScrollY / 80);
-  const gridTop = Math.max(30, 140 - gridScrollY);
   const tabRowOffset = Math.min(gridScrollY, 101);
-  const tabBgOpacity = Math.min(1, gridScrollY / 40);
 
   useEffect(() => {
     if (!showDecks || !username) return;
@@ -75,11 +85,16 @@ export default function PublicProfilePage() {
   }, [showDecks, username]);
 
   useEffect(() => {
+    if (headerSnapped && !headerUnsnapping && (gridScrollY > snapScrollYRef.current + 30 || gridScrollY < 20)) setHeaderSnapped(false);
+  }, [gridScrollY, headerSnapped, headerUnsnapping]);
+
+  useEffect(() => {
     if (!username) return;
     const load = async () => {
       try {
-        const p = await getProfileByUsername(username);
+        const { profile: p, redirectTo } = await resolveProfileByUsername(username);
         if (!p) { setNotFound(true); setLoaded(true); return; }
+        if (redirectTo) { router.replace(`/profile/${redirectTo}`); return; }
         setProfile(p);
 
         // Badge flags
@@ -92,7 +107,7 @@ export default function PublicProfilePage() {
         setFoundingMemberNumber(p.founding_member_number || null);
 
         const [userPosts, targetUser] = await Promise.all([
-          getPostsByUsername(username),
+          getUserPosts(p.user_id),
           getUserById(p.user_id),
         ]);
         setPosts(userPosts);
@@ -168,18 +183,21 @@ export default function PublicProfilePage() {
     <div className="bg-black relative w-full max-w-[375px] min-h-screen mx-auto pb-[60px]">
 
       {/* Header */}
-      <div style={{
-        position: 'relative', height: 124, background: '#000',
-        paddingTop: 'env(safe-area-inset-top, 0px)',
-        boxSizing: 'content-box',
-        opacity: headerOpacity,
-        transition: 'opacity 0.25s ease',
-        pointerEvents: gridScrollY < 20 ? 'auto' : 'none',
-        zIndex: 10,
-      }}>
+      <div
+        onClick={profileDataOpen ? () => setProfileDataOpen(false) : undefined}
+        style={{
+          position: 'relative', height: 124, background: '#000',
+          paddingTop: 'env(safe-area-inset-top, 0px)',
+          boxSizing: 'content-box',
+          opacity: profileDataOpen ? 1 : headerOpacity,
+          transition: 'opacity 0.25s ease',
+          pointerEvents: (profileDataOpen || gridScrollY < 20) ? 'auto' : 'none',
+          zIndex: profileDataOpen ? 200 : 10,
+        }}
+      >
 
         {/* PFP container */}
-        <div style={{ position: 'absolute', top: 10, left: 8, width: 80, height: 80 }}>
+        <div style={{ position: 'absolute', top: 10, left: 12, width: 80, height: 80 }}>
           {isFoundingMember && <div style={{ position: 'absolute', inset: -1, background: 'linear-gradient(135deg, #ff0080, #ff8c00, #ffe100, #00ff80, #00cfff, #cc00ff, #ff0080)', backgroundSize: '300% 300%', animation: 'holoShift 4s linear infinite', zIndex: 0 }} />}
           {isTopCollector && !isFoundingMember && <div style={{ position: 'absolute', inset: -1, background: 'linear-gradient(135deg, #BF953F, #FCF6BA, #B38728, #FBF5B7, #AA771C)', backgroundSize: '200% 200%', animation: 'goldShimmer 3s ease infinite', zIndex: 0 }} />}
           <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', zIndex: 1 }}>
@@ -203,13 +221,13 @@ export default function PublicProfilePage() {
         </div>
 
         {/* Name */}
-        <div style={{ position: 'absolute', left: 98, top: 10 }}>
+        <div style={{ position: 'absolute', left: 102, top: 10 }}>
           <p style={{ ...SKB, fontSize: 13, color: 'white', letterSpacing: '-0.02em', lineHeight: 1.2, margin: 0, textTransform: 'uppercase' }}>{profile?.display_name || username}</p>
         </div>
 
         {/* Handle */}
-        <div style={{ position: 'absolute', left: 98, top: 26 }}>
-          <p style={{ ...SKB, fontSize: 10, color: 'white', letterSpacing: '-0.02em', lineHeight: 1.2, margin: 0 }}>@{username}</p>
+        <div style={{ position: 'absolute', left: 102, top: 26 }}>
+          <p style={{ ...SKB, fontSize: 10, color: 'rgba(255,255,255,0.6)', letterSpacing: '-0.02em', lineHeight: 1.2, margin: 0, textTransform: 'uppercase' }}>@{username}</p>
         </div>
 
         {/* Info sheet trigger */}
@@ -223,7 +241,7 @@ export default function PublicProfilePage() {
           aria-label="View profile info"
         >
           <div style={{
-            width: 13, height: 10,
+            width: 14.6, height: 11.2,
             border: '0.5px solid #FFFFFF',
             background: profileDataOpen ? '#FFFFFF' : 'transparent',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -232,7 +250,7 @@ export default function PublicProfilePage() {
           }}>
             <span style={{
               fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700,
-              fontSize: 14, letterSpacing: '-0.02em',
+              fontSize: 15.7, letterSpacing: '-0.02em',
               color: profileDataOpen ? '#000000' : '#FFFFFF',
               lineHeight: 1, display: 'block',
               transform: 'translateY(-1px)',
@@ -250,49 +268,128 @@ export default function PublicProfilePage() {
 
       </div>{/* end header */}
 
-      {/* Tab row */}
+      {/* Frame icon — appears when header is hidden, tapping snaps header back */}
+      {!headerSnapped && gridScrollY > 20 && (
+        <div
+          onClick={(e) => { e.stopPropagation(); e.preventDefault(); snapScrollYRef.current = gridScrollY; setHeaderSnapped(true); setSnapAnimKey(k => k + 1); }}
+          style={{
+            position: 'fixed',
+            top: 8,
+            left: 8,
+            zIndex: 50,
+            cursor: 'pointer',
+            pointerEvents: 'auto',
+            opacity: Math.min(1, (gridScrollY - 20) / 20),
+            transition: 'opacity 0.2s ease',
+            filter: 'drop-shadow(0 0 8px rgba(0,0,0,0.9)) drop-shadow(0 2px 12px rgba(0,0,0,0.75))',
+          }}
+        >
+          <svg width="28" height="14" viewBox="0 0 32 16" fill="none">
+            <line x1="1" y1="1" x2="1" y2="6" stroke="#FF0000" strokeWidth="1.1"/>
+            <line x1="1" y1="1" x2="7" y2="1" stroke="#FF0000" strokeWidth="0.85"/>
+            <line x1="31" y1="1" x2="31" y2="6" stroke="#FF0000" strokeWidth="1.1"/>
+            <line x1="25" y1="1" x2="31" y2="1" stroke="#FF0000" strokeWidth="0.85"/>
+            <line x1="1" y1="15" x2="1" y2="10" stroke="#FF0000" strokeWidth="1.1"/>
+            <line x1="1" y1="15" x2="7" y2="15" stroke="#FF0000" strokeWidth="0.85"/>
+            <line x1="31" y1="15" x2="31" y2="10" stroke="#FF0000" strokeWidth="1.1"/>
+            <line x1="25" y1="15" x2="31" y2="15" stroke="#FF0000" strokeWidth="0.85"/>
+          </svg>
+        </div>
+      )}
+
+      {/* Tab row — absolute until scrolled past 101px, then fixed. When snapped, always fixed + aligned with frame icon. */}
       <div style={{
-        position: 'absolute', left: 0, right: 0,
-        top: `${103 - tabRowOffset}px`,
-        zIndex: gridScrollY > 101 ? 40 : 20,
-        background: `linear-gradient(to bottom, rgba(0,0,0,${tabBgOpacity * 0.55}) 0%, rgba(0,0,0,${tabBgOpacity * 0.3}) 70%, transparent 100%)`,
-        paddingTop: 10, paddingBottom: 12,
+        position: (headerSnapped || headerUnsnapping || gridScrollY > 101) ? 'fixed' : 'absolute',
+        top: (headerSnapped || headerUnsnapping) ? 0 : gridScrollY > 101 ? 2 : `${103 - tabRowOffset}px`,
+        left: (headerSnapped || headerUnsnapping || gridScrollY > 101) ? '50%' : 0,
+        right: (headerSnapped || headerUnsnapping || gridScrollY > 101) ? 'auto' : 0,
+        transform: (headerSnapped || headerUnsnapping || gridScrollY > 101) ? 'translateX(-50%)' : 'none',
+        width: (headerSnapped || headerUnsnapping || gridScrollY > 101) ? '100%' : 'auto',
+        maxWidth: 375,
+        zIndex: 40,
+        background: (headerSnapped || headerUnsnapping)
+          ? 'linear-gradient(to bottom, rgba(0,0,0,0.31) 0%, rgba(0,0,0,0.14) 80%, transparent 100%)'
+          : 'transparent',
+        paddingTop: (headerSnapped || headerUnsnapping) ? 6 : 10,
+        paddingBottom: (headerSnapped || headerUnsnapping) ? 8 : 12,
+        opacity: headerSnapped ? 1 : Math.max(0, 1 - gridScrollY / 20),
+        transition: (headerUnsnapping && !headerSnapped) ? 'none' : 'opacity 0.25s ease',
+        pointerEvents: (headerSnapped || gridScrollY < 20) ? 'auto' : 'none',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 8px', height: 20 }}>
-          <button onClick={() => setActiveTab('main')} style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer' }}>
-            <span style={{ ...SKB, fontSize: 8, color: activeTab === 'main' ? '#FF0000' : 'white', textTransform: 'uppercase', letterSpacing: '-0.16px' }}>MAIN</span>
-          </button>
-          <button onClick={() => { setActiveTab('decks'); setShowDecks(true); }} style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer' }}>
+        <div key={snapAnimKey} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 8px', height: 20 }}>
+          {(headerSnapped || headerUnsnapping) ? (
+            <button
+              onClick={dismissSnapMenu}
+              style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', animation: headerUnsnapping ? 'snapOutLeft 0.28s cubic-bezier(0.16,1,0.3,1) 165ms both' : 'snapInLeft 0.32s cubic-bezier(0.16,1,0.3,1) 0ms both' }}
+            >
+              <svg width="28" height="14" viewBox="0 0 32 16" fill="none">
+                <line x1="1" y1="1" x2="1" y2="6" stroke="#FF0000" strokeWidth="1.1"/>
+                <line x1="1" y1="1" x2="7" y2="1" stroke="#FF0000" strokeWidth="0.85"/>
+                <line x1="31" y1="1" x2="31" y2="6" stroke="#FF0000" strokeWidth="1.1"/>
+                <line x1="25" y1="1" x2="31" y2="1" stroke="#FF0000" strokeWidth="0.85"/>
+                <line x1="1" y1="15" x2="1" y2="10" stroke="#FF0000" strokeWidth="1.1"/>
+                <line x1="1" y1="15" x2="7" y2="15" stroke="#FF0000" strokeWidth="0.85"/>
+                <line x1="31" y1="15" x2="31" y2="10" stroke="#FF0000" strokeWidth="1.1"/>
+                <line x1="25" y1="15" x2="31" y2="15" stroke="#FF0000" strokeWidth="0.85"/>
+              </svg>
+            </button>
+          ) : (
+            <button
+              onClick={() => setActiveTab('main')}
+              style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer' }}
+            >
+              <span style={{ ...SKB, fontSize: 10, color: activeTab === 'main' ? '#FF0000' : 'white', textTransform: 'uppercase', letterSpacing: '-0.16px' }}>MAIN</span>
+            </button>
+          )}
+
+          <button
+            onClick={() => { setActiveTab('decks'); setShowDecks(true); }}
+            style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', position: 'relative', left: (headerSnapped || headerUnsnapping) ? -8 : 5, animation: headerUnsnapping ? 'snapOutUp 0.28s cubic-bezier(0.16,1,0.3,1) 110ms both' : headerSnapped ? 'snapInUp 0.32s cubic-bezier(0.16,1,0.3,1) 55ms both' : 'none' }}
+          >
             <img src="/decks-logo-new-lg.png" style={{ height: 8, width: 'auto', display: 'block', filter: activeTab === 'decks' ? 'invert(27%) sepia(100%) saturate(7000%) hue-rotate(0deg) brightness(100%) contrast(100%)' : 'none' }} alt="Decks" />
           </button>
+
           <button
             onClick={() => setActiveTab('theatre')}
-            style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer' }}
+            style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', animation: headerUnsnapping ? 'snapOutUp 0.28s cubic-bezier(0.16,1,0.3,1) 55ms both' : headerSnapped ? 'snapInUp 0.32s cubic-bezier(0.16,1,0.3,1) 110ms both' : 'none' }}
           >
             <img
               src="/theatre-mode-logo-new-lg.png"
-              style={{ height: 26, width: 'auto', display: 'block', opacity: activeTab === 'theatre' ? 1 : 0.7, position: 'relative', left: 10 }}
+              style={{ height: 26, width: 'auto', display: 'block', opacity: activeTab === 'theatre' ? 1 : 0.7, position: 'relative', left: (headerSnapped || headerUnsnapping) ? 0 : 10 }}
               alt="Theatre"
             />
           </button>
-          <button onClick={() => setActiveTab('collected')} style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer' }}>
-            <span style={{ ...SKB, fontSize: 8, color: activeTab === 'collected' ? '#FF0000' : 'white', textTransform: 'uppercase', letterSpacing: '-0.16px' }}>COLLECTED</span>
+
+          <button
+            onClick={() => setActiveTab('collected')}
+            style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', animation: headerUnsnapping ? 'snapOutRight 0.28s cubic-bezier(0.16,1,0.3,1) 0ms both' : headerSnapped ? 'snapInRight 0.32s cubic-bezier(0.16,1,0.3,1) 165ms both' : 'none' }}
+          >
+            <span style={{ ...SKB, fontSize: 10, color: activeTab === 'collected' ? '#FF0000' : 'white', textTransform: 'uppercase', letterSpacing: '-0.16px' }}>COLLECTED</span>
           </button>
         </div>
       </div>
 
-      {/* Posts grid */}
-      <div style={{ position: 'absolute', inset: 0, top: `${gridTop}px` }}>
+      {/* Posts grid — header space reserved by spacer in scroll content, not by moving the container. */}
+      <div style={{ position: 'absolute', inset: 0 }}>
         {activeTab === 'collected' ? (
-          <div style={{ position: 'absolute', top: 50, left: 0, right: 0, bottom: 60, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ position: 'absolute', top: 140, left: 0, right: 0, bottom: 60, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <p style={{ ...SKB, fontSize: 10, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', textAlign: 'center', letterSpacing: '0.05em' }}>NO COLLECTED POSTS YET</p>
           </div>
         ) : posts.length === 0 ? (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', flex: 1, minHeight: '50vh' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', flex: 1, minHeight: '50vh', paddingTop: 140 }}>
             <p style={{ ...SKB, fontSize: 10, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase' }}>NO POSTS YET</p>
           </div>
         ) : (
-          <div ref={gridScrollRef} className="overflow-y-auto h-full px-[1px]" onScroll={(e) => { setGridScrollY((e.target as HTMLElement).scrollTop); }}>
+          <div ref={gridScrollRef} className="overflow-y-auto h-full px-[1px]" onScroll={(e) => {
+            if (rafPendingRef.current) return;
+            rafPendingRef.current = true;
+            const el = e.currentTarget;
+            requestAnimationFrame(() => {
+              setGridScrollY(Math.max(0, el.scrollTop));
+              rafPendingRef.current = false;
+            });
+          }}>
+            <div style={{ height: 140, flexShrink: 0 }} />
             <div className={`grid ${getColCount(layoutId)} gap-x-[1px] gap-y-[2px]`}>
               {posts.map((post, index) => (
                 <PostCell

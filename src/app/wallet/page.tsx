@@ -5,8 +5,8 @@ import { usePrivy, useFundWallet } from "@privy-io/react-auth";
 import { base } from "viem/chains";
 import { getEthBalance, getUsdcBalance, getTransactionHistory } from "@/lib/wallet";
 
-const MONO: React.CSSProperties = { fontFamily: "'IBM Plex Mono', monospace" };
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
+const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
 const ETH_USD = 3000;
 
 function shortAddr(addr: string): string {
@@ -115,7 +115,7 @@ export default function WalletPage() {
             onClick={() => {
               navigator.clipboard.writeText(walletAddress).then(() => showToast("Address copied"));
             }}
-            style={{ ...MONO, fontSize: 9, color: "white", opacity: 0.4, margin: 0, cursor: "pointer" }}
+            style={{ ...SKR, fontSize: 9, color: "white", opacity: 0.4, margin: 0, cursor: "pointer" }}
           >
             {shortAddr(walletAddress)}
           </p>
@@ -146,7 +146,7 @@ export default function WalletPage() {
           <p style={{ ...SKB, fontSize: 8, color: "white", opacity: 0.3, margin: "0 0 4px", textTransform: "uppercase", letterSpacing: "0.06em" }}>or deposit directly</p>
           <p
             onClick={() => navigator.clipboard.writeText(walletAddress).then(() => showToast("Address copied"))}
-            style={{ ...MONO, fontSize: 9, color: "white", opacity: 0.5, margin: 0, cursor: "pointer", wordBreak: "break-all" }}
+            style={{ ...SKR, fontSize: 9, color: "white", opacity: 0.5, margin: 0, cursor: "pointer", wordBreak: "break-all" }}
           >
             {walletAddress}
           </p>
@@ -254,7 +254,7 @@ export default function WalletPage() {
                       <div>
                         <p style={{ fontSize: 10, color: "white", margin: 0 }}>
                           <span style={{ ...SKB, textTransform: "uppercase", letterSpacing: "0.04em" }}>{isSent ? "To" : "From"} </span>
-                          <span style={{ ...MONO }}>{counterpart ? shortAddr(counterpart) : "—"}</span>
+                          <span style={{ ...SKR }}>{counterpart ? shortAddr(counterpart) : "—"}</span>
                         </p>
                         <p style={{ ...SKB, fontSize: 9, color: "white", opacity: 0.4, margin: "2px 0 0", textTransform: "uppercase" }}>{date}</p>
                       </div>
@@ -326,7 +326,7 @@ export default function WalletPage() {
               onChange={e => setSendTo(e.target.value)}
               placeholder="0x... wallet address"
               style={{
-                ...MONO, fontSize: 11, color: "white", background: "transparent",
+                ...SKR, fontSize: 11, color: "white", background: "transparent",
                 border: "none", borderBottom: "1px solid rgba(255,255,255,0.3)",
                 outline: "none", width: "100%", padding: "4px 0", marginBottom: 20,
                 boxSizing: "border-box",
@@ -341,7 +341,7 @@ export default function WalletPage() {
               onChange={e => setSendAmount(e.target.value)}
               placeholder="0.00"
               style={{
-                ...MONO, fontSize: 11, color: "white", background: "transparent",
+                ...SKR, fontSize: 11, color: "white", background: "transparent",
                 border: "none", borderBottom: "1px solid rgba(255,255,255,0.3)",
                 outline: "none", width: "100%", padding: "4px 0", marginBottom: 8,
                 boxSizing: "border-box",

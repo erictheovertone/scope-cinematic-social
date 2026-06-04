@@ -3,7 +3,6 @@
 import { usePrivy } from "@privy-io/react-auth";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
-import Link from "next/link";
 import { getAllPosts } from "@/lib/postsService";
 import PostItem from "@/components/PostItem";
 import PostModal from "@/components/PostModal";
@@ -17,8 +16,33 @@ export default function Home() {
   const [posts, setPosts] = useState<any[]>([]);
   const [lightboxPost, setLightboxPost] = useState<any>(null);
   const [mirageActive, setMirageActive] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [showFrame, setShowFrame] = useState(true);
   const [feedState, setFeedState] = useState<FeedState>("normal");
   const transitioningRef = useRef(false);
+  const lastScrollY = useRef(0);
+  const feedRef = useRef<HTMLDivElement>(null);
+
+  // Native scroll listener — React's synthetic onScroll misses momentum scroll-up on iOS Safari.
+  useEffect(() => {
+    const el = feedRef.current;
+    if (!el) return;
+    const handler = () => {
+      const y = el.scrollTop;
+      console.log('[frame-scroll-diagnostic]', {
+        currentY: y, lastY: lastScrollY.current,
+        direction: y < lastScrollY.current ? 'UP' : y > lastScrollY.current ? 'DOWN' : 'SAME',
+      });
+      if (y < lastScrollY.current) {
+        setShowFrame(true);
+      } else if (y > lastScrollY.current && y > 40) {
+        setShowFrame(false);
+      }
+      lastScrollY.current = y;
+    };
+    el.addEventListener('scroll', handler, { passive: true });
+    return () => el.removeEventListener('scroll', handler);
+  }, []);
 
   useEffect(() => {
     if (!authenticated) router.push("/welcome");
@@ -92,47 +116,99 @@ export default function Home() {
           from { transform: scale(0.85) translateY(12px); opacity: 0; }
           to   { transform: scale(1)    translateY(0);    opacity: 1; }
         }
+        @keyframes menu-splay-in {
+          from { opacity: 0; transform: translateY(-10px) scale(0.88); }
+          to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
       `}</style>
 
-      {/* Red dot */}
-      <Link href="/">
-        <div className="absolute left-[2px] top-[4px] w-[11px] h-[11px] cursor-pointer">
-          <div className="w-[11px] h-[11px] bg-[#FF0000] rounded-full" />
-        </div>
-      </Link>
-
-      {/* Mirage logo — top right, replaces SCREENING ROOM */}
+      {/* Frame icon — top right, opens Mirage menu */}
       <button
-        onClick={enterMirage}
-        aria-label="Toggle Mirage View"
-        className="absolute"
+        onClick={() => setMenuOpen(v => !v)}
+        aria-label="Open menu"
         style={{
-          right: "4px",
-          top: "2px",
-          background: "transparent",
-          border: "none",
-          cursor: "pointer",
-          padding: 0,
+          position: 'absolute',
+          top: 6,
+          right: 6,
+          background: 'transparent',
+          border: 'none',
+          cursor: 'pointer',
+          padding: 4,
           lineHeight: 0,
+          opacity: menuOpen || !showFrame ? 0 : 1,
+          transition: 'opacity 180ms ease',
+          pointerEvents: menuOpen || !showFrame ? 'none' : 'auto',
+          filter: 'drop-shadow(0 0 8px rgba(0,0,0,0.9)) drop-shadow(0 2px 12px rgba(0,0,0,0.75))',
+          zIndex: 20,
         }}
       >
-        <img
-          src="/mirage-logo.png"
-          alt="Mirage"
-          width={28}
-          height={28}
-          style={{
-            opacity: mirageActive ? 1 : 0.5,
-            filter: mirageActive
-              ? "brightness(0) invert(1) drop-shadow(0 0 4px rgba(255,255,255,0.7))"
-              : "brightness(0) invert(1)",
-            transition: "opacity 300ms ease, filter 300ms ease",
-          }}
-        />
+        <svg width="28" height="14" viewBox="0 0 32 16" fill="none">
+          <line x1="1" y1="1" x2="1" y2="6" stroke="#FF0000" strokeWidth="1.1"/>
+          <line x1="1" y1="1" x2="7" y2="1" stroke="#FF0000" strokeWidth="0.85"/>
+          <line x1="31" y1="1" x2="31" y2="6" stroke="#FF0000" strokeWidth="1.1"/>
+          <line x1="25" y1="1" x2="31" y2="1" stroke="#FF0000" strokeWidth="0.85"/>
+          <line x1="1" y1="15" x2="1" y2="10" stroke="#FF0000" strokeWidth="1.1"/>
+          <line x1="1" y1="15" x2="7" y2="15" stroke="#FF0000" strokeWidth="0.85"/>
+          <line x1="31" y1="15" x2="31" y2="10" stroke="#FF0000" strokeWidth="1.1"/>
+          <line x1="25" y1="15" x2="31" y2="15" stroke="#FF0000" strokeWidth="0.85"/>
+        </svg>
       </button>
 
+      {/* Mirage menu — centered overlay, gradient backdrop */}
+      {menuOpen && (
+        <div
+          onClick={() => setMenuOpen(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 60,
+            background: 'linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.25) 80%, transparent 100%)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'flex-start',
+            paddingTop: 40,
+          }}
+        >
+          <button
+            onClick={e => { e.stopPropagation(); setMenuOpen(false); enterMirage(); }}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 10,
+              padding: 0,
+              animation: 'menu-splay-in 260ms cubic-bezier(0.16,1,0.3,1) both',
+            }}
+          >
+            <img
+              src="/mirage-logo-thick-red-new.png"
+              alt="Mirage"
+              style={{
+                width: 50,
+                height: 'auto',
+                objectFit: 'contain',
+                display: 'block',
+                flexShrink: 0,
+              }}
+            />
+            <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 13, color: '#ffffff', letterSpacing: '-0.26px', textTransform: 'uppercase' }}>
+              MIRAGE
+            </span>
+          </button>
+        </div>
+      )}
+
       {/* Feed */}
-      <div className="absolute left-[2px] right-[2px] top-[30px] bottom-0 overflow-y-auto">
+      <div
+        ref={feedRef}
+        className="absolute left-[2px] right-[2px] top-[30px] bottom-0 overflow-y-auto"
+        // @ts-ignore
+        style={{ WebkitOverflowScrolling: 'touch' }}
+      >
         <div style={{ paddingTop: 16, paddingBottom: 60 }}>
           {posts.map((post, index) => (
             <div key={post.id} style={getPostAnimStyle(index)}>

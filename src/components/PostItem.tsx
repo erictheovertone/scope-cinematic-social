@@ -18,6 +18,7 @@ import MediaRenderer from "@/components/MediaRenderer";
 import { getTokenPrice, getTokenHolders } from "@/lib/zora";
 import { formatEther } from "viem";
 import { getAspectRatio, ratioPadding } from "@/lib/aspectRatio";
+import PillarboxFrame from "@/components/PillarboxFrame";
 
 interface Post {
   id: string;
@@ -44,7 +45,8 @@ interface PostItemProps {
   onImageClick?: () => void;
 }
 
-const MONO: React.CSSProperties = { fontFamily: "'IBM Plex Mono', monospace" };
+const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
+const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 
 export default function PostItem({ post, onImageClick }: PostItemProps) {
   const router = useRouter();
@@ -175,50 +177,71 @@ export default function PostItem({ post, onImageClick }: PostItemProps) {
     }
   };
 
+  const is43 = (post.layout_id ?? '') === 'legacy';
   const paddingPercent = ratioPadding(getAspectRatio(post.layout_id ?? ''));
 
-  return (
-    <div style={{ marginBottom: 28 }}>
-
-      {/* ── Image with overlaid avatar + username ── */}
-      <div
-        onClick={onImageClick}
-        style={{
-          position: 'relative',
-          width: '100%',
-          paddingTop: `${paddingPercent}%`,
-          overflow: 'hidden',
-          cursor: onImageClick ? "pointer" : "default",
-          backgroundColor: '#222',
-        }}
-      >
-        <div style={{ position: 'absolute', inset: 0 }}>
-          <MediaRenderer
-            url={post.media_urls?.[0]}
-            mediaType={post.media_type}
-            caption={post.caption}
-            thumbnailUrl={post.thumbnail_url}
-            autoplay={post.autoplay !== false}
-            showSoundToggle={true}
-            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-            onClick={onImageClick}
-          />
-        </div>
-        <div style={{ position: 'absolute', top: '6px', left: '6px', display: 'flex', alignItems: 'center', gap: '4px', zIndex: 10 }}>
-          {post.profile_image_url && (
-            <img src={post.profile_image_url} style={{ width: '14px', height: '14px', borderRadius: '50%', objectFit: 'cover' }} />
-          )}
-          <span
-            onClick={(e) => { e.stopPropagation(); router.push('/profile/' + post.username); }}
-            style={{ fontFamily: 'IBM Plex Mono,monospace', fontSize: '8px', color: 'white', cursor: 'pointer', textShadow: '0 1px 2px rgba(0,0,0,1)' }}
-          >
-            @{post.username}
-          </span>
-        </div>
-        <span style={{ position: 'absolute', top: '6px', right: '6px', fontFamily: 'IBM Plex Mono,monospace', fontSize: '8px', color: 'white', textShadow: '0 1px 2px rgba(0,0,0,1)', zIndex: 10, opacity: 0.85 }}>
-          MC: {mc ?? '—'}
+  const mediaOverlays = (
+    <>
+      <div style={{ position: 'absolute', top: '6px', left: '6px', display: 'flex', alignItems: 'center', gap: '4px', zIndex: 10 }}>
+        {post.profile_image_url && (
+          <img src={post.profile_image_url} style={{ width: '14px', height: '14px', borderRadius: '50%', objectFit: 'cover' }} />
+        )}
+        <span
+          onClick={(e) => { e.stopPropagation(); router.push('/profile/' + post.username); }}
+          style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: '8px', color: 'white', cursor: 'pointer', textShadow: '0 1px 2px rgba(0,0,0,1)', textTransform: 'uppercase' }}
+        >
+          @{post.username}
         </span>
       </div>
+      <span style={{ position: 'absolute', top: '6px', right: '6px', fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: '8px', color: 'white', textShadow: '0 1px 2px rgba(0,0,0,1)', zIndex: 10, opacity: 0.85 }}>
+        MC: {mc ?? '—'}
+      </span>
+    </>
+  );
+
+  const mediaContent = (
+    <MediaRenderer
+      url={post.media_urls?.[0]}
+      mediaType={post.media_type}
+      caption={post.caption}
+      thumbnailUrl={post.thumbnail_url}
+      autoplay={post.autoplay !== false}
+      showSoundToggle={true}
+      style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+      onClick={onImageClick}
+    />
+  );
+
+  return (
+    <div style={{ marginBottom: 32 }}>
+
+      {/* ── Image with overlaid avatar + username ── */}
+      {is43 ? (
+        <PillarboxFrame
+          onClick={onImageClick}
+          cursor={onImageClick ? 'pointer' : 'default'}
+          overlays={mediaOverlays}
+        >
+          {mediaContent}
+        </PillarboxFrame>
+      ) : (
+        <div
+          onClick={onImageClick}
+          style={{
+            position: 'relative',
+            width: '100%',
+            paddingTop: `${paddingPercent}%`,
+            overflow: 'hidden',
+            cursor: onImageClick ? "pointer" : "default",
+            backgroundColor: '#222',
+          }}
+        >
+          <div style={{ position: 'absolute', inset: 0 }}>
+            {mediaContent}
+          </div>
+          {mediaOverlays}
+        </div>
+      )}
 
       {/* ── Below-image row: like · comment · COLLECT ── */}
       <div style={{ display: "flex", alignItems: "center", padding: "5px 2px 0", gap: 12 }}>
@@ -227,20 +250,20 @@ export default function PostItem({ post, onImageClick }: PostItemProps) {
           disabled={loading || !user}
           style={{ background: "transparent", border: "none", cursor: user ? "pointer" : "default", display: "flex", alignItems: "center", gap: 4, padding: 0, color: isLiked ? "#FF0000" : "rgba(255,255,255,0.6)" }}
         >
-          <svg width="11" height="11" viewBox="0 0 24 24" fill={isLiked ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill={isLiked ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
           </svg>
-          <span style={{ ...MONO, fontSize: 7, color: "inherit" }}>{likes.length}</span>
+          <span style={{ ...SKR, fontSize: 7, color: "inherit" }}>{likes.length}</span>
         </button>
 
         <button
           onClick={(e) => { e.stopPropagation(); setShowComments((v) => !v); }}
           style={{ background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 4, padding: 0, color: "rgba(255,255,255,0.6)" }}
         >
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
           </svg>
-          <span style={{ ...MONO, fontSize: 7, color: "inherit" }}>{comments.length}</span>
+          <span style={{ ...SKR, fontSize: 7, color: "inherit" }}>{comments.length}</span>
         </button>
 
         <button
@@ -248,7 +271,7 @@ export default function PostItem({ post, onImageClick }: PostItemProps) {
           disabled={!user}
           style={{ background: "transparent", border: "none", cursor: user ? "pointer" : "default", display: "flex", alignItems: "center", padding: 0, color: isSaved ? "#FF0000" : "rgba(255,255,255,0.6)" }}
         >
-          <svg width="11" height="11" viewBox="0 0 24 24" fill={isSaved ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill={isSaved ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
             <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
           </svg>
         </button>
@@ -267,12 +290,12 @@ export default function PostItem({ post, onImageClick }: PostItemProps) {
             justifyContent: "center",
           }}
         >
-          <span style={{ ...MONO, fontSize: 7, color: showCollectSheet ? "#FF0000" : "rgba(255,255,255,0.7)", lineHeight: 1 }}>COLLECT</span>
+          <span style={{ ...SKB, fontSize: 7, color: showCollectSheet ? "#FF0000" : "rgba(255,255,255,0.7)", lineHeight: 1 }}>COLLECT</span>
         </button>
       </div>
 
       {post.caption && (
-        <p style={{ ...MONO, fontSize: 8, color: "white", letterSpacing: "-0.1px", lineHeight: 1.5, margin: "5px 2px 0" }}>
+        <p style={{ ...SKR, fontSize: 11, color: "white", letterSpacing: "-0.1px", lineHeight: 1.5, margin: "5px 2px 0" }}>
           {post.caption}
         </p>
       )}
@@ -293,12 +316,12 @@ export default function PostItem({ post, onImageClick }: PostItemProps) {
                 onChange={(e) => setNewComment(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleAddComment()}
                 placeholder="add a comment..."
-                style={{ flex: 1, background: "transparent", border: "none", borderBottom: "1px solid rgba(255,255,255,0.15)", outline: "none", ...MONO, fontSize: 8, color: "white", padding: "2px 0" }}
+                style={{ flex: 1, background: "transparent", border: "none", borderBottom: "1px solid rgba(255,255,255,0.15)", outline: "none", ...SKR, fontSize: 8, color: "white", padding: "2px 0" }}
               />
               <button
                 onClick={handleAddComment}
                 disabled={loading || !newComment.trim()}
-                style={{ background: "transparent", border: "none", cursor: "pointer", ...MONO, fontSize: 8, color: newComment.trim() ? "white" : "rgba(255,255,255,0.25)", padding: 0 }}
+                style={{ background: "transparent", border: "none", cursor: "pointer", ...SKB, fontSize: 8, color: newComment.trim() ? "white" : "rgba(255,255,255,0.25)", padding: 0 }}
               >
                 post
               </button>
@@ -307,8 +330,8 @@ export default function PostItem({ post, onImageClick }: PostItemProps) {
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {comments.map((c) => (
               <div key={c.id}>
-                <span style={{ ...MONO, fontSize: 8, color: "white", marginRight: 6 }}>@{c.username}</span>
-                <span style={{ ...MONO, fontSize: 8, color: "rgba(255,255,255,0.6)" }}>{c.content}</span>
+                <span style={{ ...SKB, fontSize: 7, color: "white", marginRight: 6, textTransform: 'uppercase' }}>@{c.username}</span>
+                <span style={{ ...SKR, fontSize: 10, color: "rgba(255,255,255,0.6)" }}>{c.content}</span>
               </div>
             ))}
           </div>

@@ -112,7 +112,7 @@ function CreatorCelebration({ onDone }: { onDone: () => void }) {
         <p style={{ ...BOLD, fontSize: 24, color: "white", textTransform: "uppercase", letterSpacing: "-0.02em", margin: "0 0 16px", animation: "fadeUp 0.8s ease forwards" }}>IN-HOUSE CREATOR</p>
       )}
       {(phase === "text" || phase === "done") && (
-        <p style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 13, color: "rgba(255,255,255,0.6)", letterSpacing: "0.1em" }}>
+        <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 13, color: "rgba(255,255,255,0.6)", letterSpacing: "0.1em" }}>
           {typed}<span style={{ animation: "blink 1s step-end infinite" }}>_</span>
         </p>
       )}

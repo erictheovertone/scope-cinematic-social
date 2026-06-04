@@ -36,7 +36,8 @@ interface PostModalProps {
   onClose: () => void;
 }
 
-const MONO: React.CSSProperties = { fontFamily: "'IBM Plex Mono', monospace" };
+const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
+const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 
 export default function PostModal({ post, onClose }: PostModalProps) {
   const router = useRouter();
@@ -235,7 +236,7 @@ export default function PostModal({ post, onClose }: PostModalProps) {
             <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
               <path d="M8.5 1.5L3.5 6.5l5 5" stroke="white" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-            <span style={{ ...MONO, fontSize: 9, color: "white", letterSpacing: "-0.1px" }}>Back</span>
+            <span style={{ ...SKB, fontSize: 9, color: "white", letterSpacing: "-0.1px" }}>BACK</span>
           </button>
         </div>
 
@@ -275,7 +276,7 @@ export default function PostModal({ post, onClose }: PostModalProps) {
                 {post.profile_image_url ? (
                   <img src={post.profile_image_url} alt={post.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 ) : (
-                  <span style={{ ...MONO, fontSize: 9, color: "white", textTransform: "uppercase" }}>
+                  <span style={{ ...SKB, fontSize: 9, color: "white", textTransform: "uppercase" }}>
                     {post.username?.[0] ?? "?"}
                   </span>
                 )}
@@ -283,19 +284,19 @@ export default function PostModal({ post, onClose }: PostModalProps) {
 
               <span
                 onClick={goToProfile}
-                style={{ ...MONO, fontSize: 9, color: "white", letterSpacing: "-0.14px", cursor: "pointer" }}
+                style={{ ...SKB, fontSize: 9, color: "white", letterSpacing: "-0.14px", cursor: "pointer", textTransform: "uppercase" }}
               >
                 @{post.username}
               </span>
 
-              <span style={{ ...MONO, fontSize: 9, color: "rgba(255,255,255,0.4)", letterSpacing: "-0.14px", marginLeft: "auto" }}>
+              <span style={{ ...SKR, fontSize: 9, color: "rgba(255,255,255,0.4)", letterSpacing: "-0.14px", marginLeft: "auto" }}>
                 MC: —
               </span>
             </div>
 
             {/* Caption */}
             {post.caption ? (
-              <p style={{ ...MONO, fontSize: 9, color: "white", letterSpacing: "-0.1px", lineHeight: 1.55, margin: "0 0 14px" }}>
+              <p style={{ ...SKR, fontSize: 12, color: "white", letterSpacing: "-0.1px", lineHeight: 1.55, margin: "0 0 14px" }}>
                 {post.caption}
               </p>
             ) : null}
@@ -303,7 +304,7 @@ export default function PostModal({ post, onClose }: PostModalProps) {
             {/* ADD TO DECK + COLLECT */}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 12, marginBottom: 16 }}>
               {deckToast && (
-                <span style={{ ...MONO, fontSize: 8, color: "rgba(255,255,255,0.55)", animation: "theater-fade-in 0.2s ease-out both" }}>
+                <span style={{ ...SKR, fontSize: 8, color: "rgba(255,255,255,0.55)", animation: "theater-fade-in 0.2s ease-out both" }}>
                   Added to {deckToast}
                 </span>
               )}
@@ -312,7 +313,7 @@ export default function PostModal({ post, onClose }: PostModalProps) {
                   onClick={() => setShowDeckPicker(true)}
                   style={{ background: "transparent", border: "none", cursor: "pointer", padding: 0 }}
                 >
-                  <span style={{ ...MONO, fontSize: 8, color: "rgba(255,255,255,0.6)", letterSpacing: "-0.1px" }}>
+                  <span style={{ ...SKB, fontSize: 8, color: "rgba(255,255,255,0.6)", letterSpacing: "-0.1px" }}>
                     ADD TO DECK
                   </span>
                 </button>
@@ -326,7 +327,7 @@ export default function PostModal({ post, onClose }: PostModalProps) {
                   padding: "5px 10px",
                 }}
               >
-                <span style={{ ...MONO, fontSize: 8, color: showCollectSheet ? "#FF0000" : "rgba(255,255,255,0.7)", letterSpacing: "-0.1px" }}>
+                <span style={{ ...SKB, fontSize: 8, color: showCollectSheet ? "#FF0000" : "rgba(255,255,255,0.7)", letterSpacing: "-0.1px" }}>
                   COLLECT · 0.001 ETH
                 </span>
               </button>
@@ -348,7 +349,7 @@ export default function PostModal({ post, onClose }: PostModalProps) {
                   color: isLiked ? "#FF0000" : "rgba(255,255,255,0.55)",
                 }}
               >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
                   <path
                     d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
                     fill={isLiked ? "#FF0000" : "none"}
@@ -356,7 +357,7 @@ export default function PostModal({ post, onClose }: PostModalProps) {
                     strokeWidth="2"
                   />
                 </svg>
-                <span style={{ ...MONO, fontSize: 8, color: "inherit" }}>{likes.length}</span>
+                <span style={{ ...SKR, fontSize: 8, color: "inherit" }}>{likes.length}</span>
               </button>
 
               {/* Comments toggle */}
@@ -364,7 +365,7 @@ export default function PostModal({ post, onClose }: PostModalProps) {
                 onClick={() => setShowComments((v) => !v)}
                 style={{ background: "transparent", border: "none", cursor: "pointer", padding: 0 }}
               >
-                <span style={{ ...MONO, fontSize: 8, color: "rgba(255,255,255,0.4)", letterSpacing: "-0.1px" }}>
+                <span style={{ ...SKR, fontSize: 8, color: "rgba(255,255,255,0.4)", letterSpacing: "-0.1px" }}>
                   {showComments ? "hide comments" : `tap to see comments (${comments.length})`}
                 </span>
               </button>
@@ -374,7 +375,7 @@ export default function PostModal({ post, onClose }: PostModalProps) {
                 onClick={() => setBookmarked(v => !v)}
                 style={{ background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", padding: 0 }}
               >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill={bookmarked ? "white" : "none"} stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill={bookmarked ? "white" : "none"} stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
                 </svg>
               </button>
@@ -384,7 +385,7 @@ export default function PostModal({ post, onClose }: PostModalProps) {
                 onClick={handleShare}
                 style={{ background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", padding: 0 }}
               >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
                   <polyline points="16 6 12 2 8 6" />
                   <line x1="12" y1="2" x2="12" y2="15" />
@@ -396,7 +397,7 @@ export default function PostModal({ post, onClose }: PostModalProps) {
             {showComments && (
               <div style={{ marginBottom: 16 }}>
                 {comments.length === 0 ? (
-                  <p style={{ ...MONO, fontSize: 8, color: "rgba(255,255,255,0.25)", animation: "ripple-down 0.2s ease-out both" }}>
+                  <p style={{ ...SKR, fontSize: 8, color: "rgba(255,255,255,0.25)", animation: "ripple-down 0.2s ease-out both" }}>
                     no comments yet
                   </p>
                 ) : (
@@ -419,14 +420,14 @@ export default function PostModal({ post, onClose }: PostModalProps) {
                         {c.profile_image_url ? (
                           <img src={c.profile_image_url} alt={c.username} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                         ) : (
-                          <span style={{ ...MONO, fontSize: 7, color: "white", textTransform: "uppercase", lineHeight: 1 }}>
+                          <span style={{ ...SKB, fontSize: 7, color: "white", textTransform: "uppercase", lineHeight: 1 }}>
                             {c.username?.[0] ?? "?"}
                           </span>
                         )}
                       </div>
                       <div style={{ lineHeight: 1.1 }}>
-                        <span style={{ ...MONO, fontSize: 8, color: "white", marginRight: 5 }}>@{c.username}</span>
-                        <span style={{ ...MONO, fontSize: 8, color: "rgba(255,255,255,0.6)" }}>{c.content}</span>
+                        <span style={{ ...SKB, fontSize: 8, color: "white", marginRight: 5, textTransform: "uppercase" }}>@{c.username}</span>
+                        <span style={{ ...SKR, fontSize: 8, color: "rgba(255,255,255,0.6)" }}>{c.content}</span>
                       </div>
                     </div>
                   ))
@@ -453,7 +454,7 @@ export default function PostModal({ post, onClose }: PostModalProps) {
                   style={{
                     flex: 1, background: "transparent", border: "none",
                     borderBottom: "1px solid rgba(255,255,255,0.15)",
-                    outline: "none", ...MONO, fontSize: 9, color: "white", padding: "2px 0",
+                    outline: "none", ...SKR, fontSize: 9, color: "white", padding: "2px 0",
                   }}
                 />
                 <button
@@ -462,7 +463,7 @@ export default function PostModal({ post, onClose }: PostModalProps) {
                   style={{
                     background: "transparent", border: "none", padding: 0,
                     cursor: newComment.trim() ? "pointer" : "default",
-                    ...MONO, fontSize: 9,
+                    ...SKB, fontSize: 9,
                     color: newComment.trim() ? "white" : "rgba(255,255,255,0.2)",
                     transition: "color 0.15s ease",
                   }}
