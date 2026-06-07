@@ -16,6 +16,7 @@ import DeckPickerSheet from "@/components/DeckPickerSheet";
 import CollectSheet from "@/components/CollectSheet";
 import { supabase } from "@/lib/supabase/client";
 import { getAspectRatio } from "@/lib/aspectRatio";
+import MediaRenderer from "@/components/MediaRenderer";
 
 interface Post {
   id: string;
@@ -29,6 +30,13 @@ interface Post {
   is_minted?: boolean;
   contract_address?: string | null;
   token_id?: string | null;
+  media_type?: string;
+  thumbnail_url?: string | null;
+  autoplay?: boolean;
+  crop_x?: number;
+  crop_y?: number;
+  crop_width?: number;
+  crop_height?: number;
 }
 
 interface PostModalProps {
@@ -251,9 +259,17 @@ export default function PostModal({ post, onClose }: PostModalProps) {
         >
           <div style={{ width: "100%", aspectRatio: getAspectRatio(post.layout_id ?? ''), overflow: "hidden", background: "#0a0a0a" }}>
             {post.media_urls?.[0] ? (
-              <img
-                src={post.media_urls[0]}
-                alt={post.caption || ""}
+              <MediaRenderer
+                url={post.media_urls[0]}
+                mediaType={post.media_type}
+                caption={post.caption || ""}
+                thumbnailUrl={post.thumbnail_url}
+                autoplay={post.autoplay !== false}
+                showSoundToggle
+                cropX={post.crop_x ?? 0}
+                cropY={post.crop_y ?? 0}
+                cropWidth={post.crop_width ?? 1}
+                cropHeight={post.crop_height ?? 1}
                 style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
               />
             ) : (

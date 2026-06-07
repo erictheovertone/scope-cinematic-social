@@ -6,7 +6,7 @@ import { usePrivy } from "@privy-io/react-auth";
 import {
   resolveProfileByUsername, getUserById, followUser, unfollowUser,
   isFollowing, getFollowerCount, getFollowingCount,
-  getDecksByUsername, getProfileLinks, type Deck, type ProfileLink,
+  getDecksByUsername, getProfileLinks, isProMember, type Deck, type ProfileLink,
 } from "@/lib/userService";
 import ProfileDataSheet from "@/components/ProfileDataSheet";
 import { getUserPosts } from "@/lib/postsService";
@@ -99,7 +99,7 @@ export default function PublicProfilePage() {
 
         // Badge flags
         const memberUntil = p.paid_member_until ? new Date(p.paid_member_until) : null;
-        setIsPaidMember(memberUntil ? memberUntil > new Date() : false);
+        setIsPaidMember(isProMember(p as any));
         setPaidMemberUntil(memberUntil);
         setIsTopCollector(p.is_top_collector || false);
         setIsInHouseCreator(p.is_in_house_creator || false);
@@ -390,17 +390,38 @@ export default function PublicProfilePage() {
             });
           }}>
             <div style={{ height: 140, flexShrink: 0 }} />
-            <div className={`grid ${getColCount(layoutId)} gap-x-[1px] gap-y-[2px]`}>
-              {posts.map((post, index) => (
-                <PostCell
-                  key={post.id}
-                  post={post}
-                  layoutId={layoutId}
-                  index={index}
-                  onClick={() => { setViewerIndex(index); setShowViewer(true); }}
-                />
-              ))}
-            </div>
+            {layoutId === 'collage' ? (
+              // Collage → masonry mosaic: each post at its own layout_id AR.
+              <div style={{ columnCount: 2, columnGap: 2 }}>
+                {posts.map((post, index) => (
+                  <div key={post.id} style={{
+                    breakInside: 'avoid',
+                    // @ts-ignore — webkit prefix for older Safari
+                    WebkitColumnBreakInside: 'avoid',
+                    marginBottom: 2,
+                  }}>
+                    <PostCell
+                      post={post}
+                      layoutId={post.layout_id || 'scope'}
+                      index={index}
+                      onClick={() => { setViewerIndex(index); setShowViewer(true); }}
+                    />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className={`grid ${getColCount(layoutId)} gap-x-[1px] gap-y-[2px]`}>
+                {posts.map((post, index) => (
+                  <PostCell
+                    key={post.id}
+                    post={post}
+                    layoutId={layoutId}
+                    index={index}
+                    onClick={() => { setViewerIndex(index); setShowViewer(true); }}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>

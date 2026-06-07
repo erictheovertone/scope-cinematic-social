@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
-import { getUserByPrivyId, getProfile, getFollowerCount, getFollowingCount, getUserDecks, createDeck, getProfileLinks, type Deck, type ProfileLink } from "@/lib/userService";
+import { getUserByPrivyId, getProfile, getFollowerCount, getFollowingCount, getUserDecks, createDeck, getProfileLinks, isProMember, type Deck, type ProfileLink } from "@/lib/userService";
 import ProfileDataSheet from "@/components/ProfileDataSheet";
 import { getUserPosts } from '@/lib/postsService';
 import CreatePostFlow from "@/components/CreatePostFlow";
@@ -145,8 +145,7 @@ const userLayoutId = stableLayoutId;
             });
             setLayoutLoaded(true);
             const memberUntil = profile.paid_member_until ? new Date(profile.paid_member_until) : null;
-            const isActiveMember = memberUntil ? memberUntil > new Date() : false;
-            setIsPaidMember(isActiveMember);
+            setIsPaidMember(isProMember(profile));
             setPaidMemberUntil(memberUntil);
             setIsTopCollector(profile.is_top_collector || false);
             setIsInHouseCreator(profile.is_in_house_creator || false);
@@ -188,9 +187,7 @@ const userLayoutId = stableLayoutId;
             if (supabaseUser) {
               const profile = await getProfile(supabaseUser.id) as any;
               if (profile) {
-                const memberUntil = profile.paid_member_until ? new Date(profile.paid_member_until) : null;
-                const isActiveMember = memberUntil ? memberUntil > new Date() : false;
-                setIsPaidMember(isActiveMember);
+                setIsPaidMember(isProMember(profile));
               }
             }
           });
@@ -562,29 +559,57 @@ const userLayoutId = stableLayoutId;
               }}
             >
               <div style={{ height: 140, flexShrink: 0 }} />
-              <div className={`grid ${getColCount(userLayoutId)} gap-x-[1px] gap-y-[2px]`}>
-                {userPosts.map((post, index) => (
-                  <PostCell
-                    key={post.id}
-                    post={post}
-                    layoutId={userLayoutId}
-                    index={index}
-                    onClick={() => {
-                      const isVid = post.media_type === 'video' ||
-                        ['mp4','mov','webm'].includes(
-                          post.media_urls?.[0]?.split('?')[0].split('.').pop()?.toLowerCase() || ''
-                        );
-                      if (isVid) {
-                        setLightboxPost(post);
-                        setShowLightbox(true);
-                      } else {
-                        setViewerIndex(index);
-                        setShowViewer(true);
-                      }
-                    }}
-                  />
-                ))}
-              </div>
+              {(() => {
+                const openPost = (post: any, index: number) => {
+                  const isVid = post.media_type === 'video' ||
+                    ['mp4','mov','webm'].includes(
+                      post.media_urls?.[0]?.split('?')[0].split('.').pop()?.toLowerCase() || ''
+                    );
+                  if (isVid) {
+                    setLightboxPost(post);
+                    setShowLightbox(true);
+                  } else {
+                    setViewerIndex(index);
+                    setShowViewer(true);
+                  }
+                };
+                // Collage → masonry mosaic: each post at its own layout_id AR.
+                if (userLayoutId === 'collage') {
+                  return (
+                    <div style={{ columnCount: 2, columnGap: 2 }}>
+                      {userPosts.map((post, index) => (
+                        <div key={post.id} style={{
+                          breakInside: 'avoid',
+                          // @ts-ignore — webkit prefix for older Safari
+                          WebkitColumnBreakInside: 'avoid',
+                          marginBottom: 2,
+                        }}>
+                          <PostCell
+                            post={post}
+                            layoutId={post.layout_id || 'scope'}
+                            index={index}
+                            onClick={() => openPost(post, index)}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  );
+                }
+                // Non-collage → unchanged uniform grid.
+                return (
+                  <div className={`grid ${getColCount(userLayoutId)} gap-x-[1px] gap-y-[2px]`}>
+                    {userPosts.map((post, index) => (
+                      <PostCell
+                        key={post.id}
+                        post={post}
+                        layoutId={userLayoutId}
+                        index={index}
+                        onClick={() => openPost(post, index)}
+                      />
+                    ))}
+                  </div>
+                );
+              })()}
             </div>
           )}
         </div>
@@ -605,6 +630,7 @@ const userLayoutId = stableLayoutId;
             ownerAvatarUrl={userProfile.profileImage}
             onClose={() => setShowViewer(false)}
             isOwnProfile={true}
+            onDeleted={(deletedPostId) => setUserPosts(prev => prev.filter(p => p.id !== deletedPostId))}
           />
         </>
       )}
@@ -625,6 +651,7 @@ const userLayoutId = stableLayoutId;
           onCollect={() => { setShowLightbox(false); }}
           onAddToDeck={() => { setShowDecks(true); }}
           onTheaterMode={() => { setShowLightbox(false); setLightboxPost(null); setActiveTab('theatre'); }}
+          onDeleted={(deletedPostId) => setUserPosts(prev => prev.filter(p => p.id !== deletedPostId))}
           layoutId={userLayoutId}
         />
       )}

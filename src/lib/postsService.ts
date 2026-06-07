@@ -51,6 +51,12 @@ export const createPost = async (postData: {
   mediaType?: string;
   thumbnailUrl?: string | null;
   autoplay?: boolean;
+  editGeometry?: unknown;
+  editParams?: unknown;
+  cropX?: number;
+  cropY?: number;
+  cropWidth?: number;
+  cropHeight?: number;
 }): Promise<Post> => {
   const { data, error } = await supabase
     .from('posts')
@@ -64,6 +70,14 @@ export const createPost = async (postData: {
         media_type: postData.mediaType || 'image',
         thumbnail_url: postData.thumbnailUrl || null,
         autoplay: postData.autoplay !== false,
+        // Additive — null/absent for legacy posts, never replaces layout_id.
+        ...(postData.editGeometry !== undefined ? { edit_geometry: postData.editGeometry } : {}),
+        // Look params (Brief 8B) — additive jsonb; stored versioned ({v:1,...}).
+        ...(postData.editParams !== undefined ? { edit_params: postData.editParams } : {}),
+        ...(postData.cropX !== undefined ? { crop_x: postData.cropX } : {}),
+        ...(postData.cropY !== undefined ? { crop_y: postData.cropY } : {}),
+        ...(postData.cropWidth !== undefined ? { crop_width: postData.cropWidth } : {}),
+        ...(postData.cropHeight !== undefined ? { crop_height: postData.cropHeight } : {}),
       }
     ])
     .select()
@@ -400,14 +414,22 @@ export const deleteComment = async (commentId: string, userId: string): Promise<
 };
 
 export async function softDeletePost(postId: string, userId: string): Promise<boolean> {
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('posts')
     .update({ is_deleted: true })
     .eq('id', postId)
-    .eq('user_id', userId);
+    .eq('user_id', userId)
+    .select('id');
 
   if (error) {
     console.error('[softDeletePost] error:', error);
+    return false;
+  }
+  // No rows updated means the ownership filter matched nothing (e.g. wrong
+  // user_id). Treat that as a failure instead of a false success, otherwise
+  // the post disappears locally but persists in the DB and reappears on refetch.
+  if (!data || data.length === 0) {
+    console.error('[softDeletePost] no rows updated — ownership mismatch for post:', postId, 'user:', userId);
     return false;
   }
   console.log('[softDeletePost] post hidden:', postId);

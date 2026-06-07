@@ -59,6 +59,7 @@ function PostViewerItem({
   const [showCollectSheet, setShowCollectSheet] = useState(false);
   const [showDeckPicker, setShowDeckPicker] = useState(false);
   const [deckToast, setDeckToast] = useState("");
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -226,11 +227,6 @@ function PostViewerItem({
           {deckToast && (
             <span style={{ ...SKB, fontSize: 9, color: "rgba(255,255,255,0.5)", textTransform: "uppercase" }}>Added to {deckToast}</span>
           )}
-          {user && post.user_id === user.id && (
-            <button onClick={() => setShowDeckPicker(true)} style={{ background: "transparent", border: "none", cursor: "pointer", padding: 0 }}>
-              <span style={{ ...SKB, fontSize: 8, color: "white", opacity: 0.7, textTransform: "uppercase" }}>ADD TO DECK</span>
-            </button>
-          )}
           <button
             onClick={handleCollect}
             style={{
@@ -248,16 +244,52 @@ function PostViewerItem({
           </button>
 
           {isOwnProfile && (
-            <button
-              onClick={() => onDeletePress?.(post.id)}
-              style={{ background: "transparent", border: "none", cursor: "pointer", padding: "8px", display: "flex", alignItems: "center", justifyContent: "center" }}
-            >
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                <circle cx="3" cy="9" r="1.5" fill="white" opacity="0.7" />
-                <circle cx="9" cy="9" r="1.5" fill="white" opacity="0.7" />
-                <circle cx="15" cy="9" r="1.5" fill="white" opacity="0.7" />
-              </svg>
-            </button>
+            <div style={{ position: "relative" }}>
+              <button
+                onClick={() => setMenuOpen(o => !o)}
+                style={{ background: "transparent", border: "none", cursor: "pointer", padding: "8px", display: "flex", alignItems: "center", justifyContent: "center" }}
+              >
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                  <circle cx="3" cy="9" r="1.5" fill="white" opacity="0.7" />
+                  <circle cx="9" cy="9" r="1.5" fill="white" opacity="0.7" />
+                  <circle cx="15" cy="9" r="1.5" fill="white" opacity="0.7" />
+                </svg>
+              </button>
+
+              {menuOpen && (
+                <>
+                  {/* Click-away backdrop */}
+                  <div
+                    onClick={() => setMenuOpen(false)}
+                    style={{ position: "fixed", inset: 0, zIndex: 120 }}
+                  />
+                  <div
+                    style={{
+                      position: "absolute",
+                      bottom: "calc(100% + 6px)",
+                      right: 0,
+                      zIndex: 121,
+                      minWidth: 132,
+                      background: "#0a0a0a",
+                      border: "1px solid rgba(255,255,255,0.12)",
+                    }}
+                  >
+                    <button
+                      onClick={() => { setMenuOpen(false); setShowDeckPicker(true); }}
+                      style={{ display: "block", width: "100%", textAlign: "left", background: "transparent", border: "none", borderBottom: "1px solid rgba(255,255,255,0.08)", cursor: "pointer", padding: "11px 14px" }}
+                    >
+                      <span style={{ ...SKB, fontSize: 9, color: "white", textTransform: "uppercase", letterSpacing: "0.06em" }}>ADD TO DECK</span>
+                    </button>
+                    <button
+                      onClick={() => { setMenuOpen(false); onDeletePress?.(post.id); }}
+                      style={{ display: "block", width: "100%", textAlign: "left", background: "transparent", border: "none", cursor: "pointer", padding: "11px 14px" }}
+                    >
+                      <span style={{ ...SKB, fontSize: 9, color: "#FF0000", textTransform: "uppercase", letterSpacing: "0.06em" }}>DELETE</span>
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
           )}
         </div>
 
@@ -341,14 +373,16 @@ interface ProfilePostViewerProps {
   ownerAvatarUrl?: string | null;
   onClose: () => void;
   isOwnProfile?: boolean;
+  onDeleted?: (postId: string) => void;
 }
 
 export default function ProfilePostViewer({
-  posts: initialPosts, initialIndex = 0, ownerUsername, ownerAvatarUrl, onClose, isOwnProfile,
+  posts: initialPosts, initialIndex = 0, ownerUsername, ownerAvatarUrl, onClose, isOwnProfile, onDeleted,
 }: ProfilePostViewerProps) {
   const router = useRouter();
   const { user } = usePrivy();
   const [visible, setVisible] = useState(false);
+  const [supabaseUserId, setSupabaseUserId] = useState<string>("");
   const [viewerUsername, setViewerUsername] = useState("");
   const [viewerAvatar, setViewerAvatar] = useState<string | null>(null);
   const [localPosts, setLocalPosts] = useState(initialPosts);
@@ -387,6 +421,7 @@ export default function ProfilePostViewer({
       try {
         const sbUser = await getUserByPrivyId(user.id);
         if (!sbUser) return;
+        setSupabaseUserId(sbUser.id);
         const profile = await getProfile(sbUser.id);
         if (profile?.username) setViewerUsername(profile.username);
         if (profile?.profile_image_url) setViewerAvatar(profile.profile_image_url);
@@ -469,11 +504,12 @@ export default function ProfilePostViewer({
       <DeletePostSheet
         visible={showDeleteSheet}
         postId={deletePostId}
-        userId={user?.id || ''}
+        userId={supabaseUserId}
         onClose={() => setShowDeleteSheet(false)}
         onDeleted={(deletedPostId) => {
           const newPosts = localPosts.filter(p => p.id !== deletedPostId);
           setLocalPosts(newPosts);
+          onDeleted?.(deletedPostId);
           if (newPosts.length === 0) onClose();
         }}
       />

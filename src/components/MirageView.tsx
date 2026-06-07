@@ -230,7 +230,7 @@ export default function MirageView({ onClose }: { onClose: () => void }) {
             zIndex: 2,
             display: "flex",
             justifyContent: "flex-end",
-            padding: "4px 6px 0",
+            padding: "4px 6px 14px",
             pointerEvents: "none",
           }}
         >
@@ -247,13 +247,15 @@ export default function MirageView({ onClose }: { onClose: () => void }) {
             }}
           >
             <img
-              src="/mirage-logo.png"
+              src="/mirage-logo-thick-red-new.png"
               alt="Mirage"
-              width={24}
-              height={24}
               style={{
-                filter:
-                  "brightness(0) invert(1) drop-shadow(0 0 5px rgba(255,255,255,0.75))",
+                height: 12,
+                width: "auto",
+                objectFit: "contain",
+                flexShrink: 0,
+                display: "block",
+                filter: "drop-shadow(0 0 4px rgba(0,0,0,0.6))",
                 opacity: 1,
               }}
             />

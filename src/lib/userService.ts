@@ -98,6 +98,17 @@ export const getProfile = async (userId: string): Promise<Profile | null> => {
   }
 }
 
+/**
+ * Single source of truth for "is this user Pro". A member is Pro while their
+ * `paid_member_until` is in the future. Pass the profile loaded via the verified
+ * path (getUserByPrivyId(did) → getProfile(users.id) → profile). Replaces the
+ * inline copies that were scattered across profile/links/decks pages.
+ */
+export const isProMember = (profile: { paid_member_until?: string | null } | null | undefined): boolean => {
+  const until = profile?.paid_member_until ? new Date(profile.paid_member_until) : null;
+  return until ? until > new Date() : false;
+};
+
 export const getProfileByUsername = async (username: string): Promise<Profile | null> => {
   try {
     const { data, error } = await supabase

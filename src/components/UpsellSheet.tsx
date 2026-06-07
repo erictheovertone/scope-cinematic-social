@@ -1,9 +1,15 @@
 'use client';
 import { useEffect } from 'react';
 
-export type UpsellLimit = 'posts' | 'decks' | 'links';
+export type UpsellLimit = 'posts' | 'decks' | 'links' | 'edit';
 
 const COPY: Record<UpsellLimit, { headline: string; count: string; body: string; feature: string }> = {
+  edit: {
+    headline: 'UNLOCK THE FULL SUITE',
+    count: 'SCOPE PRO TOOL',
+    body: 'This is a Pro finishing tool. Go Pro for the full editing suite — bloom, halation, grain, and every tool to come.',
+    feature: 'edit',
+  },
   posts: {
     headline: 'YOUR REEL IS FULL',
     count: '25 / 25 POSTS',

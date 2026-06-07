@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import MediaRenderer from "@/components/MediaRenderer";
 import ReframeOverlay from "@/components/ReframeOverlay";
 import PillarboxFrame from "@/components/PillarboxFrame";
+import DeletePostSheet from "@/components/DeletePostSheet";
 
 interface VideoLightboxProps {
   post: any;
@@ -14,10 +15,11 @@ interface VideoLightboxProps {
   onCollect?: () => void;
   onAddToDeck?: () => void;
   onTheaterMode?: () => void;
+  onDeleted?: (postId: string) => void;
   layoutId?: string;
 }
 
-export default function VideoLightbox({ post, onClose, onScrollDown, isOwner, supabaseUserId, onCollect, onAddToDeck, onTheaterMode, layoutId }: VideoLightboxProps) {
+export default function VideoLightbox({ post, onClose, onScrollDown, isOwner, supabaseUserId, onCollect, onAddToDeck, onTheaterMode, onDeleted, layoutId }: VideoLightboxProps) {
   const [visible, setVisible] = useState(false);
   const [infoExpanded, setInfoExpanded] = useState(false);
   const [pinned, setPinned] = useState(post.is_pinned || false);
@@ -25,6 +27,7 @@ export default function VideoLightbox({ post, onClose, onScrollDown, isOwner, su
   const [showOwnerExpanded, setShowOwnerExpanded] = useState(false);
   const [replacingThumb, setReplacingThumb] = useState(false);
   const [showReframe, setShowReframe] = useState(false);
+  const [showDeleteSheet, setShowDeleteSheet] = useState(false);
   const thumbInputRef = useRef<HTMLInputElement>(null);
   const touchStartY = useRef<number | null>(null);
   const touchStartTime = useRef<number>(0);
@@ -419,8 +422,35 @@ export default function VideoLightbox({ post, onClose, onScrollDown, isOwner, su
               <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 8, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>REFRAME</span>
             </button>
           </div>
+
+          {/* Delete */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div>
+              <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 9, color: '#FF0000', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 2px' }}>DELETE</p>
+              <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: 8, color: 'rgba(255,255,255,0.4)', margin: 0 }}>Remove from your profile</p>
+            </div>
+            <button
+              onClick={(e) => { e.stopPropagation(); setShowDeleteSheet(true); }}
+              onTouchEnd={(e) => { e.stopPropagation(); e.preventDefault(); setShowDeleteSheet(true); }}
+              style={{ background: 'transparent', border: '1px solid rgba(255,0,0,0.5)', cursor: 'pointer', padding: '5px 10px' }}
+            >
+              <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 8, color: '#FF0000', textTransform: 'uppercase', letterSpacing: '0.08em' }}>DELETE</span>
+            </button>
+          </div>
         </div>
       )}
+
+      <DeletePostSheet
+        visible={showDeleteSheet}
+        postId={post.id}
+        userId={supabaseUserId || ''}
+        onClose={() => setShowDeleteSheet(false)}
+        onDeleted={(deletedPostId) => {
+          setShowDeleteSheet(false);
+          onDeleted?.(deletedPostId);
+          handleClose();
+        }}
+      />
 
       {/* Arrow — tap to open viewer */}
       <div

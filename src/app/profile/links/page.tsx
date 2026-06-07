@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
 import { supabase } from "@/lib/supabase/client";
-import { getUserByPrivyId, getProfile, getProfileLinks, saveProfileLinks, type ProfileLink } from "@/lib/userService";
+import { getUserByPrivyId, getProfile, getProfileLinks, saveProfileLinks, isProMember, type ProfileLink } from "@/lib/userService";
 import { getScopeLimitType } from "@/lib/limits";
 import { useUpsell } from "@/components/UpsellProvider";
 
@@ -41,8 +41,7 @@ export default function LinkManager() {
         if (!sbUser) return;
         setPrivyUserId(user.id);
         const profile = await getProfile(sbUser.id);
-        const memberUntil = (profile as any)?.paid_member_until ? new Date((profile as any).paid_member_until) : null;
-        setIsPro(memberUntil ? memberUntil > new Date() : false);
+        setIsPro(isProMember(profile as any));
         const existing = await getProfileLinks(user.id);
         setLinks(existing);
       } catch (e) {

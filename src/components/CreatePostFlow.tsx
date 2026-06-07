@@ -10,12 +10,20 @@ import MediaRenderer from '@/components/MediaRenderer';
 import { mintNewPost } from '@/lib/zora';
 import MintPromptSheet from '@/components/MintPromptSheet';
 import {
-  getUserByPrivyId, getProfile, uploadImage,
+  getUserByPrivyId, getProfile, uploadImage, isProMember,
   getUserDecks, createDeck, addPostToDeck,
   type Deck,
 } from '@/lib/userService';
+import FinishingStep from '@/components/finishing/FinishingStep';
+import { DEFAULT_PARAMS, type EditParams } from '@/lib/editor/params';
+import { bakeLook, hasLookEdits, decodeImageFile } from '@/lib/editor/bakeLook';
 import { getScopeLimitType } from '@/lib/limits';
 import { useUpsell } from '@/components/UpsellProvider';
+import CropTool from '@/components/CropTool';
+import { chipForLayout, getAspectRatio } from '@/lib/aspectRatio';
+import {
+  neutralGeometry, bakeImageGeometry, geometryMediaStyle, type EditGeometry,
+} from '@/lib/editGeometry';
 
 function profileLayoutToAspect(layoutId: string): number {
   switch (layoutId) {
@@ -204,7 +212,16 @@ interface CreatePostFlowProps {
 
 export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope' }: CreatePostFlowProps) {
   const { showUpsell } = useUpsell();
-  const [step, setStep] = useState<'media' | 'edit' | 'deck' | 'posting'>('media');
+  const [step, setStep] = useState<'media' | 'crop' | 'finishing' | 'edit' | 'deck' | 'posting'>('media');
+  // Geometry chosen in the crop tool. `chosenLayoutId` is the AR id picked by a
+  // collage user; non-collage users keep their canonical grid layout_id.
+  const [editGeometry, setEditGeometry] = useState<EditGeometry | null>(null);
+  // Look params from FINISHING (Brief 8B). Baked into the JPEG (photo) + stored.
+  const [editParams, setEditParams] = useState<EditParams>(DEFAULT_PARAMS);
+  // Real Pro status + grid gating for FINISHING, resolved via the verified path
+  // (DID → getUserByPrivyId → getProfile → isProMember). uuid typing respected.
+  const [finishCtx, setFinishCtx] = useState<{ isPro: boolean; gridLayout: 'standard' | 'collage'; layoutId: string } | null>(null);
+  const [chosenLayoutId, setChosenLayoutId] = useState<string | null>(null);
   const [selectedMedia, setSelectedMedia] = useState<MediaItem[]>([]);
   const [caption, setCaption] = useState('');
   const [isUploading, setIsUploading] = useState(false);
@@ -221,6 +238,32 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
   const thumbnailInputRef = useRef<HTMLInputElement>(null);
   const [videoAutoplay, setVideoAutoplay] = useState(true);
   const [autoThumbnail, setAutoThumbnail] = useState<string | null>(null);
+
+  // Resolve real Pro status + grid gating for FINISHING once the user is known.
+  // IDENTIFIER TYPING: DID (user.id) ONLY to getUserByPrivyId; the uuid
+  // (supabaseUser.id) goes to getProfile. The editor never receives the DID.
+  useEffect(() => {
+    if (!user?.id) { setFinishCtx(null); return; }
+    let cancelled = false;
+    (async () => {
+      try {
+        const supabaseUser = await getUserByPrivyId(user.id); // DID → users row (uuid)
+        if (!supabaseUser || cancelled) return;
+        const profile = await getProfile(supabaseUser.id);     // uuid → profile
+        if (!profile || cancelled) return;
+        const raw = (profile as any).grid_layout || userLayoutId;
+        const canonical = LEGACY_TO_CANONICAL[raw] ?? raw;
+        setFinishCtx({
+          isPro: isProMember(profile as any),
+          gridLayout: raw === 'collage' ? 'collage' : 'standard',
+          layoutId: canonical,
+        });
+      } catch (e) {
+        console.error('[CreatePostFlow] finishCtx load error:', e);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [user?.id, userLayoutId]);
 
   // Video crop state
   const [cropX, setCropX] = useState(0);
@@ -474,13 +517,43 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
       if (!profile.username) throw new Error('Username not set — please add a username at /profile/setup');
       console.log('[handlePost] profile:', profile.username, 'grid_layout:', (profile as any).grid_layout);
 
+      // ── layout_id + geometry resolution ──
+      // layout_id stays the canonical grid layout for non-collage users (existing
+      // write path, untouched). Collage users post per-AR: the chosen chip id
+      // becomes layout_id. edit_geometry is additive — never replaces layout_id.
+      const rawLayoutId: string = (profile as any).grid_layout || userLayoutId;
+      const canonicalLayoutId = LEGACY_TO_CANONICAL[rawLayoutId] ?? rawLayoutId;
+      const isCollage = rawLayoutId === 'collage';
+
+      const geomBase: EditGeometry = editGeometry ?? neutralGeometry(chipForLayout(canonicalLayoutId).id);
+      const finalLayoutId = isCollage ? (chosenLayoutId ?? geomBase.ar) : canonicalLayoutId;
+      const exportChip = chipForLayout(finalLayoutId);
+      const geometry: EditGeometry = { ...geomBase, ar: exportChip.id };
+      console.log('[handlePost] layout_id:', finalLayoutId, '| geometry:', geometry);
+
       const mediaUrls: string[] = [];
       for (const media of selectedMedia) {
         console.log('[handlePost] uploading:', media.file.name);
         let fileToUpload = media.file;
-        if (media.type === 'image' && imgNaturalAr > 0) {
-          fileToUpload = await cropImageToAspect(media.file, imageCropX, imageCropY, imageCropWidth, imgNaturalAr, profileLayoutToAspect(userLayoutId));
-          console.log('[handlePost] image cropped to', profileLayoutToAspect(userLayoutId).toFixed(2), ':1');
+        if (media.type === 'image') {
+          // 1) Bake the affine geometry (crop + straighten + rotate) at canonical dims.
+          fileToUpload = await bakeImageGeometry(media.file, geometry, exportChip.exportW, exportChip.exportH);
+          console.log('[handlePost] geometry baked at', exportChip.exportW, 'x', exportChip.exportH);
+          // 2) Bake the FINISHING look on top (color/grain/curves) via the gl-react
+          //    pipeline → readback JPEG. Skipped when there are no look edits (the
+          //    un-edited path stays byte-identical to before). GATE B: a bake/readback
+          //    failure THROWS → caught below → publish aborts (never uploads an
+          //    un-graded image as if it were graded).
+          if (hasLookEdits(editParams)) {
+            const baseImg = await decodeImageFile(fileToUpload);
+            const lookBlob = await bakeLook(baseImg, editParams, exportChip.exportW, exportChip.exportH);
+            fileToUpload = new File(
+              [lookBlob],
+              fileToUpload.name.replace(/\.[^.]+$/, '') + '-graded.jpg',
+              { type: 'image/jpeg' },
+            );
+            console.log('[handlePost] look baked (graded)');
+          }
         }
         const url = await uploadImage(fileToUpload, 'post-media', user.id);
         mediaUrls.push(url);
@@ -496,18 +569,27 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
         console.log('[handlePost] auto thumbnail uploaded:', thumbnailUrl);
       }
 
-      const rawLayoutId: string = (profile as any).grid_layout || userLayoutId;
-      const canonicalLayoutId = LEGACY_TO_CANONICAL[rawLayoutId] ?? rawLayoutId;
-
+      const isVideo = selectedMedia[0]?.type === 'video';
       const postPayload = {
         userId: supabaseUser.id,
         username: profile.username,
         caption,
         mediaUrls,
-        layoutId: canonicalLayoutId,
+        layoutId: finalLayoutId,
         mediaType: selectedMedia[0]?.type || 'image',
         thumbnailUrl,
-        autoplay: selectedMedia[0]?.type === 'video' ? videoAutoplay : true,
+        autoplay: isVideo ? videoAutoplay : true,
+        editGeometry: geometry,
+        // Look params — versioned for forward-compat. Photo: already baked into the
+        // JPEG above; stored for future re-editability. Video: stored, applied at
+        // playback in a later brief (no playback shader yet).
+        editParams: { v: 1, ...editParams },
+        // Mirror the crop into the legacy crop_* columns for video playback that
+        // reads them today (images are baked, so they need no runtime crop).
+        ...(isVideo ? {
+          cropX: geometry.crop.x, cropY: geometry.crop.y,
+          cropWidth: geometry.crop.w, cropHeight: geometry.crop.h,
+        } : {}),
       };
       console.log('[handlePost] createPost payload:', postPayload);
       const newPost = await createPost(postPayload);
@@ -534,6 +616,9 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
       console.error('[handlePost] error details:', JSON.stringify(e, null, 2));
       setPostError('Failed to create post. Please try again.');
       setIsUploading(false);
+      // Clear the full-screen POSTING overlay so the error is actually visible
+      // (GATE B: a bake/publish failure must be loud, never a silent stuck state).
+      setIsPosting(false);
     }
   };
 
@@ -542,6 +627,8 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
     setStep('media');
     setSelectedMedia([]);
     setCaption('');
+    setEditGeometry(null);
+    setChosenLayoutId(null);
     setSelectedDeckId(null);
     setMintStatus('idle');
     setCustomThumbnail(null);
@@ -649,7 +736,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
         <button onClick={onClose} className="text-white text-lg">×</button>
         <h2 style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 16, color: 'white', textTransform: 'uppercase', letterSpacing: '0.04em', margin: 0 }}>New Post</h2>
         <button
-          onClick={() => setStep('edit')}
+          onClick={() => setStep('crop')}
           disabled={selectedMedia.length === 0}
           style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: '0.04em', background: 'none', border: 'none', cursor: selectedMedia.length > 0 ? 'pointer' : 'default', color: selectedMedia.length > 0 ? '#FF0000' : '#666666' }}
         >
@@ -745,101 +832,30 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
       <div className="flex-1 flex flex-col">
         <div className="flex-1 p-4">
           <div style={{ position: 'relative', width: '100%', marginBottom: 16, backgroundColor: '#000' }}>
-            {selectedMedia[0]?.type === 'video' ? (
-              <div
-                ref={cropContainerRef}
-                style={{ position: 'relative', width: '100%', backgroundColor: '#000', marginBottom: 16, touchAction: 'none', overflow: 'hidden' }}
-                onPointerMove={handleCropPointerMove}
-                onPointerUp={handleCropPointerUp}
-                onPointerLeave={handleCropPointerUp}
-              >
-                <video
-                  src={selectedMedia[0].url}
-                  autoPlay muted loop playsInline
-                  style={{ width: '100%', display: 'block', objectFit: 'contain', maxHeight: '60vh' }}
-                  onLoadedMetadata={(e) => {
-                    const v = e.currentTarget as HTMLVideoElement;
-                    setVideoNaturalAr(v.videoWidth / v.videoHeight);
-                  }}
-                />
-                {videoNaturalAr > 0 && (
-                  <div
-                    onPointerDown={(e) => handleCropPointerDown(e, 'move')}
-                    style={{
-                      position: 'absolute', zIndex: 6,
-                      left: `${cropX * 100}%`, top: `${cropY * 100}%`,
-                      width: `${cropWidth * 100}%`, height: `${cropHeight * 100}%`,
-                      boxShadow: '0 0 0 9999px rgba(0,0,0,0.72)',
-                      outline: '1px solid rgba(255,255,255,0.45)',
-                      cursor: 'grab', pointerEvents: 'auto', touchAction: 'none',
-                    }}
-                  >
-                    {([
-                      { id: 'nw', s: { top: 0, left: 0 }, tf: 'translate(-50%,-50%)', bt: true, bl: true, br: false, bb: false },
-                      { id: 'ne', s: { top: 0, right: 0 }, tf: 'translate(50%,-50%)', bt: true, br: true, bl: false, bb: false },
-                      { id: 'sw', s: { bottom: 0, left: 0 }, tf: 'translate(-50%,50%)', bb: true, bl: true, bt: false, br: false },
-                      { id: 'se', s: { bottom: 0, right: 0 }, tf: 'translate(50%,50%)', bb: true, br: true, bt: false, bl: false },
-                    ] as any[]).map(({ id, s, tf, bt, br, bb, bl }) => (
-                      <div key={id} onPointerDown={(e) => { e.stopPropagation(); handleCropPointerDown(e, id); }}
-                        style={{ position: 'absolute', width: 28, height: 28, cursor: `${id}-resize`, touchAction: 'none', transform: tf, ...s, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <div style={{ width: 14, height: 14, borderTop: bt ? '2px solid white' : 'none', borderRight: br ? '2px solid white' : 'none', borderBottom: bb ? '2px solid white' : 'none', borderLeft: bl ? '2px solid white' : 'none' }} />
-                      </div>
-                    ))}
-                    <div style={{ position: 'absolute', bottom: 6, right: 6, background: 'rgba(0,0,0,0.55)', padding: '2px 5px' }}>
-                      <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 8, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase' }}>{profileLayoutLabel(userLayoutId)}</span>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div
-                ref={imageCropContainerRef}
-                style={{ position: 'relative', width: '100%', backgroundColor: '#000', touchAction: 'none', marginBottom: 16, overflow: 'hidden' }}
-                onPointerMove={handleImageCropPointerMove}
-                onPointerUp={handleImageCropPointerUp}
-                onPointerLeave={handleImageCropPointerUp}
-              >
-                {selectedMedia[0] && (
+            {/* Non-interactive WYSIWYG preview of the crop chosen in CropTool. */}
+            <div style={{ position: 'relative', width: '100%', aspectRatio: getAspectRatio(chosenLayoutId || userLayoutId), background: '#000', overflow: 'hidden' }}>
+              {selectedMedia[0] && editGeometry && (
+                selectedMedia[0].type === 'video' ? (
+                  <video
+                    src={selectedMedia[0].url}
+                    autoPlay muted loop playsInline
+                    style={geometryMediaStyle(editGeometry)}
+                  />
+                ) : (
                   <img
                     src={selectedMedia[0].url}
                     alt="Preview"
-                    onLoad={(e) => {
-                      const img = e.currentTarget;
-                      setImgNaturalAr(img.naturalWidth / img.naturalHeight);
-                    }}
-                    style={{ width: '100%', height: 'auto', display: 'block', maxHeight: '65vh', objectFit: 'contain' }}
+                    style={geometryMediaStyle(editGeometry)}
                   />
-                )}
-                {imgNaturalAr > 0 && (
-                  <div
-                    onPointerDown={(e) => handleImageCropPointerDown(e, 'move')}
-                    style={{
-                      position: 'absolute', zIndex: 6,
-                      left: `${imageCropX * 100}%`, top: `${imageCropY * 100}%`,
-                      width: `${imageCropWidth * 100}%`, height: `${imageCropHeight * 100}%`,
-                      boxShadow: '0 0 0 9999px rgba(0,0,0,0.72)',
-                      outline: '1px solid rgba(255,255,255,0.45)',
-                      cursor: 'grab', pointerEvents: 'auto', touchAction: 'none',
-                    }}
-                  >
-                    {([
-                      { id: 'nw', s: { top: 0, left: 0 }, tf: 'translate(-50%,-50%)', bt: true, bl: true, br: false, bb: false },
-                      { id: 'ne', s: { top: 0, right: 0 }, tf: 'translate(50%,-50%)', bt: true, br: true, bl: false, bb: false },
-                      { id: 'sw', s: { bottom: 0, left: 0 }, tf: 'translate(-50%,50%)', bb: true, bl: true, bt: false, br: false },
-                      { id: 'se', s: { bottom: 0, right: 0 }, tf: 'translate(50%,50%)', bb: true, br: true, bt: false, bl: false },
-                    ] as any[]).map(({ id, s, tf, bt, br, bb, bl }) => (
-                      <div key={id} onPointerDown={(e) => { e.stopPropagation(); handleImageCropPointerDown(e, id); }}
-                        style={{ position: 'absolute', width: 28, height: 28, cursor: `${id}-resize`, touchAction: 'none', transform: tf, ...s, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <div style={{ width: 14, height: 14, borderTop: bt ? '2px solid white' : 'none', borderRight: br ? '2px solid white' : 'none', borderBottom: bb ? '2px solid white' : 'none', borderLeft: bl ? '2px solid white' : 'none' }} />
-                      </div>
-                    ))}
-                    <div style={{ position: 'absolute', bottom: 6, right: 6, background: 'rgba(0,0,0,0.55)', padding: '2px 5px' }}>
-                      <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 8, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase' }}>{profileLayoutLabel(userLayoutId)}</span>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
+                )
+              )}
+            </div>
+            <button
+              onClick={() => setStep('crop')}
+              style={{ position: 'absolute', bottom: 8, right: 8, background: 'rgba(0,0,0,0.6)', border: '1px solid rgba(255,255,255,0.25)', cursor: 'pointer', padding: '5px 9px' }}
+            >
+              <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 8, color: 'white', textTransform: 'uppercase', letterSpacing: '0.06em' }}>ADJUST CROP</span>
+            </button>
           </div>
           <textarea
             value={caption}
@@ -890,7 +906,11 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
 
         <div className="border-t border-[#333333] p-4">
           <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 10, color: '#666666', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 4 }}>
-            LAYOUT: {profileLayoutName(userLayoutId)} ({profileLayoutLabel(userLayoutId)})
+            {/* Collage posts read the AR chosen in the crop tool; non-collage keeps the grid layout. */}
+            LAYOUT: {(() => {
+              const footerLayoutId = userLayoutId === 'collage' ? (chosenLayoutId || userLayoutId) : userLayoutId;
+              return `${profileLayoutName(footerLayoutId)} (${profileLayoutLabel(footerLayoutId)})`;
+            })()}
           </p>
           <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 9, color: '#666666', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
             {selectedMedia.length} media item{selectedMedia.length !== 1 ? 's' : ''} selected
@@ -1058,6 +1078,46 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
           {step === 'posting' && renderPostingStep()}
         </div>
       </div>
+      {step === 'crop' && selectedMedia[0] && (
+        <CropTool
+          mediaUrl={selectedMedia[0].url}
+          mediaType={selectedMedia[0].type}
+          allowArChoice={userLayoutId === 'collage'}
+          initialAr={chipForLayout(userLayoutId).id}
+          onCancel={() => setStep('media')}
+          onConfirm={(geom, layoutId) => {
+            setEditGeometry(geom);
+            setChosenLayoutId(layoutId);
+            setStep('finishing');
+          }}
+        />
+      )}
+      {step === 'finishing' && selectedMedia[0] && (() => {
+        // Fallbacks so the editor ALWAYS renders even if finishCtx hasn't resolved
+        // yet (it updates once the profile loads); never blank-on-null.
+        const fallbackLayout = LEGACY_TO_CANONICAL[userLayoutId] ?? userLayoutId;
+        const layoutId = finishCtx?.layoutId ?? fallbackLayout;
+        const gridLayout = finishCtx?.gridLayout ?? (userLayoutId === 'collage' ? 'collage' : 'standard');
+        // zIndex 200 lifts the editor above the create modal's opaque z-100 backdrop
+        // (same reason CropTool uses 200). Without it the modal covers it → black.
+        return (
+          <div style={{ position: 'fixed', inset: 0, zIndex: 200 }}>
+            <FinishingStep
+              mediaUrl={selectedMedia[0].url}
+              mediaType={selectedMedia[0].type}
+              geometry={editGeometry ?? neutralGeometry(chipForLayout(layoutId).id)}
+              onGeometryChange={setEditGeometry}
+              gridLayout={gridLayout}
+              layoutId={layoutId}
+              isPro={finishCtx?.isPro ?? false}
+              params={editParams}
+              onParamsChange={setEditParams}
+              onDone={() => setStep('edit')}
+              onBack={() => setStep('crop')}
+            />
+          </div>
+        );
+      })()}
       <MintPromptSheet
         visible={showMintPrompt}
         onMint={handleDoMint}

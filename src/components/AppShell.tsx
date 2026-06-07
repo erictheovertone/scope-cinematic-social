@@ -23,6 +23,7 @@ const HIDDEN = [
   '/profile/contact',
   '/profile/terms',
   '/profile/delete-account',
+  '/finishing-dev', // dev editing-suite bench — owns the full viewport, no app chrome
 ];
 
 export default function AppShell() {

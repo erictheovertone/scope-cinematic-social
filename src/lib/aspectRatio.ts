@@ -82,3 +82,45 @@ export function ratioPadding(ratioStr: string): number {
   const [w, h] = ratioStr.split('/').map(s => parseFloat(s.trim()));
   return (h / w) * 100;
 }
+
+// ── Crop-tool AR picker metadata (additive — does not affect any read above) ──
+// The four canonical aspect ratios offered in the crop tool. `id` is the
+// canonical layout_id written for the post; getAspectRatio()/getColCount()
+// above already understand each id, so this is purely a presentation map.
+// `exportW`/`exportH` are the canonical bake dimensions (constant 1080 short
+// edge). Display is AR-driven (object-fit), so the exact pixel count never
+// changes how a post renders — only the ratio matters.
+export interface ArChip {
+  /** canonical layout_id written to posts.layout_id */
+  id: string;
+  /** short brand name, e.g. "PANA WIDE" */
+  label: string;
+  /** human ratio label, e.g. "2.75:1" */
+  ratioLabel: string;
+  /** numeric width/height ratio */
+  ratio: number;
+  /** canonical baked JPEG dimensions for this AR */
+  exportW: number;
+  exportH: number;
+}
+
+/**
+ * Exactly four chips, widest → narrowest, as shown in the crop tool AR row.
+ * exportW/exportH are the canonical baked-JPEG dimensions.
+ */
+export const AR_CHIPS: ArChip[] = [
+  { id: 'pana-wide', label: 'PANA WIDE', ratioLabel: '2.75:1', ratio: 2.75,  exportW: 4096, exportH: 1551 },
+  { id: 'scope',     label: 'SCOPE',     ratioLabel: '2.39:1', ratio: 2.39,  exportW: 4096, exportH: 1716 },
+  { id: 'cine-wide', label: 'CINE WIDE', ratioLabel: '1.85:1', ratio: 1.85,  exportW: 4096, exportH: 2214 },
+  { id: 'legacy',    label: 'LEGACY',    ratioLabel: '4:3',    ratio: 4 / 3, exportW: 1024, exportH: 768  },
+];
+
+/** Maps any layout_id (incl. legacy/2x/2col forms) to its AR chip. */
+export function chipForLayout(layoutId: string): ArChip {
+  const ratioStr = getAspectRatio(layoutId);
+  const [w, h] = ratioStr.split('/').map(s => parseFloat(s.trim()));
+  const target = w / h;
+  // nearest chip by ratio (handles collage index-0 default too)
+  return AR_CHIPS.reduce((best, c) =>
+    Math.abs(c.ratio - target) < Math.abs(best.ratio - target) ? c : best, AR_CHIPS[1]);
+}

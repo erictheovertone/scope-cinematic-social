@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
 import {
   getDeckById, removeFromDeck, updateDeck, addMediaToDeck, uploadImage,
-  getUserByPrivyId, getProfile, getProfileByUsername,
+  getUserByPrivyId, getProfile, getProfileByUsername, isProMember,
   type DeckWithItems, type DeckItemWithMedia,
 } from "@/lib/userService";
 import { getAspectRatio, getColCount } from "@/lib/aspectRatio";
@@ -275,10 +275,7 @@ export default function DeckDetailPage() {
             if (sbUser) {
               const profile = await getProfile(sbUser.id);
               if (profile) {
-                const paidUntil = (profile as any).paid_member_until
-                  ? new Date((profile as any).paid_member_until)
-                  : null;
-                setIsPro(!!(paidUntil && paidUntil > new Date()));
+                setIsPro(isProMember(profile as any));
                 setViewerUsername((profile as any).username || "");
               }
             }
