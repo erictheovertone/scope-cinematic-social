@@ -36,6 +36,7 @@ export interface SplitTone {
 export interface EditParams {
   // ── CORRECTION (free) ──
   exposure: number;        // bi, stop −6..+6  (the one wired pass)
+  denoise: number;         // add, stop 0..12 (edge-aware bilateral, photo only)
   contrast: number;        // bi, stop −6..+6
   saturation: number;      // bi, stop −6..+6
   whiteBalance: WhiteBalance;
@@ -65,6 +66,7 @@ export interface EditParams {
 /** Rest state — a neutral edit identical to the untouched source. */
 export const DEFAULT_PARAMS: EditParams = {
   exposure: 0,
+  denoise: 0,
   contrast: 0,
   saturation: 0,
   whiteBalance: { t: 0, tint: 0 },

@@ -25,6 +25,7 @@ import { useEffect, useState } from 'react';
 import FinishingShell from '@/components/finishing/FinishingShell';
 import { DEFAULT_PARAMS, type EditParams } from '@/lib/editor/params';
 import { neutralGeometry, type EditGeometry } from '@/lib/editGeometry';
+import type { SavedLook } from '@/lib/looksService';
 
 const TEST_IMAGE = '/finishing-test.png';
 const TEST_IMAGE_AR = 1280 / 720; // the synthetic test asset is 16:9
@@ -76,6 +77,8 @@ export default function FinishingDevPage() {
   // EXISTING membership check (getUserByPrivyId → getProfile → paid_member_until)
   // and passes it in; the harness toggles it so both gating paths are testable.
   const [mockIsPro, setMockIsPro] = useState(false);
+  // Mock looks persistence (dev only) — the real path uses looksService + uuid.
+  const [savedLooks, setSavedLooks] = useState<SavedLook[]>([]);
 
   const applySeed = (mode: SeedMode) => {
     setSeedMode(mode);
@@ -125,6 +128,12 @@ export default function FinishingDevPage() {
         mediaUrl={TEST_IMAGE}
         mediaType="image"
         isPro={mockIsPro}
+        savedLooks={savedLooks}
+        onSaveLook={(name, p) => {
+          // Dev mock — in-memory only (real path persists via looksService).
+          setSavedLooks((ls) => [{ id: `${Date.now()}`, name, params: p }, ...ls]);
+          console.log('[finishing-dev] saved look (mock):', name);
+        }}
       />
 
       {/* ── DEV-ONLY scaffolding strip (never ships; gated to dev builds, lives

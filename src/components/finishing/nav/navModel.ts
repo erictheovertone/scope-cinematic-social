@@ -63,7 +63,7 @@ export const MODES: ModeDef[] = [
     ],
   },
   {
-    key: 'fx', label: 'FX',
+    key: 'fx', label: 'EFFECTS',
     subcats: [
       { key: 'all', label: 'ALL' },
       { key: 'lightFx', label: 'LIGHT FX' },
@@ -105,6 +105,7 @@ export const EDIT_TOOLS: EditTool[] = [
   // ── FREE, wired (Brief 1 + Brief 2). A tool may belong to multiple subcats. ──
   { key: 'crop', label: 'CROP', kind: 'geometry', groups: ['essential'], enabled: true },
   { key: 'exposure', label: 'EXPOSURE', kind: 'slider', groups: ['essential', 'light'], enabled: true, sliderType: 'bi' },
+  { key: 'denoise', label: 'DENOISE', kind: 'slider', groups: ['essential'], enabled: true, sliderType: 'add' },
   { key: 'contrast', label: 'CONTRAST', kind: 'slider', groups: ['essential', 'light'], enabled: true, sliderType: 'bi' },
   { key: 'curve', label: 'CURVES', kind: 'curve', groups: ['light'], enabled: true }, // luma free; R/G/B/HUE Pro per-channel (Brief 7)
   { key: 'saturation', label: 'SATURATION', kind: 'slider', groups: ['essential', 'color'], enabled: true, sliderType: 'bi' },

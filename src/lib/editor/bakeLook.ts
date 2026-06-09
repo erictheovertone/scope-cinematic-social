@@ -17,12 +17,14 @@ import Pipeline from '@/components/finishing/Pipeline';
 import { DEFAULT_PARAMS, type EditParams } from './params';
 import { CHANNELS, isIdentityChannel } from './curveEngine';
 import { grainStockByKey } from '@/components/finishing/grainStocks';
+import { lookById } from '@/components/finishing/looksCatalog';
+import { ensureLut } from './lut';
 
 void DEFAULT_PARAMS; // (kept for reference parity; comparisons are explicit below)
 
 /** True when EditParams carries any non-default look edit (so a bake is needed). */
 export function hasLookEdits(p: EditParams): boolean {
-  if (p.exposure || p.contrast || p.saturation || p.fade || p.sharpen || p.vignette ||
+  if (p.exposure || p.denoise || p.contrast || p.saturation || p.fade || p.sharpen || p.vignette ||
       p.skinTone || p.clarity || p.bloom || p.halation || p.blur) return true;
   if (p.whiteBalance.t || p.whiteBalance.tint) return true;
   if (p.grainStock && p.grainIntensity > 0) return true;
@@ -71,6 +73,19 @@ export async function bakeLook(image: HTMLImageElement, params: EditParams, w: n
     }
   }
 
+  // Load the active LOOK LUT so the bake includes it (parsed synchronously into
+  // a 2D-tiled canvas the Pipeline samples).
+  let activeLut: { canvas: HTMLCanvasElement; size: number } | null = null;
+  if (params.lutId) {
+    const look = lookById(params.lutId);
+    if (look) {
+      try {
+        const entry = await ensureLut(look.id, look.file);
+        activeLut = { canvas: entry.canvas, size: entry.parsed.size };
+      } catch (e) { throw new Error(`bakeLook: LUT load failed for ${params.lutId}: ${(e as Error).message}`); }
+    }
+  }
+
   const container = document.createElement('div');
   container.style.cssText = 'position:fixed;left:-99999px;top:0;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none;';
   document.body.appendChild(container);
@@ -86,6 +101,7 @@ export async function bakeLook(image: HTMLImageElement, params: EditParams, w: n
         height: h,
         surfaceRef: ref as unknown as React.Ref<unknown>,
         preserve: true,
+        activeLut,
       }),
     );
 

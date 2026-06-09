@@ -33,16 +33,30 @@ const PATHS: Partial<Record<IconKey, React.ReactNode>> = {
   ),
 
   // CORRECTION
-  curve: ( // S-bend curve glyph on an implied diagonal
+  curve: ( // red S-curve inside a faint graph frame (resembles the curve tool)
     <>
-      <path d="M3 21C8 21 8 13 12 13s4-8 9-8" />
-      <path d="M3 21 21 3" opacity={0.3} />
+      <rect x="3" y="3" width="18" height="18" stroke="rgba(255,255,255,0.5)" />
+      <path d="M3 21 21 3" stroke="rgba(255,255,255,0.22)" />
+      <path d="M4 20C9 20 8 13 12 12s3-8 8-8" stroke="#FF0000" />
     </>
   ),
   exposure: (
     <>
       <circle cx="12" cy="12" r="4" />
       <path d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M5.2 5.2l1.8 1.8M17 17l1.8 1.8M18.8 5.2L17 7M7 17l-1.8 1.8" />
+    </>
+  ),
+  denoise: ( // tile: speckled (noisy) left half → clean right half
+    <>
+      <rect x="3.5" y="5" width="17" height="14" rx="1" />
+      <path d="M12 5v14" />
+      <g fill="currentColor" stroke="none">
+        <circle cx="6.5" cy="8.5" r="0.8" />
+        <circle cx="9.5" cy="10.5" r="0.8" />
+        <circle cx="6.5" cy="13" r="0.8" />
+        <circle cx="9.5" cy="15.5" r="0.8" />
+        <circle cx="8" cy="12" r="0.8" />
+      </g>
     </>
   ),
   contrast: (
@@ -95,7 +109,19 @@ const PATHS: Partial<Record<IconKey, React.ReactNode>> = {
       <circle cx="15" cy="12" r="5" />
     </>
   ),
-  blur: <path d="M4 8h16M4 12h12M4 16h8" />,
+  blur: ( // same split-disc, soft white defocus + dashed/feathered outline
+    <>
+      <defs>
+        <radialGradient id="iconBlurGlow" cx="50%" cy="50%" r="66%">
+          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.6" />
+          <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+      <circle cx="12" cy="12" r="8.5" fill="url(#iconBlurGlow)" stroke="none" />
+      <circle cx="12" cy="12" r="8.5" strokeDasharray="2.4 2.6" />
+      <path d="M6 18 18 6" />
+    </>
+  ),
 
   // TEXTURE
   vignette: (
@@ -118,16 +144,35 @@ const PATHS: Partial<Record<IconKey, React.ReactNode>> = {
       </g>
     </>
   ),
-  bloom: ( // soft-glow circle (core + faint outer ring)
+  // Diagonal-split disc family. Glow uses a radial gradient — intentional icon
+  // ART (not UI chrome), so it does NOT break the no-gradients rule. Outline +
+  // diagonal stay currentColor (white at rest, red when active/touched).
+  bloom: ( // soft white glow
     <>
-      <circle cx="12" cy="12" r="4" />
-      <circle cx="12" cy="12" r="8.5" opacity={0.45} />
+      <defs>
+        <radialGradient id="iconBloomGlow" cx="38%" cy="38%" r="72%">
+          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.95" />
+          <stop offset="55%" stopColor="#ffffff" stopOpacity="0.32" />
+          <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+      <circle cx="12" cy="12" r="8.5" fill="url(#iconBloomGlow)" stroke="none" />
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M6 18 18 6" />
     </>
   ),
-  halation: ( // bright core with a haloed edge (the red-orange halo when active)
+  halation: ( // warm orange-red film halo
     <>
-      <circle cx="12" cy="12" r="3.5" fill="currentColor" stroke="none" />
+      <defs>
+        <radialGradient id="iconHalationGlow" cx="40%" cy="40%" r="74%">
+          <stop offset="0%" stopColor="#ffd9a0" stopOpacity="0.95" />
+          <stop offset="45%" stopColor="#ff7a1a" stopOpacity="0.7" />
+          <stop offset="100%" stopColor="#ff7a1a" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+      <circle cx="12" cy="12" r="8.5" fill="url(#iconHalationGlow)" stroke="none" />
       <circle cx="12" cy="12" r="8.5" />
+      <path d="M6 18 18 6" />
     </>
   ),
 

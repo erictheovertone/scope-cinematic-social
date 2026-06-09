@@ -36,7 +36,13 @@ import CropEntry from './CropEntry';
 import Tier1Modes from './nav/Tier1Modes';
 import Tier2Subcats from './nav/Tier2Subcats';
 import Tier3Items from './nav/Tier3Items';
-import HistoryRipple, { type HistoryStep } from './nav/HistoryRipple';
+import HistoryRipple from './nav/HistoryRipple';
+import AddToPalette from './AddToPalette';
+import LooksLibrary from './LooksLibrary';
+import { type HistoryEvent, toolChanged, describeTool, makeEvent } from '@/lib/editor/history';
+import type { SavedLook } from '@/lib/looksService';
+import { lookById } from './looksCatalog';
+import { ensureLut } from '@/lib/editor/lut';
 import { modeDef, firstSubcat, editItemsFor, type Mode, type EditTool } from './nav/navModel';
 import { AR_CHIPS, chipForLayout } from '@/lib/aspectRatio';
 import { rotateCoverScale, type EditGeometry } from '@/lib/editGeometry';
@@ -47,6 +53,14 @@ const Pipeline = dynamic(() => import('./Pipeline'), { ssr: false });
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const RED = '#FF0000';
 const SNAP = 'cubic-bezier(0.16,0.84,0.3,1)'; // Scope snappy ease
+
+// "+" viewing-menu item styles (sharp corners, black, red accent — design system).
+const menuItem: React.CSSProperties = {
+  width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+  gap: 10, padding: '10px 12px', background: 'transparent', border: 'none', cursor: 'pointer',
+};
+const menuLabel: React.CSSProperties = { ...SKB, fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'inherit' };
+const menuTag: React.CSSProperties = { ...SKB, fontSize: 7, textTransform: 'uppercase', letterSpacing: '0.1em', color: RED };
 
 type Source = HTMLImageElement | HTMLVideoElement;
 
@@ -83,6 +97,7 @@ function geomChanged(a: EditGeometry | null, b: EditGeometry | null): boolean {
 function sliderValue(params: EditParams, key: string): number {
   switch (key) {
     case 'exposure': return params.exposure;
+    case 'denoise': return params.denoise;
     case 'contrast': return params.contrast;
     case 'saturation': return params.saturation;
     case 'fade': return params.fade;
@@ -99,6 +114,7 @@ function sliderValue(params: EditParams, key: string): number {
 function setSliderValue(params: EditParams, key: string, stop: number): EditParams {
   switch (key) {
     case 'exposure': return { ...params, exposure: stop };
+    case 'denoise': return { ...params, denoise: stop };
     case 'contrast': return { ...params, contrast: stop };
     case 'saturation': return { ...params, saturation: stop };
     case 'fade': return { ...params, fade: stop };
@@ -137,11 +153,16 @@ interface FinishingShellProps {
    * shell never queries tier itself. Drives the generic pro-lock gate below.
    */
   isPro: boolean;
+  // ── ADD TO PALETTE (save current edits as a Look) — persistence owned by the
+  //    caller (real looksService + uuid in the post flow; mock in the dev harness). ──
+  savedLooks?: SavedLook[];
+  onSaveLook?: (name: string, params: EditParams) => void;
 }
 
 export default function FinishingShell({
   source, params, onParamsChange, onDone, onBack,
   geometry, onGeometryChange, gridLayout, layoutId, mediaUrl, mediaType, isPro,
+  savedLooks = [], onSaveLook,
 }: FinishingShellProps) {
   const { showUpsell } = useUpsell();
   const stageRef = useRef<HTMLDivElement>(null);
@@ -157,6 +178,69 @@ export default function FinishingShell({
   // Geometry as it was when the suite opened — the CROP tile lights red once the
   // user commits a reframe that differs from this.
   const baselineGeometry = useRef<EditGeometry>(geometry);
+
+  // ── Real edit history (Part 1) — one SETTLED event per tool change ──
+  const [history, setHistory] = useState<HistoryEvent[]>([]);
+  const cropSnapshot = useRef<EditGeometry>(geometry); // geometry when CROP opened
+  const logTool = (tool: EditTool, p: EditParams) => {
+    const { label, value } = describeTool(tool, p);
+    setHistory((h) => [...h, makeEvent(tool.key, label, value)]);
+  };
+
+  // Active LOOK LUT (parsed from the selected .cube; loaded async, applied in the
+  // LOOK stage of the preview + bake). Null when no look / not yet loaded.
+  const [activeLut, setActiveLut] = useState<{ canvas: HTMLCanvasElement; size: number } | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    const look = lookById(params.lutId);
+    if (!look) { setActiveLut(null); return; }
+    ensureLut(look.id, look.file)
+      .then((e) => { if (!cancelled) setActiveLut({ canvas: e.canvas, size: e.parsed.size }); })
+      .catch(() => { if (!cancelled) setActiveLut(null); });
+    return () => { cancelled = true; };
+  }, [params.lutId]);
+
+  // ── Responsive: Theatre layout (Brief: Theatre Editor) ──
+  // Theatre = wide screens by default (desktop + tablet), OR a phone rotated to
+  // landscape, OR the "+" menu's Theatre toggle. Portrait phone keeps the stacked
+  // editor. Layout-only — same pipeline/tools/params/navModel.
+  const [vp, setVp] = useState(() => (typeof window !== 'undefined' ? { w: window.innerWidth, h: window.innerHeight } : { w: 0, h: 0 }));
+  useEffect(() => {
+    const measure = () => setVp({ w: window.innerWidth, h: window.innerHeight });
+    measure();
+    window.addEventListener('resize', measure);
+    window.addEventListener('orientationchange', measure);
+    return () => { window.removeEventListener('resize', measure); window.removeEventListener('orientationchange', measure); };
+  }, []);
+  const [theatreToggle, setTheatreToggle] = useState(false);
+  const [subcatMenuOpen, setSubcatMenuOpen] = useState(false); // mobile-landscape lower-left "+"
+  const wide = vp.w >= 768;                          // desktop + tablet → Theatre default
+  const landscapeNarrow = vp.w > 0 && vp.w < 768 && vp.w > vp.h; // phone rotated to landscape
+  const theatre = wide || landscapeNarrow || theatreToggle;
+  const compactRail = theatre && !wide;              // landscape-mobile / toggled-portrait density
+  // ── Theatre browsing ↔ ADJUSTING shift ──
+  // Tapping a tool enters "adjusting": the Tier-2/Tier-3 rows collapse, the image
+  // expands, and a thin slider bar shows the active control below the image.
+  // Theatre-only; portrait keeps its slide-up sheet. Same mounted editor — a pure
+  // visibility/layout state change (never a remount).
+  const adjusting = theatre && !!activeTool && (activeMode === 'edit' || activeMode === 'fx');
+
+  // ── VIEW state (the "+" menu + image gestures) — preview-only, NEVER stored/baked ──
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [peek, setPeek] = useState(false);   // hold-to-peek original (transient, while held)
+  const [zoom, setZoom] = useState({ active: false, level: 2, panX: 0.5, panY: 0.5 });
+  const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const gesture = useRef<{ x: number; y: number; moved: boolean; held: boolean } | null>(null);
+  const panLast = useRef<{ x: number; y: number } | null>(null);
+
+  // Hold the image = show original (bypass all EditParams); release = edited. View-only.
+  const showingOriginal = peek;
+  const previewParams = showingOriginal ? DEFAULT_PARAMS : params;
+
+  const toggleZoom = () => {
+    setZoom((z) => z.active ? { ...z, active: false } : { active: true, level: 2, panX: 0.5, panY: 0.5 });
+    setMenuOpen(false);
+  };
 
   // Measure the stage and fit the Surface to the source AR.
   useEffect(() => {
@@ -211,8 +295,80 @@ export default function FinishingShell({
     };
   }, [source, stage, geometry, layoutId]);
 
+  // ZOOM view — RE-RENDER the pipeline at higher resolution (true grain/denoise
+  // detail, not a CSS upscale of the fit-res canvas), then show a panned window.
+  // The Surface is rendered at sw·z (capped at MAXDIM); if capped, a CSS scale
+  // fills the remainder (softer past the cap). rotate/straighten are dropped in
+  // the zoom inspect view (grain/denoise are orientation-agnostic; they remain
+  // exact in fit view + bake).
+  const zoomView = useMemo(() => {
+    if (!zoom.active || !geomPreview) return null;
+    const MAXDIM = 4096;
+    const z = Math.max(1, zoom.level);
+    const { fw, fh, sw, sh, left, top } = geomPreview;
+    const renderZ = Math.min(z, MAXDIM / sw, MAXDIM / sh);
+    const renderW = Math.round(sw * renderZ);
+    const renderH = Math.round(sh * renderZ);
+    const css = z / renderZ; // ≥1; CSS upscale only when render hit the cap
+    const maxPanX = fw * z - fw;
+    const maxPanY = fh * z - fh;
+    return {
+      fw, fh, renderW, renderH, css,
+      left: left * z - zoom.panX * maxPanX,
+      top: top * z - zoom.panY * maxPanY,
+    };
+  }, [zoom, geomPreview]);
+
+  // Combined IMAGE-STAGE gesture — handlers live ONLY on the stage element (never
+  // window/document; no pointer capture, so nothing can get stuck swallowing the
+  // tool rail / tier rows). A stationary press → hold-to-peek the original; a drag
+  // (only when zoomed) → pan. Movement past a small threshold cancels peek and
+  // becomes a pan; release always restores. Editing controls live in the dock and
+  // are untouched, so editing while zoomed works and the zoomed region updates live.
+  const STAGE_HOLD_MS = 180;
+  const STAGE_MOVE_PX = 6;
+  const onStagePointerDown = (e: React.PointerEvent) => {
+    gesture.current = { x: e.clientX, y: e.clientY, moved: false, held: false };
+    panLast.current = { x: e.clientX, y: e.clientY };
+    if (holdTimer.current) clearTimeout(holdTimer.current);
+    holdTimer.current = setTimeout(() => {
+      if (gesture.current && !gesture.current.moved) { gesture.current.held = true; setPeek(true); }
+    }, STAGE_HOLD_MS);
+  };
+  const onStagePointerMove = (e: React.PointerEvent) => {
+    const g = gesture.current;
+    if (!g) return;
+    if (!g.moved && Math.hypot(e.clientX - g.x, e.clientY - g.y) > STAGE_MOVE_PX) {
+      g.moved = true; // it's a drag, not a hold
+      if (holdTimer.current) { clearTimeout(holdTimer.current); holdTimer.current = null; }
+      setPeek(false);
+    }
+    if (zoom.active && g.moved && panLast.current && geomPreview) {
+      const dx = e.clientX - panLast.current.x;
+      const dy = e.clientY - panLast.current.y;
+      panLast.current = { x: e.clientX, y: e.clientY };
+      const maxPanX = geomPreview.fw * zoom.level - geomPreview.fw;
+      const maxPanY = geomPreview.fh * zoom.level - geomPreview.fh;
+      setZoom((zm) => ({
+        ...zm,
+        panX: maxPanX > 0 ? Math.min(1, Math.max(0, zm.panX - dx / maxPanX)) : 0.5,
+        panY: maxPanY > 0 ? Math.min(1, Math.max(0, zm.panY - dy / maxPanY)) : 0.5,
+      }));
+    }
+  };
+  const onStagePointerUp = () => {
+    if (holdTimer.current) { clearTimeout(holdTimer.current); holdTimer.current = null; }
+    const g = gesture.current;
+    setPeek(false);
+    panLast.current = null;
+    gesture.current = null;
+    // Theatre: a clean TAP on the image (no drag, no hold-peek) while adjusting
+    // returns to browsing — committing the active tool so its value persists.
+    if (adjusting && g && !g.moved && !g.held) commitTool();
+  };
+
   const cropAdjusted = geomChanged(geometry, baselineGeometry.current);
-  const openCrop = () => { if (source) setCropOpen(true); };
+  const openCrop = () => { if (source) { cropSnapshot.current = geometry; setCropOpen(true); } };
 
   // Cascade: changing mode resets the subcategory to that mode's first.
   const changeMode = (m: Mode) => {
@@ -239,170 +395,418 @@ export default function FinishingShell({
   const onOpenTool = (t: EditTool) => {
     if (!toolEnabled(t)) return;
     if (toolLocked(t)) { showUpsell('edit'); return; } // free user → upsell, tool stays closed
+    // Switch-away = implicit commit: settle the previously-open tool if it changed.
+    if (activeTool && activeTool.key !== t.key && toolChanged(activeTool, params, snapshot.current)) {
+      logTool(activeTool, params);
+    }
     if (t.key === 'crop') { openCrop(); return; }
     snapshot.current = params; // full snapshot for cancel/revert (slider or WB)
     setActiveTool(t);
   };
   const cancelTool = () => {
-    onParamsChange(snapshot.current);
+    onParamsChange(snapshot.current); // revert → no history event
     setActiveTool(null);
   };
-  const commitTool = () => setActiveTool(null);
+  const commitTool = () => {
+    // Settle: log ONE event for this tool if its value changed since it opened.
+    if (activeTool && toolChanged(activeTool, params, snapshot.current)) logTool(activeTool, params);
+    setActiveTool(null);
+  };
 
   const editItems = activeMode === 'edit' ? editItemsFor(activeSubcat) : [];
 
-  // HISTORY ripple — stubbed sample list driven by current edit state.
-  // ORIGINAL (top) → edits → CURRENT (bottom); reading upward = back in time.
-  const historySteps = useMemo<HistoryStep[]>(() => {
-    const steps: HistoryStep[] = [{ label: 'ORIGINAL' }];
-    if (cropAdjusted) steps.push({ label: '+ CROP' });
-    if (params.exposure !== 0) {
-      const v = params.exposure;
-      steps.push({ label: `+ EXPOSURE ${v > 0 ? '+' : ''}${v.toFixed(1)}` });
-    }
-    steps.push({ label: 'CURRENT', current: true });
-    return steps;
-  }, [cropAdjusted, params.exposure]);
+  // Save the current edit stack as a Look (ADD TO PALETTE). Pro-gating + persistence
+  // are handled by AddToPalette (upsell) and the caller's onSaveLook respectively.
+  const saveLook = (name: string) => { onSaveLook?.(name, params); };
+  const applySavedLook = (look: SavedLook) => { onParamsChange(look.params); }; // re-load onto CURRENT image only
 
-  return (
-    <div style={{ position: 'fixed', inset: 0, background: '#000', display: 'flex', flexDirection: 'column' }}>
-      {/* ── Top bar ── */}
-      <div style={{ flexShrink: 0, height: 50, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 18px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          {onBack && (
-            <button onClick={onBack} aria-label="Back" style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4, lineHeight: 0 }}>
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 3L5 8l5 5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
-            </button>
-          )}
-          <span style={{ ...SKB, fontSize: 12, color: 'white', textTransform: 'uppercase', letterSpacing: '0.06em' }}>FINISHING</span>
-        </div>
-        <button onClick={onDone} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4 }}>
-          <span style={{ ...SKB, fontSize: 12, color: RED, textTransform: 'uppercase', letterSpacing: '0.06em' }}>DONE</span>
-        </button>
-      </div>
+  // Built-in look apply/clear/intensity (lutId + lutIntensity in EditParams).
+  const applyBuiltinLook = (lookId: string) => {
+    const look = lookById(lookId);
+    onParamsChange({ ...params, lutId: lookId, lutIntensity: params.lutIntensity > 0 ? params.lutIntensity : 12 });
+    if (look) setHistory((h) => [...h, makeEvent('lutIntensity', 'LOOK', look.name)]);
+  };
+  const clearLook = () => onParamsChange({ ...params, lutId: null, lutIntensity: 0 });
+  const setLutIntensity = (stop: number) => onParamsChange({ ...params, lutIntensity: stop });
 
-      {/* ── Live stage (framed by edit_geometry) ── */}
-      <div ref={stageRef} style={{ flex: 1, position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000' }}>
-        {source && geomPreview ? (
-          <div style={{ position: 'relative', width: geomPreview.fw, height: geomPreview.fh, overflow: 'hidden' }}>
-            <div style={{
-              position: 'absolute', left: geomPreview.left, top: geomPreview.top,
-              width: geomPreview.sw, height: geomPreview.sh,
-              transform: geomPreview.spin !== 0 || geomPreview.cover !== 1
-                ? `rotate(${geomPreview.spin}deg) scale(${geomPreview.cover})` : undefined,
-              transformOrigin: `${geomPreview.originX}% ${geomPreview.originY}%`,
-            }}>
-              <Pipeline source={source} params={params} width={geomPreview.sw} height={geomPreview.sh} />
+  // "+" viewing-menu items — shared by phone (below) and Theatre.
+  const menuItemsContent = (
+    <>
+      <button onClick={toggleZoom} style={{ ...menuItem, color: zoom.active ? RED : 'white' }}>
+        <span style={menuLabel}>ZOOM</span>
+        {zoom.active && <span style={menuTag}>ON</span>}
+      </button>
+      <button onClick={() => { setTheatreToggle((o) => !o); setMenuOpen(false); }} style={{ ...menuItem, color: theatre ? RED : 'white', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+        <span style={menuLabel}>THEATRE EDITOR</span>
+        {theatre && <span style={menuTag}>ON</span>}
+      </button>
+    </>
+  );
+
+  // The live stage content (Pipeline preview + BEFORE badge) — identical pixels
+  // in both layouts; only the surrounding container differs.
+  const stageInner = (
+    <>
+      {source && geomPreview ? (
+        zoomView ? (
+          <div style={{ position: 'relative', width: zoomView.fw, height: zoomView.fh, overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', left: zoomView.left, top: zoomView.top, width: zoomView.renderW, height: zoomView.renderH, transform: zoomView.css !== 1 ? `scale(${zoomView.css})` : undefined, transformOrigin: 'top left' }}>
+              <Pipeline source={source} params={previewParams} width={zoomView.renderW} height={zoomView.renderH} activeLut={activeLut} />
             </div>
           </div>
         ) : (
-          <span style={{ ...SKB, fontSize: 10, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>LOADING…</span>
-        )}
+          <div style={{ position: 'relative', width: geomPreview.fw, height: geomPreview.fh, overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', left: geomPreview.left, top: geomPreview.top, width: geomPreview.sw, height: geomPreview.sh, transform: geomPreview.spin !== 0 || geomPreview.cover !== 1 ? `rotate(${geomPreview.spin}deg) scale(${geomPreview.cover})` : undefined, transformOrigin: `${geomPreview.originX}% ${geomPreview.originY}%` }}>
+              <Pipeline source={source} params={previewParams} width={geomPreview.sw} height={geomPreview.sh} activeLut={activeLut} />
+            </div>
+          </div>
+        )
+      ) : (
+        <span style={{ ...SKB, fontSize: 10, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>LOADING…</span>
+      )}
+      {showingOriginal && (
+        <div style={{ position: 'absolute', top: 10, left: 10, background: RED, padding: '3px 7px' }}>
+          <span style={{ ...SKB, fontSize: 9, color: '#000', textTransform: 'uppercase', letterSpacing: '0.1em' }}>BEFORE</span>
+        </div>
+      )}
+    </>
+  );
+
+  // Mode-contextual band body (history ripple · looks library · saved palette ·
+  // EDIT/FX tool rail) — same navModel-driven switch in both layouts. `lean` only
+  // affects the EDIT/FX tool rail (Theatre = leaner, borderless tiles); the
+  // history/looks/palette sections are identical regardless.
+  const renderBandBody = (lean: boolean) => (
+    activeMode === 'history' ? (
+      <div>
+        <HistoryRipple events={history} />
+        <div style={{ padding: '4px 16px 14px' }}>
+          <AddToPalette isPro={isPro} onUpsell={() => showUpsell('edit')} onSave={saveLook} />
+        </div>
       </div>
-
-      {/* ── Dock: three stacked tiers — subcats (top) · items (middle) · modes (bottom) ── */}
-      <div style={{ flexShrink: 0, borderTop: '1px solid rgba(255,255,255,0.08)', background: '#000' }}>
-        {/* TIER 2 — subcategories (hidden for HISTORY) */}
-        {activeMode !== 'history' && (
-          <Tier2Subcats
-            subcats={modeDef(activeMode).subcats}
-            active={activeSubcat}
-            onSelect={setActiveSubcat}
-          />
-        )}
-
-        {/* TIER 3 — items (EDIT/LOOKS/PALETTE/FX rail) or the HISTORY ripple */}
-        {activeMode === 'history' ? (
-          <HistoryRipple steps={historySteps} />
+    ) : activeMode === 'looks' ? (
+      <LooksLibrary source={source} isPro={isPro} onUpsell={() => showUpsell('edit')} activeLookId={params.lutId} intensity={params.lutIntensity} onApply={applyBuiltinLook} onClear={clearLook} onIntensity={setLutIntensity} />
+    ) : activeMode === 'palette' ? (
+      <div style={{ padding: '12px 16px 14px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <AddToPalette isPro={isPro} onUpsell={() => showUpsell('edit')} onSave={saveLook} />
+        {savedLooks.length === 0 ? (
+          <span style={{ ...SKB, fontSize: 9, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.08em', lineHeight: 1.6 }}>NO SAVED LOOKS YET · ADD TO PALETTE SAVES YOUR CURRENT EDIT</span>
         ) : (
-          <Tier3Items
-            mode={activeMode}
-            editItems={editItems}
-            toolTouched={toolTouched}
-            toolEnabled={toolEnabled}
-            toolLocked={toolLocked}
-            onOpenTool={onOpenTool}
-          />
+          <div style={{ display: 'flex', gap: 8, overflowX: 'auto' }}>
+            {savedLooks.map((look) => (
+              <button key={look.id} onClick={() => applySavedLook(look)} title="Apply to current" style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>
+                <div style={{ width: 60, height: 60, border: '1px solid rgba(255,255,255,0.18)' }} />
+                <span style={{ ...SKB, fontSize: 7, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.06em', maxWidth: 60, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{look.name}</span>
+              </button>
+            ))}
+          </div>
         )}
-
-        {/* TIER 1 — modes (bottom, heaviest) */}
-        <Tier1Modes active={activeMode} onSelect={changeMode} />
       </div>
+    ) : (
+      <Tier3Items mode={activeMode} editItems={editItems} toolTouched={toolTouched} toolEnabled={toolEnabled} toolLocked={toolLocked} onOpenTool={onOpenTool} lean={lean} />
+    )
+  );
 
-      {/* ── Tool sheet ── */}
-      <div
-        style={{
-          position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 10,
-          background: '#0a0a0a', borderTop: `1px solid rgba(255,255,255,0.1)`,
-          transform: activeTool ? 'translateY(0)' : 'translateY(110%)',
-          transition: `transform 0.42s ${SNAP}`,
-          padding: '16px 18px 28px',
-        }}
-      >
-        {/* header: X cancel / ✓ commit */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 22 }}>
-          <button onClick={cancelTool} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4, lineHeight: 0 }}>
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 3l8 8M11 3l-8 8" stroke="white" strokeWidth="1.4" strokeLinecap="round" /></svg>
-          </button>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}>
-            <span style={{ ...SKB, fontSize: 10, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{activeTool?.label ?? ''}</span>
-            {activeTool?.pro && <span style={{ ...SKB, fontSize: 7, color: RED, textTransform: 'uppercase', letterSpacing: '0.12em', border: `1px solid ${RED}`, padding: '1px 4px' }}>PRO</span>}
-          </span>
-          <button onClick={commitTool} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4, lineHeight: 0 }}>
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3.5 3.5L13 4.5" stroke={RED} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
+  // Active tool's control (no chrome) — docked in the Theatre band; in the phone
+  // slide-up sheet below. Shared switch so a navModel tool works in both.
+  const toolControlBody = (
+    <>
+      {activeTool?.kind === 'wb' && (
+        <WhiteBalancePanel temp={params.whiteBalance.t} tint={params.whiteBalance.tint} onChange={(wb) => onParamsChange({ ...params, whiteBalance: wb })} />
+      )}
+      {activeTool && activeTool.kind === 'slider' && (
+        <ToolSlider type={activeTool.sliderType ?? 'bi'} value={sliderValue(params, activeTool.key)} onChange={(stop) => onParamsChange(setSliderValue(params, activeTool.key, stop))} label={activeTool.label} />
+      )}
+      {activeTool?.kind === 'grain' && (
+        <GrainPicker stock={params.grainStock} intensity={params.grainIntensity} onChange={({ grainStock, grainIntensity }) => onParamsChange({ ...params, grainStock, grainIntensity })} />
+      )}
+      {activeTool?.kind === 'splitTone' && (
+        <SplitTonePanel value={params.splitTone} onChange={(splitTone) => onParamsChange({ ...params, splitTone })} />
+      )}
+      {activeTool?.kind === 'curve' && (
+        <CurvesPanel curves={params.curves} onChange={(curves) => onParamsChange({ ...params, curves })} isPro={isPro} onUpsell={() => showUpsell('edit')} />
+      )}
+    </>
+  );
+
+  // Small red ‹ back affordance — returns to browsing (commits, value persists).
+  const backToBrowsing = (
+    <button onClick={commitTool} aria-label="Back to tools" style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4, lineHeight: 0, flexShrink: 0 }}>
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M10 3L5 8l5 5" stroke={RED} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
+    </button>
+  );
+
+  // ── Theatre ADJUSTING bar — thin control below the image (replaces the old
+  //    three-stacked-bands docked control). Slider tools = one thin line
+  //    (back · name · track · value); curve/compound tools present their existing
+  //    panel here. Same params/pipeline as the portrait editor. ──
+  const adjustingBar = activeTool && (
+    <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', background: '#000', padding: activeTool.kind === 'slider' ? '7px 14px 9px' : '9px 14px 14px' }}>
+      {activeTool.kind === 'slider' ? (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {backToBrowsing}
+          <ToolSlider inline type={activeTool.sliderType ?? 'bi'} value={sliderValue(params, activeTool.key)} onChange={(stop) => onParamsChange(setSliderValue(params, activeTool.key, stop))} label={activeTool.label} />
+        </div>
+      ) : (
+        <>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+            {backToBrowsing}
+            <span style={{ ...SKB, fontSize: 10, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{activeTool.label}</span>
+            {activeTool.pro && <span style={{ ...SKB, fontSize: 7, color: RED, textTransform: 'uppercase', letterSpacing: '0.12em', border: `1px solid ${RED}`, padding: '1px 4px' }}>PRO</span>}
+          </div>
+          {toolControlBody}
+        </>
+      )}
+    </div>
+  );
+
+  const cropOverlay = cropOpen && source && (
+    <CropEntry
+      mediaUrl={mediaUrl} mediaType={mediaType} geometry={geometry} gridLayout={gridLayout} layoutId={layoutId}
+      onCommit={(g) => { if (geomChanged(g, cropSnapshot.current)) setHistory((h) => [...h, makeEvent('crop', 'CROP', '')]); onGeometryChange(g); setCropOpen(false); }}
+      onCancel={() => setCropOpen(false)}
+    />
+  );
+
+  // ════════════════════════ UNIFIED EDITOR LAYOUT ════════════════════════
+  // ONE persistent editor: the stage (decoded source + gl-react Pipeline) mounts
+  // ONCE and STAYS mounted across the portrait↔Theatre switch. Theatre and
+  // portrait are two ARRANGEMENTS of the SAME editor — never two editors. Only the
+  // chrome around the stage (top bar, mode rail, bottom band/dock) re-arranges.
+  //
+  // Stable `key`s on the root's direct children let React match the persistent
+  // stage (key="main") across the toggle instead of unmounting/remounting it —
+  // a remount would re-decode the image (the stuck LOADING bug) and reset all
+  // edits/history. Rotating or toggling Theatre now re-flows the same editor.
+  const showSubcats = activeMode !== 'history' && activeMode !== 'looks';
+  const arChip = AR_CHIPS.find((c) => c.id === geometry.ar) ?? chipForLayout(layoutId);
+  const railW = compactRail ? 58 : 86;
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: '#000', display: 'flex', flexDirection: 'column' }}>
+      {/* menu backdrop — outside tap closes (menu animates out via its own transition) */}
+      {menuOpen && <div key="menu-backdrop" onClick={() => setMenuOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 29 }} />}
+
+      {/* ── TOP BAR ── (Theatre: thin bar w/ inline "+" menu · Portrait: standard bar) */}
+      {theatre ? (
+        <div key="topbar" style={{ flexShrink: 0, height: compactRail ? 30 : 44, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 14px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            {onBack && (
+              <button onClick={onBack} aria-label="Back" style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4, lineHeight: 0 }}>
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M10 3L5 8l5 5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+              </button>
+            )}
+            <span style={{ ...SKB, fontSize: compactRail ? 10 : 12, color: 'white', textTransform: 'uppercase', letterSpacing: '0.06em' }}>FINISHING · THEATRE</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            {/* "+" viewing menu (inline in the bar) */}
+            <div style={{ position: 'relative' }}>
+              <button onClick={() => setMenuOpen((o) => !o)} aria-label="Viewing options" style={{ width: 24, height: 24, background: 'transparent', cursor: 'pointer', lineHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${menuOpen ? RED : 'rgba(255,255,255,0.25)'}`, color: menuOpen || zoom.active ? RED : 'white', transition: `border-color 0.3s ${SNAP}, color 0.3s ${SNAP}` }}>
+                <svg width="11" height="11" viewBox="0 0 12 12" fill="none" style={{ transform: menuOpen ? 'rotate(45deg)' : 'rotate(0deg)', transition: `transform 0.3s ${SNAP}` }}><path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
+              </button>
+              <div style={{ position: 'absolute', top: 'calc(100% + 6px)', right: 0, zIndex: 30, minWidth: 150, background: '#000', border: '1px solid rgba(255,255,255,0.18)', transformOrigin: 'top right', transform: menuOpen ? 'scale(1)' : 'scale(0.7)', opacity: menuOpen ? 1 : 0, pointerEvents: menuOpen ? 'auto' : 'none', transition: `transform ${menuOpen ? 0.3 : 0.2}s ${SNAP}, opacity ${menuOpen ? 0.3 : 0.2}s ${SNAP}` }}>
+                {menuItemsContent}
+              </div>
+            </div>
+            <button onClick={onDone} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4 }}>
+              <span style={{ ...SKB, fontSize: compactRail ? 10 : 12, color: RED, textTransform: 'uppercase', letterSpacing: '0.06em' }}>DONE</span>
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div key="topbar" style={{ flexShrink: 0, height: 50, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 18px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            {onBack && (
+              <button onClick={onBack} aria-label="Back" style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4, lineHeight: 0 }}>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 3L5 8l5 5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+              </button>
+            )}
+            <span style={{ ...SKB, fontSize: 12, color: 'white', textTransform: 'uppercase', letterSpacing: '0.06em' }}>FINISHING</span>
+          </div>
+          <button onClick={onDone} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4 }}>
+            <span style={{ ...SKB, fontSize: 12, color: RED, textTransform: 'uppercase', letterSpacing: '0.06em' }}>DONE</span>
           </button>
         </div>
-        {/* body — White Balance (compound) or a single mapped slider */}
-        {activeTool?.kind === 'wb' && (
-          <WhiteBalancePanel
-            temp={params.whiteBalance.t}
-            tint={params.whiteBalance.tint}
-            onChange={(wb) => onParamsChange({ ...params, whiteBalance: wb })}
-          />
-        )}
-        {activeTool && activeTool.kind === 'slider' && (
-          <ToolSlider
-            type={activeTool.sliderType ?? 'bi'}
-            value={sliderValue(params, activeTool.key)}
-            onChange={(stop) => onParamsChange(setSliderValue(params, activeTool.key, stop))}
-            label={activeTool.label}
-          />
-        )}
-        {activeTool?.kind === 'grain' && (
-          <GrainPicker
-            stock={params.grainStock}
-            intensity={params.grainIntensity}
-            onChange={({ grainStock, grainIntensity }) => onParamsChange({ ...params, grainStock, grainIntensity })}
-          />
-        )}
-        {activeTool?.kind === 'splitTone' && (
-          <SplitTonePanel
-            value={params.splitTone}
-            onChange={(splitTone) => onParamsChange({ ...params, splitTone })}
-          />
-        )}
-        {activeTool?.kind === 'curve' && (
-          <CurvesPanel
-            curves={params.curves}
-            onChange={(curves) => onParamsChange({ ...params, curves })}
-            isPro={isPro}
-            onUpsell={() => showUpsell('edit')}
-          />
+      )}
+
+      {/* ── Portrait-only "+" viewing menu — + and box share the RIGHT edge; box
+            unfurls from the +'s top-right corner (scale+fade), + rotates to ×.
+            Wrapper is pointer-events:none so its empty area never blocks the stage. ── */}
+      {!theatre && (
+        <div key="portrait-menu" style={{
+          position: 'absolute', top: 56, right: 22, zIndex: 30,
+          display: 'flex', flexDirection: 'column', alignItems: 'flex-end', pointerEvents: 'none',
+        }}>
+          <button
+            onClick={() => setMenuOpen((o) => !o)}
+            aria-label="Viewing options"
+            style={{
+              width: 26, height: 26, flexShrink: 0, background: 'transparent', cursor: 'pointer', lineHeight: 0,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'auto',
+              border: `1px solid ${menuOpen ? RED : 'rgba(255,255,255,0.25)'}`,
+              color: menuOpen || zoom.active ? RED : 'white',
+              transition: `border-color 0.3s ${SNAP}, color 0.3s ${SNAP}`,
+            }}
+          >
+            <svg
+              width="12" height="12" viewBox="0 0 12 12" fill="none"
+              style={{ transform: menuOpen ? 'rotate(45deg)' : 'rotate(0deg)', transition: `transform 0.3s ${SNAP}` }}
+            >
+              <path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+          </button>
+
+          {/* Always mounted so CLOSE animates; visibility/scale/opacity drive the state. */}
+          <div
+            style={{
+              marginTop: 6, minWidth: 150, background: '#000', border: '1px solid rgba(255,255,255,0.18)',
+              transformOrigin: 'top right',
+              transform: menuOpen ? 'scale(1)' : 'scale(0.7)',
+              opacity: menuOpen ? 1 : 0,
+              pointerEvents: menuOpen ? 'auto' : 'none',
+              transition: `transform ${menuOpen ? 0.3 : 0.2}s ${SNAP}, opacity ${menuOpen ? 0.3 : 0.2}s ${SNAP}`,
+            }}
+          >
+            {menuItemsContent}
+          </div>
+        </div>
+      )}
+
+      {/* ── MAIN ROW — the PERSISTENT stage (decoded source + Pipeline) mounts ONCE
+            here and survives the portrait↔Theatre toggle (stable key="main"). The
+            Theatre mode rail sits to its right; portrait has no rail (dock below). ── */}
+      <div key="main" style={{ flex: 1, display: 'flex', flexDirection: 'row', minHeight: 0 }}>
+        <div
+          ref={stageRef}
+          onPointerDown={onStagePointerDown}
+          onPointerMove={onStagePointerMove}
+          onPointerUp={onStagePointerUp}
+          onPointerLeave={onStagePointerUp}
+          style={{ flex: 1, position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000', cursor: zoom.active ? 'grab' : 'default', touchAction: zoom.active ? 'none' : 'auto' }}
+        >
+          {stageInner}
+          {/* Adjusting: small ‹ back over the image (top-left) — mirror of tapping
+              the image; returns to browsing. Minimal, red, no box. */}
+          {adjusting && (
+            <button onClick={commitTool} aria-label="Back to tools" style={{ position: 'absolute', top: 8, left: 8, zIndex: 6, background: 'transparent', border: 'none', cursor: 'pointer', padding: 6, lineHeight: 0 }}>
+              <svg width="18" height="18" viewBox="0 0 16 16" fill="none"><path d="M10 3L5 8l5 5" stroke={RED} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            </button>
+          )}
+          {/* Theatre AR label — viewing-at-size cue (portrait shows it via the dock context) */}
+          {theatre && (
+            <div style={{ position: 'absolute', bottom: 8, left: 0, right: 0, display: 'flex', justifyContent: 'center', pointerEvents: 'none' }}>
+              <span style={{ ...SKB, fontSize: 8, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>{arChip.ratioLabel}{showingOriginal ? ' · BEFORE' : ''}</span>
+            </div>
+          )}
+        </div>
+        {theatre && (
+          <div style={{ flexShrink: 0, width: railW }}>
+            <Tier1Modes active={activeMode} onSelect={changeMode} orientation="vertical" compact={compactRail} />
+          </div>
         )}
       </div>
 
-      {/* ── CROP — full-screen overlay (the shared CropTool, matching creation) ── */}
-      {cropOpen && source && (
-        <CropEntry
-          mediaUrl={mediaUrl}
-          mediaType={mediaType}
-          geometry={geometry}
-          gridLayout={gridLayout}
-          layoutId={layoutId}
-          onCommit={(g) => { onGeometryChange(g); setCropOpen(false); }}
-          onCancel={() => setCropOpen(false)}
-        />
+      {/* ── Zoom level slider — only while Zoom is active ── */}
+      {zoom.active && (
+        <div key="zoom" style={{ flexShrink: 0, padding: theatre ? '8px 18px' : '10px 18px', borderTop: '1px solid rgba(255,255,255,0.08)', background: '#000', display: 'flex', alignItems: 'center', gap: 12 }}>
+          <span style={{ ...SKB, fontSize: 9, color: RED, textTransform: 'uppercase', letterSpacing: '0.08em', whiteSpace: 'nowrap' }}>ZOOM {zoom.level.toFixed(1)}×</span>
+          <input
+            type="range" min={1} max={8} step={0.1} value={zoom.level}
+            onChange={(e) => setZoom((z) => ({ ...z, level: parseFloat(e.target.value) }))}
+            style={{ flex: 1, accentColor: RED }}
+          />
+          <button onClick={() => setZoom({ active: false, level: 2, panX: 0.5, panY: 0.5 })} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', cursor: 'pointer', padding: '4px 8px' }}>
+            <span style={{ ...SKB, fontSize: 8, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>EXIT</span>
+          </button>
+        </div>
       )}
+
+      {/* ── BOTTOM — Theatre contextual band (lean tool row) OR portrait stacked dock ── */}
+      {theatre ? (
+        <div key="bottom" style={{ flexShrink: 0, position: 'relative', borderTop: '1px solid rgba(255,255,255,0.08)', background: '#000', maxHeight: '46vh', overflowY: 'auto' }}>
+          {/* BROWSING chrome — Tier-2 subcats + Tier-3 tool row. Collapses to 0 in
+              the adjusting state (grid-rows fr→0fr animates to the exact height) so
+              the image expands into the reclaimed space. */}
+          <div style={{ display: 'grid', gridTemplateRows: adjusting ? '0fr' : '1fr', opacity: adjusting ? 0 : 1, transition: `grid-template-rows 0.42s ${SNAP}, opacity 0.28s ${SNAP}` }}>
+            <div style={{ overflow: 'hidden', minHeight: 0 }}>
+              {/* Tier-2 subcats: inline on desktop/tablet; via the lower-left "+" on mobile-landscape */}
+              {showSubcats && !compactRail && (
+                <Tier2Subcats subcats={modeDef(activeMode).subcats} active={activeSubcat} onSelect={setActiveSubcat} />
+              )}
+              {renderBandBody(true)}
+            </div>
+          </div>
+          {/* ADJUSTING bar — thin control below the image. Expands in via the same
+              grid-rows animation; only mounts its control while adjusting. */}
+          {(activeMode === 'edit' || activeMode === 'fx') && (
+            <div style={{ display: 'grid', gridTemplateRows: adjusting ? '1fr' : '0fr', opacity: adjusting ? 1 : 0, transition: `grid-template-rows 0.42s ${SNAP}, opacity 0.28s ${SNAP}` }}>
+              <div style={{ overflow: 'hidden', minHeight: 0 }}>
+                {adjustingBar}
+              </div>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div key="bottom" style={{ flexShrink: 0, borderTop: '1px solid rgba(255,255,255,0.08)', background: '#000' }}>
+          {/* TIER 2 — subcategories. Hidden for HISTORY and LOOKS (those render their own sections). */}
+          {showSubcats && (
+            <Tier2Subcats subcats={modeDef(activeMode).subcats} active={activeSubcat} onSelect={setActiveSubcat} />
+          )}
+          {/* TIER 3 — HISTORY ripple · LOOKS library · PALETTE · or the EDIT item rail */}
+          {renderBandBody(false)}
+          {/* TIER 1 — modes (bottom, heaviest) */}
+          <Tier1Modes active={activeMode} onSelect={changeMode} />
+        </div>
+      )}
+
+      {/* ── Portrait tool sheet — fixed slide-up (Theatre docks its control in the band) ── */}
+      {!theatre && (
+        <div
+          key="sheet"
+          style={{
+            position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 10,
+            background: '#0a0a0a', borderTop: `1px solid rgba(255,255,255,0.1)`,
+            transform: activeTool ? 'translateY(0)' : 'translateY(110%)',
+            transition: `transform 0.42s ${SNAP}`,
+            padding: '16px 18px 28px',
+          }}
+        >
+          {/* header: X cancel / ✓ commit */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 22 }}>
+            <button onClick={cancelTool} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4, lineHeight: 0 }}>
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 3l8 8M11 3l-8 8" stroke="white" strokeWidth="1.4" strokeLinecap="round" /></svg>
+            </button>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}>
+              <span style={{ ...SKB, fontSize: 10, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{activeTool?.label ?? ''}</span>
+              {activeTool?.pro && <span style={{ ...SKB, fontSize: 7, color: RED, textTransform: 'uppercase', letterSpacing: '0.12em', border: `1px solid ${RED}`, padding: '1px 4px' }}>PRO</span>}
+            </span>
+            <button onClick={commitTool} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4, lineHeight: 0 }}>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3.5 3.5L13 4.5" stroke={RED} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            </button>
+          </div>
+          {toolControlBody}
+        </div>
+      )}
+
+      {/* ── Theatre mobile-landscape: lower-left "+" → ripple-reveal subcats UPWARD (edit/fx) ── */}
+      {theatre && compactRail && !adjusting && (activeMode === 'edit' || activeMode === 'fx') && (
+        <div key="ml-subcat" style={{ position: 'fixed', left: 10, bottom: 10, zIndex: 31, display: 'flex', flexDirection: 'column-reverse', alignItems: 'flex-start', gap: 6, pointerEvents: 'none' }}>
+          <button onClick={() => setSubcatMenuOpen((o) => !o)} aria-label="Filter" style={{ width: 26, height: 26, background: '#000', cursor: 'pointer', lineHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'auto', border: `1px solid ${subcatMenuOpen ? RED : 'rgba(255,255,255,0.25)'}`, color: subcatMenuOpen ? RED : 'white', transition: `border-color 0.3s ${SNAP}, color 0.3s ${SNAP}` }}>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ transform: subcatMenuOpen ? 'rotate(45deg)' : 'rotate(0deg)', transition: `transform 0.3s ${SNAP}` }}><path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
+          </button>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 2, background: '#000', border: subcatMenuOpen ? '1px solid rgba(255,255,255,0.18)' : '1px solid transparent', transformOrigin: 'bottom left', transform: subcatMenuOpen ? 'scale(1)' : 'scale(0.7)', opacity: subcatMenuOpen ? 1 : 0, pointerEvents: subcatMenuOpen ? 'auto' : 'none', transition: `transform ${subcatMenuOpen ? 0.3 : 0.2}s ${SNAP}, opacity ${subcatMenuOpen ? 0.3 : 0.2}s ${SNAP}` }}>
+            {modeDef(activeMode).subcats.map((s) => (
+              <button key={s.key} onClick={() => { setActiveSubcat(s.key); setSubcatMenuOpen(false); }} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '8px 14px', textAlign: 'left' }}>
+                <span style={{ ...SKB, fontSize: 9, color: s.key === activeSubcat ? RED : 'white', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{s.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      {theatre && subcatMenuOpen && <div key="ml-backdrop" onClick={() => setSubcatMenuOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 30 }} />}
+
+      {/* ── CROP — full-screen overlay (the shared CropTool, matching creation) ── */}
+      {cropOverlay}
     </div>
   );
 }

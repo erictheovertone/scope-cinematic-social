@@ -32,9 +32,15 @@ interface ToolSliderProps {
    * red fill. Every other slider leaves this undefined and stays strict red-fill.
    */
   trackGradient?: string;
+  /**
+   * Theatre adjusting-bar layout: name (left) · track (centre, flex) · value
+   * (right) on ONE thin line. Same slider model/handlers — only the wrapper
+   * changes. Stacked (default) elsewhere.
+   */
+  inline?: boolean;
 }
 
-export default function ToolSlider({ type, value, onChange, label, trackGradient }: ToolSliderProps) {
+export default function ToolSlider({ type, value, onChange, label, trackGradient, inline = false }: ToolSliderProps) {
   const grad = !!trackGradient;
   const trackRef = useRef<HTMLDivElement>(null);
   const [dragging, setDragging] = useState(false);
@@ -81,6 +87,48 @@ export default function ToolSlider({ type, value, onChange, label, trackGradient
     ? `${Math.abs(pos - 0.5) * 100}%`
     : `${pos * 100}%`;
 
+  // Shared track (identical model in both layouts).
+  const track = (
+    <div
+      ref={trackRef}
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+      onPointerLeave={onPointerUp}
+      style={{ position: 'relative', height: inline ? 24 : 28, flex: inline ? 1 : undefined, display: 'flex', alignItems: 'center', cursor: 'pointer', touchAction: 'none' }}
+    >
+      {/* base line — WB exception draws a thin 1px gradient hairline; else a strict line */}
+      <div style={{ position: 'absolute', left: 0, right: 0, height: grad ? 1 : 2, background: trackGradient ?? 'rgba(255,255,255,0.18)' }} />
+      {/* active red fill — strict sliders only (never on the WB gradient track) */}
+      {!grad && <div style={{ position: 'absolute', left: fillLeft, width: fillWidth, height: 2, background: RED }} />}
+      {/* centre tick for bi */}
+      {type === 'bi' && (
+        <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', width: 1.5, height: 10, background: !grad && value === 0 ? RED : 'rgba(255,255,255,0.45)' }} />
+      )}
+      {/* thumb — WB: white circular always; strict: square, red when touched */}
+      <div style={{
+        position: 'absolute', left: `${pos * 100}%`, transform: 'translateX(-50%)',
+        width: grad ? 13 : 12, height: grad ? 13 : 12,
+        borderRadius: grad ? '50%' : 0,
+        background: grad ? 'white' : (value !== 0 || dragging ? RED : 'white'),
+      }} />
+    </div>
+  );
+
+  // ── Theatre adjusting bar: name · track · value on one thin line ──
+  if (inline) {
+    return (
+      <div style={{ width: '100%', userSelect: 'none', display: 'flex', alignItems: 'center', gap: 12 }}>
+        <span style={{ ...SKB, fontSize: 9, color: 'white', textTransform: 'uppercase', letterSpacing: '0.1em', whiteSpace: 'nowrap' }}>{label}</span>
+        {track}
+        <span style={{
+          ...SKB, fontSize: 11, color: value !== 0 ? RED : 'rgba(255,255,255,0.4)',
+          fontVariantNumeric: 'tabular-nums', minWidth: 34, textAlign: 'right',
+        }}>{readout}</span>
+      </div>
+    );
+  }
+
   return (
     <div style={{ width: '100%', userSelect: 'none' }}>
       {/* label + readout row */}
@@ -91,32 +139,7 @@ export default function ToolSlider({ type, value, onChange, label, trackGradient
           opacity: dragging ? 1 : 0.35, transition: 'opacity 0.3s ease', fontVariantNumeric: 'tabular-nums',
         }}>{readout}</span>
       </div>
-
-      {/* track */}
-      <div
-        ref={trackRef}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        onPointerLeave={onPointerUp}
-        style={{ position: 'relative', height: 28, display: 'flex', alignItems: 'center', cursor: 'pointer', touchAction: 'none' }}
-      >
-        {/* base line — WB exception draws a thin 1px gradient hairline; else a strict line */}
-        <div style={{ position: 'absolute', left: 0, right: 0, height: grad ? 1 : 2, background: trackGradient ?? 'rgba(255,255,255,0.18)' }} />
-        {/* active red fill — strict sliders only (never on the WB gradient track) */}
-        {!grad && <div style={{ position: 'absolute', left: fillLeft, width: fillWidth, height: 2, background: RED }} />}
-        {/* centre tick for bi */}
-        {type === 'bi' && (
-          <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', width: 1.5, height: 10, background: !grad && value === 0 ? RED : 'rgba(255,255,255,0.45)' }} />
-        )}
-        {/* thumb — WB: white circular always; strict: square, red when touched */}
-        <div style={{
-          position: 'absolute', left: `${pos * 100}%`, transform: 'translateX(-50%)',
-          width: grad ? 13 : 12, height: grad ? 13 : 12,
-          borderRadius: grad ? '50%' : 0,
-          background: grad ? 'white' : (value !== 0 || dragging ? RED : 'white'),
-        }} />
-      </div>
+      {track}
     </div>
   );
 }

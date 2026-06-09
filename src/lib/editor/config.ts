@@ -16,6 +16,7 @@ export type EasingKey = 'GENTLE' | 'MEDIUM' | 'STRONG';
  *  balance is two tracks (temp/tint) over one EditParams.whiteBalance object. */
 export type ToolKey =
   | 'exposure'
+  | 'denoise'
   | 'contrast'
   | 'saturation'
   | 'temp'
@@ -44,6 +45,7 @@ export interface ToolSpec {
 export const TOOL_CONFIG: Record<ToolKey, ToolSpec> = {
   // ── CORRECTION / FREE (Brief 2) — type + easing are structural; ranges tune ──
   exposure:   { type: 'bi',  easing: 'MEDIUM', min: -1.5, max: 1.5 },  // stops
+  denoise:    { type: 'add', easing: 'STRONG', min: 0.0,  max: 0.6 },  // bilateral range σ; capped short of the waxy look
   contrast:   { type: 'bi',  easing: 'STRONG', min: -0.5, max: 0.5 },  // pivot scale, plateaus
   saturation: { type: 'bi',  easing: 'STRONG', min: -1.0, max: 0.6 },  // ASYMMETRIC: full grey ↓, capped ↑
   temp:       { type: 'bi',  easing: 'MEDIUM', min: -1.0, max: 1.0 },  // blue↔amber (WB sub-slider)

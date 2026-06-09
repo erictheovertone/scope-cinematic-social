@@ -14,6 +14,7 @@ import { useEffect, useState } from 'react';
 import FinishingShell from './FinishingShell';
 import type { EditParams } from '@/lib/editor/params';
 import type { EditGeometry } from '@/lib/editGeometry';
+import type { SavedLook } from '@/lib/looksService';
 
 interface FinishingStepProps {
   mediaUrl: string;
@@ -27,11 +28,13 @@ interface FinishingStepProps {
   onParamsChange: (p: EditParams) => void;
   onDone: () => void;
   onBack: () => void;
+  savedLooks?: SavedLook[];
+  onSaveLook?: (name: string, params: EditParams) => void;
 }
 
 export default function FinishingStep({
   mediaUrl, mediaType, geometry, onGeometryChange, gridLayout, layoutId, isPro,
-  params, onParamsChange, onDone, onBack,
+  params, onParamsChange, onDone, onBack, savedLooks, onSaveLook,
 }: FinishingStepProps) {
   const [source, setSource] = useState<HTMLImageElement | HTMLVideoElement | null>(null);
 
@@ -69,6 +72,8 @@ export default function FinishingStep({
       mediaUrl={mediaUrl}
       mediaType={mediaType}
       isPro={isPro}
+      savedLooks={savedLooks}
+      onSaveLook={onSaveLook}
     />
   );
 }

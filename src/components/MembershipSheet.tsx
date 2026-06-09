@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { usePrivy, useWallets } from "@privy-io/react-auth";
 import { createPublicClient, http, parseUnits } from "viem";
 import { base } from "viem/chains";
@@ -33,15 +33,38 @@ interface MembershipSheetProps {
   onSuccess: (plan: Plan, txHash?: string) => void;
   isPaidMember?: boolean;
   paidMemberUntil?: Date | null;
+  /** In-suite purchase (raised from FINISHING) → resolve IN-APP, never navigate. */
+  fromFinishing?: boolean;
 }
 
-export default function MembershipSheet({ visible, onClose, onSuccess, isPaidMember, paidMemberUntil }: MembershipSheetProps) {
+interface EmbeddedCheckoutHandle { mount: (el: string | HTMLElement) => void; destroy: () => void }
+
+export default function MembershipSheet({ visible, onClose, onSuccess, isPaidMember, paidMemberUntil, fromFinishing }: MembershipSheetProps) {
   const { user } = usePrivy();
   const { wallets } = useWallets();
   const [selectedPlan, setSelectedPlan] = useState<Plan>("monthly_crypto");
   const [txStatus, setTxStatus] = useState<TxStatus>("idle");
   const [txError, setTxError] = useState<string | null>(null);
   const [working, setWorking] = useState(false);
+  // Stripe Embedded Checkout (in-suite card path) — mounted in an overlay.
+  const [embeddedOpen, setEmbeddedOpen] = useState(false);
+  const embeddedRef = useRef<HTMLDivElement>(null);
+  const checkoutRef = useRef<EmbeddedCheckoutHandle | null>(null);
+
+  // Mount the embedded checkout once its container is in the DOM.
+  useEffect(() => {
+    if (embeddedOpen && checkoutRef.current && embeddedRef.current) {
+      checkoutRef.current.mount(embeddedRef.current);
+    }
+  }, [embeddedOpen]);
+
+  const closeEmbedded = () => {
+    try { checkoutRef.current?.destroy(); } catch { /* noop */ }
+    checkoutRef.current = null;
+    setEmbeddedOpen(false);
+    setWorking(false);
+    setTxStatus("idle");
+  };
 
   const plans = [
     {
@@ -109,20 +132,68 @@ export default function MembershipSheet({ visible, onClose, onSuccess, isPaidMem
     return hash;
   };
 
+  // Non-suite card path — hosted checkout (full nav → success route → profile glow).
+  // privyUserId travels in Stripe metadata (no localStorage needed).
   const handleStripePayment = async () => {
     if (!user) return;
-    localStorage.setItem('scope_privy_id', user.id);
     const res = await fetch("/api/stripe/create-checkout", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        plan: selectedPlan,
-        privyUserId: user.id,
-      }),
+      body: JSON.stringify({ plan: selectedPlan, privyUserId: user.id }),
     });
     const { url, error } = await res.json();
     if (error) throw new Error(error);
     if (url) window.location.href = url;
+  };
+
+  // In-suite card path — Stripe Embedded Checkout (no navigation; editor stays mounted).
+  const handleStripeEmbedded = async () => {
+    if (!user) return;
+    const res = await fetch("/api/stripe/create-embedded-checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ plan: selectedPlan, privyUserId: user.id }),
+    });
+    const { clientSecret, sessionId, error } = await res.json();
+    if (error) throw new Error(error);
+    const { loadStripe } = await import("@stripe/stripe-js");
+    const stripe = await loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
+    if (!stripe) throw new Error("Stripe failed to load");
+    const checkout = await stripe.createEmbeddedCheckoutPage({
+      clientSecret,
+      onComplete: () => {
+        // Skip Stripe's own confirmation screen: tear the embedded component down
+        // IMMEDIATELY and jump straight to the Scope Pro celebration (one
+        // confirmation moment, no back-to-back stutter).
+        try { checkout.destroy(); } catch { /* noop */ }
+        checkoutRef.current = null;
+        setEmbeddedOpen(false);
+        setWorking(false);
+        onSuccess(selectedPlan); // provider → celebration (runs ~7s) + an early isPro refresh
+
+        // Verify SERVER-SIDE in parallel (onComplete is client-side only). The
+        // celebration covers this latency; on success re-fire the refresh so
+        // locks lift. On failure, leave Pro OFF (locks stay locked — never a
+        // silent unlock) and surface the error.
+        (async () => {
+          try {
+            const r = await fetch("/api/membership/confirm-stripe", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ sessionId }),
+            });
+            if (!r.ok) throw new Error(`confirm-stripe ${r.status}`);
+            if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent("scope:pro-activated"));
+          } catch (e) {
+            console.error("[membership] embedded server confirm failed:", e);
+            setTxError("Payment went through but activation failed — please refresh; you won't be charged twice.");
+          }
+        })();
+      },
+    });
+    checkoutRef.current = checkout as unknown as EmbeddedCheckoutHandle;
+    setWorking(false);
+    setEmbeddedOpen(true); // effect mounts it once the container renders
   };
 
   const handleSubscribe = async () => {
@@ -132,30 +203,26 @@ export default function MembershipSheet({ visible, onClose, onSuccess, isPaidMem
 
     try {
       if (selectedPlan === "monthly_stripe" || selectedPlan === "annual_stripe") {
+        // In-suite → embedded (stays mounted); elsewhere → hosted (existing nav).
+        if (fromFinishing) { await handleStripeEmbedded(); return; }
         await handleStripePayment();
         return;
       }
 
       const plan = plans.find(p => p.id === selectedPlan)!;
-      console.log("[membership] 1. starting crypto payment, plan:", selectedPlan, "user:", user?.id);
       const hash = await handleCryptoPayment(plan.amount);
-      console.log("[membership] 2. hash returned:", hash);
 
-      console.log("[membership] 3. calling /api/membership/confirm with privyUserId:", user?.id);
-      const confirmRes = await fetch("/api/membership/confirm", {
+      await fetch("/api/membership/confirm", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ plan: selectedPlan, txHash: hash, privyUserId: user?.id }),
       });
-      const confirmBody = await confirmRes.json();
-      console.log("[membership] 4. confirm response status:", confirmRes.status, "body:", confirmBody);
 
-      console.log("[membership] 5. calling onSuccess");
+      // Crypto already resolves in-app — NO redirect. The provider decides:
+      // in-suite → in-app celebration + isPro refresh (editor mounted);
+      // elsewhere → it routes to the success/profile glow.
       setTxStatus("success");
       onSuccess(selectedPlan, hash as string);
-      setTimeout(() => {
-        window.location.href = `/membership/success?plan=${selectedPlan}`;
-      }, 800);
     } catch (e: any) {
       console.error("[membership] payment failed:", e);
       setTxStatus("error");
@@ -174,6 +241,25 @@ export default function MembershipSheet({ visible, onClose, onSuccess, isPaidMem
 
   return (
     <>
+      {/* Stripe Embedded Checkout overlay (in-suite card path) — no navigation.
+          Full-screen black sheet; the embedded component mounts in a centred,
+          mobile-width column (sensible padding, content-height) and the whole
+          sheet scrolls if the fields exceed the viewport — no awkward inner
+          scroll or dead space. */}
+      {embeddedOpen && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 600, backgroundColor: "#000", display: "flex", flexDirection: "column", overflowY: "auto" }}>
+          <div style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 18px", borderBottom: "1px solid rgba(255,255,255,0.08)", position: "sticky", top: 0, background: "#000", zIndex: 1 }}>
+            <span style={{ ...BOLD, fontSize: 12, color: "white", textTransform: "uppercase", letterSpacing: "0.06em" }}>SCOPE PRO</span>
+            <button onClick={closeEmbedded} aria-label="Cancel" style={{ background: "transparent", border: "none", cursor: "pointer", padding: 6, lineHeight: 0 }}>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="white" strokeWidth="1.5" strokeLinecap="round" /></svg>
+            </button>
+          </div>
+          <div style={{ width: "100%", maxWidth: 480, margin: "0 auto", padding: "16px 16px 48px" }}>
+            <div ref={embeddedRef} style={{ width: "100%" }} />
+          </div>
+        </div>
+      )}
+
       {/* Overlay */}
       <div
         onClick={resetAndClose}

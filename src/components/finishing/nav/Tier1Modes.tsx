@@ -63,11 +63,30 @@ function ModeIcon({ mode, size = ICON }: { mode: Mode; size?: number }) {
 interface Tier1ModesProps {
   active: Mode;
   onSelect: (m: Mode) => void;
+  /** 'horizontal' = phone bottom row (default). 'vertical' = Theatre right rail. */
+  orientation?: 'horizontal' | 'vertical';
+  /** Compact = landscape-mobile rail (smaller icons/labels). */
+  compact?: boolean;
 }
 
-export default function Tier1Modes({ active, onSelect }: Tier1ModesProps) {
+export default function Tier1Modes({ active, onSelect, orientation = 'horizontal', compact = false }: Tier1ModesProps) {
+  const vertical = orientation === 'vertical';
+  // Vertical rail: shrink icons so all five modes fit the rail height with no
+  // clipping/scroll (shortest case = landscape-mobile). Horizontal row unchanged.
+  const iconSize = vertical ? (compact ? 18 : 22) : ICON;
   return (
-    <div style={{ display: 'flex', borderTop: '1px solid rgba(255,255,255,0.08)', background: '#000' }}>
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: vertical ? 'column' : 'row',
+        ...(vertical
+          // Distribute all five within the rail height (flex:1 items below) so
+          // none clip at top/bottom; overflow hidden guards the shortest rails.
+          ? { borderLeft: '1px solid rgba(255,255,255,0.08)', height: '100%', justifyContent: 'space-between', padding: compact ? '4px 0' : '8px 0', overflow: 'hidden' }
+          : { borderTop: '1px solid rgba(255,255,255,0.08)' }),
+        background: '#000',
+      }}
+    >
       {MODES.map((m) => {
         const on = m.key === active;
         return (
@@ -75,15 +94,20 @@ export default function Tier1Modes({ active, onSelect }: Tier1ModesProps) {
             key={m.key}
             onClick={() => onSelect(m.key)}
             style={{
-              flex: '1 1 0', minWidth: 0, // equal cells, even rhythm
+              ...(vertical ? { width: '100%', flex: '1 1 0', minHeight: 0, justifyContent: 'center' } : { flex: '1 1 0', minWidth: 0 }),
+              position: 'relative',
               background: 'transparent', border: 'none', cursor: 'pointer',
-              padding: '11px 0 13px',
-              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5,
+              padding: vertical ? (compact ? '2px 0' : '6px 0') : '11px 0 13px',
+              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: compact ? 3 : 5,
               color: on ? RED : 'rgba(255,255,255,0.5)', // drives the icon (currentColor)
             }}
           >
-            <ModeIcon mode={m.key} />
-            <span style={{ ...SKB, fontSize: 9, color: on ? 'white' : 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{m.label}</span>
+            {/* active marker — left red bar in the vertical rail */}
+            {vertical && on && (
+              <span style={{ position: 'absolute', left: 0, top: '50%', transform: 'translateY(-50%)', width: 2, height: compact ? 16 : 24, background: RED }} />
+            )}
+            <ModeIcon mode={m.key} size={iconSize} />
+            <span style={{ ...SKB, fontSize: compact ? 7 : 9, color: on ? 'white' : 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{m.label}</span>
           </button>
         );
       })}

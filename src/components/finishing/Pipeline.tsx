@@ -32,6 +32,7 @@ import { GRAIN_ASPECT, grainStockByKey } from './grainStocks';
 import { splitTintRgb } from './splitTonePalette';
 import { buildCurveLUT, isIdentityChannel } from '@/lib/editor/curveEngine';
 import { curveShaders } from './passes/curves';
+import { lookShaders } from './passes/look';
 
 // Labeled pass-through used for every not-yet-implemented stage. Sampling the
 // input unchanged keeps the chain intact and ordered.
@@ -57,9 +58,11 @@ interface PipelineProps {
   surfaceRef?: React.Ref<unknown>;
   /** Bake-only: enable preserveDrawingBuffer so the canvas can be read back. */
   preserve?: boolean;
+  /** Active LOOK LUT (2D-tiled canvas + cube size). Applied in the LOOK stage. */
+  activeLut?: { canvas: HTMLCanvasElement; size: number } | null;
 }
 
-export default function Pipeline({ source, params, width, height, surfaceRef, preserve }: PipelineProps) {
+export default function Pipeline({ source, params, width, height, surfaceRef, preserve, activeLut }: PipelineProps) {
   // Drive a redraw every frame while the source is a playing video so the
   // texture re-uploads. Images render once per prop change.
   const [, setTick] = useState(0);
@@ -177,16 +180,29 @@ export default function Pipeline({ source, params, width, height, surfaceRef, pr
   // GEOMETRY pass-through: real crop is owned by edit_geometry, not this chain.
   const geometry = <Node shader={passthrough.passthrough} uniforms={{ t: texSource }} />;
 
-  // CORRECTION: exposure → contrast → luma curve → white balance.
-  const nExposure = <Node shader={exposureShaders.exposure} uniforms={{ t: geometry, ev }} />;
+  // CORRECTION: denoise (EARLY, photo only) → exposure → contrast → luma curve → white balance.
+  // Denoise runs first so it cleans sensor noise BEFORE sharpen (DETAIL) enhances
+  // detail and BEFORE grain (TEXTURE) is laid on top. Skipped on video (perf) and
+  // when off.
+  const isVideoSrc = typeof HTMLVideoElement !== 'undefined' && source instanceof HTMLVideoElement;
+  const denoise = mapStop('denoise', params.denoise);
+  const denoised: React.ReactElement = (!isVideoSrc && params.denoise > 0)
+    ? <Node shader={correctionShaders.denoise} uniforms={{ t: geometry, amt: denoise, resolution: [width, height] }} />
+    : geometry;
+
+  const nExposure = <Node shader={exposureShaders.exposure} uniforms={{ t: denoised, ev }} />;
   const nContrast = <Node shader={correctionShaders.contrast} uniforms={{ t: nExposure, amt: contrast }} />;
   const nCurve: React.ReactElement = lutCanvas
     ? <Node shader={correctionShaders.curveLuma} uniforms={{ t: nContrast, lut: lutCanvas }} />
     : nContrast;
   const correction = <Node shader={correctionShaders.whiteBalance} uniforms={{ t: nCurve, temp, tint }} />;
 
-  // LOOK / LUT (stub) — LUT texture blend lands in its own brief.
-  const look = <Node shader={passthrough.passthrough} uniforms={{ t: correction }} />;
+  // LOOK / LUT — apply the selected .cube look, blended by intensity. Skipped
+  // when no look is active / not yet loaded / intensity 0.
+  const lutIntensity = mapStop('lutIntensity', params.lutIntensity);
+  const look = (activeLut && params.lutId && lutIntensity > 0)
+    ? <Node shader={lookShaders.lut} uniforms={{ t: correction, lut: activeLut.canvas, lutSize: activeLut.size, intensity: lutIntensity }} />
+    : <Node shader={passthrough.passthrough} uniforms={{ t: correction }} />;
 
   // COLOR: RGB curves → saturation → skin tone → hue curve → split tone.
   // RGB curves shape colour (own-channel LUTs); luma curve already ran in CORRECTION.

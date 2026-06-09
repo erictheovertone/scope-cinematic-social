@@ -8,20 +8,20 @@ const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fon
 const SCREENS = [
   {
     label: '01 / 03',
-    title: 'CINEMA\nFOR THE\nINTERNET.',
-    body: 'Scope is where filmmakers, photographers, and visual artists share cinematic work — and get paid for it. Every post is a token. Every collector is a fan with skin in the game.',
+    title: 'CINEMA\nFOR THE\nINTERNET',
+    body: 'Scope is a home for cinematic work — for filmmakers, photographers, and visual artists who care how their images are seen. Present your work in a space built for it: customizable grids, a theatrical viewing mode, and decks that sequence a body of work like a reel. Built for craft first.',
     cta: 'NEXT',
   },
   {
     label: '02 / 03',
-    title: 'YOU HAVE\nA WALLET.',
-    body: "When you signed up, Scope created a crypto wallet in your name on Base. It's yours — no seed phrase, no setup. Your ETH earnings go here automatically. Find it under the wallet icon.",
+    title: 'YOU HAVE\nA WALLET',
+    body: "When you joined, Scope set up a crypto wallet in your name on Base — no seed phrase, no setup, nothing to manage. It's how your work becomes ownable: every post can become a token that real fans collect. As you build here, your standing shows — early members, verified artists, and featured work carry badges that mark who you are in the community.",
     cta: 'NEXT',
   },
   {
     label: '03 / 03',
     title: 'POST.\nMINT.\nEARN.',
-    body: 'Every time someone collects your post, you earn ETH. Every trade of your token earns you a royalty. The more you create, the more you can earn. It starts with your first post.',
+    body: 'Share your work and let it travel. Every time your work is collected or traded, a fee on that transaction comes back to you — the original creator earns from all of it, every time. No follower counts to chase, no algorithm to game. Just your work, your collectors, and a reason to keep creating.',
     cta: 'START CREATING',
   },
 ];

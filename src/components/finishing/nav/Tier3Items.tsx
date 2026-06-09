@@ -17,6 +17,8 @@ const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fon
 const RED = '#FF0000';
 
 const ROW: React.CSSProperties = { display: 'flex', gap: 10, overflowX: 'auto', padding: '12px 14px 14px', alignItems: 'flex-start' };
+// Theatre-only leaner rail: tighter padding, no boxed tiles, no FREE/PRO line.
+const LEAN_ROW: React.CSSProperties = { display: 'flex', gap: 4, overflowX: 'auto', padding: '8px 12px 9px', alignItems: 'flex-start' };
 
 interface Tier3ItemsProps {
   mode: Mode;
@@ -27,6 +29,8 @@ interface Tier3ItemsProps {
   /** generic pro-lock decision (pro tool + not a Pro user) — drives the lock glyph */
   toolLocked: (t: EditTool) => boolean;
   onOpenTool: (t: EditTool) => void;
+  /** Theatre-only lean variant: borderless icon+label, no FREE/PRO line, smaller icons. */
+  lean?: boolean;
 }
 
 // Scope line-style padlock — shown on any locked pro tile (generic, not per-tool).
@@ -41,17 +45,40 @@ function LockGlyph() {
   );
 }
 
-export default function Tier3Items({ mode, editItems, toolTouched, toolEnabled, toolLocked, onOpenTool }: Tier3ItemsProps) {
+export default function Tier3Items({ mode, editItems, toolTouched, toolEnabled, toolLocked, onOpenTool, lean = false }: Tier3ItemsProps) {
   if (mode === 'edit') {
     if (editItems.length === 0) {
-      return <div style={{ ...ROW, justifyContent: 'center' }}><EmptyNote /></div>;
+      return <div style={{ ...(lean ? LEAN_ROW : ROW), justifyContent: 'center' }}><EmptyNote /></div>;
     }
     return (
-      <div style={ROW}>
+      <div style={lean ? LEAN_ROW : ROW}>
         {editItems.map((t) => {
           const touched = toolTouched(t);
           const enabled = toolEnabled(t);
           const locked = toolLocked(t);
+          // ── Theatre LEAN tile: borderless icon + label, no FREE/PRO line, smaller
+          //    icon. Active/touched reads via red icon+label (replaces the box). Pro
+          //    lock badge / pro dot preserved as the gating signal. ──
+          if (lean) {
+            return (
+              <button
+                key={t.key}
+                onClick={() => enabled && onOpenTool(t)}
+                disabled={!enabled}
+                style={{
+                  position: 'relative', flexShrink: 0, background: 'transparent', border: 'none',
+                  cursor: enabled ? 'pointer' : 'default', padding: '4px 8px',
+                  opacity: enabled ? 1 : 0.4,
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5,
+                  minWidth: 54, color: touched ? RED : 'white',
+                }}
+              >
+                {locked ? <LockGlyph /> : t.pro && <span style={{ position: 'absolute', top: 0, right: 2, width: 5, height: 5, background: RED }} />}
+                <ToolIcon toolKey={t.key} size={18} />
+                <span style={{ ...SKB, fontSize: 8, color: touched ? RED : 'white', textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>{t.label}</span>
+              </button>
+            );
+          }
           const sub = !enabled ? 'SOON' : t.kind === 'geometry' ? 'EDIT' : t.pro ? 'PRO' : 'FREE';
           return (
             <button

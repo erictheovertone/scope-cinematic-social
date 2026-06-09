@@ -17,13 +17,15 @@ import {
 import FinishingStep from '@/components/finishing/FinishingStep';
 import { DEFAULT_PARAMS, type EditParams } from '@/lib/editor/params';
 import { bakeLook, hasLookEdits, decodeImageFile } from '@/lib/editor/bakeLook';
+import { createLook, getLooks, type SavedLook } from '@/lib/looksService';
 import { getScopeLimitType } from '@/lib/limits';
 import { useUpsell } from '@/components/UpsellProvider';
 import CropTool from '@/components/CropTool';
 import { chipForLayout, getAspectRatio } from '@/lib/aspectRatio';
 import {
-  neutralGeometry, bakeImageGeometry, geometryMediaStyle, type EditGeometry,
+  neutralGeometry, bakeImageGeometry, type EditGeometry,
 } from '@/lib/editGeometry';
+import FinishingPreview from '@/components/finishing/FinishingPreview';
 
 function profileLayoutToAspect(layoutId: string): number {
   switch (layoutId) {
@@ -220,7 +222,11 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
   const [editParams, setEditParams] = useState<EditParams>(DEFAULT_PARAMS);
   // Real Pro status + grid gating for FINISHING, resolved via the verified path
   // (DID → getUserByPrivyId → getProfile → isProMember). uuid typing respected.
-  const [finishCtx, setFinishCtx] = useState<{ isPro: boolean; gridLayout: 'standard' | 'collage'; layoutId: string } | null>(null);
+  const [finishCtx, setFinishCtx] = useState<{ isPro: boolean; gridLayout: 'standard' | 'collage'; layoutId: string; userUuid: string } | null>(null);
+  const [savedLooks, setSavedLooks] = useState<SavedLook[]>([]);
+  // Bumped when a Pro purchase resolves in-app → re-fetch finishCtx so the
+  // editor's isPro refreshes and Pro tools unlock WITHOUT a page reload.
+  const [proTick, setProTick] = useState(0);
   const [chosenLayoutId, setChosenLayoutId] = useState<string | null>(null);
   const [selectedMedia, setSelectedMedia] = useState<MediaItem[]>([]);
   const [caption, setCaption] = useState('');
@@ -257,13 +263,35 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
           isPro: isProMember(profile as any),
           gridLayout: raw === 'collage' ? 'collage' : 'standard',
           layoutId: canonical,
+          userUuid: supabaseUser.id, // uuid for looksService (NEVER the DID)
         });
+        // Load saved looks (degrades to [] pre-migration; never crashes the flow).
+        const looks = await getLooks(supabaseUser.id);
+        if (!cancelled) setSavedLooks(looks);
       } catch (e) {
         console.error('[CreatePostFlow] finishCtx load error:', e);
       }
     })();
     return () => { cancelled = true; };
-  }, [user?.id, userLayoutId]);
+  }, [user?.id, userLayoutId, proTick]);
+
+  // Re-read Pro status in place after an in-app purchase (no remount/reload).
+  useEffect(() => {
+    const onProActivated = () => setProTick((t) => t + 1);
+    window.addEventListener('scope:pro-activated', onProActivated);
+    return () => window.removeEventListener('scope:pro-activated', onProActivated);
+  }, []);
+
+  // Save the current edit stack as a Look (uuid-typed; versioned in looksService).
+  const handleSaveLook = async (name: string, p: EditParams) => {
+    if (!finishCtx?.userUuid) return;
+    try {
+      const look = await createLook(finishCtx.userUuid, name, p);
+      setSavedLooks((ls) => [look, ...ls]);
+    } catch (e) {
+      console.error('[CreatePostFlow] saveLook failed (looks table may not exist yet):', e);
+    }
+  };
 
   // Video crop state
   const [cropX, setCropX] = useState(0);
@@ -832,22 +860,18 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
       <div className="flex-1 flex flex-col">
         <div className="flex-1 p-4">
           <div style={{ position: 'relative', width: '100%', marginBottom: 16, backgroundColor: '#000' }}>
-            {/* Non-interactive WYSIWYG preview of the crop chosen in CropTool. */}
+            {/* WYSIWYG preview — live gl-react render of geometry + ALL look params
+                (matches FINISHING; no preview bake → no generational loss; works for
+                video too). The single publish bake stays in handlePost. */}
             <div style={{ position: 'relative', width: '100%', aspectRatio: getAspectRatio(chosenLayoutId || userLayoutId), background: '#000', overflow: 'hidden' }}>
-              {selectedMedia[0] && editGeometry && (
-                selectedMedia[0].type === 'video' ? (
-                  <video
-                    src={selectedMedia[0].url}
-                    autoPlay muted loop playsInline
-                    style={geometryMediaStyle(editGeometry)}
-                  />
-                ) : (
-                  <img
-                    src={selectedMedia[0].url}
-                    alt="Preview"
-                    style={geometryMediaStyle(editGeometry)}
-                  />
-                )
+              {selectedMedia[0] && (
+                <FinishingPreview
+                  mediaUrl={selectedMedia[0].url}
+                  mediaType={selectedMedia[0].type}
+                  params={editParams}
+                  geometry={editGeometry ?? neutralGeometry(chipForLayout(chosenLayoutId || userLayoutId).id)}
+                  layoutId={chosenLayoutId || userLayoutId}
+                />
               )}
             </div>
             <button
@@ -1114,6 +1138,8 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
               onParamsChange={setEditParams}
               onDone={() => setStep('edit')}
               onBack={() => setStep('crop')}
+              savedLooks={savedLooks}
+              onSaveLook={handleSaveLook}
             />
           </div>
         );
