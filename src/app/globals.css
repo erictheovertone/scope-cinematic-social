@@ -42,27 +42,25 @@
   }
 }
 
-@keyframes swift-bounce {
-  0% {
-    transform: translateY(0) scaleY(0.8) scaleX(1.1);
-    animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
-  }
-  10% {
-    transform: translateY(-5px) scaleY(1.1) scaleX(0.9);
-    animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
-  }
-  50% {
-    transform: translateY(-30px) scaleY(1) scaleX(1);
-    animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
-  }
-  90% {
-    transform: translateY(-5px) scaleY(1.1) scaleX(0.9);
-    animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
-  }
-  100% {
-    transform: translateY(0) scaleY(0.8) scaleX(1.1);
-    animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
-  }
+/* FrameLoader — viewfinder corner-bracket loader (replaces the old red ball).
+   frameSnap: each bracket snaps inward from its corner offset (--fdx/--fdy) with
+   a tiny scale overshoot. framePulse: the assembled frame breathes on slow loads. */
+@keyframes frameSnap {
+  0%   { opacity: 0; transform: translate(var(--fdx, 0), var(--fdy, 0)) scale(0.6); }
+  70%  { opacity: 1; transform: translate(0, 0) scale(1.06); }
+  100% { opacity: 1; transform: translate(0, 0) scale(1); }
+}
+
+@keyframes framePulse {
+  0%, 100% { opacity: 0.45; transform: scale(0.97); }
+  50%      { opacity: 1;    transform: scale(1);    }
+}
+
+/* PALETTE tab arrival ping — the "filed away" frame landing in the gallery. */
+@keyframes tabPing {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.25); }
+  100% { transform: scale(1); }
 }
 
 @keyframes swift-press {
@@ -138,10 +136,6 @@
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
   100% { background-position: 0% 50%; }
-}
-
-.animate-swift-bounce {
-  animation: swift-bounce 0.6s infinite;
 }
 
 @keyframes badgeFlare {

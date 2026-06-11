@@ -19,9 +19,44 @@ export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [showFrame, setShowFrame] = useState(true);
   const [feedState, setFeedState] = useState<FeedState>("normal");
+  // Inline comments are one-at-a-time: only one feed post's section is open.
+  const [openCommentsPostId, setOpenCommentsPostId] = useState<string | null>(null);
   const transitioningRef = useRef(false);
   const lastScrollY = useRef(0);
   const feedRef = useRef<HTMLDivElement>(null);
+  // Captured viewport position of the tapped post, so it stays anchored while
+  // the feed reflows (another post may collapse above it).
+  const anchorRef = useRef<{ id: string; top: number } | null>(null);
+
+  const toggleComments = (postId: string) => {
+    const container = feedRef.current;
+    const el = container?.querySelector(`[data-post-id="${postId}"]`) as HTMLElement | null;
+    if (el) anchorRef.current = { id: postId, top: el.getBoundingClientRect().top };
+    setOpenCommentsPostId((prev) => (prev === postId ? null : postId));
+  };
+
+  // Pin the tapped post in place across the 0.32s comment-section reflow. We
+  // re-anchor every frame for the animation's duration so any collapse above
+  // (one-at-a-time closing a prior post) never shoves the tapped post — no jump.
+  useEffect(() => {
+    const anchor = anchorRef.current;
+    const container = feedRef.current;
+    if (!anchor || !container) return;
+    anchorRef.current = null;
+    let raf = 0;
+    const start = performance.now();
+    const DURATION = 360; // just past the grid-rows transition
+    const pin = () => {
+      const el = container.querySelector(`[data-post-id="${anchor.id}"]`) as HTMLElement | null;
+      if (el) {
+        const delta = el.getBoundingClientRect().top - anchor.top;
+        if (Math.abs(delta) > 0.5) container.scrollTop += delta;
+      }
+      if (performance.now() - start < DURATION) raf = requestAnimationFrame(pin);
+    };
+    raf = requestAnimationFrame(pin);
+    return () => cancelAnimationFrame(raf);
+  }, [openCommentsPostId]);
 
   // Native scroll listener — React's synthetic onScroll misses momentum scroll-up on iOS Safari.
   useEffect(() => {
@@ -167,7 +202,7 @@ export default function Home() {
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'flex-start',
-            paddingTop: 40,
+            paddingTop: 8,
           }}
         >
           <button
@@ -179,7 +214,7 @@ export default function Home() {
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              gap: 10,
+              gap: 6,
               padding: 0,
               animation: 'menu-splay-in 260ms cubic-bezier(0.16,1,0.3,1) both',
             }}
@@ -188,14 +223,14 @@ export default function Home() {
               src="/mirage-logo-thick-red-new.png"
               alt="Mirage"
               style={{
-                width: 50,
+                width: 30,
                 height: 'auto',
                 objectFit: 'contain',
                 display: 'block',
                 flexShrink: 0,
               }}
             />
-            <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 13, color: '#ffffff', letterSpacing: '-0.26px', textTransform: 'uppercase' }}>
+            <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 8, color: '#ffffff', letterSpacing: '-0.16px', textTransform: 'uppercase' }}>
               MIRAGE
             </span>
           </button>
@@ -211,10 +246,12 @@ export default function Home() {
       >
         <div style={{ paddingTop: 16, paddingBottom: 60 }}>
           {posts.map((post, index) => (
-            <div key={post.id} style={getPostAnimStyle(index)}>
+            <div key={post.id} data-post-id={post.id} style={getPostAnimStyle(index)}>
               <PostItem
                 post={post}
                 onImageClick={() => setLightboxPost(post)}
+                commentsOpen={openCommentsPostId === post.id}
+                onToggleComments={() => toggleComments(post.id)}
               />
             </div>
           ))}

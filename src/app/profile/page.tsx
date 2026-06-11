@@ -22,6 +22,7 @@ import PostCell from "@/components/PostCell";
 import { getColCount } from "@/lib/aspectRatio";
 import { getScopeLimitType } from "@/lib/limits";
 import { useUpsell } from "@/components/UpsellProvider";
+import FrameLoader from "@/components/FrameLoader";
 
 function getGridCols(layoutId: string): string {
   if (layoutId.startsWith('2x-')) return 'grid-cols-2';
@@ -720,7 +721,7 @@ const userLayoutId = stableLayoutId;
         <div style={{ flex: 1, overflowY: 'auto', padding: '0 16px' }}>
           {decksLoading ? (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '50%' }}>
-              <div style={{ width: 8, height: 8, background: '#FF0000', borderRadius: '50%' }} />
+              <FrameLoader />
             </div>
           ) : userDecks.length === 0 ? (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '50%' }}>
@@ -783,10 +784,11 @@ const userLayoutId = stableLayoutId;
                     if (!newDeckTitle.trim() || !user || creatingDeck) return;
                     setCreatingDeck(true);
                     try {
-                      await createDeck(user.id, userProfile.username, newDeckTitle.trim(), newDeckDesc.trim());
-                      setNewDeckTitle(''); setNewDeckDesc(''); setShowNewDeckForm(false);
-                      setDecksLoading(true);
-                      getUserDecks(user.id).then(setUserDecks).catch(console.error).finally(() => setDecksLoading(false));
+                      const deck = await createDeck(user.id, userProfile.username, newDeckTitle.trim(), newDeckDesc.trim());
+                      // Land the user straight inside the new deck's editor, ready
+                      // to fill it — dismiss the pull-up + form so nothing stacks behind.
+                      setNewDeckTitle(''); setNewDeckDesc(''); setShowNewDeckForm(false); setShowDecks(false);
+                      router.push(`/profile/${userProfile.username}/decks/${deck.id}`);
                     } catch (e: any) {
                       const lt = getScopeLimitType(e);
                       if (lt) { setCreatingDeck(false); showUpsell(lt); return; }

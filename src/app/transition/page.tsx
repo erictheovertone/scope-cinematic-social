@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import FrameLoader from "@/components/FrameLoader";
 
 export default function Transition() {
   const router = useRouter();
@@ -20,14 +21,7 @@ export default function Transition() {
   return (
     <div className="bg-black relative w-[375px] h-[812px] mx-auto flex items-center justify-center">
       
-      {/* Bouncing Red Ball - exact copy from welcome page */}
-      <div style={{
-        width: '32px',
-        height: '32px',
-        backgroundColor: '#FF0000',
-        borderRadius: '50%',
-        animation: 'swift-bounce 0.4s infinite'
-      }}></div>
+      <FrameLoader variant="page" />
 
     </div>
   );

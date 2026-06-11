@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
 import { syncUserWithSupabase, getUserByPrivyId, getProfile } from "@/lib/userService";
+import FrameLoader from "@/components/FrameLoader";
 
 export default function AuthCallback() {
   const router = useRouter();
@@ -30,8 +31,10 @@ export default function AuthCallback() {
 
         const profile = await getProfile(supabaseUser.id);
         if (profile && profile.username) {
-          router.replace("/profile");
+          // Setup complete (has a username) → land on the HOME FEED.
+          router.replace("/");
         } else {
+          // Fresh signup / setup incomplete → route through onboarding.
           router.replace("/profile/setup");
         }
       } catch (err) {
@@ -54,16 +57,7 @@ export default function AuthCallback() {
         justifyContent: "center",
       }}
     >
-      <div
-        style={{
-          width: "32px",
-          height: "32px",
-          backgroundColor: "#FF0000",
-          borderRadius: "50%",
-          animation: "swift-bounce 0.4s infinite",
-          transform: "translateY(-15px)",
-        }}
-      />
+      <FrameLoader variant="page" />
     </div>
   );
 }

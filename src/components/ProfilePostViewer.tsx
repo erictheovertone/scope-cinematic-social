@@ -12,6 +12,8 @@ import DeckPickerSheet from "@/components/DeckPickerSheet";
 import CollectSheet from "@/components/CollectSheet";
 import DeletePostSheet from "@/components/DeletePostSheet";
 import MediaRenderer from "@/components/MediaRenderer";
+import GradedVideo from "@/components/finishing/GradedVideo";
+import PostModal from "@/components/PostModal";
 import { supabase } from "@/lib/supabase/client";
 import { getAspectRatio } from "@/lib/aspectRatio";
 import PillarboxFrame from "@/components/PillarboxFrame";
@@ -41,13 +43,16 @@ interface ItemProps {
   ownerAvatarUrl?: string | null;
   viewerUsername: string;
   viewerAvatar: string | null;
-  onNavigateToProfile: () => void;
+  /** Navigate to a profile by handle; defaults to the post owner when omitted. */
+  onNavigateToProfile: (handle?: string) => void;
+  /** Open this post in the standalone post view (the SAME PostModal as the feed). */
+  onOpenPost: (post: Post) => void;
   isOwnProfile?: boolean;
   onDeletePress?: (postId: string) => void;
 }
 
 function PostViewerItem({
-  post, ownerUsername, ownerAvatarUrl, viewerUsername, viewerAvatar, onNavigateToProfile, isOwnProfile, onDeletePress,
+  post, ownerUsername, ownerAvatarUrl, viewerUsername, viewerAvatar, onNavigateToProfile, onOpenPost, isOwnProfile, onDeletePress,
 }: ItemProps) {
   const { user } = usePrivy();
   const [likes, setLikes] = useState<any[]>([]);
@@ -132,15 +137,36 @@ function PostViewerItem({
       {(() => {
         const is43 = (post.layout_id ?? '') === 'legacy';
         const mediaEl = post.media_urls?.[0] ? (
-          <MediaRenderer
-            url={post.media_urls[0]}
-            mediaType={(post as any).media_type}
-            caption={post.caption || ""}
-            thumbnailUrl={(post as any).thumbnail_url}
-            autoplay={true}
-            showSoundToggle={true}
-            style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-          />
+          (post as any).media_type === 'video' ? (
+            // Profile scroll video → GradedVideo, gridMode = the grid's direct in-view
+            // trigger (one snapped post in view → it plays graded). The wrapper's
+            // onClick opens the standalone view (taps bubble).
+            <GradedVideo
+              url={post.media_urls[0]}
+              posterUrl={(post as any).poster_url ?? (post as any).thumbnail_url}
+              clipUrl={(post as any).autoplay_clip_url}
+              editParams={(post as any).edit_params}
+              autoplayFlag={(post as any).autoplay !== false}
+              gridMode
+              cropX={(post as any).crop_x ?? 0}
+              cropY={(post as any).crop_y ?? 0}
+              cropWidth={(post as any).crop_width ?? 1}
+              cropHeight={(post as any).crop_height ?? 1}
+              showSoundToggle={true}
+              style={{ width: "100%", height: "100%" }}
+            />
+          ) : (
+            <MediaRenderer
+              url={post.media_urls[0]}
+              mediaType={(post as any).media_type}
+              caption={post.caption || ""}
+              thumbnailUrl={(post as any).poster_url ?? (post as any).thumbnail_url}
+              autoplay={true}
+              showSoundToggle={true}
+              style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+              onClick={() => onOpenPost(post)}
+            />
+          )
         ) : (
           <div style={{ width: "100%", height: "100%", background: "#111" }} />
         );
@@ -165,13 +191,13 @@ function PostViewerItem({
           </>
         );
         return is43 ? (
-          <PillarboxFrame onClick={(e) => e.stopPropagation()} overlays={overlayEls}>
+          <PillarboxFrame onClick={(e) => { e.stopPropagation(); onOpenPost(post); }} cursor="pointer" overlays={overlayEls}>
             {mediaEl}
           </PillarboxFrame>
         ) : (
           <div
-            style={{ position: "relative", width: "100%", aspectRatio: getAspectRatio(post.layout_id ?? ''), overflow: "hidden", background: "#0a0a0a" }}
-            onClick={(e) => e.stopPropagation()}
+            style={{ position: "relative", width: "100%", aspectRatio: getAspectRatio(post.layout_id ?? ''), overflow: "hidden", background: "#0a0a0a", cursor: "pointer" }}
+            onClick={(e) => { e.stopPropagation(); onOpenPost(post); }}
           >
             {mediaEl}
             {overlayEls}
@@ -324,14 +350,23 @@ function PostViewerItem({
             ) : (
               comments.map((c, i) => (
                 <div key={c.id} style={{ display: "flex", alignItems: "flex-start", gap: 6, marginBottom: 8, animation: "ripple-down 0.2s ease-out both", animationDelay: `${i * 50}ms` }}>
-                  <div style={{ width: 16, height: 16, borderRadius: "50%", background: "#2a2a2a", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+                  {/* Avatar → commenter's profile (by handle). stopPropagation so the
+                      tap doesn't bubble to the sheet/row. */}
+                  <div
+                    onClick={c.username ? (e) => { e.stopPropagation(); onNavigateToProfile(c.username); } : undefined}
+                    style={{ width: 16, height: 16, borderRadius: "50%", background: "#2a2a2a", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", cursor: c.username ? "pointer" : "default" }}
+                  >
                     {c.profile_image_url
                       ? <img src={c.profile_image_url} alt={c.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                       : <span style={{ ...SKB, fontSize: 6, color: "white", textTransform: "uppercase" }}>{c.username?.[0] ?? "?"}</span>
                     }
                   </div>
                   <div>
-                    <span style={{ ...SKB, fontSize: 9, color: "white", marginRight: 5, textTransform: "uppercase" }}>@{c.username}</span>
+                    {/* Handle → commenter's profile (by handle). */}
+                    <span
+                      onClick={c.username ? (e) => { e.stopPropagation(); onNavigateToProfile(c.username); } : undefined}
+                      style={{ ...SKB, fontSize: 9, color: "white", marginRight: 5, textTransform: "uppercase", cursor: c.username ? "pointer" : "default" }}
+                    >@{c.username}</span>
                     <span style={{ ...SKR, fontSize: 9, color: "rgba(255,255,255,0.6)", textTransform: "none" }}>{c.content}</span>
                   </div>
                 </div>
@@ -388,6 +423,9 @@ export default function ProfilePostViewer({
   const [localPosts, setLocalPosts] = useState(initialPosts);
   const [showDeleteSheet, setShowDeleteSheet] = useState(false);
   const [deletePostId, setDeletePostId] = useState<string>('');
+  // Standalone post view (the SAME PostModal as the home feed), opened over the
+  // scroll. Closing it returns here at the same scroll position (this stays mounted).
+  const [modalPost, setModalPost] = useState<any>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const postRefs = useRef<(HTMLDivElement | null)[]>([]);
 
@@ -437,9 +475,9 @@ export default function ProfilePostViewer({
     setTimeout(onClose, 340);
   };
 
-  const goToProfile = () => {
+  const goToProfile = (handle?: string) => {
     handleClose();
-    setTimeout(() => router.push(`/profile/${ownerUsername}`), 340);
+    setTimeout(() => router.push(`/profile/${handle || ownerUsername}`), 340);
   };
 
   return (
@@ -494,6 +532,7 @@ export default function ProfilePostViewer({
               viewerUsername={viewerUsername}
               viewerAvatar={viewerAvatar}
               onNavigateToProfile={goToProfile}
+              onOpenPost={(p) => setModalPost({ ...p, profile_image_url: (p as any).profile_image_url ?? ownerAvatarUrl ?? null })}
               isOwnProfile={isOwnProfile}
               onDeletePress={(postId) => { setDeletePostId(postId); setShowDeleteSheet(true); }}
             />
@@ -513,6 +552,10 @@ export default function ProfilePostViewer({
           if (newPosts.length === 0) onClose();
         }}
       />
+
+      {/* Standalone post view — the SAME component the home feed opens. BACK
+          (onClose) dismisses it and reveals this scroll at the same position. */}
+      {modalPost && <PostModal post={modalPost} onClose={() => setModalPost(null)} />}
     </div>
   );
 }

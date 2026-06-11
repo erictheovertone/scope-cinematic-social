@@ -8,6 +8,7 @@ import {
   getProfileLinks, addProfileLink, deleteProfileLink,
   type ProfileLink,
 } from "@/lib/userService";
+import FrameLoader from "@/components/FrameLoader";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -230,7 +231,7 @@ export default function EditProfilePage() {
 
   if (!loaded) return (
     <div className="bg-black" style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{ width: 11, height: 11, background: '#FF0000', borderRadius: '50%' }} />
+      <FrameLoader variant="page" />
     </div>
   );
 

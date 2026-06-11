@@ -9,6 +9,7 @@ import {
 } from "@/lib/userService";
 import { getScopeLimitType } from "@/lib/limits";
 import { useUpsell } from "@/components/UpsellProvider";
+import FrameLoader from "@/components/FrameLoader";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -80,7 +81,7 @@ export default function DecksPage() {
   if (loading) {
     return (
       <div className="bg-black w-full max-w-[375px] min-h-screen mx-auto flex items-center justify-center">
-        <div style={{ width: 11, height: 11, background: "#FF0000", borderRadius: "50%" }} />
+        <FrameLoader variant="page" />
       </div>
     );
   }

@@ -50,6 +50,8 @@ export const createPost = async (postData: {
   aspectRatio?: number;
   mediaType?: string;
   thumbnailUrl?: string | null;
+  posterUrl?: string | null;
+  autoplayClipUrl?: string | null;
   autoplay?: boolean;
   editGeometry?: unknown;
   editParams?: unknown;
@@ -69,6 +71,12 @@ export const createPost = async (postData: {
         layout_id: postData.layoutId,
         media_type: postData.mediaType || 'image',
         thumbnail_url: postData.thumbnailUrl || null,
+        // Graded poster frame (video) — geometry + look baked at publish. Shown
+        // wherever the video is NOT actively playing (grid/feed/thumbnails).
+        ...(postData.posterUrl !== undefined ? { poster_url: postData.posterUrl } : {}),
+        // Baked 3–5s graded MUTED clip — the autoplay material (looped as a plain
+        // <video> on grid/feed/scroll; no live pipeline).
+        ...(postData.autoplayClipUrl !== undefined ? { autoplay_clip_url: postData.autoplayClipUrl } : {}),
         autoplay: postData.autoplay !== false,
         // Additive — null/absent for legacy posts, never replaces layout_id.
         ...(postData.editGeometry !== undefined ? { edit_geometry: postData.editGeometry } : {}),
@@ -196,14 +204,22 @@ export const likePost = async (postId: string, userId: string, username: string)
     try {
       const { data: post } = await supabase
         .from('posts').select('user_id, media_urls').eq('id', postId).single()
-      if (!post || post.user_id === userId) return
+      if (!post) return
+      // recipient_id stores the OWNER's Privy DID — the bell reads by DID
+      // (getNotifications queries recipient_id == user.id) and follow notifs use
+      // the DID too. posts.user_id is a Supabase uuid, so translate uuid →
+      // users.privy_id; storing the raw uuid here leaves the bell permanently empty.
+      const { data: ownerUser } = await supabase
+        .from('users').select('privy_id').eq('id', post.user_id).single()
+      const recipientDid = ownerUser?.privy_id
+      if (!recipientDid || recipientDid === userId) return // skip self-notifications
       const { data: senderProfile } = await supabase
         .from('profiles').select('profile_image_url').eq('username', username).single()
-      console.log('Creating like notification — recipient:', post.user_id, ', sender:', userId)
+      console.log('Creating like notification — recipient:', recipientDid, ', sender:', userId)
       const { data: notif, error: notifError } = await supabase
         .from('notifications')
         .insert({
-          recipient_id: post.user_id,
+          recipient_id: recipientDid,
           sender_id: userId,
           sender_username: username,
           sender_avatar: senderProfile?.profile_image_url ?? null,
@@ -292,15 +308,21 @@ export const addComment = async (
     try {
       const { data: post } = await supabase
         .from('posts').select('user_id, media_urls').eq('id', postId).single()
-      if (!post || post.user_id === userId) return
+      if (!post) return
+      // recipient_id stores the OWNER's Privy DID (see likePost) — translate
+      // posts.user_id (uuid) → users.privy_id so the bell (read by DID) matches.
+      const { data: ownerUser } = await supabase
+        .from('users').select('privy_id').eq('id', post.user_id).single()
+      const recipientDid = ownerUser?.privy_id
+      if (!recipientDid || recipientDid === userId) return // skip self-notifications
       const { data: senderProfile } = await supabase
         .from('profiles').select('profile_image_url').eq('username', username).single()
       const preview = content.length > 40 ? content.slice(0, 40) + '…' : content
-      console.log('Creating comment notification — recipient:', post.user_id, ', sender:', userId)
+      console.log('Creating comment notification — recipient:', recipientDid, ', sender:', userId)
       const { data: notif, error: notifError } = await supabase
         .from('notifications')
         .insert({
-          recipient_id: post.user_id,
+          recipient_id: recipientDid,
           sender_id: userId,
           sender_username: username,
           sender_avatar: senderProfile?.profile_image_url ?? null,

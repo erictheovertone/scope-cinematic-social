@@ -18,6 +18,7 @@ import BottomToolbar from "@/components/BottomToolbar";
 import MediaRenderer from "@/components/MediaRenderer";
 import PostCell from "@/components/PostCell";
 import { getColCount } from "@/lib/aspectRatio";
+import FrameLoader from "@/components/FrameLoader";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -175,7 +176,7 @@ export default function PublicProfilePage() {
 
   if (!loaded) return (
     <div className="bg-black w-full max-w-[375px] min-h-screen mx-auto flex items-center justify-center">
-      <div style={{ width: 11, height: 11, background: "#FF0000", borderRadius: "50%" }} />
+      <FrameLoader variant="page" />
     </div>
   );
 
@@ -230,13 +231,16 @@ export default function PublicProfilePage() {
           <p style={{ ...SKB, fontSize: 10, color: 'rgba(255,255,255,0.6)', letterSpacing: '-0.02em', lineHeight: 1.2, margin: 0, textTransform: 'uppercase' }}>@{username}</p>
         </div>
 
-        {/* Info sheet trigger */}
+        {/* Info sheet trigger — hidden while BIO sheet is open so it doesn't bleed over the sheet */}
         <button
           onClick={() => setProfileDataOpen(true)}
           style={{
             position: 'absolute', top: 0, right: 0,
             background: 'transparent', border: 'none', cursor: 'pointer', padding: 7,
             display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end',
+            opacity: profileDataOpen ? 0 : 1,
+            pointerEvents: profileDataOpen ? 'none' : 'auto',
+            transition: 'opacity 200ms ease',
           }}
           aria-label="View profile info"
         >
@@ -259,9 +263,9 @@ export default function PublicProfilePage() {
           </div>
         </button>
 
-        {/* Follow button */}
+        {/* Follow button — hidden while BIO sheet is open so it doesn't bleed over the sheet */}
         {user && !isOwnProfile && targetPrivyId && (
-          <button onClick={handleFollow} disabled={followLoading} style={{ position: 'absolute', ...SKB, fontSize: 8, color: followingUser ? 'rgba(255,255,255,0.5)' : 'white', letterSpacing: '-0.18px', background: 'transparent', border: `1px solid ${followingUser ? 'rgba(255,255,255,0.3)' : 'white'}`, padding: '3px 8px', right: 4, top: 60, cursor: followLoading ? 'default' : 'pointer', textTransform: 'uppercase' }}>
+          <button onClick={handleFollow} disabled={followLoading} style={{ position: 'absolute', ...SKB, fontSize: 8, color: followingUser ? 'rgba(255,255,255,0.5)' : 'white', letterSpacing: '-0.18px', background: 'transparent', border: `1px solid ${followingUser ? 'rgba(255,255,255,0.3)' : 'white'}`, padding: '3px 8px', right: 4, top: 60, cursor: followLoading ? 'default' : 'pointer', textTransform: 'uppercase', opacity: profileDataOpen ? 0 : 1, pointerEvents: profileDataOpen ? 'none' : 'auto', transition: 'opacity 200ms ease' }}>
             {followingUser ? 'UNFOLLOW' : 'FOLLOW'}
           </button>
         )}
@@ -441,7 +445,7 @@ export default function PublicProfilePage() {
           <button onClick={() => { setShowDecks(false); setActiveTab('main'); }} style={{ position: 'absolute', right: 16, fontSize: 18, color: 'white', background: 'none', border: 'none', cursor: 'pointer' }}>×</button>
         </div>
         <div style={{ flex: 1, overflowY: 'auto', padding: '0 16px' }}>
-          {decksLoading ? <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '50%' }}><div style={{ width: 8, height: 8, background: '#FF0000', borderRadius: '50%' }} /></div>
+          {decksLoading ? <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '50%' }}><FrameLoader /></div>
           : publicDecks.length === 0 ? <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '50%' }}><span style={{ ...SKB, fontSize: 11, color: 'white', textTransform: 'uppercase' }}>NO DECKS YET</span></div>
           : publicDecks.map(deck => (
             <div key={deck.id} onClick={() => { setShowDecks(false); router.push(`/profile/${username}/decks/${deck.id}`); }} style={{ marginBottom: 12, cursor: 'pointer' }}>

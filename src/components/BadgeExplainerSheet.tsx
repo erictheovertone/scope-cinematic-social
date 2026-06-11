@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { usePrivy } from "@privy-io/react-auth";
+import { getUserByPrivyId, getProfile, isProMember } from "@/lib/userService";
 
 const BOLD: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const REG: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -86,19 +88,72 @@ function getCurrentBadge(userTiers: BadgeExplainerSheetProps['userTiers']) {
 
 export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, userTiers, isPaidMember, paidMemberUntil, onManageMembership }: BadgeExplainerSheetProps) {
   const router = useRouter();
+  const { user } = usePrivy();
   useEffect(() => {
     if (visible) document.body.style.overflow = 'hidden';
     else document.body.style.overflow = '';
     return () => { document.body.style.overflow = ''; };
   }, [visible]);
 
-  const currentTier = userTiers.isFoundingMember ? 'founding'
-    : userTiers.isTopCollector ? 'top1k'
-    : userTiers.isPaidMember ? 'pro'
-    : userTiers.isInHouseCreator ? 'creator'
+  // The sheet is ALWAYS viewer-centric: resolve the AUTHENTICATED viewer's own
+  // tiers via the verified path (did → users.id → profiles), regardless of whose
+  // badge was tapped. On a public profile the props carry the VIEWED user's
+  // tiers, so self-resolving here overrides them with the viewer's real status.
+  const [viewer, setViewer] = useState<{
+    tiers: BadgeExplainerSheetProps['userTiers'];
+    isPaid: boolean;
+    paidUntil: Date | null;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!visible || !user) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const sbUser = await getUserByPrivyId(user.id);
+        if (!sbUser || cancelled) return;
+        const p = await getProfile(sbUser.id) as any;
+        if (!p || cancelled) return;
+        const isPaid = isProMember(p);
+        const isTop = !!p.is_top_collector;
+        const isHouse = !!p.is_in_house_creator;
+        const isFounding = !!p.is_founding_member;
+        setViewer({
+          tiers: {
+            isFree: !isPaid && !isTop && !isFounding && !isHouse,
+            isInHouseCreator: isHouse,
+            isPaidMember: isPaid,
+            isTopCollector: isTop,
+            isFoundingMember: isFounding,
+            foundingMemberNumber: p.founding_member_number ?? null,
+          },
+          isPaid,
+          paidUntil: p.paid_member_until ? new Date(p.paid_member_until) : null,
+        });
+      } catch (e) {
+        console.error('Badge sheet viewer resolve error:', e);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [visible, user?.id]);
+
+  // Effective (viewer-centric) status — the self-resolved viewer wins; props are
+  // only a fallback (correct on own-profile, replaced on public once resolved).
+  const vTiers = viewer?.tiers ?? userTiers;
+  const vIsPaid = viewer?.isPaid ?? !!isPaidMember;
+  const vPaidUntil = viewer?.paidUntil ?? paidMemberUntil ?? null;
+
+  const currentTier = vTiers.isFoundingMember ? 'founding'
+    : vTiers.isTopCollector ? 'top1k'
+    : vTiers.isPaidMember ? 'pro'
+    : vTiers.isInHouseCreator ? 'creator'
     : 'free';
 
-  const currentBadge = getCurrentBadge(userTiers);
+  const currentBadge = getCurrentBadge(vTiers);
+
+  // MANAGE always works for a Pro viewer, even from a public profile where the
+  // caller didn't pass onManageMembership.
+  const handleManage = onManageMembership ?? (() => { onClose(); router.push('/membership/manage'); });
 
   return (
     <>
@@ -128,20 +183,20 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <img src={currentBadge.image} alt="" style={{ width: 16, height: 16 }} />
             <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <span style={{ ...BOLD, fontSize: 7, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.15em' }}>MEMBERSHIP</span>
+              <span style={{ ...BOLD, fontSize: 7, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.15em' }}>MY MEMBERSHIP</span>
               <span style={{ ...BOLD, fontSize: 9, color: '#FFFFFF', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                {isPaidMember
-                  ? `SCOPE PRO · RENEWS ${paidMemberUntil ? paidMemberUntil.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase() : ''}`
+                {vIsPaid
+                  ? `SCOPE PRO · RENEWS ${vPaidUntil ? vPaidUntil.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase() : ''}`
                   : 'FREE'}
               </span>
             </div>
           </div>
           <button
-            onClick={isPaidMember ? onManageMembership : onJoinPress}
+            onClick={vIsPaid ? handleManage : onJoinPress}
             style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}
           >
             <span style={{ ...BOLD, fontSize: 8, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-              {isPaidMember ? 'MANAGE →' : 'UPGRADE →'}
+              {vIsPaid ? 'MANAGE →' : 'UPGRADE →'}
             </span>
           </button>
         </div>
@@ -151,7 +206,7 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <img src={currentBadge.image} alt="" style={{ width: 16, height: 16 }} />
             <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <span style={{ ...BOLD, fontSize: 7, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.15em' }}>CURRENT BADGE</span>
+              <span style={{ ...BOLD, fontSize: 7, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.15em' }}>MY CURRENT BADGE</span>
               <span style={{ ...BOLD, fontSize: 9, color: '#FFFFFF', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                 {currentBadge.label}
               </span>
@@ -243,8 +298,15 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
                 )}
               </div>
               <div style={{ flex: 1 }}>
-                <p style={{ ...BOLD, fontSize: 12, color: tier.color, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 6px' }}>
-                  {tier.title}
+                <p style={{ ...BOLD, fontSize: 12, color: tier.color, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 6px', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span>{tier.title}</span>
+                  {/* Viewer-centric: their own tier reads YOURS; the rest read as
+                      not-yet-theirs, so every badge tap shows where they stand. */}
+                  {currentTier === tier.key ? (
+                    <span style={{ ...BOLD, fontSize: 7, color: '#FF0000', letterSpacing: '0.12em', border: '1px solid rgba(255,0,0,0.55)', padding: '1px 4px' }}>YOURS</span>
+                  ) : (
+                    <span style={{ ...BOLD, fontSize: 7, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.12em' }}>NOT YET YOURS</span>
+                  )}
                 </p>
                 <p style={{ ...REG, fontSize: 11, color: 'rgba(255,255,255,0.65)', lineHeight: 1.3, margin: '0 0 6px' }}>
                   {tier.description}

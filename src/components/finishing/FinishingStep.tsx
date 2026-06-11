@@ -44,8 +44,12 @@ export default function FinishingStep({
     if (mediaType === 'video') {
       const v = document.createElement('video');
       v.crossOrigin = 'anonymous';
+      // AUTO-PLAY on entry (muted, as the platform requires for autoplay). The
+      // user pauses to scrub to a hero frame and grade from the still, then can
+      // play again to preview the grade in motion. The freeze fix lives in the
+      // Pipeline (redraw loop runs ONLY while playing — paused grading is light).
       v.muted = true; v.loop = true; v.playsInline = true;
-      v.onloadeddata = () => { if (!cancelled) { console.log('[FinishingStep] video loaded'); v.play().catch(() => {}); setSource(v); } };
+      v.onloadeddata = () => { if (!cancelled) { console.log('[FinishingStep] video loaded (auto-playing)'); v.play().catch(() => {}); setSource(v); } };
       v.src = mediaUrl;
       return () => { cancelled = true; v.pause(); v.src = ''; };
     }

@@ -121,3 +121,48 @@ export async function bakeLook(image: HTMLImageElement, params: EditParams, w: n
     setTimeout(() => { try { root.unmount(); } catch { /* noop */ } container.remove(); }, 0);
   }
 }
+
+/**
+ * captureLookThumb — a small JPEG of the CURRENT source frame with `params`
+ * applied, for the PALETTE tile (memory anchor). Reuses bakeLook (same pipeline +
+ * captureAsBlob) at thumbnail scale (~480px wide, source aspect preserved). For a
+ * VIDEO source it snapshots the current frame to a still first, then bakes it.
+ * Returns null on any failure — the thumbnail is an enhancement, never a save
+ * dependency, so the caller must keep saving regardless.
+ */
+const THUMB_W = 480;
+export async function captureLookThumb(
+  source: HTMLImageElement | HTMLVideoElement,
+  params: EditParams,
+): Promise<Blob | null> {
+  try {
+    if (typeof document === 'undefined' || !source) return null;
+    const isVideo = typeof HTMLVideoElement !== 'undefined' && source instanceof HTMLVideoElement;
+    const sw = isVideo ? source.videoWidth : (source as HTMLImageElement).naturalWidth;
+    const sh = isVideo ? source.videoHeight : (source as HTMLImageElement).naturalHeight;
+    if (!sw || !sh) return null;
+
+    // bakeLook textures an HTMLImageElement; a video's current frame is snapshotted
+    // to a still so the same pipeline path produces the looked thumbnail.
+    let image: HTMLImageElement;
+    if (isVideo) {
+      const cv = document.createElement('canvas');
+      cv.width = sw; cv.height = sh;
+      const ctx = cv.getContext('2d');
+      if (!ctx) return null;
+      ctx.drawImage(source as CanvasImageSource, 0, 0, sw, sh);
+      image = new Image();
+      image.src = cv.toDataURL('image/jpeg', 0.9);
+      await image.decode().catch(() => { /* fall through; bakeLook waits on its own draw */ });
+    } else {
+      image = source as HTMLImageElement;
+    }
+
+    const w = THUMB_W;
+    const h = Math.max(1, Math.round((THUMB_W * sh) / sw));
+    return await bakeLook(image, params, w, h);
+  } catch (e) {
+    console.warn('[captureLookThumb] failed:', e);
+    return null;
+  }
+}

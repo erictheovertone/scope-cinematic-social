@@ -7,6 +7,7 @@ import { getUserBookmarks } from "@/lib/bookmarksService";
 import { getUserByPrivyId } from "@/lib/userService";
 import MediaRenderer from "@/components/MediaRenderer";
 import ProfilePostViewer from "@/components/ProfilePostViewer";
+import FrameLoader from "@/components/FrameLoader";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 
@@ -70,7 +71,7 @@ export default function BookmarksPage() {
 
       {loading && (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', paddingTop: 60 }}>
-          <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#FF0000' }} />
+          <FrameLoader />
         </div>
       )}
 

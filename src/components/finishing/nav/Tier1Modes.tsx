@@ -67,9 +67,11 @@ interface Tier1ModesProps {
   orientation?: 'horizontal' | 'vertical';
   /** Compact = landscape-mobile rail (smaller icons/labels). */
   compact?: boolean;
+  /** Mode whose icon should give a one-shot scale ping (e.g. PALETTE on save arrival). */
+  pingKey?: Mode | null;
 }
 
-export default function Tier1Modes({ active, onSelect, orientation = 'horizontal', compact = false }: Tier1ModesProps) {
+export default function Tier1Modes({ active, onSelect, orientation = 'horizontal', compact = false, pingKey = null }: Tier1ModesProps) {
   const vertical = orientation === 'vertical';
   // Vertical rail: shrink icons so all five modes fit the rail height with no
   // clipping/scroll (shortest case = landscape-mobile). Horizontal row unchanged.
@@ -92,6 +94,7 @@ export default function Tier1Modes({ active, onSelect, orientation = 'horizontal
         return (
           <button
             key={m.key}
+            data-finishing-mode={m.key}
             onClick={() => onSelect(m.key)}
             style={{
               ...(vertical ? { width: '100%', flex: '1 1 0', minHeight: 0, justifyContent: 'center' } : { flex: '1 1 0', minWidth: 0 }),
@@ -106,7 +109,9 @@ export default function Tier1Modes({ active, onSelect, orientation = 'horizontal
             {vertical && on && (
               <span style={{ position: 'absolute', left: 0, top: '50%', transform: 'translateY(-50%)', width: 2, height: compact ? 16 : 24, background: RED }} />
             )}
-            <ModeIcon mode={m.key} size={iconSize} />
+            <span style={{ display: 'inline-flex', animation: pingKey === m.key ? 'tabPing 0.4s ease-out' : undefined }}>
+              <ModeIcon mode={m.key} size={iconSize} />
+            </span>
             <span style={{ ...SKB, fontSize: compact ? 7 : 9, color: on ? 'white' : 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{m.label}</span>
           </button>
         );

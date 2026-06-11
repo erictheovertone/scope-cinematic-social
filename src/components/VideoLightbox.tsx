@@ -2,6 +2,8 @@
 
 import { useEffect, useState, useRef } from "react";
 import MediaRenderer from "@/components/MediaRenderer";
+import GradedVideo from "@/components/finishing/GradedVideo";
+import { getAspectRatio } from "@/lib/aspectRatio";
 import ReframeOverlay from "@/components/ReframeOverlay";
 import PillarboxFrame from "@/components/PillarboxFrame";
 import DeletePostSheet from "@/components/DeletePostSheet";
@@ -86,28 +88,33 @@ export default function VideoLightbox({ post, onClose, onScrollDown, isOwner, su
         onTouchEnd={(e) => e.stopPropagation()}
         style={{ width: '92%', position: 'relative' }}
       >
+        {/* Graded playback via the SHARED graded player (forcePlay) — owner viewer
+            keeps its theatre/edit/autoplay-toggle/crop features, now showing the
+            look exactly like the home-feed-opened standalone. */}
         {post.layout_id === 'legacy' ? (
           <PillarboxFrame>
-            <MediaRenderer
+            <GradedVideo
               url={post.media_urls?.[0]}
-              mediaType={post.media_type}
-              caption={post.caption}
-              autoplay={true}
-              showSoundToggle={true}
-              thumbnailUrl={post.thumbnail_url}
-              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+              posterUrl={post.poster_url ?? post.thumbnail_url}
+              editParams={post.edit_params}
+              cropX={post.crop_x ?? 0} cropY={post.crop_y ?? 0} cropWidth={post.crop_width ?? 1} cropHeight={post.crop_height ?? 1}
+              forcePlay
+              showSoundToggle
+              style={{ width: '100%', height: '100%' }}
             />
           </PillarboxFrame>
         ) : (
-          <MediaRenderer
-            url={post.media_urls?.[0]}
-            mediaType={post.media_type}
-            caption={post.caption}
-            autoplay={true}
-            showSoundToggle={true}
-            thumbnailUrl={post.thumbnail_url}
-            style={{ width: '100%', maxHeight: '70vh', objectFit: 'contain', display: 'block' }}
-          />
+          <div style={{ width: '100%', aspectRatio: getAspectRatio(post.layout_id ?? ''), overflow: 'hidden', background: '#0a0a0a' }}>
+            <GradedVideo
+              url={post.media_urls?.[0]}
+              posterUrl={post.poster_url ?? post.thumbnail_url}
+              editParams={post.edit_params}
+              cropX={post.crop_x ?? 0} cropY={post.crop_y ?? 0} cropWidth={post.crop_width ?? 1} cropHeight={post.crop_height ?? 1}
+              forcePlay
+              showSoundToggle
+              style={{ width: '100%', height: '100%' }}
+            />
+          </div>
         )}
       </div>
 

@@ -5,6 +5,7 @@ import { type Deck, type DeckItemWithMedia } from "@/lib/userService";
 import { getFramesLayout } from "@/lib/framesLayouts";
 import { generateFramesExport } from "@/lib/framesExport";
 import FramesPreview from "@/components/FramesPreview";
+import FrameLoader from "@/components/FrameLoader";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -295,7 +296,7 @@ export default function FramesSheet({
               </p>
             ) : (
               <>
-                <div style={{ width: 11, height: 11, background: "#FF0000", borderRadius: "50%", animation: "framesExportPulse 0.9s ease-in-out infinite alternate" }} />
+                <FrameLoader />
                 <p style={{ ...SKB, fontSize: 10, letterSpacing: "0.15em", color: "rgba(255,255,255,0.7)", textTransform: "uppercase", margin: 0 }}>
                   RENDERING FRAMES...
                 </p>
@@ -336,13 +337,6 @@ export default function FramesSheet({
           </button>
         </div>
       </div>
-
-      <style>{`
-        @keyframes framesExportPulse {
-          from { opacity: 0.4; transform: scale(0.85); }
-          to   { opacity: 1;   transform: scale(1.1); }
-        }
-      `}</style>
     </>
   );
 }

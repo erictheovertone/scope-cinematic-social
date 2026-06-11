@@ -61,6 +61,11 @@ export interface EditParams {
   // ── LOOK / LUT ──
   lutId: string | null;    // selected Look LUT id, or null
   lutIntensity: number;    // add, stop 0..12 (default 0 = no LUT applied)
+
+  // ── VIDEO ── the paused timestamp the creator graded from (the "hero frame").
+  // Metadata only — never read by the pipeline. Becomes the POSTER frame at
+  // publish (separate brief). Seconds; 0 = first frame (default).
+  heroFrameTime?: number;
 }
 
 /** Rest state — a neutral edit identical to the untouched source. */
@@ -87,4 +92,6 @@ export const DEFAULT_PARAMS: EditParams = {
 
   lutId: null,
   lutIntensity: 0,
+
+  heroFrameTime: 0,
 };

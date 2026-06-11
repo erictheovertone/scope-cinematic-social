@@ -242,20 +242,26 @@ export default function MembershipSheet({ visible, onClose, onSuccess, isPaidMem
   return (
     <>
       {/* Stripe Embedded Checkout overlay (in-suite card path) — no navigation.
-          Full-screen black sheet; the embedded component mounts in a centred,
-          mobile-width column (sensible padding, content-height) and the whole
-          sheet scrolls if the fields exceed the viewport — no awkward inner
-          scroll or dead space. */}
+          Full-screen black sheet. CRITICAL: the Stripe iframe must NOT be a
+          descendant of a position:fixed element that is also the scroll
+          container — on mobile WebKit that desyncs the iframe's painted
+          position from its touch hit-target (a tap near the top registers
+          lower down) and forces an awkward inner scroll. So the fixed outer
+          does NOT scroll (overflow:hidden) and the header is a normal flex
+          child; a dedicated NON-fixed flex child does the scrolling. The
+          iframe auto-sizes to content and fills the centred column cleanly. */}
       {embeddedOpen && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 600, backgroundColor: "#000", display: "flex", flexDirection: "column", overflowY: "auto" }}>
-          <div style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 18px", borderBottom: "1px solid rgba(255,255,255,0.08)", position: "sticky", top: 0, background: "#000", zIndex: 1 }}>
+        <div style={{ position: "fixed", inset: 0, zIndex: 600, backgroundColor: "#000", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+          <div style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 18px", borderBottom: "1px solid rgba(255,255,255,0.08)", background: "#000" }}>
             <span style={{ ...BOLD, fontSize: 12, color: "white", textTransform: "uppercase", letterSpacing: "0.06em" }}>SCOPE PRO</span>
             <button onClick={closeEmbedded} aria-label="Cancel" style={{ background: "transparent", border: "none", cursor: "pointer", padding: 6, lineHeight: 0 }}>
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="white" strokeWidth="1.5" strokeLinecap="round" /></svg>
             </button>
           </div>
-          <div style={{ width: "100%", maxWidth: 480, margin: "0 auto", padding: "16px 16px 48px" }}>
-            <div ref={embeddedRef} style={{ width: "100%" }} />
+          <div style={{ flex: 1, minHeight: 0, overflowY: "auto", WebkitOverflowScrolling: "touch" }}>
+            <div style={{ width: "100%", maxWidth: 480, margin: "0 auto", padding: "16px 16px 32px" }}>
+              <div ref={embeddedRef} style={{ width: "100%" }} />
+            </div>
           </div>
         </div>
       )}

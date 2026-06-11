@@ -4,6 +4,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useLogin } from '@privy-io/react-auth';
+import FrameLoader from "@/components/FrameLoader";
 
 // const imgScopeLogo1 = "/scope-logo.svg";
 
@@ -39,12 +40,7 @@ export default function Welcome() {
         alignItems: 'center',
         justifyContent: 'center'
       }}>
-        <div style={{
-          width: '32px',
-          height: '32px',
-          backgroundColor: '#FF0000',
-          borderRadius: '50%'
-        }}></div>
+        <FrameLoader variant="page" />
       </div>
     );
   }

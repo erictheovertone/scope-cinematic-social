@@ -17,6 +17,7 @@ import CollectSheet from "@/components/CollectSheet";
 import { supabase } from "@/lib/supabase/client";
 import { getAspectRatio } from "@/lib/aspectRatio";
 import MediaRenderer from "@/components/MediaRenderer";
+import GradedVideo from "@/components/finishing/GradedVideo";
 
 interface Post {
   id: string;
@@ -32,11 +33,13 @@ interface Post {
   token_id?: string | null;
   media_type?: string;
   thumbnail_url?: string | null;
+  poster_url?: string | null;
   autoplay?: boolean;
   crop_x?: number;
   crop_y?: number;
   crop_width?: number;
   crop_height?: number;
+  edit_params?: unknown;
 }
 
 interface PostModalProps {
@@ -139,10 +142,17 @@ export default function PostModal({ post, onClose }: PostModalProps) {
     setTimeout(onClose, 340);
   };
 
-  const goToProfile = () => {
+  const goToProfile = (handle?: string) => {
     handleClose();
-    setTimeout(() => router.push(`/profile/${post.username}`), 340);
+    setTimeout(() => router.push(`/profile/${handle || post.username}`), 340);
   };
+
+  // Video must display EXACTLY as posted — the feed/profile render videos at plain
+  // cover (no crop), so the standalone must not re-apply the stored crop as a CSS
+  // scale transform (which zooms it). Images keep their stored crop.
+  const mediaUrl0 = post.media_urls?.[0] ?? '';
+  const isVideoPost = post.media_type === 'video' ||
+    ['mp4', 'mov', 'webm', 'avi', 'mkv'].includes(mediaUrl0.split('?')[0].split('.').pop()?.toLowerCase() || '');
 
   const handleLike = async () => {
     if (!user) return;
@@ -259,19 +269,32 @@ export default function PostModal({ post, onClose }: PostModalProps) {
         >
           <div style={{ width: "100%", aspectRatio: getAspectRatio(post.layout_id ?? ''), overflow: "hidden", background: "#0a0a0a" }}>
             {post.media_urls?.[0] ? (
-              <MediaRenderer
-                url={post.media_urls[0]}
-                mediaType={post.media_type}
-                caption={post.caption || ""}
-                thumbnailUrl={post.thumbnail_url}
-                autoplay={post.autoplay !== false}
-                showSoundToggle
-                cropX={post.crop_x ?? 0}
-                cropY={post.crop_y ?? 0}
-                cropWidth={post.crop_width ?? 1}
-                cropHeight={post.crop_height ?? 1}
-                style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-              />
+              isVideoPost ? (
+                // Standalone view → always play GRADED (look applied live via the pipeline).
+                <GradedVideo
+                  url={post.media_urls[0]}
+                  posterUrl={post.poster_url ?? post.thumbnail_url}
+                  editParams={post.edit_params}
+                  cropX={post.crop_x ?? 0} cropY={post.crop_y ?? 0} cropWidth={post.crop_width ?? 1} cropHeight={post.crop_height ?? 1}
+                  forcePlay
+                  showSoundToggle
+                  style={{ width: "100%", height: "100%" }}
+                />
+              ) : (
+                <MediaRenderer
+                  url={post.media_urls[0]}
+                  mediaType={post.media_type}
+                  caption={post.caption || ""}
+                  thumbnailUrl={post.poster_url ?? post.thumbnail_url}
+                  autoplay={post.autoplay !== false}
+                  showSoundToggle
+                  cropX={post.crop_x ?? 0}
+                  cropY={post.crop_y ?? 0}
+                  cropWidth={post.crop_width ?? 1}
+                  cropHeight={post.crop_height ?? 1}
+                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                />
+              )
             ) : (
               <div style={{ width: "100%", height: "100%", background: "#0a0a0a" }} />
             )}
@@ -282,7 +305,7 @@ export default function PostModal({ post, onClose }: PostModalProps) {
             {/* Avatar + @username | MC */}
             <div style={{ display: "flex", alignItems: "center", marginBottom: 10 }}>
               <div
-                onClick={goToProfile}
+                onClick={() => goToProfile()}
                 style={{
                   width: 24, height: 24, borderRadius: "50%", overflow: "hidden",
                   background: "#333", flexShrink: 0, marginRight: 8,
@@ -299,7 +322,7 @@ export default function PostModal({ post, onClose }: PostModalProps) {
               </div>
 
               <span
-                onClick={goToProfile}
+                onClick={() => goToProfile()}
                 style={{ ...SKB, fontSize: 9, color: "white", letterSpacing: "-0.14px", cursor: "pointer", textTransform: "uppercase" }}
               >
                 @{post.username}
@@ -426,11 +449,14 @@ export default function PostModal({ post, onClose }: PostModalProps) {
                         animationDelay: `${i * 50}ms`,
                       }}
                     >
+                      {/* Avatar → commenter's profile (by handle). stopPropagation
+                          so the tap doesn't bubble to the modal/row. */}
                       <div
+                        onClick={c.username ? (e) => { e.stopPropagation(); goToProfile(c.username); } : undefined}
                         style={{
                           width: 16, height: 16, borderRadius: "50%", background: "#2a2a2a",
                           flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center",
-                          overflow: "hidden",
+                          overflow: "hidden", cursor: c.username ? "pointer" : "default",
                         }}
                       >
                         {c.profile_image_url ? (
@@ -442,7 +468,11 @@ export default function PostModal({ post, onClose }: PostModalProps) {
                         )}
                       </div>
                       <div style={{ lineHeight: 1.1 }}>
-                        <span style={{ ...SKB, fontSize: 8, color: "white", marginRight: 5, textTransform: "uppercase" }}>@{c.username}</span>
+                        {/* Handle → commenter's profile (by handle). */}
+                        <span
+                          onClick={c.username ? (e) => { e.stopPropagation(); goToProfile(c.username); } : undefined}
+                          style={{ ...SKB, fontSize: 8, color: "white", marginRight: 5, textTransform: "uppercase", cursor: c.username ? "pointer" : "default" }}
+                        >@{c.username}</span>
                         <span style={{ ...SKR, fontSize: 8, color: "rgba(255,255,255,0.6)" }}>{c.content}</span>
                       </div>
                     </div>

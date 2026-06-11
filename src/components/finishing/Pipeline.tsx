@@ -63,20 +63,36 @@ interface PipelineProps {
 }
 
 export default function Pipeline({ source, params, width, height, surfaceRef, preserve, activeLut }: PipelineProps) {
-  // Drive a redraw every frame while the source is a playing video so the
-  // texture re-uploads. Images render once per prop change.
+  // Drive a redraw every frame ONLY while the video is actually PLAYING (the
+  // texture re-uploads per frame). A PAUSED video — the hero-frame grading
+  // default — draws ONCE and stops: the old code looped at 60fps forever even
+  // when paused, re-running the whole shader chain on an idle frame, which is the
+  // primary cause of the editing freezes. Paused-frame edits still redraw because
+  // a param change re-renders this component; scrubbing redraws on `seeked`.
+  // Images render once per prop change.
   const [, setTick] = useState(0);
   const rafRef = useRef<number | null>(null);
 
   useEffect(() => {
     const isVideo = typeof HTMLVideoElement !== 'undefined' && source instanceof HTMLVideoElement;
     if (!isVideo) return;
-    const loop = () => {
-      setTick((t) => (t + 1) % 1_000_000);
-      rafRef.current = requestAnimationFrame(loop);
+    const v = source as HTMLVideoElement;
+    const draw = () => setTick((t) => (t + 1) % 1_000_000);
+    const loop = () => { draw(); rafRef.current = requestAnimationFrame(loop); };
+    const start = () => { if (rafRef.current == null) rafRef.current = requestAnimationFrame(loop); };
+    const stop = () => { if (rafRef.current != null) { cancelAnimationFrame(rafRef.current); rafRef.current = null; } draw(); };
+
+    draw();                  // paint the current frame immediately
+    if (!v.paused) start();  // only loop while playing
+    v.addEventListener('play', start);
+    v.addEventListener('pause', stop);
+    v.addEventListener('seeked', draw); // scrub-while-paused updates the graded frame
+    return () => {
+      v.removeEventListener('play', start);
+      v.removeEventListener('pause', stop);
+      v.removeEventListener('seeked', draw);
+      if (rafRef.current != null) { cancelAnimationFrame(rafRef.current); rafRef.current = null; }
     };
-    rafRef.current = requestAnimationFrame(loop);
-    return () => { if (rafRef.current != null) cancelAnimationFrame(rafRef.current); };
   }, [source]);
 
   // gl-react 6 (webgltexture-loader-dom) registers texture loaders for string

@@ -14,6 +14,7 @@ import FramesSheet from "@/components/FramesSheet";
 import FramesProUpsellSheet from "@/components/FramesProUpsellSheet";
 import MembershipSheet from "@/components/MembershipSheet";
 import MediaRenderer from "@/components/MediaRenderer";
+import FrameLoader from "@/components/FrameLoader";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -407,7 +408,7 @@ export default function DeckDetailPage() {
   if (loading) {
     return (
       <div className="bg-black w-full max-w-[375px] min-h-[100dvh] mx-auto flex items-center justify-center">
-        <div style={{ width: 11, height: 11, background: "#FF0000", borderRadius: "50%" }} />
+        <FrameLoader variant="page" />
       </div>
     );
   }

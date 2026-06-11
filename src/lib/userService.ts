@@ -220,6 +220,10 @@ export interface AppNotification {
   message: string | null
   is_read: boolean
   created_at: string
+  /** Actor's CURRENT profile, resolved at read time from sender_id (see below).
+   *  Prefer these over the baked sender_username/sender_avatar for display + nav. */
+  actor_handle?: string | null
+  actor_avatar?: string | null
 }
 
 export const getNotifications = async (privyUserId: string): Promise<AppNotification[]> => {
@@ -229,7 +233,31 @@ export const getNotifications = async (privyUserId: string): Promise<AppNotifica
     .eq('recipient_id', privyUserId)
     .order('created_at', { ascending: false })
     .limit(50)
-  return (data || []) as AppNotification[]
+  const rows = (data || []) as AppNotification[]
+  if (rows.length === 0) return rows
+
+  // Resolve each actor's CURRENT profile (handle + avatar) from sender_id, so the
+  // bell shows the real @handle + PFP — and repairs rows whose baked
+  // sender_username was garbage (e.g. derived from a Privy email object →
+  // "[object Object]"). sender_id is the actor's Privy DID on like/comment/follow;
+  // translate DID → users.id → profiles.user_id. (Any sender_id already stored as
+  // a uuid — a legacy path — falls through to a direct profiles lookup.)
+  const senderIds = [...new Set(rows.map(r => r.sender_id).filter(Boolean))]
+  const { data: users } = await supabase
+    .from('users').select('id, privy_id').in('privy_id', senderIds)
+  const uuidByDid = new Map((users || []).map(u => [u.privy_id, u.id]))
+  const directUuids = senderIds.filter(s => !uuidByDid.has(s)) // sender_id stored as uuid
+  const allUuids = [...new Set([...(users || []).map(u => u.id), ...directUuids])]
+  const { data: profiles } = allUuids.length
+    ? await supabase.from('profiles').select('user_id, username, profile_image_url').in('user_id', allUuids)
+    : { data: [] as any[] }
+  const profByUuid = new Map((profiles || []).map(p => [p.user_id, p]))
+
+  return rows.map(r => {
+    const uuid = r.sender_id ? (uuidByDid.get(r.sender_id) ?? r.sender_id) : null
+    const p = uuid ? profByUuid.get(uuid) : null
+    return { ...r, actor_handle: p?.username ?? null, actor_avatar: p?.profile_image_url ?? null }
+  })
 }
 
 export const markAllNotificationsRead = async (privyUserId: string): Promise<void> => {

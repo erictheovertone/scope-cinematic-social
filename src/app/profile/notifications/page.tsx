@@ -8,6 +8,10 @@ import {
   markAllNotificationsRead,
   type AppNotification,
 } from "@/lib/userService";
+import { getPostById } from "@/lib/postsService";
+import FrameLoader from "@/components/FrameLoader";
+import PostModal from "@/components/PostModal";
+import { NotificationActorAvatar, NotificationActorMessage } from "@/components/NotificationActor";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -25,6 +29,7 @@ export default function NotificationsPage() {
   const { user } = usePrivy();
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [loading, setLoading] = useState(true);
+  const [openedPost, setOpenedPost] = useState<any>(null);
 
   useEffect(() => {
     if (!user) {
@@ -46,13 +51,21 @@ export default function NotificationsPage() {
     load();
   }, [user?.id]);
 
-  const handleClick = (n: AppNotification) => {
+  const handleClick = async (n: AppNotification) => {
+    // Follow has no post → go to the follower's profile (consistent with the
+    // actor target). Post-related types open THAT post in the normal post view.
     if (n.type === "follow") {
-      if (n.sender_username) router.push(`/profile/${n.sender_username}`);
-    } else {
-      router.push("/profile");
+      const handle = n.actor_handle ?? n.sender_username;
+      if (handle) router.push(`/profile/${handle}`);
+      return;
     }
+    if (!n.post_id) return; // legacy row without a post reference — stays dead
+    const post = await getPostById(n.post_id);
+    if (post) setOpenedPost(post);
   };
+
+  // Actor avatar/handle tap → that actor's profile (by handle).
+  const goToActor = (handle: string) => router.push(`/profile/${handle}`);
 
   return (
     <div className="bg-black w-full max-w-[375px] min-h-screen mx-auto flex flex-col">
@@ -79,7 +92,7 @@ export default function NotificationsPage() {
       <div className="flex-1 overflow-y-auto">
         {loading ? (
           <div className="flex items-center justify-center mt-12">
-            <div style={{ width: 11, height: 11, background: "#FF0000", borderRadius: "50%" }} />
+            <FrameLoader />
           </div>
         ) : !user ? (
           <div className="flex items-center justify-center mt-12">
@@ -100,44 +113,25 @@ export default function NotificationsPage() {
               onClick={() => handleClick(n)}
               className="w-full bg-transparent border-none cursor-pointer text-left"
               style={{
+                position: "relative",
                 display: "flex",
                 alignItems: "center",
                 gap: 8,
-                padding: "9px 8px 9px 6px",
-                borderLeft: n.is_read ? "2px solid transparent" : "2px solid #FF0000",
+                padding: "9px 8px 9px 14px",
               }}
             >
-              {/* Avatar */}
-              <div
-                style={{
-                  width: 24,
-                  height: 24,
-                  borderRadius: "50%",
-                  background: "#222",
-                  flexShrink: 0,
-                  overflow: "hidden",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                {n.sender_avatar ? (
-                  <img
-                    src={n.sender_avatar}
-                    alt={n.sender_username ?? ""}
-                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                  />
-                ) : (
-                  <span style={{ ...SKB, fontSize: 9, color: "white" }}>
-                    {n.sender_username?.[0]?.toUpperCase() ?? "?"}
-                  </span>
-                )}
-              </div>
+              {/* Unread marker — small red square, left edge, vertically centered */}
+              {!n.is_read && (
+                <div style={{ position: "absolute", left: 5, top: "50%", transform: "translateY(-50%)", width: 4.5, height: 4.5, background: "#FF0000" }} />
+              )}
+
+              {/* Avatar — tappable → actor profile */}
+              <NotificationActorAvatar handle={n.actor_handle ?? null} avatar={n.actor_avatar ?? null} onNavigate={goToActor} />
 
               {/* Message + timestamp */}
               <div className="flex-1 min-w-0">
                 <p style={{ ...SKR, fontSize: 8, color: "white", letterSpacing: "-0.16px", lineHeight: 1.4, margin: 0, wordBreak: "break-word" }}>
-                  {n.message}
+                  <NotificationActorMessage handle={n.actor_handle ?? null} type={n.type} onNavigate={goToActor} />
                 </p>
                 <p style={{ ...SKR, fontSize: 6, color: "rgba(255,255,255,0.4)", letterSpacing: "-0.1px", margin: "2px 0 0" }}>
                   {timeAgo(n.created_at)}
@@ -154,6 +148,8 @@ export default function NotificationsPage() {
           ))
         )}
       </div>
+
+      {openedPost && <PostModal post={openedPost} onClose={() => setOpenedPost(null)} />}
 
     </div>
   );

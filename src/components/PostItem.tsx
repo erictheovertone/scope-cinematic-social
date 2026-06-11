@@ -15,6 +15,7 @@ import { getUserByPrivyId, getProfile } from "@/lib/userService";
 import { addBookmark, removeBookmark, isBookmarked } from "@/lib/bookmarksService";
 import CollectSheet from "@/components/CollectSheet";
 import MediaRenderer from "@/components/MediaRenderer";
+import GradedVideo from "@/components/finishing/GradedVideo";
 import { getTokenPrice, getTokenHolders } from "@/lib/zora";
 import { formatEther } from "viem";
 import { getAspectRatio, ratioPadding } from "@/lib/aspectRatio";
@@ -36,25 +37,39 @@ interface Post {
   token_id?: string | null;
   media_type?: string;
   thumbnail_url?: string | null;
+  poster_url?: string | null;
+  autoplay_clip_url?: string | null;
   autoplay?: boolean;
+  crop_x?: number;
+  crop_y?: number;
+  crop_width?: number;
+  crop_height?: number;
+  edit_params?: unknown;
 }
 
 
 interface PostItemProps {
   post: Post;
   onImageClick?: () => void;
+  /** Controlled inline-comments open state (one-at-a-time, owned by the feed).
+   *  Falls back to internal state if the feed doesn't control it. */
+  commentsOpen?: boolean;
+  onToggleComments?: () => void;
 }
 
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 
-export default function PostItem({ post, onImageClick }: PostItemProps) {
+export default function PostItem({ post, onImageClick, commentsOpen, onToggleComments }: PostItemProps) {
   const router = useRouter();
   const { user } = usePrivy();
   const [likes, setLikes] = useState<any[]>([]);
   const [comments, setComments] = useState<any[]>([]);
   const [isLiked, setIsLiked] = useState(false);
-  const [showComments, setShowComments] = useState(false);
+  const [internalComments, setInternalComments] = useState(false);
+  // Open state is controlled by the feed (one-at-a-time) when provided.
+  const showComments = commentsOpen ?? internalComments;
+  const toggleComments = onToggleComments ?? (() => setInternalComments((v) => !v));
   const [newComment, setNewComment] = useState("");
   const [loading, setLoading] = useState(false);
   const [viewerUsername, setViewerUsername] = useState("");
@@ -199,12 +214,32 @@ export default function PostItem({ post, onImageClick }: PostItemProps) {
     </>
   );
 
-  const mediaContent = (
+  const mediaContent = post.media_type === 'video' ? (
+    // Feed video → GradedVideo. gridMode = the same direct in-view trigger the grid
+    // uses (the coordinator round-trip didn't fire playback here). The feed shows
+    // only 1–2 large posts at once, so attempt-all-in-view naturally caps it; the
+    // device's decoder limit caps any overflow. Tap opens the standalone view.
+    <GradedVideo
+      url={post.media_urls?.[0]}
+      posterUrl={post.poster_url ?? post.thumbnail_url}
+      clipUrl={post.autoplay_clip_url}
+      editParams={post.edit_params}
+      autoplayFlag={post.autoplay !== false}
+      gridMode
+      cropX={post.crop_x ?? 0}
+      cropY={post.crop_y ?? 0}
+      cropWidth={post.crop_width ?? 1}
+      cropHeight={post.crop_height ?? 1}
+      showSoundToggle={true}
+      style={{ width: '100%', height: '100%' }}
+      onClick={onImageClick}
+    />
+  ) : (
     <MediaRenderer
       url={post.media_urls?.[0]}
       mediaType={post.media_type}
       caption={post.caption}
-      thumbnailUrl={post.thumbnail_url}
+      thumbnailUrl={post.poster_url ?? post.thumbnail_url}
       autoplay={post.autoplay !== false}
       showSoundToggle={true}
       style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
@@ -257,7 +292,7 @@ export default function PostItem({ post, onImageClick }: PostItemProps) {
         </button>
 
         <button
-          onClick={(e) => { e.stopPropagation(); setShowComments((v) => !v); }}
+          onClick={(e) => { e.stopPropagation(); toggleComments(); }}
           style={{ background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 4, padding: 0, color: "rgba(255,255,255,0.6)" }}
         >
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -306,37 +341,61 @@ export default function PostItem({ post, onImageClick }: PostItemProps) {
         onClose={() => setShowCollectSheet(false)}
       />
 
-      {showComments && (
-        <div onClick={(e) => e.stopPropagation()} style={{ marginTop: 10, borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 10 }}>
-          {user && (
-            <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
-              <input
-                type="text"
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleAddComment()}
-                placeholder="add a comment..."
-                style={{ flex: 1, background: "transparent", border: "none", borderBottom: "1px solid rgba(255,255,255,0.15)", outline: "none", ...SKR, fontSize: 8, color: "white", padding: "2px 0" }}
-              />
-              <button
-                onClick={handleAddComment}
-                disabled={loading || !newComment.trim()}
-                style={{ background: "transparent", border: "none", cursor: "pointer", ...SKB, fontSize: 8, color: newComment.trim() ? "white" : "rgba(255,255,255,0.25)", padding: 0 }}
-              >
-                post
-              </button>
-            </div>
-          )}
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {comments.map((c) => (
-              <div key={c.id}>
-                <span style={{ ...SKB, fontSize: 7, color: "white", marginRight: 6, textTransform: 'uppercase' }}>@{c.username}</span>
-                <span style={{ ...SKR, fontSize: 10, color: "rgba(255,255,255,0.6)" }}>{c.content}</span>
+      {/* ── Inline comments — expands beneath the post with the SAME ripple-down
+            reveal as the full-screen post view (ProfilePostViewer). The
+            grid-template-rows 0fr→1fr transition animates the height so the feed
+            reflows smoothly (no snap); each row ripples in via the shared
+            `ripple-down` keyframe + 50ms stagger, cascading downward. Rows stay
+            mounted so the height can animate; the ripple only fires while open. ── */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateRows: showComments ? "1fr" : "0fr",
+          transition: "grid-template-rows 0.32s cubic-bezier(0.16,0.84,0.3,1)",
+        }}
+      >
+        <div style={{ overflow: "hidden", minHeight: 0 }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ marginTop: 10, borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 10 }}>
+            {user && (
+              <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+                <input
+                  type="text"
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleAddComment()}
+                  placeholder="add a comment..."
+                  style={{ flex: 1, background: "transparent", border: "none", borderBottom: "1px solid rgba(255,255,255,0.15)", outline: "none", ...SKR, fontSize: 8, color: "white", padding: "2px 0" }}
+                />
+                <button
+                  onClick={handleAddComment}
+                  disabled={loading || !newComment.trim()}
+                  style={{ background: "transparent", border: "none", cursor: "pointer", ...SKB, fontSize: 8, color: newComment.trim() ? "white" : "rgba(255,255,255,0.25)", padding: 0 }}
+                >
+                  post
+                </button>
               </div>
-            ))}
+            )}
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {comments.map((c, i) => (
+                <div
+                  key={c.id}
+                  style={{
+                    animation: showComments ? "ripple-down 0.2s ease-out both" : "none",
+                    animationDelay: showComments ? `${i * 50}ms` : "0ms",
+                  }}
+                >
+                  {/* Handle → commenter's profile (by handle). */}
+                  <span
+                    onClick={c.username ? (e) => { e.stopPropagation(); router.push('/profile/' + c.username); } : undefined}
+                    style={{ ...SKB, fontSize: 7, color: "white", marginRight: 6, textTransform: 'uppercase', cursor: c.username ? "pointer" : "default" }}
+                  >@{c.username}</span>
+                  <span style={{ ...SKR, fontSize: 10, color: "rgba(255,255,255,0.6)" }}>{c.content}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }

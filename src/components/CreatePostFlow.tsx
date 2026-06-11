@@ -17,15 +17,18 @@ import {
 import FinishingStep from '@/components/finishing/FinishingStep';
 import { DEFAULT_PARAMS, type EditParams } from '@/lib/editor/params';
 import { bakeLook, hasLookEdits, decodeImageFile } from '@/lib/editor/bakeLook';
-import { createLook, getLooks, type SavedLook } from '@/lib/looksService';
+import { bakeAutoplayClip } from '@/lib/editor/bakeClip';
+import { createLook, getLooks, uploadLookThumb, setLookThumb, type SavedLook } from '@/lib/looksService';
 import { getScopeLimitType } from '@/lib/limits';
 import { useUpsell } from '@/components/UpsellProvider';
 import CropTool from '@/components/CropTool';
+import FrameLoader from '@/components/FrameLoader';
 import { chipForLayout, getAspectRatio } from '@/lib/aspectRatio';
 import {
   neutralGeometry, bakeImageGeometry, type EditGeometry,
 } from '@/lib/editGeometry';
 import FinishingPreview from '@/components/finishing/FinishingPreview';
+import SnippetSelector from '@/components/finishing/SnippetSelector';
 
 function profileLayoutToAspect(layoutId: string): number {
   switch (layoutId) {
@@ -136,6 +139,35 @@ async function uploadAutoThumbnail(dataUrl: string, userId: string): Promise<str
   }
 }
 
+/** Grab a single frame of a video (at `time` seconds, default 0) as a JPEG File —
+ *  the raw still that the poster bake (geometry + look) then renders from. */
+function captureVideoFrameFile(url: string, time = 0): Promise<File> {
+  return new Promise((resolve, reject) => {
+    const v = document.createElement('video');
+    v.crossOrigin = 'anonymous'; v.muted = true; v.playsInline = true; v.preload = 'auto';
+    const grab = () => {
+      try {
+        const cv = document.createElement('canvas');
+        cv.width = v.videoWidth; cv.height = v.videoHeight;
+        const ctx = cv.getContext('2d');
+        if (!ctx || !cv.width || !cv.height) { reject(new Error('captureVideoFrameFile: no frame')); return; }
+        ctx.drawImage(v, 0, 0);
+        cv.toBlob((b) => {
+          v.src = '';
+          b ? resolve(new File([b], 'poster-frame.jpg', { type: 'image/jpeg' })) : reject(new Error('captureVideoFrameFile: toBlob failed'));
+        }, 'image/jpeg', 0.92);
+      } catch (e) { reject(e as Error); }
+    };
+    v.onloadeddata = () => {
+      const dur = isFinite(v.duration) ? v.duration : 0;
+      const t = Math.min(Math.max(time, 0), dur || 0);
+      if (t > 0) { v.onseeked = grab; v.currentTime = t; } else grab();
+    };
+    v.onerror = () => reject(new Error('captureVideoFrameFile: video load failed'));
+    v.src = url;
+  });
+}
+
 // ── Client-side image compression via Canvas API ──────────────────
 // Max 1920px longest side, JPEG 0.82 quality, all formats → JPEG.
 // Falls back to the original file on any error so uploads never break.
@@ -220,6 +252,8 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
   const [editGeometry, setEditGeometry] = useState<EditGeometry | null>(null);
   // Look params from FINISHING (Brief 8B). Baked into the JPEG (photo) + stored.
   const [editParams, setEditParams] = useState<EditParams>(DEFAULT_PARAMS);
+  // Creator-chosen autoplay snippet window (null = auto on publish). { start, length } in seconds.
+  const [snippetWindow, setSnippetWindow] = useState<{ start: number; length: number } | null>(null);
   // Real Pro status + grid gating for FINISHING, resolved via the verified path
   // (DID → getUserByPrivyId → getProfile → isProMember). uuid typing respected.
   const [finishCtx, setFinishCtx] = useState<{ isPro: boolean; gridLayout: 'standard' | 'collage'; layoutId: string; userUuid: string } | null>(null);
@@ -283,13 +317,27 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
   }, []);
 
   // Save the current edit stack as a Look (uuid-typed; versioned in looksService).
-  const handleSaveLook = async (name: string, p: EditParams) => {
-    if (!finishCtx?.userUuid) return;
+  // A thumbnail (source frame + look, captured at save) is layered on AFTER the
+  // insert — best-effort, so a thumb upload failure never blocks the save.
+  const handleSaveLook = async (name: string, p: EditParams, thumb?: Blob): Promise<boolean> => {
+    if (!finishCtx?.userUuid) return false;
     try {
-      const look = await createLook(finishCtx.userUuid, name, p);
-      setSavedLooks((ls) => [look, ...ls]);
+      const look = await createLook(finishCtx.userUuid, name, p); // the CONFIRMED insert
+      let withThumb = look;
+      if (thumb && user?.id) {
+        try {
+          const url = await uploadLookThumb(thumb, user.id, look.id); // DID-prefixed storage path
+          await setLookThumb(look.id, url);
+          withThumb = { ...look, thumb_url: url };
+        } catch (e) {
+          console.warn('[CreatePostFlow] look thumbnail upload failed (look saved without it):', e);
+        }
+      }
+      setSavedLooks((ls) => [withThumb, ...ls]);
+      return true; // drives the "added to palette" confirmation animation
     } catch (e) {
-      console.error('[CreatePostFlow] saveLook failed (looks table may not exist yet):', e);
+      console.error('[CreatePostFlow] saveLook failed:', e);
+      return false;
     }
   };
 
@@ -588,6 +636,52 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
         console.log('[handlePost] uploaded:', url);
       }
 
+      // ── Poster bake (VIDEO) — ONE frame (hero frame if graded, else first),
+      //    geometry + look applied, same captureAsBlob machinery as the photo bake.
+      //    Cheap (one frame, no transcode). Shown wherever the video isn't playing
+      //    (grid/feed/thumbnails) so the graded look is visible at zero playback
+      //    cost. Best-effort: a failure never blocks publishing.
+      let posterUrl: string | null = null;
+      if (selectedMedia[0]?.type === 'video') {
+        try {
+          const heroT = editParams.heroFrameTime ?? 0;
+          const frameFile = await captureVideoFrameFile(selectedMedia[0].url, heroT);
+          let posterFile = await bakeImageGeometry(frameFile, geometry, exportChip.exportW, exportChip.exportH);
+          if (hasLookEdits(editParams)) {
+            const posterImg = await decodeImageFile(posterFile);
+            const posterBlob = await bakeLook(posterImg, editParams, exportChip.exportW, exportChip.exportH);
+            posterFile = new File([posterBlob], 'poster.jpg', { type: 'image/jpeg' });
+          }
+          posterUrl = await uploadImage(posterFile, 'post-media', user.id);
+          console.log('[handlePost] poster baked (hero frame:', heroT, '):', posterUrl);
+        } catch (e) {
+          console.warn('[handlePost] poster bake failed (publishing without graded poster):', e);
+        }
+      }
+
+      // ── Autoplay snippet (VIDEO) — bake the creator's 3–5s window of the GRADED
+      //    video into a tiny muted clip; autoplay surfaces loop this plain <video>
+      //    (no live pipeline). Window = the selector's choice, else auto (hero frame
+      //    anchor, else randomized). Best-effort: a failure never blocks publishing
+      //    (autoplay falls back to the poster). EVERY video post gets a clip baked.
+      let autoplayClipUrl: string | null = null;
+      if (selectedMedia[0]?.type === 'video') {
+        try {
+          const clip = await bakeAutoplayClip(selectedMedia[0].url, editParams, {
+            windowStart: snippetWindow?.start,
+            clipLen: snippetWindow?.length,
+            heroFrameTime: editParams.heroFrameTime,
+          });
+          if (clip) {
+            const clipFile = new File([clip.blob], `autoplay-clip.${clip.ext}`, { type: clip.mimeType });
+            autoplayClipUrl = await uploadImage(clipFile, 'post-media', user.id);
+            console.log('[handlePost] autoplay clip baked + uploaded:', autoplayClipUrl);
+          }
+        } catch (e) {
+          console.warn('[handlePost] autoplay clip bake failed (autoplay will use poster):', e);
+        }
+      }
+
       let thumbnailUrl: string | null = null;
       if (customThumbnail) {
         thumbnailUrl = await uploadImage(customThumbnail, 'post-media', user.id);
@@ -606,6 +700,8 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
         layoutId: finalLayoutId,
         mediaType: selectedMedia[0]?.type || 'image',
         thumbnailUrl,
+        posterUrl,
+        autoplayClipUrl,
         autoplay: isVideo ? videoAutoplay : true,
         editGeometry: geometry,
         // Look params — versioned for forward-compat. Photo: already baked into the
@@ -738,7 +834,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
       <div className="h-full flex flex-col items-center justify-center gap-4 p-6">
         {mintStatus === 'minting' && (
           <>
-            <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#FF0000' }} />
+            <FrameLoader />
             <p style={{ ...SKB, fontSize: 10, color: 'white', textAlign: 'center', lineHeight: 1.6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
               Your post is being minted on Base...
             </p>
@@ -881,6 +977,15 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
               <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 8, color: 'white', textTransform: 'uppercase', letterSpacing: '0.06em' }}>ADJUST CROP</span>
             </button>
           </div>
+          {/* Autoplay-clip window selector (video only). Optional — untouched = auto
+              on publish. The preview above is the graded video. */}
+          {selectedMedia[0]?.type === 'video' && (
+            <SnippetSelector
+              videoUrl={selectedMedia[0].url}
+              heroFrameTime={editParams.heroFrameTime}
+              onChange={(w) => setSnippetWindow(w)}
+            />
+          )}
           <textarea
             value={caption}
             onChange={(e) => setCaption(e.target.value)}
@@ -968,7 +1073,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
         <div className="flex-1 overflow-y-auto">
           {decksLoading ? (
             <div className="flex items-center justify-center mt-8">
-              <div style={{ width: 8, height: 8, background: '#FF0000', borderRadius: '50%' }} />
+              <FrameLoader />
             </div>
           ) : (
             <>

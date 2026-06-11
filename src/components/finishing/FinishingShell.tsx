@@ -22,7 +22,7 @@
  * Pipeline is dynamically imported with ssr:false (WebGL is client-only).
  */
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import type { EditParams } from '@/lib/editor/params';
 import { DEFAULT_PARAMS } from '@/lib/editor/params';
@@ -39,6 +39,10 @@ import Tier3Items from './nav/Tier3Items';
 import HistoryRipple from './nav/HistoryRipple';
 import AddToPalette from './AddToPalette';
 import LooksLibrary from './LooksLibrary';
+import PaletteTile from './PaletteTile';
+import VideoScrubber from './VideoScrubber';
+import LookSavedOverlay, { type Rect as StageRect } from './LookSavedOverlay';
+import { captureLookThumb } from '@/lib/editor/bakeLook';
 import { type HistoryEvent, toolChanged, describeTool, makeEvent } from '@/lib/editor/history';
 import type { SavedLook } from '@/lib/looksService';
 import { lookById } from './looksCatalog';
@@ -156,7 +160,9 @@ interface FinishingShellProps {
   // ── ADD TO PALETTE (save current edits as a Look) — persistence owned by the
   //    caller (real looksService + uuid in the post flow; mock in the dev harness). ──
   savedLooks?: SavedLook[];
-  onSaveLook?: (name: string, params: EditParams) => void;
+  /** Persist the look. Resolves true on a CONFIRMED insert success (drives the
+   *  "added to palette" confirmation animation); false/void = no animation. */
+  onSaveLook?: (name: string, params: EditParams, thumb?: Blob) => void | Promise<boolean | void>;
 }
 
 export default function FinishingShell({
@@ -167,6 +173,10 @@ export default function FinishingShell({
   const { showUpsell } = useUpsell();
   const stageRef = useRef<HTMLDivElement>(null);
   const [stage, setStage] = useState({ w: 0, h: 0 });
+  // "Added to Palette" confirmation animation + PALETTE tab arrival ping.
+  const [saveAnim, setSaveAnim] = useState<{ id: number; source: StageRect; target: { x: number; y: number } } | null>(null);
+  const [tabPing, setTabPing] = useState<Mode | null>(null);
+  const saveAnimId = useRef(0);
   // ── three-tier cascade: mode → subcategory → items ──
   const [activeMode, setActiveMode] = useState<Mode>('edit');
   const [activeSubcat, setActiveSubcat] = useState<string>(() => firstSubcat('edit'));
@@ -417,7 +427,52 @@ export default function FinishingShell({
 
   // Save the current edit stack as a Look (ADD TO PALETTE). Pro-gating + persistence
   // are handled by AddToPalette (upsell) and the caller's onSaveLook respectively.
-  const saveLook = (name: string) => { onSaveLook?.(name, params); };
+  // Video gets a scrub bar + hero-frame workflow; photos never do.
+  const isVideoSource = typeof HTMLVideoElement !== 'undefined' && source instanceof HTMLVideoElement;
+  // Persist the paused "hero frame" timestamp into params (metadata only). Stable
+  // via a ref so the scrubber's listeners don't re-bind on every param change.
+  const paramsRef = useRef(params);
+  paramsRef.current = params;
+  const handleHeroFrame = useCallback((t: number) => {
+    if (Math.abs((paramsRef.current.heroFrameTime ?? 0) - t) < 0.001) return; // no churn
+    onParamsChange({ ...paramsRef.current, heroFrameTime: t });
+  }, [onParamsChange]);
+
+  const saveLook = async (name: string) => {
+    // Capture a thumbnail of the CURRENT frame WITH the look applied — this is the
+    // only moment the local source blob and the look coexist (it can't be
+    // re-rendered later). Best-effort: a capture failure must NOT block the save.
+    //
+    // PRIVACY: this burns in the user's current frame, which may be a photo they
+    // never published. Acceptable ONLY because the PALETTE is PRIVATE to the user
+    // (own saved looks). If palettes ever become shareable/sellable, a
+    // consent/regenerate step MUST be added before any thumbnail is reused.
+    let thumb: Blob | undefined;
+    try {
+      if (source) thumb = (await captureLookThumb(source, params)) ?? undefined;
+    } catch (e) {
+      console.warn('[FinishingShell] look thumbnail capture failed (saving anyway):', e);
+    }
+    // Only animate on a CONFIRMED insert success — never on a failed/pending write.
+    const ok = await onSaveLook?.(name, params, thumb);
+    if (ok) triggerLookSaved();
+  };
+
+  // "Added to Palette" confirmation: snap brackets onto the image → fly to the
+  // PALETTE tab → ping it → text. Resolves the tab's LIVE position (portrait dock
+  // vs Theatre rail) via the data-finishing-mode locator. id bumps each save so a
+  // rapid re-save remounts the overlay and restarts cleanly.
+  const triggerLookSaved = () => {
+    const stage = stageRef.current;
+    if (!stage) return;
+    const sr = stage.getBoundingClientRect();
+    const source: StageRect = { left: sr.left, top: sr.top, width: sr.width, height: sr.height };
+    let target = { x: sr.left + sr.width / 2, y: window.innerHeight - 28 }; // fallback: bottom-centre
+    const tab = document.querySelector('[data-finishing-mode="palette"]') as HTMLElement | null;
+    if (tab) { const tr = tab.getBoundingClientRect(); target = { x: tr.left + tr.width / 2, y: tr.top + tr.height / 2 }; }
+    saveAnimId.current += 1;
+    setSaveAnim({ id: saveAnimId.current, source, target });
+  };
   const applySavedLook = (look: SavedLook) => { onParamsChange(look.params); }; // re-load onto CURRENT image only
 
   // Built-in look apply/clear/intensity (lutId + lutIntensity in EditParams).
@@ -494,10 +549,7 @@ export default function FinishingShell({
         ) : (
           <div style={{ display: 'flex', gap: 8, overflowX: 'auto' }}>
             {savedLooks.map((look) => (
-              <button key={look.id} onClick={() => applySavedLook(look)} title="Apply to current" style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>
-                <div style={{ width: 60, height: 60, border: '1px solid rgba(255,255,255,0.18)' }} />
-                <span style={{ ...SKB, fontSize: 7, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.06em', maxWidth: 60, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{look.name}</span>
-              </button>
+              <PaletteTile key={look.id} look={look} onTap={() => applySavedLook(look)} />
             ))}
           </div>
         )}
@@ -701,10 +753,16 @@ export default function FinishingShell({
         </div>
         {theatre && (
           <div style={{ flexShrink: 0, width: railW }}>
-            <Tier1Modes active={activeMode} onSelect={changeMode} orientation="vertical" compact={compactRail} />
+            <Tier1Modes active={activeMode} onSelect={changeMode} orientation="vertical" compact={compactRail} pingKey={tabPing} />
           </div>
         )}
       </div>
+
+      {/* ── VIDEO scrubber — beneath the viewer (portrait + Theatre); video only.
+            Paused-by-default hero-frame grading; scrubbing redraws the graded frame. ── */}
+      {isVideoSource && source && (
+        <VideoScrubber video={source as HTMLVideoElement} onHeroFrame={handleHeroFrame} compact={compactRail} />
+      )}
 
       {/* ── Zoom level slider — only while Zoom is active ── */}
       {zoom.active && (
@@ -755,7 +813,7 @@ export default function FinishingShell({
           {/* TIER 3 — HISTORY ripple · LOOKS library · PALETTE · or the EDIT item rail */}
           {renderBandBody(false)}
           {/* TIER 1 — modes (bottom, heaviest) */}
-          <Tier1Modes active={activeMode} onSelect={changeMode} />
+          <Tier1Modes active={activeMode} onSelect={changeMode} pingKey={tabPing} />
         </div>
       )}
 
@@ -807,6 +865,17 @@ export default function FinishingShell({
 
       {/* ── CROP — full-screen overlay (the shared CropTool, matching creation) ── */}
       {cropOverlay}
+
+      {/* ── "Added to Palette" confirmation (success only; non-blocking overlay) ── */}
+      {saveAnim && (
+        <LookSavedOverlay
+          key={saveAnim.id}
+          source={saveAnim.source}
+          target={saveAnim.target}
+          onArrive={() => { setTabPing('palette'); setTimeout(() => setTabPing(null), 450); }}
+          onDone={() => setSaveAnim((cur) => (cur && cur.id === saveAnim.id ? null : cur))}
+        />
+      )}
     </div>
   );
 }

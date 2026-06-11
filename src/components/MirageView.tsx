@@ -8,6 +8,9 @@ import {
 } from "@/lib/postsService";
 import PostModal from "@/components/PostModal";
 import PillarboxFrame from "@/components/PillarboxFrame";
+import FrameLoader from "@/components/FrameLoader";
+import GradedVideo from "@/components/finishing/GradedVideo";
+import { getAspectRatio } from "@/lib/aspectRatio";
 
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
 
@@ -139,6 +142,9 @@ export default function MirageView({ onClose }: { onClose: () => void }) {
   const [lightboxPost, setLightboxPost] = useState<any>(null);
   const [modalPost, setModalPost] = useState<any>(null);
   const [exiting, setExiting] = useState(false);
+  // Loader only appears if a load runs past the threshold — the near-instant
+  // Mirage entry shows NOTHING (no sub-threshold flash).
+  const [showLoader, setShowLoader] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -163,6 +169,13 @@ export default function MirageView({ onClose }: { onClose: () => void }) {
   }, []);
 
   useEffect(() => { loadMore(); }, [loadMore]);
+
+  // Delay the loader past the ~350ms threshold: instant loads render nothing.
+  useEffect(() => {
+    if (!loading) { setShowLoader(false); return; }
+    const t = setTimeout(() => setShowLoader(true), 350);
+    return () => clearTimeout(t);
+  }, [loading]);
 
   useEffect(() => {
     console.log("[MirageView] Grid rendered with", posts.length, "posts");
@@ -278,7 +291,38 @@ export default function MirageView({ onClose }: { onClose: () => void }) {
                 }}
                 onClick={() => handleItemTap(post)}
               >
-                {post.layout_id === 'legacy' ? (
+                {post.media_type === 'video' ? (
+                  // Video → GradedVideo (gridMode): autoplay tiles loop the baked
+                  // snippet (plain muted <video>, graded — no pipeline); the density
+                  // guard attempts all visible, overflow rests as graded posters with
+                  // most-visible priority; non-autoplay / clipless → poster. Tap
+                  // bubbles to the wrapper (navigation unchanged).
+                  post.layout_id === 'legacy' ? (
+                    <PillarboxFrame>
+                      <GradedVideo
+                        url={post.media_urls[0]}
+                        posterUrl={post.poster_url ?? post.thumbnail_url}
+                        clipUrl={post.autoplay_clip_url}
+                        editParams={post.edit_params}
+                        autoplayFlag={post.autoplay !== false}
+                        gridMode
+                        cropX={post.crop_x ?? 0} cropY={post.crop_y ?? 0} cropWidth={post.crop_width ?? 1} cropHeight={post.crop_height ?? 1}
+                        style={{ width: '100%', height: '100%' }}
+                      />
+                    </PillarboxFrame>
+                  ) : (
+                    <GradedVideo
+                      url={post.media_urls[0]}
+                      posterUrl={post.poster_url ?? post.thumbnail_url}
+                      clipUrl={post.autoplay_clip_url}
+                      editParams={post.edit_params}
+                      autoplayFlag={post.autoplay !== false}
+                      gridMode
+                      cropX={post.crop_x ?? 0} cropY={post.crop_y ?? 0} cropWidth={post.crop_width ?? 1} cropHeight={post.crop_height ?? 1}
+                      style={{ width: '100%', aspectRatio: getAspectRatio(post.layout_id ?? '') }}
+                    />
+                  )
+                ) : post.layout_id === 'legacy' ? (
                   <PillarboxFrame>
                     <img
                       src={post.media_urls[0]}
@@ -303,7 +347,7 @@ export default function MirageView({ onClose }: { onClose: () => void }) {
         {/* Infinite scroll sentinel */}
         <div ref={sentinelRef} style={{ height: 1 }} />
 
-        {loading && (
+        {loading && showLoader && (
           <div
             style={{
               display: "flex",
@@ -311,15 +355,7 @@ export default function MirageView({ onClose }: { onClose: () => void }) {
               padding: "16px 0",
             }}
           >
-            <div
-              style={{
-                width: 6,
-                height: 6,
-                background: "#FF0000",
-                borderRadius: "50%",
-                opacity: 0.6,
-              }}
-            />
+            <FrameLoader />
           </div>
         )}
 

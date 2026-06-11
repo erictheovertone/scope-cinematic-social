@@ -133,6 +133,7 @@ export default function FinishingDevPage() {
           // Dev mock — in-memory only (real path persists via looksService).
           setSavedLooks((ls) => [{ id: `${Date.now()}`, name, params: p }, ...ls]);
           console.log('[finishing-dev] saved look (mock):', name);
+          return true; // mock "insert" succeeds → plays the confirmation animation
         }}
       />
 
