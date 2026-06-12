@@ -62,8 +62,14 @@ export function getCoinCurrency(): ContentCoinCurrency {
 // ── Coin metadata (image = the GRADED media) ──────────────────────────────────
 //
 // image = poster_url (video hero frame) for video, the baked/edited image for
-// photos — never the raw upload. JSON uploaded to the existing post-media bucket;
-// its public https URL is the RAW_URI passed to createCoin.
+// photos — never the raw upload; the image URL stays in post-media. Only the
+// JSON lives in the dedicated PUBLIC 'coin-metadata' bucket (application/json
+// allowed; see migrations/2026-06-12_coin_metadata_bucket.sql).
+//
+// Path scheme: {postId}.json — STABLE and immutable: postId is the permanent
+// pre-coin key (the coin address doesn't exist yet at upload time), and this
+// URL becomes the coin's permanent tokenURI. Retries upsert the same path with
+// identical content (idempotent).
 async function uploadCoinMetadata(args: {
   userId: string;
   postId: string;
@@ -84,14 +90,28 @@ async function uploadCoinMetadata(args: {
   }
 
   const blob = new Blob([JSON.stringify(metadata)], { type: "application/json" });
-  const path = `coin-metadata/${args.userId}/${args.postId}.json`;
+  const path = `${args.postId}.json`;
   const { error } = await supabase.storage
-    .from("post-media")
+    .from("coin-metadata")
     .upload(path, blob, { cacheControl: "3600", upsert: true, contentType: "application/json" });
   if (error) throw error;
 
-  const { data } = supabase.storage.from("post-media").getPublicUrl(path);
-  return data.publicUrl;
+  const { data } = supabase.storage.from("coin-metadata").getPublicUrl(path);
+  const url = data.publicUrl;
+
+  // PRE-MINT ASSERTION: a coin must never point at an unreachable or non-JSON
+  // tokenURI. Verify the public URL actually serves 200 + application/json
+  // BEFORE createCoin fires; a failure throws into the coin-failed path
+  // (post survives, retryable — no half-mint).
+  const probe = await fetch(url, { cache: "no-store" });
+  const ctype = probe.headers.get("content-type") || "";
+  if (!probe.ok || !ctype.includes("application/json")) {
+    throw new Error(
+      `[zoraCoins] metadata URI failed pre-mint check: HTTP ${probe.status}, content-type "${ctype}" (${url})`
+    );
+  }
+  console.log("[zoraCoins] metadata URI verified (200, application/json):", url);
+  return url;
 }
 
 export interface CreateScopeCoinResult {
