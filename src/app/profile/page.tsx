@@ -14,7 +14,7 @@ import BadgeExplainerSheet from "@/components/BadgeExplainerSheet";
 import MembershipSheet from "@/components/MembershipSheet";
 import BottomToolbar from "@/components/BottomToolbar";
 import MediaRenderer from "@/components/MediaRenderer";
-import VideoLightbox from "@/components/VideoLightbox";
+import PostModal from "@/components/PostModal";
 import OnboardingModal from "@/components/OnboardingModal";
 import AddToHomeScreenSheet from "@/components/AddToHomeScreenSheet";
 import { shouldShowA2HS } from "@/lib/pwaUtils";
@@ -656,7 +656,7 @@ const userLayoutId = stableLayoutId;
       )}
 
       {showLightbox && lightboxPost && (
-        <VideoLightbox
+        <PostModal
           post={lightboxPost}
           onClose={() => { setShowLightbox(false); setLightboxPost(null); }}
           onScrollDown={() => {
@@ -668,8 +668,6 @@ const userLayoutId = stableLayoutId;
           }}
           isOwner={true}
           supabaseUserId={supabaseUserId}
-          onCollect={() => { setShowLightbox(false); }}
-          onAddToDeck={() => { setShowDecks(true); }}
           onTheaterMode={() => { setShowLightbox(false); setLightboxPost(null); setActiveTab('theatre'); }}
           onDeleted={(deletedPostId) => setUserPosts(prev => prev.filter(p => p.id !== deletedPostId))}
           layoutId={userLayoutId}

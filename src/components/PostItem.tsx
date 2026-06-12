@@ -18,8 +18,6 @@ import { useEconomy } from "@/components/EconomyProvider";
 import TickerMark from "@/components/economy/TickerMark";
 import MediaRenderer from "@/components/MediaRenderer";
 import GradedVideo from "@/components/finishing/GradedVideo";
-import { getTokenPrice, getTokenHolders } from "@/lib/zora";
-import { formatEther } from "viem";
 import { getAspectRatio, ratioPadding } from "@/lib/aspectRatio";
 import PillarboxFrame from "@/components/PillarboxFrame";
 
@@ -131,31 +129,9 @@ export default function PostItem({ post, onImageClick, commentsOpen, onToggleCom
     return () => { cancelled = true; };
   }, [post.id, post.coin_address, post.token_standard, economy]);
 
-  // Fetch market cap for minted posts
-  useEffect(() => {
-    if (!post.is_minted || !post.contract_address) return;
-    let cancelled = false;
-    const fetchMC = async () => {
-      try {
-        const tokenId = BigInt(post.token_id || "1");
-        const [supply, price, rate] = await Promise.all([
-          getTokenHolders({ contractAddress: post.contract_address!, tokenId }),
-          getTokenPrice({ contractAddress: post.contract_address!, tokenId }),
-          economy.getEthUsdRate(),
-        ]);
-        if (cancelled) return;
-        if (rate === null) { setMc(null); return; } // no rate → no $ figure (honest)
-        const mcEth = Number(supply) * parseFloat(formatEther(price));
-        const mcUsd = mcEth * rate;
-        setMc(`$${mcUsd < 1 ? mcUsd.toFixed(2) : Math.round(mcUsd).toLocaleString()}`);
-        console.log("[PostItem] MC fetched — supply:", supply.toString(), "priceETH:", formatEther(price));
-      } catch (e) {
-        console.error("[PostItem] MC fetch error:", e);
-      }
-    };
-    fetchMC();
-    return () => { cancelled = true; };
-  }, [post.id, post.is_minted, post.contract_address, post.token_id, economy]);
+  // Legacy 1155 posts show NO market chrome: their old "MC" was supply × the
+  // flat mint fee — a fake market figure from the pre-coin era. Coin posts get
+  // the real MC via the boundary (effect above); legacy gets nothing.
 
   const handleLike = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -229,10 +205,13 @@ export default function PostItem({ post, onImageClick, commentsOpen, onToggleCom
           @{post.username}
         </span>
       </div>
-      <span style={{ position: 'absolute', top: '6px', right: '6px', display: 'flex', alignItems: 'baseline', gap: 5, fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: '8px', color: 'white', textShadow: '0 1px 2px rgba(0,0,0,1)', zIndex: 10, opacity: 0.85 }}>
-        {post.ticker && post.token_standard === 'coin' && <TickerMark ticker={post.ticker} size={8} />}
-        <span>MC: {mc ?? '—'}</span>
-      </span>
+      {/* Market chrome — coin posts only; legacy 1155 tiles show none. */}
+      {post.token_standard === 'coin' && post.coin_address && (
+        <span style={{ position: 'absolute', top: '6px', right: '6px', display: 'flex', alignItems: 'baseline', gap: 5, fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: '8px', color: 'white', textShadow: '0 1px 2px rgba(0,0,0,1)', zIndex: 10, opacity: 0.85 }}>
+          {post.ticker && <TickerMark ticker={post.ticker} size={8} />}
+          <span>MC: {mc ?? '…'}</span>
+        </span>
+      )}
     </>
   );
 

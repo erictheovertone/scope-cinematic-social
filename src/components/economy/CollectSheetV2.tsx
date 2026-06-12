@@ -23,6 +23,7 @@ import type { PostMarket, BuyQuote, SellQuote, TradeCurrency } from '@/lib/econo
 import ApertureMark from '@/components/economy/ApertureMark';
 import TickerMark from '@/components/economy/TickerMark';
 import FrameLoader from '@/components/FrameLoader';
+import { getAspectRatio } from '@/lib/aspectRatio';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -32,7 +33,10 @@ const eth = (n: number) => `${n.toFixed(n < 0.1 ? 5 : 4)} ETH`;
 const BASE_PER_PIECE = 100_000; // 1 piece = 100,000 base tokens (display detail)
 
 interface Props {
-  post: { id: string; username: string; caption?: string; media_urls: string[]; ticker?: string | null };
+  post: {
+    id: string; username: string; caption?: string; media_urls: string[]; ticker?: string | null;
+    media_type?: string; poster_url?: string | null; thumbnail_url?: string | null; layout_id?: string;
+  };
   visible: boolean;
   onClose: () => void;
 }
@@ -173,19 +177,48 @@ export default function CollectSheetV2({ post, visible, onClose }: Props) {
           </div>
         )}
 
-        {/* Post head */}
-        <div style={{ display: 'flex', gap: 12, marginBottom: 18 }}>
-          {post.media_urls?.[0] && (
-            <img src={post.media_urls[0]} alt="" style={{ width: 56, height: 56, objectFit: 'cover', flexShrink: 0, background: '#111' }} />
-          )}
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, margin: '0 0 3px' }}>
-              <p style={{ ...SKB, fontSize: 11, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.02em', margin: 0 }}>@{post.username}</p>
-              {post.ticker && <TickerMark ticker={post.ticker} size={10} />}
+        {/* Post head — media WIDE in the creator's actual aspect ratio (never
+            re-cropped square). Video = the graded poster (poster_url — also
+            the blank-thumb fix: never thumb the video element); image = the
+            baked/graded image. Wide ARs stack the text below; the taller 4:3
+            sits text-beside. */}
+        {(() => {
+          const isVideo = post.media_type === 'video';
+          const mediaSrc = isVideo
+            ? (post.poster_url || post.thumbnail_url || null)
+            : (post.media_urls?.[0] || null);
+          const arCss = getAspectRatio(post.layout_id ?? '');
+          const arNum = (() => {
+            const [w, h] = String(arCss).split('/').map((x) => parseFloat(x));
+            return isFinite(w) && isFinite(h) && h > 0 ? w / h : 2.39;
+          })();
+          const stacked = arNum >= 1.6; // 2.75 / 2.39 / 1.85 stack; 4:3 sits beside
+          const text = (
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, margin: '0 0 3px' }}>
+                <p style={{ ...SKB, fontSize: 11, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.02em', margin: 0 }}>@{post.username}</p>
+                {post.ticker && <TickerMark ticker={post.ticker} size={10} />}
+              </div>
+              <p style={{ ...SKR, fontSize: 10, color: 'rgba(255,255,255,0.5)', margin: 0, lineHeight: 1.35, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const }}>{post.caption || ''}</p>
             </div>
-            <p style={{ ...SKR, fontSize: 10, color: 'rgba(255,255,255,0.5)', margin: 0, lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{post.caption || ''}</p>
-          </div>
-        </div>
+          );
+          const media = (
+            <div style={{ width: stacked ? '100%' : '55%', aspectRatio: String(arCss), background: '#111', overflow: 'hidden', flexShrink: 0 }}>
+              {mediaSrc && <img src={mediaSrc} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
+            </div>
+          );
+          return stacked ? (
+            <div style={{ marginBottom: 18 }}>
+              {media}
+              <div style={{ marginTop: 10 }}>{text}</div>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', marginBottom: 18 }}>
+              {media}
+              {text}
+            </div>
+          );
+        })()}
 
         {/* Price + MC in dollars, pieces framing. A no-trades pool has no
             discovered price yet — show "—", never a fabricated number. */}
