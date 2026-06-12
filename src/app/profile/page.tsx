@@ -237,12 +237,19 @@ const userLayoutId = stableLayoutId;
 
   useEffect(() => {
     if (!user || showCreatePost || !supabaseUserId) return;
-    getUserPosts(supabaseUserId)
+    const load = () => getUserPosts(supabaseUserId)
       .then(posts => {
         setUserPosts(posts);
         setAnalytics(prev => ({ ...prev, totalPosts: posts.length }));
       })
       .catch(console.error);
+    load();
+    // When a coin lands or trades ('scope:market-moved'), refetch the rows so
+    // the freshly-coined tile gains its [ TICKER ]/MC chrome without a reload —
+    // the mint moment's tile resolution.
+    const onMoved = () => load();
+    window.addEventListener('scope:market-moved', onMoved);
+    return () => window.removeEventListener('scope:market-moved', onMoved);
   }, [showCreatePost, supabaseUserId]);
 
   useEffect(() => {

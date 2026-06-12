@@ -879,14 +879,18 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
           }
         }
         narrator.done(`[ COINED · ${sym} ]`, postId);
+        // The freshly-coined tile re-reads its market + the grid refetches the
+        // post row (ticker/chrome) — the mint moment completes on screen.
+        window.dispatchEvent(new CustomEvent('scope:market-moved', { detail: { postId } }));
       } catch (coinError) {
         console.error('[coin] createScopeCoin failed:', coinError);
         narrator.fail('[ COIN FAILED — RETRY FROM YOUR POST ]', postId);
       }
     })();
 
-    // Beat, then navigate — the global chip carries the narration from here.
-    setTimeout(() => completeFlow(), 900);
+    // The in-place beat is MANDATORY: the pressed button holds its narration
+    // (~1.7s) BEFORE any navigation — then the global chip takes the handoff.
+    setTimeout(() => completeFlow(), 1700);
   };
 
   const handleSkipMint = () => {

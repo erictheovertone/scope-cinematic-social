@@ -1,11 +1,11 @@
 // ── Real economy reads (Stage A of the mock→real swap) ──────────────────────
 //
 // For COIN posts (coin_address present) getPostMarket returns REAL numbers.
-// Source: Zora's Coins API via the SDK's getCoin query (api-sdk.zora.engineering
-// /coin) — one call returns marketCap (USD), tokenPrice.priceInUsdc (per base
-// token; NULL for a no-trades pool), and uniqueHolders, already indexed by
-// Zora. The viewer's holding is read on-chain (ERC-20 balanceOf via our Base
-// RPC) — pieces math: 1 piece = 100,000 base tokens (18 decimals).
+// Source: OUR /api/market route (server-side batch + cache + Zora API key +
+// 429 backoff) — tiles never call Zora from the browser (the 429+CORS storm).
+// Returns tokenPrice.priceInUsdc (per base token; NULL for a no-trades pool)
+// and uniqueHolders. The viewer's holding is read on-chain (ERC-20 balanceOf
+// via our Base RPC) — pieces math: 1 piece = 100,000 base tokens (18 decimals).
 //
 // HONEST NO-TRADES STATE: a brand-new pool has no discovered price —
 // priceUsd stays NULL (UI shows "—") and marketCap reads 0. No NaNs, no
@@ -15,7 +15,7 @@
 // stays MOCK until the indexer / Stage B — this module delegates those to the
 // mock so the preview-flag surfaces keep working unchanged.
 
-import { getCoin, createTradeCall } from "@zoralabs/coins-sdk";
+import { createTradeCall } from "@zoralabs/coins-sdk";
 import { formatEther, parseEther, getAddress } from "viem";
 import { base } from "viem/chains";
 import { supabase } from "@/lib/supabase/client";
@@ -57,12 +57,64 @@ const num = (v: unknown): number => {
   return isFinite(n) ? n : 0;
 };
 
+// ── Market transport: /api/market (server-side batch/cache/key) ──────────────
+//
+// Tiles NEVER fetch Zora independently (the 429+CORS storm). getPostMarket
+// calls within a 40ms window batch into ONE /api/market request; a short
+// client cache absorbs re-mounts. The server route holds the Zora key, the
+// upstream batching, the SWR cache, and the 429 backoff.
+interface CoinRead {
+  found: boolean;
+  priceInUsdc: string | null;
+  uniqueHolders: number;
+  symbol: string | null;
+}
+const CLIENT_TTL_MS = 30_000;
+const FRESH_RETRY_MS = 10_000; // a just-minted coin re-checks sooner
+const marketCache = new Map<string, { data: CoinRead; at: number }>();
+let pendingAddrs = new Map<string, Array<(r: CoinRead) => void>>();
+let batchTimer: ReturnType<typeof setTimeout> | null = null;
+
+function marketFor(coinAddress: string): Promise<CoinRead> {
+  const addr = coinAddress.toLowerCase();
+  const hit = marketCache.get(addr);
+  if (hit && Date.now() - hit.at < (hit.data.found ? CLIENT_TTL_MS : FRESH_RETRY_MS)) {
+    return Promise.resolve(hit.data);
+  }
+  return new Promise((resolve) => {
+    const list = pendingAddrs.get(addr) ?? [];
+    list.push(resolve);
+    pendingAddrs.set(addr, list);
+    if (!batchTimer) {
+      batchTimer = setTimeout(async () => {
+        const batch = pendingAddrs;
+        pendingAddrs = new Map();
+        batchTimer = null;
+        const addrs = [...batch.keys()];
+        let markets: Record<string, CoinRead> = {};
+        try {
+          const res = await fetch(`/api/market?addresses=${addrs.join(",")}`);
+          markets = (await res.json())?.markets ?? {};
+        } catch (e) {
+          console.warn("[economy] market read failed (serving empty):", (e as Error)?.message);
+        }
+        const now = Date.now();
+        for (const [a, resolvers] of batch) {
+          const data: CoinRead = markets[a] ?? { found: false, priceInUsdc: null, uniqueHolders: 0, symbol: null };
+          marketCache.set(a, { data, at: now });
+          resolvers.forEach((r) => r(data));
+        }
+      }, 40);
+    }
+  });
+}
+
 async function realPostMarket(
   coinAddress: string,
   viewerAddress: string | null
 ): Promise<PostMarket> {
-  const [coinRes, viewerBalance] = await Promise.all([
-    getCoin({ address: coinAddress, chain: base.id }),
+  const [token, viewerBalance] = await Promise.all([
+    marketFor(coinAddress),
     viewerAddress
       ? publicClient
           .readContract({
@@ -75,12 +127,13 @@ async function realPostMarket(
       : Promise.resolve(BigInt(0)),
   ]);
 
-  const token = (coinRes as any)?.data?.zora20Token;
-  if (!token) throw new Error(`[economy] coin not found in Zora index: ${coinAddress}`);
+  // FRESH-COIN GRACE: a just-created coin may be missing from Zora's index for
+  // a short window — that's the honest "market opening" state (price —,
+  // MC $0.00), NEVER an error. The short client retry window re-checks it.
 
   // priceInUsdc is per BASE TOKEN; a piece is 100,000 tokens. NULL price
   // (no trades yet) stays null — the UI shows "—".
-  const perToken = token.tokenPrice?.priceInUsdc;
+  const perToken = token.priceInUsdc;
   const priceUsd =
     perToken != null && isFinite(parseFloat(perToken))
       ? parseFloat(perToken) * TOKENS_PER_PIECE
@@ -204,11 +257,10 @@ export function createRealEconomy(
 
             let priceUsd: number | null = null;
             try {
-              const res: any = await getCoin({ address: p.coin_address, chain: base.id });
-              const perToken = res?.data?.zora20Token?.tokenPrice?.priceInUsdc;
+              const t = await marketFor(p.coin_address); // batched via /api/market
               priceUsd =
-                perToken != null && isFinite(parseFloat(perToken))
-                  ? parseFloat(perToken) * TOKENS_PER_PIECE
+                t.priceInUsdc != null && isFinite(parseFloat(t.priceInUsdc))
+                  ? parseFloat(t.priceInUsdc) * TOKENS_PER_PIECE
                   : null;
             } catch { /* price unavailable → honest null */ }
 
