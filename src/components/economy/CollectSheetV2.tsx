@@ -119,7 +119,9 @@ export default function CollectSheetV2({ post, visible, onClose }: Props) {
   const ceremonyResolve = (postId: string) => {
     // Live MC chips elsewhere re-read post-trade truth.
     window.dispatchEvent(new CustomEvent('scope:market-moved', { detail: { postId } }));
-    setTimeout(() => onClose(), 1900);
+    // ~4s hold: time to read the count and watch the price move before the
+    // sheet returns the collector to where they came from.
+    setTimeout(() => onClose(), 4000);
   };
 
   const doBuy = async () => {
