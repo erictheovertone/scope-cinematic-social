@@ -280,6 +280,9 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
   // Coin ticker (Zora symbol) + optional creator self-buy, entered on the mint step.
   const [ticker, setTicker] = useState('');
   const [selfBuyUsd, setSelfBuyUsd] = useState('');
+  // Slim inline narration for multi-signature sequences (labeling, not gating):
+  // "1 OF 2 — CREATING YOUR COIN…" → "2 OF 2 — BACKING YOUR POST · $1.00".
+  const [backingNarration, setBackingNarration] = useState<string | null>(null);
   const [customThumbnail, setCustomThumbnail] = useState<File | null>(null);
   const thumbnailInputRef = useRef<HTMLInputElement>(null);
   const [videoAutoplay, setVideoAutoplay] = useState(true);
@@ -792,6 +795,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
     setIsPosting(false);
     setTicker('');
     setSelfBuyUsd('');
+    setBackingNarration(null);
     router.push('/profile');
   };
 
@@ -807,6 +811,11 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
     setShowMintPrompt(false);
     setStep('posting');
     setMintStatus('minting');
+    // Narrate the multi-signature sequence — the user always knows which
+    // signature the wallet is asking for. Labeling, not gating.
+    const plannedBuyUsd = parseFloat(selfBuyUsd);
+    const hasBacking = isFinite(plannedBuyUsd) && plannedBuyUsd > 0;
+    if (hasBacking) setBackingNarration('1 OF 2 — CREATING YOUR COIN…');
     try {
       const embeddedWallet = wallets.find(w => w.walletClientType === 'privy');
       if (!embeddedWallet) throw new Error('No embedded wallet found');
@@ -844,19 +853,28 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
       console.log('[coin] Success — coin:', coinAddress, 'tx:', hash);
       setMintStatus('minted');
 
-      // Optional "Back your post" self-buy — fully DECOUPLED from the mint
-      // breath (fire-and-forget): it polls quote readiness with backoff in the
-      // background and can never make minting feel failed. Outcome is logged;
-      // if the market isn't routable yet the user can back it from the post.
-      const buyUsd = parseFloat(selfBuyUsd);
-      if (isFinite(buyUsd) && buyUsd > 0) {
-        void backOwnCoin({ walletClient, creatorAddress: embeddedWallet.address, coinAddress, usdAmount: buyUsd })
-          .then(({ hash: buyHash }) => console.log('[coin] self-buy complete:', buyUsd, 'tx:', buyHash))
-          .catch((buyErr) => console.warn('[coin] self-buy deferred (coin unaffected):', (buyErr as Error)?.message));
+      // "Back your post" — OUTCOME stays decoupled (a backing failure can
+      // never un-mint the coin), but the SIGNATURE is narrated and collected
+      // while its label is on screen (never an unlabeled wallet prompt).
+      if (hasBacking) {
+        setBackingNarration(`2 OF 2 — BACKING YOUR POST · $${plannedBuyUsd.toFixed(2)}…`);
+        try {
+          const r = await Promise.race([
+            backOwnCoin({ walletClient, creatorAddress: embeddedWallet.address, coinAddress, usdAmount: plannedBuyUsd }),
+            new Promise<never>((_, rej) => setTimeout(() => rej(new Error('backing timed out — it may still land; check the post')), 45000)),
+          ]);
+          setBackingNarration(r.pieces != null ? `BACKED · ${r.pieces} PIECES ✓` : 'BACKED ✓');
+        } catch (buyErr) {
+          console.warn('[coin] backing did not land (coin unaffected):', (buyErr as Error)?.message);
+          setBackingNarration('BACKING DIDN’T LAND — BACK IT FROM THE POST LATER');
+        }
+        setTimeout(() => completeFlow(), 1800);
+        return;
       }
     } catch (coinError) {
       console.error('[coin] createScopeCoin failed:', coinError);
       setMintStatus('coin-failed');
+      setBackingNarration(null);
     }
     setTimeout(() => completeFlow(), 2200);
   };
@@ -914,6 +932,12 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
         {(mintStatus === 'coin-failed' || mintStatus === 'mint-failed') && (
           <p style={{ ...SKB, fontSize: 10, color: '#FF0000', textAlign: 'center', lineHeight: 1.6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
             Posted — coin not created. You can create it later from your profile.
+          </p>
+        )}
+        {/* Slim signature narration — which approval is in front of you, never a modal. */}
+        {backingNarration && (mintStatus === 'minting' || mintStatus === 'minted') && (
+          <p style={{ ...SKB, fontSize: 9, color: '#FF0000', textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.12em', margin: 0 }}>
+            {backingNarration}
           </p>
         )}
       </div>

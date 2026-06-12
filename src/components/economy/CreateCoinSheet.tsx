@@ -45,6 +45,8 @@ export default function CreateCoinSheet({
   const [selfBuyUsd, setSelfBuyUsd] = useState('');
   const [phase, setPhase] = useState<'idle' | 'working' | 'done' | 'failed'>('idle');
   const [error, setError] = useState<string | null>(null);
+  // Slim signature narration during the multi-signature sequence.
+  const [narration, setNarration] = useState<string | null>(null);
 
   const run = async () => {
     const sym = normalizeTicker(ticker);
@@ -93,13 +95,21 @@ export default function CreateCoinSheet({
       await updatePostCoinData(post.id, { coin_address: coinAddress, ticker: sym, coin_tx_hash: hash, coin_currency: currency });
       setPhase('done');
 
-      // Self-buy decoupled (fire-and-forget with quote-readiness backoff) —
-      // can never make the coin creation feel failed.
+      // Backing: OUTCOME decoupled (failure never un-coins), but the signature
+      // is narrated and collected while its label is on screen.
       const buyUsd = parseFloat(selfBuyUsd);
       if (isFinite(buyUsd) && buyUsd > 0) {
-        void backOwnCoin({ walletClient, creatorAddress: embeddedWallet.address, coinAddress, usdAmount: buyUsd })
-          .then(({ hash: buyHash }) => console.log('[CreateCoinSheet] self-buy complete, tx:', buyHash))
-          .catch((e) => console.warn('[CreateCoinSheet] self-buy deferred (coin unaffected):', (e as Error)?.message));
+        setNarration(`BACKING YOUR POST · $${buyUsd.toFixed(2)}…`);
+        try {
+          const r = await Promise.race([
+            backOwnCoin({ walletClient, creatorAddress: embeddedWallet.address, coinAddress, usdAmount: buyUsd }),
+            new Promise<never>((_, rej) => setTimeout(() => rej(new Error('backing timed out')), 45000)),
+          ]);
+          setNarration(r.pieces != null ? `BACKED · ${r.pieces} PIECES ✓` : 'BACKED ✓');
+        } catch (e) {
+          console.warn('[CreateCoinSheet] backing did not land (coin unaffected):', (e as Error)?.message);
+          setNarration('BACKING DIDN’T LAND — TRY AGAIN FROM THE POST');
+        }
       }
       onDone?.();
     } catch (e: any) {
@@ -122,7 +132,12 @@ export default function CreateCoinSheet({
         </p>
 
         {phase === 'done' ? (
-          <p style={{ ...SKB, fontSize: 11, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.06em', textAlign: 'center', padding: '14px 0' }}>COINED ✓</p>
+          <div style={{ textAlign: 'center', padding: '14px 0' }}>
+            <p style={{ ...SKB, fontSize: 11, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>COINED ✓</p>
+            {narration && (
+              <p style={{ ...SKB, fontSize: 9, color: '#FF0000', textTransform: 'uppercase', letterSpacing: '0.12em', margin: '10px 0 0' }}>{narration}</p>
+            )}
+          </div>
         ) : (
           <>
             <div style={{ marginBottom: 14 }}>
@@ -149,7 +164,9 @@ export default function CreateCoinSheet({
             <button onClick={run} disabled={working || !isValidTicker(ticker)}
               style={{ width: '100%', background: (working || !isValidTicker(ticker)) ? 'rgba(255,0,0,0.4)' : '#FF0000', border: 'none', cursor: (working || !isValidTicker(ticker)) ? 'default' : 'pointer', padding: '14px 0', marginBottom: 8 }}>
               <span style={{ ...SKB, fontSize: 12, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                {working ? 'CREATING COIN…' : !isValidTicker(ticker) ? 'ENTER A TICKER' : 'CREATE COIN'}
+                {working ? 'CREATING COIN…'
+                  : !isValidTicker(ticker) ? 'ENTER A TICKER'
+                  : (() => { const b = parseFloat(selfBuyUsd); return isFinite(b) && b > 0 ? `CREATE COIN · BACK $${b.toFixed(2)}` : 'CREATE COIN'; })()}
               </span>
             </button>
             <button onClick={onClose} disabled={working} style={{ width: '100%', background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', cursor: working ? 'default' : 'pointer', padding: '12px 0' }}>

@@ -16,6 +16,12 @@ export const privyConfig = {
   embeddedWallets: {
     createOnLogin: 'users-without-wallets' as const,
     requireUserPasswordOnCreate: false,
+    // SIGNING CLARITY (consent without fatigue): Privy's generic confirmation
+    // sheets are suppressed for embedded-wallet signing. Consent is collected
+    // ONCE by the labeled Scope action the user already took ("CREATE COIN ·
+    // BACK $1.00", "BUY · $1.00"), with inline narration during multi-signature
+    // sequences. No unlabeled money-moving signature is ever fired.
+    showWalletUIs: false,
   },
   
   // Legal configuration

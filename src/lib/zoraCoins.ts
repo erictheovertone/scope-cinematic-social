@@ -12,7 +12,6 @@
 
 import {
   createCoin,
-  tradeCoin,
   createTradeCall,
   getCoinCreateFromLogs,
   CreateConstants,
@@ -226,7 +225,7 @@ export async function backOwnCoin({
   coinAddress: string;
   usdAmount: number;
   slippage?: number;
-}): Promise<{ hash: `0x${string}` }> {
+}): Promise<{ hash: `0x${string}`; pieces: number | null }> {
   // HONEST FAILURE: converting $ at a wrong rate buys the wrong amount —
   // refuse rather than guess. (The self-buy is isolated; the coin survives.)
   const ethUsd = await getEthUsdRate();
@@ -274,29 +273,69 @@ export async function backOwnCoin({
   console.log("[zoraCoins] backOwnCoin quote response:", JSON.stringify(quote)?.slice(0, 500));
 
   // Pieces delta: balance before/after so the receipt shows what arrived.
-  const TOKENS_PER_PIECE = 100_000;
-  const ERC20_BAL = [{ name: "balanceOf", type: "function", stateMutability: "view", inputs: [{ name: "account", type: "address" }], outputs: [{ name: "", type: "uint256" }] }] as const;
-  const readPieces = async () => {
-    try {
-      const b = await publicClient.readContract({ address: getAddress(coinAddress), abi: ERC20_BAL, functionName: "balanceOf", args: [sender] });
-      return Math.floor(parseFloat(formatEther(b as bigint)) / TOKENS_PER_PIECE);
-    } catch { return null; }
-  };
-  const piecesBefore = await readPieces();
+  const piecesBefore = await readPieces(coinAddress, sender);
 
-  const res: any = await tradeCoin({
-    tradeParameters,
-    walletClient,
-    publicClient: publicClient as any,
-    account: sender,
-  });
+  const { hash } = await executeQuotedTrade({ walletClient, sender, quote, label: `backing $${usdAmount}` });
 
-  // tradeCoin resolves with the tx RECEIPT — the hash is transactionHash.
-  const hash = (res?.transactionHash ?? res?.hash ?? res) as `0x${string}`;
-  const piecesAfter = await readPieces();
+  const piecesAfter = await readPieces(coinAddress, sender);
   const delta = piecesBefore != null && piecesAfter != null ? piecesAfter - piecesBefore : null;
+  const effective = delta && delta > 0 ? (usdAmount / delta).toFixed(4) : null;
   console.log(
-    `[zoraCoins] backOwnCoin COMPLETE — tx: ${hash} | pieces received: ${delta ?? "?"} (balance ${piecesBefore ?? "?"} → ${piecesAfter ?? "?"}) | $${usdAmount} ≈ ${ethAmount} ETH`
+    `[zoraCoins] backOwnCoin COMPLETE — tx: ${hash} | pieces received: ${delta ?? "?"} (balance ${piecesBefore ?? "?"} → ${piecesAfter ?? "?"}) | $${usdAmount} ≈ ${ethAmount} ETH${effective ? ` | effective $${effective}/piece` : ""}`
   );
+  return { hash, pieces: delta };
+}
+
+// ── Trade execution (quote → SIMULATE → estimate fresh → send 1.5×) ───────────
+//
+// The first real backing tx (0x6b26db66…) ran OUT OF GAS: the first-ever trade
+// on a fresh V4 pool touches all-cold storage across a multihop route, and the
+// gas limit chosen downstream (1.82M) was under the real cost. We take control:
+// simulate the exact call (surfaces any real revert reason BEFORE spending
+// gas), estimate against fresh state, and send with a 1.5× buffer. Used by
+// backing now and the collect-sheet trades (Stage B) next.
+const TOKENS_PER_PIECE = 100_000;
+const ERC20_BAL = [{ name: "balanceOf", type: "function", stateMutability: "view", inputs: [{ name: "account", type: "address" }], outputs: [{ name: "", type: "uint256" }] }] as const;
+
+export async function readPieces(coinAddress: string, holder: `0x${string}`): Promise<number | null> {
+  try {
+    const b = await publicClient.readContract({ address: getAddress(coinAddress), abi: ERC20_BAL, functionName: "balanceOf", args: [holder] });
+    return Math.floor(parseFloat(formatEther(b as bigint)) / TOKENS_PER_PIECE);
+  } catch { return null; }
+}
+
+export async function executeQuotedTrade({
+  walletClient,
+  sender,
+  quote,
+  label,
+}: {
+  walletClient: any;
+  sender: `0x${string}`;
+  quote: any; // PostQuoteResponse from createTradeCall
+  label: string;
+}): Promise<{ hash: `0x${string}` }> {
+  const call = {
+    to: getAddress(quote.call.target),
+    data: quote.call.data as `0x${string}`,
+    value: BigInt(quote.call.value),
+  };
+
+  // 1. SIMULATE the exact call — a revert surfaces its real reason here,
+  //    before any gas is spent on-chain.
+  await publicClient.call({ ...call, account: sender });
+
+  // 2. Estimate against fresh state, send with 1.5× headroom (fresh-pool
+  //    cold-storage drift is exactly what OOG'd the first backing).
+  const est = await publicClient.estimateGas({ ...call, account: sender });
+  const gas = (est * BigInt(15)) / BigInt(10);
+  console.log(`[zoraCoins] trade (${label}) simulate OK — gas est ${est}, sending with limit ${gas} (1.5×)`);
+
+  const hash = await walletClient.sendTransaction({ ...call, gas, account: sender, chain: base });
+  const receipt = await publicClient.waitForTransactionReceipt({ hash });
+  if (receipt.status !== "success") {
+    throw new Error(`Trade reverted on-chain (tx ${hash}, gas used ${receipt.gasUsed}/${gas})`);
+  }
+  console.log(`[zoraCoins] trade (${label}) LANDED — tx: ${hash} | gas used ${receipt.gasUsed}/${gas}`);
   return { hash };
 }

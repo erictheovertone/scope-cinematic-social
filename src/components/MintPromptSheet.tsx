@@ -263,7 +263,11 @@ export default function MintPromptSheet({ visible, onMint, onSkip, onCoinSkipped
               style={{ width: '100%', background: (checkingBalance || !isValidTicker(ticker)) ? 'rgba(255,0,0,0.4)' : '#FF0000', border: 'none', cursor: (checkingBalance || !isValidTicker(ticker)) ? 'default' : 'pointer', padding: '14px 0', marginBottom: 10 }}
             >
               <span style={{ ...SKB, fontSize: 12, color: 'white', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                {checkingBalance ? 'CHECKING BALANCE...' : !isValidTicker(ticker) ? 'ENTER A TICKER' : 'CREATE COIN · EARN FOREVER'}
+                {/* The button carries the plain-language contract — this tap IS
+                    the consent for everything it names (no second confirm). */}
+                {checkingBalance ? 'CHECKING BALANCE...'
+                  : !isValidTicker(ticker) ? 'ENTER A TICKER'
+                  : (() => { const b = parseFloat(selfBuyUsd); return isFinite(b) && b > 0 ? `CREATE COIN · BACK $${b.toFixed(2)}` : 'CREATE COIN · EARN FOREVER'; })()}
               </span>
             </button>
             <button
