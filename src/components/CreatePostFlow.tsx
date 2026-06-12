@@ -11,6 +11,7 @@ import MediaRenderer from '@/components/MediaRenderer';
 // rollback lifeboat, deliberately unreferenced here. New posts mint as coins.
 import { createScopeCoin, backOwnCoin } from '@/lib/zoraCoins';
 import { suggestTicker, normalizeTicker, isValidTicker } from '@/lib/economy/ticker';
+import { useTxNarrator } from '@/components/TxNarrator';
 import MintPromptSheet from '@/components/MintPromptSheet';
 import {
   getUserByPrivyId, getProfile, uploadImage, isProMember,
@@ -276,6 +277,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
   const router = useRouter();
   const { user } = usePrivy();
   const { wallets } = useWallets();
+  const narrator = useTxNarrator();
   const [mintStatus, setMintStatus] = useState<'idle' | 'minting' | 'minted' | 'mint-failed' | 'coin-failed'>('idle');
   // Coin ticker (Zora symbol) + optional creator self-buy, entered on the mint step.
   const [ticker, setTicker] = useState('');
@@ -804,81 +806,87 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
   // it. The coin step is post-hoc + isolated; on failure we set 'coin-failed'
   // (loud inline) and still complete the flow, leaving the post coin-pending
   // (no coin_address) and retryable.
+  // TRANSACTION PRESENCE (take 3): the pressed button gets ONE in-place beat
+  // ("] CREATING YOUR COIN… ["), then the flow navigates while the sequence
+  // continues in the background — narrated by the GLOBAL TxNarrator chip,
+  // which survives all navigation. (Take 2's in-sheet wheel was correct but a
+  // stale setShowMintPrompt(false) hid its host the instant CREATE was
+  // pressed — root cause confirmed and removed.)
   const handleDoMint = async () => {
     if (!pendingMintData) return;
     const sym = normalizeTicker(ticker);
     if (!isValidTicker(sym)) { setTicker(sym); return; } // backstop; MintPromptSheet gates the button
-    setShowMintPrompt(false);
-    // TRANSACTION PRESENCE: the sheet stays open and the pressed button
-    // transforms in place into the live narration of the sequence (the real
-    // button IS the wheel — no overlay handoff, no fake controls).
-    setMintStatus('minting');
     const plannedBuyUsd = parseFloat(selfBuyUsd);
     const hasBacking = isFinite(plannedBuyUsd) && plannedBuyUsd > 0;
-    setBackingNarration(hasBacking ? '1 OF 2 — CREATING YOUR COIN…' : 'CREATING YOUR COIN…');
-    try {
-      const embeddedWallet = wallets.find(w => w.walletClientType === 'privy');
-      if (!embeddedWallet) throw new Error('No embedded wallet found');
-      console.log('[coin] Switching to Base...');
-      await embeddedWallet.switchChain(base.id);
-      const provider = await embeddedWallet.getEthereumProvider();
-      const walletClient = createWalletClient({
-        account: embeddedWallet.address as `0x${string}`,
-        chain: base,
-        transport: custom(provider),
-      });
-      console.log('[coin] Creating coin for post:', pendingMintData.postId, 'ticker:', sym);
-      const { coinAddress, hash, currency } = await createScopeCoin({
-        walletClient,
-        creatorAddress: embeddedWallet.address,
-        post: {
-          id: pendingMintData.postId,
-          userId: pendingMintData.userId,
-          name: pendingMintData.postCaption || 'Scope Post',
-          description: pendingMintData.postCaption || '',
-          symbol: sym,
-          image: pendingMintData.image,
-          animationUrl: pendingMintData.animationUrl,
-          mimeType: pendingMintData.mediaType === 'video' ? 'video/mp4' : undefined,
-        },
-      });
-      // Reconciliation breadcrumb BEFORE the canonical write (amendment C).
-      await updatePostCoinTxHash(pendingMintData.postId, hash).catch(() => {});
-      await updatePostCoinData(pendingMintData.postId, {
-        coin_address: coinAddress,
-        ticker: sym,
-        coin_tx_hash: hash,
-        coin_currency: currency,
-      });
-      console.log('[coin] Success — coin:', coinAddress, 'tx:', hash);
-      setMintStatus('minted');
+    const data = pendingMintData;
+    const postId = data.postId;
 
-      // "Back your post" — OUTCOME stays decoupled (a backing failure can
-      // never un-mint the coin), but the SIGNATURE is narrated and collected
-      // while its label is on screen (never an unlabeled wallet prompt).
-      if (hasBacking) {
-        setBackingNarration(`2 OF 2 — BACKING · $${plannedBuyUsd.toFixed(2)}…`);
-        try {
-          const r = await Promise.race([
-            backOwnCoin({ walletClient, creatorAddress: embeddedWallet.address, coinAddress, usdAmount: plannedBuyUsd }),
-            new Promise<never>((_, rej) => setTimeout(() => rej(new Error('backing timed out — it may still land; check the post')), 45000)),
-          ]);
-          setBackingNarration(r.pieces != null ? `[ BACKED · ${r.pieces} PIECES ]` : '[ BACKED ]');
-        } catch (buyErr) {
-          console.warn('[coin] backing did not land (coin unaffected):', (buyErr as Error)?.message);
-          setBackingNarration('BACKING DIDN’T LAND — RETRY FROM YOUR POST');
+    // The in-place beat — the press visibly DID something, sheet stays up.
+    setMintStatus('minting');
+    setBackingNarration('] CREATING YOUR COIN… [');
+    narrator.narrate({ phase: 'working', label: '] CREATING YOUR COIN… [', postId });
+
+    // DETACHED sequence — narrates through the global chip; this component
+    // navigating away cannot unmount the narration.
+    void (async () => {
+      try {
+        const embeddedWallet = wallets.find(w => w.walletClientType === 'privy');
+        if (!embeddedWallet) throw new Error('No embedded wallet found');
+        await embeddedWallet.switchChain(base.id);
+        const provider = await embeddedWallet.getEthereumProvider();
+        const walletClient = createWalletClient({
+          account: embeddedWallet.address as `0x${string}`,
+          chain: base,
+          transport: custom(provider),
+        });
+        console.log('[coin] Creating coin for post:', postId, 'ticker:', sym);
+        const { coinAddress, hash, currency } = await createScopeCoin({
+          walletClient,
+          creatorAddress: embeddedWallet.address,
+          post: {
+            id: postId,
+            userId: data.userId,
+            name: data.postCaption || 'Scope Post',
+            description: data.postCaption || '',
+            symbol: sym,
+            image: data.image,
+            animationUrl: data.animationUrl,
+            mimeType: data.mediaType === 'video' ? 'video/mp4' : undefined,
+          },
+        });
+        // Reconciliation breadcrumb BEFORE the canonical write (amendment C).
+        await updatePostCoinTxHash(postId, hash).catch(() => {});
+        await updatePostCoinData(postId, {
+          coin_address: coinAddress,
+          ticker: sym,
+          coin_tx_hash: hash,
+          coin_currency: currency,
+        });
+        console.log('[coin] Success — coin:', coinAddress, 'tx:', hash);
+
+        if (hasBacking) {
+          narrator.narrate({ phase: 'working', label: `] BACKING YOUR POST · $${plannedBuyUsd.toFixed(2)} [`, postId });
+          try {
+            await Promise.race([
+              backOwnCoin({ walletClient, creatorAddress: embeddedWallet.address, coinAddress, usdAmount: plannedBuyUsd }),
+              new Promise<never>((_, rej) => setTimeout(() => rej(new Error('backing timed out — it may still land')), 45000)),
+            ]);
+          } catch (buyErr) {
+            // Coin unaffected (decoupling) — backing failure narrates red.
+            console.warn('[coin] backing did not land (coin unaffected):', (buyErr as Error)?.message);
+            narrator.fail('[ BACKING DIDN’T LAND — RETRY ]', postId);
+            return;
+          }
         }
-        setTimeout(() => completeFlow(), 1800);
-        return;
+        narrator.done(`[ COINED · ${sym} ]`, postId);
+      } catch (coinError) {
+        console.error('[coin] createScopeCoin failed:', coinError);
+        narrator.fail('[ COIN FAILED — RETRY FROM YOUR POST ]', postId);
       }
-      // Terminal bracket state — a beat of hold, then resolve.
-      setBackingNarration('[ COINED ]');
-    } catch (coinError) {
-      console.error('[coin] createScopeCoin failed:', coinError);
-      setMintStatus('coin-failed');
-      setBackingNarration('COIN NOT CREATED — RETRY FROM YOUR POST');
-    }
-    setTimeout(() => completeFlow(), 1800);
+    })();
+
+    // Beat, then navigate — the global chip carries the narration from here.
+    setTimeout(() => completeFlow(), 900);
   };
 
   const handleSkipMint = () => {

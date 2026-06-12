@@ -3,6 +3,7 @@
 import { getAspectRatio, ratioPadding } from "@/lib/aspectRatio";
 import MediaRenderer from "@/components/MediaRenderer";
 import GradedVideo from "@/components/finishing/GradedVideo";
+import { useTxNarrator } from "@/components/TxNarrator";
 
 interface Post {
   id: string;
@@ -31,6 +32,10 @@ interface PostCellProps {
 export default function PostCell({ post, layoutId, index, onClick, showSoundToggle = false }: PostCellProps) {
   const ratio = getAspectRatio(layoutId, index);
   const padding = ratioPadding(ratio);
+  // The minting tile narrates: while this post's coin is being created the
+  // tile wears the corner-bracket "developing" pulse; a failed sequence shows
+  // a small red retry mark (tap → lightbox → kebab CREATE COIN).
+  const txPhase = useTxNarrator().statusFor(post.id);
 
   return (
     <div
@@ -84,6 +89,26 @@ export default function PostCell({ post, layoutId, index, onClick, showSoundTogg
           )
         )}
       </div>
+
+      {/* Developing state — corner brackets pulse while the coin is created. */}
+      {txPhase === 'working' && (
+        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 5, animation: 'tile-develop 1.6s ease-in-out infinite' }}>
+          {([['top','left'],['top','right'],['bottom','left'],['bottom','right']] as const).map(([v, h]) => (
+            <span key={v + h} style={{
+              position: 'absolute', [v]: 4, [h]: 4, width: 10, height: 10,
+              [`border${v[0].toUpperCase() + v.slice(1)}` as 'borderTop']: '1.5px solid #FF0000',
+              [`border${h[0].toUpperCase() + h.slice(1)}` as 'borderLeft']: '1.5px solid #FF0000',
+            }} />
+          ))}
+          <style>{`@keyframes tile-develop { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }`}</style>
+        </div>
+      )}
+      {/* Failed — small static red mark; the kebab retry lives one tap in. */}
+      {txPhase === 'failed' && (
+        <span style={{ position: 'absolute', top: 4, right: 4, zIndex: 5, fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 8, color: '#FF0000', textShadow: '0 1px 2px rgba(0,0,0,1)', letterSpacing: '0.06em' }}>
+          [ RETRY ]
+        </span>
+      )}
     </div>
   );
 }
