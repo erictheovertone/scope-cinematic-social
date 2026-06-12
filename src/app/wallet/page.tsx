@@ -146,11 +146,28 @@ export default function WalletPage() {
           {loading && totalUsd == null ? "..." : totalUsd != null ? `$${totalUsd}` : "$—"}
           {totalUsd != null && holdingsUnpriced && <span style={{ fontSize: 14, color: "rgba(255,255,255,0.4)" }}> +</span>}
         </p>
-        <p style={{ ...SKB, fontSize: 9, color: "rgba(255,255,255,0.45)", margin: "0 0 8px", textTransform: "uppercase", letterSpacing: "0.1em", fontVariantNumeric: "tabular-nums" }}>
-          AVAILABLE {availableUsd != null ? `$${availableUsd.toFixed(2)}` : "$—"}
-          <span style={{ color: "rgba(255,255,255,0.25)" }}> · </span>
-          HOLDINGS {holdingsUsd != null ? `$${holdingsUsd.toFixed(2)}${holdingsUnpriced ? "+" : ""}` : "…"}
-        </p>
+        {/* THE CANONICAL MONEY-PAIR: two-column stat row (label/value, profile-
+            stat pattern). White = spendable cash, red = invested/at-market.
+            Columns index the tabs beneath them. Reuse this layout wherever the
+            AVAILABLE/HOLDINGS pair appears (earnings summary etc.). */}
+        <div style={{ display: "flex", justifyContent: "center", gap: 56, margin: "14px 0 10px" }}>
+          <div onClick={() => setActiveTab("balances")} style={{ cursor: "pointer" }}>
+            <p style={{ ...SKB, fontSize: 8, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.14em", margin: "0 0 5px" }}>
+              AVAILABLE
+            </p>
+            <p style={{ ...SKB, fontSize: 16, color: "#FFFFFF", margin: 0, fontVariantNumeric: "tabular-nums" }}>
+              {availableUsd != null ? `$${availableUsd.toFixed(2)}` : "$—"}
+            </p>
+          </div>
+          <div onClick={() => setActiveTab("holdings")} style={{ cursor: "pointer" }}>
+            <p style={{ ...SKB, fontSize: 8, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.14em", margin: "0 0 5px" }}>
+              HOLDINGS
+            </p>
+            <p style={{ ...SKB, fontSize: 16, color: "#FF0000", margin: 0, fontVariantNumeric: "tabular-nums" }}>
+              {holdingsUsd != null ? `$${holdingsUsd.toFixed(2)}${holdingsUnpriced ? "+" : ""}` : "…"}
+            </p>
+          </div>
+        </div>
         {walletAddress && (
           <p
             onClick={() => {
