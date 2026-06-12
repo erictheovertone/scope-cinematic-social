@@ -85,7 +85,7 @@ const TIER_DETAILS: Record<string, {
     sections: [
       {
         title: 'HOW IT WORKS',
-        body: "1% of all Scope platform fees are distributed daily across the top 1000 collectors. Your share is weighted — the top collector earns significantly more than the 1000th. Rankings are based on current holdings, trading volume, number of unique creators supported, and how long you've held your tokens.",
+        body: "1% of everything traded on Scope is distributed daily across the top 1000 collectors. Your cut is weighted — the top collector earns significantly more than the 1000th. Rankings are based on current holdings, trading volume, number of unique creators supported, and how long you've held your tokens.",
       },
       {
         title: 'WHAT THAT LOOKS LIKE',
@@ -114,7 +114,7 @@ const TIER_DETAILS: Record<string, {
       },
       {
         title: 'THE ECONOMIC ADVANTAGE',
-        body: "Founding members earn 0.5% of all Scope platform fees — every day, forever, as long as your subscription stays open. If you're also a Top 1k Collector, both shares stack. You earn from two pools simultaneously.",
+        body: "Founding members earn 0.5% of all trading volume on Scope — every day, forever, as long as your subscription stays open. If you're also a Top 1k Collector, both streams stack. You earn from two pools simultaneously.",
       },
       {
         title: 'COMPOUNDING RETURNS',

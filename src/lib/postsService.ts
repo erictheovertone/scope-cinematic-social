@@ -14,6 +14,13 @@ interface Post {
   token_id?: string | null;
   tx_hash?: string | null;
   is_minted?: boolean;
+  // Phase 1 coin fields (additive; legacy 1155 posts leave these null).
+  coin_address?: string | null;
+  ticker?: string | null;
+  coin_tx_hash?: string | null;
+  coin_currency?: string | null;
+  coin_created_at?: string | null;
+  token_standard?: string | null; // 'erc1155' (legacy) | 'coin'
   media_type?: string;
   thumbnail_url?: string | null;
   autoplay?: boolean;
@@ -420,6 +427,49 @@ export const updatePostMintData = async (
     throw error;
   }
   console.log('[updatePostMintData] updated post:', postId, data.contract_address);
+};
+
+// ── Phase 1 coin writes ───────────────────────────────────────────────────────
+
+// Optimistic breadcrumb: persist the createCoin tx hash BEFORE confirmation so
+// the reconciliation path always has a thread, even if the post-mining write
+// fails (proposal §5.5 / amendment C). Idempotent.
+export const updatePostCoinTxHash = async (postId: string, txHash: string): Promise<void> => {
+  const { error } = await supabase
+    .from('posts')
+    .update({ coin_tx_hash: txHash })
+    .eq('id', postId);
+  if (error) console.error('[updatePostCoinTxHash] error:', JSON.stringify(error));
+};
+
+// Sibling of updatePostMintData for the coin path. Marks the post a 'coin' and
+// records its address/ticker/currency. Called after the coin confirms.
+export const updatePostCoinData = async (
+  postId: string,
+  data: {
+    coin_address: string;
+    ticker: string;
+    coin_tx_hash: string;
+    coin_currency: string;
+  }
+): Promise<void> => {
+  const { error } = await supabase
+    .from('posts')
+    .update({
+      coin_address: data.coin_address,
+      ticker: data.ticker,
+      coin_tx_hash: data.coin_tx_hash,
+      coin_currency: data.coin_currency,
+      token_standard: 'coin',
+      coin_created_at: new Date().toISOString(),
+    })
+    .eq('id', postId);
+
+  if (error) {
+    console.error('[updatePostCoinData] Supabase error:', JSON.stringify(error));
+    throw error;
+  }
+  console.log('[updatePostCoinData] coin saved:', postId, data.coin_address);
 };
 
 export const deleteComment = async (commentId: string, userId: string): Promise<void> => {

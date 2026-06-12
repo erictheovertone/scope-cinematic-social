@@ -9,7 +9,9 @@ import {
 } from "@/lib/postsService";
 import { getUserByPrivyId, getProfile } from "@/lib/userService";
 import DeckPickerSheet from "@/components/DeckPickerSheet";
-import CollectSheet from "@/components/CollectSheet";
+import CollectSheetGate from "@/components/economy/CollectSheetGate";
+import CreateCoinSheet from "@/components/economy/CreateCoinSheet";
+import { isCoinPost } from "@/components/EconomyProvider";
 import DeletePostSheet from "@/components/DeletePostSheet";
 import MediaRenderer from "@/components/MediaRenderer";
 import GradedVideo from "@/components/finishing/GradedVideo";
@@ -63,6 +65,7 @@ function PostViewerItem({
   const [newComment, setNewComment] = useState("");
   const [showCollectSheet, setShowCollectSheet] = useState(false);
   const [showDeckPicker, setShowDeckPicker] = useState(false);
+  const [showCreateCoin, setShowCreateCoin] = useState(false);
   const [deckToast, setDeckToast] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -306,6 +309,15 @@ function PostViewerItem({
                     >
                       <span style={{ ...SKB, fontSize: 9, color: "white", textTransform: "uppercase", letterSpacing: "0.06em" }}>ADD TO DECK</span>
                     </button>
+                    {/* Coin-pending: offer the idempotent "Create coin" retry. */}
+                    {!isCoinPost(post as { coin_address?: string | null; token_standard?: string | null }) && (
+                      <button
+                        onClick={() => { setMenuOpen(false); setShowCreateCoin(true); }}
+                        style={{ display: "block", width: "100%", textAlign: "left", background: "transparent", border: "none", borderBottom: "1px solid rgba(255,255,255,0.08)", cursor: "pointer", padding: "11px 14px" }}
+                      >
+                        <span style={{ ...SKB, fontSize: 9, color: "#FF0000", textTransform: "uppercase", letterSpacing: "0.06em" }}>CREATE COIN</span>
+                      </button>
+                    )}
                     <button
                       onClick={() => { setMenuOpen(false); onDeletePress?.(post.id); }}
                       style={{ display: "block", width: "100%", textAlign: "left", background: "transparent", border: "none", cursor: "pointer", padding: "11px 14px" }}
@@ -328,11 +340,20 @@ function PostViewerItem({
         )}
       </div>
 
-      <CollectSheet
+      <CollectSheetGate
         post={post}
         visible={showCollectSheet}
         onClose={() => setShowCollectSheet(false)}
       />
+
+      {isOwnProfile && (
+        <CreateCoinSheet
+          post={post as any}
+          visible={showCreateCoin}
+          onClose={() => setShowCreateCoin(false)}
+          onDone={() => { setTimeout(() => setShowCreateCoin(false), 1400); }}
+        />
+      )}
 
       {/* ── CAPTION — marginTop: 3, marginBottom: 16 (separator) ── */}
       <div style={{ padding: "0 4px", marginTop: 2, marginBottom: 31 }}>

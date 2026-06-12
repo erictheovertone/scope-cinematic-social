@@ -63,7 +63,7 @@ const tiers = [
     label: 'TOP 1000 COLLECTOR',
     color: '#C9A84C',
     title: 'TOP 1000 COLLECTOR',
-    description: 'Top 1000 collectors earn a share of platform fees every single day. Ranked by holdings, volume, and creator support. Earned, not bought.',
+    description: 'The top 1000 collectors together earn 1% of everything traded on Scope, every single day. Ranked by holdings, volume, and creator support. Earned, not bought.',
     sub: 'DAILY DISTRIBUTIONS · EARNED NOT BOUGHT',
   },
   {

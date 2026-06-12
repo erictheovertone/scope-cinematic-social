@@ -2,6 +2,10 @@
 
 import { useState, useEffect } from "react";
 import type { ProfileLink } from "@/lib/userService";
+import { isProMember } from "@/lib/userService";
+import { BADGES, resolveBadges, BADGE_BLURBS, type BadgeKey } from "@/lib/economy/badges";
+import { economyPreviewEnabled } from "@/lib/economy/flag";
+import { useRouter } from "next/navigation";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -17,6 +21,9 @@ interface Props {
   totalPosts: number;
   collectors?: number;
   portfolioMc?: number;
+  /** First Cut count for this profile — read via the economy boundary upstream
+      and passed down (preview-gated). 0/absent → no First Cut coin. */
+  firstCutCount?: number;
 }
 
 function getYouTubeId(url: string): string | null {
@@ -43,9 +50,13 @@ function getDomain(url: string): string {
 export default function ProfileDataSheet({
   isOpen, onClose, profile, links, isOwnProfile,
   followers, following, totalPosts, collectors = 0, portfolioMc = 0,
+  firstCutCount = 0,
 }: Props) {
+  const router = useRouter();
   const [bgVisible, setBgVisible] = useState(false);
   const [sectionsVisible, setSectionsVisible] = useState(false);
+  // BADGES section — tapped badge whose blurb pop-up is open (null = closed).
+  const [activeBlurb, setActiveBlurb] = useState<BadgeKey | null>(null);
 
   useEffect(() => {
     if (!isOpen) {
@@ -78,6 +89,19 @@ export default function ProfileDataSheet({
   const hasKit = !!(profile?.kit_camera || profile?.kit_lens || profile?.kit_favorite_tool);
   const hasLinks = links.length > 0;
   const showContact = !!profile;
+
+  // Earned badges for the BADGES section, rarity-ordered. Membership badges are
+  // real/ungated; First Cut only appears when the gated count is passed down.
+  const badges = profile
+    ? resolveBadges({
+        isFoundingMember: !!profile.is_founding_member,
+        isTopCollector: !!profile.is_top_collector,
+        isPaidMember: isProMember(profile),
+        isInHouseCreator: !!profile.is_in_house_creator,
+        firstCutCount,
+      })
+    : [];
+  const hasBadges = badges.length > 0;
 
   const sec = (delay: number): React.CSSProperties => ({
     opacity: sectionsVisible ? 1 : 0,
@@ -128,7 +152,7 @@ export default function ProfileDataSheet({
       </div>
     </div>
     <div
-      onClick={onClose}
+      onClick={() => { if (activeBlurb) { setActiveBlurb(null); return; } onClose(); }}
       style={{
         position: 'fixed', inset: 0, zIndex: 100,
         background: `rgba(0,0,0,${bgVisible ? 0.95 : 0})`,
@@ -177,6 +201,62 @@ export default function ProfileDataSheet({
                   </div>
                 ))}
               </div>
+            </div>
+            <Divider />
+          </>
+        )}
+
+        {/* ── BADGES ── (Scope_Economy.docx §4b / Figma 3593-440)
+            3D-rotating coins, titles directly beneath, tap → blurb pop-up. */}
+        {hasBadges && (
+          <>
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center', boxSizing: 'border-box', minHeight: 150, paddingTop: 12, paddingBottom: 12, ...sec(200) }}>
+              <div style={{ width: 168, flexShrink: 0, paddingLeft: 4, ...SKB, fontSize: 40, letterSpacing: '-2.4px', color: '#FFF', textTransform: 'uppercase', lineHeight: 1.12 }}>
+                BADGES
+              </div>
+              <div style={{ flex: 1, display: 'flex', flexWrap: 'wrap', gap: 18, justifyContent: 'flex-end', paddingRight: 8 }}>
+                {badges.map((b, i) => (
+                  <div
+                    key={b.key}
+                    onClick={(e) => { e.stopPropagation(); setActiveBlurb(b.key); }}
+                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, cursor: 'pointer', width: 56 }}
+                  >
+                    <div style={{ perspective: 300, width: 38, height: 38 }}>
+                      <div style={{ width: '100%', height: '100%', position: 'relative', transformStyle: 'preserve-3d', animation: `coinFlip 6s ease-in-out ${i * 0.8}s infinite` }}>
+                        <img src={b.src} alt={b.title} style={{ width: '100%', height: '100%', position: 'absolute', backfaceVisibility: 'hidden', borderRadius: '50%', filter: `drop-shadow(0 0 5px ${b.color}66)` }} />
+                        <img src={b.src} alt="" style={{ width: '100%', height: '100%', position: 'absolute', backfaceVisibility: 'hidden', transform: 'rotateY(180deg)', borderRadius: '50%', filter: `drop-shadow(0 0 5px ${b.color}66)` }} />
+                      </div>
+                    </div>
+                    <span style={{ ...SKB, fontSize: 8, letterSpacing: '0.04em', color: '#FFF', textTransform: 'uppercase', lineHeight: 1.1, textAlign: 'center' }}>
+                      {b.title}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Blurb pop-up — anchored to the BOTTOM of the BADGES section,
+                  scale/fade entrance, dismiss on outside tap or × top-right. */}
+              {activeBlurb && (
+                <>
+                  <div onClick={(e) => e.stopPropagation()} style={{ position: 'absolute', top: '100%', left: 0, right: 4, marginTop: 4, zIndex: 481, background: '#000', border: '1px solid #FF0000', padding: '16px 18px', transformOrigin: 'top center', animation: 'blurbIn 240ms cubic-bezier(0.16,0.84,0.3,1)' }}>
+                    <button onClick={(e) => { e.stopPropagation(); setActiveBlurb(null); }} aria-label="Close" style={{ position: 'absolute', top: 8, right: 10, ...SKB, fontSize: 13, lineHeight: 1, color: 'rgba(255,255,255,0.55)', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>×</button>
+                    <p style={{ ...SKB, fontSize: 10, color: '#FF0000', textTransform: 'uppercase', letterSpacing: '0.18em', margin: '0 0 8px', paddingRight: 16 }}>
+                      {BADGES[activeBlurb].title}
+                    </p>
+                    <p style={{ ...SKR, fontSize: 11, color: 'rgba(255,255,255,0.70)', lineHeight: 1.45, margin: 0 }}>
+                      {BADGE_BLURBS[activeBlurb]}
+                    </p>
+                    {activeBlurb === 'firstCut' && economyPreviewEnabled() && profile?.username && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setActiveBlurb(null); onClose(); router.push(`/first-cut/${profile.username}`); }}
+                        style={{ ...SKB, fontSize: 9, letterSpacing: '0.12em', color: '#FF0000', textTransform: 'uppercase', background: 'transparent', border: '1px solid #FF0000', cursor: 'pointer', padding: '7px 14px', marginTop: 12 }}
+                      >
+                        VIEW FIRST CUT →
+                      </button>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
             <Divider />
           </>
@@ -265,6 +345,20 @@ export default function ProfileDataSheet({
 
       </div>
     </div>
+
+    <style>{`
+      @keyframes coinFlip {
+        0% { transform: rotateY(0deg); }
+        40% { transform: rotateY(160deg); }
+        50% { transform: rotateY(180deg); }
+        90% { transform: rotateY(340deg); }
+        100% { transform: rotateY(360deg); }
+      }
+      @keyframes blurbIn {
+        from { opacity: 0; transform: scale(0.92); }
+        to   { opacity: 1; transform: scale(1); }
+      }
+    `}</style>
     </>
   );
 }

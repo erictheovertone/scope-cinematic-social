@@ -13,7 +13,7 @@ import {
 } from "@/lib/postsService";
 import { getUserByPrivyId, getProfile } from "@/lib/userService";
 import DeckPickerSheet from "@/components/DeckPickerSheet";
-import CollectSheet from "@/components/CollectSheet";
+import CollectSheetGate from "@/components/economy/CollectSheetGate";
 import { supabase } from "@/lib/supabase/client";
 import { getAspectRatio } from "@/lib/aspectRatio";
 import MediaRenderer from "@/components/MediaRenderer";
@@ -535,7 +535,7 @@ export default function PostModal({ post, onClose }: PostModalProps) {
         />
       )}
 
-      <CollectSheet
+      <CollectSheetGate
         post={post}
         visible={showCollectSheet}
         onClose={() => setShowCollectSheet(false)}

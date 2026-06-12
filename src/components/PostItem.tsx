@@ -13,7 +13,7 @@ import {
 } from "@/lib/postsService";
 import { getUserByPrivyId, getProfile } from "@/lib/userService";
 import { addBookmark, removeBookmark, isBookmarked } from "@/lib/bookmarksService";
-import CollectSheet from "@/components/CollectSheet";
+import CollectSheetGate from "@/components/economy/CollectSheetGate";
 import MediaRenderer from "@/components/MediaRenderer";
 import GradedVideo from "@/components/finishing/GradedVideo";
 import { getTokenPrice, getTokenHolders } from "@/lib/zora";
@@ -335,7 +335,7 @@ export default function PostItem({ post, onImageClick, commentsOpen, onToggleCom
         </p>
       )}
 
-      <CollectSheet
+      <CollectSheetGate
         post={post}
         visible={showCollectSheet}
         onClose={() => setShowCollectSheet(false)}

@@ -5,9 +5,12 @@ import { useRouter } from "next/navigation";
 import { usePrivy, useWallets } from "@privy-io/react-auth";
 import { createWalletClient, custom } from "viem";
 import { base } from "viem/chains";
-import { createPost, updatePostMintData } from '@/lib/postsService';
+import { createPost, updatePostCoinData, updatePostCoinTxHash } from '@/lib/postsService';
 import MediaRenderer from '@/components/MediaRenderer';
-import { mintNewPost } from '@/lib/zora';
+// NOTE: the 1155 path (mintNewPost) is DORMANT — intact in src/lib/zora.ts as the
+// rollback lifeboat, deliberately unreferenced here. New posts mint as coins.
+import { createScopeCoin, backOwnCoin } from '@/lib/zoraCoins';
+import { suggestTicker, normalizeTicker, isValidTicker } from '@/lib/economy/ticker';
 import MintPromptSheet from '@/components/MintPromptSheet';
 import {
   getUserByPrivyId, getProfile, uploadImage, isProMember,
@@ -273,7 +276,10 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
   const router = useRouter();
   const { user } = usePrivy();
   const { wallets } = useWallets();
-  const [mintStatus, setMintStatus] = useState<'idle' | 'minting' | 'minted' | 'mint-failed'>('idle');
+  const [mintStatus, setMintStatus] = useState<'idle' | 'minting' | 'minted' | 'mint-failed' | 'coin-failed'>('idle');
+  // Coin ticker (Zora symbol) + optional creator self-buy, entered on the mint step.
+  const [ticker, setTicker] = useState('');
+  const [selfBuyUsd, setSelfBuyUsd] = useState('');
   const [customThumbnail, setCustomThumbnail] = useState<File | null>(null);
   const thumbnailInputRef = useRef<HTMLInputElement>(null);
   const [videoAutoplay, setVideoAutoplay] = useState(true);
@@ -362,7 +368,17 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
   // Mint prompt state
   const [showMintPrompt, setShowMintPrompt] = useState(false);
   const [justPostedId, setJustPostedId] = useState<string | null>(null);
-  const [pendingMintData, setPendingMintData] = useState<{ postId: string; mediaUrls: string[]; postCaption: string } | null>(null);
+  const [pendingMintData, setPendingMintData] = useState<{
+    postId: string;
+    userId: string;
+    mediaUrls: string[];
+    postCaption: string;
+    // Coin metadata image = the GRADED media: poster_url (video hero frame) for
+    // video, the baked image for photos — never the raw upload.
+    image: string;
+    animationUrl: string | null;
+    mediaType: string;
+  } | null>(null);
 
   // Deck step state
   const [userDecks, setUserDecks] = useState<(Deck & { item_count: number })[]>([]);
@@ -727,7 +743,19 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
       // Minting now triggered manually by user via MintPromptSheet
       selectedMedia.forEach(item => URL.revokeObjectURL(item.url));
       setIsUploading(false);
-      setPendingMintData({ postId: newPost.id, mediaUrls, postCaption: caption });
+      setPendingMintData({
+        postId: newPost.id,
+        userId: supabaseUser.id,
+        mediaUrls,
+        postCaption: caption,
+        // GRADED image: poster (video hero frame) for video, baked image for photos.
+        image: (isVideo ? posterUrl : null) || mediaUrls[0],
+        animationUrl: isVideo ? autoplayClipUrl : null,
+        mediaType: selectedMedia[0]?.type || 'image',
+      });
+      // Caption-derived ticker suggestion; creator overwrites it on the mint step.
+      setTicker(suggestTicker(caption));
+      setSelfBuyUsd('');
       setJustPostedId(newPost.id);
       setShowMintPrompt(true);
 
@@ -762,18 +790,27 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
     setShowMintPrompt(false);
     setJustPostedId(null);
     setIsPosting(false);
+    setTicker('');
+    setSelfBuyUsd('');
     router.push('/profile');
   };
 
+  // Phase 1: create the post's COIN (createCoin), Scope as platformReferrer.
+  // The post is ALREADY persisted (handlePost) — a coin failure can never lose
+  // it. The coin step is post-hoc + isolated; on failure we set 'coin-failed'
+  // (loud inline) and still complete the flow, leaving the post coin-pending
+  // (no coin_address) and retryable.
   const handleDoMint = async () => {
     if (!pendingMintData) return;
+    const sym = normalizeTicker(ticker);
+    if (!isValidTicker(sym)) { setTicker(sym); return; } // backstop; MintPromptSheet gates the button
     setShowMintPrompt(false);
     setStep('posting');
     setMintStatus('minting');
     try {
       const embeddedWallet = wallets.find(w => w.walletClientType === 'privy');
       if (!embeddedWallet) throw new Error('No embedded wallet found');
-      console.log('[mint] Switching to Base...');
+      console.log('[coin] Switching to Base...');
       await embeddedWallet.switchChain(base.id);
       const provider = await embeddedWallet.getEthereumProvider();
       const walletClient = createWalletClient({
@@ -781,27 +818,46 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
         chain: base,
         transport: custom(provider),
       });
-      console.log('[mint] Minting post:', pendingMintData.postId);
-      const { contractAddress, hash } = await mintNewPost({
+      console.log('[coin] Creating coin for post:', pendingMintData.postId, 'ticker:', sym);
+      const { coinAddress, hash, currency } = await createScopeCoin({
         walletClient,
         creatorAddress: embeddedWallet.address,
-        postMetadata: {
+        post: {
+          id: pendingMintData.postId,
+          userId: pendingMintData.userId,
           name: pendingMintData.postCaption || 'Scope Post',
-          description: pendingMintData.postCaption,
-          image: pendingMintData.mediaUrls[0],
+          description: pendingMintData.postCaption || '',
+          symbol: sym,
+          image: pendingMintData.image,
+          animationUrl: pendingMintData.animationUrl,
+          mimeType: pendingMintData.mediaType === 'video' ? 'video/mp4' : undefined,
         },
       });
-      console.log('[mint] Success — contract:', contractAddress, 'hash:', hash);
-      await updatePostMintData(pendingMintData.postId, {
-        contract_address: contractAddress as string,
-        token_id: '1',
-        tx_hash: hash as string,
-        is_minted: true,
+      // Reconciliation breadcrumb BEFORE the canonical write (amendment C).
+      await updatePostCoinTxHash(pendingMintData.postId, hash).catch(() => {});
+      await updatePostCoinData(pendingMintData.postId, {
+        coin_address: coinAddress,
+        ticker: sym,
+        coin_tx_hash: hash,
+        coin_currency: currency,
       });
+      console.log('[coin] Success — coin:', coinAddress, 'tx:', hash);
       setMintStatus('minted');
-    } catch (mintError) {
-      console.error('[mint] Failed:', mintError);
-      setMintStatus('mint-failed');
+
+      // Optional "Back your post" self-buy — ISOLATED post-create trade. A
+      // failure must NOT fail the coin (the coin already exists).
+      const buyUsd = parseFloat(selfBuyUsd);
+      if (isFinite(buyUsd) && buyUsd > 0) {
+        try {
+          await backOwnCoin({ walletClient, creatorAddress: embeddedWallet.address, coinAddress, usdAmount: buyUsd });
+          console.log('[coin] self-buy complete:', buyUsd);
+        } catch (buyErr) {
+          console.error('[coin] self-buy failed (coin still created):', buyErr);
+        }
+      }
+    } catch (coinError) {
+      console.error('[coin] createScopeCoin failed:', coinError);
+      setMintStatus('coin-failed');
     }
     setTimeout(() => completeFlow(), 2200);
   };
@@ -836,18 +892,18 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
           <>
             <FrameLoader />
             <p style={{ ...SKB, fontSize: 10, color: 'white', textAlign: 'center', lineHeight: 1.6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-              Your post is being minted on Base...
+              Creating your coin on Base...
             </p>
           </>
         )}
         {mintStatus === 'minted' && (
           <p style={{ ...SKB, fontSize: 10, color: 'white', textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-            Posted &amp; minted ✓
+            Posted &amp; coined ✓
           </p>
         )}
-        {mintStatus === 'mint-failed' && (
-          <p style={{ ...SKB, fontSize: 10, color: 'rgba(255,255,255,0.6)', textAlign: 'center', lineHeight: 1.6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-            Posted (mint failed — retry later)
+        {(mintStatus === 'coin-failed' || mintStatus === 'mint-failed') && (
+          <p style={{ ...SKB, fontSize: 10, color: '#FF0000', textAlign: 'center', lineHeight: 1.6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+            Posted — coin not created. You can create it later from your profile.
           </p>
         )}
       </div>
@@ -1253,6 +1309,10 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
         visible={showMintPrompt}
         onMint={handleDoMint}
         onSkip={handleSkipMint}
+        ticker={ticker}
+        onTickerChange={(v) => setTicker(normalizeTicker(v))}
+        selfBuyUsd={selfBuyUsd}
+        onSelfBuyChange={setSelfBuyUsd}
       />
       {isPosting && !showMintPrompt && (
         <div style={{

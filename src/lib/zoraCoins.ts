@@ -1,0 +1,230 @@
+// ── Zora Coins — Phase 1 mint path (1155 → createCoin) ───────────────────────
+//
+// New posts mint as a Zora COIN (createCoin) with Scope set as platformReferrer.
+// Conforms to Scope_Economy.docx §9 + docs/economy/Phase1_Coin_Migration_Proposal.md.
+// The legacy 1155 path (src/lib/zora.ts mintNewPost) stays intact but dormant —
+// the rollback lifeboat. Do not delete it.
+//
+// Pinned to @zoralabs/coins-sdk@0.6.0 (CreateCoinArgs: creator, name, symbol,
+// metadata{type:'RAW_URI',uri}, currency, chainId, startingMarketCap,
+// platformReferrer, payoutRecipientOverride). NOTE: 0.6.0 has NO initialPurchase
+// param — the creator self-buy is a SEPARATE post-create tradeCoin (backOwnCoin).
+
+import {
+  createCoin,
+  tradeCoin,
+  getCoinCreateFromLogs,
+  CreateConstants,
+  type ContentCoinCurrency,
+} from "@zoralabs/coins-sdk";
+import { createPublicClient, http, getAddress, parseEther } from "viem";
+import { base } from "viem/chains";
+import { supabase } from "@/lib/supabase/client";
+import { getLiveEthPrice } from "@/lib/coingecko";
+
+export const publicClient = createPublicClient({
+  chain: base,
+  transport: http(
+    process.env.NEXT_PUBLIC_ALCHEMY_BASE_URL || "https://mainnet.base.org"
+  ),
+});
+
+// ── Platform referrer hard-guard ──────────────────────────────────────────────
+//
+// ARCHITECTURE: this address receives Zora's protocol-level platform referral —
+// 0.2% of volume on every trade of every Scope-minted coin, forever, paid by
+// Zora's contracts automatically. It is PERMANENT per coin (immutable for the
+// coin's life) and deliberately SEPARATE from the Scope treasury
+// (0xEEb0…C1c5, which receives Pro payments today + Phase 1.5 router fees later).
+// Receiving-only; swept manually.
+//
+// HARD-GUARD: a coin must NEVER be created without this exact, valid referrer.
+// getAddress() throws on a missing/malformed/bad-checksum value, so a
+// misconfigured environment fails loudly instead of minting un-referred coins.
+export function getScopePlatformReferrer(): `0x${string}` {
+  const raw = process.env.NEXT_PUBLIC_SCOPE_PLATFORM_REFERRER;
+  if (!raw || !raw.trim()) {
+    throw new Error(
+      "[zoraCoins] NEXT_PUBLIC_SCOPE_PLATFORM_REFERRER is not set — refusing to create an un-referred coin."
+    );
+  }
+  return getAddress(raw.trim()); // throws on invalid checksum/format
+}
+
+// Pool base currency. Ratified ETH; env-overridable to ZORA without a code
+// change if the live factory requires content coins to pair against ZORA (the
+// rollout §1 burner-create check decides). Stored on the post for audit.
+export function getCoinCurrency(): ContentCoinCurrency {
+  const v = (process.env.NEXT_PUBLIC_SCOPE_COIN_CURRENCY || "ETH").toUpperCase();
+  return (v === "ZORA" ? "ZORA" : "ETH") as ContentCoinCurrency;
+}
+
+// ── Coin metadata (image = the GRADED media) ──────────────────────────────────
+//
+// image = poster_url (video hero frame) for video, the baked/edited image for
+// photos — never the raw upload. JSON uploaded to the existing post-media bucket;
+// its public https URL is the RAW_URI passed to createCoin.
+async function uploadCoinMetadata(args: {
+  userId: string;
+  postId: string;
+  name: string;
+  description: string;
+  image: string;          // graded media URL
+  animationUrl?: string | null; // baked video clip, if any
+  mimeType?: string;
+}): Promise<string> {
+  const metadata: Record<string, unknown> = {
+    name: args.name,
+    description: args.description ?? "",
+    image: args.image,
+  };
+  if (args.animationUrl) {
+    metadata.animation_url = args.animationUrl;
+    metadata.content = { mime: args.mimeType || "video/mp4", uri: args.animationUrl };
+  }
+
+  const blob = new Blob([JSON.stringify(metadata)], { type: "application/json" });
+  const path = `coin-metadata/${args.userId}/${args.postId}.json`;
+  const { error } = await supabase.storage
+    .from("post-media")
+    .upload(path, blob, { cacheControl: "3600", upsert: true, contentType: "application/json" });
+  if (error) throw error;
+
+  const { data } = supabase.storage.from("post-media").getPublicUrl(path);
+  return data.publicUrl;
+}
+
+export interface CreateScopeCoinResult {
+  coinAddress: `0x${string}`;
+  hash: `0x${string}`;
+  currency: ContentCoinCurrency;
+  metadataUri: string;
+}
+
+// ── Create the post's coin ────────────────────────────────────────────────────
+export async function createScopeCoin({
+  walletClient,
+  creatorAddress,
+  post,
+}: {
+  walletClient: any;
+  creatorAddress: string;
+  post: {
+    id: string;
+    userId: string;
+    name: string;
+    description: string;
+    symbol: string;        // ticker
+    image: string;         // GRADED media URL
+    animationUrl?: string | null;
+    mimeType?: string;
+  };
+}): Promise<CreateScopeCoinResult> {
+  // Guard FIRST — never reach createCoin without a valid referrer.
+  const platformReferrer = getScopePlatformReferrer();
+  const creator = getAddress(creatorAddress);
+  const currency = getCoinCurrency();
+
+  const metadataUri = await uploadCoinMetadata({
+    userId: post.userId,
+    postId: post.id,
+    name: post.name,
+    description: post.description,
+    image: post.image,
+    animationUrl: post.animationUrl,
+    mimeType: post.mimeType,
+  });
+
+  console.log("[zoraCoins] createScopeCoin — creator:", creator, "symbol:", post.symbol, "currency:", currency);
+
+  const { hash, address, deployment } = await createCoin({
+    call: {
+      creator,
+      name: post.name,
+      symbol: post.symbol,
+      metadata: { type: "RAW_URI", uri: metadataUri },
+      currency,
+      chainId: base.id,
+      startingMarketCap: CreateConstants.StartingMarketCaps.LOW, // ratified LOW — early-collector upside
+      platformReferrer,
+      payoutRecipientOverride: creator, // creator receives native 0.5% + 1% allocation
+    },
+    walletClient,
+    publicClient: publicClient as any,
+  });
+
+  const coinAddress = (address ?? deployment?.coin) as `0x${string}` | undefined;
+  if (!coinAddress) {
+    // The tx may have landed without a parseable address — surface for the
+    // reconciliation path (the caller persisted coin_tx_hash already).
+    throw new Error("[zoraCoins] createCoin returned no coin address (tx: " + hash + ")");
+  }
+
+  console.log("[zoraCoins] createScopeCoin — coin:", coinAddress, "tx:", hash);
+  return { coinAddress, hash, currency, metadataUri };
+}
+
+// ── Reconciliation (retry detection) ──────────────────────────────────────────
+//
+// Given a persisted createCoin tx hash, detect whether the coin actually landed
+// on-chain (the post-mining DB write may have failed). Returns the coin address
+// if found, so the retry path can BACK-FILL instead of re-creating (proposal
+// §5.5 / amendment C). The unique index on coin_address is the backstop.
+export async function reconcileCoinFromTx(
+  txHash: string
+): Promise<`0x${string}` | null> {
+  try {
+    const receipt = await publicClient.getTransactionReceipt({ hash: txHash as `0x${string}` });
+    if (!receipt || receipt.status !== "success") return null;
+    const deployment = getCoinCreateFromLogs(receipt as any);
+    return ((deployment as any)?.coin ?? null) as `0x${string}` | null;
+  } catch {
+    return null; // tx not found / not mined → safe to (re)create
+  }
+}
+
+// ── Creator self-buy ("Back your post") ───────────────────────────────────────
+//
+// Ratified mechanism: a SEPARATE post-create trade (0.6.0 createCoin has no
+// initialPurchase). Dollar-led: $ → ETH via the live rate → tradeCoin ETH→coin
+// from the creator's own wallet, at the curve price, paying like anyone (§5).
+// ISOLATED: a self-buy failure must NOT fail the coin creation — the caller
+// runs this best-effort after the coin confirms.
+export async function backOwnCoin({
+  walletClient,
+  creatorAddress,
+  coinAddress,
+  usdAmount,
+  slippage = 0.05,
+}: {
+  walletClient: any;
+  creatorAddress: string;
+  coinAddress: string;
+  usdAmount: number;
+  slippage?: number;
+}): Promise<{ hash: `0x${string}` }> {
+  const ethUsd = await getLiveEthPrice();
+  const ethAmount = usdAmount / ethUsd;
+  const amountIn = parseEther(ethAmount.toFixed(18));
+  const sender = getAddress(creatorAddress);
+
+  console.log("[zoraCoins] backOwnCoin — $", usdAmount, "≈", ethAmount, "ETH into", coinAddress);
+
+  const res: any = await tradeCoin({
+    tradeParameters: {
+      sell: { type: "eth" },
+      buy: { type: "erc20", address: getAddress(coinAddress) },
+      amountIn,
+      slippage,
+      sender,
+      recipient: sender,
+    },
+    walletClient,
+    publicClient: publicClient as any,
+    account: sender,
+  });
+
+  const hash = (res?.hash ?? res) as `0x${string}`;
+  console.log("[zoraCoins] backOwnCoin — tx:", hash);
+  return { hash };
+}

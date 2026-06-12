@@ -1,0 +1,413 @@
+'use client';
+// ── CollectSheetV2 (Economy UI brief Part 2.4 + spend-first correction) ───────
+//
+// Dev-flag-gated preview of the economy collect sheet. Reads ONLY through the
+// EconomyProvider boundary (useEconomy) — never the chain directly.
+//
+// COINS MODEL (replaces the 1155 quantity multiplier, which dies with the
+// migration):
+//  • BUY = dollar-led. Large $ input + quick chips + custom; live "≈ N PIECES"
+//    receipt from the pool quote; USDC | ETH payment selector; FUND WALLET.
+//  • SELL = position-led. Pieces held; sell by pieces or % chips; $ proceeds
+//    preview; FIRST CUT guard — selling below the founding amount permanently
+//    ends the founding position (confirm step).
+//  • Dollars lead everywhere; ETH is secondary detail, never the headline.
+//  • Keeps the FIRST CUT provenance row + slot list + urgency line.
+//
+// Rendered in place of the real CollectSheet only when economyPreviewEnabled().
+
+import { useEffect, useState } from 'react';
+import { useEconomy } from '@/components/EconomyProvider';
+import type { PostMarket, BuyQuote, SellQuote, TradeCurrency } from '@/lib/economy/types';
+import ApertureMark from '@/components/economy/ApertureMark';
+
+const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
+const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
+
+const usd = (n: number) => (n >= 1000 ? `$${Math.round(n).toLocaleString()}` : `$${n.toFixed(2)}`);
+const eth = (n: number) => `${n.toFixed(n < 0.1 ? 5 : 4)} ETH`;
+const BASE_PER_PIECE = 100_000; // 1 piece = 100,000 base tokens (display detail)
+
+interface Props {
+  post: { id: string; username: string; caption?: string; media_urls: string[] };
+  visible: boolean;
+  onClose: () => void;
+}
+
+const BUY_CHIPS = [1, 5, 25, 100];
+const SELL_PCTS = [25, 50, 100];
+
+export default function CollectSheetV2({ post, visible, onClose }: Props) {
+  const economy = useEconomy();
+  const [market, setMarket] = useState<PostMarket | null>(null);
+  const [mode, setMode] = useState<'buy' | 'sell'>('buy');
+  const [showSlots, setShowSlots] = useState(false);
+
+  // BUY state
+  const [buyUsd, setBuyUsd] = useState('');
+  const [buyCurrency, setBuyCurrency] = useState<TradeCurrency>('USDC');
+  const [buyQuote, setBuyQuote] = useState<BuyQuote | null>(null);
+
+  // SELL state
+  const [sellPieces, setSellPieces] = useState(0);
+  const [sellQuote, setSellQuote] = useState<SellQuote | null>(null);
+  const [confirmEndFirstCut, setConfirmEndFirstCut] = useState(false);
+
+  const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState<string | null>(null);
+
+  const refresh = () => economy.getPostMarket(post.id).then(setMarket).catch(() => {});
+
+  useEffect(() => {
+    if (!visible) {
+      setShowSlots(false); setDone(null); setMode('buy');
+      setBuyUsd(''); setBuyQuote(null); setSellPieces(0); setSellQuote(null);
+      setConfirmEndFirstCut(false);
+      return;
+    }
+    let cancelled = false;
+    economy.getPostMarket(post.id).then((m) => { if (!cancelled) setMarket(m); }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [visible, post.id, economy]);
+
+  // Live BUY quote.
+  useEffect(() => {
+    const v = parseFloat(buyUsd);
+    if (!isFinite(v) || v <= 0) { setBuyQuote(null); return; }
+    let cancelled = false;
+    economy.quoteBuy(post.id, v).then((q) => { if (!cancelled) setBuyQuote(q); }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [buyUsd, post.id, economy]);
+
+  // Live SELL quote.
+  useEffect(() => {
+    if (sellPieces <= 0) { setSellQuote(null); return; }
+    let cancelled = false;
+    economy.quoteSell(post.id, sellPieces).then((q) => { if (!cancelled) setSellQuote(q); }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [sellPieces, post.id, economy]);
+
+  const held = market?.collectedByViewer ?? 0;
+  const foundingAmount = market?.foundingAmount ?? 0;
+  const viewerFounding = market?.viewerFounding ?? false;
+  // Would this sale drop the holder below their founding position?
+  const sellEndsFirstCut = viewerFounding && held - sellPieces < foundingAmount && sellPieces > 0;
+
+  const doBuy = async () => {
+    const v = parseFloat(buyUsd);
+    if (!isFinite(v) || v <= 0) return;
+    setBusy(true);
+    try {
+      const r = await economy.buy(post.id, v, buyCurrency);
+      if (r.ok) { setDone(`BOUGHT ${r.pieces} ${r.pieces === 1 ? 'PIECE' : 'PIECES'} (MOCK)`); refresh(); }
+    } finally { setBusy(false); }
+  };
+
+  const doSell = async () => {
+    if (sellPieces <= 0) return;
+    if (sellEndsFirstCut && !confirmEndFirstCut) { setConfirmEndFirstCut(true); return; }
+    setBusy(true);
+    try {
+      const r = await economy.sell(post.id, sellPieces);
+      if (r.ok) { setDone(`SOLD ${r.pieces} ${r.pieces === 1 ? 'PIECE' : 'PIECES'} (MOCK)`); setConfirmEndFirstCut(false); setSellPieces(0); refresh(); }
+    } finally { setBusy(false); }
+  };
+
+  const fc = market?.firstCut;
+  const filled = fc?.slots ?? [];
+  const holdingCount = filled.filter((s) => s.holding).length;
+  const openCount = fc?.openCount ?? 0;
+
+  const tabStyle = (active: boolean): React.CSSProperties => ({
+    ...SKB, flex: 1, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase',
+    padding: '10px 0', textAlign: 'center', cursor: 'pointer',
+    color: active ? '#FFF' : 'rgba(255,255,255,0.4)',
+    borderBottom: active ? '1px solid #FF0000' : '1px solid rgba(255,255,255,0.1)',
+    background: 'transparent', border: 'none',
+  });
+
+  return (
+    <>
+      <div
+        onClick={onClose}
+        style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 500,
+          opacity: visible ? 1 : 0, pointerEvents: visible ? 'auto' : 'none',
+          transition: 'opacity 0.3s ease',
+        }}
+      />
+      <div style={{
+        position: 'fixed', bottom: 0, left: 0, right: 0, margin: '0 auto', maxWidth: 375,
+        background: '#080808', borderTop: '1px solid rgba(255,255,255,0.08)', zIndex: 501,
+        transform: visible ? 'translateY(0)' : 'translateY(100%)',
+        transition: 'transform 0.4s cubic-bezier(0.32,0.72,0,1)',
+        padding: '24px 22px 40px', maxHeight: '90vh', overflowY: 'auto',
+      }}>
+        <div style={{ ...SKB, fontSize: 7, letterSpacing: '0.2em', color: '#FF0000', textTransform: 'uppercase', marginBottom: 14 }}>
+          ECONOMY PREVIEW · MOCK DATA
+        </div>
+
+        {/* Post head */}
+        <div style={{ display: 'flex', gap: 12, marginBottom: 18 }}>
+          {post.media_urls?.[0] && (
+            <img src={post.media_urls[0]} alt="" style={{ width: 56, height: 56, objectFit: 'cover', flexShrink: 0, background: '#111' }} />
+          )}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ ...SKB, fontSize: 11, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.02em', margin: '0 0 3px' }}>@{post.username}</p>
+            <p style={{ ...SKR, fontSize: 10, color: 'rgba(255,255,255,0.5)', margin: 0, lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{post.caption || ''}</p>
+          </div>
+        </div>
+
+        {/* Price + MC in dollars, pieces framing */}
+        <div style={{ display: 'flex', gap: 1, marginBottom: 18, background: 'rgba(255,255,255,0.08)' }}>
+          {[
+            { k: 'PRICE / PIECE', v: market ? usd(market.priceUsd) : '—' },
+            { k: 'MARKET CAP', v: market ? usd(market.mcUsd) : '—' },
+            { k: 'PIECES', v: market ? market.supply.toLocaleString() : '10,000' },
+          ].map((c) => (
+            <div key={c.k} style={{ flex: 1, background: '#080808', padding: '12px 10px' }}>
+              <p style={{ ...SKB, fontSize: 6.5, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.14em', margin: '0 0 5px' }}>{c.k}</p>
+              <p style={{ ...SKB, fontSize: 13, color: '#FFF', margin: 0, fontVariantNumeric: 'tabular-nums' }}>{c.v}</p>
+            </div>
+          ))}
+        </div>
+
+        {done ? (
+          <div style={{ border: '1px solid rgba(255,255,255,0.12)', padding: '18px 14px', textAlign: 'center', marginBottom: 18 }}>
+            <p style={{ ...SKB, fontSize: 12, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>{done}</p>
+            <p style={{ ...SKR, fontSize: 8, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '8px 0 0' }}>PREVIEW ONLY · NO REAL TRANSACTION</p>
+          </div>
+        ) : (
+          <>
+            {/* BUY / SELL tabs */}
+            <div style={{ display: 'flex', marginBottom: 18 }}>
+              <button style={tabStyle(mode === 'buy')} onClick={() => setMode('buy')}>BUY</button>
+              <button style={tabStyle(mode === 'sell')} onClick={() => setMode('sell')}>SELL</button>
+            </div>
+
+            {mode === 'buy' ? (
+              /* ── BUY — dollar-led ── */
+              <>
+                {/* Large amount input */}
+                <div style={{ display: 'flex', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.15)', paddingBottom: 8, marginBottom: 12 }}>
+                  <span style={{ ...SKB, fontSize: 34, color: buyUsd ? '#FFF' : 'rgba(255,255,255,0.25)' }}>$</span>
+                  <input
+                    inputMode="decimal"
+                    placeholder="0"
+                    value={buyUsd}
+                    onChange={(e) => setBuyUsd(e.target.value.replace(/[^0-9.]/g, ''))}
+                    style={{ ...SKB, fontSize: 34, color: '#FFF', background: 'transparent', border: 'none', outline: 'none', width: '100%', padding: 0, fontVariantNumeric: 'tabular-nums' }}
+                  />
+                </div>
+
+                {/* Quick chips + custom (the input itself is the custom entry) */}
+                <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
+                  {BUY_CHIPS.map((c) => (
+                    <button
+                      key={c}
+                      onClick={() => setBuyUsd(String(c))}
+                      style={{ ...SKB, flex: 1, fontSize: 11, color: '#FFF', background: 'transparent', border: '1px solid rgba(255,255,255,0.18)', padding: '8px 0', cursor: 'pointer' }}
+                    >
+                      ${c}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Live receipt — pieces lead, ETH/USDC secondary */}
+                <div style={{ border: '1px solid rgba(255,255,255,0.1)', padding: '12px 12px', marginBottom: 14 }}>
+                  <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+                    <span style={{ ...SKR, fontSize: 9, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>YOU RECEIVE</span>
+                    <span style={{ ...SKB, fontSize: 18, color: '#FFF', fontVariantNumeric: 'tabular-nums' }}>
+                      ≈ {buyQuote ? buyQuote.pieces.toLocaleString() : 0} {buyQuote && buyQuote.pieces === 1 ? 'PIECE' : 'PIECES'}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginTop: 6 }}>
+                    <span style={{ ...SKR, fontSize: 8, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>1 PIECE = {BASE_PER_PIECE.toLocaleString()} TOKENS</span>
+                    <span style={{ ...SKR, fontSize: 9, color: 'rgba(255,255,255,0.4)' }}>
+                      {buyCurrency === 'ETH' ? (buyQuote ? `≈ ${eth(buyQuote.ethAmount)}` : '') : (buyQuote ? `≈ ${buyQuote.usdAmount.toFixed(2)} USDC` : '')}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Currency selector (payment side) */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+                  <span style={{ ...SKR, fontSize: 9, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>PAY WITH</span>
+                  <div style={{ display: 'flex', gap: 1, background: 'rgba(255,255,255,0.12)' }}>
+                    {(['USDC', 'ETH'] as TradeCurrency[]).map((c) => (
+                      <button
+                        key={c}
+                        onClick={() => setBuyCurrency(c)}
+                        style={{ ...SKB, fontSize: 10, letterSpacing: '0.08em', padding: '6px 14px', cursor: 'pointer', border: 'none', color: buyCurrency === c ? '#000' : '#FFF', background: buyCurrency === c ? '#FFF' : '#080808' }}
+                      >
+                        {c}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <button
+                  onClick={doBuy}
+                  disabled={busy || !buyQuote}
+                  style={{ width: '100%', background: !buyQuote ? 'rgba(255,0,0,0.4)' : '#FF0000', border: 'none', cursor: busy || !buyQuote ? 'default' : 'pointer', padding: '14px 0', marginBottom: 8 }}
+                >
+                  <span style={{ ...SKB, fontSize: 12, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                    {busy ? 'BUYING…' : buyQuote ? `BUY · ${usd(buyQuote.usdAmount)}` : 'ENTER AN AMOUNT'}
+                  </span>
+                </button>
+                <button
+                  onClick={() => { /* Coinbase Onramp wired later */ }}
+                  style={{ width: '100%', background: 'transparent', border: '1px solid rgba(255,255,255,0.15)', cursor: 'pointer', padding: '11px 0' }}
+                >
+                  <span style={{ ...SKB, fontSize: 10, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>FUND WALLET</span>
+                </button>
+              </>
+            ) : (
+              /* ── SELL — position-led ── */
+              <>
+                <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 12 }}>
+                  <span style={{ ...SKR, fontSize: 9, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>YOU HOLD</span>
+                  <span style={{ ...SKB, fontSize: 18, color: '#FFF', fontVariantNumeric: 'tabular-nums' }}>{held.toLocaleString()} {held === 1 ? 'PIECE' : 'PIECES'}</span>
+                </div>
+
+                {held <= 0 ? (
+                  <p style={{ ...SKR, fontSize: 11, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.06em', padding: '16px 0' }}>
+                    NOTHING TO SELL ON THIS POST.
+                  </p>
+                ) : (
+                  <>
+                    {/* pieces input */}
+                    <div style={{ display: 'flex', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.15)', paddingBottom: 8, marginBottom: 12 }}>
+                      <input
+                        inputMode="numeric"
+                        placeholder="0"
+                        value={sellPieces || ''}
+                        onChange={(e) => { setConfirmEndFirstCut(false); setSellPieces(Math.min(held, Math.max(0, parseInt(e.target.value.replace(/[^0-9]/g, '') || '0', 10)))); }}
+                        style={{ ...SKB, fontSize: 30, color: '#FFF', background: 'transparent', border: 'none', outline: 'none', width: '100%', padding: 0, fontVariantNumeric: 'tabular-nums' }}
+                      />
+                      <span style={{ ...SKB, fontSize: 11, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em', whiteSpace: 'nowrap' }}>PIECES</span>
+                    </div>
+
+                    {/* % chips + custom (the input is custom entry) */}
+                    <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
+                      {SELL_PCTS.map((p) => (
+                        <button
+                          key={p}
+                          onClick={() => { setConfirmEndFirstCut(false); setSellPieces(Math.max(1, Math.round((held * p) / 100))); }}
+                          style={{ ...SKB, flex: 1, fontSize: 11, color: '#FFF', background: 'transparent', border: '1px solid rgba(255,255,255,0.18)', padding: '8px 0', cursor: 'pointer' }}
+                        >
+                          {p}%
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* $ proceeds preview */}
+                    <div style={{ border: '1px solid rgba(255,255,255,0.1)', padding: '12px 12px', marginBottom: 14, display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+                      <span style={{ ...SKR, fontSize: 9, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>YOU GET</span>
+                      <span style={{ ...SKB, fontSize: 18, color: '#FFF', fontVariantNumeric: 'tabular-nums' }}>
+                        ≈ {sellQuote ? usd(sellQuote.usdAmount) : '$0.00'}
+                        <span style={{ ...SKR, fontSize: 9, color: 'rgba(255,255,255,0.4)', marginLeft: 6 }}>{sellQuote ? `(${eth(sellQuote.ethAmount)})` : ''}</span>
+                      </span>
+                    </div>
+
+                    {/* FIRST CUT guard */}
+                    {sellEndsFirstCut && (
+                      <div style={{ border: '1px solid #FF0000', padding: '12px 12px', marginBottom: 14, display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                        <ApertureMark size={12} />
+                        <p style={{ ...SKR, fontSize: 10, color: '#FFF', lineHeight: 1.4, margin: 0 }}>
+                          This sale ends your First Cut on this post — <span style={{ color: '#FF0000', ...SKB }}>permanently.</span>
+                        </p>
+                      </div>
+                    )}
+
+                    <button
+                      onClick={doSell}
+                      disabled={busy || sellPieces <= 0}
+                      style={{ width: '100%', background: sellPieces <= 0 ? 'rgba(255,255,255,0.08)' : (sellEndsFirstCut && confirmEndFirstCut ? '#FF0000' : 'transparent'), border: sellPieces <= 0 ? 'none' : '1px solid #FF0000', cursor: busy || sellPieces <= 0 ? 'default' : 'pointer', padding: '14px 0' }}
+                    >
+                      <span style={{ ...SKB, fontSize: 12, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                        {busy ? 'SELLING…'
+                          : sellPieces <= 0 ? 'ENTER PIECES'
+                          : sellEndsFirstCut && !confirmEndFirstCut ? 'SELL — END FIRST CUT'
+                          : sellEndsFirstCut && confirmEndFirstCut ? 'CONFIRM — END FIRST CUT'
+                          : `SELL${sellQuote ? ` · ${usd(sellQuote.usdAmount)}` : ''}`}
+                      </span>
+                    </button>
+                  </>
+                )}
+              </>
+            )}
+          </>
+        )}
+
+        {/* ── FIRST CUT provenance row ──
+            ] • [ · FIRST CUT · 10 mini-avatars (18px, -7 overlap, departed 30%)
+            · count (or "N OF 10 SLOTS OPEN" when slots remain) · › chevron. */}
+        <div
+          onClick={() => setShowSlots((v) => !v)}
+          style={{ border: '1px solid rgba(255,255,255,0.1)', padding: '12px 12px', marginTop: 18, cursor: 'pointer' }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+            <ApertureMark size={12} />
+            <span style={{ ...SKB, fontSize: 9, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.12em' }}>FIRST CUT</span>
+            <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6 }}>
+              {openCount > 0 ? (
+                <span style={{ ...SKB, fontSize: 8, color: '#FF0000', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{openCount} OF 10 SLOTS OPEN</span>
+              ) : (
+                <span style={{ ...SKR, fontSize: 8, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{holdingCount} HOLDING</span>
+              )}
+              <span style={{ ...SKB, fontSize: 11, color: 'rgba(255,255,255,0.5)', lineHeight: 1, transform: showSlots ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s ease' }}>›</span>
+            </span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            {Array.from({ length: 10 }).map((_, i) => {
+              const slot = filled.find((s) => s.position === i + 1);
+              return (
+                <div key={i} style={{ marginLeft: i === 0 ? 0 : -7 }}>
+                  {slot && slot.avatarUrl ? (
+                    <img src={slot.avatarUrl} alt={slot.handle} style={{ width: 18, height: 18, borderRadius: '50%', border: '1px solid #080808', display: 'block', opacity: slot.holding ? 1 : 0.3, filter: slot.holding ? 'none' : 'grayscale(1)' }} />
+                  ) : (
+                    <div style={{ width: 18, height: 18, borderRadius: '50%', border: '1px dashed rgba(255,255,255,0.25)', background: 'transparent' }} />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {showSlots && (
+            <div style={{ marginTop: 12, borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                <ApertureMark size={11} />
+                <span style={{ ...SKB, fontSize: 9, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.12em' }}>FIRST CUT</span>
+                <span style={{ ...SKB, fontSize: 9, color: 'rgba(255,255,255,0.4)', marginLeft: 'auto', textTransform: 'uppercase', letterSpacing: '0.08em' }}>THE FIRST 10 · PERMANENT</span>
+              </div>
+              {Array.from({ length: 10 }).map((_, idx) => {
+                const pos = idx + 1;
+                const slot = filled.find((s) => s.position === pos);
+                const isOpen = !slot;
+                const lit = slot?.holding;
+                return (
+                  <div key={pos} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 0', opacity: !isOpen && !lit ? 0.38 : 1 }}>
+                    <span style={{ ...SKB, fontSize: 10, width: 18, color: lit ? '#FF0000' : 'rgba(255,255,255,0.35)', fontVariantNumeric: 'tabular-nums' }}>{String(pos).padStart(2, '0')}</span>
+                    {isOpen ? (
+                      <span style={{ ...SKR, fontSize: 9, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>OPEN</span>
+                    ) : (
+                      <>
+                        {slot!.avatarUrl && <img src={slot!.avatarUrl} alt="" style={{ width: 24, height: 24, borderRadius: '50%' }} />}
+                        <span style={{ ...SKR, fontSize: 10, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.04em' }}>@{slot!.handle}</span>
+                        <span style={{ ...SKB, fontSize: 8, marginLeft: 'auto', color: lit ? '#FF0000' : 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>{lit ? 'HOLDING' : 'DEPARTED'}</span>
+                      </>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        <p style={{ ...SKR, fontSize: 8, color: 'rgba(255,255,255,0.25)', textAlign: 'center', margin: '14px 0 0', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+          PREVIEW ONLY · NO REAL TRANSACTION
+        </p>
+      </div>
+    </>
+  );
+}

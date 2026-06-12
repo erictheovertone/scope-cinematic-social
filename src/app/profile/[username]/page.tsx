@@ -19,6 +19,10 @@ import MediaRenderer from "@/components/MediaRenderer";
 import PostCell from "@/components/PostCell";
 import { getColCount } from "@/lib/aspectRatio";
 import FrameLoader from "@/components/FrameLoader";
+import BadgeStack from "@/components/BadgeStack";
+import { resolveBadges } from "@/lib/economy/badges";
+import { useEconomy } from "@/components/EconomyProvider";
+import { economyPreviewEnabled } from "@/lib/economy/flag";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -58,6 +62,18 @@ export default function PublicProfilePage() {
   const [isTopCollector, setIsTopCollector] = useState(false);
   const [isInHouseCreator, setIsInHouseCreator] = useState(false);
   const [isFoundingMember, setIsFoundingMember] = useState(false);
+  // First Cut coin for the VIEWED user's stack — boundary-only, preview-gated.
+  const economy = useEconomy();
+  const [firstCutCount, setFirstCutCount] = useState(0);
+  useEffect(() => {
+    const uid = profile?.user_id;
+    if (!economyPreviewEnabled() || !uid) { setFirstCutCount(0); return; }
+    let cancelled = false;
+    economy.getBadges(uid)
+      .then((b) => { if (!cancelled) setFirstCutCount(b.firstCutCount ?? 0); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [economy, profile?.user_id]);
   const [foundingMemberNumber, setFoundingMemberNumber] = useState<number | null>(null);
   const [paidMemberUntil, setPaidMemberUntil] = useState<Date | null>(null);
 
@@ -211,14 +227,12 @@ export default function PublicProfilePage() {
           {isTopCollector && !isFoundingMember && <div style={{ position: 'absolute', right: 0, top: 0, width: 1, height: '100%', backgroundColor: '#C9A84C', zIndex: 2 }} />}
           {isPaidMember && !isTopCollector && !isFoundingMember && <div style={{ position: 'absolute', right: 0, top: 0, width: 1, height: '100%', backgroundColor: '#FF0000', zIndex: 2 }} />}
           {isInHouseCreator && !isPaidMember && !isTopCollector && !isFoundingMember && <div style={{ position: 'absolute', right: 0, top: 0, width: 1, height: '100%', backgroundColor: 'rgba(255,255,255,0.4)', zIndex: 2 }} />}
-          {(() => {
-            let src = '/free-tier-aperture-logo-red.png'; let size = 20;
-            if (isFoundingMember) { src = '/augmented-member-founding-500-aperture.png'; size = 23.5; }
-            else if (isTopCollector) { src = '/top-1k-collector-aperture-gold.png'; size = 23; }
-            else if (isPaidMember) { src = '/scope-pro-icon-aperture.png'; size = 23; }
-            else if (isInHouseCreator) { src = '/in-house-creator-logo-grey.png'; size = 21; }
-            return <img src={src} alt="Badge" onClick={(e) => { e.stopPropagation(); setShowBadgeSheet(true); }} style={{ position: 'absolute', top: -10, left: -10, width: size, height: size, zIndex: 10, cursor: 'pointer', display: 'block', filter: 'drop-shadow(0 3px 6px rgba(0,0,0,0.85)) drop-shadow(0 1px 2px rgba(0,0,0,0.5))' }} />;
-          })()}
+          {/* Badge STACK — ≤50% pfp width, max 3 + overflow, rarity order, static. */}
+          <BadgeStack
+            pfpWidth={80}
+            badges={resolveBadges({ isFoundingMember, isTopCollector, isPaidMember, isInHouseCreator, firstCutCount })}
+            onPress={() => setShowBadgeSheet(true)}
+          />
         </div>
 
         {/* Name */}
@@ -470,6 +484,7 @@ export default function PublicProfilePage() {
         totalPosts={posts.length}
         collectors={0}
         portfolioMc={profile?.portfolio_mc || 0}
+        firstCutCount={firstCutCount}
       />
 
       <BadgeExplainerSheet

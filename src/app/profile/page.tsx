@@ -23,6 +23,11 @@ import { getColCount } from "@/lib/aspectRatio";
 import { getScopeLimitType } from "@/lib/limits";
 import { useUpsell } from "@/components/UpsellProvider";
 import FrameLoader from "@/components/FrameLoader";
+import BadgeStack from "@/components/BadgeStack";
+import { resolveBadges } from "@/lib/economy/badges";
+import { useEconomy } from "@/components/EconomyProvider";
+import { economyPreviewEnabled } from "@/lib/economy/flag";
+import CollectedPreview from "@/components/economy/CollectedPreview";
 
 function getGridCols(layoutId: string): string {
   if (layoutId.startsWith('2x-')) return 'grid-cols-2';
@@ -108,6 +113,19 @@ const userLayoutId = stableLayoutId;
   const [showMembershipSheet, setShowMembershipSheet] = useState(false);
   const [showA2HS, setShowA2HS] = useState(false);
   const [badgeJustUnlocked, setBadgeJustUnlocked] = useState(false);
+  // First Cut count drives the pfp stack's First Cut coin. Read ONLY through the
+  // economy boundary, and ONLY when the preview flag is on — so nothing implies
+  // founding positions that aren't real yet. Off-flag it stays 0 (coin absent).
+  const economy = useEconomy();
+  const [firstCutCount, setFirstCutCount] = useState(0);
+  useEffect(() => {
+    if (!economyPreviewEnabled() || !supabaseUserId) { setFirstCutCount(0); return; }
+    let cancelled = false;
+    economy.getBadges(supabaseUserId)
+      .then((b) => { if (!cancelled) setFirstCutCount(b.firstCutCount ?? 0); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [economy, supabaseUserId]);
   const [gridScrollY, setGridScrollY] = useState(0);
   const [headerSnapped, setHeaderSnapped] = useState(false);
   const [headerUnsnapping, setHeaderUnsnapping] = useState(false);
@@ -310,50 +328,27 @@ const userLayoutId = stableLayoutId;
           <div style={{ position: 'absolute', right: 0, top: 0, width: 1, height: '100%', backgroundColor: 'rgba(255,255,255,0.4)', zIndex: 2 }} />
         )}
 
-        {/* Badge — bleeds outside top-left corner of PFP */}
-        {(() => {
-          let src = '';
-          let size = 21;
-          if (isFoundingMember) { src = '/augmented-member-founding-500-aperture.png'; size = 23.5; }
-          else if (isTopCollector) { src = '/top-1k-collector-aperture-gold.png'; size = 23; }
-          else if (isPaidMember) { src = '/scope-pro-icon-aperture.png'; size = 23; }
-          else if (isInHouseCreator) { src = '/in-house-creator-logo-grey.png'; size = 21; }
-          else { src = '/free-tier-aperture-logo-red.png'; size = 21; }
-          return (
-            <>
-              <img
-                src={src}
-                alt="Badge"
-                onClick={(e) => { e.stopPropagation(); setShowBadgeSheet(true); }}
-                style={{
-                  position: 'absolute',
-                  top: -10,
-                  left: -10,
-                  width: size,
-                  height: size,
-                  zIndex: 10,
-                  cursor: 'pointer',
-                  display: 'block',
-                  filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.9)) drop-shadow(0 0 3px rgba(0,0,0,0.8))',
-                }}
-              />
-              {badgeJustUnlocked && (
-                <div style={{
-                  position: 'absolute',
-                  top: -10,
-                  left: -10,
-                  width: '140%',
-                  height: '140%',
-                  borderRadius: '50%',
-                  background: 'radial-gradient(circle, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.3) 30%, transparent 70%)',
-                  animation: 'badgeFlare 1.8s ease forwards',
-                  pointerEvents: 'none',
-                  zIndex: 11,
-                }} />
-              )}
-            </>
-          );
-        })()}
+        {/* Badge STACK — bleeds outside top-left corner of PFP (≤50% pfp width,
+            max 3 + overflow chip, rarity order, static at rest). */}
+        <BadgeStack
+          pfpWidth={80}
+          badges={resolveBadges({ isFoundingMember, isTopCollector, isPaidMember, isInHouseCreator, firstCutCount })}
+          onPress={() => setShowBadgeSheet(true)}
+        />
+        {badgeJustUnlocked && (
+          <div style={{
+            position: 'absolute',
+            top: -10,
+            left: -10,
+            width: '140%',
+            height: '140%',
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.3) 30%, transparent 70%)',
+            animation: 'badgeFlare 1.8s ease forwards',
+            pointerEvents: 'none',
+            zIndex: 11,
+          }} />
+        )}
       </div>
 
       {/* Name */}
@@ -507,9 +502,13 @@ const userLayoutId = stableLayoutId;
       </div>
 
       {activeTab === 'collected' && (
-        <div style={{ position: 'absolute', top: 140, left: 0, right: 0, bottom: 60, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 10, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', textAlign: 'center', letterSpacing: '0.05em' }}>NO COLLECTED POSTS YET</p>
-        </div>
+        economyPreviewEnabled() ? (
+          <CollectedPreview />
+        ) : (
+          <div style={{ position: 'absolute', top: 140, left: 0, right: 0, bottom: 60, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 10, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', textAlign: 'center', letterSpacing: '0.05em' }}>NO COLLECTED POSTS YET</p>
+          </div>
+        )
       )}
 
       {/* Posts grid — header space reserved by spacer in scroll content, not by moving the container. */}
@@ -823,6 +822,7 @@ const userLayoutId = stableLayoutId;
         totalPosts={analytics.totalPosts}
         collectors={analytics.collectors}
         portfolioMc={analytics.portfolioMc}
+        firstCutCount={firstCutCount}
       />
 
       <BadgeExplainerSheet

@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useWallets, useFundWallet } from "@privy-io/react-auth";
 import { createPublicClient, http, formatEther } from "viem";
 import { base } from "viem/chains";
+import { isValidTicker, tickerError } from "@/lib/economy/ticker";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -11,9 +12,14 @@ interface MintPromptSheetProps {
   visible: boolean;
   onMint: () => void;
   onSkip: () => void;
+  // Phase 1 coin params (entered on the mint step).
+  ticker: string;
+  onTickerChange: (v: string) => void;
+  selfBuyUsd: string;
+  onSelfBuyChange: (v: string) => void;
 }
 
-export default function MintPromptSheet({ visible, onMint, onSkip }: MintPromptSheetProps) {
+export default function MintPromptSheet({ visible, onMint, onSkip, ticker, onTickerChange, selfBuyUsd, onSelfBuyChange }: MintPromptSheetProps) {
   const [expanded, setExpanded] = useState(false);
   const [insufficientFunds, setInsufficientFunds] = useState(false);
   const [checkingBalance, setCheckingBalance] = useState(false);
@@ -153,30 +159,74 @@ export default function MintPromptSheet({ visible, onMint, onSkip }: MintPromptS
 
             <div style={{
               overflow: 'hidden',
-              maxHeight: expanded ? '200px' : '0px',
+              maxHeight: expanded ? '340px' : '0px',
               transition: 'max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
               marginBottom: expanded ? 20 : 0,
             }}>
+              {/* Canonical EARN copy — Scope_Economy.docx §7, verbatim. */}
               {[
-                { step: '01', text: 'Your post is minted as a token on Base — a real blockchain asset.' },
-                { step: '02', text: 'Anyone on Scope can collect your post by paying a small fee.' },
-                { step: '03', text: 'Every time someone collects or trades your post, you earn ETH directly to your Scope wallet.' },
-                { step: '04', text: 'You keep earning indefinitely. The token lives on Base forever.' },
-              ].map(({ step, text }) => (
-                <div key={step} style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
+                { step: '1', title: 'POST IT.', text: 'When you post, your work becomes a token — 10,000 pieces of something you made. You own it from the start.' },
+                { step: '2', title: 'PEOPLE COLLECT IT.', text: 'Anyone can buy pieces of your post. The more people want in, the more each piece is worth.' },
+                { step: '3', title: 'YOU EARN. EVERY TIME. FOREVER.', text: 'Every time anyone buys or sells a piece — today, next year, ten years from now — a small fee is taken, and a slice goes straight to your wallet. Not just the first sale. Every sale.' },
+              ].map(({ step, title, text }) => (
+                <div key={step} style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
                   <span style={{ ...SKB, fontSize: 8, color: '#FF0000', letterSpacing: '0.1em', flexShrink: 0, marginTop: 2 }}>{step}</span>
-                  <p style={{ ...SKR, fontSize: 11, color: 'rgba(255,255,255,0.55)', lineHeight: 1.5, margin: 0 }}>{text}</p>
+                  <div>
+                    <p style={{ ...SKB, fontSize: 11, color: 'white', textTransform: 'uppercase', letterSpacing: '0.04em', margin: '0 0 3px', lineHeight: 1.3 }}>{title}</p>
+                    <p style={{ ...SKR, fontSize: 11, color: 'rgba(255,255,255,0.55)', lineHeight: 1.5, margin: 0 }}>{text}</p>
+                  </div>
                 </div>
               ))}
             </div>
 
+            {/* Ticker — creator-assigned symbol, caption-derived suggestion. */}
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                <span style={{ ...SKB, fontSize: 9, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>TICKER</span>
+                <span style={{ ...SKR, fontSize: 8, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>3–6 · A–Z 0–9</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', border: '1px solid rgba(255,255,255,0.18)', padding: '0 12px' }}>
+                <span style={{ ...SKB, fontSize: 16, color: 'rgba(255,255,255,0.4)' }}>$</span>
+                <input
+                  value={ticker}
+                  onChange={(e) => onTickerChange(e.target.value)}
+                  placeholder="TICKER"
+                  maxLength={6}
+                  style={{ ...SKB, fontSize: 16, color: '#FFF', background: 'transparent', border: 'none', outline: 'none', width: '100%', padding: '11px 6px', letterSpacing: '0.08em', textTransform: 'uppercase' }}
+                />
+              </div>
+              {tickerError(ticker) && (
+                <p style={{ ...SKR, fontSize: 9, color: '#FF0000', margin: '6px 0 0', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{tickerError(ticker)}</p>
+              )}
+            </div>
+
+            {/* Optional "Back your post" — creator self-buy at the curve price. */}
+            <div style={{ marginBottom: 18 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                <span style={{ ...SKB, fontSize: 9, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>BACK YOUR POST <span style={{ color: 'rgba(255,255,255,0.3)' }}>· OPTIONAL</span></span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', border: '1px solid rgba(255,255,255,0.18)', padding: '0 12px' }}>
+                <span style={{ ...SKB, fontSize: 16, color: selfBuyUsd ? '#FFF' : 'rgba(255,255,255,0.3)' }}>$</span>
+                <input
+                  inputMode="decimal"
+                  value={selfBuyUsd}
+                  onChange={(e) => onSelfBuyChange(e.target.value.replace(/[^0-9.]/g, ''))}
+                  placeholder="0"
+                  style={{ ...SKB, fontSize: 16, color: '#FFF', background: 'transparent', border: 'none', outline: 'none', width: '100%', padding: '11px 6px' }}
+                />
+              </div>
+              <p style={{ ...SKR, fontSize: 8, color: 'rgba(255,255,255,0.3)', margin: '6px 0 0', lineHeight: 1.4 }}>
+                Buy some of your own post at launch — at the same price as everyone. Leave blank to skip.
+              </p>
+            </div>
+
             <button
               onClick={checkBalanceAndMint}
-              disabled={checkingBalance}
-              style={{ width: '100%', background: checkingBalance ? 'rgba(255,0,0,0.5)' : '#FF0000', border: 'none', cursor: checkingBalance ? 'default' : 'pointer', padding: '14px 0', marginBottom: 10 }}
+              disabled={checkingBalance || !isValidTicker(ticker)}
+              style={{ width: '100%', background: (checkingBalance || !isValidTicker(ticker)) ? 'rgba(255,0,0,0.4)' : '#FF0000', border: 'none', cursor: (checkingBalance || !isValidTicker(ticker)) ? 'default' : 'pointer', padding: '14px 0', marginBottom: 10 }}
             >
               <span style={{ ...SKB, fontSize: 12, color: 'white', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                {checkingBalance ? 'CHECKING BALANCE...' : 'MINT THIS POST · EARN ETH'}
+                {checkingBalance ? 'CHECKING BALANCE...' : !isValidTicker(ticker) ? 'ENTER A TICKER' : 'CREATE COIN · EARN FOREVER'}
               </span>
             </button>
             <button
