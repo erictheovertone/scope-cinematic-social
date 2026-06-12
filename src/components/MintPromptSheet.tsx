@@ -26,9 +26,19 @@ interface MintPromptSheetProps {
       transforms in place into its live narration (the wheel). */
   sequencePhase: 'idle' | 'minting' | 'minted' | 'mint-failed' | 'coin-failed';
   sequenceLine: string | null;
+  /** Honest sub-line when a slow leg hands off ("BACKING SETTLING…"). */
+  ceremonySub?: string | null;
+  /** The codification ceremony: brackets snap onto the media in the flow. */
+  codified?: boolean;
+  /** The post's GRADED media + its aspect — the codification target. */
+  mediaUrl?: string | null;
+  mediaAr?: string;
+  /** In-flow failure actions — the post is never hostage. */
+  onRetry: () => void;
+  onContinue: () => void;
 }
 
-export default function MintPromptSheet({ visible, onMint, onSkip, onCoinSkipped, ticker, onTickerChange, selfBuyUsd, onSelfBuyChange, sequencePhase, sequenceLine }: MintPromptSheetProps) {
+export default function MintPromptSheet({ visible, onMint, onSkip, onCoinSkipped, ticker, onTickerChange, selfBuyUsd, onSelfBuyChange, sequencePhase, sequenceLine, ceremonySub, codified, mediaUrl, mediaAr, onRetry, onContinue }: MintPromptSheetProps) {
   const [expanded, setExpanded] = useState(false);
   const [insufficientFunds, setInsufficientFunds] = useState(false);
   const [checkingBalance, setCheckingBalance] = useState(false);
@@ -176,6 +186,23 @@ export default function MintPromptSheet({ visible, onMint, onSkip, onCoinSkipped
         ) : (
           /* ── Normal mint prompt ── */
           <>
+            {/* The post's GRADED media — the work being coined, and the
+                CODIFICATION target: on coin confirmation the red corner
+                brackets snap onto it HERE, inside the flow. */}
+            {mediaUrl && (
+              <div style={{ position: 'relative', width: '100%', aspectRatio: mediaAr || '2.39 / 1', background: '#111', overflow: 'hidden', marginBottom: 18 }}>
+                <img src={mediaUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                {codified && (
+                  <>
+                    <div style={{ position: 'absolute', top: 6, left: 6, width: 22, height: 22, borderTop: '2px solid #FF0000', borderLeft: '2px solid #FF0000', animation: 'cornerReveal 0.6s ease forwards', opacity: 0 }} />
+                    <div style={{ position: 'absolute', top: 6, right: 6, width: 22, height: 22, borderTop: '2px solid #FF0000', borderRight: '2px solid #FF0000', animation: 'cornerReveal 0.6s ease 0.1s forwards', opacity: 0 }} />
+                    <div style={{ position: 'absolute', bottom: 6, left: 6, width: 22, height: 22, borderBottom: '2px solid #FF0000', borderLeft: '2px solid #FF0000', animation: 'cornerReveal 0.6s ease 0.2s forwards', opacity: 0 }} />
+                    <div style={{ position: 'absolute', bottom: 6, right: 6, width: 22, height: 22, borderBottom: '2px solid #FF0000', borderRight: '2px solid #FF0000', animation: 'cornerReveal 0.6s ease 0.3s forwards', opacity: 0 }} />
+                    <style>{`@keyframes cornerReveal { from { opacity: 0; transform: scale(0.7); } to { opacity: 1; transform: scale(1); } }`}</style>
+                  </>
+                )}
+              </div>
+            )}
             <p style={{ ...SKB, fontSize: 16, color: 'white', textTransform: 'uppercase', letterSpacing: '-0.02em', margin: '0 0 10px' }}>
               YOUR POST IS LIVE.
             </p>
@@ -264,17 +291,40 @@ export default function MintPromptSheet({ visible, onMint, onSkip, onCoinSkipped
               </p>
             </div>
 
-            {sequencePhase !== 'idle' ? (
+            {sequencePhase === 'coin-failed' ? (
+              /* IN-FLOW FAILURE — the post is never hostage: plain-English
+                 reason + RETRY (re-runs in place) / CONTINUE TO PROFILE
+                 (kebab CREATE COIN remains). No auto-navigation. */
+              <div style={{ marginBottom: 10 }}>
+                <div style={{ width: '100%', border: '1px solid #FF0000', padding: '14px 14px', marginBottom: 10, textAlign: 'center' }}>
+                  <p style={{ ...SKB, fontSize: 12, color: '#FF0000', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 6px' }}>[ COIN FAILED ]</p>
+                  <p style={{ ...SKR, fontSize: 10, color: 'rgba(255,255,255,0.65)', lineHeight: 1.45, margin: 0 }}>{sequenceLine ?? 'Something failed on the way to the chain. Your post is safe.'}</p>
+                </div>
+                <button onClick={onRetry} style={{ width: '100%', background: '#FF0000', border: 'none', cursor: 'pointer', padding: '13px 0', marginBottom: 8 }}>
+                  <span style={{ ...SKB, fontSize: 11, color: 'white', textTransform: 'uppercase', letterSpacing: '0.1em' }}>RETRY</span>
+                </button>
+                <button onClick={onContinue} style={{ width: '100%', background: 'transparent', border: '1px solid rgba(255,255,255,0.15)', cursor: 'pointer', padding: '11px 0' }}>
+                  <span style={{ ...SKB, fontSize: 10, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>CONTINUE TO PROFILE</span>
+                </button>
+              </div>
+            ) : sequencePhase !== 'idle' ? (
               /* THE WHEEL — the pressed button, transformed in place into the
                  live narration. Loader while a step runs; bracket terminal
-                 state holds a beat; failures narrate honestly in red. */
-              <div style={{ width: '100%', border: '1px solid rgba(255,0,0,0.55)', padding: '13px 0', marginBottom: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, minHeight: 46 }}>
-                {sequencePhase === 'minting' || (sequencePhase === 'minted' && sequenceLine && !sequenceLine.startsWith('[')) ? (
-                  <FrameLoader size={22} />
-                ) : null}
-                <span style={{ ...SKB, fontSize: 11, color: (sequencePhase === 'coin-failed' || sequenceLine?.includes('DIDN’T')) ? '#FF0000' : sequenceLine?.startsWith('[') ? '#FF0000' : 'white', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-                  {sequenceLine ?? 'WORKING…'}
-                </span>
+                 state holds a beat. */
+              <div style={{ marginBottom: 10 }}>
+                <div style={{ width: '100%', border: '1px solid rgba(255,0,0,0.55)', padding: '13px 0', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, minHeight: 46 }}>
+                  {sequenceLine && !sequenceLine.startsWith('[') && !sequenceLine.includes('DIDN’T') ? (
+                    <FrameLoader size={22} />
+                  ) : null}
+                  <span style={{ ...SKB, fontSize: 11, color: sequenceLine?.includes('DIDN’T') ? '#FF0000' : sequenceLine?.startsWith('[') ? '#FF0000' : 'white', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                    {sequenceLine ?? 'WORKING…'}
+                  </span>
+                </div>
+                {ceremonySub && (
+                  <p style={{ ...SKB, fontSize: 8, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.14em', textAlign: 'center', margin: '8px 0 0' }}>
+                    {ceremonySub}
+                  </p>
+                )}
               </div>
             ) : (
               <>

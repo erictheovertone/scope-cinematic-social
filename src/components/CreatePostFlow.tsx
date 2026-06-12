@@ -285,6 +285,11 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
   // Slim inline narration for multi-signature sequences (labeling, not gating):
   // "1 OF 2 — CREATING YOUR COIN…" → "2 OF 2 — BACKING YOUR POST · $1.00".
   const [backingNarration, setBackingNarration] = useState<string | null>(null);
+  // CEREMONY IN THE FLOW: codified = the red corner brackets have snapped onto
+  // the post's media inside the mint sheet; ceremonySub = honest sub-line when
+  // a slow backing leg hands off to the global chip.
+  const [codified, setCodified] = useState(false);
+  const [ceremonySub, setCeremonySub] = useState<string | null>(null);
   const [customThumbnail, setCustomThumbnail] = useState<File | null>(null);
   const thumbnailInputRef = useRef<HTMLInputElement>(null);
   const [videoAutoplay, setVideoAutoplay] = useState(true);
@@ -383,6 +388,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
     image: string;
     animationUrl: string | null;
     mediaType: string;
+    layoutId: string;
   } | null>(null);
 
   // Deck step state
@@ -757,6 +763,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
         image: (isVideo ? posterUrl : null) || mediaUrls[0],
         animationUrl: isVideo ? autoplayClipUrl : null,
         mediaType: selectedMedia[0]?.type || 'image',
+        layoutId: finalLayoutId,
       });
       // Caption-derived ticker suggestion; creator overwrites it on the mint step.
       setTicker(suggestTicker(caption));
@@ -798,6 +805,8 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
     setTicker('');
     setSelfBuyUsd('');
     setBackingNarration(null);
+    setCodified(false);
+    setCeremonySub(null);
     router.push('/profile');
   };
 
@@ -806,12 +815,11 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
   // it. The coin step is post-hoc + isolated; on failure we set 'coin-failed'
   // (loud inline) and still complete the flow, leaving the post coin-pending
   // (no coin_address) and retryable.
-  // TRANSACTION PRESENCE (take 3): the pressed button gets ONE in-place beat
-  // ("] CREATING YOUR COIN… ["), then the flow navigates while the sequence
-  // continues in the background — narrated by the GLOBAL TxNarrator chip,
-  // which survives all navigation. (Take 2's in-sheet wheel was correct but a
-  // stale setShowMintPrompt(false) hid its host the instant CREATE was
-  // pressed — root cause confirmed and removed.)
+  // THE CEREMONY HAPPENS IN THE FLOW (supersedes take 3's navigate-first):
+  // narration, signing, codification all play INSIDE the mint sheet — the
+  // user navigates only after the terminal beat. The global chip is demoted
+  // to fallback narrator: it carries ONLY a slow backing remainder (or future
+  // background money actions), never a mint the user is still inside.
   const handleDoMint = async () => {
     if (!pendingMintData) return;
     const sym = normalizeTicker(ticker);
@@ -820,77 +828,99 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
     const hasBacking = isFinite(plannedBuyUsd) && plannedBuyUsd > 0;
     const data = pendingMintData;
     const postId = data.postId;
+    const beat = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
-    // The in-place beat — the press visibly DID something, sheet stays up.
     setMintStatus('minting');
-    setBackingNarration('] CREATING YOUR COIN… [');
-    narrator.narrate({ phase: 'working', label: '] CREATING YOUR COIN… [', postId });
+    setCeremonySub(null);
+    setBackingNarration(hasBacking ? '] 1 OF 2 — CREATING YOUR COIN… [' : '] CREATING YOUR COIN… [');
 
-    // DETACHED sequence — narrates through the global chip; this component
-    // navigating away cannot unmount the narration.
-    void (async () => {
-      try {
-        const embeddedWallet = wallets.find(w => w.walletClientType === 'privy');
-        if (!embeddedWallet) throw new Error('No embedded wallet found');
-        await embeddedWallet.switchChain(base.id);
-        const provider = await embeddedWallet.getEthereumProvider();
-        const walletClient = createWalletClient({
-          account: embeddedWallet.address as `0x${string}`,
-          chain: base,
-          transport: custom(provider),
-        });
-        console.log('[coin] Creating coin for post:', postId, 'ticker:', sym);
-        const { coinAddress, hash, currency } = await createScopeCoin({
-          walletClient,
-          creatorAddress: embeddedWallet.address,
-          post: {
-            id: postId,
-            userId: data.userId,
-            name: data.postCaption || 'Scope Post',
-            description: data.postCaption || '',
-            symbol: sym,
-            image: data.image,
-            animationUrl: data.animationUrl,
-            mimeType: data.mediaType === 'video' ? 'video/mp4' : undefined,
-          },
-        });
-        // Reconciliation breadcrumb BEFORE the canonical write (amendment C).
-        await updatePostCoinTxHash(postId, hash).catch(() => {});
-        await updatePostCoinData(postId, {
-          coin_address: coinAddress,
-          ticker: sym,
-          coin_tx_hash: hash,
-          coin_currency: currency,
-        });
-        console.log('[coin] Success — coin:', coinAddress, 'tx:', hash);
+    try {
+      const embeddedWallet = wallets.find(w => w.walletClientType === 'privy');
+      if (!embeddedWallet) throw new Error('No embedded wallet found');
+      await embeddedWallet.switchChain(base.id);
+      const provider = await embeddedWallet.getEthereumProvider();
+      const walletClient = createWalletClient({
+        account: embeddedWallet.address as `0x${string}`,
+        chain: base,
+        transport: custom(provider),
+      });
+      console.log('[coin] Creating coin for post:', postId, 'ticker:', sym);
+      const { coinAddress, hash, currency } = await createScopeCoin({
+        walletClient,
+        creatorAddress: embeddedWallet.address,
+        post: {
+          id: postId,
+          userId: data.userId,
+          name: data.postCaption || 'Scope Post',
+          description: data.postCaption || '',
+          symbol: sym,
+          image: data.image,
+          animationUrl: data.animationUrl,
+          mimeType: data.mediaType === 'video' ? 'video/mp4' : undefined,
+        },
+      });
+      // Reconciliation breadcrumb BEFORE the canonical write (amendment C).
+      await updatePostCoinTxHash(postId, hash).catch(() => {});
+      await updatePostCoinData(postId, {
+        coin_address: coinAddress,
+        ticker: sym,
+        coin_tx_hash: hash,
+        coin_currency: currency,
+      });
+      console.log('[coin] Success — coin:', coinAddress, 'tx:', hash);
+      setMintStatus('minted');
 
-        if (hasBacking) {
+      // THE CODIFICATION CEREMONY — the red corner brackets snap onto the
+      // post's media HERE, inside the flow. The work is coined where the
+      // user made it.
+      setCodified(true);
+      await beat(900);
+
+      if (hasBacking) {
+        setBackingNarration(`] 2 OF 2 — BACKING YOUR POST · $${plannedBuyUsd.toFixed(2)} [`);
+        // Keep the original promise alive for a possible chip hand-off.
+        const backingPromise = backOwnCoin({ walletClient, creatorAddress: embeddedWallet.address, coinAddress, usdAmount: plannedBuyUsd });
+        const BOUND_MS = 11_000; // bounded in-flow wait (incl. readiness poll)
+        const raced = await Promise.race([
+          backingPromise.then((r) => ({ kind: 'landed' as const, r })).catch((e) => ({ kind: 'failed' as const, e })),
+          beat(BOUND_MS).then(() => ({ kind: 'slow' as const })),
+        ]);
+        if (raced.kind === 'landed') {
+          setBackingNarration(raced.r.pieces != null ? `[ BACKED · ${raced.r.pieces} PIECES ]` : '[ BACKED ]');
+          await beat(1200);
+        } else if (raced.kind === 'failed') {
+          console.warn('[coin] backing did not land (coin unaffected):', (raced.e as Error)?.message);
+          setBackingNarration('BACKING DIDN’T LAND — RETRY FROM YOUR POST');
+          await beat(1600);
+        } else {
+          // SLOW: complete the ceremony honestly, hand ONLY the remainder to
+          // the global chip, and let it conclude there.
+          setCeremonySub('BACKING SETTLING — FINISHING IN BACKGROUND');
           narrator.narrate({ phase: 'working', label: `] BACKING YOUR POST · $${plannedBuyUsd.toFixed(2)} [`, postId });
-          try {
-            await Promise.race([
-              backOwnCoin({ walletClient, creatorAddress: embeddedWallet.address, coinAddress, usdAmount: plannedBuyUsd }),
-              new Promise<never>((_, rej) => setTimeout(() => rej(new Error('backing timed out — it may still land')), 45000)),
-            ]);
-          } catch (buyErr) {
-            // Coin unaffected (decoupling) — backing failure narrates red.
-            console.warn('[coin] backing did not land (coin unaffected):', (buyErr as Error)?.message);
-            narrator.fail('[ BACKING DIDN’T LAND — RETRY ]', postId);
-            return;
-          }
+          backingPromise
+            .then((r) => narrator.done(r.pieces != null ? `[ BACKED · ${r.pieces} PIECES ]` : '[ BACKED ]', postId))
+            .catch((e) => {
+              console.warn('[coin] handed-off backing failed (coin unaffected):', (e as Error)?.message);
+              narrator.fail('[ BACKING DIDN’T LAND — RETRY ]', postId);
+            });
         }
-        narrator.done(`[ COINED · ${sym} ]`, postId);
-        // The freshly-coined tile re-reads its market + the grid refetches the
-        // post row (ticker/chrome) — the mint moment completes on screen.
-        window.dispatchEvent(new CustomEvent('scope:market-moved', { detail: { postId } }));
-      } catch (coinError) {
-        console.error('[coin] createScopeCoin failed:', coinError);
-        narrator.fail('[ COIN FAILED — RETRY FROM YOUR POST ]', postId);
       }
-    })();
 
-    // The in-place beat is MANDATORY: the pressed button holds its narration
-    // (~1.7s) BEFORE any navigation — then the global chip takes the handoff.
-    setTimeout(() => completeFlow(), 1700);
+      // TERMINAL BEAT — then, and only then, the epilogue: navigation.
+      setBackingNarration(`[ COINED · ${sym} ]`);
+      window.dispatchEvent(new CustomEvent('scope:market-moved', { detail: { postId } }));
+      await beat(2000);
+      completeFlow();
+    } catch (coinError) {
+      // IN-FLOW failure state: [ COIN FAILED ] + plain-English reason +
+      // RETRY / CONTINUE TO PROFILE (rendered by MintPromptSheet). The post is
+      // never hostage — no auto-navigation, kebab retry always remains.
+      console.error('[coin] createScopeCoin failed:', coinError);
+      const msg = (coinError as Error)?.message ?? '';
+      setMintStatus('coin-failed');
+      setCodified(false);
+      setBackingNarration(msg.length > 0 && msg.length < 120 ? msg : 'Something failed on the way to the chain. Your post is safe.');
+    }
   };
 
   const handleSkipMint = () => {
@@ -1364,6 +1394,12 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
         onSelfBuyChange={setSelfBuyUsd}
         sequencePhase={mintStatus}
         sequenceLine={backingNarration}
+        ceremonySub={ceremonySub}
+        codified={codified}
+        mediaUrl={pendingMintData?.image ?? null}
+        mediaAr={getAspectRatio(pendingMintData?.layoutId ?? '')}
+        onRetry={handleDoMint}
+        onContinue={completeFlow}
       />
       {isPosting && !showMintPrompt && (
         <div style={{
