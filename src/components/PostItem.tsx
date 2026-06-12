@@ -113,6 +113,16 @@ export default function PostItem({ post, onImageClick, commentsOpen, onToggleCom
   }, [post.id, user?.id]);
 
   // Real MC for COIN posts via the boundary (Zora index; honest $0 pre-trades).
+  // Re-reads when a trade on this post lands ('scope:market-moved') so the
+  // tile reflects post-trade truth where the collector returns.
+  const [marketRefreshKey, setMarketRefreshKey] = useState(0);
+  useEffect(() => {
+    const onMoved = (e: Event) => {
+      if ((e as CustomEvent).detail?.postId === post.id) setMarketRefreshKey((k) => k + 1);
+    };
+    window.addEventListener('scope:market-moved', onMoved);
+    return () => window.removeEventListener('scope:market-moved', onMoved);
+  }, [post.id]);
   useEffect(() => {
     if (!post.coin_address || post.token_standard !== 'coin') return;
     let cancelled = false;
@@ -123,7 +133,7 @@ export default function PostItem({ post, onImageClick, commentsOpen, onToggleCom
       })
       .catch((e) => console.error('[PostItem] coin MC fetch error:', e));
     return () => { cancelled = true; };
-  }, [post.id, post.coin_address, post.token_standard, economy]);
+  }, [post.id, post.coin_address, post.token_standard, economy, marketRefreshKey]);
 
   // Legacy 1155 posts show NO market chrome: their old "MC" was supply × the
   // flat mint fee — a fake market figure from the pre-coin era. Coin posts get

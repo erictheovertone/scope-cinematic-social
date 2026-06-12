@@ -63,6 +63,11 @@ export default function CollectSheetV2({ post, visible, onClose }: Props) {
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState<string | null>(null);
   const [tradeError, setTradeError] = useState<string | null>(null);
+  // THE CEREMONY — on confirmed collect the red corner brackets SNAP onto the
+  // media (the frame motif's third verb: it loads pages, it captures looks —
+  // now it claims pieces), the terminal holds a beat, then the sheet returns
+  // the collector to where they came from.
+  const [captured, setCaptured] = useState(false);
 
   const refresh = () => economy.getPostMarket(post.id).then(setMarket).catch(() => {});
 
@@ -70,7 +75,7 @@ export default function CollectSheetV2({ post, visible, onClose }: Props) {
     if (!visible) {
       setShowSlots(false); setDone(null); setMode('buy');
       setBuyUsd(''); setBuyQuote(null); setSellPieces(0); setSellQuote(null);
-      setConfirmEndFirstCut(false); setTradeError(null);
+      setConfirmEndFirstCut(false); setTradeError(null); setCaptured(false);
       return;
     }
     let cancelled = false;
@@ -108,6 +113,15 @@ export default function CollectSheetV2({ post, visible, onClose }: Props) {
       ? (e as Error).message
       : 'Trade didn’t go through — nothing was bought or sold. Try again.';
 
+  // After the held terminal beat, the sheet returns the collector to their
+  // ORIGINATING context — it's an overlay, so closing it lands them exactly
+  // where they were (feed or visited profile, scroll position intact).
+  const ceremonyResolve = (postId: string) => {
+    // Live MC chips elsewhere re-read post-trade truth.
+    window.dispatchEvent(new CustomEvent('scope:market-moved', { detail: { postId } }));
+    setTimeout(() => onClose(), 1900);
+  };
+
   const doBuy = async () => {
     const v = parseFloat(buyUsd);
     if (!isFinite(v) || v <= 0) return;
@@ -115,12 +129,17 @@ export default function CollectSheetV2({ post, visible, onClose }: Props) {
     try {
       const r = await economy.buy(post.id, v, buyCurrency);
       if (r.ok) {
-        setDone(market?.live ? `[ BOUGHT · ${r.pieces} ${r.pieces === 1 ? 'PIECE' : 'PIECES'} ]` : `BOUGHT ${r.pieces} ${r.pieces === 1 ? 'PIECE' : 'PIECES'} (MOCK)`);
-        refresh();
+        // r.pieces is RECEIPT-derived (the chain's word) — never a quote
+        // estimate or stale balance.
+        const n = r.pieces;
+        setDone(market?.live ? `[ COLLECTED · ${n} ${n === 1 ? 'PIECE' : 'PIECES'} ]` : `COLLECTED ${n} ${n === 1 ? 'PIECE' : 'PIECES'} (MOCK)`);
+        setCaptured(true); // bracket-capture snaps onto the media
+        refresh();         // price/MC re-read — the buyer sees the price they moved
+        ceremonyResolve(post.id);
       }
     } catch (e) {
       console.error('[collect] buy failed:', e);
-      setTradeError(humanError(e));
+      setTradeError(humanError(e)); // failure: loud, plain-English, no ceremony
     } finally { setBusy(false); }
   };
 
@@ -133,6 +152,7 @@ export default function CollectSheetV2({ post, visible, onClose }: Props) {
       if (r.ok) {
         setDone(market?.live ? `[ SOLD · ${r.pieces} ${r.pieces === 1 ? 'PIECE' : 'PIECES'} ]` : `SOLD ${r.pieces} ${r.pieces === 1 ? 'PIECE' : 'PIECES'} (MOCK)`);
         setConfirmEndFirstCut(false); setSellPieces(0); refresh();
+        ceremonyResolve(post.id);
       }
     } catch (e) {
       console.error('[collect] sell failed:', e);
@@ -203,8 +223,19 @@ export default function CollectSheetV2({ post, visible, onClose }: Props) {
             </div>
           );
           const media = (
-            <div style={{ width: stacked ? '100%' : '55%', aspectRatio: String(arCss), background: '#111', overflow: 'hidden', flexShrink: 0 }}>
+            <div style={{ position: 'relative', width: stacked ? '100%' : '55%', aspectRatio: String(arCss), background: '#111', overflow: 'hidden', flexShrink: 0 }}>
               {mediaSrc && <img src={mediaSrc} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
+              {/* BRACKET CAPTURE — the staggered corner lock (same family as
+                  the look-saved choreography): the work is claimed. */}
+              {captured && (
+                <>
+                  <div style={{ position: 'absolute', top: 6, left: 6, width: 22, height: 22, borderTop: '2px solid #FF0000', borderLeft: '2px solid #FF0000', animation: 'cornerReveal 0.6s ease forwards', opacity: 0 }} />
+                  <div style={{ position: 'absolute', top: 6, right: 6, width: 22, height: 22, borderTop: '2px solid #FF0000', borderRight: '2px solid #FF0000', animation: 'cornerReveal 0.6s ease 0.1s forwards', opacity: 0 }} />
+                  <div style={{ position: 'absolute', bottom: 6, left: 6, width: 22, height: 22, borderBottom: '2px solid #FF0000', borderLeft: '2px solid #FF0000', animation: 'cornerReveal 0.6s ease 0.2s forwards', opacity: 0 }} />
+                  <div style={{ position: 'absolute', bottom: 6, right: 6, width: 22, height: 22, borderBottom: '2px solid #FF0000', borderRight: '2px solid #FF0000', animation: 'cornerReveal 0.6s ease 0.3s forwards', opacity: 0 }} />
+                  <style>{`@keyframes cornerReveal { from { opacity: 0; transform: scale(0.7); } to { opacity: 1; transform: scale(1); } }`}</style>
+                </>
+              )}
             </div>
           );
           return stacked ? (

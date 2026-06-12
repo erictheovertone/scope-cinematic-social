@@ -176,7 +176,16 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
   }, [post.id, user?.id]);
 
   // MC in dollars (derived rule) via the boundary — coin posts only. Legacy
-  // 1155 posts get NO market chrome at all.
+  // 1155 posts get NO market chrome at all. Re-reads on 'scope:market-moved'
+  // so the lightbox shows post-trade truth after a collect.
+  const [marketRefreshKey, setMarketRefreshKey] = useState(0);
+  useEffect(() => {
+    const onMoved = (e: Event) => {
+      if ((e as CustomEvent).detail?.postId === post.id) setMarketRefreshKey((k) => k + 1);
+    };
+    window.addEventListener('scope:market-moved', onMoved);
+    return () => window.removeEventListener('scope:market-moved', onMoved);
+  }, [post.id]);
   useEffect(() => {
     if (!isCoinPost(post)) { setMcLabel(null); return; }
     let cancelled = false;
@@ -187,7 +196,7 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
       })
       .catch(() => {});
     return () => { cancelled = true; };
-  }, [post.id, post.coin_address, post.token_standard, economy]);
+  }, [post.id, post.coin_address, post.token_standard, economy, marketRefreshKey]);
 
   // Animated close
   const handleClose = () => {

@@ -216,6 +216,31 @@ export async function reconcileCoinFromTx(
 
 const USDC_BASE = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913" as const;
 
+// THE COUNT comes from the RECEIPT, never stale state: parse the coin's ERC-20
+// Transfer events to the buyer from the confirmed receipt and convert to
+// pieces. (The old balance-delta read could race the RPC and report 0.)
+const TRANSFER_TOPIC = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
+export function piecesFromReceipt(receipt: any, coinAddress: string, recipient: string): number | null {
+  try {
+    const coin = coinAddress.toLowerCase();
+    const to = recipient.toLowerCase().replace(/^0x/, "");
+    let total = BigInt(0);
+    let found = false;
+    for (const log of receipt?.logs ?? []) {
+      if ((log.address || "").toLowerCase() !== coin) continue;
+      if (log.topics?.[0] !== TRANSFER_TOPIC) continue;
+      if (!(log.topics?.[2] || "").toLowerCase().endsWith(to)) continue;
+      total += BigInt(log.data);
+      found = true;
+    }
+    if (!found) return null;
+    // wei → tokens (1e18) → pieces (100,000 tokens each) = 1e23
+    return Math.floor(Number(total / BigInt("100000000000000000000")) / 1000);
+  } catch {
+    return null;
+  }
+}
+
 export async function buyCoin({
   walletClient,
   sender,
@@ -233,6 +258,7 @@ export async function buyCoin({
 }): Promise<{ hash: `0x${string}`; pieces: number | null }> {
   const piecesBefore = await readPieces(coinAddress, sender);
   let hash: `0x${string}`;
+  let receipt: any = null;
 
   if (currency === "USDC") {
     // USDC leg needs Permit2 — the SDK signs + sends (validated/estimated).
@@ -247,6 +273,7 @@ export async function buyCoin({
     };
     console.log("[zoraCoins] buyCoin USDC quote request:", JSON.stringify({ ...tradeParameters, amountIn: tradeParameters.amountIn.toString() }));
     const res: any = await tradeCoin({ tradeParameters, walletClient, publicClient: publicClient as any, account: sender, validateTransaction: true });
+    receipt = res;
     hash = (res?.transactionHash ?? res?.hash) as `0x${string}`;
   } else {
     const ethUsd = await getEthUsdRate();
@@ -263,12 +290,18 @@ export async function buyCoin({
     console.log("[zoraCoins] buyCoin quote request:", JSON.stringify({ ...tradeParameters, amountIn: amountIn.toString(), usd: usdAmount, ethUsd }));
     const quote = await createTradeCall(tradeParameters);
     console.log("[zoraCoins] buyCoin quote response:", JSON.stringify(quote)?.slice(0, 400));
-    ({ hash } = await executeQuotedTrade({ walletClient, sender, quote, label: `buy $${usdAmount}` }));
+    const exec = await executeQuotedTrade({ walletClient, sender, quote, label: `buy $${usdAmount}` });
+    hash = exec.hash;
+    receipt = exec.receipt;
   }
 
+  // Receipt is the source of truth for the count; balance delta is the
+  // cross-check fallback only.
+  const receiptPieces = piecesFromReceipt(receipt, coinAddress, sender);
   const piecesAfter = await readPieces(coinAddress, sender);
-  const pieces = piecesBefore != null && piecesAfter != null ? piecesAfter - piecesBefore : null;
-  console.log(`[zoraCoins] buyCoin COMPLETE — tx: ${hash} | +${pieces ?? "?"} pieces`);
+  const deltaPieces = piecesBefore != null && piecesAfter != null ? piecesAfter - piecesBefore : null;
+  const pieces = receiptPieces ?? deltaPieces;
+  console.log(`[zoraCoins] buyCoin COMPLETE — tx: ${hash} | pieces (receipt): ${receiptPieces ?? "?"} | (balance delta cross-check): ${deltaPieces ?? "?"}`);
   return { hash, pieces };
 }
 
@@ -412,7 +445,7 @@ export async function executeQuotedTrade({
   sender: `0x${string}`;
   quote: any; // PostQuoteResponse from createTradeCall
   label: string;
-}): Promise<{ hash: `0x${string}` }> {
+}): Promise<{ hash: `0x${string}`; receipt: any }> {
   const call = {
     to: getAddress(quote.call.target),
     data: quote.call.data as `0x${string}`,
@@ -435,5 +468,5 @@ export async function executeQuotedTrade({
     throw new Error(`Trade reverted on-chain (tx ${hash}, gas used ${receipt.gasUsed}/${gas})`);
   }
   console.log(`[zoraCoins] trade (${label}) LANDED — tx: ${hash} | gas used ${receipt.gasUsed}/${gas}`);
-  return { hash };
+  return { hash, receipt };
 }
