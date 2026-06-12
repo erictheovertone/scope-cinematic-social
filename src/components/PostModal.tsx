@@ -92,7 +92,6 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
   const [showCollectSheet, setShowCollectSheet] = useState(false);
   const [showDeckPicker, setShowDeckPicker] = useState(false);
   const [deckToast, setDeckToast] = useState("");
-  const [bookmarked, setBookmarked] = useState(false);
 
   // Viewer's own Supabase profile (for comment submission + owner detection)
   const [viewerUsername, setViewerUsername] = useState<string>("");
@@ -498,15 +497,8 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
                 </span>
               </button>
 
-              {/* Bookmark */}
-              <button
-                onClick={() => setBookmarked(v => !v)}
-                style={{ background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", padding: 0 }}
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill={bookmarked ? "white" : "none"} stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
-                </svg>
-              </button>
+              {/* No bookmark/save: Scope has no free keep-mechanism — the
+                  heart is feeling, COLLECT is conviction (ratified). */}
 
               {/* Share */}
               <button

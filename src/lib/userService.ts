@@ -559,6 +559,17 @@ export const getDeckById = async (deckId: string): Promise<DeckWithItems | null>
 }
 
 export const addPostToDeck = async (deckId: string, postId: string): Promise<DeckItem> => {
+  // DECKS = OWN WORK ONLY (ratified): structurally enforced — a deck may only
+  // contain posts authored by the deck's owner. (Decks curate what you MADE;
+  // collected-grouping will curate what you OWN.) DB-level trigger guard
+  // proposed in migrations/2026-06-13_deck_own_work_guard.sql.
+  const [{ data: deck }, { data: post }] = await Promise.all([
+    supabase.from('decks').select('user_id').eq('id', deckId).single(),
+    supabase.from('posts').select('user_id').eq('id', postId).single(),
+  ])
+  if (!deck || !post) throw new Error('Deck or post not found')
+  if (deck.user_id !== post.user_id) throw new Error('Decks hold your own work only')
+
   const { data: duplicate } = await supabase
     .from('deck_items')
     .select('id')

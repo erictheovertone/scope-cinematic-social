@@ -117,7 +117,6 @@ export default function Preferences() {
     { label: 'Change Grid Layout', action: () => router.push('/profile/grid-layout') },
     ...(mounted && !isStandalone() ? [{ label: 'ADD TO HOME SCREEN', action: () => setShowA2HS(true) }] : []),
     { label: 'Link Manager', action: () => router.push('/profile/edit') },
-    { label: 'Saved', action: () => router.push('/profile/bookmarks') },
     { label: 'Notifications', action: () => router.push('/profile/notifications') },
     { label: 'Privacy', action: () => {} },
     { label: 'Blocked Accounts', action: () => router.push('/profile/hidden') },

@@ -211,7 +211,7 @@ function PostViewerItem({
       {/* ── ACTION ROW — marginTop: 2px ── */}
       <div style={{ marginTop: 2, padding: "0 4px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
 
-        {/* Left: like · comment · bookmark · share */}
+        {/* Left: like · comment · share (no bookmark: the heart is feeling, COLLECT is conviction) */}
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <button
             onClick={handleLike}
@@ -236,11 +236,6 @@ function PostViewerItem({
             <span style={{ ...SKB, fontSize: 8, color: "white", opacity: 0.7 }}>{comments.length}</span>
           </button>
 
-          <button style={{ background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", padding: 0 }}>
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.7 }}>
-              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
-            </svg>
-          </button>
 
           <button style={{ background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", padding: 0 }}>
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.7 }}>
