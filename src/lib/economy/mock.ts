@@ -131,15 +131,17 @@ export const mockEconomy: EconomyApi = {
       const earnedUsd = money(r, 2, 180);
       total += earnedUsd;
       const seed = hash(userId + ':' + i);
+      const postTitle = TITLES[seed % TITLES.length];
       return {
         postId: `mock-post-${seed % 100000}`,
         slot: 1 + Math.floor(r() * 10),
         holdingDays: 1 + Math.floor(r() * 320),
         earnedUsd,
         active: r() > 0.2,
-        postTitle: TITLES[seed % TITLES.length],
+        postTitle,
         creatorHandle: HANDLES[(seed >> 3) % HANDLES.length],
         thumbUrl: `https://picsum.photos/seed/${seed % 1000}/120/120`,
+        ticker: postTitle.replace(/[^A-Z0-9]/g, '').slice(0, 6),
       };
     });
     return { totalEarnedUsd: Math.round(total * 100) / 100, positions };

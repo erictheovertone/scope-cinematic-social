@@ -22,7 +22,7 @@ export default function CollectSheetGate(props: CollectSheetProps) {
     const { post, visible, onClose } = props;
     return (
       <CollectSheetV2
-        post={{ id: post.id, username: post.username, caption: post.caption, media_urls: post.media_urls }}
+        post={{ id: post.id, username: post.username, caption: post.caption, media_urls: post.media_urls, ticker: (post as { ticker?: string | null }).ticker ?? null }}
         visible={visible}
         onClose={onClose}
       />

@@ -16,6 +16,7 @@ import { useEconomy } from '@/components/EconomyProvider';
 import { economyPreviewEnabled } from '@/lib/economy/flag';
 import { BADGES } from '@/lib/economy/badges';
 import ApertureMark from '@/components/economy/ApertureMark';
+import TickerMark from '@/components/economy/TickerMark';
 import { getProfileByUsername } from '@/lib/userService';
 import type { FirstCuts } from '@/lib/economy/types';
 
@@ -110,9 +111,12 @@ export default function FirstCutPage() {
               ? <img src={p.thumbUrl} alt="" style={{ width: 64, height: 38, objectFit: 'cover', flexShrink: 0, background: '#111', filter: p.active ? 'none' : 'grayscale(1)' }} />
               : <div style={{ width: 64, height: 38, background: '#111', flexShrink: 0 }} />}
             <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ ...SKB, fontSize: 11, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.03em', margin: '0 0 3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {p.postTitle}
-              </p>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 7, margin: '0 0 3px', minWidth: 0 }}>
+                <p style={{ ...SKB, fontSize: 11, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.03em', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {p.postTitle}
+                </p>
+                {p.ticker && <TickerMark ticker={p.ticker} size={8} />}
+              </div>
               <p style={{ ...SKR, fontSize: 9, color: 'rgba(255,255,255,0.45)', margin: 0, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                 @{p.creatorHandle} · holding {p.holdingDays} days
               </p>

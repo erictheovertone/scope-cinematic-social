@@ -15,6 +15,7 @@ import { getUserByPrivyId, getProfile } from "@/lib/userService";
 import { addBookmark, removeBookmark, isBookmarked } from "@/lib/bookmarksService";
 import CollectSheetGate from "@/components/economy/CollectSheetGate";
 import { useEconomy } from "@/components/EconomyProvider";
+import TickerMark from "@/components/economy/TickerMark";
 import MediaRenderer from "@/components/MediaRenderer";
 import GradedVideo from "@/components/finishing/GradedVideo";
 import { getTokenPrice, getTokenHolders } from "@/lib/zora";
@@ -38,6 +39,7 @@ interface Post {
   token_id?: string | null;
   coin_address?: string | null;
   token_standard?: string | null;
+  ticker?: string | null;
   media_type?: string;
   thumbnail_url?: string | null;
   poster_url?: string | null;
@@ -227,8 +229,9 @@ export default function PostItem({ post, onImageClick, commentsOpen, onToggleCom
           @{post.username}
         </span>
       </div>
-      <span style={{ position: 'absolute', top: '6px', right: '6px', fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: '8px', color: 'white', textShadow: '0 1px 2px rgba(0,0,0,1)', zIndex: 10, opacity: 0.85 }}>
-        MC: {mc ?? '—'}
+      <span style={{ position: 'absolute', top: '6px', right: '6px', display: 'flex', alignItems: 'baseline', gap: 5, fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: '8px', color: 'white', textShadow: '0 1px 2px rgba(0,0,0,1)', zIndex: 10, opacity: 0.85 }}>
+        {post.ticker && post.token_standard === 'coin' && <TickerMark ticker={post.ticker} size={8} />}
+        <span>MC: {mc ?? '—'}</span>
       </span>
     </>
   );

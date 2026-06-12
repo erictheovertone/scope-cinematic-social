@@ -21,6 +21,7 @@ import { useEconomy } from '@/components/EconomyProvider';
 import { economyPreviewEnabled } from '@/lib/economy/flag';
 import type { PostMarket, BuyQuote, SellQuote, TradeCurrency } from '@/lib/economy/types';
 import ApertureMark from '@/components/economy/ApertureMark';
+import TickerMark from '@/components/economy/TickerMark';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -30,7 +31,7 @@ const eth = (n: number) => `${n.toFixed(n < 0.1 ? 5 : 4)} ETH`;
 const BASE_PER_PIECE = 100_000; // 1 piece = 100,000 base tokens (display detail)
 
 interface Props {
-  post: { id: string; username: string; caption?: string; media_urls: string[] };
+  post: { id: string; username: string; caption?: string; media_urls: string[]; ticker?: string | null };
   visible: boolean;
   onClose: () => void;
 }
@@ -157,7 +158,10 @@ export default function CollectSheetV2({ post, visible, onClose }: Props) {
             <img src={post.media_urls[0]} alt="" style={{ width: 56, height: 56, objectFit: 'cover', flexShrink: 0, background: '#111' }} />
           )}
           <div style={{ flex: 1, minWidth: 0 }}>
-            <p style={{ ...SKB, fontSize: 11, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.02em', margin: '0 0 3px' }}>@{post.username}</p>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, margin: '0 0 3px' }}>
+              <p style={{ ...SKB, fontSize: 11, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.02em', margin: 0 }}>@{post.username}</p>
+              {post.ticker && <TickerMark ticker={post.ticker} size={10} />}
+            </div>
             <p style={{ ...SKR, fontSize: 10, color: 'rgba(255,255,255,0.5)', margin: 0, lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{post.caption || ''}</p>
           </div>
         </div>

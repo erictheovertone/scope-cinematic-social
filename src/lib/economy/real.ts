@@ -89,9 +89,15 @@ async function realPostMarket(
   const viewerTokens = parseFloat(formatEther(viewerBalance as bigint));
   const collectedByViewer = Math.floor(viewerTokens / TOKENS_PER_PIECE);
 
+  // MC CONSISTENCY RULE: MC is ALWAYS price × total supply, derived here in
+  // the boundary — never fetched independently (Zora's marketCap field lags
+  // its own price and the two contradicted on screen). One source of truth:
+  // price and MC can never disagree again. No price yet → MC 0.
+  const mcUsd = priceUsd != null ? priceUsd * PIECE_SUPPLY : 0;
+
   return {
     priceUsd,
-    mcUsd: num(token.marketCap),
+    mcUsd,
     live: true,
     supply: PIECE_SUPPLY,
     holders: num(token.uniqueHolders),

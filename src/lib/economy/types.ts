@@ -83,6 +83,8 @@ export interface FirstCutPosition {
   postTitle: string;
   creatorHandle: string;
   thumbUrl: string | null;
+  /** The coin's ticker — rendered as the [ TICKER ] mark wherever shown. */
+  ticker: string;
 }
 
 /** A user's FIRST CUT record — drives the public First Cut page. */
