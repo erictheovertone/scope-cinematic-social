@@ -165,7 +165,12 @@ export function createRealEconomy(viewerAddress: string | null): EconomyApi {
               thumbUrl: (p.media_type === "video" ? p.poster_url : null) || p.thumbnail_url || p.media_urls?.[0] || null,
               pieces,
               priceUsd,
-              valueUsd: priceUsd != null ? priceUsd * pieces : null,
+              // VALUATION RULE 1 (ratified, as amended): valuation activates on
+              // ANY trade — including the creator's own backing (real liquidity,
+              // real price, real dollars). Zero-trade coins value at $0 — spam-
+              // post allocations inflate nothing, by construction. (priceInUsdc
+              // is null until the first trade, so the rule maps exactly.)
+              valueUsd: priceUsd != null ? priceUsd * pieces : 0,
               post: p,
             };
           } catch {

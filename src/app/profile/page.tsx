@@ -126,6 +126,26 @@ const userLayoutId = stableLayoutId;
       .catch(() => {});
     return () => { cancelled = true; };
   }, [economy, supabaseUserId]);
+
+  // PORTFOLIO MC — VALUATION RULE 2 (ratified): the PUBLIC number counts
+  // EXTERNAL positions only (coins collected from others), never the user's
+  // own allocations/backing. Public metrics measure taste, not self-stake —
+  // the firewall that keeps the wallet's complete ledger harmless. Same
+  // philosophy as the COLLECTED-grid rule and the First Cut creator exclusion.
+  useEffect(() => {
+    if (!supabaseUserId) return;
+    let cancelled = false;
+    economy.getHoldings()
+      .then((h) => {
+        if (cancelled) return;
+        const externalMc = h
+          .filter((x) => (x.post as { user_id?: string }).user_id !== supabaseUserId)
+          .reduce((s, x) => s + x.valueUsd, 0);
+        setAnalytics((prev) => ({ ...prev, portfolioMc: Math.round(externalMc * 100) / 100 }));
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [economy, supabaseUserId]);
   const [gridScrollY, setGridScrollY] = useState(0);
   const [headerSnapped, setHeaderSnapped] = useState(false);
   const [headerUnsnapping, setHeaderUnsnapping] = useState(false);

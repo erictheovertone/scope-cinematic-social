@@ -96,8 +96,8 @@ export default function WalletPage() {
     ethBalance != null && usdcBalance != null && ethUsdRate != null
       ? parseFloat(ethBalance) * ethUsdRate + parseFloat(usdcBalance)
       : null;
-  const holdingsUsd = holdings != null ? holdings.reduce((s, h) => s + (h.valueUsd ?? 0), 0) : null;
-  const holdingsUnpriced = holdings != null && holdings.some((h) => h.valueUsd == null);
+  // Rule 1: zero-trade coins are $0 by definition — valueUsd is always a number.
+  const holdingsUsd = holdings != null ? holdings.reduce((s, h) => s + h.valueUsd, 0) : null;
   const totalUsd =
     availableUsd != null ? (availableUsd + (holdingsUsd ?? 0)).toFixed(2) : null;
 
@@ -144,8 +144,7 @@ export default function WalletPage() {
         </p>
         <p style={{ ...SKB, fontSize: 32, color: "white", margin: "0 0 8px", lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>
           {loading && totalUsd == null ? "..." : totalUsd != null ? `$${totalUsd}` : "$—"}
-          {totalUsd != null && holdingsUnpriced && <span style={{ fontSize: 14, color: "rgba(255,255,255,0.4)" }}> +</span>}
-        </p>
+                  </p>
         {/* THE CANONICAL MONEY-PAIR: two-column stat row (label/value, profile-
             stat pattern). White = spendable cash, red = invested/at-market.
             Columns index the tabs beneath them. Reuse this layout wherever the
@@ -164,7 +163,7 @@ export default function WalletPage() {
               HOLDINGS
             </p>
             <p style={{ ...SKB, fontSize: 16, color: "#FF0000", margin: 0, fontVariantNumeric: "tabular-nums" }}>
-              {holdingsUsd != null ? `$${holdingsUsd.toFixed(2)}${holdingsUnpriced ? "+" : ""}` : "…"}
+              {holdingsUsd != null ? `$${holdingsUsd.toFixed(2)}` : "…"}
             </p>
           </div>
         </div>
@@ -294,8 +293,7 @@ export default function WalletPage() {
               <div style={{ borderBottom: "1px solid #FF0000", padding: "4px 0 14px", marginBottom: 14 }}>
                 <p style={{ ...SKB, fontSize: 7, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.16em", margin: "0 0 6px" }}>HOLDINGS VALUE</p>
                 <p style={{ ...SKB, fontSize: 26, color: "#FF0000", margin: 0, fontVariantNumeric: "tabular-nums" }}>
-                  ${holdings.reduce((s, h) => s + (h.valueUsd ?? 0), 0).toFixed(2)}
-                  {holdings.some((h) => h.valueUsd == null) && <span style={{ fontSize: 12, color: "rgba(255,255,255,0.4)" }}> +</span>}
+                  ${holdings.reduce((s, h) => s + h.valueUsd, 0).toFixed(2)}
                 </p>
               </div>
               {holdings.map((h) => (
@@ -314,7 +312,7 @@ export default function WalletPage() {
                     </p>
                   </div>
                   <span style={{ ...SKB, fontSize: 13, color: "white", fontVariantNumeric: "tabular-nums" }}>
-                    {h.valueUsd != null ? `$${h.valueUsd.toFixed(2)}` : "$—"}
+                    {`$${h.valueUsd.toFixed(2)}`}
                   </span>
                 </div>
               ))}

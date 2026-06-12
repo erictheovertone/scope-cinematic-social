@@ -165,9 +165,18 @@ export interface Holding {
   ticker: string | null;
   thumbUrl: string | null;
   pieces: number;
-  /** Price per piece (USD); null = no-trades pool (value then also null). */
+  /** Price per piece (USD); null = no-trades pool (price shows "—"). */
   priceUsd: number | null;
-  valueUsd: number | null;
+  /**
+   * VALUATION RULE 1 (ratified): price × pieces once ANY trade has occurred
+   * (incl. the creator's own backing); ZERO-trade coins value at $0 — spam
+   * allocations inflate nothing. RULE 2: the PUBLIC Portfolio MC counts
+   * EXTERNAL positions only (collected coins, never self-allocation/backing)
+   * — public metrics measure taste, not self-stake; this private ledger stays
+   * complete. The external-only firewall is what makes marked-to-price own
+   * positions here harmless.
+   */
+  valueUsd: number;
   /** The post row — lets the wallet open the collect sheet directly. */
   post: Record<string, unknown>;
 }
