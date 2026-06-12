@@ -4,10 +4,10 @@ import { useState, useEffect, useRef } from "react";
 import { usePrivy, useFundWallet } from "@privy-io/react-auth";
 import { base } from "viem/chains";
 import { getEthBalance, getUsdcBalance, getTransactionHistory } from "@/lib/wallet";
+import { useEconomy } from "@/components/EconomyProvider";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
-const ETH_USD = 3000;
 
 function shortAddr(addr: string): string {
   return addr.slice(0, 6) + "..." + addr.slice(-4);
@@ -16,9 +16,12 @@ function shortAddr(addr: string): string {
 export default function WalletPage() {
   const { user } = usePrivy();
   const { fundWallet } = useFundWallet();
+  const economy = useEconomy();
   const walletAddress = user?.wallet?.address ?? "";
 
   const [activeTab, setActiveTab] = useState<"balances" | "holdings" | "activity">("balances");
+  // ETH/USD via the boundary's single source; null = rate unavailable → "$—".
+  const [ethUsdRate, setEthUsdRate] = useState<number | null>(null);
   const [ethBalance, setEthBalance] = useState<string | null>(null);
   const [usdcBalance, setUsdcBalance] = useState<string | null>(null);
   const [txHistory, setTxHistory] = useState<any[]>([]);
@@ -42,14 +45,16 @@ export default function WalletPage() {
     if (!walletAddress) return;
     setLoading(true);
     try {
-      const [eth, usdc, txs] = await Promise.all([
+      const [eth, usdc, txs, rate] = await Promise.all([
         getEthBalance(walletAddress),
         getUsdcBalance(walletAddress),
         getTransactionHistory(walletAddress),
+        economy.getEthUsdRate(),
       ]);
       setEthBalance(eth);
       setUsdcBalance(usdc);
       setTxHistory(txs);
+      setEthUsdRate(rate);
     } catch (e) {
       console.error("fetchBalances error:", e);
     } finally {
@@ -61,11 +66,14 @@ export default function WalletPage() {
     fetchBalances();
   }, [walletAddress]);
 
-  const ethUsd = ethBalance != null ? (parseFloat(ethBalance) * ETH_USD).toFixed(2) : null;
+  // Dollar figures only when the live rate exists — "$—" beats a wrong number.
+  const ethUsd = ethBalance != null && ethUsdRate != null
+    ? (parseFloat(ethBalance) * ethUsdRate).toFixed(2)
+    : null;
   const usdcUsd = usdcBalance != null ? parseFloat(usdcBalance).toFixed(2) : null;
   const totalUsd =
-    ethBalance != null && usdcBalance != null
-      ? (parseFloat(ethBalance) * ETH_USD + parseFloat(usdcBalance)).toFixed(2)
+    ethBalance != null && usdcBalance != null && ethUsdRate != null
+      ? (parseFloat(ethBalance) * ethUsdRate + parseFloat(usdcBalance)).toFixed(2)
       : null;
 
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -108,7 +116,7 @@ export default function WalletPage() {
           Total available balance
         </p>
         <p style={{ ...SKB, fontSize: 32, color: "white", margin: "0 0 8px", lineHeight: 1 }}>
-          {loading && totalUsd == null ? "..." : `$${totalUsd ?? "0.00"}`}
+          {loading && totalUsd == null ? "..." : totalUsd != null ? `$${totalUsd}` : "$—"}
         </p>
         {walletAddress && (
           <p
@@ -193,7 +201,7 @@ export default function WalletPage() {
                 </div>
               </div>
               <p style={{ ...SKB, fontSize: 11, color: "white", margin: 0 }}>
-                {loading && ethUsd == null ? "..." : `$${ethUsd ?? "0.00"}`}
+                {loading && ethUsd == null ? "..." : ethUsd != null ? `$${ethUsd}` : "$—"}
               </p>
             </div>
 

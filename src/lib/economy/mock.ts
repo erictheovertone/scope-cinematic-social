@@ -193,4 +193,12 @@ export const mockEconomy: EconomyApi = {
     await new Promise((res) => setTimeout(res, 600));
     return { ok: true, pieces: Math.max(0, pieces), ref: `mock-sell-${hash(postId)}-${Date.now()}` };
   },
+
+  async getEthUsdRate(): Promise<number | null> {
+    // NOT mocked: the rate is real infrastructure used by real (ungated)
+    // dollar displays — wallet, legacy collect, MC. Delegates to the live
+    // feed; null when unavailable (surfaces show "$—").
+    const { getEthUsdRate } = await import('@/lib/coingecko');
+    return getEthUsdRate();
+  },
 };

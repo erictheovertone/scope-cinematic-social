@@ -20,7 +20,7 @@ import {
 import { createPublicClient, http, getAddress, parseEther } from "viem";
 import { base } from "viem/chains";
 import { supabase } from "@/lib/supabase/client";
-import { getLiveEthPrice } from "@/lib/coingecko";
+import { getEthUsdRate } from "@/lib/coingecko";
 
 export const publicClient = createPublicClient({
   chain: base,
@@ -203,7 +203,10 @@ export async function backOwnCoin({
   usdAmount: number;
   slippage?: number;
 }): Promise<{ hash: `0x${string}` }> {
-  const ethUsd = await getLiveEthPrice();
+  // HONEST FAILURE: converting $ at a wrong rate buys the wrong amount —
+  // refuse rather than guess. (The self-buy is isolated; the coin survives.)
+  const ethUsd = await getEthUsdRate();
+  if (ethUsd === null) throw new Error("ETH/USD rate unavailable — self-buy skipped, try again from the post");
   const ethAmount = usdAmount / ethUsd;
   const amountIn = parseEther(ethAmount.toFixed(18));
   const sender = getAddress(creatorAddress);

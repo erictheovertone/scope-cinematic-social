@@ -14,6 +14,7 @@ import {
 import { getUserByPrivyId, getProfile } from "@/lib/userService";
 import { addBookmark, removeBookmark, isBookmarked } from "@/lib/bookmarksService";
 import CollectSheetGate from "@/components/economy/CollectSheetGate";
+import { useEconomy } from "@/components/EconomyProvider";
 import MediaRenderer from "@/components/MediaRenderer";
 import GradedVideo from "@/components/finishing/GradedVideo";
 import { getTokenPrice, getTokenHolders } from "@/lib/zora";
@@ -75,6 +76,7 @@ export default function PostItem({ post, onImageClick, commentsOpen, onToggleCom
   const [viewerUsername, setViewerUsername] = useState("");
   const [showCollectSheet, setShowCollectSheet] = useState(false);
   const [mc, setMc] = useState<string | null>(null);
+  const economy = useEconomy();
   const [isSaved, setIsSaved] = useState(false);
 
   useEffect(() => {
@@ -119,13 +121,15 @@ export default function PostItem({ post, onImageClick, commentsOpen, onToggleCom
     const fetchMC = async () => {
       try {
         const tokenId = BigInt(post.token_id || "1");
-        const [supply, price] = await Promise.all([
+        const [supply, price, rate] = await Promise.all([
           getTokenHolders({ contractAddress: post.contract_address!, tokenId }),
           getTokenPrice({ contractAddress: post.contract_address!, tokenId }),
+          economy.getEthUsdRate(),
         ]);
         if (cancelled) return;
+        if (rate === null) { setMc(null); return; } // no rate → no $ figure (honest)
         const mcEth = Number(supply) * parseFloat(formatEther(price));
-        const mcUsd = mcEth * 3000;
+        const mcUsd = mcEth * rate;
         setMc(`$${mcUsd < 1 ? mcUsd.toFixed(2) : Math.round(mcUsd).toLocaleString()}`);
         console.log("[PostItem] MC fetched — supply:", supply.toString(), "priceETH:", formatEther(price));
       } catch (e) {
@@ -134,7 +138,7 @@ export default function PostItem({ post, onImageClick, commentsOpen, onToggleCom
     };
     fetchMC();
     return () => { cancelled = true; };
-  }, [post.id, post.is_minted, post.contract_address, post.token_id]);
+  }, [post.id, post.is_minted, post.contract_address, post.token_id, economy]);
 
   const handleLike = async (e: React.MouseEvent) => {
     e.stopPropagation();

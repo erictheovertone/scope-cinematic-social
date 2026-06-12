@@ -136,4 +136,10 @@ export interface EconomyApi {
   buy(postId: string, usdAmount: number, currency: TradeCurrency): Promise<CollectResult>;
   /** SELL stub — mocks success, NO real transaction. */
   sell(postId: string, pieces: number): Promise<CollectResult>;
+  /**
+   * Live ETH/USD rate, or NULL when genuinely unavailable. The ONE conversion
+   * source for every dollar display — surfaces never convert on their own and
+   * never substitute a constant: show "$—" on null (missing beats lying).
+   */
+  getEthUsdRate(): Promise<number | null>;
 }

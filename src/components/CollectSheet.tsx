@@ -5,7 +5,7 @@ import { usePrivy, useWallets } from "@privy-io/react-auth";
 import { createWalletClient, custom, formatEther } from "viem";
 import { base } from "viem/chains";
 import { collectPost, sellPost, getTokenPrice, getHolderBalance, diagnoseContract, getSaleConfig } from "@/lib/zora";
-import { getLiveEthPrice } from "@/lib/coingecko";
+import { useEconomy } from "@/components/EconomyProvider";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -46,11 +46,14 @@ interface CollectSheetProps {
 export default function CollectSheet({ post, visible, onClose }: CollectSheetProps) {
   const { user } = usePrivy();
   const { wallets } = useWallets();
+  const economy = useEconomy();
 
   const [mode, setMode] = useState<Mode>("buy");
   const [selectedQty, setSelectedQty] = useState(1);
 
-  const [ethUsd, setEthUsd] = useState(3000);
+  // ETH/USD via the boundary's single source; null = unavailable → "$—",
+  // never a hardcoded fallback (the old 3000 inflated every dollar shown).
+  const [ethUsd, setEthUsd] = useState<number | null>(null);
   const [tokenPrice, setTokenPrice] = useState<bigint | null>(null);
   const [holderBalance, setHolderBalance] = useState<bigint>(BigInt(0));
   const [priceLoading, setPriceLoading] = useState(false);
@@ -61,8 +64,8 @@ export default function CollectSheet({ post, visible, onClose }: CollectSheetPro
 
   useEffect(() => {
     if (!visible) return;
-    getLiveEthPrice().then(setEthUsd).catch(() => setEthUsd(3000));
-  }, [visible]);
+    economy.getEthUsdRate().then(setEthUsd).catch(() => setEthUsd(null));
+  }, [visible, economy]);
 
   const fetchData = useCallback(async () => {
     if (!visible || !post.is_minted || !post.contract_address) return;
@@ -106,7 +109,7 @@ export default function CollectSheet({ post, visible, onClose }: CollectSheetPro
 
   const pricePerTokenEth = tokenPrice != null ? parseFloat(formatEther(tokenPrice)) : null;
   const totalEth = pricePerTokenEth != null ? (pricePerTokenEth * selectedQty).toFixed(5) : null;
-  const totalUsd = pricePerTokenEth != null ? (pricePerTokenEth * selectedQty * ethUsd).toFixed(2) : null;
+  const totalUsd = pricePerTokenEth != null && ethUsd != null ? (pricePerTokenEth * selectedQty * ethUsd).toFixed(2) : null;
   const userHoldsTokens = holderBalance > BigInt(0);
   const notMinted = !post.is_minted || !post.contract_address;
 

@@ -4,7 +4,7 @@ import { useWallets, useFundWallet } from "@privy-io/react-auth";
 import { createPublicClient, http, formatEther } from "viem";
 import { base } from "viem/chains";
 import { isValidTicker, tickerError } from "@/lib/economy/ticker";
-import { getLiveEthPrice } from "@/lib/coingecko";
+import { getEthUsdRate } from "@/lib/coingecko";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -64,8 +64,10 @@ export default function MintPromptSheet({ visible, onMint, onSkip, onCoinSkipped
       let selfBuyEth = 0;
       const buyUsd = parseFloat(selfBuyUsd);
       if (isFinite(buyUsd) && buyUsd > 0) {
-        try { selfBuyEth = buyUsd / (await getLiveEthPrice()); }
-        catch { selfBuyEth = 0; } // price feed down → don't false-block; tradeCoin failure is isolated + loud
+        const rate = await getEthUsdRate();
+        // Rate unavailable → don't false-block the gate; backOwnCoin refuses
+        // honestly (isolated + loud) if the rate is still down at buy time.
+        selfBuyEth = rate !== null ? buyUsd / rate : 0;
       }
       const thresholdEth = GAS_ALLOWANCE_ETH + selfBuyEth;
       const sufficient = ethBalance >= thresholdEth;
