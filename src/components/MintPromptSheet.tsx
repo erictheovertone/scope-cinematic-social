@@ -4,6 +4,7 @@ import { useWallets, useFundWallet } from "@privy-io/react-auth";
 import { createPublicClient, http, formatEther } from "viem";
 import { base } from "viem/chains";
 import { isValidTicker, tickerError } from "@/lib/economy/ticker";
+import { getLiveEthPrice } from "@/lib/coingecko";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -12,6 +13,9 @@ interface MintPromptSheetProps {
   visible: boolean;
   onMint: () => void;
   onSkip: () => void;
+  /** LOUD path: user dismissed the FUND WALLET screen — the post must land in
+      coin-failed (inline error + profile retry), never a silent skip. */
+  onCoinSkipped: () => void;
   // Phase 1 coin params (entered on the mint step).
   ticker: string;
   onTickerChange: (v: string) => void;
@@ -19,7 +23,7 @@ interface MintPromptSheetProps {
   onSelfBuyChange: (v: string) => void;
 }
 
-export default function MintPromptSheet({ visible, onMint, onSkip, ticker, onTickerChange, selfBuyUsd, onSelfBuyChange }: MintPromptSheetProps) {
+export default function MintPromptSheet({ visible, onMint, onSkip, onCoinSkipped, ticker, onTickerChange, selfBuyUsd, onSelfBuyChange }: MintPromptSheetProps) {
   const [expanded, setExpanded] = useState(false);
   const [insufficientFunds, setInsufficientFunds] = useState(false);
   const [checkingBalance, setCheckingBalance] = useState(false);
@@ -29,9 +33,17 @@ export default function MintPromptSheet({ visible, onMint, onSkip, ticker, onTic
 
   const embeddedWallet = wallets.find(w => w.walletClientType === 'privy');
 
+  // Soft pre-check, not enforcement: it exists to catch obviously-empty wallets
+  // before a doomed tx. If it's wrong in either direction the coin step itself
+  // is the real gate (a createCoin failure lands LOUD in coin-failed + retry).
+  // Gas allowance: createCoin on Base ≈ a few M gas at sub-0.05 gwei → well
+  // under 0.0002 ETH (cents). The old 0.0005 constant false-gated funded
+  // wallets (observed: 0.000493 ETH balance refused — $0.02 short).
+  const GAS_ALLOWANCE_ETH = 0.0002;
+
   const checkBalanceAndMint = async () => {
     if (!embeddedWallet) {
-      onMint();
+      onMint(); // no wallet to check — handleDoMint throws loudly itself
       return;
     }
     setCheckingBalance(true);
@@ -40,18 +52,41 @@ export default function MintPromptSheet({ visible, onMint, onSkip, ticker, onTic
         chain: base,
         transport: http(process.env.NEXT_PUBLIC_ALCHEMY_BASE_URL || 'https://mainnet.base.org'),
       });
-      const balance = await publicClient.getBalance({
-        address: embeddedWallet.address as `0x${string}`,
-      });
-      const ethBalance = parseFloat(formatEther(balance));
-      console.log('[mint] ETH balance:', ethBalance);
-      if (ethBalance < 0.0005) {
-        setInsufficientFunds(true);
-      } else {
-        onMint();
+      // Read the REAL chain the transport answers as — never assume the URL.
+      const [balanceWei, chainId] = await Promise.all([
+        publicClient.getBalance({ address: embeddedWallet.address as `0x${string}` }),
+        publicClient.getChainId(),
+      ]);
+      const ethBalance = parseFloat(formatEther(balanceWei));
+
+      // Threshold = gas allowance + the optional self-buy (USD → ETH). The
+      // create itself is ETH-gas; USDC holdings are irrelevant here (fact 4).
+      let selfBuyEth = 0;
+      const buyUsd = parseFloat(selfBuyUsd);
+      if (isFinite(buyUsd) && buyUsd > 0) {
+        try { selfBuyEth = buyUsd / (await getLiveEthPrice()); }
+        catch { selfBuyEth = 0; } // price feed down → don't false-block; tradeCoin failure is isolated + loud
       }
+      const thresholdEth = GAS_ALLOWANCE_ETH + selfBuyEth;
+      const sufficient = ethBalance >= thresholdEth;
+
+      // The one-line diagnostic this class of bug demands — on EVERY evaluation.
+      console.log(
+        `[coin-gate] addr=${embeddedWallet.address} chainId=${chainId} balance=${ethBalance} ETH threshold=${thresholdEth} ETH (gas=${GAS_ALLOWANCE_ETH} + selfBuy=${selfBuyEth}) → ${sufficient ? 'PROCEED' : 'FUND WALLET'}`
+      );
+
+      if (chainId !== base.id) {
+        // RPC answers as the wrong network — the balance read is meaningless.
+        // Don't false-gate on garbage data; let the coin step be the loud gate.
+        console.error(`[coin-gate] RPC chainId ${chainId} ≠ Base ${base.id} — skipping gate, proceeding to mint`);
+        onMint();
+        return;
+      }
+
+      if (sufficient) onMint();
+      else setInsufficientFunds(true);
     } catch (e) {
-      console.error('[mint] balance check failed:', e);
+      console.error('[coin-gate] balance check failed (proceeding — coin step is the loud gate):', e);
       onMint();
     } finally {
       setCheckingBalance(false);
@@ -118,7 +153,7 @@ export default function MintPromptSheet({ visible, onMint, onSkip, ticker, onTic
               </span>
             </button>
             <button
-              onClick={() => { setInsufficientFunds(false); onSkip(); }}
+              onClick={() => { setInsufficientFunds(false); onCoinSkipped(); }}
               style={{ width: '100%', background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', cursor: 'pointer', padding: '12px 0' }}
             >
               <span style={{ ...SKB, fontSize: 10, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>

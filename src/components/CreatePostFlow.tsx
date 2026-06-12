@@ -866,6 +866,17 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
     completeFlow();
   };
 
+  // LOUD path for a dismissed FUND WALLET gate (failure contract): the post is
+  // already live but has NO coin — surface coin-failed inline (with the
+  // "create it later from your profile" pointer to the kebab retry), never a
+  // silent skip.
+  const handleCoinSkipped = () => {
+    setShowMintPrompt(false);
+    setStep('posting');
+    setMintStatus('coin-failed');
+    setTimeout(() => completeFlow(), 2200);
+  };
+
   const handleCreateDeckAndSelect = async () => {
     if (!newDeckTitle.trim() || !user) return;
     setCreatingDeck(true);
@@ -1309,6 +1320,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
         visible={showMintPrompt}
         onMint={handleDoMint}
         onSkip={handleSkipMint}
+        onCoinSkipped={handleCoinSkipped}
         ticker={ticker}
         onTickerChange={(v) => setTicker(normalizeTicker(v))}
         selfBuyUsd={selfBuyUsd}

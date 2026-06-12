@@ -309,8 +309,11 @@ function PostViewerItem({
                     >
                       <span style={{ ...SKB, fontSize: 9, color: "white", textTransform: "uppercase", letterSpacing: "0.06em" }}>ADD TO DECK</span>
                     </button>
-                    {/* Coin-pending: offer the idempotent "Create coin" retry. */}
-                    {!isCoinPost(post as { coin_address?: string | null; token_standard?: string | null }) && (
+                    {/* Coin-pending: offer the idempotent "Create coin" retry.
+                        Excludes legacy 1155-minted posts — those remain
+                        collectibles without coins (§9), only true coin-pending
+                        posts (no coin AND not 1155-minted) get the retry. */}
+                    {!isCoinPost(post as { coin_address?: string | null; token_standard?: string | null }) && !(post as { is_minted?: boolean }).is_minted && (
                       <button
                         onClick={() => { setMenuOpen(false); setShowCreateCoin(true); }}
                         style={{ display: "block", width: "100%", textAlign: "left", background: "transparent", border: "none", borderBottom: "1px solid rgba(255,255,255,0.08)", cursor: "pointer", padding: "11px 14px" }}
