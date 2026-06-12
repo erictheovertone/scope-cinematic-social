@@ -18,7 +18,7 @@ import {
   CreateConstants,
   type ContentCoinCurrency,
 } from "@zoralabs/coins-sdk";
-import { createPublicClient, http, getAddress, parseEther } from "viem";
+import { createPublicClient, http, getAddress, parseEther, formatEther } from "viem";
 import { base } from "viem/chains";
 import { supabase } from "@/lib/supabase/client";
 import { getEthUsdRate } from "@/lib/coingecko";
@@ -249,6 +249,7 @@ export async function backOwnCoin({
   // logs the exact request so a routing 500 is never blind.
   const DELAYS_MS = [0, 2000, 4000, 8000, 8000, 8000]; // ~30s total
   let lastErr: unknown = null;
+  let quote: any = null;
   for (let i = 0; i < DELAYS_MS.length; i++) {
     if (DELAYS_MS[i] > 0) await new Promise((r) => setTimeout(r, DELAYS_MS[i]));
     console.log(
@@ -256,7 +257,7 @@ export async function backOwnCoin({
       JSON.stringify({ ...tradeParameters, amountIn: amountIn.toString(), chainId: base.id, usd: usdAmount, ethUsd })
     );
     try {
-      await createTradeCall(tradeParameters); // quote only — no tx
+      quote = await createTradeCall(tradeParameters); // quote only — no tx
       lastErr = null;
       break;
     } catch (e) {
@@ -269,6 +270,19 @@ export async function backOwnCoin({
       `Backing not available yet — the market may still be opening. You can back it from the post shortly. (${(lastErr as Error)?.message})`
     );
   }
+  // The full quote response — the receipt's first leg.
+  console.log("[zoraCoins] backOwnCoin quote response:", JSON.stringify(quote)?.slice(0, 500));
+
+  // Pieces delta: balance before/after so the receipt shows what arrived.
+  const TOKENS_PER_PIECE = 100_000;
+  const ERC20_BAL = [{ name: "balanceOf", type: "function", stateMutability: "view", inputs: [{ name: "account", type: "address" }], outputs: [{ name: "", type: "uint256" }] }] as const;
+  const readPieces = async () => {
+    try {
+      const b = await publicClient.readContract({ address: getAddress(coinAddress), abi: ERC20_BAL, functionName: "balanceOf", args: [sender] });
+      return Math.floor(parseFloat(formatEther(b as bigint)) / TOKENS_PER_PIECE);
+    } catch { return null; }
+  };
+  const piecesBefore = await readPieces();
 
   const res: any = await tradeCoin({
     tradeParameters,
@@ -277,7 +291,12 @@ export async function backOwnCoin({
     account: sender,
   });
 
-  const hash = (res?.hash ?? res) as `0x${string}`;
-  console.log("[zoraCoins] backOwnCoin — tx:", hash);
+  // tradeCoin resolves with the tx RECEIPT — the hash is transactionHash.
+  const hash = (res?.transactionHash ?? res?.hash ?? res) as `0x${string}`;
+  const piecesAfter = await readPieces();
+  const delta = piecesBefore != null && piecesAfter != null ? piecesAfter - piecesBefore : null;
+  console.log(
+    `[zoraCoins] backOwnCoin COMPLETE — tx: ${hash} | pieces received: ${delta ?? "?"} (balance ${piecesBefore ?? "?"} → ${piecesAfter ?? "?"}) | $${usdAmount} ≈ ${ethAmount} ETH`
+  );
   return { hash };
 }
