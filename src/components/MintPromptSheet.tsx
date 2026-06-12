@@ -5,6 +5,7 @@ import { createPublicClient, http, formatEther } from "viem";
 import { base } from "viem/chains";
 import { isValidTicker, tickerError } from "@/lib/economy/ticker";
 import { getEthUsdRate } from "@/lib/coingecko";
+import FrameLoader from "@/components/FrameLoader";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -21,9 +22,13 @@ interface MintPromptSheetProps {
   onTickerChange: (v: string) => void;
   selfBuyUsd: string;
   onSelfBuyChange: (v: string) => void;
+  /** TRANSACTION PRESENCE: while the sequence runs, the pressed button
+      transforms in place into its live narration (the wheel). */
+  sequencePhase: 'idle' | 'minting' | 'minted' | 'mint-failed' | 'coin-failed';
+  sequenceLine: string | null;
 }
 
-export default function MintPromptSheet({ visible, onMint, onSkip, onCoinSkipped, ticker, onTickerChange, selfBuyUsd, onSelfBuyChange }: MintPromptSheetProps) {
+export default function MintPromptSheet({ visible, onMint, onSkip, onCoinSkipped, ticker, onTickerChange, selfBuyUsd, onSelfBuyChange, sequencePhase, sequenceLine }: MintPromptSheetProps) {
   const [expanded, setExpanded] = useState(false);
   const [insufficientFunds, setInsufficientFunds] = useState(false);
   const [checkingBalance, setCheckingBalance] = useState(false);
@@ -257,27 +262,43 @@ export default function MintPromptSheet({ visible, onMint, onSkip, onCoinSkipped
               </p>
             </div>
 
-            <button
-              onClick={checkBalanceAndMint}
-              disabled={checkingBalance || !isValidTicker(ticker)}
-              style={{ width: '100%', background: (checkingBalance || !isValidTicker(ticker)) ? 'rgba(255,0,0,0.4)' : '#FF0000', border: 'none', cursor: (checkingBalance || !isValidTicker(ticker)) ? 'default' : 'pointer', padding: '14px 0', marginBottom: 10 }}
-            >
-              <span style={{ ...SKB, fontSize: 12, color: 'white', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                {/* The button carries the plain-language contract — this tap IS
-                    the consent for everything it names (no second confirm). */}
-                {checkingBalance ? 'CHECKING BALANCE...'
-                  : !isValidTicker(ticker) ? 'ENTER A TICKER'
-                  : (() => { const b = parseFloat(selfBuyUsd); return isFinite(b) && b > 0 ? `CREATE COIN · BACK $${b.toFixed(2)}` : 'CREATE COIN · EARN FOREVER'; })()}
-              </span>
-            </button>
-            <button
-              onClick={onSkip}
-              style={{ width: '100%', background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', cursor: 'pointer', padding: '12px 0' }}
-            >
-              <span style={{ ...SKB, fontSize: 10, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                SKIP FOR NOW
-              </span>
-            </button>
+            {sequencePhase !== 'idle' ? (
+              /* THE WHEEL — the pressed button, transformed in place into the
+                 live narration. Loader while a step runs; bracket terminal
+                 state holds a beat; failures narrate honestly in red. */
+              <div style={{ width: '100%', border: '1px solid rgba(255,0,0,0.55)', padding: '13px 0', marginBottom: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, minHeight: 46 }}>
+                {sequencePhase === 'minting' || (sequencePhase === 'minted' && sequenceLine && !sequenceLine.startsWith('[')) ? (
+                  <FrameLoader size={22} />
+                ) : null}
+                <span style={{ ...SKB, fontSize: 11, color: (sequencePhase === 'coin-failed' || sequenceLine?.includes('DIDN’T')) ? '#FF0000' : sequenceLine?.startsWith('[') ? '#FF0000' : 'white', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                  {sequenceLine ?? 'WORKING…'}
+                </span>
+              </div>
+            ) : (
+              <>
+                <button
+                  onClick={checkBalanceAndMint}
+                  disabled={checkingBalance || !isValidTicker(ticker)}
+                  style={{ width: '100%', background: (checkingBalance || !isValidTicker(ticker)) ? 'rgba(255,0,0,0.4)' : '#FF0000', border: 'none', cursor: (checkingBalance || !isValidTicker(ticker)) ? 'default' : 'pointer', padding: '14px 0', marginBottom: 10 }}
+                >
+                  <span style={{ ...SKB, fontSize: 12, color: 'white', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                    {/* The button carries the plain-language contract — this tap IS
+                        the consent for everything it names (no second confirm). */}
+                    {checkingBalance ? 'CHECKING BALANCE...'
+                      : !isValidTicker(ticker) ? 'ENTER A TICKER'
+                      : (() => { const b = parseFloat(selfBuyUsd); return isFinite(b) && b > 0 ? `CREATE COIN · BACK $${b.toFixed(2)}` : 'CREATE COIN · EARN FOREVER'; })()}
+                  </span>
+                </button>
+                <button
+                  onClick={onSkip}
+                  style={{ width: '100%', background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', cursor: 'pointer', padding: '12px 0' }}
+                >
+                  <span style={{ ...SKB, fontSize: 10, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                    SKIP FOR NOW
+                  </span>
+                </button>
+              </>
+            )}
             <p style={{ ...SKR, fontSize: 8, color: 'rgba(255,255,255,0.2)', textAlign: 'center', margin: '12px 0 0', lineHeight: 1.5 }}>
               MINTING REQUIRES A SMALL GAS FEE ON BASE. YOU CAN ALWAYS MINT LATER FROM YOUR PROFILE.
             </p>

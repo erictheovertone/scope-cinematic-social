@@ -21,7 +21,7 @@ import { base } from "viem/chains";
 import { supabase } from "@/lib/supabase/client";
 import { mockEconomy, PIECE_SUPPLY, FOUNDING_AMOUNT } from "./mock";
 import { publicClient } from "@/lib/zoraCoins";
-import type { EconomyApi, PostMarket } from "./types";
+import type { EconomyApi, PostMarket, Holding } from "./types";
 
 const TOKENS_PER_PIECE = 100_000;
 
@@ -122,6 +122,60 @@ export function createRealEconomy(viewerAddress: string | null): EconomyApi {
       const coinAddress = await coinAddressFor(postId);
       if (!coinAddress) return mockEconomy.getPostMarket(postId);
       return realPostMarket(coinAddress, viewerAddress);
+    },
+
+    // The wallet's ownership ledger — every Scope coin the viewer holds,
+    // including their own posts (allocation + backing). balanceOf per coin
+    // over the platform's coin set, price from the same Zora read as
+    // getPostMarket, value derived (price × pieces; null price → null value).
+    async getHoldings(): Promise<Holding[]> {
+      if (!viewerAddress) return [];
+      const { data: coinPosts } = await supabase
+        .from("posts")
+        .select("*")
+        .not("coin_address", "is", null)
+        .eq("token_standard", "coin");
+      if (!coinPosts?.length) return [];
+
+      const rows = await Promise.all(
+        coinPosts.map(async (p): Promise<Holding | null> => {
+          try {
+            const bal = (await publicClient.readContract({
+              address: p.coin_address as `0x${string}`,
+              abi: BALANCE_OF_ABI,
+              functionName: "balanceOf",
+              args: [viewerAddress as `0x${string}`],
+            })) as bigint;
+            const pieces = Math.floor(parseFloat(formatEther(bal)) / TOKENS_PER_PIECE);
+            if (pieces <= 0) return null;
+
+            let priceUsd: number | null = null;
+            try {
+              const res: any = await getCoin({ address: p.coin_address, chain: base.id });
+              const perToken = res?.data?.zora20Token?.tokenPrice?.priceInUsdc;
+              priceUsd =
+                perToken != null && isFinite(parseFloat(perToken))
+                  ? parseFloat(perToken) * TOKENS_PER_PIECE
+                  : null;
+            } catch { /* price unavailable → honest null */ }
+
+            return {
+              postId: p.id,
+              ticker: p.ticker ?? null,
+              thumbUrl: (p.media_type === "video" ? p.poster_url : null) || p.thumbnail_url || p.media_urls?.[0] || null,
+              pieces,
+              priceUsd,
+              valueUsd: priceUsd != null ? priceUsd * pieces : null,
+              post: p,
+            };
+          } catch {
+            return null;
+          }
+        })
+      );
+      return rows
+        .filter((r): r is Holding => r !== null)
+        .sort((a, b) => (b.valueUsd ?? 0) - (a.valueUsd ?? 0));
     },
   };
 }

@@ -149,4 +149,25 @@ export interface EconomyApi {
    * never substitute a constant: show "$—" on null (missing beats lying).
    */
   getEthUsdRate(): Promise<number | null>;
+  /**
+   * Every Scope coin the viewer holds pieces of — the wallet's ownership
+   * ledger, COMPLETE (includes the viewer's own posts: allocation + backing).
+   * NOTE the COLLECTED-grid rule: COLLECTED = external curation only — the
+   * grid excludes self-backed posts (creator positions live on the POST and
+   * here in the WALLET). Rhymes with the First Cut creator-exclusion.
+   */
+  getHoldings(): Promise<Holding[]>;
+}
+
+/** One wallet-holdings row: a coin the viewer holds pieces of. */
+export interface Holding {
+  postId: string;
+  ticker: string | null;
+  thumbUrl: string | null;
+  pieces: number;
+  /** Price per piece (USD); null = no-trades pool (value then also null). */
+  priceUsd: number | null;
+  valueUsd: number | null;
+  /** The post row — lets the wallet open the collect sheet directly. */
+  post: Record<string, unknown>;
 }

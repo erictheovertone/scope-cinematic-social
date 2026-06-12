@@ -197,6 +197,12 @@ export const mockEconomy: EconomyApi = {
     return { ok: true, pieces: Math.max(0, pieces), ref: `mock-sell-${hash(postId)}-${Date.now()}` };
   },
 
+  async getHoldings() {
+    // Holdings are a REAL wallet surface — the mock has none. The real
+    // boundary (real.ts) overrides this with on-chain reads.
+    return [];
+  },
+
   async getEthUsdRate(): Promise<number | null> {
     // NOT mocked: the rate is real infrastructure used by real (ungated)
     // dollar displays — wallet, legacy collect, MC. Delegates to the live

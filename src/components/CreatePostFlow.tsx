@@ -809,13 +809,13 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
     const sym = normalizeTicker(ticker);
     if (!isValidTicker(sym)) { setTicker(sym); return; } // backstop; MintPromptSheet gates the button
     setShowMintPrompt(false);
-    setStep('posting');
+    // TRANSACTION PRESENCE: the sheet stays open and the pressed button
+    // transforms in place into the live narration of the sequence (the real
+    // button IS the wheel — no overlay handoff, no fake controls).
     setMintStatus('minting');
-    // Narrate the multi-signature sequence — the user always knows which
-    // signature the wallet is asking for. Labeling, not gating.
     const plannedBuyUsd = parseFloat(selfBuyUsd);
     const hasBacking = isFinite(plannedBuyUsd) && plannedBuyUsd > 0;
-    if (hasBacking) setBackingNarration('1 OF 2 — CREATING YOUR COIN…');
+    setBackingNarration(hasBacking ? '1 OF 2 — CREATING YOUR COIN…' : 'CREATING YOUR COIN…');
     try {
       const embeddedWallet = wallets.find(w => w.walletClientType === 'privy');
       if (!embeddedWallet) throw new Error('No embedded wallet found');
@@ -863,20 +863,22 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
             backOwnCoin({ walletClient, creatorAddress: embeddedWallet.address, coinAddress, usdAmount: plannedBuyUsd }),
             new Promise<never>((_, rej) => setTimeout(() => rej(new Error('backing timed out — it may still land; check the post')), 45000)),
           ]);
-          setBackingNarration(r.pieces != null ? `BACKED · ${r.pieces} PIECES ✓` : 'BACKED ✓');
+          setBackingNarration(r.pieces != null ? `[ BACKED · ${r.pieces} PIECES ]` : '[ BACKED ]');
         } catch (buyErr) {
           console.warn('[coin] backing did not land (coin unaffected):', (buyErr as Error)?.message);
-          setBackingNarration('BACKING DIDN’T LAND — BACK IT FROM THE POST LATER');
+          setBackingNarration('BACKING DIDN’T LAND — RETRY FROM YOUR POST');
         }
         setTimeout(() => completeFlow(), 1800);
         return;
       }
+      // Terminal bracket state — a beat of hold, then resolve.
+      setBackingNarration('[ COINED ]');
     } catch (coinError) {
       console.error('[coin] createScopeCoin failed:', coinError);
       setMintStatus('coin-failed');
-      setBackingNarration(null);
+      setBackingNarration('COIN NOT CREATED — RETRY FROM YOUR POST');
     }
-    setTimeout(() => completeFlow(), 2200);
+    setTimeout(() => completeFlow(), 1800);
   };
 
   const handleSkipMint = () => {
@@ -1348,6 +1350,8 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
         onTickerChange={(v) => setTicker(normalizeTicker(v))}
         selfBuyUsd={selfBuyUsd}
         onSelfBuyChange={setSelfBuyUsd}
+        sequencePhase={mintStatus}
+        sequenceLine={backingNarration}
       />
       {isPosting && !showMintPrompt && (
         <div style={{

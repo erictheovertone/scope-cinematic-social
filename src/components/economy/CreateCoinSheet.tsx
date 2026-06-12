@@ -105,10 +105,10 @@ export default function CreateCoinSheet({
             backOwnCoin({ walletClient, creatorAddress: embeddedWallet.address, coinAddress, usdAmount: buyUsd }),
             new Promise<never>((_, rej) => setTimeout(() => rej(new Error('backing timed out')), 45000)),
           ]);
-          setNarration(r.pieces != null ? `BACKED · ${r.pieces} PIECES ✓` : 'BACKED ✓');
+          setNarration(r.pieces != null ? `[ BACKED · ${r.pieces} PIECES ]` : '[ BACKED ]');
         } catch (e) {
           console.warn('[CreateCoinSheet] backing did not land (coin unaffected):', (e as Error)?.message);
-          setNarration('BACKING DIDN’T LAND — TRY AGAIN FROM THE POST');
+          setNarration('BACKING DIDN’T LAND — RETRY FROM YOUR POST');
         }
       }
       onDone?.();
@@ -133,9 +133,9 @@ export default function CreateCoinSheet({
 
         {phase === 'done' ? (
           <div style={{ textAlign: 'center', padding: '14px 0' }}>
-            <p style={{ ...SKB, fontSize: 11, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>COINED ✓</p>
+            <p style={{ ...SKB, fontSize: 12, color: '#FF0000', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>[ COINED ]</p>
             {narration && (
-              <p style={{ ...SKB, fontSize: 9, color: '#FF0000', textTransform: 'uppercase', letterSpacing: '0.12em', margin: '10px 0 0' }}>{narration}</p>
+              <p style={{ ...SKB, fontSize: 9, color: narration.startsWith('[') ? '#FF0000' : '#FFF', textTransform: 'uppercase', letterSpacing: '0.12em', margin: '10px 0 0' }}>{narration}</p>
             )}
           </div>
         ) : (

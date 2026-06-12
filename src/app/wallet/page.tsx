@@ -5,6 +5,9 @@ import { usePrivy, useFundWallet } from "@privy-io/react-auth";
 import { base } from "viem/chains";
 import { getEthBalance, getUsdcBalance, getTransactionHistory } from "@/lib/wallet";
 import { useEconomy } from "@/components/EconomyProvider";
+import TickerMark from "@/components/economy/TickerMark";
+import CollectSheetGate from "@/components/economy/CollectSheetGate";
+import type { Holding } from "@/lib/economy/types";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -25,6 +28,8 @@ export default function WalletPage() {
   const [ethBalance, setEthBalance] = useState<string | null>(null);
   const [usdcBalance, setUsdcBalance] = useState<string | null>(null);
   const [txHistory, setTxHistory] = useState<any[]>([]);
+  const [holdings, setHoldings] = useState<Holding[] | null>(null); // null = not loaded
+  const [openHolding, setOpenHolding] = useState<Holding | null>(null);
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState("");
   const [showSend, setShowSend] = useState(false);
@@ -55,6 +60,7 @@ export default function WalletPage() {
       setUsdcBalance(usdc);
       setTxHistory(txs);
       setEthUsdRate(rate);
+      setHoldings(null); // re-pull holdings on next tab view (pull-to-refresh)
     } catch (e) {
       console.error("fetchBalances error:", e);
     } finally {
@@ -65,6 +71,17 @@ export default function WalletPage() {
   useEffect(() => {
     fetchBalances();
   }, [walletAddress]);
+
+  // Holdings — the ownership ledger, loaded when the tab opens (and refreshed
+  // on pull-to-refresh via fetchBalances → holdings reset below).
+  useEffect(() => {
+    if (activeTab !== "holdings" || holdings !== null) return;
+    let cancelled = false;
+    economy.getHoldings()
+      .then((h) => { if (!cancelled) setHoldings(h); })
+      .catch((e) => { console.error("[wallet] holdings load error:", e); if (!cancelled) setHoldings([]); });
+    return () => { cancelled = true; };
+  }, [activeTab, holdings, economy]);
 
   // Dollar figures only when the live rate exists — "$—" beats a wrong number.
   const ethUsd = ethBalance != null && ethUsdRate != null
@@ -225,13 +242,60 @@ export default function WalletPage() {
           </div>
         )}
 
-        {/* HOLDINGS */}
+        {/* HOLDINGS — the ownership ledger: every Scope coin held, OWN posts
+            included (allocation + backing). Dollars lead; null price → "$—". */}
         {activeTab === "holdings" && (
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "30vh" }}>
-            <p style={{ ...SKB, fontSize: 11, color: "white", opacity: 0.5, textAlign: "center", lineHeight: 1.6, textTransform: "uppercase", letterSpacing: "0.06em" }}>
-              Your collected post tokens<br />will appear here
-            </p>
-          </div>
+          holdings === null ? (
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "30vh" }}>
+              <p style={{ ...SKB, fontSize: 10, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em" }}>LOADING…</p>
+            </div>
+          ) : holdings.length === 0 ? (
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "30vh" }}>
+              <p style={{ ...SKB, fontSize: 11, color: "white", opacity: 0.5, textAlign: "center", lineHeight: 1.6, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                No coin holdings yet
+              </p>
+            </div>
+          ) : (
+            <div>
+              {/* Total holdings value — austere, dollars. "+" marks unpriced pools. */}
+              <div style={{ borderBottom: "1px solid #FF0000", padding: "4px 0 14px", marginBottom: 14 }}>
+                <p style={{ ...SKB, fontSize: 7, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.16em", margin: "0 0 6px" }}>HOLDINGS VALUE</p>
+                <p style={{ ...SKB, fontSize: 26, color: "#FF0000", margin: 0, fontVariantNumeric: "tabular-nums" }}>
+                  ${holdings.reduce((s, h) => s + (h.valueUsd ?? 0), 0).toFixed(2)}
+                  {holdings.some((h) => h.valueUsd == null) && <span style={{ fontSize: 12, color: "rgba(255,255,255,0.4)" }}> +</span>}
+                </p>
+              </div>
+              {holdings.map((h) => (
+                <div
+                  key={h.postId}
+                  onClick={() => setOpenHolding(h)}
+                  style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 0", borderBottom: "1px solid rgba(255,255,255,0.07)", cursor: "pointer" }}
+                >
+                  {h.thumbUrl
+                    ? <img src={h.thumbUrl} alt="" style={{ width: 44, height: 30, objectFit: "cover", flexShrink: 0, background: "#111" }} />
+                    : <div style={{ width: 44, height: 30, background: "#111", flexShrink: 0 }} />}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    {h.ticker ? <TickerMark ticker={h.ticker} size={10} /> : <span style={{ ...SKB, fontSize: 10, color: "rgba(255,255,255,0.4)" }}>—</span>}
+                    <p style={{ ...SKR, fontSize: 9, color: "rgba(255,255,255,0.45)", margin: "3px 0 0", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                      {h.pieces.toLocaleString()} {h.pieces === 1 ? "PIECE" : "PIECES"}
+                    </p>
+                  </div>
+                  <span style={{ ...SKB, fontSize: 13, color: "white", fontVariantNumeric: "tabular-nums" }}>
+                    {h.valueUsd != null ? `$${h.valueUsd.toFixed(2)}` : "$—"}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )
+        )}
+
+        {/* Tap-through: the holding opens its post's collect sheet. */}
+        {openHolding && (
+          <CollectSheetGate
+            post={openHolding.post as any}
+            visible={!!openHolding}
+            onClose={() => setOpenHolding(null)}
+          />
         )}
 
         {/* ACTIVITY */}
