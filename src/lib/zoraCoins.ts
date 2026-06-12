@@ -13,6 +13,7 @@
 import {
   createCoin,
   tradeCoin,
+  createTradeCall,
   getCoinCreateFromLogs,
   CreateConstants,
   type ContentCoinCurrency,
@@ -51,12 +52,15 @@ export function getScopePlatformReferrer(): `0x${string}` {
   return getAddress(raw.trim()); // throws on invalid checksum/format
 }
 
-// Pool base currency. Ratified ETH; env-overridable to ZORA without a code
-// change if the live factory requires content coins to pair against ZORA (the
-// rollout §1 burner-create check decides). Stored on the post for audit.
+// Pool base currency. DEFAULT: ZORA — the burner check (2026-06-12) proved
+// Zora's market router cannot route ETH-paired content coins ("Failed to
+// create route", price null, MC 0; every live content coin pairs against a
+// creator coin / ZORA). The ratified §1.4 fallback applies. ETH remains an
+// env override only for if/when Zora's router supports it. Stored on the post
+// for audit.
 export function getCoinCurrency(): ContentCoinCurrency {
-  const v = (process.env.NEXT_PUBLIC_SCOPE_COIN_CURRENCY || "ETH").toUpperCase();
-  return (v === "ZORA" ? "ZORA" : "ETH") as ContentCoinCurrency;
+  const v = (process.env.NEXT_PUBLIC_SCOPE_COIN_CURRENCY || "ZORA").toUpperCase();
+  return (v === "ETH" ? "ETH" : "ZORA") as ContentCoinCurrency;
 }
 
 // ── Coin metadata (image = the GRADED media) ──────────────────────────────────
@@ -231,17 +235,43 @@ export async function backOwnCoin({
   const amountIn = parseEther(ethAmount.toFixed(18));
   const sender = getAddress(creatorAddress);
 
-  console.log("[zoraCoins] backOwnCoin — $", usdAmount, "≈", ethAmount, "ETH into", coinAddress);
+  const tradeParameters = {
+    sell: { type: "eth" as const },
+    buy: { type: "erc20" as const, address: getAddress(coinAddress) },
+    amountIn,
+    slippage,
+    sender,
+    recipient: sender,
+  };
+
+  // READINESS: a freshly created pool may not be quotable for a few seconds —
+  // poll the quote with backoff before committing the trade. Every attempt
+  // logs the exact request so a routing 500 is never blind.
+  const DELAYS_MS = [0, 2000, 4000, 8000, 8000, 8000]; // ~30s total
+  let lastErr: unknown = null;
+  for (let i = 0; i < DELAYS_MS.length; i++) {
+    if (DELAYS_MS[i] > 0) await new Promise((r) => setTimeout(r, DELAYS_MS[i]));
+    console.log(
+      `[zoraCoins] backOwnCoin quote attempt ${i + 1}/${DELAYS_MS.length}:`,
+      JSON.stringify({ ...tradeParameters, amountIn: amountIn.toString(), chainId: base.id, usd: usdAmount, ethUsd })
+    );
+    try {
+      await createTradeCall(tradeParameters); // quote only — no tx
+      lastErr = null;
+      break;
+    } catch (e) {
+      lastErr = e;
+      console.warn(`[zoraCoins] backOwnCoin quote not ready (attempt ${i + 1}):`, (e as Error)?.message);
+    }
+  }
+  if (lastErr) {
+    throw new Error(
+      `Backing not available yet — the market may still be opening. You can back it from the post shortly. (${(lastErr as Error)?.message})`
+    );
+  }
 
   const res: any = await tradeCoin({
-    tradeParameters: {
-      sell: { type: "eth" },
-      buy: { type: "erc20", address: getAddress(coinAddress) },
-      amountIn,
-      slippage,
-      sender,
-      recipient: sender,
-    },
+    tradeParameters,
     walletClient,
     publicClient: publicClient as any,
     account: sender,

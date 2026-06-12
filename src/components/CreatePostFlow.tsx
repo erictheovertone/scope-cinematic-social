@@ -844,16 +844,15 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
       console.log('[coin] Success — coin:', coinAddress, 'tx:', hash);
       setMintStatus('minted');
 
-      // Optional "Back your post" self-buy — ISOLATED post-create trade. A
-      // failure must NOT fail the coin (the coin already exists).
+      // Optional "Back your post" self-buy — fully DECOUPLED from the mint
+      // breath (fire-and-forget): it polls quote readiness with backoff in the
+      // background and can never make minting feel failed. Outcome is logged;
+      // if the market isn't routable yet the user can back it from the post.
       const buyUsd = parseFloat(selfBuyUsd);
       if (isFinite(buyUsd) && buyUsd > 0) {
-        try {
-          await backOwnCoin({ walletClient, creatorAddress: embeddedWallet.address, coinAddress, usdAmount: buyUsd });
-          console.log('[coin] self-buy complete:', buyUsd);
-        } catch (buyErr) {
-          console.error('[coin] self-buy failed (coin still created):', buyErr);
-        }
+        void backOwnCoin({ walletClient, creatorAddress: embeddedWallet.address, coinAddress, usdAmount: buyUsd })
+          .then(({ hash: buyHash }) => console.log('[coin] self-buy complete:', buyUsd, 'tx:', buyHash))
+          .catch((buyErr) => console.warn('[coin] self-buy deferred (coin unaffected):', (buyErr as Error)?.message));
       }
     } catch (coinError) {
       console.error('[coin] createScopeCoin failed:', coinError);

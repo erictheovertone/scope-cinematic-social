@@ -93,10 +93,13 @@ export default function CreateCoinSheet({
       await updatePostCoinData(post.id, { coin_address: coinAddress, ticker: sym, coin_tx_hash: hash, coin_currency: currency });
       setPhase('done');
 
+      // Self-buy decoupled (fire-and-forget with quote-readiness backoff) —
+      // can never make the coin creation feel failed.
       const buyUsd = parseFloat(selfBuyUsd);
       if (isFinite(buyUsd) && buyUsd > 0) {
-        try { await backOwnCoin({ walletClient, creatorAddress: embeddedWallet.address, coinAddress, usdAmount: buyUsd }); }
-        catch (e) { console.error('[CreateCoinSheet] self-buy failed (coin created):', e); }
+        void backOwnCoin({ walletClient, creatorAddress: embeddedWallet.address, coinAddress, usdAmount: buyUsd })
+          .then(({ hash: buyHash }) => console.log('[CreateCoinSheet] self-buy complete, tx:', buyHash))
+          .catch((e) => console.warn('[CreateCoinSheet] self-buy deferred (coin unaffected):', (e as Error)?.message));
       }
       onDone?.();
     } catch (e: any) {
