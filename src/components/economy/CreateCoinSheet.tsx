@@ -15,6 +15,7 @@ import { base } from 'viem/chains';
 import { createScopeCoin, backOwnCoin, reconcileCoinFromTx } from '@/lib/zoraCoins';
 import { updatePostCoinData, updatePostCoinTxHash } from '@/lib/postsService';
 import { suggestTicker, normalizeTicker, isValidTicker, tickerError } from '@/lib/economy/ticker';
+import FrameLoader from '@/components/FrameLoader';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -53,6 +54,10 @@ export default function CreateCoinSheet({
     if (!isValidTicker(sym)) { setTicker(sym); return; }
     setPhase('working');
     setError(null);
+    // TRANSACTION PRESENCE: narrate from the first signature (the pressed
+    // button transforms into the wheel — see the working-state render).
+    const plannedBuy = parseFloat(selfBuyUsd);
+    setNarration(isFinite(plannedBuy) && plannedBuy > 0 ? '1 OF 2 — CREATING YOUR COIN…' : 'CREATING YOUR COIN…');
     try {
       const embeddedWallet = wallets.find(w => w.walletClientType === 'privy');
       if (!embeddedWallet) throw new Error('No wallet found');
@@ -99,7 +104,7 @@ export default function CreateCoinSheet({
       // is narrated and collected while its label is on screen.
       const buyUsd = parseFloat(selfBuyUsd);
       if (isFinite(buyUsd) && buyUsd > 0) {
-        setNarration(`BACKING YOUR POST · $${buyUsd.toFixed(2)}…`);
+        setNarration(`2 OF 2 — BACKING · $${buyUsd.toFixed(2)}…`);
         try {
           const r = await Promise.race([
             backOwnCoin({ walletClient, creatorAddress: embeddedWallet.address, coinAddress, usdAmount: buyUsd }),
@@ -142,10 +147,12 @@ export default function CreateCoinSheet({
           <>
             <div style={{ marginBottom: 14 }}>
               <span style={{ ...SKB, fontSize: 9, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>TICKER</span>
+              {/* Bracket frame, not the $ cashtag — $ appears ONLY on money. */}
               <div style={{ display: 'flex', alignItems: 'center', border: '1px solid rgba(255,255,255,0.18)', padding: '0 12px', marginTop: 6 }}>
-                <span style={{ ...SKB, fontSize: 16, color: 'rgba(255,255,255,0.4)' }}>$</span>
+                <span style={{ ...SKB, fontSize: 16, color: '#FF0000' }}>[</span>
                 <input value={ticker} onChange={(e) => setTicker(normalizeTicker(e.target.value))} placeholder="TICKER" maxLength={6}
-                  style={{ ...SKB, fontSize: 16, color: '#FFF', background: 'transparent', border: 'none', outline: 'none', width: '100%', padding: '11px 6px', letterSpacing: '0.08em', textTransform: 'uppercase' }} />
+                  style={{ ...SKB, fontSize: 16, color: '#FFF', background: 'transparent', border: 'none', outline: 'none', width: '100%', padding: '11px 8px', letterSpacing: '0.08em', textTransform: 'uppercase', textAlign: 'center' }} />
+                <span style={{ ...SKB, fontSize: 16, color: '#FF0000' }}>]</span>
               </div>
               {tickerError(ticker) && <p style={{ ...SKR, fontSize: 9, color: '#FF0000', margin: '6px 0 0', textTransform: 'uppercase' }}>{tickerError(ticker)}</p>}
             </div>
@@ -161,14 +168,24 @@ export default function CreateCoinSheet({
 
             {error && <p style={{ ...SKR, fontSize: 10, color: '#FF0000', margin: '0 0 12px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{error}</p>}
 
-            <button onClick={run} disabled={working || !isValidTicker(ticker)}
-              style={{ width: '100%', background: (working || !isValidTicker(ticker)) ? 'rgba(255,0,0,0.4)' : '#FF0000', border: 'none', cursor: (working || !isValidTicker(ticker)) ? 'default' : 'pointer', padding: '14px 0', marginBottom: 8 }}>
-              <span style={{ ...SKB, fontSize: 12, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                {working ? 'CREATING COIN…'
-                  : !isValidTicker(ticker) ? 'ENTER A TICKER'
-                  : (() => { const b = parseFloat(selfBuyUsd); return isFinite(b) && b > 0 ? `CREATE COIN · BACK $${b.toFixed(2)}` : 'CREATE COIN'; })()}
-              </span>
-            </button>
+            {working ? (
+              /* THE WHEEL — pressed button transformed into live narration. */
+              <div style={{ width: '100%', border: '1px solid rgba(255,0,0,0.55)', padding: '13px 0', marginBottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, minHeight: 46 }}>
+                <FrameLoader size={22} />
+                <span style={{ ...SKB, fontSize: 11, color: 'white', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                  {narration ?? 'CREATING YOUR COIN…'}
+                </span>
+              </div>
+            ) : (
+              <button onClick={run} disabled={!isValidTicker(ticker)}
+                style={{ width: '100%', background: !isValidTicker(ticker) ? 'rgba(255,0,0,0.4)' : '#FF0000', border: 'none', cursor: !isValidTicker(ticker) ? 'default' : 'pointer', padding: '14px 0', marginBottom: 8 }}>
+                <span style={{ ...SKB, fontSize: 12, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                  {/* Amount = the consented spend; "BACK" banned from the button. */}
+                  {!isValidTicker(ticker) ? 'ENTER A TICKER'
+                    : (() => { const b = parseFloat(selfBuyUsd); return isFinite(b) && b > 0 ? `CREATE COIN · $${b.toFixed(2)}` : 'CREATE COIN'; })()}
+                </span>
+              </button>
+            )}
             <button onClick={onClose} disabled={working} style={{ width: '100%', background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', cursor: working ? 'default' : 'pointer', padding: '12px 0' }}>
               <span style={{ ...SKB, fontSize: 10, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{phase === 'failed' ? 'CLOSE' : 'NOT NOW'}</span>
             </button>

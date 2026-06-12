@@ -857,7 +857,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
       // never un-mint the coin), but the SIGNATURE is narrated and collected
       // while its label is on screen (never an unlabeled wallet prompt).
       if (hasBacking) {
-        setBackingNarration(`2 OF 2 — BACKING YOUR POST · $${plannedBuyUsd.toFixed(2)}…`);
+        setBackingNarration(`2 OF 2 — BACKING · $${plannedBuyUsd.toFixed(2)}…`);
         try {
           const r = await Promise.race([
             backOwnCoin({ walletClient, creatorAddress: embeddedWallet.address, coinAddress, usdAmount: plannedBuyUsd }),

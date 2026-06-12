@@ -227,15 +227,17 @@ export default function MintPromptSheet({ visible, onMint, onSkip, onCoinSkipped
                 <span style={{ ...SKB, fontSize: 9, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>TICKER</span>
                 <span style={{ ...SKR, fontSize: 8, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>3–6 · A–Z 0–9</span>
               </div>
+              {/* Bracket frame, not the $ cashtag — $ appears ONLY on money. */}
               <div style={{ display: 'flex', alignItems: 'center', border: '1px solid rgba(255,255,255,0.18)', padding: '0 12px' }}>
-                <span style={{ ...SKB, fontSize: 16, color: 'rgba(255,255,255,0.4)' }}>$</span>
+                <span style={{ ...SKB, fontSize: 16, color: '#FF0000' }}>[</span>
                 <input
                   value={ticker}
                   onChange={(e) => onTickerChange(e.target.value)}
                   placeholder="TICKER"
                   maxLength={6}
-                  style={{ ...SKB, fontSize: 16, color: '#FFF', background: 'transparent', border: 'none', outline: 'none', width: '100%', padding: '11px 6px', letterSpacing: '0.08em', textTransform: 'uppercase' }}
+                  style={{ ...SKB, fontSize: 16, color: '#FFF', background: 'transparent', border: 'none', outline: 'none', width: '100%', padding: '11px 8px', letterSpacing: '0.08em', textTransform: 'uppercase', textAlign: 'center' }}
                 />
+                <span style={{ ...SKB, fontSize: 16, color: '#FF0000' }}>]</span>
               </div>
               {tickerError(ticker) && (
                 <p style={{ ...SKR, fontSize: 9, color: '#FF0000', margin: '6px 0 0', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{tickerError(ticker)}</p>
@@ -284,9 +286,11 @@ export default function MintPromptSheet({ visible, onMint, onSkip, onCoinSkipped
                   <span style={{ ...SKB, fontSize: 12, color: 'white', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                     {/* The button carries the plain-language contract — this tap IS
                         the consent for everything it names (no second confirm). */}
+                    {/* Amount = the consented spend. No word that can read as
+                        a ticker — "BACK" is banned from the button. */}
                     {checkingBalance ? 'CHECKING BALANCE...'
                       : !isValidTicker(ticker) ? 'ENTER A TICKER'
-                      : (() => { const b = parseFloat(selfBuyUsd); return isFinite(b) && b > 0 ? `CREATE COIN · BACK $${b.toFixed(2)}` : 'CREATE COIN · EARN FOREVER'; })()}
+                      : (() => { const b = parseFloat(selfBuyUsd); return isFinite(b) && b > 0 ? `CREATE COIN · $${b.toFixed(2)}` : 'CREATE COIN'; })()}
                   </span>
                 </button>
                 <button

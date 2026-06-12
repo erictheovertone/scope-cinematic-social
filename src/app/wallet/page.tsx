@@ -72,26 +72,34 @@ export default function WalletPage() {
     fetchBalances();
   }, [walletAddress]);
 
-  // Holdings — the ownership ledger, loaded when the tab opens (and refreshed
-  // on pull-to-refresh via fetchBalances → holdings reset below).
+  // Holdings — the ownership ledger. Loaded eagerly: the headline TOTAL is
+  // AVAILABLE + HOLDINGS, so both numbers exist from the start. Refreshed on
+  // pull-to-refresh via fetchBalances → holdings reset.
   useEffect(() => {
-    if (activeTab !== "holdings" || holdings !== null) return;
+    if (holdings !== null || !walletAddress) return;
     let cancelled = false;
     economy.getHoldings()
       .then((h) => { if (!cancelled) setHoldings(h); })
       .catch((e) => { console.error("[wallet] holdings load error:", e); if (!cancelled) setHoldings([]); });
     return () => { cancelled = true; };
-  }, [activeTab, holdings, economy]);
+  }, [holdings, walletAddress, economy]);
 
   // Dollar figures only when the live rate exists — "$—" beats a wrong number.
   const ethUsd = ethBalance != null && ethUsdRate != null
     ? (parseFloat(ethBalance) * ethUsdRate).toFixed(2)
     : null;
   const usdcUsd = usdcBalance != null ? parseFloat(usdcBalance).toFixed(2) : null;
-  const totalUsd =
+  // WALLET STRUCTURE (decided): holdings never blend into available.
+  // AVAILABLE = spendable USDC+ETH — the ONLY balance buy flows draw on.
+  // HOLDINGS = positions value (price × pieces). TOTAL = the headline.
+  const availableUsd =
     ethBalance != null && usdcBalance != null && ethUsdRate != null
-      ? (parseFloat(ethBalance) * ethUsdRate + parseFloat(usdcBalance)).toFixed(2)
+      ? parseFloat(ethBalance) * ethUsdRate + parseFloat(usdcBalance)
       : null;
+  const holdingsUsd = holdings != null ? holdings.reduce((s, h) => s + (h.valueUsd ?? 0), 0) : null;
+  const holdingsUnpriced = holdings != null && holdings.some((h) => h.valueUsd == null);
+  const totalUsd =
+    availableUsd != null ? (availableUsd + (holdingsUsd ?? 0)).toFixed(2) : null;
 
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartY.current = e.touches[0].clientY;
@@ -127,13 +135,21 @@ export default function WalletPage() {
 
       <div style={{ height: 1, background: "rgba(255,255,255,0.1)" }} />
 
-      {/* Total balance */}
+      {/* TOTAL (headline) — then the split that matters: AVAILABLE is what a
+          purchase can actually draw on; HOLDINGS is position value. Never show
+          a balance a buy can't spend. */}
       <div style={{ textAlign: "center", padding: "28px 16px 20px" }}>
         <p style={{ ...SKB, fontSize: 10, color: "white", opacity: 0.5, margin: "0 0 8px", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-          Total available balance
+          Total
         </p>
-        <p style={{ ...SKB, fontSize: 32, color: "white", margin: "0 0 8px", lineHeight: 1 }}>
+        <p style={{ ...SKB, fontSize: 32, color: "white", margin: "0 0 8px", lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>
           {loading && totalUsd == null ? "..." : totalUsd != null ? `$${totalUsd}` : "$—"}
+          {totalUsd != null && holdingsUnpriced && <span style={{ fontSize: 14, color: "rgba(255,255,255,0.4)" }}> +</span>}
+        </p>
+        <p style={{ ...SKB, fontSize: 9, color: "rgba(255,255,255,0.45)", margin: "0 0 8px", textTransform: "uppercase", letterSpacing: "0.1em", fontVariantNumeric: "tabular-nums" }}>
+          AVAILABLE {availableUsd != null ? `$${availableUsd.toFixed(2)}` : "$—"}
+          <span style={{ color: "rgba(255,255,255,0.25)" }}> · </span>
+          HOLDINGS {holdingsUsd != null ? `$${holdingsUsd.toFixed(2)}${holdingsUnpriced ? "+" : ""}` : "…"}
         </p>
         {walletAddress && (
           <p
