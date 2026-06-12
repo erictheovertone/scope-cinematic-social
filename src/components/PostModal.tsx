@@ -108,6 +108,7 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
   const [replacingThumb, setReplacingThumb] = useState(false);
   const [showReframe, setShowReframe] = useState(false);
   const [showDeleteSheet, setShowDeleteSheet] = useState(false);
+  const [ownerMenuOpen, setOwnerMenuOpen] = useState(false);
   const thumbInputRef = useRef<HTMLInputElement>(null);
 
   // viewer == author — explicit prop wins; otherwise resolved Supabase ids.
@@ -313,6 +314,7 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
 
         {/* ── Scrollable body ── */}
         <div
+          onClick={() => { if (ownerMenuOpen) setOwnerMenuOpen(false); }} // tap-out collapses the owner reveal
           style={{
             flex: 1,
             overflowY: "auto",
@@ -320,10 +322,11 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
             WebkitOverflowScrolling: "touch",
           }}
         >
-          {/* Media — CENTERED in the page (the profile-lightbox quality, kept
-              and brought to every entry). Info scrolls up from below. */}
-          <div style={{ minHeight: "calc(100vh - 44px)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", position: "relative" }}>
-            <div style={{ width: "92%", aspectRatio: getAspectRatio(post.layout_id ?? ''), overflow: "hidden", background: "#0a0a0a" }}>
+          {/* ONE GROUP — media + the data block center vertically TOGETHER
+              (no void: the data block sits directly beneath the media with
+              normal spacing, never pinned to the screen bottom). */}
+          <div style={{ minHeight: "calc(100vh - 44px)", display: "flex", flexDirection: "column", justifyContent: "center", position: "relative", paddingBottom: onScrollDown ? 72 : 0 }}>
+            <div style={{ width: "92%", margin: "0 auto", aspectRatio: getAspectRatio(post.layout_id ?? ''), overflow: "hidden", background: "#0a0a0a" }}>
               {post.media_urls?.[0] ? (
                 isVideoPost ? (
                   // Standalone view → always play GRADED (look applied live via the pipeline).
@@ -367,7 +370,6 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
                 <span style={{ ...SKB, fontSize: 8, color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.12em" }}>SCROLL</span>
               </button>
             )}
-          </div>
 
           <div style={{ padding: "14px 16px 0" }}>
 
@@ -517,6 +519,21 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
                   <line x1="12" y1="2" x2="12" y2="15" />
                 </svg>
               </button>
+
+              {/* ••• — owner controls reveal (ripple-down). Non-owners have no
+                  extra actions today (share is already in the row) → hidden. */}
+              {ownerView && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); setOwnerMenuOpen((v) => !v); }}
+                  style={{ background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", padding: 0, marginLeft: "auto" }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                    <circle cx="5" cy="12" r="1.4" fill={ownerMenuOpen ? "#FF0000" : "rgba(255,255,255,0.6)"} />
+                    <circle cx="12" cy="12" r="1.4" fill={ownerMenuOpen ? "#FF0000" : "rgba(255,255,255,0.6)"} />
+                    <circle cx="19" cy="12" r="1.4" fill={ownerMenuOpen ? "#FF0000" : "rgba(255,255,255,0.6)"} />
+                  </svg>
+                </button>
+              )}
             </div>
 
             {/* Comments — ripple down on reveal */}
@@ -606,14 +623,15 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
               </div>
             )}
 
-            {/* ── OWNER SECTION — strictly viewer == author. The profile
-                lightbox's controls, intact, in the unified frame. ── */}
-            {ownerView && (
-              <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", padding: "16px 0 90px", display: "flex", flexDirection: "column", gap: 14 }}>
-                <p style={{ ...SKB, fontSize: 7, color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.18em", margin: 0 }}>OWNER</p>
+            {/* ── OWNER SECTION — strictly viewer == author, revealed by the
+                ••• kebab with the ripple-down stagger (the established ripple
+                language; tap-out or ••• again collapses). ── */}
+            {ownerView && ownerMenuOpen && (
+              <div onClick={(e) => e.stopPropagation()} style={{ borderTop: "1px solid rgba(255,255,255,0.08)", padding: "16px 0 90px", display: "flex", flexDirection: "column", gap: 14 }}>
+                <p style={{ ...SKB, fontSize: 7, color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.18em", margin: 0, animation: "ripple-down 0.2s ease-out both" }}>OWNER</p>
 
                 {/* Pin to grid */}
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", animation: "ripple-down 0.2s ease-out both", animationDelay: "50ms" }}>
                   <div>
                     <p style={{ ...SKB, fontSize: 9, color: "white", textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 2px" }}>PIN</p>
                     <p style={{ ...SKR, fontSize: 8, color: "rgba(255,255,255,0.4)", margin: 0 }}>{pinned ? "Pinned to the top of your grid" : "Pin to the top of your grid"}</p>
@@ -635,7 +653,7 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
 
                 {/* Autoplay toggle (video) */}
                 {isVideoPost && (
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", animation: "ripple-down 0.2s ease-out both", animationDelay: "100ms" }}>
                     <div>
                       <p style={{ ...SKB, fontSize: 9, color: "white", textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 2px" }}>AUTOPLAY ON GRID</p>
                       <p style={{ ...SKR, fontSize: 8, color: "rgba(255,255,255,0.4)", margin: 0 }}>{autoplayOn ? "Playing automatically" : "Shows thumbnail with play button"}</p>
@@ -664,7 +682,7 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
                 )}
 
                 {/* Replace thumbnail */}
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", animation: "ripple-down 0.2s ease-out both", animationDelay: "150ms" }}>
                   <div>
                     <p style={{ ...SKB, fontSize: 9, color: "white", textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 2px" }}>THUMBNAIL</p>
                     <p style={{ ...SKR, fontSize: 8, color: "rgba(255,255,255,0.4)", margin: 0 }}>{replacingThumb ? "Uploading..." : "Replace poster image"}</p>
@@ -705,7 +723,7 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
                 </div>
 
                 {/* Re-frame */}
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", animation: "ripple-down 0.2s ease-out both", animationDelay: "200ms" }}>
                   <div>
                     <p style={{ ...SKB, fontSize: 9, color: "white", textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 2px" }}>RE-FRAME</p>
                     <p style={{ ...SKR, fontSize: 8, color: "rgba(255,255,255,0.4)", margin: 0 }}>Adjust crop on grid</p>
@@ -719,7 +737,7 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
                 </div>
 
                 {/* Delete */}
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", animation: "ripple-down 0.2s ease-out both", animationDelay: "250ms" }}>
                   <div>
                     <p style={{ ...SKB, fontSize: 9, color: "#FF0000", textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 2px" }}>DELETE</p>
                     <p style={{ ...SKR, fontSize: 8, color: "rgba(255,255,255,0.4)", margin: 0 }}>Remove from your profile</p>
@@ -734,6 +752,7 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
               </div>
             )}
 
+          </div>
           </div>
         </div>
       </div>

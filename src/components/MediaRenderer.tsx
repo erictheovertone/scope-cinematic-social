@@ -74,7 +74,8 @@ export default function MediaRenderer({
     return (
       <img
         src={url}
-        alt={caption || "Post"}
+        alt="" /* never the caption — alt text paints as a visible "ghost
+                  caption" over slow-loading media, duplicating the real one */
         className={className}
         style={{ width: '100%', height: '100%', display: 'block', ...getCropStyle(cropX, cropY, cropWidth, cropHeight), ...style }}
         onClick={onClick}
