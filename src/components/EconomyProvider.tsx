@@ -10,9 +10,11 @@
 // the *visible* Part 2 surfaces is done by each surface via
 // `economyPreviewEnabled()` — the boundary itself is not what's gated.
 
-import { createContext, useContext, ReactNode } from 'react';
+import { createContext, useContext, useMemo, ReactNode } from 'react';
+import { usePrivy } from '@privy-io/react-auth';
 import type { EconomyApi } from '@/lib/economy/types';
 import { mockEconomy } from '@/lib/economy/mock';
+import { createRealEconomy } from '@/lib/economy/real';
 
 const Ctx = createContext<EconomyApi>(mockEconomy);
 
@@ -33,11 +35,19 @@ export function isCoinPost(
 
 export function EconomyProvider({
   children,
-  api = mockEconomy,
+  api,
 }: {
   children: ReactNode;
-  /** Swap point: pass a Zora-backed implementation later. Defaults to mock. */
+  /** Test override; by default the Stage-A hybrid (real coin reads, mock rest). */
   api?: EconomyApi;
 }) {
-  return <Ctx.Provider value={api}>{children}</Ctx.Provider>;
+  // Stage A swap: real pool reads for coin posts (price/MC/holders + the
+  // viewer's on-chain holding), mock for everything still pre-indexer.
+  const { user } = usePrivy();
+  const viewerAddress = user?.wallet?.address ?? null;
+  const value = useMemo(
+    () => api ?? createRealEconomy(viewerAddress),
+    [api, viewerAddress]
+  );
+  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

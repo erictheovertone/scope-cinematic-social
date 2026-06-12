@@ -36,6 +36,8 @@ interface Post {
   is_minted?: boolean;
   contract_address?: string | null;
   token_id?: string | null;
+  coin_address?: string | null;
+  token_standard?: string | null;
   media_type?: string;
   thumbnail_url?: string | null;
   poster_url?: string | null;
@@ -113,6 +115,19 @@ export default function PostItem({ post, onImageClick, commentsOpen, onToggleCom
     };
     load();
   }, [post.id, user?.id]);
+
+  // Real MC for COIN posts via the boundary (Zora index; honest $0 pre-trades).
+  useEffect(() => {
+    if (!post.coin_address || post.token_standard !== 'coin') return;
+    let cancelled = false;
+    economy.getPostMarket(post.id)
+      .then((m) => {
+        if (cancelled) return;
+        setMc(`$${m.mcUsd < 1 ? m.mcUsd.toFixed(2) : Math.round(m.mcUsd).toLocaleString()}`);
+      })
+      .catch((e) => console.error('[PostItem] coin MC fetch error:', e));
+    return () => { cancelled = true; };
+  }, [post.id, post.coin_address, post.token_standard, economy]);
 
   // Fetch market cap for minted posts
   useEffect(() => {

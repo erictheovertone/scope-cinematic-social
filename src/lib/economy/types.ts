@@ -32,8 +32,13 @@ export interface FirstCutMarket {
 
 /** Market read for one post's coin. All prices in USD. Supply in pieces. */
 export interface PostMarket {
-  priceUsd: number;
+  /** Price per PIECE in USD. NULL for a no-trades pool (price not yet
+      discovered) — surfaces show "—", never a fabricated number. */
+  priceUsd: number | null;
   mcUsd: number;
+  /** True when these numbers come from the real pool/index (coin posts);
+      false for mocked preview data. Drives the MOCK DATA banner. */
+  live: boolean;
   /** Always 10000 — the piece denomination shown in the UI. */
   supply: number;
   holders: number;

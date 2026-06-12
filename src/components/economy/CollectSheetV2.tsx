@@ -18,6 +18,7 @@
 
 import { useEffect, useState } from 'react';
 import { useEconomy } from '@/components/EconomyProvider';
+import { economyPreviewEnabled } from '@/lib/economy/flag';
 import type { PostMarket, BuyQuote, SellQuote, TradeCurrency } from '@/lib/economy/types';
 import ApertureMark from '@/components/economy/ApertureMark';
 
@@ -143,9 +144,12 @@ export default function CollectSheetV2({ post, visible, onClose }: Props) {
         transition: 'transform 0.4s cubic-bezier(0.32,0.72,0,1)',
         padding: '24px 22px 40px', maxHeight: '90vh', overflowY: 'auto',
       }}>
-        <div style={{ ...SKB, fontSize: 7, letterSpacing: '0.2em', color: '#FF0000', textTransform: 'uppercase', marginBottom: 14 }}>
-          ECONOMY PREVIEW · MOCK DATA
-        </div>
+        {/* Banner ONLY for mock data — real coin reads (live) carry no banner. */}
+        {market && !market.live && (
+          <div style={{ ...SKB, fontSize: 7, letterSpacing: '0.2em', color: '#FF0000', textTransform: 'uppercase', marginBottom: 14 }}>
+            ECONOMY PREVIEW · MOCK DATA
+          </div>
+        )}
 
         {/* Post head */}
         <div style={{ display: 'flex', gap: 12, marginBottom: 18 }}>
@@ -158,10 +162,11 @@ export default function CollectSheetV2({ post, visible, onClose }: Props) {
           </div>
         </div>
 
-        {/* Price + MC in dollars, pieces framing */}
+        {/* Price + MC in dollars, pieces framing. A no-trades pool has no
+            discovered price yet — show "—", never a fabricated number. */}
         <div style={{ display: 'flex', gap: 1, marginBottom: 18, background: 'rgba(255,255,255,0.08)' }}>
           {[
-            { k: 'PRICE / PIECE', v: market ? usd(market.priceUsd) : '—' },
+            { k: 'PRICE / PIECE', v: market ? (market.priceUsd != null ? usd(market.priceUsd) : '—') : '—' },
             { k: 'MARKET CAP', v: market ? usd(market.mcUsd) : '—' },
             { k: 'PIECES', v: market ? market.supply.toLocaleString() : '10,000' },
           ].map((c) => (
@@ -172,7 +177,23 @@ export default function CollectSheetV2({ post, visible, onClose }: Props) {
           ))}
         </div>
 
-        {done ? (
+        {market?.live ? (
+          /* STAGE A: real numbers, trades not yet wired — never a fake-success
+             buy on a real coin. Stage B replaces this with real tradeCoin. */
+          <div style={{ border: '1px solid rgba(255,255,255,0.12)', padding: '18px 14px', textAlign: 'center', marginBottom: 4 }}>
+            {market.collectedByViewer > 0 && (
+              <p style={{ ...SKB, fontSize: 10, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 8px' }}>
+                YOU HOLD {market.collectedByViewer.toLocaleString()} {market.collectedByViewer === 1 ? 'PIECE' : 'PIECES'}
+              </p>
+            )}
+            <p style={{ ...SKB, fontSize: 11, color: '#FF0000', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>
+              TRADING OPENS SHORTLY
+            </p>
+            <p style={{ ...SKR, fontSize: 9, color: 'rgba(255,255,255,0.4)', margin: '6px 0 0', lineHeight: 1.4 }}>
+              This coin is live on Base. Buying and selling arrive here next.
+            </p>
+          </div>
+        ) : done ? (
           <div style={{ border: '1px solid rgba(255,255,255,0.12)', padding: '18px 14px', textAlign: 'center', marginBottom: 18 }}>
             <p style={{ ...SKB, fontSize: 12, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>{done}</p>
             <p style={{ ...SKR, fontSize: 8, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '8px 0 0' }}>PREVIEW ONLY · NO REAL TRANSACTION</p>
@@ -341,7 +362,10 @@ export default function CollectSheetV2({ post, visible, onClose }: Props) {
 
         {/* ── FIRST CUT provenance row ──
             ] • [ · FIRST CUT · 10 mini-avatars (18px, -7 overlap, departed 30%)
-            · count (or "N OF 10 SLOTS OPEN" when slots remain) · › chevron. */}
+            · count (or "N OF 10 SLOTS OPEN" when slots remain) · › chevron.
+            STILL MOCK (no indexer yet) → preview-flag-gated; hidden on real
+            coins until founding slots come from real trade events. */}
+        {economyPreviewEnabled() && (
         <div
           onClick={() => setShowSlots((v) => !v)}
           style={{ border: '1px solid rgba(255,255,255,0.1)', padding: '12px 12px', marginTop: 18, cursor: 'pointer' }}
@@ -403,10 +427,14 @@ export default function CollectSheetV2({ post, visible, onClose }: Props) {
             </div>
           )}
         </div>
+        )}
 
-        <p style={{ ...SKR, fontSize: 8, color: 'rgba(255,255,255,0.25)', textAlign: 'center', margin: '14px 0 0', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-          PREVIEW ONLY · NO REAL TRANSACTION
-        </p>
+        {/* Mock-data disclaimer only — live coins carry no fake-trade caveat. */}
+        {market && !market.live && (
+          <p style={{ ...SKR, fontSize: 8, color: 'rgba(255,255,255,0.25)', textAlign: 'center', margin: '14px 0 0', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+            PREVIEW ONLY · NO REAL TRANSACTION
+          </p>
+        )}
       </div>
     </>
   );

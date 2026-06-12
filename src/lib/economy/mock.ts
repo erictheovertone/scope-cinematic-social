@@ -94,6 +94,7 @@ export const mockEconomy: EconomyApi = {
     return {
       priceUsd,
       mcUsd: Math.round(priceUsd * PIECE_SUPPLY),
+      live: false, // mocked preview data — keeps the MOCK DATA banner on
       supply: PIECE_SUPPLY,
       holders: 8 + Math.floor(r() * 240),
       collectedByViewer,
