@@ -15,13 +15,14 @@
 // stays MOCK until the indexer / Stage B — this module delegates those to the
 // mock so the preview-flag surfaces keep working unchanged.
 
-import { getCoin } from "@zoralabs/coins-sdk";
-import { formatEther } from "viem";
+import { getCoin, createTradeCall } from "@zoralabs/coins-sdk";
+import { formatEther, parseEther, getAddress } from "viem";
 import { base } from "viem/chains";
 import { supabase } from "@/lib/supabase/client";
 import { mockEconomy, PIECE_SUPPLY, FOUNDING_AMOUNT } from "./mock";
-import { publicClient } from "@/lib/zoraCoins";
-import type { EconomyApi, PostMarket, Holding } from "./types";
+import { publicClient, buyCoin, sellCoin } from "@/lib/zoraCoins";
+import { getEthUsdRate } from "@/lib/coingecko";
+import type { EconomyApi, PostMarket, Holding, BuyQuote, SellQuote, TradeCurrency, CollectResult } from "./types";
 
 const TOKENS_PER_PIECE = 100_000;
 
@@ -115,13 +116,65 @@ async function realPostMarket(
  * everything else. `viewerAddress` (the Privy wallet) enables the real
  * "you hold N pieces" read; null viewer just reads 0.
  */
-export function createRealEconomy(viewerAddress: string | null): EconomyApi {
+export function createRealEconomy(
+  viewerAddress: string | null,
+  /** Provider-injected: builds a signing wallet client at trade time. */
+  getWalletClient?: () => Promise<any>
+): EconomyApi {
   return {
     ...mockEconomy,
     async getPostMarket(postId: string): Promise<PostMarket> {
       const coinAddress = await coinAddressFor(postId);
       if (!coinAddress) return mockEconomy.getPostMarket(postId);
       return realPostMarket(coinAddress, viewerAddress);
+    },
+
+    // ── Stage B: real quotes + trades for coin posts (mock otherwise) ────────
+    async quoteBuy(postId: string, usdAmount: number): Promise<BuyQuote> {
+      const coinAddress = await coinAddressFor(postId);
+      if (!coinAddress) return mockEconomy.quoteBuy(postId, usdAmount);
+      const rate = await getEthUsdRate();
+      if (rate === null) throw new Error("Dollar rate unavailable right now.");
+      const ethAmount = usdAmount / rate;
+      const quote: any = await createTradeCall({
+        sell: { type: "eth" }, buy: { type: "erc20", address: getAddress(coinAddress) },
+        amountIn: parseEther(ethAmount.toFixed(18)), slippage: 0.05,
+        sender: (viewerAddress ?? "0x0000000000000000000000000000000000000001") as `0x${string}`,
+      });
+      const pieces = Math.floor(Number(BigInt(quote?.quote?.amountOut ?? 0)) / 1e23);
+      return { usdAmount, pieces, ethAmount };
+    },
+
+    async quoteSell(postId: string, pieces: number): Promise<SellQuote> {
+      const coinAddress = await coinAddressFor(postId);
+      if (!coinAddress) return mockEconomy.quoteSell(postId, pieces);
+      const rate = await getEthUsdRate();
+      const quote: any = await createTradeCall({
+        sell: { type: "erc20", address: getAddress(coinAddress) }, buy: { type: "eth" },
+        amountIn: BigInt(Math.round(pieces)) * BigInt(100_000) * BigInt("1000000000000000000"),
+        slippage: 0.05,
+        sender: (viewerAddress ?? "0x0000000000000000000000000000000000000001") as `0x${string}`,
+      });
+      const ethAmount = Number(BigInt(quote?.quote?.amountOut ?? 0)) / 1e18;
+      return { pieces, usdAmount: rate != null ? ethAmount * rate : 0, ethAmount };
+    },
+
+    async buy(postId: string, usdAmount: number, currency: TradeCurrency): Promise<CollectResult> {
+      const coinAddress = await coinAddressFor(postId);
+      if (!coinAddress) return mockEconomy.buy(postId, usdAmount, currency);
+      if (!viewerAddress || !getWalletClient) throw new Error("Wallet not ready — try again in a moment.");
+      const walletClient = await getWalletClient();
+      const { hash, pieces } = await buyCoin({ walletClient, sender: getAddress(viewerAddress), coinAddress, usdAmount, currency });
+      return { ok: true, pieces: pieces ?? 0, ref: hash };
+    },
+
+    async sell(postId: string, pieces: number): Promise<CollectResult> {
+      const coinAddress = await coinAddressFor(postId);
+      if (!coinAddress) return mockEconomy.sell(postId, pieces);
+      if (!viewerAddress || !getWalletClient) throw new Error("Wallet not ready — try again in a moment.");
+      const walletClient = await getWalletClient();
+      const { hash } = await sellCoin({ walletClient, sender: getAddress(viewerAddress), coinAddress, pieces });
+      return { ok: true, pieces, ref: hash };
     },
 
     // The wallet's ownership ledger — every Scope coin the viewer holds,

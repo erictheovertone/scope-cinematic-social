@@ -10,8 +10,10 @@
 // the *visible* Part 2 surfaces is done by each surface via
 // `economyPreviewEnabled()` — the boundary itself is not what's gated.
 
-import { createContext, useContext, useMemo, ReactNode } from 'react';
-import { usePrivy } from '@privy-io/react-auth';
+import { createContext, useContext, useMemo, useRef, ReactNode } from 'react';
+import { usePrivy, useWallets } from '@privy-io/react-auth';
+import { createWalletClient, custom } from 'viem';
+import { base } from 'viem/chains';
 import type { EconomyApi } from '@/lib/economy/types';
 import { mockEconomy } from '@/lib/economy/mock';
 import { createRealEconomy } from '@/lib/economy/real';
@@ -41,13 +43,23 @@ export function EconomyProvider({
   /** Test override; by default the Stage-A hybrid (real coin reads, mock rest). */
   api?: EconomyApi;
 }) {
-  // Stage A swap: real pool reads for coin posts (price/MC/holders + the
-  // viewer's on-chain holding), mock for everything still pre-indexer.
+  // Stage A: real pool reads for coin posts. Stage B: real trades — the
+  // boundary gets a wallet-client factory (built at trade time from the Privy
+  // embedded wallet), so trade calls stay behind the same EconomyApi.
   const { user } = usePrivy();
+  const { wallets } = useWallets();
   const viewerAddress = user?.wallet?.address ?? null;
-  const value = useMemo(
-    () => api ?? createRealEconomy(viewerAddress),
-    [api, viewerAddress]
-  );
+  const walletsRef = useRef(wallets);
+  walletsRef.current = wallets;
+  const value = useMemo(() => {
+    const getWalletClient = async () => {
+      const embedded = walletsRef.current.find((w) => w.walletClientType === 'privy');
+      if (!embedded) throw new Error('Wallet not ready — try again in a moment.');
+      await embedded.switchChain(base.id);
+      const provider = await embedded.getEthereumProvider();
+      return createWalletClient({ account: embedded.address as `0x${string}`, chain: base, transport: custom(provider) });
+    };
+    return api ?? createRealEconomy(viewerAddress, getWalletClient);
+  }, [api, viewerAddress]);
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

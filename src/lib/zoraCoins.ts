@@ -206,6 +206,104 @@ export async function reconcileCoinFromTx(
   }
 }
 
+// ── Collect-sheet trades (Stage B) ────────────────────────────────────────────
+//
+// BUY (ETH path): $ → ETH at the live rate → quote → simulate → send (1.5×
+// gas). SELL (coin → ETH) and USDC buys go through the SDK's tradeCoin with
+// validateTransaction: true — those legs need Permit2 signatures, which the
+// SDK orchestrates (signed silently by the embedded wallet; the labeled Scope
+// button is the consent surface). Full quote logged before every execution.
+
+const USDC_BASE = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913" as const;
+
+export async function buyCoin({
+  walletClient,
+  sender,
+  coinAddress,
+  usdAmount,
+  currency = "ETH",
+  slippage = 0.05,
+}: {
+  walletClient: any;
+  sender: `0x${string}`;
+  coinAddress: string;
+  usdAmount: number;
+  currency?: "ETH" | "USDC";
+  slippage?: number;
+}): Promise<{ hash: `0x${string}`; pieces: number | null }> {
+  const piecesBefore = await readPieces(coinAddress, sender);
+  let hash: `0x${string}`;
+
+  if (currency === "USDC") {
+    // USDC leg needs Permit2 — the SDK signs + sends (validated/estimated).
+    const { tradeCoin } = await import("@zoralabs/coins-sdk");
+    const tradeParameters = {
+      sell: { type: "erc20" as const, address: USDC_BASE },
+      buy: { type: "erc20" as const, address: getAddress(coinAddress) },
+      amountIn: BigInt(Math.round(usdAmount * 1e6)), // USDC: 6 decimals
+      slippage,
+      sender,
+      recipient: sender,
+    };
+    console.log("[zoraCoins] buyCoin USDC quote request:", JSON.stringify({ ...tradeParameters, amountIn: tradeParameters.amountIn.toString() }));
+    const res: any = await tradeCoin({ tradeParameters, walletClient, publicClient: publicClient as any, account: sender, validateTransaction: true });
+    hash = (res?.transactionHash ?? res?.hash) as `0x${string}`;
+  } else {
+    const ethUsd = await getEthUsdRate();
+    if (ethUsd === null) throw new Error("Dollar rate unavailable right now — try again in a moment.");
+    const amountIn = parseEther((usdAmount / ethUsd).toFixed(18));
+    const tradeParameters = {
+      sell: { type: "eth" as const },
+      buy: { type: "erc20" as const, address: getAddress(coinAddress) },
+      amountIn,
+      slippage,
+      sender,
+      recipient: sender,
+    };
+    console.log("[zoraCoins] buyCoin quote request:", JSON.stringify({ ...tradeParameters, amountIn: amountIn.toString(), usd: usdAmount, ethUsd }));
+    const quote = await createTradeCall(tradeParameters);
+    console.log("[zoraCoins] buyCoin quote response:", JSON.stringify(quote)?.slice(0, 400));
+    ({ hash } = await executeQuotedTrade({ walletClient, sender, quote, label: `buy $${usdAmount}` }));
+  }
+
+  const piecesAfter = await readPieces(coinAddress, sender);
+  const pieces = piecesBefore != null && piecesAfter != null ? piecesAfter - piecesBefore : null;
+  console.log(`[zoraCoins] buyCoin COMPLETE — tx: ${hash} | +${pieces ?? "?"} pieces`);
+  return { hash, pieces };
+}
+
+export async function sellCoin({
+  walletClient,
+  sender,
+  coinAddress,
+  pieces,
+  slippage = 0.05,
+}: {
+  walletClient: any;
+  sender: `0x${string}`;
+  coinAddress: string;
+  pieces: number;
+  slippage?: number;
+}): Promise<{ hash: `0x${string}` }> {
+  // pieces → base-token wei: pieces × 100,000 tokens × 1e18.
+  const amountIn = BigInt(Math.round(pieces)) * BigInt(100_000) * BigInt("1000000000000000000");
+  const tradeParameters = {
+    sell: { type: "erc20" as const, address: getAddress(coinAddress) },
+    buy: { type: "eth" as const },
+    amountIn,
+    slippage,
+    sender,
+    recipient: sender,
+  };
+  console.log("[zoraCoins] sellCoin quote request:", JSON.stringify({ ...tradeParameters, amountIn: amountIn.toString(), pieces }));
+  // Coin→ETH needs Permit2 — SDK signs + validates + sends.
+  const { tradeCoin } = await import("@zoralabs/coins-sdk");
+  const res: any = await tradeCoin({ tradeParameters, walletClient, publicClient: publicClient as any, account: sender, validateTransaction: true });
+  const hash = (res?.transactionHash ?? res?.hash) as `0x${string}`;
+  console.log(`[zoraCoins] sellCoin COMPLETE — tx: ${hash} | -${pieces} pieces`);
+  return { hash };
+}
+
 // ── Creator self-buy ("Back your post") ───────────────────────────────────────
 //
 // Ratified mechanism: a SEPARATE post-create trade (0.6.0 createCoin has no

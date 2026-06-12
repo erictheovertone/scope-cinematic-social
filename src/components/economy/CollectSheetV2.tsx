@@ -22,6 +22,7 @@ import { economyPreviewEnabled } from '@/lib/economy/flag';
 import type { PostMarket, BuyQuote, SellQuote, TradeCurrency } from '@/lib/economy/types';
 import ApertureMark from '@/components/economy/ApertureMark';
 import TickerMark from '@/components/economy/TickerMark';
+import FrameLoader from '@/components/FrameLoader';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -57,6 +58,7 @@ export default function CollectSheetV2({ post, visible, onClose }: Props) {
 
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState<string | null>(null);
+  const [tradeError, setTradeError] = useState<string | null>(null);
 
   const refresh = () => economy.getPostMarket(post.id).then(setMarket).catch(() => {});
 
@@ -64,7 +66,7 @@ export default function CollectSheetV2({ post, visible, onClose }: Props) {
     if (!visible) {
       setShowSlots(false); setDone(null); setMode('buy');
       setBuyUsd(''); setBuyQuote(null); setSellPieces(0); setSellQuote(null);
-      setConfirmEndFirstCut(false);
+      setConfirmEndFirstCut(false); setTradeError(null);
       return;
     }
     let cancelled = false;
@@ -95,23 +97,42 @@ export default function CollectSheetV2({ post, visible, onClose }: Props) {
   // Would this sale drop the holder below their founding position?
   const sellEndsFirstCut = viewerFounding && held - sellPieces < foundingAmount && sellPieces > 0;
 
+  // Plain-English failure line — the layers below throw human messages; this
+  // is the catch-all. Money outcome honesty: gas may be spent, nothing bought.
+  const humanError = (e: unknown) =>
+    (e as Error)?.message?.length && (e as Error).message.length < 140
+      ? (e as Error).message
+      : 'Trade didn’t go through — nothing was bought or sold. Try again.';
+
   const doBuy = async () => {
     const v = parseFloat(buyUsd);
     if (!isFinite(v) || v <= 0) return;
-    setBusy(true);
+    setBusy(true); setTradeError(null);
     try {
       const r = await economy.buy(post.id, v, buyCurrency);
-      if (r.ok) { setDone(`BOUGHT ${r.pieces} ${r.pieces === 1 ? 'PIECE' : 'PIECES'} (MOCK)`); refresh(); }
+      if (r.ok) {
+        setDone(market?.live ? `[ BOUGHT · ${r.pieces} ${r.pieces === 1 ? 'PIECE' : 'PIECES'} ]` : `BOUGHT ${r.pieces} ${r.pieces === 1 ? 'PIECE' : 'PIECES'} (MOCK)`);
+        refresh();
+      }
+    } catch (e) {
+      console.error('[collect] buy failed:', e);
+      setTradeError(humanError(e));
     } finally { setBusy(false); }
   };
 
   const doSell = async () => {
     if (sellPieces <= 0) return;
     if (sellEndsFirstCut && !confirmEndFirstCut) { setConfirmEndFirstCut(true); return; }
-    setBusy(true);
+    setBusy(true); setTradeError(null);
     try {
       const r = await economy.sell(post.id, sellPieces);
-      if (r.ok) { setDone(`SOLD ${r.pieces} ${r.pieces === 1 ? 'PIECE' : 'PIECES'} (MOCK)`); setConfirmEndFirstCut(false); setSellPieces(0); refresh(); }
+      if (r.ok) {
+        setDone(market?.live ? `[ SOLD · ${r.pieces} ${r.pieces === 1 ? 'PIECE' : 'PIECES'} ]` : `SOLD ${r.pieces} ${r.pieces === 1 ? 'PIECE' : 'PIECES'} (MOCK)`);
+        setConfirmEndFirstCut(false); setSellPieces(0); refresh();
+      }
+    } catch (e) {
+      console.error('[collect] sell failed:', e);
+      setTradeError(humanError(e));
     } finally { setBusy(false); }
   };
 
@@ -181,26 +202,14 @@ export default function CollectSheetV2({ post, visible, onClose }: Props) {
           ))}
         </div>
 
-        {market?.live ? (
-          /* STAGE A: real numbers, trades not yet wired — never a fake-success
-             buy on a real coin. Stage B replaces this with real tradeCoin. */
-          <div style={{ border: '1px solid rgba(255,255,255,0.12)', padding: '18px 14px', textAlign: 'center', marginBottom: 4 }}>
-            {market.collectedByViewer > 0 && (
-              <p style={{ ...SKB, fontSize: 10, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 8px' }}>
-                YOU HOLD {market.collectedByViewer.toLocaleString()} {market.collectedByViewer === 1 ? 'PIECE' : 'PIECES'}
-              </p>
-            )}
-            <p style={{ ...SKB, fontSize: 11, color: '#FF0000', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>
-              TRADING OPENS SHORTLY
-            </p>
-            <p style={{ ...SKR, fontSize: 9, color: 'rgba(255,255,255,0.4)', margin: '6px 0 0', lineHeight: 1.4 }}>
-              This coin is live on Base. Buying and selling arrive here next.
-            </p>
-          </div>
-        ) : done ? (
+        {/* STAGE B: real trades for live coins through the same boundary calls
+            the mock skeleton always used — identical UI, real tradeCoin. */}
+        {done ? (
           <div style={{ border: '1px solid rgba(255,255,255,0.12)', padding: '18px 14px', textAlign: 'center', marginBottom: 18 }}>
-            <p style={{ ...SKB, fontSize: 12, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>{done}</p>
-            <p style={{ ...SKR, fontSize: 8, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '8px 0 0' }}>PREVIEW ONLY · NO REAL TRANSACTION</p>
+            <p style={{ ...SKB, fontSize: 12, color: done.startsWith('[') ? '#FF0000' : '#FFF', textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>{done}</p>
+            {market && !market.live && (
+              <p style={{ ...SKR, fontSize: 8, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '8px 0 0' }}>PREVIEW ONLY · NO REAL TRANSACTION</p>
+            )}
           </div>
         ) : (
           <>
@@ -270,15 +279,28 @@ export default function CollectSheetV2({ post, visible, onClose }: Props) {
                   </div>
                 </div>
 
-                <button
-                  onClick={doBuy}
-                  disabled={busy || !buyQuote}
-                  style={{ width: '100%', background: !buyQuote ? 'rgba(255,0,0,0.4)' : '#FF0000', border: 'none', cursor: busy || !buyQuote ? 'default' : 'pointer', padding: '14px 0', marginBottom: 8 }}
-                >
-                  <span style={{ ...SKB, fontSize: 12, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                    {busy ? 'BUYING…' : buyQuote ? `BUY · ${usd(buyQuote.usdAmount)}` : 'ENTER AN AMOUNT'}
-                  </span>
-                </button>
+                {tradeError && (
+                  <p style={{ ...SKR, fontSize: 10, color: '#FF0000', margin: '0 0 10px', lineHeight: 1.4 }}>{tradeError}</p>
+                )}
+                {busy ? (
+                  /* THE WHEEL — pressed button transformed into narration. */
+                  <div style={{ width: '100%', border: '1px solid rgba(255,0,0,0.55)', padding: '13px 0', marginBottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, minHeight: 46 }}>
+                    <FrameLoader size={22} />
+                    <span style={{ ...SKB, fontSize: 11, color: 'white', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                      BUYING · {buyQuote ? usd(buyQuote.usdAmount) : ''}…
+                    </span>
+                  </div>
+                ) : (
+                  <button
+                    onClick={doBuy}
+                    disabled={!buyQuote}
+                    style={{ width: '100%', background: !buyQuote ? 'rgba(255,0,0,0.4)' : '#FF0000', border: 'none', cursor: !buyQuote ? 'default' : 'pointer', padding: '14px 0', marginBottom: 8 }}
+                  >
+                    <span style={{ ...SKB, fontSize: 12, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                      {buyQuote ? `BUY · ${usd(buyQuote.usdAmount)}` : 'ENTER AN AMOUNT'}
+                    </span>
+                  </button>
+                )}
                 <button
                   onClick={() => { /* Coinbase Onramp wired later */ }}
                   style={{ width: '100%', background: 'transparent', border: '1px solid rgba(255,255,255,0.15)', cursor: 'pointer', padding: '11px 0' }}
@@ -344,19 +366,31 @@ export default function CollectSheetV2({ post, visible, onClose }: Props) {
                       </div>
                     )}
 
-                    <button
-                      onClick={doSell}
-                      disabled={busy || sellPieces <= 0}
-                      style={{ width: '100%', background: sellPieces <= 0 ? 'rgba(255,255,255,0.08)' : (sellEndsFirstCut && confirmEndFirstCut ? '#FF0000' : 'transparent'), border: sellPieces <= 0 ? 'none' : '1px solid #FF0000', cursor: busy || sellPieces <= 0 ? 'default' : 'pointer', padding: '14px 0' }}
-                    >
-                      <span style={{ ...SKB, fontSize: 12, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                        {busy ? 'SELLING…'
-                          : sellPieces <= 0 ? 'ENTER PIECES'
-                          : sellEndsFirstCut && !confirmEndFirstCut ? 'SELL — END FIRST CUT'
-                          : sellEndsFirstCut && confirmEndFirstCut ? 'CONFIRM — END FIRST CUT'
-                          : `SELL${sellQuote ? ` · ${usd(sellQuote.usdAmount)}` : ''}`}
-                      </span>
-                    </button>
+                    {tradeError && (
+                      <p style={{ ...SKR, fontSize: 10, color: '#FF0000', margin: '0 0 10px', lineHeight: 1.4 }}>{tradeError}</p>
+                    )}
+                    {busy ? (
+                      /* THE WHEEL — pressed button transformed into narration. */
+                      <div style={{ width: '100%', border: '1px solid rgba(255,0,0,0.55)', padding: '13px 0', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, minHeight: 46 }}>
+                        <FrameLoader size={22} />
+                        <span style={{ ...SKB, fontSize: 11, color: 'white', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                          SELLING · {sellPieces} {sellPieces === 1 ? 'PIECE' : 'PIECES'}…
+                        </span>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={doSell}
+                        disabled={sellPieces <= 0}
+                        style={{ width: '100%', background: sellPieces <= 0 ? 'rgba(255,255,255,0.08)' : (sellEndsFirstCut && confirmEndFirstCut ? '#FF0000' : 'transparent'), border: sellPieces <= 0 ? 'none' : '1px solid #FF0000', cursor: sellPieces <= 0 ? 'default' : 'pointer', padding: '14px 0' }}
+                      >
+                        <span style={{ ...SKB, fontSize: 12, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                          {sellPieces <= 0 ? 'ENTER PIECES'
+                            : sellEndsFirstCut && !confirmEndFirstCut ? 'SELL — END FIRST CUT'
+                            : sellEndsFirstCut && confirmEndFirstCut ? 'CONFIRM — END FIRST CUT'
+                            : `SELL${sellQuote ? ` · ${usd(sellQuote.usdAmount)}` : ''}`}
+                        </span>
+                      </button>
+                    )}
                   </>
                 )}
               </>
