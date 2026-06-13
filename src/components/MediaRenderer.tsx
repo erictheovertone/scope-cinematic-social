@@ -126,16 +126,15 @@ export default function MediaRenderer({
           )}
         </button>
       )}
-      {/* Non-autoplay videos get a centered PLAY affordance — signals "this is a
-          video" and that tapping starts it. Hidden once playing; the video's
-          onClick (handleActivate) does the work, so this is pointer-transparent. */}
+      {/* Non-autoplay videos get a small RED play triangle, lower-right — the
+          austere corner affordance (matches the feed's GradedVideo). Hidden once
+          playing; the video's onClick (handleActivate) starts it. */}
       {!autoplay && !isPlaying && (
-        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
-          <div style={{ width: 46, height: 46, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.85)', background: 'rgba(0,0,0,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="white" style={{ marginLeft: 2 }}>
-              <path d="M8 5v14l11-7z"/>
-            </svg>
-          </div>
+        <div
+          aria-label="Play"
+          style={{ position: 'absolute', bottom: 8, right: 8, lineHeight: 0, pointerEvents: 'none', filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.9))' }}
+        >
+          <svg width="13" height="15" viewBox="0 0 13 15" fill="#FF0000"><path d="M1 1l11 6.5L1 14z"/></svg>
         </div>
       )}
     </div>

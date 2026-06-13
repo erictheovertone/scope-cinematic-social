@@ -71,6 +71,7 @@ export default function GradedVideo({
   const [failed, setFailed] = useState(false);           // pipeline failure → plain playback
   const [errored, setErrored] = useState(false);         // video element error → poster (contain to this tile)
   const [muted, setMuted] = useState(true);
+  const [manualPlay, setManualPlay] = useState(false); // non-autoplay video: user tapped the play affordance
   const [videoEl, setVideoEl] = useState<HTMLVideoElement | null>(null);
   const [activeLut, setActiveLut] = useState<{ canvas: HTMLCanvasElement; size: number } | null>(null);
   const boxRef = useRef<HTMLDivElement>(null);
@@ -92,9 +93,12 @@ export default function GradedVideo({
   // Autoplay plays the pre-baked GRADED CLIP (plain <video>, already graded — no
   // pipeline). The live pipeline runs ONLY for full playback (forcePlay = lightbox/
   // standalone). Autoplay with no clip (legacy / bake failure) → poster only.
-  const playbackUrl = forcePlay ? url : (clipUrl ?? null);
-  const shouldAttempt = !!playbackUrl && (forcePlay || (autoplayFlag && (gridMode ? inView : coordActive)));
-  const usePipeline = forcePlay && playing && looked && !failed;
+  // A manual tap on a non-autoplay video plays the FULL video (graded), exactly
+  // like the standalone/lightbox path — so it shares forcePlay's behavior.
+  const effectiveForcePlay = forcePlay || manualPlay;
+  const playbackUrl = effectiveForcePlay ? url : (clipUrl ?? null);
+  const shouldAttempt = !!playbackUrl && (effectiveForcePlay || (autoplayFlag && (gridMode ? inView : coordActive)));
+  const usePipeline = effectiveForcePlay && playing && looked && !failed;
 
   // ── Visibility ──
   useEffect(() => {
@@ -169,7 +173,7 @@ export default function GradedVideo({
   // Load the LOOK LUT — ONLY for full playback (forcePlay), the only path that
   // runs the pipeline. Autoplay clips are already graded (baked), so no LUT.
   useEffect(() => {
-    if (!forcePlay || !shouldAttempt || !looked) { setActiveLut(null); return; }
+    if (!effectiveForcePlay || !shouldAttempt || !looked) { setActiveLut(null); return; }
     let cancelled = false;
     const look = lookById(params?.lutId ?? null);
     if (!look) { setActiveLut(null); return; }
@@ -177,7 +181,7 @@ export default function GradedVideo({
       .then((e) => { if (!cancelled) setActiveLut({ canvas: e.canvas, size: e.parsed.size }); })
       .catch(() => { if (!cancelled) setActiveLut(null); });
     return () => { cancelled = true; };
-  }, [forcePlay, shouldAttempt, looked, params?.lutId]);
+  }, [effectiveForcePlay, shouldAttempt, looked, params?.lutId]);
 
   // Measure the container for the cover/crop pipeline geometry.
   useEffect(() => {
@@ -250,6 +254,19 @@ export default function GradedVideo({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Non-autoplay videos get a small RED play triangle, lower-right — the
+          austere corner affordance. Tap plays the full graded video in place.
+          Hidden once playing, and never shown for autoplay/forcePlay (already live). */}
+      {!autoplayFlag && !forcePlay && !playing && !manualPlay && (
+        <button
+          onClick={(e) => { e.stopPropagation(); setManualPlay(true); }}
+          aria-label="Play"
+          style={{ position: "absolute", bottom: 8, right: 8, background: "transparent", border: "none", cursor: "pointer", padding: 0, lineHeight: 0, zIndex: 10, filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.9))" }}
+        >
+          <svg width="13" height="15" viewBox="0 0 13 15" fill="#FF0000"><path d="M1 1l11 6.5L1 14z" /></svg>
+        </button>
       )}
 
       {showSoundToggle && playing && (

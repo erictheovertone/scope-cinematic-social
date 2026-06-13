@@ -58,25 +58,34 @@ export default function Home() {
     return () => cancelAnimationFrame(raf);
   }, [openCommentsPostId]);
 
-  // Native scroll listener — React's synthetic onScroll misses momentum scroll-up on iOS Safari.
+  // Direction-aware red frame — present at rest and on scroll-UP, hidden on
+  // scroll-DOWN. Native listener (React's synthetic onScroll misses iOS momentum
+  // scroll-up), rAF-throttled, with a small threshold so micro-scrolls don't
+  // flicker it. lastScrollY only advances past the threshold, so a continuous
+  // gesture reads as one direction instead of thrashing per sub-pixel event.
   useEffect(() => {
     const el = feedRef.current;
     if (!el) return;
-    const handler = () => {
+    const THRESHOLD = 6; // px of intent before we act
+    let ticking = false;
+    const update = () => {
+      ticking = false;
       const y = el.scrollTop;
-      console.log('[frame-scroll-diagnostic]', {
-        currentY: y, lastY: lastScrollY.current,
-        direction: y < lastScrollY.current ? 'UP' : y > lastScrollY.current ? 'DOWN' : 'SAME',
-      });
-      if (y < lastScrollY.current) {
+      if (y <= THRESHOLD) {            // at/near the top → always present
         setShowFrame(true);
-      } else if (y > lastScrollY.current && y > 40) {
-        setShowFrame(false);
+        lastScrollY.current = y;
+        return;
       }
+      const delta = y - lastScrollY.current;
+      if (Math.abs(delta) < THRESHOLD) return; // below intent → ignore (no flicker)
+      setShowFrame(delta < 0);         // up → show, down → hide
       lastScrollY.current = y;
     };
-    el.addEventListener('scroll', handler, { passive: true });
-    return () => el.removeEventListener('scroll', handler);
+    const onScroll = () => {
+      if (!ticking) { ticking = true; requestAnimationFrame(update); }
+    };
+    el.addEventListener('scroll', onScroll, { passive: true });
+    return () => el.removeEventListener('scroll', onScroll);
   }, []);
 
   useEffect(() => {
@@ -171,7 +180,7 @@ export default function Home() {
           padding: 4,
           lineHeight: 0,
           opacity: menuOpen || !showFrame ? 0 : 1,
-          transition: 'opacity 180ms ease',
+          transition: 'opacity 0.42s cubic-bezier(0.16,0.84,0.3,1)',
           pointerEvents: menuOpen || !showFrame ? 'none' : 'auto',
           filter: 'drop-shadow(0 0 8px rgba(0,0,0,0.9)) drop-shadow(0 2px 12px rgba(0,0,0,0.75))',
           zIndex: 20,
@@ -197,7 +206,7 @@ export default function Home() {
             position: 'fixed',
             inset: 0,
             zIndex: 60,
-            background: 'linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.25) 80%, transparent 100%)',
+            background: 'linear-gradient(to bottom, rgba(0,0,0,0.70) 0%, rgba(0,0,0,0.40) 80%, transparent 100%)',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',

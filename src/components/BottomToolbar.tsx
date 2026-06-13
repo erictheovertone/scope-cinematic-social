@@ -94,7 +94,7 @@ export default function BottomToolbar({ page, unreadCount = 0, onNotificationsCl
         left: 0,
         right: 0,
         height: 50,
-        background: 'linear-gradient(to top, rgba(0,0,0,0.54) 0%, rgba(0,0,0,0) 100%)',
+        background: 'linear-gradient(to top, rgba(0,0,0,0.69) 0%, rgba(0,0,0,0) 100%)',
         zIndex: 49,
         pointerEvents: 'none',
       }} />
