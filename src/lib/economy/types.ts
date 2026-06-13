@@ -120,6 +120,8 @@ export interface CollectResult {
   pieces: number;
   /** Mock tx reference — visibly fake in Phase 1. */
   ref: string;
+  /** SELL only: receipt-true proceeds in USD (null when unmeasurable). */
+  proceedsUsd?: number | null;
 }
 
 /** The boundary contract. Mocked now; Zora-backed later. Signatures are fixed. */
@@ -141,8 +143,8 @@ export interface EconomyApi {
   quoteSell(postId: string, pieces: number): Promise<SellQuote>;
   /** BUY stub — mocks success, NO real transaction. `currency` = payment side. */
   buy(postId: string, usdAmount: number, currency: TradeCurrency): Promise<CollectResult>;
-  /** SELL stub — mocks success, NO real transaction. */
-  sell(postId: string, pieces: number): Promise<CollectResult>;
+  /** SELL stub — mocks success, NO real transaction. `currency` = receive side. */
+  sell(postId: string, pieces: number, currency?: TradeCurrency): Promise<CollectResult>;
   /**
    * Live ETH/USD rate, or NULL when genuinely unavailable. The ONE conversion
    * source for every dollar display — surfaces never convert on their own and
@@ -157,6 +159,13 @@ export interface EconomyApi {
    * here in the WALLET). Rhymes with the First Cut creator-exclusion.
    */
   getHoldings(): Promise<Holding[]>;
+  /**
+   * COLLECTED (the page): posts where the GIVEN user holds >0 pieces,
+   * EXCLUDING their own posts (the ratified rule — self-positions live on the
+   * post and in the wallet). Public by nature: the data is on-chain; any
+   * profile's collected grid is viewable by anyone (the curator résumé).
+   */
+  getCollected(userId: string): Promise<Holding[]>;
 }
 
 /** One wallet-holdings row: a coin the viewer holds pieces of. */

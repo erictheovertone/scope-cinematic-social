@@ -203,6 +203,11 @@ export const mockEconomy: EconomyApi = {
     return [];
   },
 
+  async getCollected() {
+    // COLLECTED is a real on-chain surface — real.ts overrides.
+    return [];
+  },
+
   async getEthUsdRate(): Promise<number | null> {
     // NOT mocked: the rate is real infrastructure used by real (ungated)
     // dollar displays — wallet, legacy collect, MC. Delegates to the live

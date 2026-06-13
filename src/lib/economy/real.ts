@@ -221,13 +221,63 @@ export function createRealEconomy(
       return { ok: true, pieces: pieces ?? 0, ref: hash };
     },
 
-    async sell(postId: string, pieces: number): Promise<CollectResult> {
+    async sell(postId: string, pieces: number, currency: TradeCurrency = "ETH"): Promise<CollectResult> {
       const coinAddress = await coinAddressFor(postId);
       if (!coinAddress) return mockEconomy.sell(postId, pieces);
       if (!viewerAddress || !getWalletClient) throw new Error("Wallet not ready — try again in a moment.");
       const walletClient = await getWalletClient();
-      const { hash } = await sellCoin({ walletClient, sender: getAddress(viewerAddress), coinAddress, pieces });
-      return { ok: true, pieces, ref: hash };
+      const r = await sellCoin({ walletClient, sender: getAddress(viewerAddress), coinAddress, pieces, currency });
+      // Receipt-true: pieces and proceeds from the trade result, never estimates.
+      return { ok: true, pieces: r.pieces ?? pieces, ref: r.hash, proceedsUsd: r.proceedsUsd };
+    },
+
+    // COLLECTED — posts where the GIVEN user holds >0 pieces, EXCLUDING their
+    // own posts (ratified). Public by nature (on-chain data): works for any
+    // profile, not just the viewer.
+    async getCollected(userId: string): Promise<Holding[]> {
+      const { data: userRow } = await supabase
+        .from("users").select("wallet_address").eq("id", userId).maybeSingle();
+      const wallet = userRow?.wallet_address;
+      if (!wallet) return [];
+      const { data: coinPosts } = await supabase
+        .from("posts")
+        .select("*")
+        .not("coin_address", "is", null)
+        .eq("token_standard", "coin")
+        .neq("user_id", userId); // external curation only — never own posts
+      if (!coinPosts?.length) return [];
+
+      const rows = await Promise.all(
+        coinPosts.map(async (p): Promise<Holding | null> => {
+          try {
+            const bal = (await publicClient.readContract({
+              address: p.coin_address as `0x${string}`,
+              abi: BALANCE_OF_ABI,
+              functionName: "balanceOf",
+              args: [wallet as `0x${string}`],
+            })) as bigint;
+            const pieces = Math.floor(parseFloat(formatEther(bal)) / TOKENS_PER_PIECE);
+            if (pieces <= 0) return null;
+            let priceUsd: number | null = null;
+            try {
+              const t = await marketFor(p.coin_address);
+              priceUsd = t.priceInUsdc != null && isFinite(parseFloat(t.priceInUsdc))
+                ? parseFloat(t.priceInUsdc) * TOKENS_PER_PIECE
+                : null;
+            } catch { /* honest null */ }
+            return {
+              postId: p.id,
+              ticker: p.ticker ?? null,
+              thumbUrl: (p.media_type === "video" ? p.poster_url : null) || p.thumbnail_url || p.media_urls?.[0] || null,
+              pieces,
+              priceUsd,
+              valueUsd: priceUsd != null ? priceUsd * pieces : 0,
+              post: p,
+            };
+          } catch { return null; }
+        })
+      );
+      return rows.filter((r): r is Holding => r !== null).sort((a, b) => b.valueUsd - a.valueUsd);
     },
 
     // The wallet's ownership ledger — every Scope coin the viewer holds,

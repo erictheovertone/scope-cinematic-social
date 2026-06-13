@@ -27,7 +27,7 @@ import BadgeStack from "@/components/BadgeStack";
 import { resolveBadges } from "@/lib/economy/badges";
 import { useEconomy } from "@/components/EconomyProvider";
 import { economyPreviewEnabled } from "@/lib/economy/flag";
-import CollectedPreview from "@/components/economy/CollectedPreview";
+import CollectedGrid from "@/components/economy/CollectedGrid";
 
 function getGridCols(layoutId: string): string {
   if (layoutId.startsWith('2x-')) return 'grid-cols-2';
@@ -528,14 +528,12 @@ const userLayoutId = stableLayoutId;
         </div>
       </div>
 
-      {activeTab === 'collected' && (
-        economyPreviewEnabled() ? (
-          <CollectedPreview />
-        ) : (
-          <div style={{ position: 'absolute', top: 140, left: 0, right: 0, bottom: 60, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 10, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', textAlign: 'center', letterSpacing: '0.05em' }}>NO COLLECTED POSTS YET</p>
-          </div>
-        )
+      {/* COLLECTED — the real page (ownership as identity): posts this user
+          holds pieces of, EXCLUDING their own (ratified). */}
+      {activeTab === 'collected' && supabaseUserId && (
+        <div style={{ position: 'absolute', top: 140, left: 0, right: 0, bottom: 60, overflowY: 'auto' }}>
+          <CollectedGrid userId={supabaseUserId} isOwn />
+        </div>
       )}
 
       {/* Posts grid — header space reserved by spacer in scroll content, not by moving the container. */}

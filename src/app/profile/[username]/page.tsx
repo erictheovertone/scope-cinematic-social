@@ -23,6 +23,7 @@ import BadgeStack from "@/components/BadgeStack";
 import { resolveBadges } from "@/lib/economy/badges";
 import { useEconomy } from "@/components/EconomyProvider";
 import { economyPreviewEnabled } from "@/lib/economy/flag";
+import CollectedGrid from "@/components/economy/CollectedGrid";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -390,8 +391,12 @@ export default function PublicProfilePage() {
       {/* Posts grid — header space reserved by spacer in scroll content, not by moving the container. */}
       <div style={{ position: 'absolute', inset: 0 }}>
         {activeTab === 'collected' ? (
-          <div style={{ position: 'absolute', top: 140, left: 0, right: 0, bottom: 60, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <p style={{ ...SKB, fontSize: 10, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', textAlign: 'center', letterSpacing: '0.05em' }}>NO COLLECTED POSTS YET</p>
+          /* COLLECTED — the curator résumé, public by nature (on-chain data).
+             Excludes the profile user's own posts (ratified). */
+          <div style={{ position: 'absolute', top: 140, left: 0, right: 0, bottom: 60, overflowY: 'auto' }}>
+            {profile?.user_id
+              ? <CollectedGrid userId={profile.user_id} isOwn={!!isOwnProfile} />
+              : <div style={{ minHeight: '30vh' }} />}
           </div>
         ) : posts.length === 0 ? (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', flex: 1, minHeight: '50vh', paddingTop: 140 }}>

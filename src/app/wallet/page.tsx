@@ -1,11 +1,14 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { usePrivy, useFundWallet } from "@privy-io/react-auth";
+import { usePrivy, useFundWallet, useWallets } from "@privy-io/react-auth";
 import { base } from "viem/chains";
+import { createWalletClient, custom, getAddress, parseEther, encodeFunctionData } from "viem";
+import { publicClient, errInfo } from "@/lib/zoraCoins";
 import { getEthBalance, getUsdcBalance, getTransactionHistory } from "@/lib/wallet";
 import { useEconomy } from "@/components/EconomyProvider";
 import TickerMark from "@/components/economy/TickerMark";
+import FrameLoader from "@/components/FrameLoader";
 import CollectSheetGate from "@/components/economy/CollectSheetGate";
 import type { Holding } from "@/lib/economy/types";
 
@@ -16,9 +19,13 @@ function shortAddr(addr: string): string {
   return addr.slice(0, 6) + "..." + addr.slice(-4);
 }
 
+const USDC_BASE = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913" as const;
+const ERC20_TRANSFER_ABI = [{ name: "transfer", type: "function", stateMutability: "nonpayable", inputs: [{ name: "to", type: "address" }, { name: "amount", type: "uint256" }], outputs: [{ name: "", type: "bool" }] }] as const;
+
 export default function WalletPage() {
   const { user } = usePrivy();
   const { fundWallet } = useFundWallet();
+  const { wallets } = useWallets();
   const economy = useEconomy();
   const walletAddress = user?.wallet?.address ?? "";
 
@@ -32,10 +39,18 @@ export default function WalletPage() {
   const [openHolding, setOpenHolding] = useState<Holding | null>(null);
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState("");
+  // SEND v1 — CURRENCIES ONLY (ETH | USDC from AVAILABLE). No coin/piece
+  // transfers: gifting pieces collides with First Cut HOLD-ALL provenance —
+  // deferred as its own design question.
   const [showSend, setShowSend] = useState(false);
   const [sendToken, setSendToken] = useState<"ETH" | "USDC">("ETH");
   const [sendTo, setSendTo] = useState("");
-  const [sendAmount, setSendAmount] = useState("");
+  const [sendAmount, setSendAmount] = useState(""); // DOLLARS
+  const [sendStep, setSendStep] = useState<"input" | "review" | "sending" | "sent">("input");
+  const [sendError, setSendError] = useState<string | null>(null);
+  const [sendGasUsd, setSendGasUsd] = useState<number | null>(null);
+  const [sentLabel, setSentLabel] = useState("");
+  const GAS_RESERVE_ETH = 0.0002; // ETH MAX leaves this for gas
 
   // Pull-to-refresh
   const touchStartY = useRef(0);
@@ -107,6 +122,86 @@ export default function WalletPage() {
   const handleTouchEnd = (e: React.TouchEvent) => {
     const delta = e.changedTouches[0].clientY - touchStartY.current;
     if (delta > 60 && !loading) fetchBalances();
+  };
+
+  // ── SEND mechanics ───────────────────────────────────────────────────────
+  const sendUsdNum = parseFloat(sendAmount);
+  const sendNativeNum = sendToken === "USDC"
+    ? (isFinite(sendUsdNum) ? sendUsdNum : null)
+    : (isFinite(sendUsdNum) && ethUsdRate != null ? sendUsdNum / ethUsdRate : null);
+
+  const sendMax = () => {
+    if (sendToken === "USDC") setSendAmount(parseFloat(usdcBalance ?? "0").toFixed(2));
+    else if (ethUsdRate != null) {
+      // ETH MAX = balance minus the gas reserve.
+      const maxEth = Math.max(0, parseFloat(ethBalance ?? "0") - GAS_RESERVE_ETH);
+      setSendAmount(Math.max(0, maxEth * ethUsdRate).toFixed(2));
+    }
+  };
+
+  const buildSendTx = (to: `0x${string}`) =>
+    sendToken === "ETH"
+      ? { to, value: parseEther((sendNativeNum ?? 0).toFixed(18)), data: undefined as `0x${string}` | undefined }
+      : {
+          to: USDC_BASE as `0x${string}`,
+          value: BigInt(0),
+          data: encodeFunctionData({ abi: ERC20_TRANSFER_ABI, functionName: "transfer", args: [to, BigInt(Math.round((sendUsdNum || 0) * 1e6))] }),
+        };
+
+  const goReview = async () => {
+    setSendError(null);
+    // Checksum-validate LOUDLY — reject anything that isn't a valid address.
+    let to: `0x${string}`;
+    try { to = getAddress(sendTo.trim()); } catch {
+      setSendError("That isn’t a valid address — check it and paste again.");
+      return;
+    }
+    if (!isFinite(sendUsdNum) || sendUsdNum <= 0 || sendNativeNum == null) {
+      setSendError(sendToken === "ETH" && ethUsdRate == null ? "Dollar rate unavailable right now — try again in a moment." : "Enter an amount.");
+      return;
+    }
+    const avail = sendToken === "USDC" ? parseFloat(usdcBalance ?? "0") : Math.max(0, parseFloat(ethBalance ?? "0") - GAS_RESERVE_ETH);
+    if (sendNativeNum > avail) { setSendError("That’s more than your available balance."); return; }
+    try {
+      const tx = buildSendTx(to);
+      const [gas, gasPrice] = await Promise.all([
+        publicClient.estimateGas({ ...tx, account: walletAddress as `0x${string}` }),
+        publicClient.getGasPrice(),
+      ]);
+      const gasEth = Number(gas * gasPrice) / 1e18;
+      setSendGasUsd(ethUsdRate != null ? gasEth * ethUsdRate : null);
+    } catch { setSendGasUsd(null); }
+    setSendStep("review");
+  };
+
+  const doSend = async () => {
+    setSendStep("sending");
+    setSendError(null);
+    try {
+      const embedded = wallets.find((w) => w.walletClientType === "privy");
+      if (!embedded) throw new Error("Wallet not ready — try again in a moment.");
+      await embedded.switchChain(base.id);
+      const provider = await embedded.getEthereumProvider();
+      const walletClient = createWalletClient({ account: embedded.address as `0x${string}`, chain: base, transport: custom(provider) });
+      const to = getAddress(sendTo.trim());
+      const tx = buildSendTx(to);
+      const hash = await walletClient.sendTransaction({ ...tx, account: embedded.address as `0x${string}`, chain: base });
+      console.log(`[wallet] SEND ${sendToken} $${sendUsdNum.toFixed(2)} → ${to} | tx: ${hash}`);
+      const receipt = await publicClient.waitForTransactionReceipt({ hash });
+      if (receipt.status !== "success") throw new Error("The transfer reverted on-chain — nothing was sent.");
+      setSentLabel(`[ SENT · $${sendUsdNum.toFixed(2)} ]`);
+      setSendStep("sent");
+      fetchBalances(); // AVAILABLE updates; ACTIVITY picks the tx up
+      setTimeout(() => {
+        setShowSend(false);
+        setSendStep("input"); setSendTo(""); setSendAmount(""); setSentLabel("");
+      }, 2500);
+    } catch (e) {
+      console.error("[wallet] send failed:", errInfo(e));
+      const m = (e as Error)?.message ?? "";
+      setSendError(m.length > 0 && m.length < 140 ? m : "The send didn’t go through — nothing left your wallet. Try again.");
+      setSendStep("review");
+    }
   };
 
   return (
@@ -405,68 +500,114 @@ export default function WalletPage() {
           <div style={{ height: 1, background: "rgba(255,255,255,0.08)" }} />
 
           <div style={{ flex: 1, overflowY: "auto", padding: "16px" }}>
-            {/* Token selector */}
-            <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
-              {(["ETH", "USDC"] as const).map(t => (
-                <button
-                  key={t}
-                  onClick={() => setSendToken(t)}
+            {sendStep === "sent" ? (
+              /* TERMINAL — bracket state, then the sheet resolves itself. */
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: 180 }}>
+                <span style={{ ...SKB, fontSize: 14, color: "#FF0000", textTransform: "uppercase", letterSpacing: "0.12em" }}>{sentLabel}</span>
+              </div>
+            ) : sendStep === "sending" ? (
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, minHeight: 180 }}>
+                <FrameLoader size={22} />
+                <span style={{ ...SKB, fontSize: 11, color: "white", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+                  SENDING · ${isFinite(sendUsdNum) ? sendUsdNum.toFixed(2) : ""}…
+                </span>
+              </div>
+            ) : sendStep === "review" ? (
+              /* THE REVIEW STEP — the sanctioned two-step (irreversible act). */
+              <>
+                <p style={{ ...SKB, fontSize: 9, color: "rgba(255,255,255,0.5)", margin: "0 0 6px", textTransform: "uppercase", letterSpacing: "0.12em" }}>REVIEW — SENDING</p>
+                <p style={{ ...SKB, fontSize: 22, color: "white", margin: "0 0 2px", fontVariantNumeric: "tabular-nums" }}>${sendUsdNum.toFixed(2)}</p>
+                <p style={{ ...SKR, fontSize: 10, color: "rgba(255,255,255,0.5)", margin: "0 0 16px" }}>
+                  = {sendToken === "USDC" ? `${sendUsdNum.toFixed(2)} USDC` : `${(sendNativeNum ?? 0).toFixed(6)} ETH`}
+                </p>
+                <p style={{ ...SKB, fontSize: 9, color: "rgba(255,255,255,0.5)", margin: "0 0 6px", textTransform: "uppercase", letterSpacing: "0.12em" }}>TO</p>
+                <p style={{ ...SKR, fontSize: 11, color: "white", margin: "0 0 16px", wordBreak: "break-all", lineHeight: 1.5 }}>{(() => { try { return getAddress(sendTo.trim()); } catch { return sendTo; } })()}</p>
+                <p style={{ ...SKR, fontSize: 9, color: "rgba(255,255,255,0.45)", margin: "0 0 14px", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                  EST. GAS {sendGasUsd != null ? `$${sendGasUsd.toFixed(4)}` : "$—"}
+                </p>
+                <div style={{ border: "1px solid rgba(255,0,0,0.55)", padding: "10px 12px", marginBottom: 16 }}>
+                  <p style={{ ...SKB, fontSize: 9, color: "#FF0000", textTransform: "uppercase", letterSpacing: "0.08em", margin: 0, lineHeight: 1.5 }}>
+                    BASE NETWORK ONLY — funds sent to addresses on other networks are unrecoverable.
+                  </p>
+                </div>
+                {sendError && <p style={{ ...SKR, fontSize: 10, color: "#FF0000", margin: "0 0 12px", lineHeight: 1.4 }}>{sendError}</p>}
+                <button onClick={doSend} style={{ ...SKB, fontSize: 11, color: "white", background: "#FF0000", border: "none", cursor: "pointer", padding: "13px", width: "100%", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>
+                  SEND · ${sendUsdNum.toFixed(2)}
+                </button>
+                <button onClick={() => { setSendStep("input"); setSendError(null); }} style={{ ...SKB, fontSize: 10, color: "rgba(255,255,255,0.5)", background: "transparent", border: "1px solid rgba(255,255,255,0.15)", cursor: "pointer", padding: "11px", width: "100%", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                  BACK
+                </button>
+              </>
+            ) : (
+              /* INPUT — currencies only (no coin/piece transfers in v1). */
+              <>
+                <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
+                  {(["ETH", "USDC"] as const).map(t => (
+                    <button
+                      key={t}
+                      onClick={() => { setSendToken(t); setSendError(null); }}
+                      style={{
+                        ...SKB, fontSize: 10, background: "transparent",
+                        border: `1px solid ${sendToken === t ? "white" : "rgba(255,255,255,0.3)"}`,
+                        color: "white", opacity: sendToken === t ? 1 : 0.4,
+                        cursor: "pointer", padding: "6px 16px", textTransform: "uppercase", letterSpacing: "0.06em",
+                      }}
+                    >{t}</button>
+                  ))}
+                </div>
+
+                <p style={{ ...SKB, fontSize: 9, color: "white", opacity: 0.5, margin: "0 0 6px", textTransform: "uppercase", letterSpacing: "0.06em" }}>TO</p>
+                <input
+                  type="text"
+                  value={sendTo}
+                  onChange={e => { setSendTo(e.target.value); setSendError(null); }}
+                  placeholder="0x… wallet address (Base)"
                   style={{
-                    ...SKB, fontSize: 10, background: "transparent",
-                    border: `1px solid ${sendToken === t ? "white" : "rgba(255,255,255,0.3)"}`,
-                    color: "white", opacity: sendToken === t ? 1 : 0.4,
-                    cursor: "pointer", padding: "6px 16px", textTransform: "uppercase", letterSpacing: "0.06em",
+                    ...SKR, fontSize: 11, color: "white", background: "transparent",
+                    border: "none", borderBottom: "1px solid rgba(255,255,255,0.3)",
+                    outline: "none", width: "100%", padding: "4px 0", marginBottom: 20,
+                    boxSizing: "border-box",
                   }}
-                >{t}</button>
-              ))}
-            </div>
+                />
 
-            {/* TO */}
-            <p style={{ ...SKB, fontSize: 9, color: "white", opacity: 0.5, margin: "0 0 6px", textTransform: "uppercase", letterSpacing: "0.06em" }}>TO</p>
-            <input
-              type="text"
-              value={sendTo}
-              onChange={e => setSendTo(e.target.value)}
-              placeholder="0x... wallet address"
-              style={{
-                ...SKR, fontSize: 11, color: "white", background: "transparent",
-                border: "none", borderBottom: "1px solid rgba(255,255,255,0.3)",
-                outline: "none", width: "100%", padding: "4px 0", marginBottom: 20,
-                boxSizing: "border-box",
-              }}
-            />
+                <p style={{ ...SKB, fontSize: 9, color: "white", opacity: 0.5, margin: "0 0 6px", textTransform: "uppercase", letterSpacing: "0.06em" }}>AMOUNT · DOLLARS</p>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+                  <span style={{ ...SKB, fontSize: 14, color: sendAmount ? "white" : "rgba(255,255,255,0.3)" }}>$</span>
+                  <input
+                    inputMode="decimal"
+                    value={sendAmount}
+                    onChange={e => { setSendAmount(e.target.value.replace(/[^0-9.]/g, "")); setSendError(null); }}
+                    placeholder="0.00"
+                    style={{
+                      ...SKB, fontSize: 14, color: "white", background: "transparent",
+                      border: "none", borderBottom: "1px solid rgba(255,255,255,0.3)",
+                      outline: "none", flex: 1, padding: "4px 0", fontVariantNumeric: "tabular-nums",
+                    }}
+                  />
+                  <button onClick={sendMax} style={{ ...SKB, fontSize: 9, color: "white", background: "transparent", border: "1px solid rgba(255,255,255,0.3)", cursor: "pointer", padding: "5px 10px", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                    MAX
+                  </button>
+                </div>
+                <p style={{ ...SKB, fontSize: 9, color: "white", opacity: 0.5, margin: "0 0 20px", textTransform: "uppercase" }}>
+                  Available: {sendToken === "ETH"
+                    ? `${parseFloat(ethBalance ?? "0").toFixed(4)} ETH${ethUsd != null ? ` ($${ethUsd})` : ""}`
+                    : `${parseFloat(usdcBalance ?? "0").toFixed(2)} USDC`}
+                </p>
 
-            {/* AMOUNT */}
-            <p style={{ ...SKB, fontSize: 9, color: "white", opacity: 0.5, margin: "0 0 6px", textTransform: "uppercase", letterSpacing: "0.06em" }}>AMOUNT</p>
-            <input
-              type="number"
-              value={sendAmount}
-              onChange={e => setSendAmount(e.target.value)}
-              placeholder="0.00"
-              style={{
-                ...SKR, fontSize: 11, color: "white", background: "transparent",
-                border: "none", borderBottom: "1px solid rgba(255,255,255,0.3)",
-                outline: "none", width: "100%", padding: "4px 0", marginBottom: 8,
-                boxSizing: "border-box",
-              }}
-            />
-            <p style={{ ...SKB, fontSize: 9, color: "white", opacity: 0.5, margin: "0 0 20px", textTransform: "uppercase" }}>
-              Available: {sendToken === "ETH"
-                ? `${parseFloat(ethBalance ?? "0").toFixed(4)} ETH`
-                : `${parseFloat(usdcBalance ?? "0").toFixed(2)} USDC`}
-            </p>
+                {sendError && <p style={{ ...SKR, fontSize: 10, color: "#FF0000", margin: "0 0 12px", lineHeight: 1.4 }}>{sendError}</p>}
 
-            {/* SEND button */}
-            <button
-              onClick={() => showToast("Sending coming soon")}
-              style={{
-                ...SKB, fontSize: 11, color: "white", background: "transparent",
-                border: "1px solid white", cursor: "pointer", padding: "12px",
-                width: "100%", textTransform: "uppercase", letterSpacing: "0.06em",
-              }}
-            >
-              SEND
-            </button>
+                <button
+                  onClick={goReview}
+                  style={{
+                    ...SKB, fontSize: 11, color: "white", background: "transparent",
+                    border: "1px solid white", cursor: "pointer", padding: "12px",
+                    width: "100%", textTransform: "uppercase", letterSpacing: "0.06em",
+                  }}
+                >
+                  REVIEW
+                </button>
+              </>
+            )}
           </div>
         </div>
       </>

@@ -58,6 +58,7 @@ export default function CollectSheetV2({ post, visible, onClose }: Props) {
   // SELL state
   const [sellPieces, setSellPieces] = useState(0);
   const [sellQuote, setSellQuote] = useState<SellQuote | null>(null);
+  const [sellCurrency, setSellCurrency] = useState<TradeCurrency>('ETH');
   const [confirmEndFirstCut, setConfirmEndFirstCut] = useState(false);
 
   const [busy, setBusy] = useState(false);
@@ -150,9 +151,12 @@ export default function CollectSheetV2({ post, visible, onClose }: Props) {
     if (sellEndsFirstCut && !confirmEndFirstCut) { setConfirmEndFirstCut(true); return; }
     setBusy(true); setTradeError(null);
     try {
-      const r = await economy.sell(post.id, sellPieces);
+      const r = await economy.sell(post.id, sellPieces, sellCurrency);
       if (r.ok) {
-        setDone(market?.live ? `[ SOLD · ${r.pieces} ${r.pieces === 1 ? 'PIECE' : 'PIECES'} ]` : `SOLD ${r.pieces} ${r.pieces === 1 ? 'PIECE' : 'PIECES'} (MOCK)`);
+        // Receipt-true pieces AND proceeds. Quieter than the collect ceremony —
+        // no bracket capture (that celebrates acquiring; selling is matter-of-fact).
+        const proceeds = r.proceedsUsd != null ? ` · ${usd(r.proceedsUsd)}` : '';
+        setDone(market?.live ? `[ SOLD · ${r.pieces} ${r.pieces === 1 ? 'PIECE' : 'PIECES'}${proceeds} ]` : `SOLD ${r.pieces} ${r.pieces === 1 ? 'PIECE' : 'PIECES'} (MOCK)`);
         setConfirmEndFirstCut(false); setSellPieces(0); refresh();
         ceremonyResolve(post.id);
       }
@@ -385,7 +389,12 @@ export default function CollectSheetV2({ post, visible, onClose }: Props) {
               <>
                 <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 12 }}>
                   <span style={{ ...SKR, fontSize: 9, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>YOU HOLD</span>
-                  <span style={{ ...SKB, fontSize: 18, color: '#FFF', fontVariantNumeric: 'tabular-nums' }}>{held.toLocaleString()} {held === 1 ? 'PIECE' : 'PIECES'}</span>
+                  <span style={{ ...SKB, fontSize: 18, color: '#FFF', fontVariantNumeric: 'tabular-nums' }}>
+                    {held.toLocaleString()} {held === 1 ? 'PIECE' : 'PIECES'}
+                    {market?.priceUsd != null && held > 0 && (
+                      <span style={{ ...SKR, fontSize: 11, color: 'rgba(255,255,255,0.45)', marginLeft: 7 }}>· {usd(held * market.priceUsd)}</span>
+                    )}
+                  </span>
                 </div>
 
                 {held <= 0 ? (
@@ -406,26 +415,58 @@ export default function CollectSheetV2({ post, visible, onClose }: Props) {
                       <span style={{ ...SKB, fontSize: 11, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em', whiteSpace: 'nowrap' }}>PIECES</span>
                     </div>
 
-                    {/* % chips + custom (the input is custom entry) */}
+                    {/* 25% / 50% / MAX chips + custom (the input is custom entry) */}
                     <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
                       {SELL_PCTS.map((p) => (
                         <button
                           key={p}
-                          onClick={() => { setConfirmEndFirstCut(false); setSellPieces(Math.max(1, Math.round((held * p) / 100))); }}
+                          onClick={() => { setConfirmEndFirstCut(false); setSellPieces(p === 100 ? held : Math.max(1, Math.round((held * p) / 100))); }}
                           style={{ ...SKB, flex: 1, fontSize: 11, color: '#FFF', background: 'transparent', border: '1px solid rgba(255,255,255,0.18)', padding: '8px 0', cursor: 'pointer' }}
                         >
-                          {p}%
+                          {p === 100 ? 'MAX' : `${p}%`}
                         </button>
                       ))}
                     </div>
 
-                    {/* $ proceeds preview */}
-                    <div style={{ border: '1px solid rgba(255,255,255,0.1)', padding: '12px 12px', marginBottom: 14, display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
-                      <span style={{ ...SKR, fontSize: 9, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>YOU GET</span>
-                      <span style={{ ...SKB, fontSize: 18, color: '#FFF', fontVariantNumeric: 'tabular-nums' }}>
-                        ≈ {sellQuote ? usd(sellQuote.usdAmount) : '$0.00'}
-                        <span style={{ ...SKR, fontSize: 9, color: 'rgba(255,255,255,0.4)', marginLeft: 6 }}>{sellQuote ? `(${eth(sellQuote.ethAmount)})` : ''}</span>
-                      </span>
+                    {/* $ proceeds preview ("YOU RECEIVE") + price impact */}
+                    <div style={{ border: '1px solid rgba(255,255,255,0.1)', padding: '12px 12px', marginBottom: 14 }}>
+                      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+                        <span style={{ ...SKR, fontSize: 9, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>YOU RECEIVE</span>
+                        <span style={{ ...SKB, fontSize: 18, color: '#FFF', fontVariantNumeric: 'tabular-nums' }}>
+                          ≈ {sellQuote ? usd(sellQuote.usdAmount) : '$0.00'}
+                          <span style={{ ...SKR, fontSize: 9, color: 'rgba(255,255,255,0.4)', marginLeft: 6 }}>{sellQuote && sellCurrency === 'ETH' ? `(${eth(sellQuote.ethAmount)})` : sellQuote ? '(USDC)' : ''}</span>
+                        </span>
+                      </div>
+                      {/* PRICE IMPACT — mandatory on thin pools: selling moves
+                          the price hard; say so plainly before the press. */}
+                      {(() => {
+                        if (!sellQuote || market?.priceUsd == null || sellPieces <= 0) return null;
+                        const spot = sellPieces * market.priceUsd;
+                        if (spot <= 0) return null;
+                        const impact = Math.max(0, (spot - sellQuote.usdAmount) / spot) * 100;
+                        if (impact < 0.5) return null;
+                        return (
+                          <p style={{ ...SKB, fontSize: 8, color: impact >= 5 ? '#FF0000' : 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '8px 0 0' }}>
+                            PRICE IMPACT ≈ {impact.toFixed(1)}%{impact >= 5 ? ' — THIS POOL IS THIN; YOUR SALE MOVES THE PRICE' : ''}
+                          </p>
+                        );
+                      })()}
+                    </div>
+
+                    {/* Receive-currency selector (same options as the buy side) */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+                      <span style={{ ...SKR, fontSize: 9, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>RECEIVE</span>
+                      <div style={{ display: 'flex', gap: 1, background: 'rgba(255,255,255,0.12)' }}>
+                        {(['USDC', 'ETH'] as TradeCurrency[]).map((c) => (
+                          <button
+                            key={c}
+                            onClick={() => setSellCurrency(c)}
+                            style={{ ...SKB, fontSize: 10, letterSpacing: '0.08em', padding: '6px 14px', cursor: 'pointer', border: 'none', color: sellCurrency === c ? '#000' : '#FFF', background: sellCurrency === c ? '#FFF' : '#080808' }}
+                          >
+                            {c}
+                          </button>
+                        ))}
+                      </div>
                     </div>
 
                     {/* FIRST CUT guard */}

@@ -322,36 +322,92 @@ export async function buyCoin({
   return { hash, pieces };
 }
 
+// Pieces SOLD from the receipt: coin Transfers FROM the seller, summed.
+export function piecesSoldFromReceipt(receipt: any, coinAddress: string, seller: string): number | null {
+  try {
+    const coin = coinAddress.toLowerCase();
+    const from = seller.toLowerCase().replace(/^0x/, "");
+    let total = BigInt(0);
+    let found = false;
+    for (const log of receipt?.logs ?? []) {
+      if ((log.address || "").toLowerCase() !== coin) continue;
+      if (log.topics?.[0] !== TRANSFER_TOPIC) continue;
+      if (!(log.topics?.[1] || "").toLowerCase().endsWith(from)) continue;
+      total += BigInt(log.data);
+      found = true;
+    }
+    if (!found) return null;
+    return Math.floor(Number(total / BigInt("100000000000000000000")) / 1000);
+  } catch { return null; }
+}
+
 export async function sellCoin({
   walletClient,
   sender,
   coinAddress,
   pieces,
+  currency = "ETH",
   slippage = 0.05,
 }: {
   walletClient: any;
   sender: `0x${string}`;
   coinAddress: string;
   pieces: number;
+  /** Receive side: ETH or USDC (same options as the buy's payment side). */
+  currency?: "ETH" | "USDC";
   slippage?: number;
-}): Promise<{ hash: `0x${string}` }> {
+}): Promise<{ hash: `0x${string}`; pieces: number | null; proceedsUsd: number | null }> {
   // pieces → base-token wei: pieces × 100,000 tokens × 1e18.
   const amountIn = BigInt(Math.round(pieces)) * BigInt(100_000) * BigInt("1000000000000000000");
   const tradeParameters = {
     sell: { type: "erc20" as const, address: getAddress(coinAddress) },
-    buy: { type: "eth" as const },
+    buy: currency === "USDC"
+      ? { type: "erc20" as const, address: USDC_BASE }
+      : { type: "eth" as const },
     amountIn,
     slippage,
     sender,
     recipient: sender,
   };
-  console.log("[zoraCoins] sellCoin quote request:", JSON.stringify({ ...tradeParameters, amountIn: amountIn.toString(), pieces }));
-  // Coin→ETH needs Permit2 — SDK signs + validates + sends.
+  console.log("[zoraCoins] sellCoin quote request:", JSON.stringify({ ...tradeParameters, amountIn: amountIn.toString(), pieces, currency }));
+
+  // PROCEEDS measurement (ETH path): native receipts aren't ERC-20 logs, so
+  // measure balance delta corrected for gas spent. USDC path parses Transfers.
+  const ethBefore = currency === "ETH" ? await publicClient.getBalance({ address: sender }) : BigInt(0);
+
+  // ERC-20 sells need Permit2 — the SDK signs the typed-data permit and sends
+  // atomically inside tradeCoin (validated + estimated; no separate approval tx).
   const { tradeCoin } = await import("@zoralabs/coins-sdk");
   const res: any = await tradeCoin({ tradeParameters, walletClient, publicClient: publicClient as any, account: sender, validateTransaction: true });
   const hash = (res?.transactionHash ?? res?.hash) as `0x${string}`;
-  console.log(`[zoraCoins] sellCoin COMPLETE — tx: ${hash} | -${pieces} pieces`);
-  return { hash };
+
+  // RECEIPT-TRUE numbers — pieces and proceeds are never estimates.
+  const soldPieces = piecesSoldFromReceipt(res, coinAddress, sender);
+  let proceedsUsd: number | null = null;
+  try {
+    if (currency === "USDC") {
+      // USDC Transfers TO the seller in this receipt.
+      const to = sender.toLowerCase().replace(/^0x/, "");
+      let usdcWei = BigInt(0);
+      for (const log of res?.logs ?? []) {
+        if ((log.address || "").toLowerCase() !== USDC_BASE.toLowerCase()) continue;
+        if (log.topics?.[0] !== TRANSFER_TOPIC) continue;
+        if (!(log.topics?.[2] || "").toLowerCase().endsWith(to)) continue;
+        usdcWei += BigInt(log.data);
+      }
+      proceedsUsd = Number(usdcWei) / 1e6;
+    } else {
+      const ethAfter = await publicClient.getBalance({ address: sender });
+      const gasCost = BigInt(res?.gasUsed ?? 0) * BigInt(res?.effectiveGasPrice ?? 0);
+      const receivedWei = ethAfter - ethBefore + gasCost; // net of gas
+      const receivedEth = Number(receivedWei) / 1e18;
+      const rate = await getEthUsdRate();
+      proceedsUsd = rate != null && receivedEth > 0 ? receivedEth * rate : null;
+    }
+  } catch { /* proceeds unknown → terminal shows pieces only */ }
+
+  console.log(`[zoraCoins] sellCoin COMPLETE — tx: ${hash} | pieces (receipt): ${soldPieces ?? "?"} | proceeds: ${proceedsUsd != null ? "$" + proceedsUsd.toFixed(4) : "?"} (${currency})`);
+  return { hash, pieces: soldPieces, proceedsUsd };
 }
 
 // ── Creator self-buy ("Back your post") ───────────────────────────────────────
