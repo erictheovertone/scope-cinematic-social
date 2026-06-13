@@ -9,7 +9,7 @@ import { createPost, updatePostCoinData, updatePostCoinTxHash } from '@/lib/post
 import MediaRenderer from '@/components/MediaRenderer';
 // NOTE: the 1155 path (mintNewPost) is DORMANT — intact in src/lib/zora.ts as the
 // rollback lifeboat, deliberately unreferenced here. New posts mint as coins.
-import { createScopeCoin, backOwnCoin } from '@/lib/zoraCoins';
+import { createScopeCoin, backOwnCoin, errInfo } from '@/lib/zoraCoins';
 import { suggestTicker, normalizeTicker, isValidTicker } from '@/lib/economy/ticker';
 import { useTxNarrator } from '@/components/TxNarrator';
 import MintPromptSheet from '@/components/MintPromptSheet';
@@ -138,7 +138,7 @@ async function uploadAutoThumbnail(dataUrl: string, userId: string): Promise<str
     const file = new File([blob], 'auto-thumb.jpg', { type: 'image/jpeg' });
     return await uploadImage(file, 'post-media', userId);
   } catch (e) {
-    console.error('[uploadAutoThumbnail] error:', e);
+    console.error('[uploadAutoThumbnail] error:', errInfo(e));
     return null;
   }
 }
@@ -319,7 +319,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
         const looks = await getLooks(supabaseUser.id);
         if (!cancelled) setSavedLooks(looks);
       } catch (e) {
-        console.error('[CreatePostFlow] finishCtx load error:', e);
+        console.error('[CreatePostFlow] finishCtx load error:', errInfo(e));
       }
     })();
     return () => { cancelled = true; };
@@ -352,7 +352,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
       setSavedLooks((ls) => [withThumb, ...ls]);
       return true; // drives the "added to palette" confirmation animation
     } catch (e) {
-      console.error('[CreatePostFlow] saveLook failed:', e);
+      console.error('[CreatePostFlow] saveLook failed:', errInfo(e));
       return false;
     }
   };
@@ -459,7 +459,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
           processedFile = await compressImage(file);
           console.log(`[handleMediaSelect] Compression complete: ${(processedFile.size / 1024).toFixed(1)} KB (was ${(file.size / 1024).toFixed(1)} KB)`);
         } catch (e) {
-          console.error('[handleMediaSelect] Compression threw — using original:', e);
+          console.error('[handleMediaSelect] Compression threw — using original:', errInfo(e));
         }
         console.log('[handleMediaSelect] Adding to selectedMedia');
         newMedia.push({
@@ -595,7 +595,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
         if (profile?.username) setDeckUsername(profile.username);
       }
     } catch (e) {
-      console.error('loadDecksForStep error:', e);
+      console.error('loadDecksForStep error:', errInfo(e));
     } finally {
       setDecksLoading(false);
     }
@@ -747,7 +747,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
       console.log('[handlePost] post created:', newPost?.id);
 
       if (deckId && newPost?.id) {
-        addPostToDeck(deckId, newPost.id).catch(e => console.error('addPostToDeck error:', e));
+        addPostToDeck(deckId, newPost.id).catch(e => console.error('addPostToDeck error:', errInfo(e)));
       }
 
       // Post saved — show mint prompt instead of auto-minting
@@ -774,7 +774,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
     } catch (e: any) {
       const lt = getScopeLimitType(e);
       if (lt) { setIsPosting(false); setIsUploading(false); showUpsell(lt); return; }
-      console.error('[handlePost] FAILED:', e);
+      console.error('[handlePost] FAILED:', errInfo(e));
       console.error('[handlePost] error message:', e?.message);
       console.error('[handlePost] error code:', e?.code);
       console.error('[handlePost] error details:', JSON.stringify(e, null, 2));
@@ -915,7 +915,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
       // IN-FLOW failure state: [ COIN FAILED ] + plain-English reason +
       // RETRY / CONTINUE TO PROFILE (rendered by MintPromptSheet). The post is
       // never hostage — no auto-navigation, kebab retry always remains.
-      console.error('[coin] createScopeCoin failed:', coinError);
+      console.error('[coin] createScopeCoin failed:', errInfo(coinError));
       const msg = (coinError as Error)?.message ?? '';
       setMintStatus('coin-failed');
       setCodified(false);
@@ -950,7 +950,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
     } catch (e: any) {
       const lt = getScopeLimitType(e);
       if (lt) { setCreatingDeck(false); showUpsell(lt); return; }
-      console.error('createDeck error:', e);
+      console.error('createDeck error:', errInfo(e));
     } finally {
       setCreatingDeck(false);
     }

@@ -29,6 +29,23 @@ export const publicClient = createPublicClient({
   ),
 });
 
+// LOG HYGIENE: SDK errors carry non-enumerable props — logging the raw object
+// prints "{}". Always log through this extractor.
+export const errInfo = (e: unknown) => ({
+  name: (e as any)?.name,
+  message: (e as any)?.message,
+  cause: (e as any)?.cause?.message ?? (e as any)?.cause,
+});
+
+// The SDK's createTradeCall console.error()s its raw failed quote internally —
+// pure noise during the readiness poll where failure is EXPECTED. Scoped
+// suppression for the single awaited call; always restored.
+async function withQuietConsoleError<T>(fn: () => Promise<T>): Promise<T> {
+  const orig = console.error;
+  console.error = () => {};
+  try { return await fn(); } finally { console.error = orig; }
+}
+
 // ── Platform referrer hard-guard ──────────────────────────────────────────────
 //
 // ARCHITECTURE: this address receives Zora's protocol-level platform referral —
@@ -387,15 +404,22 @@ export async function backOwnCoin({
       JSON.stringify({ ...tradeParameters, amountIn: amountIn.toString(), chainId: base.id, usd: usdAmount, ethUsd })
     );
     try {
-      quote = await createTradeCall(tradeParameters); // quote only — no tx
+      quote = await withQuietConsoleError(() => createTradeCall(tradeParameters)); // quote only — no tx
       lastErr = null;
       break;
     } catch (e) {
+      // EXPECTED while a fresh pool becomes routable — quiet debug, not error.
       lastErr = e;
-      console.warn(`[zoraCoins] backOwnCoin quote not ready (attempt ${i + 1}):`, (e as Error)?.message);
+      const next = DELAYS_MS[i + 1];
+      console.debug(
+        `[zoraCoins] backing poll ${i + 1}/${DELAYS_MS.length} — pool not routable yet${next ? `, retrying in ${next / 1000}s` : ''}`
+      );
     }
   }
   if (lastErr) {
+    // Poll exhausted — the backing is actually being abandoned: THIS is the
+    // error-level moment.
+    console.error('[zoraCoins] backing poll exhausted — abandoning:', errInfo(lastErr));
     throw new Error(
       `Backing not available yet — the market may still be opening. You can back it from the post shortly. (${(lastErr as Error)?.message})`
     );
