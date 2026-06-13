@@ -357,7 +357,7 @@ export default function PublicProfilePage() {
               onClick={() => setActiveTab('main')}
               style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer' }}
             >
-              <span style={{ ...SKB, fontSize: 10, color: activeTab === 'main' ? '#FF0000' : 'white', textTransform: 'uppercase', letterSpacing: '-0.16px' }}>MAIN</span>
+              <span style={{ ...SKB, fontSize: 8, color: activeTab === 'main' ? '#FF0000' : 'white', textTransform: 'uppercase', letterSpacing: '-0.16px' }}>MAIN</span>
             </button>
           )}
 
@@ -383,7 +383,7 @@ export default function PublicProfilePage() {
             onClick={() => setActiveTab('collected')}
             style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', animation: headerUnsnapping ? 'snapOutRight 0.28s cubic-bezier(0.16,1,0.3,1) 0ms both' : headerSnapped ? 'snapInRight 0.32s cubic-bezier(0.16,1,0.3,1) 165ms both' : 'none' }}
           >
-            <span style={{ ...SKB, fontSize: 10, color: activeTab === 'collected' ? '#FF0000' : 'white', textTransform: 'uppercase', letterSpacing: '-0.16px' }}>COLLECTED</span>
+            <span style={{ ...SKB, fontSize: 8, color: activeTab === 'collected' ? '#FF0000' : 'white', textTransform: 'uppercase', letterSpacing: '-0.16px' }}>COLLECTED</span>
           </button>
         </div>
       </div>

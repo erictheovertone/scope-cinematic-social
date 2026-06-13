@@ -31,6 +31,9 @@ export default function VideoScrubber({ video, onHeroFrame, compact = false }: P
   const [playing, setPlaying] = useState(!video.paused);
   const [current, setCurrent] = useState(video.currentTime || 0);
   const [duration, setDuration] = useState(isFinite(video.duration) ? video.duration : 0);
+  // Audio control — the source enters muted (platform autoplay rule); unmuting is
+  // a user gesture so it's audible. Creators finish with sound here.
+  const [muted, setMuted] = useState(video.muted);
   const trackRef = useRef<HTMLDivElement>(null);
   const draggingRef = useRef(false);
 
@@ -40,12 +43,14 @@ export default function VideoScrubber({ video, onHeroFrame, compact = false }: P
     const onTime = () => { if (!draggingRef.current) setCurrent(video.currentTime); };
     const onDur = () => setDuration(isFinite(video.duration) ? video.duration : 0);
     const onSeeked = () => { setCurrent(video.currentTime); if (video.paused) onHeroFrame(video.currentTime); };
+    const onVolume = () => setMuted(video.muted);
     video.addEventListener("play", onPlay);
     video.addEventListener("pause", onPause);
     video.addEventListener("timeupdate", onTime);
     video.addEventListener("durationchange", onDur);
     video.addEventListener("loadedmetadata", onDur);
     video.addEventListener("seeked", onSeeked);
+    video.addEventListener("volumechange", onVolume);
     onDur();
     return () => {
       video.removeEventListener("play", onPlay);
@@ -54,10 +59,12 @@ export default function VideoScrubber({ video, onHeroFrame, compact = false }: P
       video.removeEventListener("durationchange", onDur);
       video.removeEventListener("loadedmetadata", onDur);
       video.removeEventListener("seeked", onSeeked);
+      video.removeEventListener("volumechange", onVolume);
     };
   }, [video, onHeroFrame]);
 
   const togglePlay = () => { if (video.paused) video.play().catch(() => {}); else video.pause(); };
+  const toggleMute = () => { video.muted = !video.muted; setMuted(video.muted); };
 
   const seekToClientX = (clientX: number) => {
     const el = trackRef.current;
@@ -110,6 +117,21 @@ export default function VideoScrubber({ video, onHeroFrame, compact = false }: P
       <span style={{ ...REG, fontSize: 8, color: "rgba(255,255,255,0.55)", letterSpacing: "0.04em", flexShrink: 0, minWidth: 56, textAlign: "right" }}>
         {fmt(current)} / {fmt(duration)}
       </span>
+
+      {/* Mute / unmute — austere speaker; red when audible so it reads as active */}
+      <button onClick={toggleMute} aria-label={muted ? "Unmute" : "Mute"} style={{ background: "transparent", border: "none", cursor: "pointer", padding: 0, lineHeight: 0, flexShrink: 0 }}>
+        {muted ? (
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="rgba(255,255,255,0.7)">
+            <path d="M3.5 9v6h4l5 5V4l-5 5h-4z" />
+            <path d="M15.5 8.5l5 7M20.5 8.5l-5 7" stroke="rgba(255,255,255,0.7)" strokeWidth="1.6" strokeLinecap="round" />
+          </svg>
+        ) : (
+          <svg width="13" height="13" viewBox="0 0 24 24" fill={RED}>
+            <path d="M3.5 9v6h4l5 5V4l-5 5h-4z" />
+            <path d="M16.5 8.2a5 5 0 010 7.6M18.8 6a8 8 0 010 12" fill="none" stroke={RED} strokeWidth="1.6" strokeLinecap="round" />
+          </svg>
+        )}
+      </button>
     </div>
   );
 }

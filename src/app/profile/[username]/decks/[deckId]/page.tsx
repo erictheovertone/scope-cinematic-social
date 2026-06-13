@@ -228,6 +228,10 @@ export default function DeckDetailPage() {
   // Media upload
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  // Batch progress (done/total) + any files that failed, so partial failures are
+  // surfaced honestly with a retry rather than silently dropped.
+  const [uploadProgress, setUploadProgress] = useState<{ done: number; total: number } | null>(null);
+  const [failedUploads, setFailedUploads] = useState<File[]>([]);
 
   // Close menu on outside click
   useEffect(() => {
@@ -367,24 +371,42 @@ export default function DeckDetailPage() {
     }
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!deck || !user) return;
-    const files = Array.from(e.target.files || []);
-    if (files.length === 0) return;
-    e.target.value = "";
+  // Upload a batch file-by-file so one failure doesn't abort the rest; track
+  // progress and collect the failures for an honest retry affordance.
+  const runUploads = async (files: File[]) => {
+    if (!deck || !user || files.length === 0) return;
     setUploading(true);
-    try {
-      for (const file of files) {
+    setFailedUploads([]);
+    setUploadProgress({ done: 0, total: files.length });
+    const failed: File[] = [];
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      try {
         const url = await uploadImage(file, "post-media", user.id);
         const item = await addMediaToDeck(deck.id, url);
         const newItem: DeckItemWithMedia = { ...item, media_url: url, post: null };
         setDeck(prev => prev ? { ...prev, items: [...prev.items, newItem], item_count: prev.item_count + 1 } : prev);
+      } catch (err) {
+        console.error("deck upload failed for", file.name, err);
+        failed.push(file);
       }
-    } catch (e) {
-      console.error("addMediaToDeck error:", e);
-    } finally {
-      setUploading(false);
+      setUploadProgress({ done: i + 1, total: files.length });
     }
+    setFailedUploads(failed);
+    setUploadProgress(null);
+    setUploading(false);
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    e.target.value = "";
+    await runUploads(files);
+  };
+
+  const retryFailedUploads = () => {
+    const files = failedUploads;
+    setFailedUploads([]);
+    runUploads(files);
   };
 
   const handleItemTap = (item: DeckItemWithMedia) => {
@@ -748,16 +770,44 @@ export default function DeckDetailPage() {
 
       {/* ADD button — own deck */}
       {isOwner && (
-        <div style={{ padding: "20px 4px 0", display: "flex", gap: 12 }}>
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            disabled={uploading}
-            style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.35)", cursor: "pointer", padding: "5px 12px" }}
-          >
-            <span style={{ ...SKB, fontSize: 8, color: "white" }}>
-              {uploading ? "UPLOADING…" : "+ ADD"}
-            </span>
-          </button>
+        <div style={{ padding: "20px 4px 0" }}>
+          <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.35)", cursor: uploading ? "default" : "pointer", padding: "5px 12px", opacity: uploading ? 0.5 : 1 }}
+            >
+              <span style={{ ...SKB, fontSize: 8, color: "white" }}>
+                {uploading ? "UPLOADING…" : "+ ADD"}
+              </span>
+            </button>
+
+            {/* Batch progress — corner-bracket loader + count, so large batches read as working */}
+            {uploading && uploadProgress && (
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <FrameLoader variant="inline" size={28} />
+                <span style={{ ...SKB, fontSize: 8, color: "rgba(255,255,255,0.7)", letterSpacing: "0.06em" }}>
+                  {uploadProgress.done} / {uploadProgress.total}
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Partial-failure — name the count, offer a retry of just the failures */}
+          {!uploading && failedUploads.length > 0 && (
+            <div style={{ display: "flex", alignItems: "center", gap: 12, paddingTop: 12 }}>
+              <span style={{ ...SKB, fontSize: 8, color: "#FF0000", letterSpacing: "0.04em" }}>
+                {failedUploads.length} FILE{failedUploads.length > 1 ? "S" : ""} FAILED
+              </span>
+              <button
+                onClick={retryFailedUploads}
+                style={{ background: "transparent", border: "1px solid #FF0000", cursor: "pointer", padding: "4px 10px" }}
+              >
+                <span style={{ ...SKB, fontSize: 8, color: "#FF0000" }}>RETRY</span>
+              </button>
+            </div>
+          )}
+
           <input ref={fileInputRef} type="file" accept="image/*,video/*" multiple onChange={handleFileUpload} className="hidden" />
         </div>
       )}

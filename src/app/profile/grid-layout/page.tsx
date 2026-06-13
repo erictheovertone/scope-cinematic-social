@@ -97,10 +97,10 @@ function CellOverlay({
         <>
           <span style={{
             position: "absolute", top: 5, left: 6,
-            background: "#d9d9d9", height: 11, padding: "0 3px",
+            background: selected ? "#FF0000" : "#d9d9d9", height: 11, padding: "0 3px",
             display: "flex", alignItems: "center",
             fontFamily: "'Sk-Modernist', sans-serif", fontWeight: 700, fontSize: 8,
-            color: "#000000", letterSpacing: "-0.16px", whiteSpace: "nowrap", lineHeight: 1, zIndex: 1,
+            color: selected ? "#ffffff" : "#000000", letterSpacing: "-0.16px", whiteSpace: "nowrap", lineHeight: 1, zIndex: 1,
           }}>
             {layout.label}
           </span>
@@ -156,7 +156,7 @@ function LayoutSection({
             <div key={i} style={{ position: "absolute", left: cell.left, top: cell.top, width: cell.width, height: cell.height, border, background: "transparent" }}>
               {i === 0 && (
                 <>
-                  <span style={{ position: "absolute", top: 5, left: 6, background: "#d9d9d9", height: 11, padding: "0 3px", display: "flex", alignItems: "center", fontFamily: "'Sk-Modernist', sans-serif", fontWeight: 700, fontSize: 8, color: "#000000", letterSpacing: "-0.16px", whiteSpace: "nowrap", lineHeight: 1 }}>
+                  <span style={{ position: "absolute", top: 5, left: 6, background: selected ? "#FF0000" : "#d9d9d9", height: 11, padding: "0 3px", display: "flex", alignItems: "center", fontFamily: "'Sk-Modernist', sans-serif", fontWeight: 700, fontSize: 8, color: selected ? "#ffffff" : "#000000", letterSpacing: "-0.16px", whiteSpace: "nowrap", lineHeight: 1 }}>
                     {layout.label}
                   </span>
                   <div style={{ position: "absolute", top: 18, left: 6, display: "flex", alignItems: "center" }}>

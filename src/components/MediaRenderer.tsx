@@ -83,6 +83,14 @@ export default function MediaRenderer({
     );
   }
 
+  // Non-autoplay tap: defer to the caller if it wants the tap (opens the viewer,
+  // which plays there); otherwise start playback inline.
+  const handleActivate = () => {
+    if (onClick) { onClick(); return; }
+    const el = videoRef.current;
+    if (el) el.play().then(() => setIsPlaying(true)).catch(() => {});
+  };
+
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
       <video
@@ -95,7 +103,7 @@ export default function MediaRenderer({
         autoPlay={autoplay}
         className={className}
         style={{ width: '100%', height: '100%', display: 'block', ...getCropStyle(cropX, cropY, cropWidth, cropHeight), ...style }}
-        onClick={(e) => { e.stopPropagation(); onClick?.(); }}
+        onClick={(e) => { e.stopPropagation(); handleActivate(); }}
       />
       {showSoundToggle && (
         <button
@@ -118,11 +126,16 @@ export default function MediaRenderer({
           )}
         </button>
       )}
-      {!autoplay && !showSoundToggle && (
-        <div style={{ position: 'absolute', top: 6, right: 6, width: 24, height: 24, borderRadius: '50%', background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="white">
-            <path d="M8 5v14l11-7z"/>
-          </svg>
+      {/* Non-autoplay videos get a centered PLAY affordance — signals "this is a
+          video" and that tapping starts it. Hidden once playing; the video's
+          onClick (handleActivate) does the work, so this is pointer-transparent. */}
+      {!autoplay && !isPlaying && (
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+          <div style={{ width: 46, height: 46, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.85)', background: 'rgba(0,0,0,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="white" style={{ marginLeft: 2 }}>
+              <path d="M8 5v14l11-7z"/>
+            </svg>
+          </div>
         </div>
       )}
     </div>
