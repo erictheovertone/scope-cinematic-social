@@ -167,12 +167,18 @@ export default function CollectSheetV2({ post, visible, onClose }: Props) {
   const holdingCount = filled.filter((s) => s.holding).length;
   const openCount = fc?.openCount ?? 0;
 
+  // LONGHAND borders only — never the `border` shorthand in this component:
+  // mixing it with borderBottom* flips React's conflicting-property warning on
+  // rerender. Both states carry the IDENTICAL property set; only color varies.
   const tabStyle = (active: boolean): React.CSSProperties => ({
     ...SKB, flex: 1, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase',
     padding: '10px 0', textAlign: 'center', cursor: 'pointer',
     color: active ? '#FFF' : 'rgba(255,255,255,0.4)',
-    borderBottom: active ? '1px solid #FF0000' : '1px solid rgba(255,255,255,0.1)',
-    background: 'transparent', border: 'none',
+    background: 'transparent',
+    borderTop: 'none', borderLeft: 'none', borderRight: 'none',
+    borderBottomWidth: 1,
+    borderBottomStyle: 'solid',
+    borderBottomColor: active ? '#FF0000' : 'rgba(255,255,255,0.1)',
   });
 
   return (
