@@ -72,6 +72,12 @@ interface CoinRead {
 const CLIENT_TTL_MS = 30_000;
 const FRESH_RETRY_MS = 10_000; // a just-minted coin re-checks sooner
 const marketCache = new Map<string, { data: CoinRead; at: number }>();
+
+// A settled trade invalidates the cached prices so the very next read (holdings
+// refetch, MC chip) is post-trade fresh — not a stale cached value.
+if (typeof window !== "undefined") {
+  import("./tradeEvents").then(({ onTradeSettled }) => onTradeSettled(() => marketCache.clear()));
+}
 let pendingAddrs = new Map<string, Array<(r: CoinRead) => void>>();
 let batchTimer: ReturnType<typeof setTimeout> | null = null;
 

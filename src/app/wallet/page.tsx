@@ -11,6 +11,7 @@ import TickerMark from "@/components/economy/TickerMark";
 import FrameLoader from "@/components/FrameLoader";
 import CollectSheetGate from "@/components/economy/CollectSheetGate";
 import type { Holding } from "@/lib/economy/types";
+import { onTradeSettled } from "@/lib/economy/tradeEvents";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -98,6 +99,10 @@ export default function WalletPage() {
       .catch((e) => { console.error("[wallet] holdings load error:", e); if (!cancelled) setHoldings([]); });
     return () => { cancelled = true; };
   }, [holdings, walletAddress, economy]);
+
+  // THE ONE post-trade refresh: after ANY trade (mint-flow backing, standalone
+  // collect, sell), re-pull holdings so the grey piece counts are never stale.
+  useEffect(() => onTradeSettled(() => setHoldings(null)), []);
 
   // Dollar figures only when the live rate exists — "$—" beats a wrong number.
   const ethUsd = ethBalance != null && ethUsdRate != null

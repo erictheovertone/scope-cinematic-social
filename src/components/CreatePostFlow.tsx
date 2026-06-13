@@ -12,6 +12,7 @@ import MediaRenderer from '@/components/MediaRenderer';
 import { createScopeCoin, backOwnCoin, errInfo } from '@/lib/zoraCoins';
 import { suggestTicker, normalizeTicker, isValidTicker } from '@/lib/economy/ticker';
 import { useTxNarrator } from '@/components/TxNarrator';
+import { notifyTradeSettled } from '@/lib/economy/tradeEvents';
 import MintPromptSheet from '@/components/MintPromptSheet';
 import {
   getUserByPrivyId, getProfile, uploadImage, isProMember,
@@ -832,7 +833,8 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
 
     setMintStatus('minting');
     setCeremonySub(null);
-    setBackingNarration(hasBacking ? '] 1 OF 2 — CREATING YOUR COIN… [' : '] CREATING YOUR COIN… [');
+    // In-sheet signing box: clean copy — no reverse brackets, no "…" (Note 1).
+    setBackingNarration(hasBacking ? '1 OF 2 — CREATING YOUR COIN' : 'CREATING YOUR COIN');
 
     try {
       const embeddedWallet = wallets.find(w => w.walletClientType === 'privy');
@@ -877,7 +879,9 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
       await beat(900);
 
       if (hasBacking) {
-        setBackingNarration(`] 2 OF 2 — BACKING YOUR POST · $${plannedBuyUsd.toFixed(2)} [`);
+        // In-sheet signing box: clean copy (no reverse brackets, no "…") —
+        // those stay on the global narration chip only (Note 1).
+        setBackingNarration(`2 OF 2 — BACKING · $${plannedBuyUsd.toFixed(2)}`);
         // Keep the original promise alive for a possible chip hand-off.
         const backingPromise = backOwnCoin({ walletClient, creatorAddress: embeddedWallet.address, coinAddress, usdAmount: plannedBuyUsd });
         const BOUND_MS = 11_000; // bounded in-flow wait (incl. readiness poll)
@@ -886,7 +890,9 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
           beat(BOUND_MS).then(() => ({ kind: 'slow' as const })),
         ]);
         if (raced.kind === 'landed') {
+          // Receipt-true backing count (the mint-flow path now matches collect).
           setBackingNarration(raced.r.pieces != null ? `[ BACKED · ${raced.r.pieces} PIECES ]` : '[ BACKED ]');
+          notifyTradeSettled(postId); // backing pieces → wallet holdings refresh
           await beat(1200);
         } else if (raced.kind === 'failed') {
           console.warn('[coin] backing did not land (coin unaffected):', (raced.e as Error)?.message);
@@ -894,11 +900,11 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
           await beat(1600);
         } else {
           // SLOW: complete the ceremony honestly, hand ONLY the remainder to
-          // the global chip, and let it conclude there.
+          // the global chip (which KEEPS the bracket-pulse language).
           setCeremonySub('BACKING SETTLING — FINISHING IN BACKGROUND');
           narrator.narrate({ phase: 'working', label: `] BACKING YOUR POST · $${plannedBuyUsd.toFixed(2)} [`, postId });
           backingPromise
-            .then((r) => narrator.done(r.pieces != null ? `[ BACKED · ${r.pieces} PIECES ]` : '[ BACKED ]', postId))
+            .then((r) => { narrator.done(r.pieces != null ? `[ BACKED · ${r.pieces} PIECES ]` : '[ BACKED ]', postId); notifyTradeSettled(postId); })
             .catch((e) => {
               console.warn('[coin] handed-off backing failed (coin unaffected):', (e as Error)?.message);
               narrator.fail('[ BACKING DIDN’T LAND — RETRY ]', postId);
@@ -908,7 +914,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
 
       // TERMINAL BEAT — then, and only then, the epilogue: navigation.
       setBackingNarration(`[ COINED · ${sym} ]`);
-      window.dispatchEvent(new CustomEvent('scope:market-moved', { detail: { postId } }));
+      notifyTradeSettled(postId); // the ONE post-trade refresh path
       await beat(2000);
       completeFlow();
     } catch (coinError) {

@@ -483,18 +483,21 @@ export async function backOwnCoin({
   // The full quote response — the receipt's first leg.
   console.log("[zoraCoins] backOwnCoin quote response:", JSON.stringify(quote)?.slice(0, 500));
 
-  // Pieces delta: balance before/after so the receipt shows what arrived.
   const piecesBefore = await readPieces(coinAddress, sender);
 
-  const { hash } = await executeQuotedTrade({ walletClient, sender, quote, label: `backing $${usdAmount}` });
+  const { hash, receipt } = await executeQuotedTrade({ walletClient, sender, quote, label: `backing $${usdAmount}` });
 
+  // RECEIPT is the source of truth for the count — IDENTICAL to the standalone
+  // collect path (buyCoin). The old balance-delta read raced the RPC and showed
+  // 0; it survives only as a cross-check fallback.
+  const receiptPieces = piecesFromReceipt(receipt, coinAddress, sender);
   const piecesAfter = await readPieces(coinAddress, sender);
-  const delta = piecesBefore != null && piecesAfter != null ? piecesAfter - piecesBefore : null;
-  const effective = delta && delta > 0 ? (usdAmount / delta).toFixed(4) : null;
+  const deltaPieces = piecesBefore != null && piecesAfter != null ? piecesAfter - piecesBefore : null;
+  const pieces = receiptPieces ?? deltaPieces;
   console.log(
-    `[zoraCoins] backOwnCoin COMPLETE — tx: ${hash} | pieces received: ${delta ?? "?"} (balance ${piecesBefore ?? "?"} → ${piecesAfter ?? "?"}) | $${usdAmount} ≈ ${ethAmount} ETH${effective ? ` | effective $${effective}/piece` : ""}`
+    `[zoraCoins] backOwnCoin COMPLETE — tx: ${hash} | pieces (receipt): ${receiptPieces ?? "?"} | (balance delta cross-check): ${deltaPieces ?? "?"} | $${usdAmount} ≈ ${ethAmount} ETH`
   );
-  return { hash, pieces: delta };
+  return { hash, pieces };
 }
 
 // ── Trade execution (quote → SIMULATE → estimate fresh → send 1.5×) ───────────

@@ -24,6 +24,8 @@ import ApertureMark from '@/components/economy/ApertureMark';
 import TickerMark from '@/components/economy/TickerMark';
 import FrameLoader from '@/components/FrameLoader';
 import { getAspectRatio } from '@/lib/aspectRatio';
+import { notifyTradeSettled } from '@/lib/economy/tradeEvents';
+import { openPostLightbox } from '@/lib/postLightbox';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -118,8 +120,8 @@ export default function CollectSheetV2({ post, visible, onClose }: Props) {
   // ORIGINATING context — it's an overlay, so closing it lands them exactly
   // where they were (feed or visited profile, scroll position intact).
   const ceremonyResolve = (postId: string) => {
-    // Live MC chips elsewhere re-read post-trade truth.
-    window.dispatchEvent(new CustomEvent('scope:market-moved', { detail: { postId } }));
+    // The ONE post-trade refresh: MC chips re-read + wallet holdings refetch.
+    notifyTradeSettled(postId);
     // ~4s hold: time to read the count and watch the price move before the
     // sheet returns the collector to where they came from.
     setTimeout(() => onClose(), 4000);
@@ -235,7 +237,10 @@ export default function CollectSheetV2({ post, visible, onClose }: Props) {
             </div>
           );
           const media = (
-            <div style={{ position: 'relative', width: stacked ? '100%' : '55%', aspectRatio: String(arCss), background: '#111', overflow: 'hidden', flexShrink: 0 }}>
+            <div
+              onClick={() => openPostLightbox(post.id)}
+              style={{ position: 'relative', width: stacked ? '100%' : '55%', aspectRatio: String(arCss), background: '#111', overflow: 'hidden', flexShrink: 0, cursor: 'pointer' }}
+            >
               {mediaSrc && <img src={mediaSrc} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
               {/* BRACKET CAPTURE — the staggered corner lock (same family as
                   the look-saved choreography): the work is claimed. */}

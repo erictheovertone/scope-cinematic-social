@@ -7,6 +7,7 @@ import AppShell from '@/components/AppShell';
 import { UpsellProvider } from '@/components/UpsellProvider';
 import { EconomyProvider } from '@/components/EconomyProvider';
 import { TxNarratorProvider } from '@/components/TxNarrator';
+import PostLightboxHost from '@/components/PostLightboxHost';
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -18,6 +19,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
               {children}
             </Suspense>
             <AppShell />
+            <PostLightboxHost />
           </UpsellProvider>
         </TxNarratorProvider>
       </EconomyProvider>
