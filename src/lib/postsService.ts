@@ -1,5 +1,13 @@
 import { supabase } from './supabase/client';
 
+// The IMAGE thumbnail for a post (notifications, previews): video posts use the
+// baked graded poster (never the .mp4, which renders blank as <img>); photos
+// use their baked image.
+function notifThumb(p: { media_type?: string | null; poster_url?: string | null; thumbnail_url?: string | null; media_urls?: string[] | null }): string | null {
+  if (p?.media_type === 'video') return p.poster_url ?? p.thumbnail_url ?? null;
+  return p?.media_urls?.[0] ?? p?.thumbnail_url ?? null;
+}
+
 interface Post {
   id: string;
   user_id: string;
@@ -210,7 +218,7 @@ export const likePost = async (postId: string, userId: string, username: string)
   ;(async () => {
     try {
       const { data: post } = await supabase
-        .from('posts').select('user_id, media_urls').eq('id', postId).single()
+        .from('posts').select('user_id, media_urls, poster_url, thumbnail_url, media_type').eq('id', postId).single()
       if (!post) return
       // recipient_id stores the OWNER's Privy DID — the bell reads by DID
       // (getNotifications queries recipient_id == user.id) and follow notifs use
@@ -232,7 +240,9 @@ export const likePost = async (postId: string, userId: string, username: string)
           sender_avatar: senderProfile?.profile_image_url ?? null,
           type: 'like',
           post_id: postId,
-          post_image_url: post.media_urls?.[0] ?? null,
+          // Thumbnail must be an IMAGE: for video posts media_urls[0] is the
+          // .mp4 (renders blank as <img>) — use the baked poster/thumbnail.
+          post_image_url: notifThumb(post),
           message: `@${username} liked your post`,
           is_read: false,
         })
@@ -314,7 +324,7 @@ export const addComment = async (
   ;(async () => {
     try {
       const { data: post } = await supabase
-        .from('posts').select('user_id, media_urls').eq('id', postId).single()
+        .from('posts').select('user_id, media_urls, poster_url, thumbnail_url, media_type').eq('id', postId).single()
       if (!post) return
       // recipient_id stores the OWNER's Privy DID (see likePost) — translate
       // posts.user_id (uuid) → users.privy_id so the bell (read by DID) matches.
@@ -335,7 +345,9 @@ export const addComment = async (
           sender_avatar: senderProfile?.profile_image_url ?? null,
           type: 'comment',
           post_id: postId,
-          post_image_url: post.media_urls?.[0] ?? null,
+          // Thumbnail must be an IMAGE: for video posts media_urls[0] is the
+          // .mp4 (renders blank as <img>) — use the baked poster/thumbnail.
+          post_image_url: notifThumb(post),
           message: `@${username} commented: ${preview}`,
           is_read: false,
         })

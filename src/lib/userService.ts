@@ -41,14 +41,20 @@ export const saveProfile = async (userId: string, profileData: {
   profileImageUrl?: string
   websiteUrl?: string
 }) => {
+  // ALL-CAPS IDENTITY (ratified): handles + display names store UPPERCASE — at
+  // the app layer here AND a DB trigger (migrations/2026-06-13_uppercase_identity.sql)
+  // so non-UI write paths can't bypass the invariant.
+  const username = (profileData.username ?? '').toUpperCase()
+  const displayName = (profileData.displayName ?? '').toUpperCase()
+
   // Record old handle before overwriting so old URLs redirect to the new one
-  if (profileData.username) {
+  if (username) {
     const { data: current } = await supabase
       .from('profiles')
       .select('username')
       .eq('user_id', userId)
       .maybeSingle()
-    if (current?.username && current.username !== profileData.username) {
+    if (current?.username && current.username !== username) {
       await supabase
         .from('handle_history')
         .upsert({ old_username: current.username, user_id: userId }, { onConflict: 'old_username' })
@@ -59,8 +65,8 @@ export const saveProfile = async (userId: string, profileData: {
     .from('profiles')
     .upsert({
       user_id: userId,
-      display_name: profileData.displayName,
-      username: profileData.username,
+      display_name: displayName,
+      username: username,
       bio: profileData.bio,
       profile_image_url: profileData.profileImageUrl,
       website_url: profileData.websiteUrl ?? null,
@@ -111,11 +117,15 @@ export const isProMember = (profile: { paid_member_until?: string | null } | nul
 
 export const getProfileByUsername = async (username: string): Promise<Profile | null> => {
   try {
+    // Handles store UPPERCASE, but a URL can arrive in any case — match either
+    // (exact, underscore-safe; covers the transition before the migration runs).
+    const variants = [...new Set([username, username.toUpperCase(), username.toLowerCase()])]
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
-      .eq('username', username)
-      .single()
+      .in('username', variants)
+      .limit(1)
+      .maybeSingle()
 
     if (error && error.code !== 'PGRST116') {
       throw error
@@ -137,10 +147,12 @@ export const resolveProfileByUsername = async (
   if (profile) return { profile, redirectTo: null }
 
   // Check handle history for a renamed user
+  const histVariants = [...new Set([username, username.toUpperCase(), username.toLowerCase()])]
   const { data: history } = await supabase
     .from('handle_history')
     .select('user_id')
-    .eq('old_username', username)
+    .in('old_username', histVariants)
+    .limit(1)
     .maybeSingle()
 
   if (!history) return { profile: null, redirectTo: null }
@@ -739,6 +751,11 @@ export const updateProfileFields = async (
     contact_email_public: boolean;
   }>
 ): Promise<void> => {
+  // Identity is ALWAYS uppercase — enforce here so no write path bypasses it
+  // (the DB trigger is the final guarantee; this keeps app state consistent).
+  if (typeof fields.username === 'string') fields = { ...fields, username: fields.username.toUpperCase() }
+  if (typeof fields.display_name === 'string') fields = { ...fields, display_name: fields.display_name.toUpperCase() }
+
   // Record old handle before overwriting so old URLs redirect to the new one
   if (fields.username) {
     const { data: current } = await supabase

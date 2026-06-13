@@ -12,6 +12,7 @@ import FrameLoader from "@/components/FrameLoader";
 import CollectSheetGate from "@/components/economy/CollectSheetGate";
 import type { Holding } from "@/lib/economy/types";
 import { onTradeSettled } from "@/lib/economy/tradeEvents";
+import { useCountUp } from "@/lib/economy/useCountUp";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -40,6 +41,8 @@ export default function WalletPage() {
   const [openHolding, setOpenHolding] = useState<Holding | null>(null);
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState("");
+  // Incoming-funds acknowledgment: { id } restarts the [ +$X ] pulse animation.
+  const [fundPulse, setFundPulse] = useState<{ id: number; usd: number } | null>(null);
   // SEND v1 — CURRENCIES ONLY (ETH | USDC from AVAILABLE). No coin/piece
   // transfers: gifting pieces collides with First Cut HOLD-ALL provenance —
   // deferred as its own design question.
@@ -84,9 +87,69 @@ export default function WalletPage() {
     }
   };
 
+  // Quiet AVAILABLE refresh — eth + usdc only, no loading flash, no holdings/tx
+  // re-pull (those carry the market-read cost). Used by the deposit poll and by
+  // post-trade proceeds so cash landing in the wallet shows up on its own.
+  const refreshAvailable = async () => {
+    if (!walletAddress) return;
+    try {
+      const [eth, usdc] = await Promise.all([
+        getEthBalance(walletAddress),
+        getUsdcBalance(walletAddress),
+      ]);
+      setEthBalance(eth);
+      setUsdcBalance(usdc);
+    } catch (e) {
+      console.error("refreshAvailable error:", e);
+    }
+  };
+
   useEffect(() => {
     fetchBalances();
   }, [walletAddress]);
+
+  // Autodetect incoming funds — poll the wallet while this page is visible.
+  // One path serves both external deposits AND in-app proceeds: anything that
+  // raises eth/usdc surfaces here. Paused when the tab is hidden; 25s cadence
+  // keeps it well under any RPC ceiling for a single wallet.
+  useEffect(() => {
+    if (!walletAddress) return;
+    let timer: ReturnType<typeof setTimeout>;
+    const loop = async () => {
+      if (typeof document === "undefined" || document.visibilityState === "visible") {
+        await refreshAvailable();
+      }
+      timer = setTimeout(loop, 25000);
+    };
+    timer = setTimeout(loop, 25000);
+    return () => clearTimeout(timer);
+  }, [walletAddress]);
+
+  // Detection lives on the underlying token balances, not the USD figure, so a
+  // moving ETH/USD rate never fakes a deposit. Only INCREASES fire (deposits +
+  // sale proceeds); outflows from sends/buys are ignored.
+  const prevEth = useRef<number | null>(null);
+  const prevUsdc = useRef<number | null>(null);
+  useEffect(() => {
+    if (ethBalance == null || usdcBalance == null) return;
+    const e = parseFloat(ethBalance);
+    const u = parseFloat(usdcBalance);
+    if (prevEth.current != null && prevUsdc.current != null) {
+      const dEth = e - prevEth.current;
+      const dUsdc = u - prevUsdc.current;
+      const incUsd = (dEth > 0 ? dEth * (ethUsdRate ?? 0) : 0) + (dUsdc > 0 ? dUsdc : 0);
+      if (incUsd > 0.01) setFundPulse({ id: Date.now(), usd: incUsd });
+    }
+    prevEth.current = e;
+    prevUsdc.current = u;
+  }, [ethBalance, usdcBalance, ethUsdRate]);
+
+  // Retire the [ +$X ] mark after it plays (matches the fundPulse keyframe).
+  useEffect(() => {
+    if (!fundPulse) return;
+    const t = setTimeout(() => setFundPulse(null), 2800);
+    return () => clearTimeout(t);
+  }, [fundPulse]);
 
   // Holdings — the ownership ledger. Loaded eagerly: the headline TOTAL is
   // AVAILABLE + HOLDINGS, so both numbers exist from the start. Refreshed on
@@ -101,8 +164,9 @@ export default function WalletPage() {
   }, [holdings, walletAddress, economy]);
 
   // THE ONE post-trade refresh: after ANY trade (mint-flow backing, standalone
-  // collect, sell), re-pull holdings so the grey piece counts are never stale.
-  useEffect(() => onTradeSettled(() => setHoldings(null)), []);
+  // collect, sell), re-pull holdings so the grey piece counts are never stale —
+  // and pull AVAILABLE so sale proceeds land (and trip the incoming-funds mark).
+  useEffect(() => onTradeSettled(() => { setHoldings(null); refreshAvailable(); }), [walletAddress]);
 
   // Dollar figures only when the live rate exists — "$—" beats a wrong number.
   const ethUsd = ethBalance != null && ethUsdRate != null
@@ -118,8 +182,10 @@ export default function WalletPage() {
       : null;
   // Rule 1: zero-trade coins are $0 by definition — valueUsd is always a number.
   const holdingsUsd = holdings != null ? holdings.reduce((s, h) => s + h.valueUsd, 0) : null;
-  const totalUsd =
-    availableUsd != null ? (availableUsd + (holdingsUsd ?? 0)).toFixed(2) : null;
+  const totalNum = availableUsd != null ? availableUsd + (holdingsUsd ?? 0) : null;
+  // TOTAL and AVAILABLE roll to new values (deposits, proceeds, holdings load).
+  const animatedTotal = useCountUp(totalNum);
+  const animatedAvailable = useCountUp(availableUsd);
 
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartY.current = e.touches[0].clientY;
@@ -242,9 +308,24 @@ export default function WalletPage() {
         <p style={{ ...SKB, fontSize: 10, color: "white", opacity: 0.5, margin: "0 0 8px", textTransform: "uppercase", letterSpacing: "0.06em" }}>
           Total
         </p>
-        <p style={{ ...SKB, fontSize: 32, color: "white", margin: "0 0 8px", lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>
-          {loading && totalUsd == null ? "..." : totalUsd != null ? `$${totalUsd}` : "$—"}
-                  </p>
+        <div style={{ position: "relative" }}>
+          {/* Incoming-funds mark — lands above TOTAL, then lifts away */}
+          {fundPulse && (
+            <span
+              key={fundPulse.id}
+              style={{
+                ...SKB, position: "absolute", left: 0, right: 0, top: -16,
+                fontSize: 11, color: "#FF0000", letterSpacing: "0.08em",
+                animation: "fundPulse 2.6s ease-out forwards", pointerEvents: "none",
+              }}
+            >
+              [ +${fundPulse.usd.toFixed(2)} ]
+            </span>
+          )}
+          <p style={{ ...SKB, fontSize: 32, color: "white", margin: "0 0 8px", lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>
+            {loading && animatedTotal == null ? "..." : animatedTotal != null ? `$${animatedTotal.toFixed(2)}` : "$—"}
+          </p>
+        </div>
         {/* THE CANONICAL MONEY-PAIR: two-column stat row (label/value, profile-
             stat pattern). White = spendable cash, red = invested/at-market.
             Columns index the tabs beneath them. Reuse this layout wherever the
@@ -255,7 +336,7 @@ export default function WalletPage() {
               AVAILABLE
             </p>
             <p style={{ ...SKB, fontSize: 16, color: "#FFFFFF", margin: 0, fontVariantNumeric: "tabular-nums" }}>
-              {availableUsd != null ? `$${availableUsd.toFixed(2)}` : "$—"}
+              {animatedAvailable != null ? `$${animatedAvailable.toFixed(2)}` : "$—"}
             </p>
           </div>
           <div onClick={() => setActiveTab("holdings")} style={{ cursor: "pointer" }}>

@@ -63,6 +63,16 @@
   100% { transform: scale(1); }
 }
 
+/* Incoming funds — the brief [ +$X ] mark that lands above the balance when a
+   deposit or trade proceeds arrive, then lifts away. */
+@keyframes fundPulse {
+  0%   { opacity: 0; transform: translateY(5px) scale(0.92); }
+  14%  { opacity: 1; transform: translateY(0) scale(1.06); }
+  28%  { transform: scale(1); }
+  78%  { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-7px); }
+}
+
 @keyframes swift-press {
   0% {
     transform: scale(1);

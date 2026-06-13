@@ -33,13 +33,6 @@ const Pipeline = dynamic(() => import("./Pipeline"), { ssr: false });
 
 const RENDER_CAP = 720; // max pipeline render dimension — small tiles render smaller (tile-res)
 
-// Crop math matching MediaRenderer (plain <video> path) so unedited/fallback framing
-// matches the poster.
-function cropStyle(cx = 0, cy = 0, cw = 1, ch = 1): React.CSSProperties {
-  if (cx === 0 && cy === 0 && cw === 1 && ch === 1) return { objectFit: "cover", objectPosition: "center" };
-  const posX = (cx + cw / 2) * 100, posY = (cy + ch / 2) * 100;
-  return { objectFit: "cover", objectPosition: `${posX}% ${posY}%`, transform: `scale(${Math.max(1 / cw, 1 / ch)})`, transformOrigin: `${posX}% ${posY}%` };
-}
 
 class PipelineBoundary extends Component<{ onError: () => void; children: React.ReactNode }, { failed: boolean }> {
   state = { failed: false };
@@ -233,7 +226,16 @@ export default function GradedVideo({
           autoPlay
           preload="auto"
           onError={() => { console.warn("[GradedVideo] video element error → poster:", playbackUrl); setErrored(true); }}
-          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", display: "block", opacity: playing && !usePipeline ? 1 : 0, ...cropStyle(cropX, cropY, cropWidth, cropHeight) }}
+          // FRAMING INTEGRITY: the plain <video> uses the SAME crop geometry as
+          // the graded pipeline path and the poster bake — the full frame laid
+          // out at fullW×fullH and offset so the chosen [cx,cy,cw,ch] region
+          // exactly fills the container (clipped by overflow:hidden). The old
+          // cropStyle() double-cropped (objectFit:cover + an extra scale) and
+          // played back zoomed. fullW/fullH preserve the video's AR, so the
+          // frame maps cleanly with no distortion.
+          style={geom
+            ? { position: "absolute", left: geom.left, top: geom.top, width: geom.fullW, height: geom.fullH, objectFit: "cover", display: "block", opacity: playing && !usePipeline ? 1 : 0 }
+            : { position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", display: "block", opacity: playing && !usePipeline ? 1 : 0 }}
         />
       )}
 

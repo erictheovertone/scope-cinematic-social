@@ -200,7 +200,7 @@ export default function ProfileSetup() {
         <input
           type="text"
           value={username}
-          onChange={(e) => setUsername(e.target.value)}
+          onChange={(e) => setUsername(e.target.value.toUpperCase())}
           placeholder="USERNAME"
           style={{ flex: 1, height: '100%', background: 'transparent', border: 'none', outline: 'none', ...SKB, fontSize: 9, color: 'white', letterSpacing: '-0.18px', paddingLeft: 3, paddingRight: 6 }}
         />
@@ -216,7 +216,7 @@ export default function ProfileSetup() {
         <input
           type="text"
           value={displayName}
-          onChange={(e) => setDisplayName(e.target.value)}
+          onChange={(e) => setDisplayName(e.target.value.toUpperCase())}
           placeholder="DISPLAY NAME"
           style={{ width: '100%', height: '100%', background: 'transparent', border: 'none', outline: 'none', ...SKB, fontSize: 9, color: 'white', letterSpacing: '-0.18px', paddingLeft: 6, paddingRight: 6 }}
         />

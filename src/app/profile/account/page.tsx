@@ -106,7 +106,7 @@ export default function AccountSettings() {
           <input
             className="edit-input"
             value={form.displayName}
-            onChange={e => setForm(p => ({ ...p, displayName: e.target.value }))}
+            onChange={e => setForm(p => ({ ...p, displayName: e.target.value.toUpperCase() }))}
             style={INPUT}
             placeholder="Your name"
           />
@@ -117,7 +117,7 @@ export default function AccountSettings() {
           <input
             className="edit-input"
             value={form.username}
-            onChange={e => setForm(p => ({ ...p, username: e.target.value }))}
+            onChange={e => setForm(p => ({ ...p, username: e.target.value.toUpperCase() }))}
             style={INPUT}
             placeholder="username"
           />
