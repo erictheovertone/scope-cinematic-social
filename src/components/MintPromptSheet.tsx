@@ -4,6 +4,7 @@ import { useWallets, useFundWallet } from "@privy-io/react-auth";
 import { createPublicClient, http, formatEther } from "viem";
 import { base } from "viem/chains";
 import { isValidTicker, tickerError } from "@/lib/economy/ticker";
+import { getEthUsdRate } from "@/lib/coingecko";
 import FrameLoader from "@/components/FrameLoader";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
@@ -19,9 +20,11 @@ interface MintPromptSheetProps {
   // Phase 1 coin params (entered on the mint step).
   ticker: string;
   onTickerChange: (v: string) => void;
+  selfBuyUsd: string;
+  onSelfBuyChange: (v: string) => void;
   /** TRANSACTION PRESENCE: while the sequence runs, the pressed button
       transforms in place into its live narration (the wheel). */
-  sequencePhase: 'idle' | 'minting' | 'minted' | 'mint-failed' | 'coin-failed';
+  sequencePhase: 'idle' | 'minting' | 'minted' | 'mint-failed' | 'coin-failed' | 'backing-failed';
   sequenceLine: string | null;
   /** Honest sub-line when a slow leg hands off ("BACKING SETTLING…"). */
   ceremonySub?: string | null;
@@ -35,7 +38,7 @@ interface MintPromptSheetProps {
   onContinue: () => void;
 }
 
-export default function MintPromptSheet({ visible, onMint, onSkip, onCoinSkipped, ticker, onTickerChange, sequencePhase, sequenceLine, ceremonySub, codified, mediaUrl, mediaAr, onRetry, onContinue }: MintPromptSheetProps) {
+export default function MintPromptSheet({ visible, onMint, onSkip, onCoinSkipped, ticker, onTickerChange, selfBuyUsd, onSelfBuyChange, sequencePhase, sequenceLine, ceremonySub, codified, mediaUrl, mediaAr, onRetry, onContinue }: MintPromptSheetProps) {
   const [expanded, setExpanded] = useState(false);
   const [insufficientFunds, setInsufficientFunds] = useState(false);
   const [checkingBalance, setCheckingBalance] = useState(false);
@@ -71,14 +74,22 @@ export default function MintPromptSheet({ visible, onMint, onSkip, onCoinSkipped
       ]);
       const ethBalance = parseFloat(formatEther(balanceWei));
 
-      // Threshold = gas only. Backing is no longer bought in-flow (it's deferred
-      // to the post's collect sheet), so this gate just needs createCoin's gas.
-      const thresholdEth = GAS_ALLOWANCE_ETH;
+      // Threshold = gas allowance + the optional self-buy (USD → ETH). The
+      // create itself is ETH-gas; USDC holdings are irrelevant here (fact 4).
+      let selfBuyEth = 0;
+      const buyUsd = parseFloat(selfBuyUsd);
+      if (isFinite(buyUsd) && buyUsd > 0) {
+        const rate = await getEthUsdRate();
+        // Rate unavailable → don't false-block the gate; backOwnCoin refuses
+        // honestly (isolated + loud) if the rate is still down at buy time.
+        selfBuyEth = rate !== null ? buyUsd / rate : 0;
+      }
+      const thresholdEth = GAS_ALLOWANCE_ETH + selfBuyEth;
       const sufficient = ethBalance >= thresholdEth;
 
       // The one-line diagnostic this class of bug demands — on EVERY evaluation.
       console.log(
-        `[coin-gate] addr=${embeddedWallet.address} chainId=${chainId} balance=${ethBalance} ETH threshold=${thresholdEth} ETH (gas only) → ${sufficient ? 'PROCEED' : 'FUND WALLET'}`
+        `[coin-gate] addr=${embeddedWallet.address} chainId=${chainId} balance=${ethBalance} ETH threshold=${thresholdEth} ETH (gas=${GAS_ALLOWANCE_ETH} + selfBuy=${selfBuyEth}) → ${sufficient ? 'PROCEED' : 'FUND WALLET'}`
       );
 
       if (chainId !== base.id) {
@@ -260,26 +271,44 @@ export default function MintPromptSheet({ visible, onMint, onSkip, onCoinSkipped
               )}
             </div>
 
-            {/* Backing is deferred — once the coin is live, the creator backs it
-                from the post's own collect sheet (a mature, routable pool), the
-                same BUY path collectors use. No in-flow self-buy race. */}
+            {/* Optional "Back your post" — creator self-buy at the curve price. */}
             <div style={{ marginBottom: 18 }}>
-              <p style={{ ...SKR, fontSize: 9, color: 'rgba(255,255,255,0.35)', margin: 0, lineHeight: 1.5 }}>
-                Want to back your own post? Once it&apos;s coined, open it and tap COLLECT to buy in at the same price as everyone.
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                <span style={{ ...SKB, fontSize: 9, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>BACK YOUR POST <span style={{ color: 'rgba(255,255,255,0.3)' }}>· OPTIONAL</span></span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', border: '1px solid rgba(255,255,255,0.18)', padding: '0 12px' }}>
+                <span style={{ ...SKB, fontSize: 16, color: selfBuyUsd ? '#FFF' : 'rgba(255,255,255,0.3)' }}>$</span>
+                <input
+                  inputMode="decimal"
+                  value={selfBuyUsd}
+                  onChange={(e) => onSelfBuyChange(e.target.value.replace(/[^0-9.]/g, ''))}
+                  placeholder="0"
+                  style={{ ...SKB, fontSize: 16, color: '#FFF', background: 'transparent', border: 'none', outline: 'none', width: '100%', padding: '11px 6px' }}
+                />
+              </div>
+              <p style={{ ...SKR, fontSize: 8, color: 'rgba(255,255,255,0.3)', margin: '6px 0 0', lineHeight: 1.4 }}>
+                Buy some of your own post at launch — at the same price as everyone. Leave blank to skip.
               </p>
             </div>
 
-            {sequencePhase === 'coin-failed' ? (
-              /* IN-FLOW FAILURE — the post is never hostage: plain-English
-                 reason + RETRY (re-runs in place) / CONTINUE TO PROFILE
-                 (kebab CREATE COIN remains). No auto-navigation. */
+            {(sequencePhase === 'coin-failed' || sequencePhase === 'backing-failed') ? (
+              /* IN-FLOW FAILURE — ONE dismissible surface, the post is never
+                 hostage. coin-failed → RETRY re-runs the mint; backing-failed →
+                 the COIN IS SAFE, RETRY re-attempts ONLY the backing buy. The
+                 parent routes onRetry by phase. No auto-navigation. */
               <div style={{ marginBottom: 10 }}>
                 <div style={{ width: '100%', border: '1px solid #FF0000', padding: '14px 14px', marginBottom: 10, textAlign: 'center' }}>
-                  <p style={{ ...SKB, fontSize: 12, color: '#FF0000', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 6px' }}>[ COIN FAILED ]</p>
-                  <p style={{ ...SKR, fontSize: 10, color: 'rgba(255,255,255,0.65)', lineHeight: 1.45, margin: 0 }}>{sequenceLine ?? 'Something failed on the way to the chain. Your post is safe.'}</p>
+                  <p style={{ ...SKB, fontSize: 12, color: '#FF0000', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 6px' }}>
+                    {sequencePhase === 'backing-failed' ? '[ BACKING DIDN’T LAND ]' : '[ COIN FAILED ]'}
+                  </p>
+                  <p style={{ ...SKR, fontSize: 10, color: 'rgba(255,255,255,0.65)', lineHeight: 1.45, margin: 0 }}>
+                    {sequencePhase === 'backing-failed'
+                      ? 'Your coin is live and your post is safe — only the backing buy didn’t go through. Retry it now, or back it later from your post.'
+                      : (sequenceLine ?? 'Something failed on the way to the chain. Your post is safe.')}
+                  </p>
                 </div>
                 <button onClick={onRetry} style={{ width: '100%', background: '#FF0000', border: 'none', cursor: 'pointer', padding: '13px 0', marginBottom: 8 }}>
-                  <span style={{ ...SKB, fontSize: 11, color: 'white', textTransform: 'uppercase', letterSpacing: '0.1em' }}>RETRY</span>
+                  <span style={{ ...SKB, fontSize: 11, color: 'white', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{sequencePhase === 'backing-failed' ? 'RETRY BACKING' : 'RETRY'}</span>
                 </button>
                 <button onClick={onContinue} style={{ width: '100%', background: 'transparent', border: '1px solid rgba(255,255,255,0.15)', cursor: 'pointer', padding: '11px 0' }}>
                   <span style={{ ...SKB, fontSize: 10, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>CONTINUE TO PROFILE</span>
@@ -318,7 +347,7 @@ export default function MintPromptSheet({ visible, onMint, onSkip, onCoinSkipped
                         a ticker — "BACK" is banned from the button. */}
                     {checkingBalance ? 'CHECKING BALANCE...'
                       : !isValidTicker(ticker) ? 'ENTER A TICKER'
-                      : 'CREATE COIN'}
+                      : (() => { const b = parseFloat(selfBuyUsd); return isFinite(b) && b > 0 ? `CREATE COIN · $${b.toFixed(2)}` : 'CREATE COIN'; })()}
                   </span>
                 </button>
                 <button

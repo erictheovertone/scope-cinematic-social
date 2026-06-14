@@ -9,8 +9,9 @@ import { createPost, updatePostCoinData, updatePostCoinTxHash } from '@/lib/post
 import MediaRenderer from '@/components/MediaRenderer';
 // NOTE: the 1155 path (mintNewPost) is DORMANT — intact in src/lib/zora.ts as the
 // rollback lifeboat, deliberately unreferenced here. New posts mint as coins.
-import { createScopeCoin, errInfo } from '@/lib/zoraCoins';
+import { createScopeCoin, backOwnCoin, errInfo } from '@/lib/zoraCoins';
 import { suggestTicker, normalizeTicker, isValidTicker } from '@/lib/economy/ticker';
+import { useTxNarrator } from '@/components/TxNarrator';
 import { notifyTradeSettled } from '@/lib/economy/tradeEvents';
 import MintPromptSheet from '@/components/MintPromptSheet';
 import {
@@ -277,9 +278,14 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
   const router = useRouter();
   const { user } = usePrivy();
   const { wallets } = useWallets();
-  const [mintStatus, setMintStatus] = useState<'idle' | 'minting' | 'minted' | 'mint-failed' | 'coin-failed'>('idle');
+  const narrator = useTxNarrator();
+  const [mintStatus, setMintStatus] = useState<'idle' | 'minting' | 'minted' | 'mint-failed' | 'coin-failed' | 'backing-failed'>('idle');
   // Coin ticker (Zora symbol) + optional creator self-buy, entered on the mint step.
   const [ticker, setTicker] = useState('');
+  const [selfBuyUsd, setSelfBuyUsd] = useState('');
+  // Backing-retry context: the coin already exists, so RETRY re-attempts ONLY
+  // the self-buy (never the mint). Captured when the in-flow backing fires.
+  const backingCtxRef = useRef<{ walletClient: any; creatorAddress: string; coinAddress: string; usdAmount: number; postId: string; sym: string } | null>(null);
   // Slim inline narration for multi-signature sequences (labeling, not gating):
   // "1 OF 2 — CREATING YOUR COIN…" → "2 OF 2 — BACKING YOUR POST · $1.00".
   const [backingNarration, setBackingNarration] = useState<string | null>(null);
@@ -765,6 +771,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
       });
       // Caption-derived ticker suggestion; creator overwrites it on the mint step.
       setTicker(suggestTicker(caption));
+      setSelfBuyUsd('');
       setJustPostedId(newPost.id);
       setShowMintPrompt(true);
 
@@ -800,6 +807,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
     setJustPostedId(null);
     setIsPosting(false);
     setTicker('');
+    setSelfBuyUsd('');
     setBackingNarration(null);
     setCodified(false);
     setCeremonySub(null);
@@ -813,15 +821,15 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
   // (no coin_address) and retryable.
   // THE CEREMONY HAPPENS IN THE FLOW (supersedes take 3's navigate-first):
   // narration, signing, codification all play INSIDE the mint sheet — the
-  // user navigates only after the terminal beat. Backing is NOT bought here:
-  // a fresh pool isn't routable for tens of seconds after createCoin, so the
-  // in-flow self-buy raced indexing and failed (where a standalone collect on
-  // a mature pool succeeds). Backing is deferred to the post's collect sheet —
-  // the proven path — so the mint flow only creates + codifies the coin.
+  // user navigates only after the terminal beat. The global chip is demoted
+  // to fallback narrator: it carries ONLY a slow backing remainder (or future
+  // background money actions), never a mint the user is still inside.
   const handleDoMint = async () => {
     if (!pendingMintData) return;
     const sym = normalizeTicker(ticker);
     if (!isValidTicker(sym)) { setTicker(sym); return; } // backstop; MintPromptSheet gates the button
+    const plannedBuyUsd = parseFloat(selfBuyUsd);
+    const hasBacking = isFinite(plannedBuyUsd) && plannedBuyUsd > 0;
     const data = pendingMintData;
     const postId = data.postId;
     const beat = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
@@ -829,7 +837,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
     setMintStatus('minting');
     setCeremonySub(null);
     // In-sheet signing box: clean copy — no reverse brackets, no "…" (Note 1).
-    setBackingNarration('CREATING YOUR COIN');
+    setBackingNarration(hasBacking ? '1 OF 2 — CREATING YOUR COIN' : 'CREATING YOUR COIN');
 
     try {
       const embeddedWallet = wallets.find(w => w.walletClientType === 'privy');
@@ -873,13 +881,55 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
       setCodified(true);
       await beat(900);
 
-      // BACKING IS DEFERRED (not auto-bought in the mint breath). A fresh pool
-      // isn't routable for tens of seconds after createCoin, so an in-flow
-      // self-buy raced indexing and failed where the standalone collect (a
-      // mature pool) succeeds. We converge ON that working path: the coin is
-      // created + codified here; the creator backs it whenever from the post's
-      // own collect sheet (BUY). No in-flow trade primitive, no fragile race,
-      // no orphaned failure UI.
+      if (hasBacking) {
+        setBackingNarration(`2 OF 2 — BACKING · $${plannedBuyUsd.toFixed(2)}`);
+        // SAME trade impl the standalone collect uses (backOwnCoin →
+        // executeQuotedTrade), called from the in-flow entry point — one
+        // implementation, two callers. backOwnCoin runs the READINESS POLL
+        // (createTradeCall with backoff, ~30s / 6 attempts) BEFORE committing,
+        // so the buy waits for the fresh pool to become routable instead of
+        // racing indexing. Wider slippage absorbs a fresh pool's high impact so
+        // the creator's own buy lands. Context is captured for an isolated retry.
+        backingCtxRef.current = { walletClient, creatorAddress: embeddedWallet.address, coinAddress, usdAmount: plannedBuyUsd, postId, sym };
+        const backingPromise = backOwnCoin({ walletClient, creatorAddress: embeddedWallet.address, coinAddress, usdAmount: plannedBuyUsd, slippage: 0.15 });
+        // Generous bound: the DEFAULT path completes the backing IN-FLOW (the
+        // readiness poll + trade fit comfortably on a normal pool). Only a
+        // genuinely slow-to-index pool exceeds this and degrades to the global
+        // chip (the exception). 32s > the ~30s poll window so an exhausted poll
+        // surfaces as a proper in-flow failure, not a premature hand-off.
+        const BOUND_MS = 32_000;
+        const raced = await Promise.race([
+          backingPromise.then((r) => ({ kind: 'landed' as const, r })).catch((e) => ({ kind: 'failed' as const, e })),
+          beat(BOUND_MS).then(() => ({ kind: 'slow' as const })),
+        ]);
+        if (raced.kind === 'landed') {
+          // Receipt-true backing count (the mint-flow path matches collect).
+          setBackingNarration(raced.r.pieces != null ? `[ BACKED · ${raced.r.pieces} PIECES ]` : '[ BACKED ]');
+          notifyTradeSettled(postId); // backing pieces → wallet holdings refresh
+          await beat(1200);
+        } else if (raced.kind === 'failed') {
+          // The COIN is safe — only the backing leg failed. Hold on ONE
+          // dismissible surface (MintPromptSheet 'backing-failed') whose RETRY
+          // re-attempts ONLY the backing. No auto-navigation, no stuck chip.
+          console.warn('[coin] backing did not land (coin unaffected):', errInfo(raced.e));
+          setMintStatus('backing-failed');
+          setBackingNarration(null);
+          return;
+        } else {
+          // SLOW (exception): finish the coin ceremony, hand ONLY the backing
+          // remainder to the global chip to settle in the background.
+          setCeremonySub('BACKING SETTLING — FINISHING IN BACKGROUND');
+          narrator.narrate({ phase: 'working', label: `] BACKING YOUR POST · $${plannedBuyUsd.toFixed(2)} [`, postId });
+          backingPromise
+            .then((r) => { narrator.done(r.pieces != null ? `[ BACKED · ${r.pieces} PIECES ]` : '[ BACKED ]', postId); notifyTradeSettled(postId); })
+            .catch((e) => {
+              console.warn('[coin] handed-off backing failed (coin unaffected):', errInfo(e));
+              // Honest, dismissible — tap clears + goes to the post, where the
+              // backing can be retried from the collect sheet. Not a dead RETRY.
+              narrator.fail('BACKING DIDN’T LAND — FINISH FROM YOUR POST', postId);
+            });
+        }
+      }
 
       // TERMINAL BEAT — then, and only then, the epilogue: navigation.
       setBackingNarration(`[ COINED · ${sym} ]`);
@@ -895,6 +945,32 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
       setMintStatus('coin-failed');
       setCodified(false);
       setBackingNarration(msg.length > 0 && msg.length < 120 ? msg : 'Something failed on the way to the chain. Your post is safe.');
+    }
+  };
+
+  // RETRY the BACKING ONLY — the coin already exists (decoupled). Re-runs the
+  // same backOwnCoin (readiness poll + simulate-first) against the now-older
+  // pool. Success → terminal COINED + navigate; failure → hold the same single
+  // dismissible surface again. The mint is never re-run here.
+  const retryBacking = async () => {
+    const ctx = backingCtxRef.current;
+    if (!ctx) { completeFlow(); return; }
+    const beat = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+    setMintStatus('minted'); // back to the in-sheet wheel (coin is live)
+    setCeremonySub(null);
+    setBackingNarration(`BACKING · $${ctx.usdAmount.toFixed(2)}`);
+    try {
+      const r = await backOwnCoin({ walletClient: ctx.walletClient, creatorAddress: ctx.creatorAddress, coinAddress: ctx.coinAddress, usdAmount: ctx.usdAmount, slippage: 0.15 });
+      setBackingNarration(r.pieces != null ? `[ BACKED · ${r.pieces} PIECES ]` : '[ BACKED ]');
+      notifyTradeSettled(ctx.postId);
+      await beat(1200);
+      setBackingNarration(`[ COINED · ${ctx.sym} ]`);
+      await beat(1500);
+      completeFlow();
+    } catch (e) {
+      console.warn('[coin] backing retry failed (coin unaffected):', errInfo(e));
+      setMintStatus('backing-failed');
+      setBackingNarration(null);
     }
   };
 
@@ -1365,13 +1441,15 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
         onCoinSkipped={handleCoinSkipped}
         ticker={ticker}
         onTickerChange={(v) => setTicker(normalizeTicker(v))}
+        selfBuyUsd={selfBuyUsd}
+        onSelfBuyChange={setSelfBuyUsd}
         sequencePhase={mintStatus}
         sequenceLine={backingNarration}
         ceremonySub={ceremonySub}
         codified={codified}
         mediaUrl={pendingMintData?.image ?? null}
         mediaAr={getAspectRatio(pendingMintData?.layoutId ?? '')}
-        onRetry={handleDoMint}
+        onRetry={mintStatus === 'backing-failed' ? retryBacking : handleDoMint}
         onContinue={completeFlow}
       />
       {isPosting && !showMintPrompt && (
