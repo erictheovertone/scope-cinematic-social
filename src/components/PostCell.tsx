@@ -103,12 +103,6 @@ export default function PostCell({ post, layoutId, index, onClick, showSoundTogg
           <style>{`@keyframes tile-develop { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }`}</style>
         </div>
       )}
-      {/* Failed — small static red mark; the kebab retry lives one tap in. */}
-      {txPhase === 'failed' && (
-        <span style={{ position: 'absolute', top: 4, right: 4, zIndex: 5, fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 8, color: '#FF0000', textShadow: '0 1px 2px rgba(0,0,0,1)', letterSpacing: '0.06em' }}>
-          [ RETRY ]
-        </span>
-      )}
     </div>
   );
 }

@@ -4,7 +4,6 @@ import { useWallets, useFundWallet } from "@privy-io/react-auth";
 import { createPublicClient, http, formatEther } from "viem";
 import { base } from "viem/chains";
 import { isValidTicker, tickerError } from "@/lib/economy/ticker";
-import { getEthUsdRate } from "@/lib/coingecko";
 import FrameLoader from "@/components/FrameLoader";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
@@ -20,8 +19,6 @@ interface MintPromptSheetProps {
   // Phase 1 coin params (entered on the mint step).
   ticker: string;
   onTickerChange: (v: string) => void;
-  selfBuyUsd: string;
-  onSelfBuyChange: (v: string) => void;
   /** TRANSACTION PRESENCE: while the sequence runs, the pressed button
       transforms in place into its live narration (the wheel). */
   sequencePhase: 'idle' | 'minting' | 'minted' | 'mint-failed' | 'coin-failed';
@@ -38,7 +35,7 @@ interface MintPromptSheetProps {
   onContinue: () => void;
 }
 
-export default function MintPromptSheet({ visible, onMint, onSkip, onCoinSkipped, ticker, onTickerChange, selfBuyUsd, onSelfBuyChange, sequencePhase, sequenceLine, ceremonySub, codified, mediaUrl, mediaAr, onRetry, onContinue }: MintPromptSheetProps) {
+export default function MintPromptSheet({ visible, onMint, onSkip, onCoinSkipped, ticker, onTickerChange, sequencePhase, sequenceLine, ceremonySub, codified, mediaUrl, mediaAr, onRetry, onContinue }: MintPromptSheetProps) {
   const [expanded, setExpanded] = useState(false);
   const [insufficientFunds, setInsufficientFunds] = useState(false);
   const [checkingBalance, setCheckingBalance] = useState(false);
@@ -74,22 +71,14 @@ export default function MintPromptSheet({ visible, onMint, onSkip, onCoinSkipped
       ]);
       const ethBalance = parseFloat(formatEther(balanceWei));
 
-      // Threshold = gas allowance + the optional self-buy (USD → ETH). The
-      // create itself is ETH-gas; USDC holdings are irrelevant here (fact 4).
-      let selfBuyEth = 0;
-      const buyUsd = parseFloat(selfBuyUsd);
-      if (isFinite(buyUsd) && buyUsd > 0) {
-        const rate = await getEthUsdRate();
-        // Rate unavailable → don't false-block the gate; backOwnCoin refuses
-        // honestly (isolated + loud) if the rate is still down at buy time.
-        selfBuyEth = rate !== null ? buyUsd / rate : 0;
-      }
-      const thresholdEth = GAS_ALLOWANCE_ETH + selfBuyEth;
+      // Threshold = gas only. Backing is no longer bought in-flow (it's deferred
+      // to the post's collect sheet), so this gate just needs createCoin's gas.
+      const thresholdEth = GAS_ALLOWANCE_ETH;
       const sufficient = ethBalance >= thresholdEth;
 
       // The one-line diagnostic this class of bug demands — on EVERY evaluation.
       console.log(
-        `[coin-gate] addr=${embeddedWallet.address} chainId=${chainId} balance=${ethBalance} ETH threshold=${thresholdEth} ETH (gas=${GAS_ALLOWANCE_ETH} + selfBuy=${selfBuyEth}) → ${sufficient ? 'PROCEED' : 'FUND WALLET'}`
+        `[coin-gate] addr=${embeddedWallet.address} chainId=${chainId} balance=${ethBalance} ETH threshold=${thresholdEth} ETH (gas only) → ${sufficient ? 'PROCEED' : 'FUND WALLET'}`
       );
 
       if (chainId !== base.id) {
@@ -271,23 +260,12 @@ export default function MintPromptSheet({ visible, onMint, onSkip, onCoinSkipped
               )}
             </div>
 
-            {/* Optional "Back your post" — creator self-buy at the curve price. */}
+            {/* Backing is deferred — once the coin is live, the creator backs it
+                from the post's own collect sheet (a mature, routable pool), the
+                same BUY path collectors use. No in-flow self-buy race. */}
             <div style={{ marginBottom: 18 }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                <span style={{ ...SKB, fontSize: 9, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>BACK YOUR POST <span style={{ color: 'rgba(255,255,255,0.3)' }}>· OPTIONAL</span></span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', border: '1px solid rgba(255,255,255,0.18)', padding: '0 12px' }}>
-                <span style={{ ...SKB, fontSize: 16, color: selfBuyUsd ? '#FFF' : 'rgba(255,255,255,0.3)' }}>$</span>
-                <input
-                  inputMode="decimal"
-                  value={selfBuyUsd}
-                  onChange={(e) => onSelfBuyChange(e.target.value.replace(/[^0-9.]/g, ''))}
-                  placeholder="0"
-                  style={{ ...SKB, fontSize: 16, color: '#FFF', background: 'transparent', border: 'none', outline: 'none', width: '100%', padding: '11px 6px' }}
-                />
-              </div>
-              <p style={{ ...SKR, fontSize: 8, color: 'rgba(255,255,255,0.3)', margin: '6px 0 0', lineHeight: 1.4 }}>
-                Buy some of your own post at launch — at the same price as everyone. Leave blank to skip.
+              <p style={{ ...SKR, fontSize: 9, color: 'rgba(255,255,255,0.35)', margin: 0, lineHeight: 1.5 }}>
+                Want to back your own post? Once it&apos;s coined, open it and tap COLLECT to buy in at the same price as everyone.
               </p>
             </div>
 
@@ -340,7 +318,7 @@ export default function MintPromptSheet({ visible, onMint, onSkip, onCoinSkipped
                         a ticker — "BACK" is banned from the button. */}
                     {checkingBalance ? 'CHECKING BALANCE...'
                       : !isValidTicker(ticker) ? 'ENTER A TICKER'
-                      : (() => { const b = parseFloat(selfBuyUsd); return isFinite(b) && b > 0 ? `CREATE COIN · $${b.toFixed(2)}` : 'CREATE COIN'; })()}
+                      : 'CREATE COIN'}
                   </span>
                 </button>
                 <button
