@@ -23,7 +23,6 @@ import { getColCount } from "@/lib/aspectRatio";
 import { getScopeLimitType } from "@/lib/limits";
 import { useUpsell } from "@/components/UpsellProvider";
 import FrameLoader from "@/components/FrameLoader";
-import BadgeStack from "@/components/BadgeStack";
 import BannerBadgeStrip from "@/components/BannerBadgeStrip";
 import { resolveBadges } from "@/lib/economy/badges";
 import { useEconomy } from "@/components/EconomyProvider";
@@ -113,7 +112,6 @@ const userLayoutId = stableLayoutId;
   const [paidMemberUntil, setPaidMemberUntil] = useState<Date | null>(null);
   const [showMembershipSheet, setShowMembershipSheet] = useState(false);
   const [showA2HS, setShowA2HS] = useState(false);
-  const [badgeJustUnlocked, setBadgeJustUnlocked] = useState(false);
   // First Cut count drives the pfp stack's First Cut coin. Read ONLY through the
   // economy boundary, and ONLY when the preview flag is on — so nothing implies
   // founding positions that aren't real yet. Off-flag it stays 0 (coin absent).
@@ -219,8 +217,6 @@ const userLayoutId = stableLayoutId;
       setShowMembershipSheet(true);
     }
     if (searchParams?.get('upgraded') === 'true') {
-      setBadgeJustUnlocked(true);
-      setTimeout(() => setBadgeJustUnlocked(false), 3000);
       setTimeout(() => {
         if (user) {
           getUserByPrivyId(user.id).then(async (supabaseUser) => {
@@ -345,52 +341,9 @@ const userLayoutId = stableLayoutId;
           )}
         </div>
 
-        {/* Right-edge stripe only */}
-        {isFoundingMember && (
-          <div style={{
-            position: 'absolute', right: 0, top: 0, width: 1, height: '100%',
-            background: 'linear-gradient(180deg, #ff0080, #ffe100, #00cfff, #cc00ff)',
-            backgroundSize: '100% 300%',
-            animation: 'holoShift 4s linear infinite',
-            zIndex: 2,
-          }} />
-        )}
-        {isTopCollector && !isFoundingMember && (
-          <div style={{ position: 'absolute', right: 0, top: 0, width: 1, height: '100%', backgroundColor: '#C9A84C', zIndex: 2 }} />
-        )}
-        {isPaidMember && !isTopCollector && !isFoundingMember && (
-          <div style={{
-            position: 'absolute', right: 0, top: 0, width: 1, height: '100%',
-            backgroundColor: '#FF0000',
-            zIndex: 2,
-            animation: badgeJustUnlocked ? 'stripeShine 1.5s ease forwards' : 'none',
-          }} />
-        )}
-        {isInHouseCreator && !isPaidMember && !isTopCollector && !isFoundingMember && (
-          <div style={{ position: 'absolute', right: 0, top: 0, width: 1, height: '100%', backgroundColor: 'rgba(255,255,255,0.4)', zIndex: 2 }} />
-        )}
-
-        {/* Badge STACK — bleeds outside top-left corner of PFP (≤50% pfp width,
-            max 3 + overflow chip, rarity order, static at rest). */}
-        <BadgeStack
-          pfpWidth={80}
-          badges={resolveBadges({ isFoundingMember, isTopCollector, isPaidMember, isInHouseCreator, firstCutCount })}
-          onPress={() => setShowBadgeSheet(true)}
-        />
-        {badgeJustUnlocked && (
-          <div style={{
-            position: 'absolute',
-            top: -10,
-            left: -10,
-            width: '140%',
-            height: '140%',
-            borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.3) 30%, transparent 70%)',
-            animation: 'badgeFlare 1.8s ease forwards',
-            pointerEvents: 'none',
-            zIndex: 11,
-          }} />
-        )}
+        {/* Legacy badge UI removed (clean slate) — the BadgeStack coins, the
+            right-edge membership stripes, and the unlock flare are replaced by
+            the BannerBadgeStrip (left of the PFP) + Piece 2's divider colour. */}
       </div>
 
       {/* Name */}

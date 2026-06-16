@@ -19,7 +19,6 @@ import MediaRenderer from "@/components/MediaRenderer";
 import PostCell from "@/components/PostCell";
 import { getColCount } from "@/lib/aspectRatio";
 import FrameLoader from "@/components/FrameLoader";
-import BadgeStack from "@/components/BadgeStack";
 import BannerBadgeStrip from "@/components/BannerBadgeStrip";
 import { resolveBadges } from "@/lib/economy/badges";
 import { useEconomy } from "@/components/EconomyProvider";
@@ -230,24 +229,15 @@ export default function PublicProfilePage() {
 
         {/* PFP container — shifted right (40) to make room for the 27px strip. */}
         <div style={{ position: 'absolute', top: 10, left: 40, width: 80, height: 80 }}>
-          {isFoundingMember && <div style={{ position: 'absolute', inset: -1, background: 'linear-gradient(135deg, #ff0080, #ff8c00, #ffe100, #00ff80, #00cfff, #cc00ff, #ff0080)', backgroundSize: '300% 300%', animation: 'holoShift 4s linear infinite', zIndex: 0 }} />}
-          {isTopCollector && !isFoundingMember && <div style={{ position: 'absolute', inset: -1, background: 'linear-gradient(135deg, #BF953F, #FCF6BA, #B38728, #FBF5B7, #AA771C)', backgroundSize: '200% 200%', animation: 'goldShimmer 3s ease infinite', zIndex: 0 }} />}
+          {/* Legacy badge UI removed (clean slate) — holo/gold PFP borders, the
+              right-edge membership stripes, and the BadgeStack coins are replaced
+              by the BannerBadgeStrip + Piece 2's divider colour. */}
           <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', zIndex: 1 }}>
             {profile?.profile_image_url
               ? <img src={profile.profile_image_url} alt={username} style={{ width: 80, height: 80, objectFit: 'cover', display: 'block' }} />
               : <div style={{ width: 80, height: 80, backgroundColor: '#222', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span style={{ ...SKB, fontSize: 28, color: 'white' }}>{username?.[0]?.toUpperCase() ?? '?'}</span></div>
             }
           </div>
-          {isFoundingMember && <div style={{ position: 'absolute', right: 0, top: 0, width: 1, height: '100%', background: 'linear-gradient(180deg, #ff0080, #ffe100, #00cfff, #cc00ff)', backgroundSize: '100% 300%', animation: 'holoShift 4s linear infinite', zIndex: 2 }} />}
-          {isTopCollector && !isFoundingMember && <div style={{ position: 'absolute', right: 0, top: 0, width: 1, height: '100%', backgroundColor: '#C9A84C', zIndex: 2 }} />}
-          {isPaidMember && !isTopCollector && !isFoundingMember && <div style={{ position: 'absolute', right: 0, top: 0, width: 1, height: '100%', backgroundColor: '#FF0000', zIndex: 2 }} />}
-          {isInHouseCreator && !isPaidMember && !isTopCollector && !isFoundingMember && <div style={{ position: 'absolute', right: 0, top: 0, width: 1, height: '100%', backgroundColor: 'rgba(255,255,255,0.4)', zIndex: 2 }} />}
-          {/* Badge STACK — ≤50% pfp width, max 3 + overflow, rarity order, static. */}
-          <BadgeStack
-            pfpWidth={80}
-            badges={resolveBadges({ isFoundingMember, isTopCollector, isPaidMember, isInHouseCreator, firstCutCount })}
-            onPress={() => setShowBadgeSheet(true)}
-          />
         </div>
 
         {/* Name */}

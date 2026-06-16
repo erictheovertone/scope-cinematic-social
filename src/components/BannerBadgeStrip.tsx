@@ -53,13 +53,18 @@ export default function BannerBadgeStrip({
 
   return (
     <div style={{ position: 'relative', width, height, flexShrink: 0 }}>
-      {/* Backdrop — pure black; icons sit on it, fixed size, symmetric for any count. */}
+      {/* Backdrop — the real banner image (public/badges, 27:74 art) fit to the
+          rect; icons sit on it, fixed size, symmetric for any count. */}
       <div
         onClick={onPress ? (e) => { e.stopPropagation(); onPress(); } : undefined}
         style={{
           position: 'absolute',
           inset: 0,
-          background: '#000',
+          backgroundColor: '#000',
+          backgroundImage: "url('/badges/profile-badge-banner-backdrop.png')",
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
