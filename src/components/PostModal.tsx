@@ -14,6 +14,7 @@ import {
 import { getUserByPrivyId, getProfile } from "@/lib/userService";
 import DeckPickerSheet from "@/components/DeckPickerSheet";
 import CollectSheetGate from "@/components/economy/CollectSheetGate";
+import { isUntradeableCoin } from "@/lib/economy/pairing";
 import { supabase } from "@/lib/supabase/client";
 import { getAspectRatio } from "@/lib/aspectRatio";
 import MediaRenderer from "@/components/MediaRenderer";
@@ -462,9 +463,11 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
                 }}
               >
                 {/* Plain COLLECT — the price lives in the collect sheet, in
-                    dollars. (The old "· 0.001 ETH" was the 1155 flat mint fee.) */}
+                    dollars. (The old "· 0.001 ETH" was the 1155 flat mint fee.)
+                    Legacy ETH-paired coins read LEGACY and open to the sheet's
+                    non-tradeable note rather than a misleading COLLECT. */}
                 <span style={{ ...SKB, fontSize: 8, color: showCollectSheet ? "#FF0000" : "rgba(255,255,255,0.7)", letterSpacing: "-0.1px" }}>
-                  COLLECT
+                  {isUntradeableCoin(post as { coin_address?: string | null; coin_currency?: string | null }) ? "LEGACY" : "COLLECT"}
                 </span>
               </button>
             </div>

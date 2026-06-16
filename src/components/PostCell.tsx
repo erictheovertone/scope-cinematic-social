@@ -4,6 +4,7 @@ import { getAspectRatio, ratioPadding } from "@/lib/aspectRatio";
 import MediaRenderer from "@/components/MediaRenderer";
 import GradedVideo from "@/components/finishing/GradedVideo";
 import { useTxNarrator } from "@/components/TxNarrator";
+import { isUntradeableCoin } from "@/lib/economy/pairing";
 
 interface Post {
   id: string;
@@ -19,6 +20,8 @@ interface Post {
   crop_width?: number;
   crop_height?: number;
   edit_params?: unknown;
+  coin_address?: string | null;
+  coin_currency?: string | null;
 }
 
 interface PostCellProps {
@@ -89,6 +92,14 @@ export default function PostCell({ post, layoutId, index, onClick, showSoundTogg
           )
         )}
       </div>
+
+      {/* LEGACY pairing tag — a small, quiet mark so an untradeable (ETH-paired)
+          coin reads as such before the collect sheet is opened. */}
+      {isUntradeableCoin(post) && (
+        <div style={{ position: 'absolute', bottom: 6, left: 6, zIndex: 6, pointerEvents: 'none', background: 'rgba(0,0,0,0.72)', border: '1px solid rgba(255,0,0,0.5)', padding: '2px 5px' }}>
+          <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 6.5, letterSpacing: '0.14em', color: '#FF0000', textTransform: 'uppercase' }}>LEGACY</span>
+        </div>
+      )}
 
       {/* Developing state — corner brackets pulse while the coin is created. */}
       {txPhase === 'working' && (

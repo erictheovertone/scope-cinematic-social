@@ -10,6 +10,7 @@ import {
 import { getUserByPrivyId, getProfile } from "@/lib/userService";
 import DeckPickerSheet from "@/components/DeckPickerSheet";
 import CollectSheetGate from "@/components/economy/CollectSheetGate";
+import { isUntradeableCoin } from "@/lib/economy/pairing";
 import CreateCoinSheet from "@/components/economy/CreateCoinSheet";
 import { isCoinPost } from "@/components/EconomyProvider";
 import DeletePostSheet from "@/components/DeletePostSheet";
@@ -264,7 +265,7 @@ function PostViewerItem({
               justifyContent: "center",
             }}
           >
-            <span style={{ ...SKB, fontSize: 8, color: showCollectSheet ? "#FF0000" : "rgba(255,255,255,0.7)", lineHeight: 1, textTransform: "uppercase" }}>COLLECT</span>
+            <span style={{ ...SKB, fontSize: 8, color: showCollectSheet ? "#FF0000" : "rgba(255,255,255,0.7)", lineHeight: 1, textTransform: "uppercase" }}>{isUntradeableCoin(post as { coin_address?: string | null; coin_currency?: string | null }) ? "LEGACY" : "COLLECT"}</span>
           </button>
 
           {isOwnProfile && (

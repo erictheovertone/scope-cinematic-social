@@ -41,12 +41,15 @@ interface Props {
   };
   visible: boolean;
   onClose: () => void;
+  /** False for legacy ETH-paired coins (unroutable). The sheet keeps the post
+      header but replaces the whole BUY/SELL surface with a non-tradeable note. */
+  tradeable?: boolean;
 }
 
 const BUY_CHIPS = [1, 5, 25, 100];
 const SELL_PCTS = [25, 50, 100];
 
-export default function CollectSheetV2({ post, visible, onClose }: Props) {
+export default function CollectSheetV2({ post, visible, onClose, tradeable = true }: Props) {
   const economy = useEconomy();
   const [market, setMarket] = useState<PostMarket | null>(null);
   const [mode, setMode] = useState<'buy' | 'sell'>('buy');
@@ -267,6 +270,11 @@ export default function CollectSheetV2({ post, visible, onClose }: Props) {
             </div>
           );
         })()}
+
+        {/* LEGACY pairing — unroutable coin. Keep the post head above; replace
+            the entire market/trade surface with an honest non-tradeable note
+            (detected by pairing upstream, never by catching a trade error). */}
+        {tradeable ? (<>
 
         {/* Price + MC in dollars, pieces framing. A no-trades pool has no
             discovered price yet — show "—", never a fabricated number. */}
@@ -583,6 +591,16 @@ export default function CollectSheetV2({ post, visible, onClose }: Props) {
             </div>
           )}
         </div>
+        )}
+
+        </>) : (
+          /* ── NOT TRADEABLE — legacy ETH-paired coin ── */
+          <div style={{ border: '1px solid rgba(255,0,0,0.4)', padding: '24px 16px', textAlign: 'center', marginTop: 2 }}>
+            <p style={{ ...SKB, fontSize: 12, color: '#FF0000', textTransform: 'uppercase', letterSpacing: '0.16em', margin: '0 0 12px' }}>[ NOT TRADEABLE ]</p>
+            <p style={{ ...SKR, fontSize: 11, color: 'rgba(255,255,255,0.6)', lineHeight: 1.6, margin: '0 auto', maxWidth: 240 }}>
+              This coin uses a legacy pairing and can&rsquo;t be traded.
+            </p>
+          </div>
         )}
 
         {/* Mock-data disclaimer only — live coins carry no fake-trade caveat. */}
