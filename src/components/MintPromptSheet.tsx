@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { useWallets, useFundWallet } from "@privy-io/react-auth";
+import { useWallets, useFundWallet, usePrivy } from "@privy-io/react-auth";
 import { createPublicClient, http, formatEther } from "viem";
 import { base } from "viem/chains";
 import { isValidTicker, tickerError } from "@/lib/economy/ticker";
@@ -44,8 +44,18 @@ export default function MintPromptSheet({ visible, onMint, onSkip, onCoinSkipped
 
   const { wallets } = useWallets();
   const { fundWallet } = useFundWallet();
+  const { ready, authenticated } = usePrivy();
 
   const embeddedWallet = wallets.find(w => w.walletClientType === 'privy');
+
+  // READINESS — the three-state gate (never collapse LOADING into "no funds").
+  // In a cold/incognito session the mint sheet can render before Privy finishes
+  // connecting; a balance read then would race and return 0, which the old gate
+  // mis-read as INSUFFICIENT (the phantom FUND WALLET). We do not read balance
+  // or evaluate sufficiency until the wallet is genuinely connected: Privy ready
+  // + authenticated + an embedded-wallet address present. Until then the CTA
+  // shows CONNECTING and waits — pending is LOADING, never zero.
+  const walletReady = ready && authenticated && !!embeddedWallet?.address;
 
   // Soft pre-check, not enforcement: it exists to catch obviously-empty wallets
   // before a doomed tx. If it's wrong in either direction the coin step itself
@@ -56,10 +66,10 @@ export default function MintPromptSheet({ visible, onMint, onSkip, onCoinSkipped
   const GAS_ALLOWANCE_ETH = 0.0002;
 
   const checkBalanceAndMint = async () => {
-    if (!embeddedWallet) {
-      onMint(); // no wallet to check — handleDoMint throws loudly itself
-      return;
-    }
+    // LOADING is not "no funds": if the wallet isn't connected yet, do nothing —
+    // the CTA shows CONNECTING and the user taps again once ready. We never
+    // evaluate sufficiency (or show FUND WALLET) against an unconnected wallet.
+    if (!walletReady || !embeddedWallet) return;
     setCheckingBalance(true);
     try {
       const publicClient = createPublicClient({
@@ -131,21 +141,24 @@ export default function MintPromptSheet({ visible, onMint, onSkip, onCoinSkipped
         </div>
 
         {insufficientFunds ? (
-          /* ── Insufficient funds screen ── */
+          /* ── Needs-ETH-for-gas screen (the wallet is READY, just low on ETH) ──
+             The wallet here has ≈zero ETH, so a USDC→ETH swap can't run (the swap
+             itself needs gas). Onramp ETH directly — the one path that works on a
+             zero-gas wallet. (Swap-as-primary needs a paymaster; see notes.) */
           <div>
             <p style={{ ...SKB, fontSize: 16, color: 'white', textTransform: 'uppercase', letterSpacing: '-0.02em', margin: '0 0 6px' }}>
-              FUND YOUR WALLET
+              YOU NEED A LITTLE ETH
             </p>
             <p style={{ ...SKB, fontSize: 16, color: '#FF0000', textTransform: 'uppercase', letterSpacing: '-0.02em', margin: '0 0 20px' }}>
-              TO START EARNING.
+              TO CREATE A COIN.
             </p>
             <p style={{ ...SKR, fontSize: 12, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, margin: '0 0 28px' }}>
-              Minting requires a tiny amount of ETH for gas on Base — typically less than $0.01. Add funds to your Scope wallet using a card, Apple Pay, or crypto.
+              Creating a coin takes a tiny network fee, paid in ETH — usually less than a cent on Base. Add a little ETH to your wallet with a card or Apple Pay and you&rsquo;re set.
             </p>
             {[
-              'ETH every time someone collects your post',
-              'Royalties on every secondary trade',
-              'Your work lives on-chain forever',
+              'You earn ETH every time someone collects your post',
+              'Royalties on every resale, forever',
+              'Your work lives on-chain — yours',
             ].map((item, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 8 }}>
                 <div style={{ width: 4, height: 4, borderRadius: '50%', backgroundColor: '#FF0000', flexShrink: 0, marginTop: 4 }} />
@@ -154,12 +167,14 @@ export default function MintPromptSheet({ visible, onMint, onSkip, onCoinSkipped
             ))}
             <button
               onClick={() => {
-                if (embeddedWallet) fundWallet(embeddedWallet.address, { chain: base });
+                // Onramp ETH (native currency) — the reliable fix for a zero-gas
+                // wallet. asset native-currency = ETH on Base (not USDC).
+                if (embeddedWallet) fundWallet(embeddedWallet.address, { chain: base, asset: 'native-currency' });
               }}
               style={{ width: '100%', background: '#FF0000', border: 'none', cursor: 'pointer', padding: '14px 0', marginTop: 24, marginBottom: 10 }}
             >
               <span style={{ ...SKB, fontSize: 12, color: 'white', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                ADD FUNDS · CARD OR CRYPTO
+                ADD ETH · CARD OR APPLE PAY
               </span>
             </button>
             <button
@@ -330,18 +345,22 @@ export default function MintPromptSheet({ visible, onMint, onSkip, onCoinSkipped
               <>
                 <button
                   onClick={checkBalanceAndMint}
-                  disabled={checkingBalance || !isValidTicker(ticker)}
-                  style={{ width: '100%', background: (checkingBalance || !isValidTicker(ticker)) ? 'rgba(255,0,0,0.4)' : '#FF0000', border: 'none', cursor: (checkingBalance || !isValidTicker(ticker)) ? 'default' : 'pointer', padding: '14px 0', marginBottom: 10 }}
+                  disabled={!walletReady || checkingBalance || !isValidTicker(ticker)}
+                  style={{ width: '100%', background: (!walletReady || checkingBalance || !isValidTicker(ticker)) ? 'rgba(255,0,0,0.4)' : '#FF0000', border: 'none', cursor: (!walletReady || checkingBalance || !isValidTicker(ticker)) ? 'default' : 'pointer', padding: '14px 0', marginBottom: 10 }}
                 >
-                  <span style={{ ...SKB, fontSize: 12, color: 'white', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                  <span style={{ ...SKB, fontSize: 12, color: 'white', textTransform: 'uppercase', letterSpacing: '0.08em', animation: !walletReady ? 'mp-connect-pulse 1.4s ease-in-out infinite' : 'none' }}>
                     {/* The button carries the plain-language contract — this tap IS
                         the consent for everything it names (no second confirm). */}
                     {/* Amount = the consented spend. No word that can read as
                         a ticker — "BACK" is banned from the button. */}
-                    {checkingBalance ? 'CHECKING BALANCE...'
+                    {/* LOADING state: wallet not connected yet → CONNECTING (pulse),
+                        never FUND WALLET, never a blind mint. */}
+                    {!walletReady ? 'CONNECTING WALLET…'
+                      : checkingBalance ? 'CHECKING BALANCE...'
                       : !isValidTicker(ticker) ? 'ENTER A TICKER'
                       : (() => { const b = parseFloat(selfBuyUsd); return isFinite(b) && b > 0 ? `CREATE COIN · $${b.toFixed(2)}` : 'CREATE COIN'; })()}
                   </span>
+                  <style>{`@keyframes mp-connect-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.45; } }`}</style>
                 </button>
                 <button
                   onClick={onSkip}
