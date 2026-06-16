@@ -4,11 +4,14 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
 import {
-  getUserByPrivyId, getProfile, saveProfile, updateProfileFields, uploadImage,
+  getUserByPrivyId, getProfile, saveProfile, updateProfileFields, uploadImage, isProMember,
   getProfileLinks, addProfileLink, deleteProfileLink,
   type ProfileLink,
 } from "@/lib/userService";
 import FrameLoader from "@/components/FrameLoader";
+import { useEconomy } from "@/components/EconomyProvider";
+import { economyPreviewEnabled } from "@/lib/economy/flag";
+import { DIVIDER_ORDER, DIVIDER_LINES, dividerTier, isDividerUnlocked, TIER_UNLOCK_LABEL, type DividerLineKey } from "@/lib/economy/dividerLines";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -74,6 +77,12 @@ export default function EditProfilePage() {
   const [contactSaved, setContactSaved] = useState(false);
   const [contactError, setContactError] = useState<string | null>(null);
 
+  // DIVIDING LINE (Piece 2) — tier from held badges; persists on select.
+  const economy = useEconomy();
+  const [firstCutCount, setFirstCutCount] = useState(0);
+  const [lineFlags, setLineFlags] = useState({ isPaidMember: false, isFoundingMember: false, isTopCollector: false, isInHouseCreator: false });
+  const [selectedLine, setSelectedLine] = useState<DividerLineKey>('default');
+
   // LINKS
   const [links, setLinks] = useState<ProfileLink[]>([]);
   const [showAddLink, setShowAddLink] = useState(false);
@@ -103,6 +112,13 @@ export default function EditProfilePage() {
           setKitTool(profile.kit_favorite_tool || '');
           setContactEmail(profile.contact_email || '');
           setContactPublic(profile.contact_email_public || false);
+          setLineFlags({
+            isPaidMember: isProMember(profile),
+            isFoundingMember: !!profile.is_founding_member,
+            isTopCollector: !!profile.is_top_collector,
+            isInHouseCreator: !!profile.is_in_house_creator,
+          });
+          setSelectedLine((profile.divider_line as DividerLineKey) || 'default');
         }
         setLinks(fetchedLinks);
       } catch (e) {
@@ -113,6 +129,26 @@ export default function EditProfilePage() {
     };
     load();
   }, [user?.id]);
+
+  // First Cut count (gated economy boundary) completes the tier computation.
+  useEffect(() => {
+    if (!economyPreviewEnabled() || !sbUserId) { setFirstCutCount(0); return; }
+    let cancelled = false;
+    economy.getBadges(sbUserId).then((b) => { if (!cancelled) setFirstCutCount(b.firstCutCount ?? 0); }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [economy, sbUserId]);
+
+  const lineTier = dividerTier({ ...lineFlags, firstCutCount });
+
+  const selectLine = async (key: DividerLineKey) => {
+    if (!isDividerUnlocked(key, lineTier) || !sbUserId) return;
+    setSelectedLine(key); // instant feedback + drives the profile on next render
+    try {
+      await updateProfileFields(sbUserId, { divider_line: key === 'default' ? null : key });
+    } catch (e) {
+      console.error('divider_line save error:', e);
+    }
+  };
 
   const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -312,6 +348,39 @@ export default function EditProfilePage() {
         >
           {savingProfile ? 'SAVING...' : profileSaved ? 'SAVED ✓' : 'SAVE PROFILE'}
         </button>
+
+        <DIVIDER />
+
+        {/* DIVIDING LINE — Piece 2. The line between your badges and photo; tier
+            unlocks the gradients. THICK swatches (real preview); locked lines
+            shown dimmed with the tier needed. Persists on select. Shows for
+            EVERYONE — free users see the default + locked/dimmed options. */}
+        <SECTION label="DIVIDING LINE" />
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 12 }}>
+          {DIVIDER_ORDER.map((key) => {
+            const line = DIVIDER_LINES[key];
+            const unlocked = isDividerUnlocked(key, lineTier);
+            const selected = selectedLine === key;
+            return (
+              <button
+                key={key}
+                onClick={() => selectLine(key)}
+                disabled={!unlocked}
+                style={{ background: 'transparent', border: 'none', padding: 0, cursor: unlocked ? 'pointer' : 'default', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, opacity: unlocked ? 1 : 0.32 }}
+              >
+                {/* THICK swatch — gradient preview (the real divider is 0.5px). */}
+                <div style={{ width: 20, height: 60, background: line.gradient, border: selected ? '1.5px solid #FF0000' : '1px solid rgba(255,255,255,0.18)', boxSizing: 'border-box' }} />
+                <span style={{ ...SKB, fontSize: 7.5, letterSpacing: '0.05em', color: selected ? '#FF0000' : 'rgba(255,255,255,0.7)', textTransform: 'uppercase' }}>{line.name}</span>
+                {!unlocked && line.tier > 0 && (
+                  <span style={{ ...SKR, fontSize: 6, letterSpacing: '0.08em', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase' }}>{TIER_UNLOCK_LABEL[line.tier as 1 | 2 | 3]}</span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+        <p style={{ ...SKR, fontSize: 9, color: 'rgba(255,255,255,0.35)', lineHeight: 1.5, margin: '0 0 4px' }}>
+          The line between your badges and your photo. Default is invisible — climb tiers to unlock colours. Saves instantly.
+        </p>
 
         <DIVIDER />
 
