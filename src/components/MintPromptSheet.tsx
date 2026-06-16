@@ -1,19 +1,13 @@
 "use client";
 import { useState } from "react";
 import { useWallets, useFundWallet } from "@privy-io/react-auth";
-import { createPublicClient, http, formatEther, getAddress } from "viem";
+import { createPublicClient, http, formatEther } from "viem";
 import { base } from "viem/chains";
 import { isValidTicker, tickerError } from "@/lib/economy/ticker";
 import FrameLoader from "@/components/FrameLoader";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
-
-// The self-buy ("back your post") spends USDC — the SAME currency the standalone
-// collect routes with (a ZORA-paired content coin has no ETH route). So the gate
-// checks USDC for the self-buy and ETH only for createCoin gas.
-const USDC_BASE = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913" as const;
-const ERC20_BAL = [{ name: "balanceOf", type: "function", stateMutability: "view", inputs: [{ name: "account", type: "address" }], outputs: [{ name: "", type: "uint256" }] }] as const;
 
 interface MintPromptSheetProps {
   visible: boolean;
@@ -46,9 +40,6 @@ interface MintPromptSheetProps {
 export default function MintPromptSheet({ visible, onMint, onSkip, onCoinSkipped, ticker, onTickerChange, selfBuyUsd, onSelfBuyChange, sequencePhase, sequenceLine, ceremonySub, codified, mediaUrl, mediaAr, onRetry, onContinue }: MintPromptSheetProps) {
   const [expanded, setExpanded] = useState(false);
   const [insufficientFunds, setInsufficientFunds] = useState(false);
-  // Which leg is underfunded — drives honest fund-screen copy ('gas' = no ETH
-  // for createCoin; 'backing' = has gas but lacks the USDC for the self-buy).
-  const [fundReason, setFundReason] = useState<'gas' | 'backing'>('gas');
   const [checkingBalance, setCheckingBalance] = useState(false);
 
   const { wallets } = useWallets();
@@ -76,27 +67,22 @@ export default function MintPromptSheet({ visible, onMint, onSkip, onCoinSkipped
         transport: http(process.env.NEXT_PUBLIC_ALCHEMY_BASE_URL || 'https://mainnet.base.org'),
       });
       // Read the REAL chain the transport answers as — never assume the URL.
-      // ETH covers gas; USDC covers the self-buy (the routable currency).
-      const buyUsd = parseFloat(selfBuyUsd);
-      const wantsBacking = isFinite(buyUsd) && buyUsd > 0;
-      const [balanceWei, chainId, usdcWei] = await Promise.all([
+      // GAS (ETH) is the ONLY mint gate. The self-buy ("back your post") is
+      // OPTIONAL and ISOLATED — it must NEVER block creating the coin. If the
+      // wallet is short on USDC for the typed backing, we STILL mint; the
+      // backing leg skips / hands off downstream (backOwnCoin fail-fast → the
+      // post's collect sheet). Gating the mint on USDC-for-backing was the
+      // FUND WALLET mis-fire — removed.
+      const [balanceWei, chainId] = await Promise.all([
         publicClient.getBalance({ address: embeddedWallet.address as `0x${string}` }),
         publicClient.getChainId(),
-        wantsBacking
-          ? publicClient.readContract({ address: USDC_BASE, abi: ERC20_BAL, functionName: "balanceOf", args: [getAddress(embeddedWallet.address)] }) as Promise<bigint>
-          : Promise.resolve(BigInt(0)),
       ]);
       const ethBalance = parseFloat(formatEther(balanceWei));
-      const usdcBalance = Number(usdcWei) / 1e6; // USDC: 6 decimals, dollar-for-dollar
-
-      // Gas (ETH) gates the create; the self-buy (USDC) gates the backing.
       const gasOk = ethBalance >= GAS_ALLOWANCE_ETH;
-      const backingOk = !wantsBacking || usdcBalance >= buyUsd;
-      const sufficient = gasOk && backingOk;
 
       // The one-line diagnostic this class of bug demands — on EVERY evaluation.
       console.log(
-        `[coin-gate] addr=${embeddedWallet.address} chainId=${chainId} eth=${ethBalance} (gas≥${GAS_ALLOWANCE_ETH}→${gasOk}) usdc=${usdcBalance} (selfBuy≥${wantsBacking ? buyUsd : 0}→${backingOk}) → ${sufficient ? 'PROCEED' : 'FUND WALLET'}`
+        `[coin-gate] addr=${embeddedWallet.address} chainId=${chainId} eth=${ethBalance} (gas≥${GAS_ALLOWANCE_ETH}→${gasOk}) → ${gasOk ? 'PROCEED' : 'FUND WALLET'}`
       );
 
       if (chainId !== base.id) {
@@ -107,13 +93,8 @@ export default function MintPromptSheet({ visible, onMint, onSkip, onCoinSkipped
         return;
       }
 
-      if (sufficient) onMint();
-      else {
-        // Gas shortfall is the blocking one (no coin at all); if gas is fine and
-        // only the USDC self-buy is short, name the backing so the copy is honest.
-        setFundReason(!gasOk ? 'gas' : 'backing');
-        setInsufficientFunds(true);
-      }
+      if (gasOk) onMint();
+      else setInsufficientFunds(true);
     } catch (e) {
       console.error('[coin-gate] balance check failed (proceeding — coin step is the loud gate):', e);
       onMint();
@@ -159,9 +140,7 @@ export default function MintPromptSheet({ visible, onMint, onSkip, onCoinSkipped
               TO START EARNING.
             </p>
             <p style={{ ...SKR, fontSize: 12, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, margin: '0 0 28px' }}>
-              {fundReason === 'backing'
-                ? `Backing your post with $${parseFloat(selfBuyUsd || '0').toFixed(2)} needs that amount in USDC. Add funds to your Scope wallet using a card, Apple Pay, or crypto — or clear the backing amount to mint without it.`
-                : 'Minting requires a tiny amount of ETH for gas on Base — typically less than $0.01. Add funds to your Scope wallet using a card, Apple Pay, or crypto.'}
+              Minting requires a tiny amount of ETH for gas on Base — typically less than $0.01. Add funds to your Scope wallet using a card, Apple Pay, or crypto.
             </p>
             {[
               'ETH every time someone collects your post',
