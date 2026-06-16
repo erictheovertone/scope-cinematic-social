@@ -119,6 +119,7 @@ const userLayoutId = stableLayoutId;
   const economy = useEconomy();
   const [firstCutCount, setFirstCutCount] = useState(0);
   const [dividerLine, setDividerLine] = useState<string | null>(null); // chosen banner divider (Piece 2)
+  const [holoBanner, setHoloBanner] = useState(false); // Augmented holo backdrop (Piece 3)
   useEffect(() => {
     if (!economyPreviewEnabled() || !supabaseUserId) { setFirstCutCount(0); return; }
     let cancelled = false;
@@ -192,6 +193,7 @@ const userLayoutId = stableLayoutId;
             setIsFoundingMember(profile.is_founding_member || false);
             setFoundingMemberNumber(profile.founding_member_number || null);
             setDividerLine((profile as any).divider_line || null);
+            setHoloBanner(!!(profile as any).holo_banner);
           }
           getProfileLinks(user.id).then(setProfileLinks).catch(() => {});
         }
@@ -327,6 +329,7 @@ const userLayoutId = stableLayoutId;
         <BannerBadgeStrip
           height={80}
           dividerColor={dividerBackground(dividerLine)}
+          holo={holoBanner && isFoundingMember}
           badges={resolveBadges({ isFoundingMember, isTopCollector, isPaidMember, isInHouseCreator, firstCutCount })
             .filter((b) => b.bannerSrc)
             .map((b) => ({ key: b.key, src: b.bannerSrc as string, title: b.title }))}

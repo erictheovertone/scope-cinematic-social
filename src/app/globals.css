@@ -236,3 +236,21 @@
   from { opacity: 0; transform: translate(22px, 10px) scale(0.35) rotate(9deg); }
   to { opacity: 1; transform: translate(0, 0) scale(1) rotate(0deg); }
 }
+
+/* ── Holographic banner (Piece 3 — Augmented only) ──────────────────────────
+   Slow, premium iridescence on the badge backdrop. Small element + transform/
+   bg-position only → GPU-friendly, no scroll jank. */
+@keyframes holoDrift {
+  0%, 100% { background-position: 50% 0%; }
+  50%      { background-position: 50% 100%; }
+}
+@keyframes holoHue {
+  0%, 100% { filter: hue-rotate(0deg) saturate(1.05); }
+  50%      { filter: hue-rotate(-15deg) saturate(1.18); }
+}
+@keyframes holoSheen {
+  0%   { transform: translateY(-120%); opacity: 0; }
+  20%  { opacity: 1; }
+  80%  { opacity: 1; }
+  100% { transform: translateY(230%); opacity: 0; }
+}

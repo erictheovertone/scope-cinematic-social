@@ -41,6 +41,10 @@ export default function BannerBadgeStrip({
       lets badge holders / Pro users choose a custom line colour/gradient in
       Edit Profile; default stays black/none until they do. */
   dividerColor = '#000000',
+  /** Piece 3 — Augmented-only holographic fill. When true, the backdrop becomes
+      a living iridescent (magenta/pink/plum) shimmer instead of the static art.
+      Icons stay above it (z-index) and legible. */
+  holo = false,
   onPress,
 }: {
   badges: StripBadge[];
@@ -48,6 +52,7 @@ export default function BannerBadgeStrip({
   width?: number;
   iconSize?: number;
   dividerColor?: string;
+  holo?: boolean;
   onPress?: () => void;
 }) {
   const overflow = badges.length > MAX_VISIBLE;
@@ -56,15 +61,16 @@ export default function BannerBadgeStrip({
 
   return (
     <div style={{ position: 'relative', width, height, flexShrink: 0 }}>
-      {/* Backdrop — the real banner image (public/badges, 27:74 art) fit to the
-          rect; icons sit on it, fixed size, symmetric for any count. */}
+      {/* Backdrop — standard art, OR (Augmented + holo on) the iridescent fill.
+          Icons sit on it, fixed size, symmetric for any count. */}
       <div
         onClick={onPress ? (e) => { e.stopPropagation(); onPress(); } : undefined}
         style={{
           position: 'absolute',
           inset: 0,
+          overflow: 'hidden',
           backgroundColor: '#000',
-          backgroundImage: "url('/badges/profile-badge-banner-backdrop.png')",
+          backgroundImage: holo ? 'none' : "url('/badges/profile-badge-banner-backdrop.png')",
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
@@ -75,21 +81,43 @@ export default function BannerBadgeStrip({
           cursor: onPress ? 'pointer' : 'default',
         }}
       >
+        {holo && (
+          <>
+            {/* Base iridescence — the Figma magenta/pink/plum palette, slowly
+                drifting + a gentle hue breath. GPU: small element; bg-position. */}
+            <div style={{
+              position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none',
+              background: 'linear-gradient(180deg, #FF0DBF 0%, #991F77 31.7%, #7F2366 41.8%, #FF9AD0 100%)',
+              backgroundSize: '100% 300%',
+              opacity: 0.62,
+              willChange: 'background-position, filter',
+              animation: 'holoDrift 12s ease-in-out infinite, holoHue 22s ease-in-out infinite',
+            }} />
+            {/* Catching-light sheen — a soft band sweeping down (transform = GPU). */}
+            <div style={{
+              position: 'absolute', left: 0, right: 0, top: 0, height: '55%', zIndex: 0, pointerEvents: 'none',
+              background: 'linear-gradient(180deg, transparent 0%, rgba(255,255,255,0.28) 50%, transparent 100%)',
+              mixBlendMode: 'screen',
+              willChange: 'transform, opacity',
+              animation: 'holoSheen 8s ease-in-out infinite',
+            }} />
+          </>
+        )}
         {visible.map((b) => (
           <img
             key={b.key}
             src={b.src}
             alt={b.title ?? b.key}
-            style={{ width: iconSize, height: iconSize, objectFit: 'contain', display: 'block' }}
+            style={{ position: 'relative', zIndex: 1, width: iconSize, height: iconSize, objectFit: 'contain', display: 'block' }}
           />
         ))}
         {extra > 0 && (
-          <span style={{ ...SKB, fontSize: Math.round(iconSize * 0.5), color: '#FF0000', lineHeight: 1 }}>+{extra}</span>
+          <span style={{ position: 'relative', zIndex: 1, ...SKB, fontSize: Math.round(iconSize * 0.5), color: '#FF0000', lineHeight: 1 }}>+{extra}</span>
         )}
       </div>
 
       {/* 0.5px divider between the backdrop and the PFP. Colour set by Piece 2. */}
-      <div style={{ position: 'absolute', top: 0, right: 0, width: 0.5, height: '100%', background: dividerColor }} />
+      <div style={{ position: 'absolute', top: 0, right: 0, width: 0.5, height: '100%', zIndex: 2, background: dividerColor }} />
     </div>
   );
 }

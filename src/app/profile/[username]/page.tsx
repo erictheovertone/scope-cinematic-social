@@ -222,6 +222,7 @@ export default function PublicProfilePage() {
           <BannerBadgeStrip
             height={80}
             dividerColor={dividerBackground((profile as any)?.divider_line)}
+            holo={!!(profile as any)?.holo_banner && isFoundingMember}
             badges={resolveBadges({ isFoundingMember, isTopCollector, isPaidMember, isInHouseCreator, firstCutCount })
               .filter((b) => b.bannerSrc)
               .map((b) => ({ key: b.key, src: b.bannerSrc as string, title: b.title }))}

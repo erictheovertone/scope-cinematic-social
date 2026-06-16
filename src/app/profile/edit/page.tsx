@@ -82,6 +82,7 @@ export default function EditProfilePage() {
   const [firstCutCount, setFirstCutCount] = useState(0);
   const [lineFlags, setLineFlags] = useState({ isPaidMember: false, isFoundingMember: false, isTopCollector: false, isInHouseCreator: false });
   const [selectedLine, setSelectedLine] = useState<DividerLineKey>('default');
+  const [holoBanner, setHoloBanner] = useState(false); // Piece 3 — Augmented only
 
   // LINKS
   const [links, setLinks] = useState<ProfileLink[]>([]);
@@ -119,6 +120,7 @@ export default function EditProfilePage() {
             isInHouseCreator: !!profile.is_in_house_creator,
           });
           setSelectedLine((profile.divider_line as DividerLineKey) || 'default');
+          setHoloBanner(!!profile.holo_banner);
         }
         setLinks(fetchedLinks);
       } catch (e) {
@@ -169,7 +171,7 @@ export default function EditProfilePage() {
     setProfileSaved(false);
     try {
       await saveProfile(sbUserId, { displayName, username, bio, profileImageUrl: profileImageUrl || undefined });
-      await updateProfileFields(sbUserId, { divider_line: selectedLine === 'default' ? null : selectedLine });
+      await updateProfileFields(sbUserId, { divider_line: selectedLine === 'default' ? null : selectedLine, holo_banner: holoBanner });
       setProfileSaved(true);
       setTimeout(() => setProfileSaved(false), 2500);
       return true;
@@ -378,6 +380,28 @@ export default function EditProfilePage() {
         <p style={{ ...SKR, fontSize: 9, color: 'rgba(255,255,255,0.35)', lineHeight: 1.5, margin: '0 0 4px' }}>
           The line between your badges and your photo. Default is invisible — climb tiers to unlock colours.
         </p>
+
+        {/* HOLO BANNER — Piece 3. Augmented (Founding 500) ONLY: an iridescent
+            fill for the badge backdrop. Default OFF. Persists on SAVE. */}
+        {lineFlags.isFoundingMember && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 18 }}>
+            <div style={{ width: 20, height: 60, position: 'relative', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.18)', boxSizing: 'border-box', background: '#000', flexShrink: 0 }}>
+              {holoBanner && (
+                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, #FF0DBF 0%, #991F77 31.7%, #7F2366 41.8%, #FF9AD0 100%)', backgroundSize: '100% 300%', opacity: 0.62, animation: 'holoDrift 12s ease-in-out infinite, holoHue 22s ease-in-out infinite' }} />
+              )}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ ...LABEL, marginBottom: 4 }}>HOLO BANNER</p>
+              <p style={{ ...SKR, fontSize: 9, color: 'rgba(255,255,255,0.35)', lineHeight: 1.4, margin: 0 }}>Augmented only — an iridescent backdrop for the founding 500.</p>
+            </div>
+            <button
+              onClick={() => { setHoloBanner(v => !v); setIsDirty(true); }}
+              style={{ ...SKB, fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '8px 14px', cursor: 'pointer', flexShrink: 0, background: holoBanner ? '#FF0000' : 'transparent', color: holoBanner ? '#fff' : 'rgba(255,255,255,0.6)', border: holoBanner ? 'none' : '1px solid rgba(255,255,255,0.3)' }}
+            >
+              {holoBanner ? 'ON' : 'OFF'}
+            </button>
+          </div>
+        )}
 
         <DIVIDER />
 
