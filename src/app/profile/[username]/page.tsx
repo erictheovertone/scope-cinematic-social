@@ -20,6 +20,7 @@ import PostCell from "@/components/PostCell";
 import { getColCount } from "@/lib/aspectRatio";
 import FrameLoader from "@/components/FrameLoader";
 import BadgeStack from "@/components/BadgeStack";
+import BannerBadgeStrip from "@/components/BannerBadgeStrip";
 import { resolveBadges } from "@/lib/economy/badges";
 import { useEconomy } from "@/components/EconomyProvider";
 import { economyPreviewEnabled } from "@/lib/economy/flag";
@@ -214,8 +215,21 @@ export default function PublicProfilePage() {
         }}
       >
 
-        {/* PFP container */}
-        <div style={{ position: 'absolute', top: 10, left: 12, width: 80, height: 80 }}>
+        {/* Badge backdrop strip — PIECE 1. Left of the PFP with a 0.5px divider
+            between (default hairline; Piece 2 colours it). SAME component as the
+            own profile. Renders earned badges generically (16px, symmetric). */}
+        <div style={{ position: 'absolute', left: 12, top: 10, zIndex: 3 }}>
+          <BannerBadgeStrip
+            height={80}
+            badges={resolveBadges({ isFoundingMember, isTopCollector, isPaidMember, isInHouseCreator, firstCutCount })
+              .filter((b) => b.bannerSrc)
+              .map((b) => ({ key: b.key, src: b.bannerSrc as string, title: b.title }))}
+            onPress={() => setShowBadgeSheet(true)}
+          />
+        </div>
+
+        {/* PFP container — shifted right (40) to make room for the 27px strip. */}
+        <div style={{ position: 'absolute', top: 10, left: 40, width: 80, height: 80 }}>
           {isFoundingMember && <div style={{ position: 'absolute', inset: -1, background: 'linear-gradient(135deg, #ff0080, #ff8c00, #ffe100, #00ff80, #00cfff, #cc00ff, #ff0080)', backgroundSize: '300% 300%', animation: 'holoShift 4s linear infinite', zIndex: 0 }} />}
           {isTopCollector && !isFoundingMember && <div style={{ position: 'absolute', inset: -1, background: 'linear-gradient(135deg, #BF953F, #FCF6BA, #B38728, #FBF5B7, #AA771C)', backgroundSize: '200% 200%', animation: 'goldShimmer 3s ease infinite', zIndex: 0 }} />}
           <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', zIndex: 1 }}>
@@ -237,12 +251,12 @@ export default function PublicProfilePage() {
         </div>
 
         {/* Name */}
-        <div style={{ position: 'absolute', left: 102, top: 10 }}>
+        <div style={{ position: 'absolute', left: 130, top: 10 }}>
           <p style={{ ...SKB, fontSize: 13, color: 'white', letterSpacing: '-0.02em', lineHeight: 1.2, margin: 0, textTransform: 'uppercase' }}>{profile?.display_name || username}</p>
         </div>
 
         {/* Handle */}
-        <div style={{ position: 'absolute', left: 102, top: 26 }}>
+        <div style={{ position: 'absolute', left: 130, top: 26 }}>
           <p style={{ ...SKB, fontSize: 10, color: 'rgba(255,255,255,0.6)', letterSpacing: '-0.02em', lineHeight: 1.2, margin: 0, textTransform: 'uppercase' }}>@{username}</p>
         </div>
 
