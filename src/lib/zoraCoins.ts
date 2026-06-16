@@ -71,9 +71,11 @@ export function getScopePlatformReferrer(): `0x${string}` {
 // Pool base currency. DEFAULT: ZORA — the burner check (2026-06-12) proved
 // Zora's market router cannot route ETH-paired content coins ("Failed to
 // create route", price null, MC 0; every live content coin pairs against a
-// creator coin / ZORA). The ratified §1.4 fallback applies. ETH remains an
-// env override only for if/when Zora's router supports it. Stored on the post
-// for audit.
+// creator coin / ZORA). The ratified §1.4 fallback applies. This resolves the
+// configured pairing and is stored on the post for audit; an ETH value is
+// HARD-BLOCKED at mint by the routability guard in createScopeCoin (ETH would
+// mint a permanently untradeable coin), so ETH is inert until/unless Zora's
+// router supports it AND that guard is lifted.
 export function getCoinCurrency(): ContentCoinCurrency {
   const v = (process.env.NEXT_PUBLIC_SCOPE_COIN_CURRENCY || "ZORA").toUpperCase();
   return (v === "ETH" ? "ETH" : "ZORA") as ContentCoinCurrency;
@@ -164,6 +166,20 @@ export async function createScopeCoin({
   const platformReferrer = getScopePlatformReferrer();
   const creator = getAddress(creatorAddress);
   const currency = getCoinCurrency();
+
+  // ROUTABILITY HARD-GUARD (mirrors the referrer guard above). A coin must
+  // NEVER mint with a currency Zora's router can't route. ETH-paired content
+  // coins are unroutable — every BUY / SELL / backing returns "Failed to create
+  // route" forever, and the pairing is immutable, so an ETH currency here mints
+  // a PERMANENTLY DEAD token (proven 2026-06-12, re-proven live 2026-06-16:
+  // 6/6 ETH-paired coins fail all legs; every ZORA-paired coin routes). A bad
+  // env (NEXT_PUBLIC_SCOPE_COIN_CURRENCY=ETH) is a misconfiguration — fail LOUD
+  // here, before createCoin, rather than strand a creator with a dead coin.
+  if (currency !== "ZORA") {
+    throw new Error(
+      `[zoraCoins] refusing to mint a ${currency}-paired coin — Zora's router cannot route it, so it would be permanently untradeable. Set NEXT_PUBLIC_SCOPE_COIN_CURRENCY=ZORA.`
+    );
+  }
 
   const metadataUri = await uploadCoinMetadata({
     userId: post.userId,
