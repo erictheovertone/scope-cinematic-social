@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import type { ProfileLink } from "@/lib/userService";
 import { isProMember } from "@/lib/userService";
-import { BADGES, resolveBadges, BADGE_BLURBS, type BadgeKey } from "@/lib/economy/badges";
+import { BADGES, resolveBadges, BADGE_SHORT_BLURB, type BadgeKey } from "@/lib/economy/badges";
 import { economyPreviewEnabled } from "@/lib/economy/flag";
 import { useRouter } from "next/navigation";
 
@@ -215,18 +215,16 @@ export default function ProfileDataSheet({
                 BADGES
               </div>
               <div style={{ flex: 1, display: 'flex', flexWrap: 'wrap', gap: 18, justifyContent: 'flex-end', paddingRight: 8 }}>
-                {badges.map((b, i) => (
+                {badges.map((b) => (
                   <div
                     key={b.key}
                     onClick={(e) => { e.stopPropagation(); setActiveBlurb(b.key); }}
-                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, cursor: 'pointer', width: 56 }}
+                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, cursor: 'pointer', width: 52 }}
                   >
-                    <div style={{ perspective: 300, width: 38, height: 38 }}>
-                      <div style={{ width: '100%', height: '100%', position: 'relative', transformStyle: 'preserve-3d', animation: `coinFlip 6s ease-in-out ${i * 0.8}s infinite` }}>
-                        <img src={b.src} alt={b.title} style={{ width: '100%', height: '100%', position: 'absolute', backfaceVisibility: 'hidden', borderRadius: '50%', filter: `drop-shadow(0 0 5px ${b.color}66)` }} />
-                        <img src={b.src} alt="" style={{ width: '100%', height: '100%', position: 'absolute', backfaceVisibility: 'hidden', transform: 'rotateY(180deg)', borderRadius: '50%', filter: `drop-shadow(0 0 5px ${b.color}66)` }} />
-                      </div>
-                    </div>
+                    {/* Flat min-design icon (public/badges), ~34px — no glow/3D,
+                        per the redesign + the no-shadows rule. Generic: any badge
+                        with a strip icon renders; falls back to its coin art. */}
+                    <img src={b.bannerSrc ?? b.src} alt={b.title} style={{ width: 34, height: 34, objectFit: 'contain', display: 'block' }} />
                     <span style={{ ...SKB, fontSize: 8, letterSpacing: '0.04em', color: '#FFF', textTransform: 'uppercase', lineHeight: 1.1, textAlign: 'center' }}>
                       {b.title}
                     </span>
@@ -237,25 +235,40 @@ export default function ProfileDataSheet({
               {/* Blurb pop-up — anchored to the BOTTOM of the BADGES section,
                   scale/fade entrance, dismiss on outside tap or × top-right. */}
               {activeBlurb && (
-                <>
-                  <div onClick={(e) => e.stopPropagation()} style={{ position: 'absolute', top: '100%', left: 0, right: 4, marginTop: 4, zIndex: 481, background: '#000', border: '1px solid #FF0000', padding: '16px 18px', transformOrigin: 'top center', animation: 'blurbIn 240ms cubic-bezier(0.16,0.84,0.3,1)' }}>
-                    <button onClick={(e) => { e.stopPropagation(); setActiveBlurb(null); }} aria-label="Close" style={{ position: 'absolute', top: 8, right: 10, ...SKB, fontSize: 13, lineHeight: 1, color: 'rgba(255,255,255,0.55)', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>×</button>
-                    <p style={{ ...SKB, fontSize: 10, color: '#FF0000', textTransform: 'uppercase', letterSpacing: '0.18em', margin: '0 0 8px', paddingRight: 16 }}>
-                      {BADGES[activeBlurb].title}
-                    </p>
-                    <p style={{ ...SKR, fontSize: 11, color: 'rgba(255,255,255,0.70)', lineHeight: 1.45, margin: 0 }}>
-                      {BADGE_BLURBS[activeBlurb]}
-                    </p>
-                    {activeBlurb === 'firstCut' && economyPreviewEnabled() && profile?.username && (
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setActiveBlurb(null); onClose(); router.push(`/first-cut/${profile.username}`); }}
-                        style={{ ...SKB, fontSize: 9, letterSpacing: '0.12em', color: '#FF0000', textTransform: 'uppercase', background: 'transparent', border: '1px solid #FF0000', cursor: 'pointer', padding: '7px 14px', marginTop: 12 }}
-                      >
-                        VIEW FIRST CUT →
-                      </button>
-                    )}
+                <div onClick={(e) => e.stopPropagation()} style={{ position: 'absolute', top: '100%', left: 0, right: 4, marginTop: 4, zIndex: 481, background: '#000', border: '1px solid #FF0000', padding: '16px 18px', transformOrigin: 'top center', animation: 'blurbIn 240ms cubic-bezier(0.16,0.84,0.3,1)' }}>
+                  <button onClick={(e) => { e.stopPropagation(); setActiveBlurb(null); }} aria-label="Close" style={{ position: 'absolute', top: 8, right: 10, ...SKB, fontSize: 13, lineHeight: 1, color: 'rgba(255,255,255,0.55)', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>×</button>
+
+                  {/* icon LEFT · text RIGHT */}
+                  <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
+                    <img src={BADGES[activeBlurb].bannerSrc ?? BADGES[activeBlurb].src} alt={BADGES[activeBlurb].title} style={{ width: 46, height: 46, objectFit: 'contain', flexShrink: 0 }} />
+                    <div style={{ flex: 1, minWidth: 0, paddingRight: 12 }}>
+                      <p style={{ ...SKB, fontSize: 10, color: '#FF0000', textTransform: 'uppercase', letterSpacing: '0.16em', margin: '0 0 6px' }}>
+                        {BADGES[activeBlurb].title}
+                      </p>
+                      <p style={{ ...SKR, fontSize: 11, color: 'rgba(255,255,255,0.70)', lineHeight: 1.45, margin: 0 }}>
+                        {BADGE_SHORT_BLURB[activeBlurb]}
+                      </p>
+                    </div>
                   </div>
-                </>
+
+                  {/* EXPLORE SCOPE BADGES — deep-link to the full tier list (Piece 6).
+                      STUB: routes to /badges until Piece 6 lands. */}
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setActiveBlurb(null); onClose(); router.push('/badges'); }}
+                    style={{ ...SKB, fontSize: 9, letterSpacing: '0.12em', color: '#FF0000', textTransform: 'uppercase', background: 'transparent', border: '1px solid #FF0000', cursor: 'pointer', padding: '9px 14px', marginTop: 14, width: '100%' }}
+                  >
+                    EXPLORE SCOPE BADGES →
+                  </button>
+
+                  {activeBlurb === 'firstCut' && economyPreviewEnabled() && profile?.username && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setActiveBlurb(null); onClose(); router.push(`/first-cut/${profile.username}`); }}
+                      style={{ ...SKB, fontSize: 9, letterSpacing: '0.12em', color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', background: 'transparent', border: '1px solid rgba(255,255,255,0.25)', cursor: 'pointer', padding: '8px 14px', marginTop: 8, width: '100%' }}
+                    >
+                      VIEW FIRST CUT →
+                    </button>
+                  )}
+                </div>
               )}
             </div>
             <Divider />

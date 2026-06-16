@@ -60,6 +60,19 @@ export const BADGE_BLURBS: Record<BadgeKey, string> = {
   free: 'Every Scope account starts here: full posting and collecting, minted on Base from day one.',
 };
 
+// ── Short blurb (Piece 4 — bio-sheet BADGES pop) ─────────────────────────────
+// 1–2 sentences for the tap-pop; full explainers live in Piece 6. Working copy
+// from Eric's brief (he can refine). composer/srh copy is ready for when those
+// keys + earning logic land.
+export const BADGE_SHORT_BLURB: Record<BadgeKey, string> = {
+  pro: 'The paid membership tier — unlocks Pro features and customization.',
+  firstCut: 'Held by the first 10 external collectors of a post — a permanent founding position in that work.',
+  augmented: 'One of the first 500 members of Scope. The earliest believers.',
+  top1k: 'Among the top 1,000 collectors on Scope by collecting activity.',
+  inHouse: 'Content created using Scope’s in-app editing tools (the NLE).',
+  free: 'Every Scope account starts here — full posting and collecting from day one.',
+};
+
 export interface BadgeTierFlags {
   isFoundingMember?: boolean;   // Augmented
   isTopCollector?: boolean;     // Top 1k
