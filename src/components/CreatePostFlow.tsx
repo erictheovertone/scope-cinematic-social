@@ -883,13 +883,13 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
 
       if (hasBacking) {
         setBackingNarration(`2 OF 2 — BACKING · $${plannedBuyUsd.toFixed(2)}`);
-        // SAME trade impl the standalone collect uses (backOwnCoin →
-        // executeQuotedTrade), called from the in-flow entry point — one
-        // implementation, two callers. backOwnCoin runs the READINESS POLL
-        // (createTradeCall with backoff, ~30s / 6 attempts) BEFORE committing,
-        // so the buy waits for the fresh pool to become routable instead of
-        // racing indexing. Wider slippage absorbs a fresh pool's high impact so
-        // the creator's own buy lands. Context is captured for an isolated retry.
+        // SAME trade as the standalone collect: backOwnCoin now delegates to
+        // buyCoin (USDC, the routable currency) — one implementation, two
+        // callers. The old in-flow backing FAILED because it sold ETH, for
+        // which a ZORA-paired content coin has no route. A short readiness
+        // window (~7.5s) absorbs a just-created pool's indexing lag; wider
+        // slippage absorbs its high price impact. Context is captured for an
+        // isolated retry.
         backingCtxRef.current = { walletClient, creatorAddress: embeddedWallet.address, coinAddress, usdAmount: plannedBuyUsd, postId, sym };
         const backingPromise = backOwnCoin({ walletClient, creatorAddress: embeddedWallet.address, coinAddress, usdAmount: plannedBuyUsd, slippage: 0.15 });
         // Generous bound: the DEFAULT path completes the backing IN-FLOW (the

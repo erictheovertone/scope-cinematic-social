@@ -410,94 +410,89 @@ export async function sellCoin({
   return { hash, pieces: soldPieces, proceedsUsd };
 }
 
+// Classify a trade failure so the backing readiness loop knows whether to WAIT
+// (a fresh pool that's still opening — quote 500s for a few seconds) or QUIT
+// (a definitive on-chain revert or insufficient funds — retrying can't fix it).
+function classifyTradeError(e: unknown): "route" | "reverted" | "insufficient" | "transient" {
+  const m = `${(e as any)?.message ?? ""} ${(e as any)?.cause?.message ?? ""}`.toLowerCase();
+  if (m.includes("insufficient")) return "insufficient";
+  if (m.includes("reverted")) return "reverted";
+  if (m.includes("failed to create route") || m.includes("no route") || m.includes("unroutable") || m.includes("cannot route")) return "route";
+  return "transient";
+}
+
 // ── Creator self-buy ("Back your post") ───────────────────────────────────────
 //
 // Ratified mechanism: a SEPARATE post-create trade (0.6.0 createCoin has no
-// initialPurchase). Dollar-led: $ → ETH via the live rate → tradeCoin ETH→coin
-// from the creator's own wallet, at the curve price, paying like anyone (§5).
-// ISOLATED: a self-buy failure must NOT fail the coin creation — the caller
-// runs this best-effort after the coin confirms.
+// initialPurchase). The creator buys their own coin at the curve price, paying
+// like anyone (§5). ISOLATED: a self-buy failure must NOT fail the coin
+// creation — the caller runs this best-effort after the coin confirms.
+//
+// CONVERGED PATH (the 2026-06-15 fix): the self-buy is now the SAME trade as a
+// standalone collect — buyCoin, two entry points. The old backing hardcoded
+// `sell: ETH`, for which a ZORA-paired content coin has NO route ("Failed to
+// create route", every attempt) — the same ETH-routing failure proven at
+// migration. The standalone collect routes because it sells USDC; so does this
+// now. The failure was CURRENCY, not timing — a priced, live pool (MC > 0)
+// still 500'd on ETH because the route never existed to begin with.
 export async function backOwnCoin({
   walletClient,
   creatorAddress,
   coinAddress,
   usdAmount,
-  slippage = 0.05,
+  currency = "USDC",
+  slippage = 0.15,
 }: {
   walletClient: any;
   creatorAddress: string;
   coinAddress: string;
   usdAmount: number;
+  /** Sell side. MUST be the routable currency the standalone collect uses
+      (CollectSheetV2 defaults to USDC). ETH is an escape hatch only — it has
+      no route on a ZORA-paired content coin, so it is never the default. */
+  currency?: "USDC" | "ETH";
   slippage?: number;
 }): Promise<{ hash: `0x${string}`; pieces: number | null }> {
-  // HONEST FAILURE: converting $ at a wrong rate buys the wrong amount —
-  // refuse rather than guess. (The self-buy is isolated; the coin survives.)
-  const ethUsd = await getEthUsdRate();
-  if (ethUsd === null) throw new Error("ETH/USD rate unavailable — self-buy skipped, try again from the post");
-  const ethAmount = usdAmount / ethUsd;
-  const amountIn = parseEther(ethAmount.toFixed(18));
   const sender = getAddress(creatorAddress);
 
-  const tradeParameters = {
-    sell: { type: "eth" as const },
-    buy: { type: "erc20" as const, address: getAddress(coinAddress) },
-    amountIn,
-    slippage,
-    sender,
-    recipient: sender,
-  };
-
-  // READINESS: a freshly created pool may not be quotable for a few seconds —
-  // poll the quote with backoff before committing the trade. Every attempt
-  // logs the exact request so a routing 500 is never blind.
-  const DELAYS_MS = [0, 2000, 4000, 8000, 8000, 8000]; // ~30s total
+  // READINESS (reduced window): the pool was created moments ago and its quote
+  // may briefly 500 while it indexes. A SHORT grace — 3 tries / ~7.5s, down
+  // from 6 / ~30s — covers genuine freshness without spamming 500s. Now that
+  // the route actually EXISTS (USDC), the first attempt usually lands; the
+  // retries only matter for the seconds-old pool. Definitive failures (an
+  // on-chain revert, or insufficient funds) fail FAST — no pointless retries.
+  // SDK quote console.error noise on the failing attempts is muted; buyCoin's
+  // own console.log success lines (which it emits, not console.error) survive.
+  const DELAYS_MS = [0, 3000, 4500]; // ~7.5s total
   let lastErr: unknown = null;
-  let quote: any = null;
   for (let i = 0; i < DELAYS_MS.length; i++) {
     if (DELAYS_MS[i] > 0) await new Promise((r) => setTimeout(r, DELAYS_MS[i]));
-    console.log(
-      `[zoraCoins] backOwnCoin quote attempt ${i + 1}/${DELAYS_MS.length}:`,
-      JSON.stringify({ ...tradeParameters, amountIn: amountIn.toString(), chainId: base.id, usd: usdAmount, ethUsd })
-    );
     try {
-      quote = await withQuietConsoleError(() => createTradeCall(tradeParameters)); // quote only — no tx
-      lastErr = null;
-      break;
+      const r = await withQuietConsoleError(() =>
+        buyCoin({ walletClient, sender, coinAddress, usdAmount, currency, slippage })
+      );
+      console.log(`[zoraCoins] backOwnCoin COMPLETE via buyCoin(${currency}) — tx: ${r.hash} | pieces: ${r.pieces ?? "?"} | $${usdAmount}`);
+      return r;
     } catch (e) {
-      // EXPECTED while a fresh pool becomes routable — quiet debug, not error.
       lastErr = e;
+      const kind = classifyTradeError(e);
+      if (kind === "reverted" || kind === "insufficient") {
+        // Definitive — surface the REAL reason, do not retry an impossible thing.
+        console.error(`[zoraCoins] backing ${kind} — failing fast:`, errInfo(e));
+        throw e;
+      }
       const next = DELAYS_MS[i + 1];
       console.debug(
-        `[zoraCoins] backing poll ${i + 1}/${DELAYS_MS.length} — pool not routable yet${next ? `, retrying in ${next / 1000}s` : ''}`
+        `[zoraCoins] backing readiness ${i + 1}/${DELAYS_MS.length} — pool not quotable yet (${kind})${next ? `, retrying in ${next / 1000}s` : ""}`
       );
     }
   }
-  if (lastErr) {
-    // Poll exhausted — the backing is actually being abandoned: THIS is the
-    // error-level moment.
-    console.error('[zoraCoins] backing poll exhausted — abandoning:', errInfo(lastErr));
-    throw new Error(
-      `Backing not available yet — the market may still be opening. You can back it from the post shortly. (${(lastErr as Error)?.message})`
-    );
-  }
-  // The full quote response — the receipt's first leg.
-  console.log("[zoraCoins] backOwnCoin quote response:", JSON.stringify(quote)?.slice(0, 500));
-
-  const piecesBefore = await readPieces(coinAddress, sender);
-
-  const { hash, receipt } = await executeQuotedTrade({ walletClient, sender, quote, label: `backing $${usdAmount}` });
-
-  // RECEIPT is the source of truth for the count — IDENTICAL to the standalone
-  // collect path (buyCoin). The old balance-delta read raced the RPC and showed
-  // 0; it survives only as a cross-check fallback.
-  const receiptPieces = piecesFromReceipt(receipt, coinAddress, sender);
-  const piecesAfter = await readPieces(coinAddress, sender);
-  const deltaPieces = piecesBefore != null && piecesAfter != null ? piecesAfter - piecesBefore : null;
-  const pieces = receiptPieces ?? deltaPieces;
-  console.log(
-    `[zoraCoins] backOwnCoin COMPLETE — tx: ${hash} | pieces (receipt): ${receiptPieces ?? "?"} | (balance delta cross-check): ${deltaPieces ?? "?"} | $${usdAmount} ≈ ${ethAmount} ETH`
+  // Short window exhausted — hand off cleanly (the backing can still be done
+  // from the post's collect sheet); this is the only error-level moment.
+  console.error("[zoraCoins] backing readiness window exhausted — handing off:", errInfo(lastErr));
+  throw new Error(
+    `Backing not available yet — the market may still be opening. You can back it from the post shortly. (${(lastErr as Error)?.message})`
   );
-  return { hash, pieces };
 }
 
 // ── Trade execution (quote → SIMULATE → estimate fresh → send 1.5×) ───────────

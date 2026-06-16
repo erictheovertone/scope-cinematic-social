@@ -6,10 +6,11 @@
 //   ] CREATING YOUR COIN… [        (working — bracket pulse)
 //   ] BACKING YOUR POST · $0.15 [  (working)
 //   [ COINED · SPRL ]              (done — ~2.5s hold, then fades)
-//   [ COIN FAILED — RETRY FROM YOUR POST ]  (failed — red, persists until tap)
+//   [ COIN FAILED — RETRY FROM YOUR POST ]  (failed — red, ~4s then auto-fades)
 // Tap → navigates to where the action lives (the profile grid / the post's
-// kebab retry). Any future background money action narrates through this same
-// chip — one narrator, everywhere.
+// kebab retry). Failure never pins the screen: it auto-dismisses after ~4s and
+// is manually dismissible by tap. Any future background money action narrates
+// through this same chip — one narrator, everywhere.
 
 import { createContext, useContext, useState, useRef, useCallback, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
@@ -31,7 +32,7 @@ interface TxNarratorApi {
   narrate: (s: TxStatus) => void;
   /** Terminal success — holds ~2.5s, then fades out. */
   done: (label: string, postId?: string) => void;
-  /** Terminal failure — red, persists until tapped/dismissed. */
+  /** Terminal failure — red, holds ~4s then auto-fades; also tap-dismissible. */
   fail: (label: string, postId?: string) => void;
   clear: () => void;
   /** Grid tiles consult this: the phase of the action on a given post. */
@@ -67,6 +68,14 @@ export function TxNarratorProvider({ children }: { children: ReactNode }) {
 
   const fail = useCallback((label: string, postId?: string) => {
     clearTimers(); setFading(false); setStatus({ phase: 'failed', label, postId });
+    // AUTO-DISMISS: a failure chip must never pin the screen. It holds ~4s
+    // (long enough to read), fades over 0.5s, then clears itself. Still
+    // manually dismissible by tap (handleTap). The action it points at — back
+    // from your post — remains available on the post's collect sheet after.
+    fadeTimer.current = setTimeout(() => {
+      setFading(true);
+      fadeTimer.current = setTimeout(() => { setStatus(null); setFading(false); }, 500);
+    }, 4000);
   }, []);
 
   const clear = useCallback(() => { clearTimers(); setStatus(null); setFading(false); }, []);
