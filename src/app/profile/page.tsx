@@ -320,7 +320,7 @@ const userLayoutId = stableLayoutId;
           0.5px divider between (default hairline; Piece 2 colours it). Same
           component on own + public. Renders the user's earned badges generically
           (min-design icons, fixed 16px, symmetric for any count). */}
-      <div style={{ position: 'absolute', left: 12, top: 10, zIndex: 3 }}>
+      <div style={{ position: 'absolute', left: 8, top: 10, zIndex: 3 }}>
         <BannerBadgeStrip
           height={80}
           badges={resolveBadges({ isFoundingMember, isTopCollector, isPaidMember, isInHouseCreator, firstCutCount })
@@ -330,8 +330,8 @@ const userLayoutId = stableLayoutId;
         />
       </div>
 
-      {/* PFP container — shifted right (40) to make room for the 27px strip. */}
-      <div style={{ position: 'absolute', left: 40, top: 10, width: 80, height: 80 }}>
+      {/* PFP container — right of the 27px strip (cluster left-edge aligns with MAIN). */}
+      <div style={{ position: 'absolute', left: 36, top: 10, width: 80, height: 80 }}>
 
         <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', zIndex: 1 }}>
           {userProfile.profileImage ? (
@@ -347,15 +347,15 @@ const userLayoutId = stableLayoutId;
       </div>
 
       {/* Name */}
-      <div style={{ position: 'absolute', left: 130, top: 10 }}>
+      <div style={{ position: 'absolute', left: 126, top: 10 }}>
         <p style={{ ...SKB, fontSize: 13, color: 'white', letterSpacing: '-0.02em', lineHeight: 1.2, margin: 0, textTransform: 'uppercase' }}>
           {userProfile.displayName}
         </p>
       </div>
 
-      {/* Handle */}
-      <div style={{ position: 'absolute', left: 130, top: 26 }}>
-        <p style={{ ...SKB, fontSize: 10, color: 'rgba(255,255,255,0.6)', letterSpacing: '-0.02em', lineHeight: 1.2, margin: 0, textTransform: 'uppercase' }}>
+      {/* Handle — 2px smaller than the display name's neighbours (fontSize 8). */}
+      <div style={{ position: 'absolute', left: 126, top: 26 }}>
+        <p style={{ ...SKB, fontSize: 8, color: 'rgba(255,255,255,0.6)', letterSpacing: '-0.02em', lineHeight: 1.2, margin: 0, textTransform: 'uppercase' }}>
           {userProfile.username ? `@${userProfile.username}` : ''}
         </p>
       </div>

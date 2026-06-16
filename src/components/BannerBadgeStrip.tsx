@@ -36,8 +36,11 @@ export default function BannerBadgeStrip({
   height = 80,
   width = 27,
   iconSize = 16,
-  /** Piece 2 hook — colour/gradient of the 0.5px divider. Default hairline. */
-  dividerColor = 'rgba(255,255,255,0.15)',
+  /** Piece 2 hook — colour/gradient of the 0.5px divider. DEFAULT = black
+      (#000000), i.e. effectively invisible against the black header. Piece 2
+      lets badge holders / Pro users choose a custom line colour/gradient in
+      Edit Profile; default stays black/none until they do. */
+  dividerColor = '#000000',
   onPress,
 }: {
   badges: StripBadge[];

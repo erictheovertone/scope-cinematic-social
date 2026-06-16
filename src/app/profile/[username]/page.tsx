@@ -217,7 +217,7 @@ export default function PublicProfilePage() {
         {/* Badge backdrop strip — PIECE 1. Left of the PFP with a 0.5px divider
             between (default hairline; Piece 2 colours it). SAME component as the
             own profile. Renders earned badges generically (16px, symmetric). */}
-        <div style={{ position: 'absolute', left: 12, top: 10, zIndex: 3 }}>
+        <div style={{ position: 'absolute', left: 8, top: 10, zIndex: 3 }}>
           <BannerBadgeStrip
             height={80}
             badges={resolveBadges({ isFoundingMember, isTopCollector, isPaidMember, isInHouseCreator, firstCutCount })
@@ -227,8 +227,8 @@ export default function PublicProfilePage() {
           />
         </div>
 
-        {/* PFP container — shifted right (40) to make room for the 27px strip. */}
-        <div style={{ position: 'absolute', top: 10, left: 40, width: 80, height: 80 }}>
+        {/* PFP container — right of the 27px strip (cluster left-edge aligns with MAIN). */}
+        <div style={{ position: 'absolute', top: 10, left: 36, width: 80, height: 80 }}>
           {/* Legacy badge UI removed (clean slate) — holo/gold PFP borders, the
               right-edge membership stripes, and the BadgeStack coins are replaced
               by the BannerBadgeStrip + Piece 2's divider colour. */}
@@ -241,13 +241,13 @@ export default function PublicProfilePage() {
         </div>
 
         {/* Name */}
-        <div style={{ position: 'absolute', left: 130, top: 10 }}>
+        <div style={{ position: 'absolute', left: 126, top: 10 }}>
           <p style={{ ...SKB, fontSize: 13, color: 'white', letterSpacing: '-0.02em', lineHeight: 1.2, margin: 0, textTransform: 'uppercase' }}>{profile?.display_name || username}</p>
         </div>
 
-        {/* Handle */}
-        <div style={{ position: 'absolute', left: 130, top: 26 }}>
-          <p style={{ ...SKB, fontSize: 10, color: 'rgba(255,255,255,0.6)', letterSpacing: '-0.02em', lineHeight: 1.2, margin: 0, textTransform: 'uppercase' }}>@{username}</p>
+        {/* Handle — 2px smaller than the display name (fontSize 8). */}
+        <div style={{ position: 'absolute', left: 126, top: 26 }}>
+          <p style={{ ...SKB, fontSize: 8, color: 'rgba(255,255,255,0.6)', letterSpacing: '-0.02em', lineHeight: 1.2, margin: 0, textTransform: 'uppercase' }}>@{username}</p>
         </div>
 
         {/* Info sheet trigger — hidden while BIO sheet is open so it doesn't bleed over the sheet */}
