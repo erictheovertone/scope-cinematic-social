@@ -68,10 +68,13 @@ decide on the paymaster.** Either we sponsor gas (no swap needed) or we onramp E
    minted coins' `creator` + `payoutRecipientOverride` (immutable), holdings,
    balances, the wallet page, notifications keyed on wallet. A smart wallet is a
    **different address** → fragmentation unless handled.
-2. **Existing coins are immutable.** `payoutRecipientOverride` on already-minted
-   coins points at the **old EOA** — creator earnings keep flowing there. Can't
-   repoint. A mixed model (old earnings → EOA, new activity → SCA) is unavoidable
-   for existing creators.
+2. **Existing coins' payout — CORRECTION (verified 2026-06-16): MUTABLE.**
+   `updatePayoutRecipient` is a first-class coins-sdk action (owner-signed). So
+   `payoutRecipientOverride` on already-minted coins **defaults to the old EOA
+   (won't break — earnings keep flowing to the EOA, which stays the smart-wallet
+   signer, so funds remain accessible)** AND **can be repointed to the new SCA**.
+   Migration is non-destructive and improvable — not the "immutable, stuck on EOA"
+   blocker stated earlier.
 3. **Every wallet-touching surface changes** — `wallet.ts` balance/tx-history
    reads, the wallet page, address display, all tx-sending in `zoraCoins.ts`,
    Permit2 signing in `tradeCoin`, the funding gate's balance read. Each must
