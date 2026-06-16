@@ -140,14 +140,10 @@ export default function EditProfilePage() {
 
   const lineTier = dividerTier({ ...lineFlags, firstCutCount });
 
-  const selectLine = async (key: DividerLineKey) => {
-    if (!isDividerUnlocked(key, lineTier) || !sbUserId) return;
-    setSelectedLine(key); // instant feedback + drives the profile on next render
-    try {
-      await updateProfileFields(sbUserId, { divider_line: key === 'default' ? null : key });
-    } catch (e) {
-      console.error('divider_line save error:', e);
-    }
+  const selectLine = (key: DividerLineKey) => {
+    if (!isDividerUnlocked(key, lineTier)) return;
+    setSelectedLine(key); // previewed in the swatch; applied to the profile on SAVE
+    setIsDirty(true);     // hydrate the top-right SAVE button (any edit change does)
   };
 
   const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -173,6 +169,7 @@ export default function EditProfilePage() {
     setProfileSaved(false);
     try {
       await saveProfile(sbUserId, { displayName, username, bio, profileImageUrl: profileImageUrl || undefined });
+      await updateProfileFields(sbUserId, { divider_line: selectedLine === 'default' ? null : selectedLine });
       setProfileSaved(true);
       setTimeout(() => setProfileSaved(false), 2500);
       return true;
@@ -379,7 +376,7 @@ export default function EditProfilePage() {
           })}
         </div>
         <p style={{ ...SKR, fontSize: 9, color: 'rgba(255,255,255,0.35)', lineHeight: 1.5, margin: '0 0 4px' }}>
-          The line between your badges and your photo. Default is invisible — climb tiers to unlock colours. Saves instantly.
+          The line between your badges and your photo. Default is invisible — climb tiers to unlock colours.
         </p>
 
         <DIVIDER />
