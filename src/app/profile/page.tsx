@@ -25,6 +25,7 @@ import { useUpsell } from "@/components/UpsellProvider";
 import FrameLoader from "@/components/FrameLoader";
 import BannerBadgeStrip from "@/components/BannerBadgeStrip";
 import { resolveBadges } from "@/lib/economy/badges";
+import { dividerBackground } from "@/lib/economy/dividerLines";
 import { useEconomy } from "@/components/EconomyProvider";
 import { economyPreviewEnabled } from "@/lib/economy/flag";
 import CollectedGrid from "@/components/economy/CollectedGrid";
@@ -117,6 +118,7 @@ const userLayoutId = stableLayoutId;
   // founding positions that aren't real yet. Off-flag it stays 0 (coin absent).
   const economy = useEconomy();
   const [firstCutCount, setFirstCutCount] = useState(0);
+  const [dividerLine, setDividerLine] = useState<string | null>(null); // chosen banner divider (Piece 2)
   useEffect(() => {
     if (!economyPreviewEnabled() || !supabaseUserId) { setFirstCutCount(0); return; }
     let cancelled = false;
@@ -189,6 +191,7 @@ const userLayoutId = stableLayoutId;
             setIsInHouseCreator(profile.is_in_house_creator || false);
             setIsFoundingMember(profile.is_founding_member || false);
             setFoundingMemberNumber(profile.founding_member_number || null);
+            setDividerLine((profile as any).divider_line || null);
           }
           getProfileLinks(user.id).then(setProfileLinks).catch(() => {});
         }
@@ -323,6 +326,7 @@ const userLayoutId = stableLayoutId;
       <div style={{ position: 'absolute', left: 8, top: 10, zIndex: 3 }}>
         <BannerBadgeStrip
           height={80}
+          dividerColor={dividerBackground(dividerLine)}
           badges={resolveBadges({ isFoundingMember, isTopCollector, isPaidMember, isInHouseCreator, firstCutCount })
             .filter((b) => b.bannerSrc)
             .map((b) => ({ key: b.key, src: b.bannerSrc as string, title: b.title }))}

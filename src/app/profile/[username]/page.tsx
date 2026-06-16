@@ -21,6 +21,7 @@ import { getColCount } from "@/lib/aspectRatio";
 import FrameLoader from "@/components/FrameLoader";
 import BannerBadgeStrip from "@/components/BannerBadgeStrip";
 import { resolveBadges } from "@/lib/economy/badges";
+import { dividerBackground } from "@/lib/economy/dividerLines";
 import { useEconomy } from "@/components/EconomyProvider";
 import { economyPreviewEnabled } from "@/lib/economy/flag";
 import CollectedGrid from "@/components/economy/CollectedGrid";
@@ -220,6 +221,7 @@ export default function PublicProfilePage() {
         <div style={{ position: 'absolute', left: 8, top: 10, zIndex: 3 }}>
           <BannerBadgeStrip
             height={80}
+            dividerColor={dividerBackground((profile as any)?.divider_line)}
             badges={resolveBadges({ isFoundingMember, isTopCollector, isPaidMember, isInHouseCreator, firstCutCount })
               .filter((b) => b.bannerSrc)
               .map((b) => ({ key: b.key, src: b.bannerSrc as string, title: b.title }))}

@@ -749,6 +749,7 @@ export const updateProfileFields = async (
     kit_favorite_tool: string;
     contact_email: string;
     contact_email_public: boolean;
+    divider_line: string | null;
   }>
 ): Promise<void> => {
   // Identity is ALWAYS uppercase — enforce here so no write path bypasses it
