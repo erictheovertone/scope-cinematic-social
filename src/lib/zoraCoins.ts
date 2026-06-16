@@ -455,15 +455,16 @@ export async function backOwnCoin({
 }): Promise<{ hash: `0x${string}`; pieces: number | null }> {
   const sender = getAddress(creatorAddress);
 
-  // READINESS (reduced window): the pool was created moments ago and its quote
-  // may briefly 500 while it indexes. A SHORT grace — 3 tries / ~7.5s, down
-  // from 6 / ~30s — covers genuine freshness without spamming 500s. Now that
-  // the route actually EXISTS (USDC), the first attempt usually lands; the
-  // retries only matter for the seconds-old pool. Definitive failures (an
-  // on-chain revert, or insufficient funds) fail FAST — no pointless retries.
-  // SDK quote console.error noise on the failing attempts is muted; buyCoin's
-  // own console.log success lines (which it emits, not console.error) survive.
-  const DELAYS_MS = [0, 3000, 4500]; // ~7.5s total
+  // FAIL FAST, DON'T SPAM. Now that the route actually EXISTS (USDC), a healthy
+  // pool quotes on the FIRST attempt — zero failed requests. So we no longer
+  // poll a doomed route 3–6× and litter the console with 500s: a "Failed to
+  // create route" (the pool isn't routable/indexed THIS instant) fails fast and
+  // hands off — the creator can back from the post a moment later when it's
+  // ready. Only a genuine TRANSIENT (a network blip, not a route/revert/funds
+  // error) gets a single short retry. Definitive errors (route / revert /
+  // insufficient funds) never retry. SDK console.error noise is muted; buyCoin's
+  // own console.log success lines (not console.error) survive.
+  const DELAYS_MS = [0, 3000]; // one short retry, transient-only
   let lastErr: unknown = null;
   for (let i = 0; i < DELAYS_MS.length; i++) {
     if (DELAYS_MS[i] > 0) await new Promise((r) => setTimeout(r, DELAYS_MS[i]));
@@ -476,20 +477,21 @@ export async function backOwnCoin({
     } catch (e) {
       lastErr = e;
       const kind = classifyTradeError(e);
-      if (kind === "reverted" || kind === "insufficient") {
-        // Definitive — surface the REAL reason, do not retry an impossible thing.
-        console.error(`[zoraCoins] backing ${kind} — failing fast:`, errInfo(e));
-        throw e;
+      if (kind !== "transient") {
+        // route / reverted / insufficient — definitive. Surface the REAL reason
+        // and hand off; retrying an unroutable/reverting/underfunded call only
+        // burns time and logs more 500s.
+        console.warn(`[zoraCoins] backing not landing in-flow (${kind}) — handing off to the post:`, errInfo(e));
+        break;
       }
       const next = DELAYS_MS[i + 1];
-      console.debug(
-        `[zoraCoins] backing readiness ${i + 1}/${DELAYS_MS.length} — pool not quotable yet (${kind})${next ? `, retrying in ${next / 1000}s` : ""}`
-      );
+      console.debug(`[zoraCoins] backing transient${next ? `, one retry in ${next / 1000}s` : ""}`);
     }
   }
-  // Short window exhausted — hand off cleanly (the backing can still be done
-  // from the post's collect sheet); this is the only error-level moment.
-  console.error("[zoraCoins] backing readiness window exhausted — handing off:", errInfo(lastErr));
+  // Hand off cleanly — the backing can still be done from the post's collect
+  // sheet (where, a moment later, the pool is ready). The caller surfaces ONE
+  // dismissible chip that auto-clears; no stuck UI.
+  console.warn("[zoraCoins] backing did not land in-flow — handing off:", errInfo(lastErr));
   throw new Error(
     `Backing not available yet — the market may still be opening. You can back it from the post shortly. (${(lastErr as Error)?.message})`
   );
