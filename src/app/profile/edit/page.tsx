@@ -387,7 +387,7 @@ export default function EditProfilePage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 18 }}>
             <div style={{ width: 20, height: 60, position: 'relative', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.18)', boxSizing: 'border-box', background: '#000', flexShrink: 0 }}>
               {holoBanner && (
-                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, #FF0DBF 0%, #991F77 31.7%, #7F2366 41.8%, #FF9AD0 100%)', backgroundSize: '100% 300%', opacity: 0.62, animation: 'holoDrift 12s ease-in-out infinite, holoHue 22s ease-in-out infinite' }} />
+                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(160deg, #FF0DBF 0%, #991F77 22%, #7F2366 38%, #FF9AD0 55%, #B14FD6 72%, #FF0DBF 100%)', backgroundSize: '100% 300%', opacity: 0.6, animation: 'holoDrift 14s ease-in-out infinite' }} />
               )}
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>

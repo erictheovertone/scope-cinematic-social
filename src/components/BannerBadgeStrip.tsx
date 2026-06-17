@@ -81,27 +81,20 @@ export default function BannerBadgeStrip({
           cursor: onPress ? 'pointer' : 'default',
         }}
       >
+        {/* DRIFT — the locked Augmented holo: a slow top→bottom drift of the
+            magenta/pink/plum gradient at 14s (Eric's picked pace). Single layer,
+            no sheen/hue. Opacity tuned down vs the preview so it's special, not
+            blinding; icons stay legible above (z-index 1). Pure CSS bg-position
+            on a tiny element — GPU-friendly, no scroll jank. */}
         {holo && (
-          <>
-            {/* Base iridescence — the Figma magenta/pink/plum palette, slowly
-                drifting + a gentle hue breath. GPU: small element; bg-position. */}
-            <div style={{
-              position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none',
-              background: 'linear-gradient(180deg, #FF0DBF 0%, #991F77 31.7%, #7F2366 41.8%, #FF9AD0 100%)',
-              backgroundSize: '100% 300%',
-              opacity: 0.62,
-              willChange: 'background-position, filter',
-              animation: 'holoDrift 12s ease-in-out infinite, holoHue 22s ease-in-out infinite',
-            }} />
-            {/* Catching-light sheen — a soft band sweeping down (transform = GPU). */}
-            <div style={{
-              position: 'absolute', left: 0, right: 0, top: 0, height: '55%', zIndex: 0, pointerEvents: 'none',
-              background: 'linear-gradient(180deg, transparent 0%, rgba(255,255,255,0.28) 50%, transparent 100%)',
-              mixBlendMode: 'screen',
-              willChange: 'transform, opacity',
-              animation: 'holoSheen 8s ease-in-out infinite',
-            }} />
-          </>
+          <div style={{
+            position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none',
+            background: 'linear-gradient(160deg, #FF0DBF 0%, #991F77 22%, #7F2366 38%, #FF9AD0 55%, #B14FD6 72%, #FF0DBF 100%)',
+            backgroundSize: '100% 300%',
+            opacity: 0.42,
+            willChange: 'background-position',
+            animation: 'holoDrift 14s ease-in-out infinite',
+          }} />
         )}
         {visible.map((b) => (
           <img
