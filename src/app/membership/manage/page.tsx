@@ -59,7 +59,7 @@ export default function ManageMembershipPage() {
       {/* Current plan */}
       <div style={{ padding: '24px 16px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-          <img src="/scope-pro-icon-aperture.png" alt="Scope Pro" style={{ width: 40, height: 40 }} />
+          <img src="/badges/scope-pro-badge-min-design-01.png" alt="Scope Pro" style={{ width: 40, height: 40, objectFit: 'contain' }} />
           <div>
             <p style={{ ...SKB, fontSize: 9, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 4px' }}>CURRENT PLAN</p>
             <p style={{ ...SKB, fontSize: 18, color: 'white', textTransform: 'uppercase', margin: 0 }}>SCOPE PRO</p>
