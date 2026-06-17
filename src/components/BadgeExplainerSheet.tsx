@@ -26,6 +26,9 @@ interface BadgeExplainerSheetProps {
   onManageMembership?: () => void;
 }
 
+// Icons are the NEW min-design set (public/badges) — same assets as the BADGES
+// EARNED grid above, so the whole sheet is consistent. (Free has no min-design
+// art, so it keeps its existing mark.)
 const tiers = [
   {
     key: 'free',
@@ -35,11 +38,11 @@ const tiers = [
     color: '#FF0000',
     title: 'FREE TIER',
     description: 'Every Scope account starts here. 25 posts, full collecting, minted on Base from day one.',
-    sub: 'FREE · 10 POST LIMIT',
+    sub: 'FREE · 25 POST LIMIT',
   },
   {
     key: 'creator',
-    img: '/in-house-creator-logo-grey.png',
+    img: '/badges/in-house-badge-min-design-01.png',
     size: 40,
     label: 'IN-HOUSE CREATOR',
     color: 'rgba(255,255,255,0.6)',
@@ -49,7 +52,7 @@ const tiers = [
   },
   {
     key: 'pro',
-    img: '/scope-pro-icon-aperture.png',
+    img: '/badges/scope-pro-badge-min-design-01.png',
     size: 44,
     label: 'SCOPE PRO',
     color: '#FF0000',
@@ -59,7 +62,7 @@ const tiers = [
   },
   {
     key: 'top1k',
-    img: '/top-1k-collector-aperture-gold.png',
+    img: '/badges/collector-badge-min-design-01.png',
     size: 44,
     label: 'TOP 1000 COLLECTOR',
     color: '#C9A84C',
@@ -69,7 +72,7 @@ const tiers = [
   },
   {
     key: 'founding',
-    img: '/augmented-member-founding-500-aperture.png',
+    img: '/badges/augmented-badge-min-design-01.png',
     size: 45,
     label: 'FOUNDING 500',
     color: '#ff0080',
@@ -77,7 +80,52 @@ const tiers = [
     description: 'The first 500 Scope Pro subscribers. Stays active as long as your subscription is open — cancel and your spot passes to the next in line.',
     sub: 'FIRST 500 PRO MEMBERS · TRANSFERABLE SPOT',
   },
+  // ── New rows (Piece 5 cont.) ──
+  {
+    key: 'firstCut',
+    img: '/badges/first-cut-badge-min-design-01.png',
+    size: 42,
+    label: 'FIRST CUT',
+    color: '#00E08A',
+    title: 'FIRST CUT',
+    description: "Held by the first 10 external collectors of any post. A permanent founding stake in that work — it can't be re-minted.",
+    sub: 'FIRST 10 COLLECTORS · AUTO-AWARDED',
+  },
+  {
+    key: 'composer',
+    img: '/badges/composer-badge-min-design-01.png',
+    size: 42,
+    label: 'COMPOSER',
+    color: '#7FB2FF',
+    title: 'COMPOSER',
+    description: 'For musicians who contribute original tracks to the Scope library. Keep 12+ vetted tracks live each quarter; earn a perpetual share of trades on posts using your music.',
+    sub: '12 VETTED TRACKS / QUARTER · ROYALTY SHARE',
+  },
+  {
+    key: 'srh',
+    img: '/badges/srh-badge-min-design-01.png',
+    size: 42,
+    label: 'SCREENING ROOM',
+    color: '#C9A84C',
+    title: 'SCREENING ROOM HOLDER',
+    description: "Currently holds at least one post in the Screening Room — the platform's top-traded showcase. Visibility recognition; lost if the post drops off the top 50.",
+    sub: 'TOP-TRADED SHOWCASE · WHILE HELD',
+  },
 ];
+
+// Real earned status from the viewer's flags (CHANGE 4) — fixes the inverted
+// "NOT YET YOURS" that keyed off a single highest tier. firstCut/composer/srh
+// have no flags yet → correctly "not yet".
+function tierEarned(key: string, t: BadgeExplainerSheetProps['userTiers'], isPaid: boolean): boolean {
+  switch (key) {
+    case 'free': return true;            // every account has it
+    case 'pro': return isPaid;           // paid_member_until active
+    case 'founding': return !!t.isFoundingMember;
+    case 'creator': return !!t.isInHouseCreator;
+    case 'top1k': return !!t.isTopCollector;
+    default: return false;               // firstCut, composer, srh
+  }
+}
 
 function getCurrentBadge(userTiers: BadgeExplainerSheetProps['userTiers']) {
   if (userTiers.isFoundingMember) return { key: 'founding', label: 'FOUNDING 500', image: '/augmented-member-founding-500-aperture.png' };
@@ -241,76 +289,20 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
         {tiers.map((tier, i) => (
           <div key={tier.key} id={`badge-tier-${tier.key}`}>
             <div onClick={() => { onClose(); router.push(`/badge/${tier.key}`); }} style={{ display: 'flex', gap: 16, marginBottom: 24, alignItems: 'flex-start', cursor: 'pointer' }}>
-              <div style={{
-                perspective: 300,
-                perspectiveOrigin: 'center center',
-                flexShrink: 0,
-                marginTop: 2,
-                position: 'relative',
-                width: tier.size,
-                height: tier.size,
-              }}>
-                {/* Glow */}
-                <div style={{
-                  position: 'absolute',
-                  inset: -8,
-                  borderRadius: '50%',
-                  background: `radial-gradient(circle, ${tier.color}44 0%, transparent 70%)`,
-                  animation: `glowPulse 2.5s ease-in-out ${i * 0.4}s infinite`,
-                  pointerEvents: 'none',
-                }} />
-                {/* 3D coin */}
-                <div style={{
-                  width: '100%',
-                  height: '100%',
-                  position: 'relative',
-                  transformStyle: 'preserve-3d',
-                  animation: `coinFlip 6s ease-in-out ${i * 0.8}s infinite`,
-                }}>
-                  <img
-                    src={tier.img}
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      display: 'block',
-                      position: 'absolute',
-                      backfaceVisibility: 'hidden',
-                      filter: `drop-shadow(0 0 6px ${tier.color}88)`,
-                      borderRadius: '50%',
-                    }}
-                    alt={tier.label}
-                  />
-                  {/* Back face — same image mirrored */}
-                  <img
-                    src={tier.img}
-                    alt=""
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      display: 'block',
-                      position: 'absolute',
-                      backfaceVisibility: 'hidden',
-                      transform: 'rotateY(180deg)',
-                      filter: `drop-shadow(0 0 6px ${tier.color}88)`,
-                      borderRadius: '50%',
-                    }}
-                  />
-                </div>
-                {currentTier === tier.key && (
-                  <div style={{
-                    position: 'absolute', top: -3, right: -3,
-                    width: 6, height: 6, borderRadius: '50%',
-                    backgroundColor: '#FF0000',
-                    zIndex: 2,
-                  }} />
+              <div style={{ flexShrink: 0, marginTop: 2, position: 'relative', width: tier.size, height: tier.size }}>
+                {/* Flat min-design icon — consistent with the BADGES EARNED grid
+                    above (no 3D/glow; the new flat assets don't suit a round coin). */}
+                <img src={tier.img} alt={tier.label} style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
+                {tierEarned(tier.key, vTiers, vIsPaid) && (
+                  <div style={{ position: 'absolute', top: -3, right: -3, width: 6, height: 6, borderRadius: '50%', backgroundColor: '#FF0000', zIndex: 2 }} />
                 )}
               </div>
               <div style={{ flex: 1 }}>
                 <p style={{ ...BOLD, fontSize: 12, color: tier.color, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 6px', display: 'flex', alignItems: 'center', gap: 8 }}>
                   <span>{tier.title}</span>
-                  {/* Viewer-centric: their own tier reads YOURS; the rest read as
-                      not-yet-theirs, so every badge tap shows where they stand. */}
-                  {currentTier === tier.key ? (
+                  {/* Real earned status per the viewer's flags — every tier they
+                      hold reads YOURS; the rest read NOT YET YOURS. */}
+                  {tierEarned(tier.key, vTiers, vIsPaid) ? (
                     <span style={{ ...BOLD, fontSize: 7, color: '#FF0000', letterSpacing: '0.12em', border: '1px solid rgba(255,0,0,0.55)', padding: '1px 4px' }}>YOURS</span>
                   ) : (
                     <span style={{ ...BOLD, fontSize: 7, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.12em' }}>NOT YET YOURS</span>
