@@ -16,7 +16,7 @@ export const maxDuration = 60;
 
 const BASE_CHAIN = 8453;
 const TOP_N = 50;
-const BATCH = 50;          // getCoins batch size; page the registry above this
+const BATCH = 20;          // getCoins hard cap = 20 ids/call ("max batch size is 20"); page above this
 const RECONCILE_CAP = 25;  // bound the per-run reconcile of incomplete mints
 
 export async function GET(req: NextRequest) {
