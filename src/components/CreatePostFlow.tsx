@@ -871,6 +871,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
         ticker: sym,
         coin_tx_hash: hash,
         coin_currency: currency,
+        creator_address: embeddedWallet.address, // denormalized for the awarding jobs (Step A)
       });
       console.log('[coin] Success — coin:', coinAddress, 'tx:', hash);
       setMintStatus('minted');

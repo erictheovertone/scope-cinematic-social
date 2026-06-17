@@ -463,6 +463,8 @@ export const updatePostCoinData = async (
     ticker: string;
     coin_tx_hash: string;
     coin_currency: string;
+    /** Creator's wallet — denormalized for the awarding-layer jobs (Step A). */
+    creator_address?: string;
   }
 ): Promise<void> => {
   const { error } = await supabase
@@ -474,6 +476,7 @@ export const updatePostCoinData = async (
       coin_currency: data.coin_currency,
       token_standard: 'coin',
       coin_created_at: new Date().toISOString(),
+      ...(data.creator_address ? { creator_address: data.creator_address } : {}),
     })
     .eq('id', postId);
 
