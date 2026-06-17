@@ -35,7 +35,7 @@ const TIER_DETAILS: Record<string, {
     ],
   },
   creator: {
-    img: '/in-house-creator-logo-grey.png',
+    img: '/badges/in-house-badge-min-design-01.png',
     size: 64,
     label: 'IN-HOUSE CREATOR',
     color: 'rgba(255,255,255,0.7)',
@@ -56,7 +56,7 @@ const TIER_DETAILS: Record<string, {
     ],
   },
   pro: {
-    img: '/scope-pro-icon-aperture.png',
+    img: '/badges/scope-pro-badge-min-design-01.png',
     size: 64,
     label: 'SCOPE PRO',
     color: '#FF0000',
@@ -77,7 +77,7 @@ const TIER_DETAILS: Record<string, {
     ],
   },
   top1k: {
-    img: '/top-1k-collector-aperture-gold.png',
+    img: '/badges/collector-badge-min-design-01.png',
     size: 64,
     label: 'TOP 1000 COLLECTOR',
     color: '#C9A84C',
@@ -102,7 +102,7 @@ const TIER_DETAILS: Record<string, {
     ],
   },
   founding: {
-    img: '/augmented-member-founding-500-aperture.png',
+    img: '/badges/augmented-badge-min-design-01.png',
     size: 64,
     label: 'FOUNDING 500',
     color: '#ff0080',
@@ -123,6 +123,69 @@ const TIER_DETAILS: Record<string, {
       {
         title: 'THE BADGE',
         body: "The holographic augmented aperture is the most visually distinct badge on the platform. It marks you as someone who was here before Scope was Scope. That history doesn't disappear — it compounds.",
+      },
+    ],
+  },
+  composer: {
+    img: '/badges/composer-badge-min-design-01.png',
+    size: 64,
+    label: 'COMPOSER',
+    color: '#7FB2FF',
+    tagline: 'Score the platform. Earn forever.',
+    sections: [
+      {
+        title: 'HOW TO EARN IT',
+        body: "Contribute original music to the Scope library and keep at least 12 vetted tracks live each quarter. Submissions are reviewed for quality and originality before they go in. Hit the threshold and the badge is yours; keep your catalog live and it stays. This is a working musician's badge — it rewards a body of work, not a single upload.",
+      },
+      {
+        title: 'PERPETUAL ROYALTY',
+        body: "Every time a creator scores a post with one of your tracks, you earn a perpetual share of that post's trading activity — automatically, for as long as the post lives on Scope. You don't chase licensing or sign paperwork. Your music works while you sleep. The more your sound spreads across the platform, the more you earn.",
+      },
+      {
+        title: 'WHY IT MATTERS',
+        body: "Film is sound as much as image. The Composer badge marks the people scoring Scope — the artists whose work gives everyone else's films a pulse. It signals that your music is native to the platform, trusted by creators, and woven into the work being made here.",
+      },
+    ],
+  },
+  firstCut: {
+    img: '/badges/first-cut-badge-min-design-01.png',
+    size: 64,
+    label: 'FIRST CUT',
+    color: '#00E08A',
+    tagline: 'Be early. Stay first.',
+    sections: [
+      {
+        title: 'HOW TO EARN IT',
+        body: "Be one of the first 10 external collectors of any post on Scope. The moment you collect early on a work before the crowd arrives, the First Cut badge is minted to you for that post. It's awarded automatically, on-chain, and it can never be re-issued for that work — the first 10 are the first 10, forever.",
+      },
+      {
+        title: 'A FOUNDING STAKE',
+        body: "First Cut isn't just recognition — it's a permanent founding position in a piece of work. You backed a creator before it was obvious. That early conviction is recorded on Base and can't be diluted, bought later, or faked. As the work grows, your place at the front of it stays fixed in its history.",
+      },
+      {
+        title: 'WHY IT MATTERS',
+        body: "Every great film had people who saw it first. First Cut marks the collectors with taste and timing — the ones who find the work early and put their conviction behind it. It's the difference between following a trend and starting one.",
+      },
+    ],
+  },
+  srh: {
+    img: '/badges/srh-badge-min-design-01.png',
+    size: 64,
+    label: 'SCREENING ROOM HOLDER',
+    color: '#C9A84C',
+    tagline: 'Hold the room.',
+    sections: [
+      {
+        title: 'HOW TO EARN IT',
+        body: "Hold at least one post in the Screening Room — Scope's showcase of the top 50 most-traded works on the platform. When a post you hold sits in the top 50, you carry the SRH badge. It's live and earned in real time: hold your place and keep the badge. If your post is pushed out of the top 50 by another, the badge passes with it. Nothing here is permanent — it's held.",
+      },
+      {
+        title: 'THE TOP 50',
+        body: "The Screening Room is the most visible real estate on Scope — the works the whole platform is moving on right now. Holding a spot there puts you among the most active and successful collectors and creators on the app. The room refreshes continuously, so the badge always reflects who's holding the room today, not who held it last month.",
+      },
+      {
+        title: 'WHY IT MATTERS',
+        body: "SRH is a living signal of standing. It can't be bought outright or held by resting — it's earned by holding work the platform values and defended against everyone trying to take your place. Wearing it means you're not just on Scope; you're holding the room at the center of it.",
       },
     ],
   },
@@ -157,60 +220,37 @@ export default function BadgeDetailPage() {
       {/* Badge hero */}
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '40px 20px 32px' }}>
         <div style={{
-          perspective: 500,
-          perspectiveOrigin: 'center center',
           width: detail.size,
           height: detail.size,
           marginBottom: 20,
           position: 'relative',
         }}>
-          {/* Glow */}
-          <div style={{
+          {/* Glow — blooms in over the focus-pull window (trails slightly so the
+              logo arrives first). The glow treatment stays (CHANGE 1). */}
+          <div className="badge-hero-glow" style={{
             position: 'absolute',
             inset: -24,
             borderRadius: '50%',
             background: `radial-gradient(circle, ${detail.color}55 0%, transparent 65%)`,
-            animation: 'glowPulse 2.5s ease-in-out infinite',
+            animation: 'glowIn 2s ease 0.3s both',
             pointerEvents: 'none',
           }} />
-          {/* 3D coin wrapper */}
-          <div style={{
-            width: '100%',
-            height: '100%',
-            position: 'relative',
-            transformStyle: 'preserve-3d',
-            animation: 'coinFlip 5s ease-in-out infinite',
-          }}>
-            {/* Front face */}
-            <img
-              src={detail.img}
-              alt={detail.label}
-              style={{
-                width: '100%',
-                height: '100%',
-                display: 'block',
-                position: 'absolute',
-                backfaceVisibility: 'hidden',
-                filter: `drop-shadow(0 0 12px ${detail.color}) drop-shadow(2px 4px 8px rgba(0,0,0,0.8))`,
-                borderRadius: '50%',
-              }}
-            />
-            {/* Back face — same image mirrored */}
-            <img
-              src={detail.img}
-              alt=""
-              style={{
-                width: '100%',
-                height: '100%',
-                display: 'block',
-                position: 'absolute',
-                backfaceVisibility: 'hidden',
-                transform: 'rotateY(180deg)',
-                filter: `drop-shadow(0 0 12px ${detail.color}) drop-shadow(2px 4px 8px rgba(0,0,0,0.8))`,
-                borderRadius: '50%',
-              }}
-            />
-          </div>
+          {/* FOCUS PULL — flat min-design logo racks from blurred + enlarged into
+              sharp focus at full size. Plays ONCE on open; filter/transform/opacity
+              only (GPU). prefers-reduced-motion → simple fade (in <style>). */}
+          <img
+            className="badge-hero-logo"
+            src={detail.img}
+            alt={detail.label}
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'contain',
+              display: 'block',
+              position: 'relative',
+              animation: 'focusPull 2s cubic-bezier(0.16, 0.84, 0.3, 1) both',
+            }}
+          />
         </div>
         <p style={{ ...BOLD, fontSize: 18, color: detail.color, textTransform: 'uppercase', letterSpacing: '-0.02em', margin: '0 0 12px', textAlign: 'center' }}>
           {detail.label}
@@ -253,16 +293,19 @@ export default function BadgeDetailPage() {
       )}
 
       <style>{`
-        @keyframes coinFlip {
-          0% { transform: rotateY(0deg); }
-          40% { transform: rotateY(160deg); }
-          50% { transform: rotateY(180deg); }
-          90% { transform: rotateY(340deg); }
-          100% { transform: rotateY(360deg); }
+        /* FOCUS PULL — the badge logo's rack-focus reveal on sheet open. */
+        @keyframes focusPull {
+          0%   { filter: blur(14px); transform: scale(1.25); opacity: 0; }
+          100% { filter: blur(0);    transform: scale(1);    opacity: 1; }
         }
-        @keyframes glowPulse {
-          0%, 100% { opacity: 0.4; }
-          50% { opacity: 0.9; }
+        @keyframes glowIn {
+          from { opacity: 0; }
+          to   { opacity: 1; }
+        }
+        /* prefers-reduced-motion → no blur/scale, just a gentle fade. */
+        @media (prefers-reduced-motion: reduce) {
+          .badge-hero-logo { animation: glowIn 0.6s ease both !important; }
+          .badge-hero-glow { animation: glowIn 0.6s ease both !important; }
         }
       `}</style>
     </div>

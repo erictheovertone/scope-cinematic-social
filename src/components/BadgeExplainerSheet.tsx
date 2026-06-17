@@ -227,10 +227,11 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
         overflowY: 'auto',
       }}>
         {/* Status rows */}
-        {/* Row 1 — Membership */}
+        {/* Row 1 — Membership. Icon = the member's actual tier logo (min-design):
+            Scope Pro badge when Pro, the Free mark otherwise (CHANGE 3). */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <img src={currentBadge.image} alt="" style={{ width: 16, height: 16 }} />
+            <img src={vIsPaid ? '/badges/scope-pro-badge-min-design-01.png' : '/free-tier-aperture-logo-red.png'} alt="" style={{ width: 16, height: 16, objectFit: 'contain' }} />
             <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               <span style={{ ...BOLD, fontSize: 7, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.15em' }}>MY MEMBERSHIP</span>
               <span style={{ ...BOLD, fontSize: 9, color: '#FFFFFF', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
