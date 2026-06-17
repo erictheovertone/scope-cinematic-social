@@ -109,6 +109,7 @@ const userLayoutId = stableLayoutId;
   const [isTopCollector, setIsTopCollector] = useState(false);
   const [isInHouseCreator, setIsInHouseCreator] = useState(false);
   const [isFoundingMember, setIsFoundingMember] = useState(false);
+  const [isScreeningRoomHolder, setIsScreeningRoomHolder] = useState(false); // SRH (cron-awarded)
   const [foundingMemberNumber, setFoundingMemberNumber] = useState<number | null>(null);
   const [paidMemberUntil, setPaidMemberUntil] = useState<Date | null>(null);
   const [showMembershipSheet, setShowMembershipSheet] = useState(false);
@@ -191,6 +192,7 @@ const userLayoutId = stableLayoutId;
             setIsTopCollector(profile.is_top_collector || false);
             setIsInHouseCreator(profile.is_in_house_creator || false);
             setIsFoundingMember(profile.is_founding_member || false);
+            setIsScreeningRoomHolder((profile as any).is_screening_room_holder || false);
             setFoundingMemberNumber(profile.founding_member_number || null);
             setDividerLine((profile as any).divider_line || null);
             setHoloBanner(!!(profile as any).holo_banner);
@@ -330,7 +332,7 @@ const userLayoutId = stableLayoutId;
           height={80}
           dividerColor={dividerBackground(dividerLine)}
           holo={holoBanner && isFoundingMember}
-          badges={resolveBadges({ isFoundingMember, isTopCollector, isPaidMember, isInHouseCreator, firstCutCount })
+          badges={resolveBadges({ isFoundingMember, isTopCollector, isScreeningRoomHolder, isPaidMember, isInHouseCreator, firstCutCount })
             .filter((b) => b.bannerSrc)
             .map((b) => ({ key: b.key, src: b.bannerSrc as string, title: b.title }))}
           onPress={() => setShowBadgeSheet(true)}

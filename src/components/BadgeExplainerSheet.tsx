@@ -18,6 +18,7 @@ interface BadgeExplainerSheetProps {
     isInHouseCreator: boolean;
     isPaidMember: boolean;
     isTopCollector: boolean;
+    isScreeningRoomHolder?: boolean;
     isFoundingMember: boolean;
     foundingMemberNumber?: number | null;
   };
@@ -167,12 +168,14 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
         const isTop = !!p.is_top_collector;
         const isHouse = !!p.is_in_house_creator;
         const isFounding = !!p.is_founding_member;
+        const isSRH = !!p.is_screening_room_holder;
         setViewer({
           tiers: {
             isFree: !isPaid && !isTop && !isFounding && !isHouse,
             isInHouseCreator: isHouse,
             isPaidMember: isPaid,
             isTopCollector: isTop,
+            isScreeningRoomHolder: isSRH,
             isFoundingMember: isFounding,
             foundingMemberNumber: p.founding_member_number ?? null,
           },
@@ -259,9 +262,10 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
           const earned = resolveBadges({
             isFoundingMember: vTiers.isFoundingMember,
             isTopCollector: vTiers.isTopCollector,
+            isScreeningRoomHolder: vTiers.isScreeningRoomHolder,
             isPaidMember: vTiers.isPaidMember,
             isInHouseCreator: vTiers.isInHouseCreator,
-            firstCutCount: 0, // this sheet doesn't load the gated count; First Cut/Composer/SRH light up here once their flags reach this surface
+            firstCutCount: 0, // this sheet doesn't load the gated count; First Cut/Composer light up here once their flags reach this surface
           }).filter((b) => b.key !== 'free'); // the Free baseline isn't an "earned" badge
           if (earned.length === 0) return null;
           return (

@@ -99,6 +99,7 @@ export default function ProfileDataSheet({
     ? resolveBadges({
         isFoundingMember: !!profile.is_founding_member,
         isTopCollector: !!profile.is_top_collector,
+        isScreeningRoomHolder: !!profile.is_screening_room_holder,
         isPaidMember: isProMember(profile),
         isInHouseCreator: !!profile.is_in_house_creator,
         firstCutCount,

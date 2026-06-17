@@ -13,6 +13,7 @@ export type BadgeKey =
   | 'augmented'
   | 'firstCut'
   | 'top1k'
+  | 'srh'
   | 'pro'
   | 'inHouse'
   | 'free';
@@ -39,13 +40,14 @@ export const BADGES: Record<BadgeKey, BadgeMeta> = {
   augmented: { key: 'augmented', src: '/augmented-member-founding-500-aperture.png', title: 'AUGMENTED', color: '#ff0080',            bannerSrc: '/badges/augmented-badge-min-design-01.png' },
   firstCut:  { key: 'firstCut',  src: '/first-cut-badge-green.png',                  title: 'FIRST CUT', color: '#00E08A',            bannerSrc: '/badges/first-cut-badge-min-design-01.png' },
   top1k:     { key: 'top1k',     src: '/top-1k-collector-aperture-gold.png',         title: 'TOP 1K',    color: '#C9A84C',            bannerSrc: '/badges/collector-badge-min-design-01.png' },
+  srh:       { key: 'srh',       src: '/badges/srh-badge-min-design-01.png',         title: 'SRH',       color: '#C9A84C',            bannerSrc: '/badges/srh-badge-min-design-01.png' },
   pro:       { key: 'pro',       src: '/scope-pro-icon-aperture.png',                title: 'SCOPE PRO', color: '#FF0000',            bannerSrc: '/badges/scope-pro-badge-min-design-01.png' },
   inHouse:   { key: 'inHouse',   src: '/in-house-creator-logo-grey.png',             title: 'IN-HOUSE',  color: 'rgba(255,255,255,0.6)', bannerSrc: '/badges/in-house-badge-min-design-01.png' },
   free:      { key: 'free',      src: '/free-tier-aperture-logo-red.png',            title: 'FREE TIER', color: '#FF0000' },
 };
 
 /** Rarity order for the stack/section. */
-export const RARITY_ORDER: BadgeKey[] = ['augmented', 'firstCut', 'top1k', 'pro', 'inHouse'];
+export const RARITY_ORDER: BadgeKey[] = ['augmented', 'firstCut', 'top1k', 'srh', 'pro', 'inHouse'];
 
 // ── Tap-blurb copy (BADGES section pop-up) ───────────────────────────────────
 // RATIFIED by Eric 2026-06-11. From Scope_Economy.docx §4: one breath each,
@@ -55,6 +57,7 @@ export const BADGE_BLURBS: Record<BadgeKey, string> = {
   augmented: 'One of Scope’s first 500 members. They earn a slice of every trade on Scope, forever — the founding honor.',
   firstCut: 'Given for being one of the first 10 people to collect a post. As long as they keep every piece, they earn a cut each time that post is traded.',
   top1k: 'One of the 1,000 biggest collectors on Scope. Together they earn 1% of everything traded, split among them.',
+  srh: 'Holds a post in the Screening Room — Scope’s top-50 most-traded showcase. A live signal, held only while the post stays in the room.',
   pro: 'A paid Scope membership — the full finishing suite, every look, every tool.',
   inHouse: 'Earned by creators who regularly use Scope’s built-in tools to make their work. It can’t be bought — only earned.',
   free: 'Every Scope account starts here: full posting and collecting, minted on Base from day one.',
@@ -69,15 +72,17 @@ export const BADGE_SHORT_BLURB: Record<BadgeKey, string> = {
   firstCut: 'Held by the first 10 external collectors of a post — a permanent founding position in that work.',
   augmented: 'One of the first 500 members of Scope. The earliest believers.',
   top1k: 'Among the top 1,000 collectors on Scope by collecting activity.',
+  srh: 'Currently holds a post in the Screening Room — Scope’s top-50 most-traded showcase. Held in real time; lost if the post drops out.',
   inHouse: 'Content created using Scope’s in-app editing tools (the NLE).',
   free: 'Every Scope account starts here — full posting and collecting from day one.',
 };
 
 export interface BadgeTierFlags {
-  isFoundingMember?: boolean;   // Augmented
-  isTopCollector?: boolean;     // Top 1k
-  isPaidMember?: boolean;       // Pro
-  isInHouseCreator?: boolean;   // In-House
+  isFoundingMember?: boolean;     // Augmented
+  isTopCollector?: boolean;       // Top 1k
+  isScreeningRoomHolder?: boolean; // SRH (profiles.is_screening_room_holder — awarded by the cron)
+  isPaidMember?: boolean;         // Pro
+  isInHouseCreator?: boolean;     // In-House
   /** From the economy boundary (gated); >0 → user holds founding positions. */
   firstCutCount?: number;
 }
@@ -93,6 +98,7 @@ export function resolveBadges(flags: BadgeTierFlags): BadgeMeta[] {
     augmented: !!flags.isFoundingMember,
     firstCut: (flags.firstCutCount ?? 0) > 0,
     top1k: !!flags.isTopCollector,
+    srh: !!flags.isScreeningRoomHolder,
     pro: !!flags.isPaidMember,
     inHouse: !!flags.isInHouseCreator,
     free: false,

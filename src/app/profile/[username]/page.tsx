@@ -64,6 +64,7 @@ export default function PublicProfilePage() {
   const [isTopCollector, setIsTopCollector] = useState(false);
   const [isInHouseCreator, setIsInHouseCreator] = useState(false);
   const [isFoundingMember, setIsFoundingMember] = useState(false);
+  const [isScreeningRoomHolder, setIsScreeningRoomHolder] = useState(false); // SRH (cron-awarded)
   // First Cut coin for the VIEWED user's stack — boundary-only, preview-gated.
   const economy = useEconomy();
   const [firstCutCount, setFirstCutCount] = useState(0);
@@ -123,6 +124,7 @@ export default function PublicProfilePage() {
         setIsTopCollector(p.is_top_collector || false);
         setIsInHouseCreator(p.is_in_house_creator || false);
         setIsFoundingMember(p.is_founding_member || false);
+        setIsScreeningRoomHolder((p as any).is_screening_room_holder || false);
         setFoundingMemberNumber(p.founding_member_number || null);
 
         const [userPosts, targetUser] = await Promise.all([
@@ -223,7 +225,7 @@ export default function PublicProfilePage() {
             height={80}
             dividerColor={dividerBackground((profile as any)?.divider_line)}
             holo={!!(profile as any)?.holo_banner && isFoundingMember}
-            badges={resolveBadges({ isFoundingMember, isTopCollector, isPaidMember, isInHouseCreator, firstCutCount })
+            badges={resolveBadges({ isFoundingMember, isTopCollector, isScreeningRoomHolder, isPaidMember, isInHouseCreator, firstCutCount })
               .filter((b) => b.bannerSrc)
               .map((b) => ({ key: b.key, src: b.bannerSrc as string, title: b.title }))}
             onPress={() => setShowBadgeSheet(true)}
