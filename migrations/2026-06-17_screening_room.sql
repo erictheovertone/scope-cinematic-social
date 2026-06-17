@@ -5,12 +5,17 @@
 -- Denormalize the creator's wallet onto the post so the ranking job needs no
 -- join at read time. New mints write it directly (postsService.updatePostCoinData);
 -- this backfills the existing rows from the current creator mapping.
+--
+-- JOIN (verified 2026-06-17): the creator's wallet lives on `users.wallet_address`
+-- (NOT on `profiles`). `posts.user_id` is TEXT holding the uuid that equals
+-- `users.id` (UUID). So cast uuid→text for the comparison — the safe direction
+-- (never errors on a stray non-uuid value; non-matches simply don't join).
 ALTER TABLE posts ADD COLUMN IF NOT EXISTS creator_address TEXT;
 
 UPDATE posts p
 SET creator_address = u.wallet_address
 FROM users u
-WHERE p.user_id = u.id
+WHERE u.id::text = p.user_id
   AND p.creator_address IS NULL
   AND u.wallet_address IS NOT NULL;
 
@@ -24,7 +29,7 @@ CREATE TABLE IF NOT EXISTS screening_room (
   rank            INT PRIMARY KEY,
   coin_address    TEXT NOT NULL,
   creator_address TEXT,
-  user_id         UUID,
+  user_id         TEXT,   -- matches posts.user_id (TEXT); the cron inserts that value
   symbol          TEXT,
   volume          NUMERIC,
   computed_at     TIMESTAMPTZ NOT NULL DEFAULT now()
