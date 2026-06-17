@@ -91,7 +91,7 @@ export default function BannerBadgeStrip({
             position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none',
             background: 'linear-gradient(160deg, #FF0DBF 0%, #991F77 22%, #7F2366 38%, #FF9AD0 55%, #B14FD6 72%, #FF0DBF 100%)',
             backgroundSize: '100% 300%',
-            opacity: 0.42,
+            opacity: 0.29, // −30% from 0.42 (Eric) — subtler on the live banner
             willChange: 'background-position',
             animation: 'holoDrift 14s ease-in-out infinite',
           }} />
