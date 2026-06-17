@@ -268,9 +268,17 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
             <div style={{ padding: '14px 0 18px', borderBottom: '1px solid rgba(255,255,255,0.08)', marginBottom: 20 }}>
               <span style={{ ...BOLD, fontSize: 7, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.15em', display: 'block', marginBottom: 14 }}>BADGES EARNED</span>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 18 }}>
-                {earned.map((b) => (
+                {earned.map((b, i) => (
                   <div key={b.key} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, width: 52 }}>
-                    <img src={b.bannerSrc ?? b.src} alt={b.title} style={{ width: 34, height: 34, objectFit: 'contain', display: 'block' }} />
+                    {/* Staggered focus-pull on sheet open — racks into focus one
+                        after another (100ms apart). reduced-motion → fade. */}
+                    <img
+                      key={`${b.key}-${visible ? 'open' : 'shut'}`}
+                      className="focus-pull"
+                      src={b.bannerSrc ?? b.src}
+                      alt={b.title}
+                      style={{ width: 34, height: 34, objectFit: 'contain', display: 'block', animation: 'focusPull 2s cubic-bezier(0.16,0.84,0.3,1) both', animationDelay: `${i * 100}ms` }}
+                    />
                     <span style={{ ...BOLD, fontSize: 8, letterSpacing: '0.04em', color: '#FFF', textTransform: 'uppercase', lineHeight: 1.1, textAlign: 'center' }}>{b.title}</span>
                   </div>
                 ))}

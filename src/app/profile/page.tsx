@@ -812,6 +812,7 @@ const userLayoutId = stableLayoutId;
       <ProfileDataSheet
         isOpen={profileDataOpen}
         onClose={() => setProfileDataOpen(false)}
+        onExploreBadges={() => { setProfileDataOpen(false); setShowBadgeSheet(true); }}
         profile={rawProfile}
         links={profileLinks}
         isOwnProfile={true}

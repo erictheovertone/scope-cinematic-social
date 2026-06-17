@@ -24,6 +24,9 @@ interface Props {
   /** First Cut count for this profile — read via the economy boundary upstream
       and passed down (preview-gated). 0/absent → no First Cut coin. */
   firstCutCount?: number;
+  /** Opens the full "Badges on Scope" tier list (the blurb's EXPLORE button).
+      Wired by the profile page to close this sheet + open BadgeExplainerSheet. */
+  onExploreBadges?: () => void;
 }
 
 function getYouTubeId(url: string): string | null {
@@ -50,7 +53,7 @@ function getDomain(url: string): string {
 export default function ProfileDataSheet({
   isOpen, onClose, profile, links, isOwnProfile,
   followers, following, totalPosts, collectors = 0, portfolioMc = 0,
-  firstCutCount = 0,
+  firstCutCount = 0, onExploreBadges,
 }: Props) {
   const router = useRouter();
   const [bgVisible, setBgVisible] = useState(false);
@@ -225,7 +228,7 @@ export default function ProfileDataSheet({
                         per the redesign + the no-shadows rule. Generic: any badge
                         with a strip icon renders; falls back to its coin art. */}
                     <img src={b.bannerSrc ?? b.src} alt={b.title} style={{ width: 34, height: 34, objectFit: 'contain', display: 'block' }} />
-                    <span style={{ ...SKB, fontSize: 8, letterSpacing: '0.04em', color: '#FFF', textTransform: 'uppercase', lineHeight: 1.1, textAlign: 'center' }}>
+                    <span style={{ ...SKB, fontSize: 8, letterSpacing: '0.04em', color: '#FFFFFF', textTransform: 'uppercase', lineHeight: 1.1, textAlign: 'center' }}>
                       {b.title}
                     </span>
                   </div>
@@ -238,9 +241,15 @@ export default function ProfileDataSheet({
                 <div onClick={(e) => e.stopPropagation()} style={{ position: 'absolute', top: '100%', left: 0, right: 4, marginTop: 4, zIndex: 481, background: '#000', border: '1px solid #FF0000', padding: '16px 18px', transformOrigin: 'top center', animation: 'blurbIn 240ms cubic-bezier(0.16,0.84,0.3,1)' }}>
                   <button onClick={(e) => { e.stopPropagation(); setActiveBlurb(null); }} aria-label="Close" style={{ position: 'absolute', top: 8, right: 10, ...SKB, fontSize: 13, lineHeight: 1, color: 'rgba(255,255,255,0.55)', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>×</button>
 
-                  {/* icon LEFT · text RIGHT */}
-                  <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
-                    <img src={BADGES[activeBlurb].bannerSrc ?? BADGES[activeBlurb].src} alt={BADGES[activeBlurb].title} style={{ width: 46, height: 46, objectFit: 'contain', flexShrink: 0 }} />
+                  {/* icon LEFT (larger, focus-pulls in on each tap) · text RIGHT */}
+                  <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+                    <img
+                      key={activeBlurb}
+                      className="focus-pull"
+                      src={BADGES[activeBlurb].bannerSrc ?? BADGES[activeBlurb].src}
+                      alt={BADGES[activeBlurb].title}
+                      style={{ width: 60, height: 60, objectFit: 'contain', flexShrink: 0, animation: 'focusPull 1.2s cubic-bezier(0.16,0.84,0.3,1) both' }}
+                    />
                     <div style={{ flex: 1, minWidth: 0, paddingRight: 12 }}>
                       <p style={{ ...SKB, fontSize: 10, color: '#FF0000', textTransform: 'uppercase', letterSpacing: '0.16em', margin: '0 0 6px' }}>
                         {BADGES[activeBlurb].title}
@@ -251,10 +260,11 @@ export default function ProfileDataSheet({
                     </div>
                   </div>
 
-                  {/* EXPLORE SCOPE BADGES — deep-link to the full tier list (Piece 6).
-                      STUB: routes to /badges until Piece 6 lands. */}
+                  {/* EXPLORE SCOPE BADGES — opens the full "Badges on Scope" tier
+                      list (BadgeExplainerSheet) via the parent. Falls back to the
+                      /badges route if no handler is wired. */}
                   <button
-                    onClick={(e) => { e.stopPropagation(); setActiveBlurb(null); onClose(); router.push('/badges'); }}
+                    onClick={(e) => { e.stopPropagation(); setActiveBlurb(null); if (onExploreBadges) { onClose(); onExploreBadges(); } else { onClose(); router.push('/badges'); } }}
                     style={{ ...SKB, fontSize: 9, letterSpacing: '0.12em', color: '#FF0000', textTransform: 'uppercase', background: 'transparent', border: '1px solid #FF0000', cursor: 'pointer', padding: '9px 14px', marginTop: 14, width: '100%' }}
                   >
                     EXPLORE SCOPE BADGES →

@@ -245,3 +245,17 @@
   0%, 100% { background-position: 50% 0%; }
   50%      { background-position: 50% 100%; }
 }
+
+/* ── Focus pull (Piece 6 + polish) — reusable rack-focus reveal ──────────────
+   Blur+scale → sharp at full size. GPU (filter/transform/opacity). Apply via an
+   inline `animation: focusPull 2s cubic-bezier(0.16,0.84,0.3,1) both` (+ a
+   staggered animation-delay where wanted) AND className "focus-pull" so
+   reduced-motion can downgrade it to a plain fade. */
+@keyframes focusPull {
+  0%   { filter: blur(14px); transform: scale(1.25); opacity: 0; }
+  100% { filter: blur(0);    transform: scale(1);    opacity: 1; }
+}
+@keyframes simpleFade { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .focus-pull { animation: simpleFade 0.5s ease both !important; }
+}

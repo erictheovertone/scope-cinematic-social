@@ -488,6 +488,7 @@ export default function PublicProfilePage() {
       <ProfileDataSheet
         isOpen={profileDataOpen}
         onClose={() => setProfileDataOpen(false)}
+        onExploreBadges={() => { setProfileDataOpen(false); setShowBadgeSheet(true); }}
         profile={profile}
         links={profileLinks}
         isOwnProfile={!!isOwnProfile}
