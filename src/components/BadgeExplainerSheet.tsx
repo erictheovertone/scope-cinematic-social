@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
 import { getUserByPrivyId, getProfile, isProMember } from "@/lib/userService";
+import { resolveBadges } from "@/lib/economy/badges";
 
 const BOLD: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const REG: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -201,26 +202,33 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
           </button>
         </div>
 
-        {/* Row 2 — Current Badge */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.08)', marginBottom: 20 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <img src={currentBadge.image} alt="" style={{ width: 16, height: 16 }} />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <span style={{ ...BOLD, fontSize: 7, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.15em' }}>MY CURRENT BADGE</span>
-              <span style={{ ...BOLD, fontSize: 9, color: '#FFFFFF', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                {currentBadge.label}
-              </span>
+        {/* BADGES EARNED — read-only (Piece 5). The badges the viewer actually
+            holds, rendered generically. NO customization here — the dividing-line
+            picker + holo toggle live in Edit Profile (Pieces 2–3). Replaces the
+            single "my current badge", which no longer fits the multi-badge model. */}
+        {(() => {
+          const earned = resolveBadges({
+            isFoundingMember: vTiers.isFoundingMember,
+            isTopCollector: vTiers.isTopCollector,
+            isPaidMember: vTiers.isPaidMember,
+            isInHouseCreator: vTiers.isInHouseCreator,
+            firstCutCount: 0, // this sheet doesn't load the gated count; First Cut/Composer/SRH light up here once their flags reach this surface
+          }).filter((b) => b.key !== 'free'); // the Free baseline isn't an "earned" badge
+          if (earned.length === 0) return null;
+          return (
+            <div style={{ padding: '14px 0 18px', borderBottom: '1px solid rgba(255,255,255,0.08)', marginBottom: 20 }}>
+              <span style={{ ...BOLD, fontSize: 7, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.15em', display: 'block', marginBottom: 14 }}>BADGES EARNED</span>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 18 }}>
+                {earned.map((b) => (
+                  <div key={b.key} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, width: 52 }}>
+                    <img src={b.bannerSrc ?? b.src} alt={b.title} style={{ width: 34, height: 34, objectFit: 'contain', display: 'block' }} />
+                    <span style={{ ...BOLD, fontSize: 8, letterSpacing: '0.04em', color: '#FFF', textTransform: 'uppercase', lineHeight: 1.1, textAlign: 'center' }}>{b.title}</span>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-          <button
-            onClick={() => document.getElementById(`badge-tier-${currentBadge.key}`)?.scrollIntoView({ behavior: 'smooth' })}
-            style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}
-          >
-            <span style={{ ...BOLD, fontSize: 8, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-              DETAILS →
-            </span>
-          </button>
-        </div>
+          );
+        })()}
 
         {/* Header */}
         <img
