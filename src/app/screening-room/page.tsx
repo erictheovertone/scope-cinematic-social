@@ -14,7 +14,8 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
 import { openPostLightbox } from '@/lib/postLightbox';
-import { getAspectRatio } from '@/lib/aspectRatio';
+import { getAspectRatio, ratioPadding } from '@/lib/aspectRatio';
+import PillarboxFrame from '@/components/PillarboxFrame';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -124,27 +125,39 @@ export default function ScreeningRoomPage() {
             const src = p ? mediaSrc(p) : null;
             const tickerMark = (p?.ticker || r.symbol) ? `[ ${p?.ticker || r.symbol} ]` : null;
             // Each post shows in ITS OWN aspect ratio (post.layout_id), exactly as
-            // the home feed sizes it — never a forced 2.39:1. getAspectRatio maps
-            // the layout to its CSS ratio (PANA 2.75 / SCOPE 2.39 / CINE 1.85 /
-            // LEGACY 4:3, etc.); the rank chip + shelf are ratio-agnostic.
-            const frameRatio = getAspectRatio(p?.layout_id ?? '');
+            // the home feed sizes it — never a forced 2.39:1. Wide ratios (PANA
+            // 2.75 / SCOPE 2.39 / CINE 1.85) fill the row via ratioPadding; LEGACY
+            // 4:3 is PILLARBOXED in PillarboxFrame (the SAME component the feed/
+            // Mirage/lightbox use — black side bars, centered, never stretched).
+            const is43 = (p?.layout_id ?? '') === 'legacy';
+            const paddingPercent = ratioPadding(getAspectRatio(p?.layout_id ?? ''));
+            const media = src ? (
+              <img src={src} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+            ) : (
+              <div style={{ width: '100%', height: '100%', background: '#111' }} />
+            );
+            // Rank chip — top-left of the frame, regardless of ratio (in the outer
+            // container for legacy, matching how the feed places its overlays).
+            const rankChip = (
+              <div style={{ position: 'absolute', top: 0, left: 0, background: '#FF0000', padding: '2px 7px', zIndex: 10 }}>
+                <span style={{ ...SKB, fontSize: 11, color: '#000', letterSpacing: '0.04em' }}>{r.rank}</span>
+              </div>
+            );
             return (
               <div
                 key={r.rank}
                 onClick={() => p && openPostLightbox(p.id)}
                 style={{ marginBottom: 22, cursor: p ? 'pointer' : 'default' }}
               >
-                {/* Cinematic frame at the post's OWN ratio — media only, rank chip the sole overlay. */}
-                <div style={{ position: 'relative', width: '100%', aspectRatio: frameRatio, background: '#0A0A0A', overflow: 'hidden' }}>
-                  {src ? (
-                    <img src={src} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                  ) : (
-                    <div style={{ width: '100%', height: '100%', background: '#111' }} />
-                  )}
-                  <div style={{ position: 'absolute', top: 0, left: 0, background: '#FF0000', padding: '2px 7px' }}>
-                    <span style={{ ...SKB, fontSize: 11, color: '#000', letterSpacing: '0.04em' }}>{r.rank}</span>
+                {/* Frame at the post's OWN ratio — media only, rank chip the sole overlay. */}
+                {is43 ? (
+                  <PillarboxFrame overlays={rankChip}>{media}</PillarboxFrame>
+                ) : (
+                  <div style={{ position: 'relative', width: '100%', paddingTop: `${paddingPercent}%`, overflow: 'hidden', background: '#0A0A0A' }}>
+                    <div style={{ position: 'absolute', inset: 0 }}>{media}</div>
+                    {rankChip}
                   </div>
-                </div>
+                )}
 
                 {/* Data shelf BENEATH — ticker/creator left, market cap right (focal). */}
                 <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', padding: '8px 2px 0', gap: 12 }}>
