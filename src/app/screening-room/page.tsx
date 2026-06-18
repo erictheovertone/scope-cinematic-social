@@ -14,6 +14,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
 import { openPostLightbox } from '@/lib/postLightbox';
+import { getAspectRatio } from '@/lib/aspectRatio';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -33,6 +34,7 @@ interface RoomRow {
     id: string;
     username: string | null;
     ticker: string | null;
+    layout_id: string | null;
     media_type: string | null;
     poster_url: string | null;
     thumbnail_url: string | null;
@@ -58,7 +60,7 @@ export default function ScreeningRoomPage() {
       const addrs = cache.map((c) => c.coin_address).filter(Boolean);
       const { data: posts } = await supabase
         .from('posts')
-        .select('id, coin_address, username, ticker, media_type, poster_url, thumbnail_url, media_urls')
+        .select('id, coin_address, username, ticker, layout_id, media_type, poster_url, thumbnail_url, media_urls')
         .in('coin_address', addrs);
       const byAddr = new Map((posts ?? []).map((p) => [String(p.coin_address).toLowerCase(), p]));
 
@@ -121,14 +123,19 @@ export default function ScreeningRoomPage() {
             const p = r.post;
             const src = p ? mediaSrc(p) : null;
             const tickerMark = (p?.ticker || r.symbol) ? `[ ${p?.ticker || r.symbol} ]` : null;
+            // Each post shows in ITS OWN aspect ratio (post.layout_id), exactly as
+            // the home feed sizes it — never a forced 2.39:1. getAspectRatio maps
+            // the layout to its CSS ratio (PANA 2.75 / SCOPE 2.39 / CINE 1.85 /
+            // LEGACY 4:3, etc.); the rank chip + shelf are ratio-agnostic.
+            const frameRatio = getAspectRatio(p?.layout_id ?? '');
             return (
               <div
                 key={r.rank}
                 onClick={() => p && openPostLightbox(p.id)}
                 style={{ marginBottom: 22, cursor: p ? 'pointer' : 'default' }}
               >
-                {/* Wide cinematic frame — media only, rank chip the sole overlay. */}
-                <div style={{ position: 'relative', width: '100%', aspectRatio: '2.39 / 1', background: '#0A0A0A', overflow: 'hidden' }}>
+                {/* Cinematic frame at the post's OWN ratio — media only, rank chip the sole overlay. */}
+                <div style={{ position: 'relative', width: '100%', aspectRatio: frameRatio, background: '#0A0A0A', overflow: 'hidden' }}>
                   {src ? (
                     <img src={src} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                   ) : (
