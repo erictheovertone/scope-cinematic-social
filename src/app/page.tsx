@@ -17,6 +17,8 @@ export default function Home() {
   const [lightboxPost, setLightboxPost] = useState<any>(null);
   const [mirageActive, setMirageActive] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [menuClosing, setMenuClosing] = useState(false); // playing the close fade
+  const [reduceMotion, setReduceMotion] = useState(false);
   const [showFrame, setShowFrame] = useState(true);
   const [feedState, setFeedState] = useState<FeedState>("normal");
   // Inline comments are one-at-a-time: only one feed post's section is open.
@@ -113,6 +115,25 @@ export default function Home() {
     load();
   }, []);
 
+  // Respect prefers-reduced-motion (JS, not a CSS !important — so it can't fight
+  // the close fade): reduced → doors fade in place, no stagger/rise.
+  useEffect(() => {
+    const m = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const sync = () => setReduceMotion(m.matches);
+    sync();
+    m.addEventListener?.('change', sync);
+    return () => m.removeEventListener?.('change', sync);
+  }, []);
+
+  // Close the overlay with a quick fade-out, then unmount.
+  const closeMenu = () => {
+    if (menuClosing) return;
+    setMenuClosing(true);
+    setTimeout(() => { setMenuOpen(false); setMenuClosing(false); }, 250);
+  };
+  // Door selection navigates immediately (the overlay leaves with the view).
+  const selectDoor = (go: () => void) => { setMenuOpen(false); setMenuClosing(false); go(); };
+
   const enterMirage = () => {
     if (transitioningRef.current) return;
     console.log("Mirage toggle clicked — current state:", mirageActive);
@@ -164,6 +185,11 @@ export default function Home() {
           from { opacity: 0; transform: translateY(-10px) scale(0.88); }
           to   { opacity: 1; transform: translateY(0) scale(1); }
         }
+        /* Home-feed menu overlay — "Fade + Staggered Rise" (GPU: opacity/transform). */
+        @keyframes menuBackingIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes menuDoorRise  { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes menuChromeIn  { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes menuFadeOut   { from { opacity: 1; } to { opacity: 0; } }
       `}</style>
 
       {/* Frame icon — top right, opens Mirage menu */}
@@ -198,80 +224,73 @@ export default function Home() {
         </svg>
       </button>
 
-      {/* Mirage menu — centered overlay, gradient backdrop */}
+      {/* Home-feed menu — bold full-screen overlay: two typographic "doors". */}
       {menuOpen && (
         <div
-          onClick={() => setMenuOpen(false)}
+          onClick={closeMenu}
           style={{
             position: 'fixed',
             inset: 0,
             zIndex: 60,
-            background: 'linear-gradient(to bottom, rgba(0,0,0,0.70) 0%, rgba(0,0,0,0.40) 80%, transparent 100%)',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'flex-start',
-            paddingTop: 8,
+            // ~90% black backing with a FEATHERED bottom edge — fades to fully
+            // transparent so it melts into the live feed below (no hard line).
+            background: 'linear-gradient(to bottom, rgba(0,0,0,0.93) 0%, rgba(0,0,0,0.93) 48%, rgba(0,0,0,0.72) 70%, rgba(0,0,0,0.3) 86%, rgba(0,0,0,0) 100%)',
+            animation: menuClosing ? 'menuFadeOut 0.25s ease both' : 'menuBackingIn 0.4s cubic-bezier(0.16,0.84,0.3,1) both',
           }}
         >
-          {/* Matched red set — Mirage + Screening Room sit side by side. */}
-          <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-start', gap: 34, animation: 'menu-splay-in 260ms cubic-bezier(0.16,1,0.3,1) both' }}>
+          {/* X close — top-left per the design. Chrome fades in last. */}
+          <button
+            onClick={e => { e.stopPropagation(); closeMenu(); }}
+            aria-label="Close menu"
+            style={{
+              position: 'absolute', top: 14, left: 14,
+              background: 'transparent', border: 'none', cursor: 'pointer',
+              color: '#FFFFFF', fontSize: 24, lineHeight: 1, padding: 8,
+              fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700,
+              animation: menuClosing ? 'menuFadeOut 0.2s ease both' : 'menuChromeIn 0.3s ease 0.3s both',
+            }}
+          >
+            ✕
+          </button>
+
+          {/* Two doors — stacked, oversized, dominant. */}
+          <div style={{ position: 'absolute', top: '22vh', left: 0, right: 0, padding: '0 26px', display: 'flex', flexDirection: 'column', gap: 36 }}>
+            {/* Door 1 — SCREENING ROOM (rises ~0.08s in). */}
             <button
-              onClick={e => { e.stopPropagation(); setMenuOpen(false); enterMirage(); }}
+              onClick={e => { e.stopPropagation(); selectDoor(() => router.push('/screening-room')); }}
               style={{
-                background: 'transparent',
-                border: 'none',
-                cursor: 'pointer',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: 6,
-                padding: 0,
+                background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, width: '100%',
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14, textAlign: 'left',
+                animation: menuClosing
+                  ? 'menuFadeOut 0.22s ease both'
+                  : reduceMotion
+                    ? 'menuBackingIn 0.3s ease both'
+                    : 'menuDoorRise 0.55s cubic-bezier(0.16,0.84,0.3,1) 0.08s both',
               }}
             >
-              <img
-                src="/mirage-logo-thick-red-new.png"
-                alt="Mirage"
-                style={{
-                  width: 30,
-                  height: 'auto',
-                  objectFit: 'contain',
-                  display: 'block',
-                  flexShrink: 0,
-                }}
-              />
-              <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 8, color: '#ffffff', letterSpacing: '-0.16px', textTransform: 'uppercase' }}>
-                MIRAGE
+              <span style={{ flex: '1 1 auto', minWidth: 0, fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'clamp(36px, 13vw, 56px)', lineHeight: 0.92, letterSpacing: '-0.03em', color: '#FFFFFF', textTransform: 'uppercase' }}>
+                Screening Room
               </span>
+              <img src="/screening-room-logo-temp-01.png" alt="" style={{ width: 56, height: 'auto', objectFit: 'contain', flexShrink: 0 }} />
             </button>
 
+            {/* Door 2 — MIRAGE VIEW (rises ~0.18s in). */}
             <button
-              onClick={e => { e.stopPropagation(); setMenuOpen(false); router.push('/screening-room'); }}
+              onClick={e => { e.stopPropagation(); selectDoor(() => enterMirage()); }}
               style={{
-                background: 'transparent',
-                border: 'none',
-                cursor: 'pointer',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: 6,
-                padding: 0,
+                background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, width: '100%',
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14, textAlign: 'left',
+                animation: menuClosing
+                  ? 'menuFadeOut 0.22s ease both'
+                  : reduceMotion
+                    ? 'menuBackingIn 0.3s ease both'
+                    : 'menuDoorRise 0.55s cubic-bezier(0.16,0.84,0.3,1) 0.18s both',
               }}
             >
-              <img
-                src="/screening-room-logo-temp-01.png"
-                alt="Screening Room"
-                style={{
-                  width: 30,
-                  height: 30,
-                  objectFit: 'contain',
-                  display: 'block',
-                  flexShrink: 0,
-                }}
-              />
-              <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 8, color: '#ffffff', letterSpacing: '-0.16px', textTransform: 'uppercase' }}>
-                SCREENING ROOM
+              <span style={{ flex: '1 1 auto', minWidth: 0, fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'clamp(36px, 13vw, 56px)', lineHeight: 0.92, letterSpacing: '-0.03em', color: '#FFFFFF', textTransform: 'uppercase' }}>
+                Mirage View
               </span>
+              <img src="/mirage-logo-thick-red-new.png" alt="" style={{ width: 48, height: 'auto', objectFit: 'contain', flexShrink: 0 }} />
             </button>
           </div>
         </div>
