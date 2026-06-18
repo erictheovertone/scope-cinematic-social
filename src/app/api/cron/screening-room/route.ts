@@ -18,6 +18,9 @@ const BASE_CHAIN = 8453;
 const TOP_N = 50;
 const BATCH = 20;          // getCoins hard cap = 20 ids/call ("max batch size is 20"); page above this
 const RECONCILE_CAP = 25;  // bound the per-run reconcile of incomplete mints
+const MAX_RETRIES = 4;     // retry a 429'd batch before treating the run as incomplete
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 export async function GET(req: NextRequest) {
   // Vercel Cron sends `Authorization: Bearer <CRON_SECRET>` when CRON_SECRET is
@@ -73,22 +76,41 @@ export async function GET(req: NextRequest) {
 
   // ── 2. Batched getCoins → marketCap (+ volume for reference) per coin. Both
   //    come off the SAME payload — no extra call. The room now ranks by VALUE.
+  //    Each batch RETRIES 429s. If a batch still fails after retries, the read
+  //    is INCOMPLETE — we must NOT rank/award on partial data (a dropped coin
+  //    would silently fall out of the room), so the run aborts below and keeps
+  //    the last good cache intact.
   const stats = new Map<string, { marketCap: number; volume: number; symbol?: string }>();
+  let incompleteRead = false;
   for (let i = 0; i < coins.length; i += BATCH) {
     const batch = coins.slice(i, i + BATCH);
-    try {
-      const res: any = await getCoins({ coins: batch.map((c) => ({ chainId: BASE_CHAIN, collectionAddress: c.coin_address! })) });
-      apiCalls++;
-      for (const z of res?.data?.zora20Tokens ?? []) {
-        if (z?.address) stats.set(z.address.toLowerCase(), {
-          marketCap: parseFloat(z.marketCap ?? '0') || 0,
-          volume: parseFloat(z.totalVolume ?? '0') || 0,
-          symbol: z.symbol,
-        });
+    let ok = false;
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      try {
+        const res: any = await getCoins({ coins: batch.map((c) => ({ chainId: BASE_CHAIN, collectionAddress: c.coin_address! })) });
+        apiCalls++;
+        for (const z of res?.data?.zora20Tokens ?? []) {
+          if (z?.address) stats.set(z.address.toLowerCase(), {
+            marketCap: parseFloat(z.marketCap ?? '0') || 0,
+            volume: parseFloat(z.totalVolume ?? '0') || 0,
+            symbol: z.symbol,
+          });
+        }
+        ok = true;
+        break;
+      } catch (e: any) {
+        if (attempt < MAX_RETRIES - 1) { await sleep(500 * Math.pow(2, attempt)); continue; }
+        console.error('[screening-room] getCoins batch failed after retries:', e?.message);
       }
-    } catch (e: any) {
-      console.error('[screening-room] getCoins batch failed:', e?.message);
     }
+    if (!ok) incompleteRead = true;
+  }
+
+  // ABORT on an incomplete read — keep the existing valid cache rather than
+  // overwriting it with a partial (mis)ranking. SRH stays as last computed.
+  if (incompleteRead) {
+    console.warn('[screening-room] incomplete read (rate-limited after retries) — keeping existing cache, skipping write.');
+    return NextResponse.json({ ok: false, skipped: 'incomplete-read', ms: Date.now() - t0, apiCalls, reconciled });
   }
 
   // ── 3. Rank by MARKET CAP desc, take top 50 (only coins Zora returned).

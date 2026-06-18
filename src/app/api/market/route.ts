@@ -21,7 +21,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCoins, setApiKey } from "@zoralabs/coins-sdk";
 
 const CHAIN_ID = 8453; // Base
-const TTL_MS = 45_000;
 const MAX_ADDRESSES = 50;
 
 interface CoinRead {
@@ -35,51 +34,72 @@ interface CoinRead {
   symbol: string | null;
 }
 
+const TTL_MS_FOUND = 45_000; // a real read is fresh ~45s
+const NEG_TTL_MS = 8_000;    // a genuine not-found is re-checked sooner (don't hammer, don't trust forever)
+const MAX_RETRIES = 4;       // RETRY 429s in-request instead of serving an empty miss
+
 const cache = new Map<string, { data: CoinRead; at: number }>();
-let inflight: Promise<void> | null = null;
-let inflightAddrs = new Set<string>();
-let backoffUntil = 0;
-let backoffMs = 2_000;
+// Per-ADDRESS in-flight tracking — a concurrent request never overwrites a
+// shared promise before its addresses resolve (the old cold-fetch race that
+// returned found:false for 9/10 coins on a feed-load burst).
+const inflight = new Map<string, Promise<void>>();
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+const EMPTY: CoinRead = { found: false, priceInUsdc: null, marketCap: null, uniqueHolders: 0, symbol: null };
 
 if (process.env.ZORA_API_KEY) setApiKey(process.env.ZORA_API_KEY);
 
+// Fetch a batch, RETRYING 429s with backoff. Caches ONLY a SUCCESSFUL read —
+// real data, or a genuine not-found (the call succeeded but Zora doesn't index
+// the coin). A FAILED call (429/error after all retries) caches NOTHING, so the
+// addresses stay uncached and the next request retries them — a transient rate
+// limit is never frozen into an authoritative "missing".
 async function fetchUpstream(addresses: string[]): Promise<void> {
-  if (Date.now() < backoffUntil) return; // in backoff — stale gets served
-  try {
-    const res: any = await getCoins({
-      coins: addresses.map((collectionAddress) => ({ chainId: CHAIN_ID, collectionAddress })),
-    });
-    const tokens: any[] = res?.data?.zora20Tokens ?? [];
-    const byAddr = new Map<string, any>(
-      tokens.filter(Boolean).map((t: any) => [(t.address || "").toLowerCase(), t])
-    );
-    const now = Date.now();
-    for (const a of addresses) {
-      const t = byAddr.get(a);
-      cache.set(a, {
-        at: now,
-        data: t
-          ? {
-              found: true,
-              priceInUsdc: t.tokenPrice?.priceInUsdc ?? null,
-              marketCap: t.marketCap ?? null,
-              uniqueHolders: Number(t.uniqueHolders) || 0,
-              symbol: t.symbol ?? null,
-            }
-          : { found: false, priceInUsdc: null, marketCap: null, uniqueHolders: 0, symbol: null },
+  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+    try {
+      const res: any = await getCoins({
+        coins: addresses.map((collectionAddress) => ({ chainId: CHAIN_ID, collectionAddress })),
       });
-    }
-    backoffMs = 2_000; // healthy again
-  } catch (e: any) {
-    const msg = String(e?.message ?? e);
-    if (msg.includes("429") || e?.status === 429) {
-      backoffUntil = Date.now() + backoffMs;
-      console.warn(`[api/market] upstream 429 — backing off ${backoffMs}ms (key ${process.env.ZORA_API_KEY ? "present" : "MISSING"})`);
-      backoffMs = Math.min(backoffMs * 2, 60_000);
-    } else {
-      console.error("[api/market] upstream error:", msg.slice(0, 200));
+      const tokens: any[] = res?.data?.zora20Tokens ?? [];
+      const byAddr = new Map<string, any>(
+        tokens.filter(Boolean).map((t: any) => [(t.address || "").toLowerCase(), t])
+      );
+      const now = Date.now();
+      for (const a of addresses) {
+        const t = byAddr.get(a);
+        cache.set(a, {
+          at: now,
+          data: t
+            ? {
+                found: true,
+                priceInUsdc: t.tokenPrice?.priceInUsdc ?? null,
+                marketCap: t.marketCap ?? null,
+                uniqueHolders: Number(t.uniqueHolders) || 0,
+                symbol: t.symbol ?? null,
+              }
+            : { ...EMPTY }, // genuine not-found (call succeeded) — short-lived, re-checked
+        });
+      }
+      return; // success
+    } catch (e: any) {
+      const msg = String(e?.message ?? e);
+      const is429 = msg.includes("429") || e?.status === 429;
+      if (attempt < MAX_RETRIES - 1) {
+        await sleep(Math.min(400 * Math.pow(2, attempt), 4_000)); // 0.4s, 0.8s, 1.6s
+        continue;
+      }
+      // Exhausted — do NOT cache. Leave uncached so the next poll retries.
+      console.error(`[api/market] upstream failed after ${MAX_RETRIES} tries${is429 ? " (429)" : ""} (key ${process.env.ZORA_API_KEY ? "present" : "MISSING"}):`, msg.slice(0, 160));
+      return;
     }
   }
+}
+
+function startFetch(addresses: string[]): void {
+  const p = fetchUpstream(addresses).finally(() => {
+    for (const a of addresses) if (inflight.get(a) === p) inflight.delete(a);
+  });
+  for (const a of addresses) inflight.set(a, p);
 }
 
 export async function GET(req: NextRequest) {
@@ -92,28 +112,23 @@ export async function GET(req: NextRequest) {
   }
 
   const now = Date.now();
-  const missing = addresses.filter((a) => !cache.has(a));
-  const stale = addresses.filter((a) => cache.has(a) && now - cache.get(a)!.at > TTL_MS);
+  const isFresh = (a: string) => {
+    const h = cache.get(a);
+    if (!h) return false;
+    const ttl = h.data.found ? TTL_MS_FOUND : NEG_TTL_MS; // not-found re-checked sooner
+    return now - h.at <= ttl;
+  };
 
-  if (missing.length > 0) {
-    // Cold addresses must wait for data; dedupe concurrent identical fetches.
-    const need = missing.filter((a) => !inflightAddrs.has(a));
-    if (need.length > 0 || !inflight) {
-      const batch = [...new Set([...missing, ...stale])];
-      inflightAddrs = new Set(batch);
-      inflight = fetchUpstream(batch).finally(() => { inflight = null; inflightAddrs = new Set(); });
-    }
-    await inflight;
-  } else if (stale.length > 0 && !inflight) {
-    // Stale-while-revalidate: serve immediately, refresh in background.
-    const batch = [...stale];
-    inflightAddrs = new Set(batch);
-    inflight = fetchUpstream(batch).finally(() => { inflight = null; inflightAddrs = new Set(); });
-  }
+  // Everything not fresh needs a fetch; start one only for addresses not already
+  // in flight, then AWAIT the per-address promises that cover what we need.
+  const need = addresses.filter((a) => !isFresh(a));
+  const toFetch = need.filter((a) => !inflight.has(a));
+  if (toFetch.length > 0) startFetch(toFetch);
+  await Promise.all(need.map((a) => inflight.get(a)).filter(Boolean));
 
   const markets: Record<string, CoinRead> = {};
   for (const a of addresses) {
-    markets[a] = cache.get(a)?.data ?? { found: false, priceInUsdc: null, marketCap: null, uniqueHolders: 0, symbol: null };
+    markets[a] = cache.get(a)?.data ?? { ...EMPTY };
   }
   return NextResponse.json({ markets });
 }

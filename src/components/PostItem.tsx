@@ -126,14 +126,25 @@ export default function PostItem({ post, onImageClick, commentsOpen, onToggleCom
   useEffect(() => {
     if (!post.coin_address || post.token_standard !== 'coin') return;
     let cancelled = false;
-    economy.getPostMarket(post.id)
-      .then((m) => {
-        if (cancelled) return;
-        // No market yet (untraded coin → Zora marketCap 0) shows "—", never a
-        // misleading "$0.00". Matches the no-price convention used elsewhere.
-        setMc(m.mcUsd > 0 ? `$${m.mcUsd < 1 ? m.mcUsd.toFixed(2) : Math.round(m.mcUsd).toLocaleString()}` : '—');
-      })
-      .catch((e) => console.error('[PostItem] coin MC fetch error:', e));
+    let tries = 0;
+    const MAX_TRIES = 6; // ~9s of retries before giving up on a stubborn read
+    const attempt = () => {
+      economy.getPostMarket(post.id)
+        .then((m) => {
+          if (cancelled) return;
+          // UNRESOLVED (transient — a 429 burst left this read empty): retry
+          // shortly, keep the loading "…", never render a misleading $0/"—".
+          if (m.marketResolved === false && tries < MAX_TRIES) {
+            tries++;
+            setTimeout(attempt, 1500);
+            return;
+          }
+          // RESOLVED: real MC, or "—" for a genuinely untraded coin (marketCap 0).
+          setMc(m.mcUsd > 0 ? `$${m.mcUsd < 1 ? m.mcUsd.toFixed(2) : Math.round(m.mcUsd).toLocaleString()}` : '—');
+        })
+        .catch((e) => console.error('[PostItem] coin MC fetch error:', e));
+    };
+    attempt();
     return () => { cancelled = true; };
   }, [post.id, post.coin_address, post.token_standard, economy, marketRefreshKey]);
 

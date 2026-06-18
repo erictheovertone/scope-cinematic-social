@@ -71,7 +71,6 @@ interface CoinRead {
   symbol: string | null;
 }
 const CLIENT_TTL_MS = 30_000;
-const FRESH_RETRY_MS = 10_000; // a just-minted coin re-checks sooner
 const marketCache = new Map<string, { data: CoinRead; at: number }>();
 
 // A settled trade invalidates the cached prices so the very next read (holdings
@@ -85,7 +84,10 @@ let batchTimer: ReturnType<typeof setTimeout> | null = null;
 function marketFor(coinAddress: string): Promise<CoinRead> {
   const addr = coinAddress.toLowerCase();
   const hit = marketCache.get(addr);
-  if (hit && Date.now() - hit.at < (hit.data.found ? CLIENT_TTL_MS : FRESH_RETRY_MS)) {
+  // Only RESOLVED reads are cached (see the set below), so an unresolved miss is
+  // never served from cache — a caller retry re-hits /api/market, which by then
+  // has retried Zora and warmed up.
+  if (hit && Date.now() - hit.at < CLIENT_TTL_MS) {
     return Promise.resolve(hit.data);
   }
   return new Promise((resolve) => {
@@ -108,7 +110,7 @@ function marketFor(coinAddress: string): Promise<CoinRead> {
         const now = Date.now();
         for (const [a, resolvers] of batch) {
           const data: CoinRead = markets[a] ?? { found: false, priceInUsdc: null, marketCap: null, uniqueHolders: 0, symbol: null };
-          marketCache.set(a, { data, at: now });
+          if (data.found) marketCache.set(a, { data, at: now }); // never cache an unresolved miss → retry re-fetches
           resolvers.forEach((r) => r(data));
         }
       }, 40);
@@ -167,6 +169,10 @@ async function realPostMarket(
     priceUsd,
     mcUsd,
     live: true,
+    // False when /api/market couldn't resolve this coin yet (transient — a 429
+    // burst). The corner/lightbox treat this as "retry shortly", NOT as a $0
+    // market. A genuinely untraded coin resolves with found:true + marketCap 0.
+    marketResolved: token.found,
     supply: PIECE_SUPPLY,
     holders: num(token.uniqueHolders),
     collectedByViewer,

@@ -190,13 +190,24 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
   useEffect(() => {
     if (!isCoinPost(post)) { setMcLabel(null); return; }
     let cancelled = false;
-    economy.getPostMarket(post.id)
-      .then((m) => {
-        if (cancelled) return;
-        // No market yet (untraded coin → marketCap 0) shows "—", not "$0.00".
-        setMcLabel(m.mcUsd > 0 ? `$${m.mcUsd < 1 ? m.mcUsd.toFixed(2) : Math.round(m.mcUsd).toLocaleString()}` : '—');
-      })
-      .catch(() => {});
+    let tries = 0;
+    const MAX_TRIES = 6;
+    const attempt = () => {
+      economy.getPostMarket(post.id)
+        .then((m) => {
+          if (cancelled) return;
+          // Unresolved (transient 429 miss) → retry shortly, keep loading.
+          if (m.marketResolved === false && tries < MAX_TRIES) {
+            tries++;
+            setTimeout(attempt, 1500);
+            return;
+          }
+          // Resolved: real MC, or "—" for a genuinely untraded coin (marketCap 0).
+          setMcLabel(m.mcUsd > 0 ? `$${m.mcUsd < 1 ? m.mcUsd.toFixed(2) : Math.round(m.mcUsd).toLocaleString()}` : '—');
+        })
+        .catch(() => {});
+    };
+    attempt();
     return () => { cancelled = true; };
   }, [post.id, post.coin_address, post.token_standard, economy, marketRefreshKey]);
 

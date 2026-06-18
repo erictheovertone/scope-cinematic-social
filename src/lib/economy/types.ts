@@ -39,6 +39,11 @@ export interface PostMarket {
   /** True when these numbers come from the real pool/index (coin posts);
       false for mocked preview data. Drives the MOCK DATA banner. */
   live: boolean;
+  /** False when the market read did not resolve this pass (transient — a 429
+      burst on /api/market). Surfaces should RETRY rather than render mcUsd as a
+      real $0. Undefined/true on the mock path and for resolved reads. A
+      genuinely untraded coin resolves true with mcUsd 0. */
+  marketResolved?: boolean;
   /** Always 10000 — the piece denomination shown in the UI. */
   supply: number;
   holders: number;
