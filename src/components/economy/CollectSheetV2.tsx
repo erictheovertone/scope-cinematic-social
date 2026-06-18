@@ -143,12 +143,14 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
   // check failure is silently ignored (the award can still land on a later
   // verified pass; Moment 2 covers the badge reveal). Celebrates ONLY when the
   // server confirms this buy newly earned First Cut (earned && firstTime).
-  const checkFirstCut = (postId: string, txHash: string) => {
+  const checkFirstCut = (postId: string, txHash: string, buyUsdAmount: number) => {
     if (!viewerWallet || !txHash) return;
     fetch('/api/first-cut/check', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ postId, txHash, buyer: viewerWallet }),
+      // buyUsd = the USD the buy flow computed (the hardened pricing path) — the
+      // server's $5 qualifying floor checks THIS purchase against it.
+      body: JSON.stringify({ postId, txHash, buyer: viewerWallet, buyUsd: buyUsdAmount }),
     })
       .then((res) => res.json())
       .then((j) => { if (j?.earned && j?.firstTime) setFirstCut({ rank: j.rank ?? null }); })
@@ -169,7 +171,7 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
         setCaptured(true); // bracket-capture snaps onto the media
         refresh();         // price/MC re-read — the buyer sees the price they moved
         ceremonyResolve(post.id);
-        checkFirstCut(post.id, r.ref); // Moment 1 — additive, non-blocking
+        checkFirstCut(post.id, r.ref, v); // Moment 1 — additive, non-blocking ($ floor)
       }
     } catch (e) {
       console.error('[collect] buy failed:', e);

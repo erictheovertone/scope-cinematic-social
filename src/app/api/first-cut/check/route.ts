@@ -11,7 +11,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { computeFirstCutRank, confirmBuyOnChain } from '@/lib/economy/firstCut';
+import { computeFirstCutRank, confirmBuyOnChain, FIRST_CUT_CONFIG } from '@/lib/economy/firstCut';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 30;
@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
   } catch {
     return NextResponse.json({ earned: false, error: 'bad request' }, { status: 400 });
   }
-  const { postId, txHash, buyer } = body ?? {};
+  const { postId, txHash, buyer, buyUsd } = body ?? {};
   if (!postId || !txHash || !buyer) {
     return NextResponse.json({ earned: false, error: 'postId, txHash, buyer required' }, { status: 400 });
   }
@@ -74,13 +74,30 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ earned: true, firstTime: false, rank: existing.rank });
   }
 
-  // Authoritative rank. Unverified read → DEFER (no write, no celebration).
-  const { rank, verified } = await computeFirstCutRank(post.coin_address, post.creator_address ?? '', buyer);
+  // The CURRENT buy must clear the $5 floor. Sub-$5 is a DEFINITIVE no-earn (not
+  // a defer): it never qualifies and never consumes a slot.
+  const min = FIRST_CUT_CONFIG.minQualifyingUsd;
+  if (typeof buyUsd === 'number' && buyUsd < min) {
+    return NextResponse.json({ earned: false, belowMin: true });
+  }
+
+  // Authoritative rank among QUALIFYING (≥$5) external founders. Unverified
+  // (degraded/truncated) read → DEFER (no write, no celebration).
+  const { rank, slotsFilled, verified } = await computeFirstCutRank(post.coin_address, post.creator_address ?? '', buyer);
   if (!verified) {
     return NextResponse.json({ earned: false, deferred: true });
   }
   if (rank == null) {
-    return NextResponse.json({ earned: false }); // 11th+ buyer — silent, no record
+    // Not (yet) among the qualifying founders. If this buy clears $5 and a slot
+    // is still open, the just-confirmed buy likely isn't indexed in the swap
+    // feed yet → DEFER so a later VERIFIED pass awards the exact rank (never
+    // guess a slot). A full window (slots filled) = a genuine 11th+ qualifying
+    // buyer → silent no-earn.
+    const qualifiesOnValue = typeof buyUsd !== 'number' || buyUsd >= min;
+    if (qualifiesOnValue && slotsFilled < FIRST_CUT_CONFIG.slots) {
+      return NextResponse.json({ earned: false, deferred: true });
+    }
+    return NextResponse.json({ earned: false }); // sub-$5, or 11th+ qualifying — no record
   }
 
   // WRITE-ONCE. ON CONFLICT (user_id, coin_address) DO NOTHING handles a race

@@ -22,12 +22,32 @@ const BASE_CHAIN = 8453;
 const SWAP_PAGE = 100;
 const SWAP_MAX_PAGES = 50;   // bound pagination; hitting the cap = unverified → defer
 const MAX_RETRIES = 3;
-const FOUNDER_SLOTS = 10;
 // keccak256("Transfer(address,address,uint256)") — the ERC-20 Transfer topic.
 const TRANSFER_TOPIC = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
 
+// ── First Cut config (tunable in ONE place, like the Collector weights) ───────
+export const FIRST_CUT_CONFIG = {
+  /** Anti-spam floor in USD, INCLUSIVE (a qualifying buy must be ≥ this). Without
+   *  it the permanent, reward-bearing badge is farmable for cents — 10 dust buys
+   *  on 10 fresh coins would mint 10 forever-positions for a dime. */
+  minQualifyingUsd: 5,
+  /** Founding slots per coin. */
+  slots: 10,
+};
+const FOUNDER_SLOTS = FIRST_CUT_CONFIG.slots;
+
 const lc = (s?: string | null) => (s ?? '').toLowerCase();
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+// USD value of a swap from its currency leg: priceUsdc (USD per currency unit) ×
+// the amount spent. Returns 0 when price/amount can't be read — a missing value
+// never clears the $5 floor (safe: a buy of unknown value can't farm a slot).
+function swapUsd(n: any): number {
+  const price = parseFloat(n?.currencyAmountWithPrice?.priceUsdc ?? '0');
+  const amt = n?.currencyAmountWithPrice?.currencyAmount?.amountDecimal;
+  const usd = (Number.isFinite(price) ? price : 0) * (typeof amt === 'number' ? amt : 0);
+  return Number.isFinite(usd) ? usd : 0;
+}
 
 let _keyed = false;
 function ensureKey() {
@@ -69,7 +89,7 @@ export async function externalFounders(
 ): Promise<FirstCutComputation> {
   ensureKey();
   const creator = lc(creatorAddress);
-  const buys: { wallet: string; ts: string }[] = [];
+  const buys: { wallet: string; ts: string; usd: number }[] = [];
   const seen = new Set<string>();
   let after: string | undefined;
   let expected = Infinity;  // swapActivities.count — verified to be the TOTAL
@@ -94,7 +114,7 @@ export async function externalFounders(
       if (!n || seen.has(n.id)) continue;
       seen.add(n.id);
       if (n.activityType !== 'BUY') continue;       // founders acquire via BUY
-      buys.push({ wallet: lc(n.senderAddress), ts: n.blockTimestamp });
+      buys.push({ wallet: lc(n.senderAddress), ts: n.blockTimestamp, usd: swapUsd(n) });
     }
     if (sa?.pageInfo?.hasNextPage && sa?.pageInfo?.endCursor) {
       after = sa.pageInfo.endCursor;
@@ -110,12 +130,16 @@ export async function externalFounders(
   const verified = !threw && reachedInception && expected !== Infinity && collected >= expected;
   if (!verified) return { founders: [], verified: false };
 
-  // Oldest-first, then distinct external wallets in acquisition order.
+  // Oldest-first, then distinct external wallets among QUALIFYING (≥$5) buys.
+  // A sub-$5 buy is skipped entirely — it never occupies or "uses up" a slot;
+  // the slot passes to the next external buyer who clears the floor.
+  const min = FIRST_CUT_CONFIG.minQualifyingUsd;
   buys.sort((a, b) => (a.ts < b.ts ? -1 : a.ts > b.ts ? 1 : 0));
   const founders: string[] = [];
   for (const b of buys) {
     if (b.wallet === creator) continue;             // creator never earns First Cut
-    if (founders.includes(b.wallet)) continue;      // distinct; keep first acquisition
+    if (b.usd < min) continue;                      // sub-$5 — invisible to First Cut
+    if (founders.includes(b.wallet)) continue;      // distinct; keep first QUALIFYING buy
     founders.push(b.wallet);
     if (founders.length >= FOUNDER_SLOTS) break;
   }
@@ -151,24 +175,27 @@ export async function confirmBuyOnChain(
 }
 
 export interface FirstCutCheck {
-  rank: number | null;   // 1..10 if a founder, else null
+  rank: number | null;   // 1..10 if already among the qualifying founders, else null
+  slotsFilled: number;   // # qualifying (≥$5, external) founders currently filled (≤10)
   verified: boolean;     // false → defer (do not award/celebrate this pass)
 }
 
 /**
- * Is `buyerWallet` one of the coin's first 10 external founders? Authoritative:
- * count-verified swap history for the ranking. `verified:false` → defer.
+ * Is `buyerWallet` one of the coin's first 10 QUALIFYING external founders
+ * (≥$5 buys)? Authoritative: count-verified swap history for the ranking.
+ * `verified:false` → defer. `slotsFilled` lets the caller tell a still-open
+ * window (a just-confirmed buy may not be indexed yet → defer) from a full one.
  */
 export async function computeFirstCutRank(
   coinAddress: string,
   creatorAddress: string,
   buyerWallet: string,
 ): Promise<FirstCutCheck> {
-  if (lc(buyerWallet) === lc(creatorAddress)) return { rank: null, verified: true }; // creator excluded, definitively
+  if (lc(buyerWallet) === lc(creatorAddress)) return { rank: null, slotsFilled: 0, verified: true }; // creator excluded
   const { founders, verified } = await externalFounders(coinAddress, creatorAddress);
-  if (!verified) return { rank: null, verified: false };
+  if (!verified) return { rank: null, slotsFilled: 0, verified: false };
   const idx = founders.indexOf(lc(buyerWallet));
-  return { rank: idx >= 0 ? idx + 1 : null, verified: true };
+  return { rank: idx >= 0 ? idx + 1 : null, slotsFilled: founders.length, verified: true };
 }
 
 export { getAddress };
