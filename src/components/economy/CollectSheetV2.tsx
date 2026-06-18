@@ -140,22 +140,40 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
   };
 
   // Moment 1 — the in-flow First Cut check. Fire-and-forget AFTER the buy's own
-  // success is already set: it must never block or delay the confirmation, and a
-  // check failure is silently ignored (the award can still land on a later
-  // verified pass; Moment 2 covers the badge reveal). Celebrates ONLY when the
-  // server confirms this buy newly earned First Cut (earned && firstTime).
+  // success is already set: it must never block or delay the confirmation.
+  // Celebrates ONLY when the server confirms this buy newly earned First Cut
+  // (earned && firstTime).
+  //
+  // DEFERRED-AWARD RETRY: the server returns deferred:true when the buy clears
+  // the floor and a slot is open but the buy isn't in Zora's swap feed yet
+  // (indexing lag). A defer used to drop forever; now we re-check over the
+  // indexing window (~42s, capped) so a genuine-but-not-yet-indexed earn still
+  // lands. Each re-check is the SAME authoritative server check (verified swap
+  // read + on-chain confirm), so it only ever awards a real founder — a defer
+  // that resolves to "not a founder" (sub-floor / slot filled) correctly stops.
+  const FIRST_CUT_RETRY_MS = [5000, 12000, 25000]; // re-check a defer, then stop
   const checkFirstCut = (postId: string, txHash: string, buyUsdAmount: number) => {
     if (!viewerWallet || !txHash) return;
-    fetch('/api/first-cut/check', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      // buyUsd = the USD the buy flow computed (the hardened pricing path) — the
-      // server's $5 qualifying floor checks THIS purchase against it.
-      body: JSON.stringify({ postId, txHash, buyer: viewerWallet, buyUsd: buyUsdAmount }),
-    })
-      .then((res) => res.json())
-      .then((j) => { if (j?.earned && j?.firstTime) setFirstCut({ rank: j.rank ?? null }); })
-      .catch(() => { /* additive beat — a check failure never disturbs the buy */ });
+    const attempt = (retryIdx: number) => {
+      fetch('/api/first-cut/check', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        // buyUsd = the USD the buy flow computed (the hardened pricing path) — the
+        // server's qualifying floor checks THIS purchase against it.
+        body: JSON.stringify({ postId, txHash, buyer: viewerWallet, buyUsd: buyUsdAmount }),
+      })
+        .then((res) => res.json())
+        .then((j) => {
+          if (j?.earned && j?.firstTime) { setFirstCut({ rank: j.rank ?? null }); return; }
+          // Retry ONLY a defer (genuine earn awaiting indexing). A definitive
+          // earned:false (sub-floor / slot full / already held) never retries.
+          if (j?.deferred && retryIdx < FIRST_CUT_RETRY_MS.length) {
+            setTimeout(() => attempt(retryIdx + 1), FIRST_CUT_RETRY_MS[retryIdx]);
+          }
+        })
+        .catch(() => { /* additive beat — a check failure never disturbs the buy */ });
+    };
+    attempt(0);
   };
 
   const doBuy = async () => {

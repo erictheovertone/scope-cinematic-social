@@ -28,9 +28,13 @@ const TRANSFER_TOPIC = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a
 // ── First Cut config (tunable in ONE place, like the Collector weights) ───────
 export const FIRST_CUT_CONFIG = {
   /** Anti-spam floor in USD, INCLUSIVE (a qualifying buy must be ≥ this). Without
-   *  it the permanent, reward-bearing badge is farmable for cents — 10 dust buys
-   *  on 10 fresh coins would mint 10 forever-positions for a dime. */
-  minQualifyingUsd: 5,
+   *  it the permanent, reward-bearing badge is farmable for cents.
+   *  SET TO $4.50 = a 10% slippage tolerance below the $5 intent: a genuine $5
+   *  buy nets <$5 of pool value after slippage/fees (a live test hit $4.99 and
+   *  was wrongly disqualified by a strict $5.00). $4.50 rescues real ~$5 backers
+   *  at the boundary while keeping spam impossible — $0.02 dust is nowhere near
+   *  it. Applies uniformly to current AND historical buys. */
+  minQualifyingUsd: 4.5,
   /** Founding slots per coin. */
   slots: 10,
 };
