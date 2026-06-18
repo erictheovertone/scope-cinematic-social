@@ -366,7 +366,7 @@ export default function PublicProfilePage() {
               onClick={() => setActiveTab('main')}
               style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer' }}
             >
-              <span style={{ ...SKB, fontSize: 8, color: activeTab === 'main' ? '#FF0000' : 'white', textTransform: 'uppercase', letterSpacing: '-0.16px' }}>MAIN</span>
+              <span style={{ ...SKB, fontSize: 8, color: activeTab === 'main' ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '-0.16px' }}>MAIN</span>
             </button>
           )}
 
@@ -382,7 +382,7 @@ export default function PublicProfilePage() {
             style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', animation: headerUnsnapping ? 'snapOutUp 0.28s cubic-bezier(0.16,1,0.3,1) 55ms both' : headerSnapped ? 'snapInUp 0.32s cubic-bezier(0.16,1,0.3,1) 110ms both' : 'none' }}
           >
             <img
-              src="/theatre-mode-logo-new-lg.png"
+              src="/theatre-mode-eye-solo.png"
               style={{ height: 26, width: 'auto', display: 'block', opacity: activeTab === 'theatre' ? 1 : 0.7, position: 'relative', left: (headerSnapped || headerUnsnapping) ? 0 : 10 }}
               alt="Theatre"
             />
@@ -392,7 +392,7 @@ export default function PublicProfilePage() {
             onClick={() => setActiveTab('collected')}
             style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', animation: headerUnsnapping ? 'snapOutRight 0.28s cubic-bezier(0.16,1,0.3,1) 0ms both' : headerSnapped ? 'snapInRight 0.32s cubic-bezier(0.16,1,0.3,1) 165ms both' : 'none' }}
           >
-            <span style={{ ...SKB, fontSize: 8, color: activeTab === 'collected' ? '#FF0000' : 'white', textTransform: 'uppercase', letterSpacing: '-0.16px' }}>COLLECTED</span>
+            <span style={{ ...SKB, fontSize: 8, color: activeTab === 'collected' ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '-0.16px' }}>COLLECTED</span>
           </button>
         </div>
       </div>
