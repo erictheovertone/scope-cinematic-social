@@ -22,7 +22,7 @@ import { supabase } from "@/lib/supabase/client";
 import { mockEconomy, PIECE_SUPPLY, FOUNDING_AMOUNT } from "./mock";
 import { publicClient, buyCoin, sellCoin } from "@/lib/zoraCoins";
 import { getEthUsdRate } from "@/lib/coingecko";
-import type { EconomyApi, PostMarket, Holding, BuyQuote, SellQuote, TradeCurrency, CollectResult } from "./types";
+import type { EconomyApi, PostMarket, Holding, BuyQuote, SellQuote, TradeCurrency, CollectResult, Badges } from "./types";
 
 const TOKENS_PER_PIECE = 100_000;
 
@@ -186,6 +186,21 @@ export function createRealEconomy(
       const coinAddress = await coinAddressFor(postId);
       if (!coinAddress) return mockEconomy.getPostMarket(postId);
       return realPostMarket(coinAddress, viewerAddress);
+    },
+
+    // FIRST CUT is authoritative: firstCutCount comes from the immutable
+    // first_cut_awards table (one row per coin where the user is a first-10
+    // founder), NOT the mock. >0 → the First Cut badge lights up. Other badge
+    // flags still read from their own columns on the profile pages; this only
+    // makes the First Cut signal real.
+    async getBadges(userId: string): Promise<Badges> {
+      const base = await mockEconomy.getBadges(userId).catch(() => ({} as Badges));
+      const { count } = await supabase
+        .from("first_cut_awards")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", userId);
+      const firstCutCount = count ?? 0;
+      return { ...base, firstCutCount: firstCutCount > 0 ? firstCutCount : undefined };
     },
 
     // ── Stage B: real quotes + trades for coin posts (mock otherwise) ────────

@@ -17,8 +17,10 @@
 // Rendered in place of the real CollectSheet only when economyPreviewEnabled().
 
 import { useEffect, useState } from 'react';
+import { usePrivy } from '@privy-io/react-auth';
 import { useEconomy } from '@/components/EconomyProvider';
 import { economyPreviewEnabled } from '@/lib/economy/flag';
+import FirstCutFlourish from '@/components/economy/FirstCutFlourish';
 import type { PostMarket, BuyQuote, SellQuote, TradeCurrency } from '@/lib/economy/types';
 import ApertureMark from '@/components/economy/ApertureMark';
 import TickerMark from '@/components/economy/TickerMark';
@@ -51,6 +53,11 @@ const SELL_PCTS = [25, 50, 100];
 
 export default function CollectSheetV2({ post, visible, onClose, tradeable = true }: Props) {
   const economy = useEconomy();
+  const { user } = usePrivy();
+  const viewerWallet = user?.wallet?.address ?? null;
+  // Moment 1 (First Cut flourish) — set only when the in-flow check verifies
+  // THIS buy newly earned First Cut. Additive over the buy's success state.
+  const [firstCut, setFirstCut] = useState<{ rank: number | null } | null>(null);
   const [market, setMarket] = useState<PostMarket | null>(null);
   const [mode, setMode] = useState<'buy' | 'sell'>('buy');
   const [showSlots, setShowSlots] = useState(false);
@@ -82,6 +89,7 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
       setShowSlots(false); setDone(null); setMode('buy');
       setBuyUsd(''); setBuyQuote(null); setSellPieces(0); setSellQuote(null);
       setConfirmEndFirstCut(false); setTradeError(null); setCaptured(false);
+      setFirstCut(null);
       return;
     }
     let cancelled = false;
@@ -130,6 +138,23 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
     setTimeout(() => onClose(), 4000);
   };
 
+  // Moment 1 — the in-flow First Cut check. Fire-and-forget AFTER the buy's own
+  // success is already set: it must never block or delay the confirmation, and a
+  // check failure is silently ignored (the award can still land on a later
+  // verified pass; Moment 2 covers the badge reveal). Celebrates ONLY when the
+  // server confirms this buy newly earned First Cut (earned && firstTime).
+  const checkFirstCut = (postId: string, txHash: string) => {
+    if (!viewerWallet || !txHash) return;
+    fetch('/api/first-cut/check', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ postId, txHash, buyer: viewerWallet }),
+    })
+      .then((res) => res.json())
+      .then((j) => { if (j?.earned && j?.firstTime) setFirstCut({ rank: j.rank ?? null }); })
+      .catch(() => { /* additive beat — a check failure never disturbs the buy */ });
+  };
+
   const doBuy = async () => {
     const v = parseFloat(buyUsd);
     if (!isFinite(v) || v <= 0) return;
@@ -144,6 +169,7 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
         setCaptured(true); // bracket-capture snaps onto the media
         refresh();         // price/MC re-read — the buyer sees the price they moved
         ceremonyResolve(post.id);
+        checkFirstCut(post.id, r.ref); // Moment 1 — additive, non-blocking
       }
     } catch (e) {
       console.error('[collect] buy failed:', e);
@@ -610,6 +636,9 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
           </p>
         )}
       </div>
+
+      {/* Moment 1 — quick First Cut flourish over the confirmation (additive). */}
+      <FirstCutFlourish show={!!firstCut} rank={firstCut?.rank} onDone={() => setFirstCut(null)} />
     </>
   );
 }

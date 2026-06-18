@@ -45,6 +45,11 @@ export default function BannerBadgeStrip({
       a living iridescent (magenta/pink/plum) shimmer instead of the static art.
       Icons stay above it (z-index) and legible. */
   holo = false,
+  /** Step 3, Moment 2 — the badge key to focus-pull ONCE on first appearance
+      (the rack-focus reveal settling into its home). The pull plays only if that
+      badge is in the VISIBLE set — i.e. there's an open banner slot; an
+      overflowed badge is still earned/shown elsewhere, just not animated here. */
+  pullKey,
   onPress,
 }: {
   badges: StripBadge[];
@@ -53,6 +58,7 @@ export default function BannerBadgeStrip({
   iconSize?: number;
   dividerColor?: string;
   holo?: boolean;
+  pullKey?: string | null;
   onPress?: () => void;
 }) {
   const overflow = badges.length > MAX_VISIBLE;
@@ -96,14 +102,21 @@ export default function BannerBadgeStrip({
             animation: 'holoDrift 14s ease-in-out infinite',
           }} />
         )}
-        {visible.map((b) => (
-          <img
-            key={b.key}
-            src={b.src}
-            alt={b.title ?? b.key}
-            style={{ position: 'relative', zIndex: 1, width: iconSize, height: iconSize, objectFit: 'contain', display: 'block' }}
-          />
-        ))}
+        {visible.map((b) => {
+          const pull = pullKey != null && b.key === pullKey;
+          return (
+            <img
+              key={b.key}
+              src={b.src}
+              alt={b.title ?? b.key}
+              className={pull ? 'focus-pull' : undefined}
+              style={{
+                position: 'relative', zIndex: 1, width: iconSize, height: iconSize, objectFit: 'contain', display: 'block',
+                ...(pull ? { animation: 'focusPull 2s cubic-bezier(0.16,0.84,0.3,1) both' } : null),
+              }}
+            />
+          );
+        })}
         {extra > 0 && (
           <span style={{ position: 'relative', zIndex: 1, ...SKB, fontSize: Math.round(iconSize * 0.5), color: '#FF0000', lineHeight: 1 }}>+{extra}</span>
         )}

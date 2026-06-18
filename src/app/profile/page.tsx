@@ -119,16 +119,41 @@ const userLayoutId = stableLayoutId;
   // founding positions that aren't real yet. Off-flag it stays 0 (coin absent).
   const economy = useEconomy();
   const [firstCutCount, setFirstCutCount] = useState(0);
+  const [badgesLoaded, setBadgesLoaded] = useState(false); // firstCutCount has resolved
+  const [firstCutPull, setFirstCutPull] = useState<string | null>(null); // Moment 2 focus-pull
   const [dividerLine, setDividerLine] = useState<string | null>(null); // chosen banner divider (Piece 2)
   const [holoBanner, setHoloBanner] = useState(false); // Augmented holo backdrop (Piece 3)
   useEffect(() => {
-    if (!economyPreviewEnabled() || !supabaseUserId) { setFirstCutCount(0); return; }
+    if (!economyPreviewEnabled() || !supabaseUserId) { setFirstCutCount(0); setBadgesLoaded(true); return; }
     let cancelled = false;
     economy.getBadges(supabaseUserId)
-      .then((b) => { if (!cancelled) setFirstCutCount(b.firstCutCount ?? 0); })
-      .catch(() => {});
+      .then((b) => { if (!cancelled) { setFirstCutCount(b.firstCutCount ?? 0); setBadgesLoaded(true); } })
+      .catch(() => { if (!cancelled) setBadgesLoaded(true); });
     return () => { cancelled = true; };
   }, [economy, supabaseUserId]);
+
+  // ── Moment 2 (Step 3) — profile focus-pull via client-diff ──────────────────
+  // The first time the user sees their OWN profile after newly earning First
+  // Cut, the badge focus-pulls into the banner. We diff the resolved badge keys
+  // against a locally stored last-seen set: a COLD start (no stored set) seeds
+  // silently — only a genuine NEW arrival animates, never pre-existing badges.
+  // Runs only after badges have loaded (firstCutCount resolves async, so a
+  // pre-load seed would falsely flag an old award as new). Reads the STORED
+  // award (firstCutCount ← the immutable table), so it can never contradict
+  // what Moment 1 celebrated. The strip itself gates the pull on an open slot.
+  useEffect(() => {
+    if (!badgesLoaded || !supabaseUserId) return;
+    const keys = resolveBadges({ isFoundingMember, isTopCollector, isScreeningRoomHolder, isPaidMember, isInHouseCreator, firstCutCount }).map((b) => b.key);
+    const storeKey = `scope:seenBadges:${supabaseUserId}`;
+    let seen: string[] | null = null;
+    try { const raw = localStorage.getItem(storeKey); seen = raw ? JSON.parse(raw) : null; } catch {}
+    if (Array.isArray(seen) && keys.includes('firstCut') && !seen.includes('firstCut')) {
+      setFirstCutPull('firstCut');
+      setTimeout(() => setFirstCutPull(null), 2200);
+    }
+    try { localStorage.setItem(storeKey, JSON.stringify(keys)); } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [badgesLoaded, supabaseUserId, firstCutCount, isFoundingMember, isTopCollector, isScreeningRoomHolder, isPaidMember, isInHouseCreator]);
 
   // PORTFOLIO MC — VALUATION RULE 2 (ratified): the PUBLIC number counts
   // EXTERNAL positions only (coins collected from others), never the user's
@@ -335,6 +360,7 @@ const userLayoutId = stableLayoutId;
           badges={resolveBadges({ isFoundingMember, isTopCollector, isScreeningRoomHolder, isPaidMember, isInHouseCreator, firstCutCount })
             .filter((b) => b.bannerSrc)
             .map((b) => ({ key: b.key, src: b.bannerSrc as string, title: b.title }))}
+          pullKey={firstCutPull}
           onPress={() => setShowBadgeSheet(true)}
         />
       </div>

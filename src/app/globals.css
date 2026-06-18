@@ -155,6 +155,33 @@
   100% { opacity: 0; transform: scale(1.4); }
 }
 
+/* ── First Cut flourish (Step 3, Moment 1) — quick game-achievement spike ─────
+   The badge mark punches in with an overshoot, a red ring flares past it, the
+   "FIRST CUT" mark snaps up; the whole beat holds ~1.8s then clears. Energetic,
+   rewarding, gone — additive over the buy's own confirmation, never blocking. */
+@keyframes fcMark {
+  0%   { opacity: 0; transform: scale(0.3) rotate(-12deg); }
+  45%  { opacity: 1; transform: scale(1.18) rotate(0deg); }
+  62%  { transform: scale(0.96); }
+  78%  { transform: scale(1.04); }
+  88%  { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.06); }
+}
+@keyframes fcRing {
+  0%   { opacity: 0; transform: scale(0.4); }
+  35%  { opacity: 0.9; }
+  100% { opacity: 0; transform: scale(2.4); }
+}
+@keyframes fcLabel {
+  0%, 30% { opacity: 0; transform: translateY(8px); letter-spacing: 0.5em; }
+  50%     { opacity: 1; transform: translateY(0); letter-spacing: 0.24em; }
+  85%     { opacity: 1; }
+  100%    { opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fc-mark, .fc-ring, .fc-label { animation: simpleFade 0.4s ease both !important; }
+}
+
 @keyframes stripeShine {
   0% { opacity: 0.3; box-shadow: none; }
   30% { opacity: 1; box-shadow: 2px 0 12px 2px rgba(255,0,0,0.8); }
