@@ -130,9 +130,10 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
   // After the held terminal beat, the sheet returns the collector to their
   // ORIGINATING context — it's an overlay, so closing it lands them exactly
   // where they were (feed or visited profile, scroll position intact).
-  const ceremonyResolve = (postId: string) => {
+  const ceremonyResolve = (postId: string, piecesDelta?: number) => {
     // The ONE post-trade refresh: MC chips re-read + wallet holdings refetch.
-    notifyTradeSettled(postId);
+    // piecesDelta (+buy / −sell, receipt-true) drives the optimistic wallet patch.
+    notifyTradeSettled(postId, piecesDelta != null ? { piecesDelta } : undefined);
     // ~4s hold: time to read the count and watch the price move before the
     // sheet returns the collector to where they came from.
     setTimeout(() => onClose(), 4000);
@@ -170,7 +171,7 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
         setDone(market?.live ? `[ COLLECTED · ${n} ${n === 1 ? 'PIECE' : 'PIECES'} ]` : `COLLECTED ${n} ${n === 1 ? 'PIECE' : 'PIECES'} (MOCK)`);
         setCaptured(true); // bracket-capture snaps onto the media
         refresh();         // price/MC re-read — the buyer sees the price they moved
-        ceremonyResolve(post.id);
+        ceremonyResolve(post.id, n); // +pieces bought → optimistic wallet patch
         checkFirstCut(post.id, r.ref, v); // Moment 1 — additive, non-blocking ($ floor)
       }
     } catch (e) {
@@ -191,7 +192,7 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
         const proceeds = r.proceedsUsd != null ? ` · ${usd(r.proceedsUsd)}` : '';
         setDone(market?.live ? `[ SOLD · ${r.pieces} ${r.pieces === 1 ? 'PIECE' : 'PIECES'}${proceeds} ]` : `SOLD ${r.pieces} ${r.pieces === 1 ? 'PIECE' : 'PIECES'} (MOCK)`);
         setConfirmEndFirstCut(false); setSellPieces(0); refresh();
-        ceremonyResolve(post.id);
+        ceremonyResolve(post.id, r.pieces != null ? -r.pieces : undefined); // −pieces sold → optimistic patch
       }
     } catch (e) {
       console.error('[collect] sell failed:', e);

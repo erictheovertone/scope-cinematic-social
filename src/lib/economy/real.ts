@@ -57,6 +57,19 @@ const num = (v: unknown): number => {
   return isFinite(n) ? n : 0;
 };
 
+// Bust the SERVER /api/market cache for a just-traded coin so the next read
+// serves fresh data, not the ≤45s pre-trade price. Best-effort: a failure just
+// falls back to the normal TTL. The next GET re-reads through the hardened path.
+async function bustServerMarket(coinAddress: string): Promise<void> {
+  try {
+    await fetch("/api/market", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ bust: [coinAddress.toLowerCase()] }),
+    });
+  } catch { /* fall back to TTL */ }
+}
+
 // ── Market transport: /api/market (server-side batch/cache/key) ──────────────
 //
 // Tiles NEVER fetch Zora independently (the 429+CORS storm). getPostMarket
@@ -253,6 +266,7 @@ export function createRealEconomy(
       if (!viewerAddress || !getWalletClient) throw new Error("Wallet not ready — try again in a moment.");
       const walletClient = await getWalletClient();
       const { hash, pieces } = await buyCoin({ walletClient, sender: getAddress(viewerAddress), coinAddress, usdAmount, currency });
+      await bustServerMarket(coinAddress); // freshness: next read isn't the pre-trade price
       return { ok: true, pieces: pieces ?? 0, ref: hash };
     },
 
@@ -262,6 +276,7 @@ export function createRealEconomy(
       if (!viewerAddress || !getWalletClient) throw new Error("Wallet not ready — try again in a moment.");
       const walletClient = await getWalletClient();
       const r = await sellCoin({ walletClient, sender: getAddress(viewerAddress), coinAddress, pieces, currency });
+      await bustServerMarket(coinAddress); // freshness: next read isn't the pre-trade price
       // Receipt-true: pieces and proceeds from the trade result, never estimates.
       return { ok: true, pieces: r.pieces ?? pieces, ref: r.hash, proceedsUsd: r.proceedsUsd };
     },

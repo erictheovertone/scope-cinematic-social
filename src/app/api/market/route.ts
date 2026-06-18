@@ -132,3 +132,22 @@ export async function GET(req: NextRequest) {
   }
   return NextResponse.json({ markets });
 }
+
+// ── POST /api/market — bust cache for traded coins ───────────────────────────
+//
+// Called on a confirmed trade so the post-trade read serves FRESH data instead
+// of the ≤45s-old pre-trade price (the wrong-value-until-TTL symptom). Per-coin,
+// not whole-cache. Deletes the entries; the next GET re-reads through the SAME
+// hardened path (retry/dedup/never-cache-failed) — protections are reused, never
+// bypassed.
+export async function POST(req: NextRequest) {
+  let body: any;
+  try { body = await req.json(); } catch { return NextResponse.json({ ok: false, error: "bad request" }, { status: 400 }); }
+  const list: string[] = Array.isArray(body?.bust) ? body.bust : [];
+  let busted = 0;
+  for (const raw of list) {
+    const a = String(raw).trim().toLowerCase();
+    if (/^0x[0-9a-f]{40}$/.test(a) && cache.delete(a)) busted++;
+  }
+  return NextResponse.json({ ok: true, busted });
+}

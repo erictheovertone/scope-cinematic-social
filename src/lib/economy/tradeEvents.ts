@@ -12,16 +12,28 @@
 
 export const TRADE_SETTLED_EVENT = 'scope:market-moved';
 
-/** Fire after ANY successful trade, with the affected post. */
-export function notifyTradeSettled(postId: string): void {
-  if (typeof window === 'undefined') return;
-  window.dispatchEvent(new CustomEvent(TRADE_SETTLED_EVENT, { detail: { postId } }));
+export interface TradeSettledDetail {
+  postId: string;
+  /** Signed pieces change for the OPTIMISTIC holdings patch (+buy, −sell).
+   *  Receipt-true (the chain's word); value/order reconcile from the real read.
+   *  Optional — listeners that only refetch ignore it (backward-compatible). */
+  piecesDelta?: number;
 }
 
-/** Subscribe; returns an unsubscribe. cb gets the postId that settled. */
-export function onTradeSettled(cb: (postId: string | undefined) => void): () => void {
+/** Fire after ANY successful trade. `opts.piecesDelta` enables the optimistic
+ *  wallet patch; omit it and listeners simply refetch as before. */
+export function notifyTradeSettled(postId: string, opts?: { piecesDelta?: number }): void {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(new CustomEvent(TRADE_SETTLED_EVENT, { detail: { postId, piecesDelta: opts?.piecesDelta } }));
+}
+
+/** Subscribe; returns an unsubscribe. cb gets the postId + the full detail. */
+export function onTradeSettled(cb: (postId: string | undefined, detail?: TradeSettledDetail) => void): () => void {
   if (typeof window === 'undefined') return () => {};
-  const handler = (e: Event) => cb((e as CustomEvent).detail?.postId);
+  const handler = (e: Event) => {
+    const detail = (e as CustomEvent).detail as TradeSettledDetail | undefined;
+    cb(detail?.postId, detail);
+  };
   window.addEventListener(TRADE_SETTLED_EVENT, handler);
   return () => window.removeEventListener(TRADE_SETTLED_EVENT, handler);
 }

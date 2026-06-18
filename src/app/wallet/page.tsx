@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { usePrivy, useFundWallet, useWallets } from "@privy-io/react-auth";
 import { base } from "viem/chains";
 import { createWalletClient, custom, getAddress, parseEther, encodeFunctionData } from "viem";
@@ -163,10 +163,57 @@ export default function WalletPage() {
     return () => { cancelled = true; };
   }, [holdings, walletAddress, economy]);
 
-  // THE ONE post-trade refresh: after ANY trade (mint-flow backing, standalone
-  // collect, sell), re-pull holdings so the grey piece counts are never stale —
-  // and pull AVAILABLE so sale proceeds land (and trip the incoming-funds mark).
-  useEffect(() => onTradeSettled(() => { setHoldings(null); refreshAvailable(); }), [walletAddress]);
+  // Guards async setState after unmount (the spaced reconcile reads + interval).
+  const mountedRef = useRef(true);
+  useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
+
+  // RECONCILE (Change 3): refetch real holdings — the SERVER /api/market cache is
+  // busted on trade, so this reads fresh, not the pre-trade price. A few spaced
+  // reads converge as Zora indexes the trade; the real read always WINS over the
+  // optimistic patch. Reuses the hardened /api/market (retry/verify) — no bypass.
+  const reconcileHoldings = useCallback(() => {
+    [0, 1500, 4000].forEach((delay) => setTimeout(() => {
+      economy.getHoldings()
+        .then((h) => { if (mountedRef.current) setHoldings(h); })
+        .catch(() => {});
+    }, delay));
+  }, [economy]);
+
+  // POST-TRADE: OPTIMISTIC pieces patch (Change 2, holdings-only) THEN reconcile.
+  // The affected holding's pieces update INSTANTLY — value recomputed with the
+  // LAST KNOWN price (price/order reconcile from the real read, never guessed);
+  // a holding emptied to 0 drops out; a brand-new holding is added by reconcile.
+  // No blanking — the optimistic state shows until the real read replaces it.
+  useEffect(() => onTradeSettled((postId, detail) => {
+    const delta = detail?.piecesDelta;
+    if (postId && typeof delta === "number" && delta !== 0) {
+      setHoldings((prev) => {
+        if (!prev) return prev;
+        return prev
+          .map((h) => {
+            if (h.postId !== postId) return h;
+            const pieces = Math.max(0, h.pieces + delta);
+            return { ...h, pieces, valueUsd: (h.priceUsd ?? 0) * pieces };
+          })
+          .filter((h) => h.pieces > 0)
+          .sort((a, b) => b.valueUsd - a.valueUsd);
+      });
+    }
+    reconcileHoldings();
+    refreshAvailable();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), [walletAddress, reconcileHoldings]);
+
+  // 60s BACKGROUND staleness (Change 4): even absent an action, holdings are
+  // never older than ~60s. Light — one batched getHoldings/min (reuses the
+  // /api/market batch+cache, so no per-tile API storm / 429 regression).
+  useEffect(() => {
+    if (!walletAddress) return;
+    const id = setInterval(() => {
+      economy.getHoldings().then((h) => { if (mountedRef.current) setHoldings(h); }).catch(() => {});
+    }, 60_000);
+    return () => clearInterval(id);
+  }, [walletAddress, economy]);
 
   // Dollar figures only when the live rate exists — "$—" beats a wrong number.
   const ethUsd = ethBalance != null && ethUsdRate != null
