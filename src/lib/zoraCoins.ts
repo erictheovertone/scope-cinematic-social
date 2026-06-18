@@ -253,6 +253,12 @@ const USDC_BASE = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913" as const;
 // Transfer events to the buyer from the confirmed receipt and convert to
 // pieces. (The old balance-delta read could race the RPC and report 0.)
 const TRANSFER_TOPIC = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
+const WETH_BASE = "0x4200000000000000000000000000000000000006";
+// Withdrawal(address indexed src, uint256 wad) — emitted when WETH is unwrapped
+// to native ETH. For an ETH-out sell the router unwraps exactly the swap output
+// to the seller, so `wad` is the RECEIPT-TRUE realized proceeds in ETH (no
+// balance-read timing race).
+const WETH_WITHDRAWAL_TOPIC = "0x7fcf532c15f0a6db0bd6d0e038bea71d30d808c7d98cb3bf7268a95bf5081b65";
 export function piecesFromReceipt(receipt: any, coinAddress: string, recipient: string): number | null {
   try {
     const coin = coinAddress.toLowerCase();
@@ -413,10 +419,27 @@ export async function sellCoin({
       }
       proceedsUsd = Number(usdcWei) / 1e6;
     } else {
-      const ethAfter = await publicClient.getBalance({ address: sender });
-      const gasCost = BigInt(res?.gasUsed ?? 0) * BigInt(res?.effectiveGasPrice ?? 0);
-      const receivedWei = ethAfter - ethBefore + gasCost; // net of gas
-      const receivedEth = Number(receivedWei) / 1e18;
+      // ETH path. REALIZED OUTPUT, not balance math: the router unwraps WETH →
+      // native ETH to the seller, so the WETH Withdrawal `wad` in THIS receipt is
+      // the true proceeds (in ETH). The old balance-delta (ethAfter − ethBefore)
+      // was a timing race — a lagging RPC read of ethAfter collapsed real $4.91
+      // proceeds to ~$0.02 on the confirmation. Sum Withdrawals (one per sell;
+      // multi-hop ends in a single WETH→ETH unwrap). Fall back to the balance
+      // delta only if no Withdrawal is present (a router that sends native ETH).
+      let ethWei = BigInt(0);
+      for (const log of res?.logs ?? []) {
+        if ((log.address || "").toLowerCase() !== WETH_BASE) continue;
+        if (log.topics?.[0] !== WETH_WITHDRAWAL_TOPIC) continue;
+        ethWei += BigInt(log.data);
+      }
+      let receivedEth: number;
+      if (ethWei > BigInt(0)) {
+        receivedEth = Number(ethWei) / 1e18; // receipt-true
+      } else {
+        const ethAfter = await publicClient.getBalance({ address: sender });
+        const gasCost = BigInt(res?.gasUsed ?? 0) * BigInt(res?.effectiveGasPrice ?? 0);
+        receivedEth = Number(ethAfter - ethBefore + gasCost) / 1e18; // fallback
+      }
       const rate = await getEthUsdRate();
       proceedsUsd = rate != null && receivedEth > 0 ? receivedEth * rate : null;
     }
