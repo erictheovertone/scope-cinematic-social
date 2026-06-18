@@ -66,6 +66,7 @@ const num = (v: unknown): number => {
 interface CoinRead {
   found: boolean;
   priceInUsdc: string | null;
+  marketCap: string | null; // Zora's authoritative MC (USD) — see /api/market
   uniqueHolders: number;
   symbol: string | null;
 }
@@ -106,7 +107,7 @@ function marketFor(coinAddress: string): Promise<CoinRead> {
         }
         const now = Date.now();
         for (const [a, resolvers] of batch) {
-          const data: CoinRead = markets[a] ?? { found: false, priceInUsdc: null, uniqueHolders: 0, symbol: null };
+          const data: CoinRead = markets[a] ?? { found: false, priceInUsdc: null, marketCap: null, uniqueHolders: 0, symbol: null };
           marketCache.set(a, { data, at: now });
           resolvers.forEach((r) => r(data));
         }
@@ -149,11 +150,18 @@ async function realPostMarket(
   const viewerTokens = parseFloat(formatEther(viewerBalance as bigint));
   const collectedByViewer = Math.floor(viewerTokens / TOKENS_PER_PIECE);
 
-  // MC CONSISTENCY RULE: MC is ALWAYS price × total supply, derived here in
-  // the boundary — never fetched independently (Zora's marketCap field lags
-  // its own price and the two contradicted on screen). One source of truth:
-  // price and MC can never disagree again. No price yet → MC 0.
-  const mcUsd = priceUsd != null ? priceUsd * PIECE_SUPPLY : 0;
+  // MARKET CAP: use Zora's authoritative `marketCap` field — the SAME value the
+  // Screening Room ranks by, so the feed corner and the room agree. Critically,
+  // marketCap is populated from pool state even when no swap price has been
+  // discovered yet, so it does NOT collapse to $0.00 the way price × supply does
+  // when priceInUsdc is null (the bug: a live coin reading "MC: $0.00"). Falls
+  // back to the price-derived value only if the field is genuinely absent; a
+  // truly empty pool stays 0 (honest "market opening").
+  const mcField =
+    token.marketCap != null && isFinite(parseFloat(token.marketCap))
+      ? parseFloat(token.marketCap)
+      : null;
+  const mcUsd = mcField ?? (priceUsd != null ? priceUsd * PIECE_SUPPLY : 0);
 
   return {
     priceUsd,

@@ -27,6 +27,10 @@ const MAX_ADDRESSES = 50;
 interface CoinRead {
   found: boolean;
   priceInUsdc: string | null;
+  /** Zora's authoritative market cap (USD). Populated from pool state even
+      before a discovered swap price — so it's non-zero when priceInUsdc is
+      null. The SAME field the Screening Room ranks by. */
+  marketCap: string | null;
   uniqueHolders: number;
   symbol: string | null;
 }
@@ -58,10 +62,11 @@ async function fetchUpstream(addresses: string[]): Promise<void> {
           ? {
               found: true,
               priceInUsdc: t.tokenPrice?.priceInUsdc ?? null,
+              marketCap: t.marketCap ?? null,
               uniqueHolders: Number(t.uniqueHolders) || 0,
               symbol: t.symbol ?? null,
             }
-          : { found: false, priceInUsdc: null, uniqueHolders: 0, symbol: null },
+          : { found: false, priceInUsdc: null, marketCap: null, uniqueHolders: 0, symbol: null },
       });
     }
     backoffMs = 2_000; // healthy again
@@ -108,7 +113,7 @@ export async function GET(req: NextRequest) {
 
   const markets: Record<string, CoinRead> = {};
   for (const a of addresses) {
-    markets[a] = cache.get(a)?.data ?? { found: false, priceInUsdc: null, uniqueHolders: 0, symbol: null };
+    markets[a] = cache.get(a)?.data ?? { found: false, priceInUsdc: null, marketCap: null, uniqueHolders: 0, symbol: null };
   }
   return NextResponse.json({ markets });
 }
