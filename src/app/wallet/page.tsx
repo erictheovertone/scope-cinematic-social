@@ -207,10 +207,37 @@ export default function WalletPage() {
   // 60s BACKGROUND staleness (Change 4): even absent an action, holdings are
   // never older than ~60s. Light — one batched getHoldings/min (reuses the
   // /api/market batch+cache, so no per-tile API storm / 429 regression).
+  //
+  // KEEP-LAST-GOOD (the established rule): a background tick must NEVER overwrite
+  // a good value with $0 from a failed/unresolved price read. If a holding that
+  // was PRICED comes back unpriced this tick (a traded coin doesn't lose its
+  // discovered price → it's a failed read, not a real $0), keep its last-known
+  // value. A genuinely untraded coin (always unpriced) stays $0; a sold-out coin
+  // (0 pieces) is already dropped by getHoldings. The chunk fix above makes this
+  // rare, but the merge guarantees the collapse can never recur.
   useEffect(() => {
     if (!walletAddress) return;
     const id = setInterval(() => {
-      economy.getHoldings().then((h) => { if (mountedRef.current) setHoldings(h); }).catch(() => {});
+      economy.getHoldings()
+        .then((next) => {
+          if (!mountedRef.current) return;
+          setHoldings((prev) => {
+            if (!prev) return next;
+            const prevByPost = new Map(prev.map((h) => [h.postId, h]));
+            return next
+              .map((h) => {
+                if (h.priceUsd != null && h.valueUsd > 0) return h; // resolved — use it
+                const old = prevByPost.get(h.postId);
+                if (old && old.priceUsd != null && old.valueUsd > 0) {
+                  // unresolved this tick but previously priced → keep last good
+                  return { ...h, priceUsd: old.priceUsd, valueUsd: old.priceUsd * h.pieces };
+                }
+                return h; // genuinely unpriced (untraded) → stays $0
+              })
+              .sort((a, b) => b.valueUsd - a.valueUsd);
+          });
+        })
+        .catch(() => {});
     }, 60_000);
     return () => clearInterval(id);
   }, [walletAddress, economy]);

@@ -115,8 +115,22 @@ function marketFor(coinAddress: string): Promise<CoinRead> {
         const addrs = [...batch.keys()];
         let markets: Record<string, CoinRead> = {};
         try {
-          const res = await fetch(`/api/market?addresses=${addrs.join(",")}`);
-          markets = (await res.json())?.markets ?? {};
+          // CHUNK to ≤20 addresses/request: /api/market → getCoins caps at 20
+          // ids ("max batch size is 20"). Sending all of a wallet's >20 holdings
+          // in ONE request makes getCoins throw → EVERY coin returns found:false
+          // → every holding reads $0 (the 60s-refresh collapse). One request per
+          // ≤20 chunk; merge. Each chunk still rides the hardened /api/market.
+          const CHUNK = 20;
+          const groups: string[][] = [];
+          for (let i = 0; i < addrs.length; i += CHUNK) groups.push(addrs.slice(i, i + CHUNK));
+          const results = await Promise.all(
+            groups.map((g) =>
+              fetch(`/api/market?addresses=${g.join(",")}`)
+                .then((r) => r.json())
+                .catch((e) => { console.warn("[economy] market chunk failed:", (e as Error)?.message); return {}; })
+            )
+          );
+          for (const res of results) Object.assign(markets, res?.markets ?? {});
         } catch (e) {
           console.warn("[economy] market read failed (serving empty):", (e as Error)?.message);
         }
