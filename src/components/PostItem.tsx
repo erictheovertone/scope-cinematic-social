@@ -129,7 +129,9 @@ export default function PostItem({ post, onImageClick, commentsOpen, onToggleCom
     economy.getPostMarket(post.id)
       .then((m) => {
         if (cancelled) return;
-        setMc(`$${m.mcUsd < 1 ? m.mcUsd.toFixed(2) : Math.round(m.mcUsd).toLocaleString()}`);
+        // No market yet (untraded coin → Zora marketCap 0) shows "—", never a
+        // misleading "$0.00". Matches the no-price convention used elsewhere.
+        setMc(m.mcUsd > 0 ? `$${m.mcUsd < 1 ? m.mcUsd.toFixed(2) : Math.round(m.mcUsd).toLocaleString()}` : '—');
       })
       .catch((e) => console.error('[PostItem] coin MC fetch error:', e));
     return () => { cancelled = true; };

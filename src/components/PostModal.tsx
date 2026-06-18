@@ -193,7 +193,8 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
     economy.getPostMarket(post.id)
       .then((m) => {
         if (cancelled) return;
-        setMcLabel(`$${m.mcUsd < 1 ? m.mcUsd.toFixed(2) : Math.round(m.mcUsd).toLocaleString()}`);
+        // No market yet (untraded coin → marketCap 0) shows "—", not "$0.00".
+        setMcLabel(m.mcUsd > 0 ? `$${m.mcUsd < 1 ? m.mcUsd.toFixed(2) : Math.round(m.mcUsd).toLocaleString()}` : '—');
       })
       .catch(() => {});
     return () => { cancelled = true; };

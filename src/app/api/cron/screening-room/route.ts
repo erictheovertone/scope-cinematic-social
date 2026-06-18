@@ -94,9 +94,13 @@ export async function GET(req: NextRequest) {
   // ── 3. Rank by MARKET CAP desc, take top 50 (only coins Zora returned).
   //    Market cap is the room's metric: the most VALUABLE posts right now (more
   //    live than cumulative volume — it moves with price, as SRH intends).
+  // Only coins with an ACTUAL market cap (>0) belong in a "most valuable" room.
+  // A marketCap of 0 is Zora's real value for an UNTRADED coin (totalVolume 0) —
+  // not a fetch gap — so excluding them is correct: they have no market to
+  // showcase, and their creators shouldn't earn SRH off a post with no market.
   const ranked = coins
     .map((c) => ({ ...c, m: stats.get(c.coin_address!.toLowerCase()) }))
-    .filter((c) => c.m)
+    .filter((c) => c.m && c.m.marketCap > 0)
     .sort((a, b) => b.m!.marketCap - a.m!.marketCap)
     .slice(0, TOP_N);
 
