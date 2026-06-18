@@ -500,7 +500,7 @@ const userLayoutId = stableLayoutId;
               onClick={() => setActiveTab('main')}
               style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer' }}
             >
-              <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 9, color: activeTab === 'main' ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '-0.16px' }}>MAIN</span>
+              <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 9.5, color: activeTab === 'main' ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '-0.16px' }}>MAIN</span>
             </button>
           )}
 
@@ -526,7 +526,7 @@ const userLayoutId = stableLayoutId;
             onClick={() => setActiveTab('collected')}
             style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', animation: headerUnsnapping ? 'snapOutRight 0.28s cubic-bezier(0.16,1,0.3,1) 0ms both' : headerSnapped ? 'snapInRight 0.32s cubic-bezier(0.16,1,0.3,1) 165ms both' : 'none' }}
           >
-            <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 9, color: activeTab === 'collected' ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '-0.16px' }}>COLLECTED</span>
+            <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 9.5, color: activeTab === 'collected' ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '-0.16px' }}>COLLECTED</span>
           </button>
         </div>
       </div>
