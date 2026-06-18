@@ -1,7 +1,7 @@
 // ── Cron · Screening Room ranking + SRH awarding (Awarding layer · Step 1) ────
 //
 // Plan: docs/economy/Indexer_Decisions.md. NO self-hosted indexer — this reads
-// Zora's API for Scope's own coins, caches the top-50-by-volume ranking in
+// Zora's API for Scope's own coins, caches the top-50-by-MARKET-CAP ranking in
 // Supabase, and awards/clears the SRH badge on the creators of those posts.
 // Runs every 6h (vercel.json crons). Idempotent: re-running yields the same
 // state; SRH is pure CURRENT standing (in top-50 → flagged; out → cleared).
@@ -71,26 +71,33 @@ export async function GET(req: NextRequest) {
   }
   const coins = (rows ?? []).filter((r) => r.coin_address);
 
-  // ── 2. Batched getCoins → totalVolume per coin (cumulative volume window).
-  const vol = new Map<string, { volume: number; symbol?: string }>();
+  // ── 2. Batched getCoins → marketCap (+ volume for reference) per coin. Both
+  //    come off the SAME payload — no extra call. The room now ranks by VALUE.
+  const stats = new Map<string, { marketCap: number; volume: number; symbol?: string }>();
   for (let i = 0; i < coins.length; i += BATCH) {
     const batch = coins.slice(i, i + BATCH);
     try {
       const res: any = await getCoins({ coins: batch.map((c) => ({ chainId: BASE_CHAIN, collectionAddress: c.coin_address! })) });
       apiCalls++;
       for (const z of res?.data?.zora20Tokens ?? []) {
-        if (z?.address) vol.set(z.address.toLowerCase(), { volume: parseFloat(z.totalVolume ?? '0') || 0, symbol: z.symbol });
+        if (z?.address) stats.set(z.address.toLowerCase(), {
+          marketCap: parseFloat(z.marketCap ?? '0') || 0,
+          volume: parseFloat(z.totalVolume ?? '0') || 0,
+          symbol: z.symbol,
+        });
       }
     } catch (e: any) {
       console.error('[screening-room] getCoins batch failed:', e?.message);
     }
   }
 
-  // ── 3. Rank by volume desc, take top 50 (only coins Zora returned).
+  // ── 3. Rank by MARKET CAP desc, take top 50 (only coins Zora returned).
+  //    Market cap is the room's metric: the most VALUABLE posts right now (more
+  //    live than cumulative volume — it moves with price, as SRH intends).
   const ranked = coins
-    .map((c) => ({ ...c, m: vol.get(c.coin_address!.toLowerCase()) }))
+    .map((c) => ({ ...c, m: stats.get(c.coin_address!.toLowerCase()) }))
     .filter((c) => c.m)
-    .sort((a, b) => b.m!.volume - a.m!.volume)
+    .sort((a, b) => b.m!.marketCap - a.m!.marketCap)
     .slice(0, TOP_N);
 
   // ── 4. Cache table — overwrite (last-write-wins live snapshot).
@@ -104,6 +111,7 @@ export async function GET(req: NextRequest) {
         creator_address: c.creator_address ?? null,
         user_id: c.user_id ?? null,
         symbol: c.m!.symbol ?? c.ticker ?? null,
+        market_cap: c.m!.marketCap,
         volume: c.m!.volume,
         computed_at: now,
       })),

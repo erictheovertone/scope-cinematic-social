@@ -214,35 +214,66 @@ export default function Home() {
             paddingTop: 8,
           }}
         >
-          <button
-            onClick={e => { e.stopPropagation(); setMenuOpen(false); enterMirage(); }}
-            style={{
-              background: 'transparent',
-              border: 'none',
-              cursor: 'pointer',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: 6,
-              padding: 0,
-              animation: 'menu-splay-in 260ms cubic-bezier(0.16,1,0.3,1) both',
-            }}
-          >
-            <img
-              src="/mirage-logo-thick-red-new.png"
-              alt="Mirage"
+          {/* Matched red set — Mirage + Screening Room sit side by side. */}
+          <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-start', gap: 34, animation: 'menu-splay-in 260ms cubic-bezier(0.16,1,0.3,1) both' }}>
+            <button
+              onClick={e => { e.stopPropagation(); setMenuOpen(false); enterMirage(); }}
               style={{
-                width: 30,
-                height: 'auto',
-                objectFit: 'contain',
-                display: 'block',
-                flexShrink: 0,
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 6,
+                padding: 0,
               }}
-            />
-            <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 8, color: '#ffffff', letterSpacing: '-0.16px', textTransform: 'uppercase' }}>
-              MIRAGE
-            </span>
-          </button>
+            >
+              <img
+                src="/mirage-logo-thick-red-new.png"
+                alt="Mirage"
+                style={{
+                  width: 30,
+                  height: 'auto',
+                  objectFit: 'contain',
+                  display: 'block',
+                  flexShrink: 0,
+                }}
+              />
+              <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 8, color: '#ffffff', letterSpacing: '-0.16px', textTransform: 'uppercase' }}>
+                MIRAGE
+              </span>
+            </button>
+
+            <button
+              onClick={e => { e.stopPropagation(); setMenuOpen(false); router.push('/screening-room'); }}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 6,
+                padding: 0,
+              }}
+            >
+              <img
+                src="/screening-room-logo-temp-01.png"
+                alt="Screening Room"
+                style={{
+                  width: 30,
+                  height: 30,
+                  objectFit: 'contain',
+                  display: 'block',
+                  flexShrink: 0,
+                }}
+              />
+              <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 8, color: '#ffffff', letterSpacing: '-0.16px', textTransform: 'uppercase' }}>
+                SCREENING ROOM
+              </span>
+            </button>
+          </div>
         </div>
       )}
 
