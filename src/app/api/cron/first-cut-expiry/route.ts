@@ -14,7 +14,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { remainingHoldingUsd, FIRST_CUT_CONFIG } from '@/lib/economy/firstCut';
+import { remainingHoldingUsd, holderHasSell, FIRST_CUT_CONFIG } from '@/lib/economy/firstCut';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -45,7 +45,7 @@ export async function GET(req: NextRequest) {
   const { data: users } = await supabase.from('users').select('id, wallet_address').in('id', userIds);
   const walletOf = new Map((users ?? []).map((u) => [u.id, lc(u.wallet_address)]));
 
-  let expired = 0, sampled = 0, unresolved = 0, baselined = 0;
+  let expired = 0, reconciled = 0, sampled = 0, unresolved = 0, baselined = 0;
   for (const r of rows ?? []) {
     const wallet = walletOf.get(r.user_id);
     if (!wallet) continue;
@@ -54,20 +54,37 @@ export async function GET(req: NextRequest) {
     if (!resolved) { unresolved++; continue; } // NEVER expire / sample on a flaky read
 
     const prev = r.last_balance_tokens as number | null;
-    const decreased = prev != null && tokens < prev - EPS;
 
+    if (prev == null) {
+      // RECONCILIATION (no baseline yet — e.g. a slot sold BEFORE the column
+      // existed). Run-to-run diff can't see that sell, so use the unambiguous
+      // confirmed-SELL signal: if the holder SOLD this coin (swap feed) and is
+      // now below the keep-floor, expire. Otherwise just seed the baseline — a
+      // low value WITHOUT a sell is a price dip and must NOT expire.
+      const { sold, resolved: soldResolved } = await holderHasSell(r.coin_address, wallet);
+      if (soldResolved && sold && usd < keep) {
+        await supabase.from('first_cut_awards').update({ expired_at: new Date().toISOString(), last_balance_tokens: tokens }).eq('id', r.id).is('expired_at', null);
+        reconciled++;
+      } else {
+        await supabase.from('first_cut_awards').update({ last_balance_tokens: tokens }).eq('id', r.id);
+        baselined++;
+      }
+      continue;
+    }
+
+    // Steady state: a token-balance DECREASE leaving the holding below the
+    // keep-floor expires the slot. A pure price drop (no decrease) never does.
+    const decreased = tokens < prev - EPS;
     if (decreased && usd < keep) {
-      // Confirmed token-balance decrease leaving the holding below the keep-floor.
       await supabase.from('first_cut_awards').update({ expired_at: new Date().toISOString(), last_balance_tokens: tokens }).eq('id', r.id).is('expired_at', null);
       expired++;
     } else {
-      // No expiry — record the current balance for the next run's comparison.
       await supabase.from('first_cut_awards').update({ last_balance_tokens: tokens }).eq('id', r.id);
-      if (prev == null) baselined++; else sampled++;
+      sampled++;
     }
   }
 
-  const summary = { ok: true, ms: Date.now() - t0, active: rows?.length ?? 0, expired, sampled, baselined, unresolved, keep };
+  const summary = { ok: true, ms: Date.now() - t0, active: rows?.length ?? 0, expired, reconciled, sampled, baselined, unresolved, keep };
   console.log('[first-cut-expiry] done', JSON.stringify(summary));
   return NextResponse.json(summary);
 }

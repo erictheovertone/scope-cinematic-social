@@ -247,6 +247,27 @@ export async function remainingHoldingUsd(coinAddress: string, holder: string): 
   return { usd: tokens * priceInUsdc, tokens, resolved: true };
 }
 
+/**
+ * Has `holder` ever SOLD this coin (a SELL activity in the swap feed)? The
+ * UNAMBIGUOUS exit signal for the one-time reconciliation of already-sold slots
+ * (where there is no last_balance baseline to diff). A SELL is a real exit — a
+ * price drop never appears here. resolved:false on a failed read → caller must
+ * NOT expire. A truncated read that misses a SELL only ever yields sold:false →
+ * errs toward NOT expiring (safe).
+ */
+export async function holderHasSell(coinAddress: string, holder: string): Promise<{ sold: boolean; resolved: boolean }> {
+  ensureKey();
+  const h = lc(holder);
+  try {
+    const res: any = await apiCall(() => getCoinSwaps({ address: coinAddress, chain: BASE_CHAIN, first: SWAP_PAGE }));
+    const edges = res?.data?.zora20Token?.swapActivities?.edges ?? [];
+    const sold = edges.some((e: any) => e?.node?.activityType === 'SELL' && lc(e.node.senderAddress) === h);
+    return { sold, resolved: true };
+  } catch {
+    return { sold: false, resolved: false };
+  }
+}
+
 export interface FirstCutCheck {
   rank: number | null;   // 1..10 if already among the qualifying founders, else null
   slotsFilled: number;   // # qualifying (≥$5, external) founders currently filled (≤10)
