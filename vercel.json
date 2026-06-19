@@ -1,7 +1,7 @@
 {
   "crons": [
-    { "path": "/api/cron/screening-room", "schedule": "0 */6 * * *" },
-    { "path": "/api/cron/collector", "schedule": "0 0 * * *" },
-    { "path": "/api/cron/first-cut-expiry", "schedule": "0 */6 * * *" }
+    { "path": "/api/cron/screening-room",  "schedule": "0 0 * * *" },
+    { "path": "/api/cron/collector",        "schedule": "0 0 * * *" },
+    { "path": "/api/cron/first-cut-expiry", "schedule": "0 0 * * *" }
   ]
 }
