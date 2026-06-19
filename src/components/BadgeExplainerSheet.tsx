@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
 import { getUserByPrivyId, getProfile, isProMember } from "@/lib/userService";
 import { resolveBadges } from "@/lib/economy/badges";
+import { supabase } from "@/lib/supabase/client";
 
 const BOLD: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const REG: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -153,6 +154,7 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
     tiers: BadgeExplainerSheetProps['userTiers'];
     isPaid: boolean;
     paidUntil: Date | null;
+    firstCutCount: number; // active First Cut slots (expired_at IS NULL)
   } | null>(null);
 
   useEffect(() => {
@@ -164,6 +166,17 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
         if (!sbUser || cancelled) return;
         const p = await getProfile(sbUser.id) as any;
         if (!p || cancelled) return;
+        // Active First Cut slots for the viewer (same active-gated rule as getBadges).
+        let fcRes = await supabase
+          .from('first_cut_awards')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', sbUser.id)
+          .is('expired_at', null);
+        if (fcRes.error) { // expired_at migration not applied yet → count all
+          fcRes = await supabase.from('first_cut_awards').select('id', { count: 'exact', head: true }).eq('user_id', sbUser.id);
+        }
+        const fcCount = fcRes.count;
+        if (cancelled) return;
         const isPaid = isProMember(p);
         const isTop = !!p.is_top_collector;
         const isHouse = !!p.is_in_house_creator;
@@ -181,6 +194,7 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
           },
           isPaid,
           paidUntil: p.paid_member_until ? new Date(p.paid_member_until) : null,
+          firstCutCount: fcCount ?? 0,
         });
       } catch (e) {
         console.error('Badge sheet viewer resolve error:', e);
@@ -192,6 +206,7 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
   // Effective (viewer-centric) status — the self-resolved viewer wins; props are
   // only a fallback (correct on own-profile, replaced on public once resolved).
   const vTiers = viewer?.tiers ?? userTiers;
+  const vFirstCutCount = viewer?.firstCutCount ?? 0; // active First Cut slots → lights First Cut in the earned grid
   const vIsPaid = viewer?.isPaid ?? !!isPaidMember;
   const vPaidUntil = viewer?.paidUntil ?? paidMemberUntil ?? null;
 
@@ -265,7 +280,7 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
             isScreeningRoomHolder: vTiers.isScreeningRoomHolder,
             isPaidMember: vTiers.isPaidMember,
             isInHouseCreator: vTiers.isInHouseCreator,
-            firstCutCount: 0, // this sheet doesn't load the gated count; First Cut/Composer light up here once their flags reach this surface
+            firstCutCount: vFirstCutCount, // active First Cut slots (viewer-centric) — now lights here too
           }).filter((b) => b.key !== 'free'); // the Free baseline isn't an "earned" badge
           if (earned.length === 0) return null;
           return (

@@ -14,9 +14,13 @@
 // A missed award is recoverable (a later verified pass / Moment 2 still fires);
 // a false award is not. When in doubt, DEFER.
 
-import { getCoinSwaps, setApiKey } from '@zoralabs/coins-sdk';
-import { getAddress } from 'viem';
+import { getCoinSwaps, getCoins, setApiKey } from '@zoralabs/coins-sdk';
+import { getAddress, formatEther } from 'viem';
 import { publicClient } from '@/lib/zoraCoins';
+
+const ERC20_BALANCE_ABI = [
+  { name: 'balanceOf', type: 'function', stateMutability: 'view', inputs: [{ name: 'a', type: 'address' }], outputs: [{ name: '', type: 'uint256' }] },
+] as const;
 
 const BASE_CHAIN = 8453;
 const SWAP_PAGE = 100;
@@ -176,6 +180,71 @@ export async function confirmBuyOnChain(
   } catch {
     return false;
   }
+}
+
+// ── Expiry (lifecycle) ────────────────────────────────────────────────────────
+
+/**
+ * Ground-truth backstop for a SELL: does `txHash` show the coin's ERC-20 moving
+ * AWAY FROM `seller` (a real sell/transfer-out)? Receipt-read — the balance-
+ * decrease signal that distinguishes a sell from a pure price drop.
+ */
+export async function confirmSellOnChain(
+  txHash: string,
+  coinAddress: string,
+  seller: string,
+): Promise<boolean> {
+  try {
+    const receipt = await publicClient.getTransactionReceipt({ hash: txHash as `0x${string}` });
+    if (!receipt || receipt.status !== 'success') return false;
+    const coin = lc(coinAddress);
+    const from = lc(seller).replace(/^0x/, '');
+    for (const log of receipt.logs ?? []) {
+      if (lc(log.address) !== coin) continue;
+      if (log.topics?.[0] !== TRANSFER_TOPIC) continue;
+      // topics[1] = indexed `from` — coin leaving the seller's wallet.
+      if ((log.topics?.[1] ?? '').toLowerCase().endsWith(from)) return true;
+    }
+    return false;
+  } catch {
+    return false;
+  }
+}
+
+export interface RemainingHolding {
+  usd: number;
+  tokens: number; // on-chain token balance (for the cron's decrease-detection)
+  /** False when the balance OR price read failed/was empty. The caller must
+   *  NEVER expire on resolved:false — a flaky read is not a real exit. */
+  resolved: boolean;
+}
+
+/**
+ * USD value of `holder`'s CURRENT holding of the coin: on-chain balance ×
+ * Zora's per-token price (retried). Both reads must succeed (resolved:true) or
+ * the caller defers — never expires a slot on an unverified read.
+ */
+export async function remainingHoldingUsd(coinAddress: string, holder: string): Promise<RemainingHolding> {
+  ensureKey();
+  let tokens: number;
+  try {
+    const bal = await publicClient.readContract({
+      address: getAddress(coinAddress), abi: ERC20_BALANCE_ABI, functionName: 'balanceOf', args: [getAddress(holder)],
+    });
+    tokens = parseFloat(formatEther(bal as bigint));
+  } catch {
+    return { usd: 0, tokens: 0, resolved: false };
+  }
+  let priceInUsdc: number | null = null;
+  try {
+    const res: any = await apiCall(() => getCoins({ coins: [{ chainId: BASE_CHAIN, collectionAddress: coinAddress }] }));
+    const p = res?.data?.zora20Tokens?.[0]?.tokenPrice?.priceInUsdc;
+    priceInUsdc = p != null && isFinite(parseFloat(p)) ? parseFloat(p) : null;
+  } catch {
+    return { usd: 0, tokens, resolved: false };
+  }
+  if (priceInUsdc == null) return { usd: 0, tokens, resolved: false }; // no discovered price → can't value → don't expire
+  return { usd: tokens * priceInUsdc, tokens, resolved: true };
 }
 
 export interface FirstCutCheck {

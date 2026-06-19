@@ -236,11 +236,21 @@ export function createRealEconomy(
     // makes the First Cut signal real.
     async getBadges(userId: string): Promise<Badges> {
       const base = await mockEconomy.getBadges(userId).catch(() => ({} as Badges));
-      const { count } = await supabase
+      // HOLDING-GATED: the badge lights iff the user has ≥1 ACTIVE slot
+      // (expired_at IS NULL). Expired slots (holder sold below the $4.50 keep-
+      // floor) persist as the permanent record but no longer light the badge.
+      let res = await supabase
         .from("first_cut_awards")
         .select("id", { count: "exact", head: true })
-        .eq("user_id", userId);
-      const firstCutCount = count ?? 0;
+        .eq("user_id", userId)
+        .is("expired_at", null);
+      // Graceful fallback if the expired_at migration hasn't been applied yet —
+      // count all rows so the badge still resolves (active-gating kicks in once
+      // the column exists). Avoids a hard dependency on migration ordering.
+      if (res.error) {
+        res = await supabase.from("first_cut_awards").select("id", { count: "exact", head: true }).eq("user_id", userId);
+      }
+      const firstCutCount = res.count ?? 0;
       return { ...base, firstCutCount: firstCutCount > 0 ? firstCutCount : undefined };
     },
 

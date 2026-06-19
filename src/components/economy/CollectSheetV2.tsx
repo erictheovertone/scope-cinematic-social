@@ -180,6 +180,19 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
     attempt(0);
   };
 
+  // Lifecycle — after a sell, expire the First Cut slot IFF this sell drops the
+  // remaining holding below the $4.50 keep-floor. Server-authoritative + on-chain
+  // confirmed; never expires on a flaky read. Fire-and-forget; the badge
+  // re-resolves on the next profile load.
+  const expireCheckFirstCut = (postId: string, txHash: string) => {
+    if (!viewerWallet || !txHash) return;
+    fetch('/api/first-cut/expire', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ postId, txHash, seller: viewerWallet }),
+    }).catch(() => { /* never disturbs the sell */ });
+  };
+
   const doBuy = async () => {
     const v = parseFloat(buyUsd);
     if (!isFinite(v) || v <= 0) return;
@@ -215,6 +228,7 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
         setDone(market?.live ? `[ SOLD · ${r.pieces} ${r.pieces === 1 ? 'PIECE' : 'PIECES'}${proceeds} ]` : `SOLD ${r.pieces} ${r.pieces === 1 ? 'PIECE' : 'PIECES'} (MOCK)`);
         setConfirmEndFirstCut(false); setSellPieces(0); refresh();
         ceremonyResolve(post.id, r.pieces != null ? -r.pieces : undefined); // −pieces sold → optimistic patch
+        expireCheckFirstCut(post.id, r.ref); // lifecycle — expire the slot if this sell drops below the keep-floor
       }
     } catch (e) {
       console.error('[collect] sell failed:', e);
