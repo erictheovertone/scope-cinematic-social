@@ -23,7 +23,6 @@ import BannerBadgeStrip from "@/components/BannerBadgeStrip";
 import { resolveBadges } from "@/lib/economy/badges";
 import { dividerBackground } from "@/lib/economy/dividerLines";
 import { useEconomy } from "@/components/EconomyProvider";
-import { economyPreviewEnabled } from "@/lib/economy/flag";
 import CollectedGrid from "@/components/economy/CollectedGrid";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
@@ -70,7 +69,9 @@ export default function PublicProfilePage() {
   const [firstCutCount, setFirstCutCount] = useState(0);
   useEffect(() => {
     const uid = profile?.user_id;
-    if (!economyPreviewEnabled() || !uid) { setFirstCutCount(0); return; }
+    // First Cut is a REAL, table-backed award — not preview/mock data — so it is
+    // NOT gated behind the economy-preview flag (which hid the resolving badge).
+    if (!uid) { setFirstCutCount(0); return; }
     let cancelled = false;
     economy.getBadges(uid)
       .then((b) => { if (!cancelled) setFirstCutCount(b.firstCutCount ?? 0); })

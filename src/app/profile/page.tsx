@@ -27,7 +27,6 @@ import BannerBadgeStrip from "@/components/BannerBadgeStrip";
 import { resolveBadges } from "@/lib/economy/badges";
 import { dividerBackground } from "@/lib/economy/dividerLines";
 import { useEconomy } from "@/components/EconomyProvider";
-import { economyPreviewEnabled } from "@/lib/economy/flag";
 import CollectedGrid from "@/components/economy/CollectedGrid";
 
 function getGridCols(layoutId: string): string {
@@ -124,7 +123,11 @@ const userLayoutId = stableLayoutId;
   const [dividerLine, setDividerLine] = useState<string | null>(null); // chosen banner divider (Piece 2)
   const [holoBanner, setHoloBanner] = useState(false); // Augmented holo backdrop (Piece 3)
   useEffect(() => {
-    if (!economyPreviewEnabled() || !supabaseUserId) { setFirstCutCount(0); setBadgesLoaded(true); return; }
+    // First Cut is a REAL, table-backed award (first_cut_awards) — NOT mock
+    // preview data — so it must NOT be gated behind the economy-preview flag.
+    // (That gate forced firstCutCount=0 with the flag off, hiding the badge even
+    // though the row resolves: row user_id = users.id = supabaseUserId.)
+    if (!supabaseUserId) { setFirstCutCount(0); setBadgesLoaded(true); return; }
     let cancelled = false;
     economy.getBadges(supabaseUserId)
       .then((b) => { if (!cancelled) { setFirstCutCount(b.firstCutCount ?? 0); setBadgesLoaded(true); } })
