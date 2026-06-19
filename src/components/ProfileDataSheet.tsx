@@ -203,7 +203,7 @@ export default function ProfileDataSheet({
               <div style={{ flex: 1, paddingRight: 15 }}>
                 {kitRows.map((row, i) => (
                   <div key={row.label} style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: i < kitRows.length - 1 ? 12 : 0 }}>
-                    <span style={{ ...SKB, fontSize: 10, letterSpacing: '-0.2px', color: '#FF0000', textTransform: 'uppercase', lineHeight: 1.12 }}>
+                    <span style={{ ...SKB, fontSize: 10, letterSpacing: '-0.2px', color: '#FFF', textTransform: 'uppercase', lineHeight: 1.12 }}>
                       {row.label}
                     </span>
                     <span style={{ ...SKR, fontSize: 10, letterSpacing: '-0.2px', color: '#FF0000', textTransform: 'uppercase', lineHeight: 1.12 }}>
