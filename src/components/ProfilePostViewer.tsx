@@ -13,6 +13,7 @@ import CollectSheetGate from "@/components/economy/CollectSheetGate";
 import { isUntradeableCoin } from "@/lib/economy/pairing";
 import CreateCoinSheet from "@/components/economy/CreateCoinSheet";
 import { isCoinPost } from "@/components/EconomyProvider";
+import FirstCutChip from "@/components/economy/FirstCutChip";
 import DeletePostSheet from "@/components/DeletePostSheet";
 import MediaRenderer from "@/components/MediaRenderer";
 import GradedVideo from "@/components/finishing/GradedVideo";
@@ -238,19 +239,27 @@ function PostViewerItem({
           </button>
 
 
-          <button style={{ background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", padding: 0 }}>
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.7 }}>
-              <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
-              <polyline points="16 6 12 2 8 6" />
-              <line x1="12" y1="2" x2="12" y2="15" />
-            </svg>
-          </button>
+          {/* Share — removed on the PERSONAL (own) profile per Eric; kept on
+              public (same component, gated by isOwnProfile). */}
+          {!isOwnProfile && (
+            <button style={{ background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", padding: 0 }}>
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.7 }}>
+                <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                <polyline points="16 6 12 2 8 6" />
+                <line x1="12" y1="2" x2="12" y2="15" />
+              </svg>
+            </button>
+          )}
         </div>
 
         {/* Right: add to deck · collect */}
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           {deckToast && (
             <span style={{ ...SKB, fontSize: 9, color: "rgba(255,255,255,0.5)", textTransform: "uppercase" }}>Added to {deckToast}</span>
+          )}
+          {/* First Cut count — same component/treatment as the feed, left of COLLECT. */}
+          {isCoinPost(post as { coin_address?: string | null; token_standard?: string | null }) && (post as { coin_address?: string | null }).coin_address && (
+            <FirstCutChip coinAddress={(post as { coin_address?: string }).coin_address as string} postId={(post as { id?: string }).id as string} />
           )}
           <button
             onClick={handleCollect}
