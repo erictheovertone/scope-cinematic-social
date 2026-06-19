@@ -59,7 +59,7 @@ function getDomain(url: string): string {
 export default function ProfileDataSheet({
   isOpen, onClose, profile, links, isOwnProfile,
   followers, following, totalPosts, collectors = 0, portfolioMc = 0,
-  firstCutCount = 0, onExploreBadges,
+  firstCutCount = 0,
   isFollowing = false, followBusy = false, onUnfollow,
 }: Props) {
   const router = useRouter();
@@ -203,10 +203,10 @@ export default function ProfileDataSheet({
               <div style={{ flex: 1, paddingRight: 15 }}>
                 {kitRows.map((row, i) => (
                   <div key={row.label} style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: i < kitRows.length - 1 ? 12 : 0 }}>
-                    <span style={{ ...SKB, fontSize: 10, letterSpacing: '-0.2px', color: '#FFF', textTransform: 'uppercase', lineHeight: 1.12 }}>
+                    <span style={{ ...SKB, fontSize: 10, letterSpacing: '-0.2px', color: '#FF0000', textTransform: 'uppercase', lineHeight: 1.12 }}>
                       {row.label}
                     </span>
-                    <span style={{ ...SKR, fontSize: 10, letterSpacing: '-0.2px', color: '#FFF', textTransform: 'uppercase', lineHeight: 1.12 }}>
+                    <span style={{ ...SKR, fontSize: 10, letterSpacing: '-0.2px', color: '#FF0000', textTransform: 'uppercase', lineHeight: 1.12 }}>
                       {row.value}
                     </span>
                   </div>
@@ -272,7 +272,7 @@ export default function ProfileDataSheet({
                       list (BadgeExplainerSheet) via the parent. Falls back to the
                       /badges route if no handler is wired. */}
                   <button
-                    onClick={(e) => { e.stopPropagation(); setActiveBlurb(null); if (onExploreBadges) { onClose(); onExploreBadges(); } else { onClose(); router.push('/badges'); } }}
+                    onClick={(e) => { e.stopPropagation(); setActiveBlurb(null); onClose(); router.push('/badges'); }}
                     style={{ ...SKB, fontSize: 9, letterSpacing: '0.12em', color: '#FF0000', textTransform: 'uppercase', background: 'transparent', border: '1px solid #FF0000', cursor: 'pointer', padding: '9px 14px', marginTop: 14, width: '100%' }}
                   >
                     EXPLORE SCOPE BADGES →
