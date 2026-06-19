@@ -19,7 +19,7 @@ export default function FirstCutChip({ coinAddress }: { coinAddress: string }) {
   const filled = holders.length;
   return (
     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
-      <img src={MARK} alt="First Cut" style={{ width: 11, height: 11, objectFit: 'contain', display: 'block' }} />
+      <img src={MARK} alt="First Cut" style={{ width: 22, height: 22, objectFit: 'contain', display: 'block' }} />
       <span style={{ ...SKB, fontSize: 8, letterSpacing: '0.04em', color: filled > 0 ? '#FF0000' : 'rgba(255,255,255,0.5)', lineHeight: 1 }}>
         {filled}/{FIRST_CUT_SLOTS}
       </span>
