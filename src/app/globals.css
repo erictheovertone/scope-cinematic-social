@@ -178,8 +178,23 @@
   85%     { opacity: 1; }
   100%    { opacity: 0; }
 }
+/* Backdrop dim — fades IN with the flourish, OUT with it (no lingering scrim). */
+@keyframes fcBackdrop {
+  0%   { opacity: 0; }
+  14%  { opacity: 1; }
+  82%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+/* Red glow behind the mark — blooms, holds, clears with the moment. */
+@keyframes fcGlow {
+  0%   { opacity: 0; transform: scale(0.6); }
+  30%  { opacity: 1; transform: scale(1); }
+  72%  { opacity: 0.9; transform: scale(1.08); }
+  100% { opacity: 0; transform: scale(1.16); }
+}
 @media (prefers-reduced-motion: reduce) {
-  .fc-mark, .fc-ring, .fc-label { animation: simpleFade 0.4s ease both !important; }
+  .fc-mark, .fc-ring, .fc-label, .fc-glow { animation: simpleFade 0.4s ease both !important; }
+  .fc-backdrop { animation: fcBackdrop 1.6s ease both !important; }
 }
 
 @keyframes stripeShine {

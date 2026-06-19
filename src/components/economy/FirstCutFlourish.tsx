@@ -36,14 +36,28 @@ export default function FirstCutFlourish({
   return (
     <div
       // Above the collect sheet (z 501); click-through so it never traps the
-      // collector — purely a visual beat.
+      // collector — purely a visual beat. STRONG uniform dim so the post recedes
+      // and the flourish reads clearly (the old radial left the centre — behind
+      // the mark — nearly transparent, so the mark was lost on the post). Fades
+      // in AND out with the moment (fcBackdrop) — no lingering scrim.
+      className="fc-backdrop"
       style={{
         position: 'fixed', inset: 0, zIndex: 600, pointerEvents: 'none',
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-        background: 'radial-gradient(circle at 50% 45%, rgba(255,0,0,0.10) 0%, rgba(0,0,0,0.72) 60%, rgba(0,0,0,0.88) 100%)',
-        animation: 'simpleFade 0.25s ease both',
+        background: 'rgba(0,0,0,0.9)',
+        animation: 'fcBackdrop 1.8s ease both',
       }}
     >
+      {/* Red glow blooming from BEHIND the mark — bright centre over the dark dim
+          so it reads as a glow (sanctioned celebration exception). */}
+      <div
+        className="fc-glow"
+        style={{
+          position: 'absolute', width: 380, height: 380, borderRadius: '50%', pointerEvents: 'none',
+          background: 'radial-gradient(circle, rgba(255,0,0,0.55) 0%, rgba(255,0,0,0.28) 28%, rgba(255,0,0,0.08) 50%, rgba(255,0,0,0) 70%)',
+          animation: 'fcGlow 1.8s ease both',
+        }}
+      />
       <div style={{ position: 'relative', width: 96, height: 96, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         {/* Red ring flare sweeping past the mark */}
         <div

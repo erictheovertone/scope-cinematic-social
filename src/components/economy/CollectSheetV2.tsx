@@ -89,7 +89,9 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
       setShowSlots(false); setDone(null); setMode('buy');
       setBuyUsd(''); setBuyQuote(null); setSellPieces(0); setSellQuote(null);
       setConfirmEndFirstCut(false); setTradeError(null); setCaptured(false);
-      setFirstCut(null);
+      // NOTE: do NOT clear firstCut here. The sheet auto-closes ~4s after a buy;
+      // clearing on close truncated the flourish mid-play. It self-clears via its
+      // own onDone (1.8s); a fresh buy sets it anew. So it always plays in full.
       return;
     }
     let cancelled = false;
@@ -151,7 +153,9 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
   // lands. Each re-check is the SAME authoritative server check (verified swap
   // read + on-chain confirm), so it only ever awards a real founder — a defer
   // that resolves to "not a founder" (sub-floor / slot filled) correctly stops.
-  const FIRST_CUT_RETRY_MS = [5000, 12000, 25000]; // re-check a defer, then stop
+  // Aggressive early retries so a deferred (not-yet-indexed) earn fires ASAP —
+  // the old 5s first delay was the visible lag. Same ~20s window, just front-loaded.
+  const FIRST_CUT_RETRY_MS = [1500, 3000, 6000, 12000]; // re-check a defer, then stop
   const checkFirstCut = (postId: string, txHash: string, buyUsdAmount: number) => {
     if (!viewerWallet || !txHash) return;
     const attempt = (retryIdx: number) => {
