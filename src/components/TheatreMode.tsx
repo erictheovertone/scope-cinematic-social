@@ -154,6 +154,24 @@ export default function TheatreMode({
   let boxW = availW, boxH = availW / arNum;
   if (boxH > availH) { boxH = availH; boxW = availH * arNum; }
 
+  // ── Arrow geometry — anchored to the IMAGE's rendered bounds, never over it ──
+  // The image is centered, so the black margins are (stage − box)/2 on each axis.
+  // Side arrows live centered in the side black bars; but a wide post (PANA/SCOPE)
+  // fills the width, leaving too little side margin — then the arrows drop into
+  // the BOTTOM black bar instead. Smaller than the hero so they sit clear. The
+  // arrow's full footprint (image + tap padding) is kept inside the margin.
+  const sideMargin = (stageW - boxW) / 2;
+  const bottomMargin = (stageH - boxH) / 2;
+  const ARROW_AR = 72 / 140; // asset w/h
+  const ARROW_PAD = 8;       // tap padding around the (smaller) glyph
+  let arrowH = Math.min(56, stageH * 0.15);
+  let arrowW = arrowH * ARROW_AR;
+  // Side arrows only when the full footprint clears the image with breathing room.
+  const arrowsBelow = sideMargin < arrowW + ARROW_PAD * 2 + 8;
+  if (arrowsBelow) { arrowH = Math.min(arrowH, Math.max(22, bottomMargin - 10)); arrowW = arrowH * ARROW_AR; }
+  const imgBottomY = (stageH + boxH) / 2;
+  const bottomArrowY = imgBottomY + bottomMargin / 2; // centre of the bottom black bar
+
   const isVideo = f(post, 'media_type') === 'video';
   const mediaUrl = (post['media_urls'] as string[] | undefined)?.[0];
   const poster = f(post, 'poster_url') || f(post, 'thumbnail_url') || undefined;
@@ -214,24 +232,53 @@ export default function TheatreMode({
           </div>
         </div>
 
-        {/* ── Prev / Next arrows (theatre-mode-arrow-01.png) — mid-height sides ── */}
-        {index > 0 && (
-          <button
-            onClick={(e) => { stop(e); go(-1); }}
-            aria-label="Previous"
-            style={{ position: 'absolute', left: '2.5%', top: '50%', transform: 'translateY(-50%)', background: 'transparent', border: 'none', cursor: 'pointer', padding: 8, opacity: 0.85 }}
-          >
-            <img src="/theatre-mode-arrow-01.png" alt="" style={{ height: Math.min(110, stageH * 0.3), width: 'auto', display: 'block' }} />
-          </button>
+        {/* ── Prev / Next arrows (theatre-mode-arrow-01.png) — ALWAYS in the black
+            margin around the image (anchored to its rendered edges), never over the
+            media. Sides when there's room; bottom bar for wide posts. Hidden while
+            the data panel is up. Left → previous, right → next. ── */}
+        {!showData && !arrowsBelow && (
+          <>
+            {index > 0 && (
+              <button
+                onClick={(e) => { stop(e); go(-1); }}
+                aria-label="Previous"
+                style={{ position: 'absolute', left: sideMargin / 2, top: '50%', transform: 'translate(-50%, -50%)', background: 'transparent', border: 'none', cursor: 'pointer', padding: ARROW_PAD, opacity: 0.85 }}
+              >
+                <img src="/theatre-mode-arrow-01.png" alt="" style={{ height: arrowH, width: 'auto', display: 'block' }} />
+              </button>
+            )}
+            {index < posts.length - 1 && (
+              <button
+                onClick={(e) => { stop(e); go(1); }}
+                aria-label="Next"
+                style={{ position: 'absolute', left: stageW - sideMargin / 2, top: '50%', transform: 'translate(-50%, -50%)', background: 'transparent', border: 'none', cursor: 'pointer', padding: ARROW_PAD, opacity: 0.85 }}
+              >
+                <img src="/theatre-mode-arrow-01.png" alt="" style={{ height: arrowH, width: 'auto', display: 'block', transform: 'scaleX(-1)' }} />
+              </button>
+            )}
+          </>
         )}
-        {index < posts.length - 1 && (
-          <button
-            onClick={(e) => { stop(e); go(1); }}
-            aria-label="Next"
-            style={{ position: 'absolute', right: '2.5%', top: '50%', transform: 'translateY(-50%)', background: 'transparent', border: 'none', cursor: 'pointer', padding: 8, opacity: 0.85 }}
-          >
-            <img src="/theatre-mode-arrow-01.png" alt="" style={{ height: Math.min(110, stageH * 0.3), width: 'auto', display: 'block', transform: 'scaleX(-1)' }} />
-          </button>
+        {/* Wide posts: arrows in the BOTTOM black bar, flanking the centre (clear of
+            the "+" and the counter), still below the image — never on the media. */}
+        {!showData && arrowsBelow && (
+          <>
+            <button
+              onClick={(e) => { stop(e); go(-1); }}
+              disabled={index === 0}
+              aria-label="Previous"
+              style={{ position: 'absolute', left: stageW / 2 - 66, top: bottomArrowY, transform: 'translate(-50%, -50%)', background: 'transparent', border: 'none', cursor: index === 0 ? 'default' : 'pointer', padding: ARROW_PAD, opacity: index === 0 ? 0.25 : 0.85 }}
+            >
+              <img src="/theatre-mode-arrow-01.png" alt="" style={{ height: arrowH, width: 'auto', display: 'block' }} />
+            </button>
+            <button
+              onClick={(e) => { stop(e); go(1); }}
+              disabled={index === posts.length - 1}
+              aria-label="Next"
+              style={{ position: 'absolute', left: stageW / 2 + 66, top: bottomArrowY, transform: 'translate(-50%, -50%)', background: 'transparent', border: 'none', cursor: index === posts.length - 1 ? 'default' : 'pointer', padding: ARROW_PAD, opacity: index === posts.length - 1 ? 0.25 : 0.85 }}
+            >
+              <img src="/theatre-mode-arrow-01.png" alt="" style={{ height: arrowH, width: 'auto', display: 'block', transform: 'scaleX(-1)' }} />
+            </button>
+          </>
         )}
 
         {/* ── BACK (top-left) — mobile out (per the mobile node) ── */}
