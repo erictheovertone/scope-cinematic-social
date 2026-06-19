@@ -62,7 +62,7 @@ export default function FirstCutLedger({
               className="fc-slot"
               style={{ ...SKR, fontSize: 10, color: '#FF0000', letterSpacing: '0.16em', textTransform: 'uppercase', padding: '2px 0 10px', animation: 'fcSlotRipple 0.32s cubic-bezier(0.16,0.84,0.3,1) both' }}
             >
-              Be the first — the founding class is open
+              Be the first
             </div>
           )}
           {Array.from({ length: FIRST_CUT_SLOTS }, (_, i) => i + 1).map((rank) => {
