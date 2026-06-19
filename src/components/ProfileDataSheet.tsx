@@ -27,6 +27,12 @@ interface Props {
   /** Opens the full "Badges on Scope" tier list (the blurb's EXPLORE button).
       Wired by the profile page to close this sheet + open BadgeExplainerSheet. */
   onExploreBadges?: () => void;
+  /** Follow state, passed from the public profile. The UNFOLLOW affordance lives
+      HERE (not on the main page) — the main page only shows FOLLOW. Shown when
+      viewing someone else's profile that you currently follow. */
+  isFollowing?: boolean;
+  followBusy?: boolean;
+  onUnfollow?: () => void;
 }
 
 function getYouTubeId(url: string): string | null {
@@ -54,6 +60,7 @@ export default function ProfileDataSheet({
   isOpen, onClose, profile, links, isOwnProfile,
   followers, following, totalPosts, collectors = 0, portfolioMc = 0,
   firstCutCount = 0, onExploreBadges,
+  isFollowing = false, followBusy = false, onUnfollow,
 }: Props) {
   const router = useRouter();
   const [bgVisible, setBgVisible] = useState(false);
@@ -354,8 +361,23 @@ export default function ProfileDataSheet({
           </>
         )}
 
-        {/* ── BACK ── */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '20px 8px 0', ...sec(400) }}>
+        {/* ── BACK (+ UNFOLLOW for a followed profile) ──
+            UNFOLLOW lives here, not on the main public profile (which only shows
+            FOLLOW). State is driven by the parent, so it stays in sync with the
+            page's FOLLOW button — unfollowing here flips both. */}
+        <div style={{ display: 'flex', justifyContent: isFollowing && !isOwnProfile && onUnfollow ? 'space-between' : 'flex-end', alignItems: 'center', padding: '20px 8px 0', ...sec(400) }}>
+          {isFollowing && !isOwnProfile && onUnfollow && (
+            <button
+              onClick={(e) => { e.stopPropagation(); if (!followBusy) onUnfollow(); }}
+              disabled={followBusy}
+              style={{
+                background: 'transparent', border: '1px solid #FF0000', cursor: followBusy ? 'default' : 'pointer',
+                padding: '7px 14px', ...SKB, fontSize: 10, letterSpacing: '0.04em', color: '#FF0000', textTransform: 'uppercase', lineHeight: 1.12,
+              }}
+            >
+              UNFOLLOW
+            </button>
+          )}
           <button
             onClick={onClose}
             style={{

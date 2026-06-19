@@ -12,6 +12,7 @@ import { getPostById } from "@/lib/postsService";
 import FrameLoader from "@/components/FrameLoader";
 import PostModal from "@/components/PostModal";
 import { NotificationActorAvatar, NotificationActorMessage } from "@/components/NotificationActor";
+import { getAspectRatio } from "@/lib/aspectRatio";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -128,20 +129,23 @@ export default function NotificationsPage() {
               {/* Avatar — tappable → actor profile */}
               <NotificationActorAvatar handle={n.actor_handle ?? null} avatar={n.actor_avatar ?? null} onNavigate={goToActor} />
 
-              {/* Message + timestamp */}
+              {/* Message + timestamp — bumped up for legibility (8→11 / 6→8). */}
               <div className="flex-1 min-w-0">
-                <p style={{ ...SKR, fontSize: 8, color: "white", letterSpacing: "-0.16px", lineHeight: 1.4, margin: 0, wordBreak: "break-word" }}>
+                <p style={{ ...SKR, fontSize: 11, color: "white", letterSpacing: "-0.16px", lineHeight: 1.4, margin: 0, wordBreak: "break-word" }}>
                   <NotificationActorMessage handle={n.actor_handle ?? null} type={n.type} onNavigate={goToActor} />
                 </p>
-                <p style={{ ...SKR, fontSize: 6, color: "rgba(255,255,255,0.4)", letterSpacing: "-0.1px", margin: "2px 0 0" }}>
+                <p style={{ ...SKR, fontSize: 8, color: "rgba(255,255,255,0.4)", letterSpacing: "-0.1px", margin: "2px 0 0" }}>
                   {timeAgo(n.created_at)}
                 </p>
               </div>
 
-              {/* Post thumbnail */}
+              {/* Post thumbnail — larger on mobile (60px wide, was 40²) and sized to
+                  the post's TRUE aspect ratio via layout_id (same source as the feed
+                  / Screening Room): a 4:3 thumb reads 4:3, a 2.39:1 thumb reads
+                  2.39:1. objectFit cover center-crops to that AR, like the feed. */}
               {(n.type === "like" || n.type === "comment") && n.post_image_url && (
-                <div style={{ width: 40, height: 40, flexShrink: 0, background: "#222", overflow: "hidden" }}>
-                  <img src={n.post_image_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                <div style={{ width: 60, aspectRatio: getAspectRatio(n.post_layout_id ?? ''), flexShrink: 0, background: "#222", overflow: "hidden" }}>
+                  <img src={n.post_image_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                 </div>
               )}
             </button>

@@ -288,10 +288,12 @@ export default function PublicProfilePage() {
           </div>
         </button>
 
-        {/* Follow button — hidden while BIO sheet is open so it doesn't bleed over the sheet */}
-        {user && !isOwnProfile && targetPrivyId && (
-          <button onClick={handleFollow} disabled={followLoading} style={{ position: 'absolute', ...SKB, fontSize: 8, color: followingUser ? 'rgba(255,255,255,0.5)' : 'white', letterSpacing: '-0.18px', background: 'transparent', border: `1px solid ${followingUser ? 'rgba(255,255,255,0.3)' : 'white'}`, padding: '3px 8px', right: 4, top: 60, cursor: followLoading ? 'default' : 'pointer', textTransform: 'uppercase', opacity: profileDataOpen ? 0 : 1, pointerEvents: profileDataOpen ? 'none' : 'auto', transition: 'opacity 200ms ease' }}>
-            {followingUser ? 'UNFOLLOW' : 'FOLLOW'}
+        {/* FOLLOW button — shown ONLY when not yet following. Once following, the
+            main page shows no button here; UNFOLLOW lives in the BIO sheet instead.
+            Hidden while the BIO sheet is open so it doesn't bleed over the sheet. */}
+        {user && !isOwnProfile && targetPrivyId && !followingUser && (
+          <button onClick={handleFollow} disabled={followLoading} style={{ position: 'absolute', ...SKB, fontSize: 8, color: 'white', letterSpacing: '-0.18px', background: 'transparent', border: '1px solid white', padding: '3px 8px', right: 4, top: 60, cursor: followLoading ? 'default' : 'pointer', textTransform: 'uppercase', opacity: profileDataOpen ? 0 : 1, pointerEvents: profileDataOpen ? 'none' : 'auto', transition: 'opacity 200ms ease' }}>
+            FOLLOW
           </button>
         )}
 
@@ -501,6 +503,9 @@ export default function PublicProfilePage() {
         collectors={0}
         portfolioMc={profile?.portfolio_mc || 0}
         firstCutCount={firstCutCount}
+        isFollowing={!!followingUser}
+        followBusy={followLoading}
+        onUnfollow={handleFollow}
       />
 
       <BadgeExplainerSheet

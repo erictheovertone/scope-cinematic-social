@@ -229,6 +229,10 @@ export interface AppNotification {
   type: 'like' | 'comment' | 'follow' | 'collect'
   post_id: string | null
   post_image_url: string | null
+  /** The post's immutable layout (set at creation) → its TRUE aspect ratio. Used
+   *  to render the notification thumbnail at the real AR (via getAspectRatio),
+   *  the same source the feed + Screening Room use. Resolved at read time. */
+  post_layout_id?: string | null
   message: string | null
   is_read: boolean
   created_at: string
@@ -247,6 +251,14 @@ export const getNotifications = async (privyUserId: string): Promise<AppNotifica
     .limit(50)
   const rows = (data || []) as AppNotification[]
   if (rows.length === 0) return rows
+
+  // Resolve each referenced post's layout_id (its TRUE aspect ratio) in one batch
+  // — so the thumbnail renders at the real AR, not a forced square.
+  const postIds = [...new Set(rows.map(r => r.post_id).filter(Boolean))] as string[]
+  const { data: postRows } = postIds.length
+    ? await supabase.from('posts').select('id, layout_id').in('id', postIds)
+    : { data: [] as { id: string; layout_id: string | null }[] }
+  const layoutByPost = new Map((postRows || []).map(p => [p.id, p.layout_id]))
 
   // Resolve each actor's CURRENT profile (handle + avatar) from sender_id, so the
   // bell shows the real @handle + PFP — and repairs rows whose baked
@@ -268,7 +280,12 @@ export const getNotifications = async (privyUserId: string): Promise<AppNotifica
   return rows.map(r => {
     const uuid = r.sender_id ? (uuidByDid.get(r.sender_id) ?? r.sender_id) : null
     const p = uuid ? profByUuid.get(uuid) : null
-    return { ...r, actor_handle: p?.username ?? null, actor_avatar: p?.profile_image_url ?? null }
+    return {
+      ...r,
+      actor_handle: p?.username ?? null,
+      actor_avatar: p?.profile_image_url ?? null,
+      post_layout_id: r.post_id ? (layoutByPost.get(r.post_id) ?? null) : null,
+    }
   })
 }
 

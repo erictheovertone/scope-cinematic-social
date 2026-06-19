@@ -104,6 +104,10 @@ export default function BannerBadgeStrip({
         )}
         {visible.map((b) => {
           const pull = pullKey != null && b.key === pullKey;
+          // SRH sits 1px smaller than the rest on the banner — it was visually
+          // overpowering the other badges; this rebalances it. SRH-only override
+          // of the otherwise-fixed icon size.
+          const sz = b.key === 'srh' ? iconSize - 1 : iconSize;
           return (
             <img
               key={b.key}
@@ -111,7 +115,7 @@ export default function BannerBadgeStrip({
               alt={b.title ?? b.key}
               className={pull ? 'focus-pull' : undefined}
               style={{
-                position: 'relative', zIndex: 1, width: iconSize, height: iconSize, objectFit: 'contain', display: 'block',
+                position: 'relative', zIndex: 1, width: sz, height: sz, objectFit: 'contain', display: 'block',
                 ...(pull ? { animation: 'focusPull 2s cubic-bezier(0.16,0.84,0.3,1) both' } : null),
               }}
             />
