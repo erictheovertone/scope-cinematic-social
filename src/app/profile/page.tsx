@@ -15,6 +15,7 @@ import MembershipSheet from "@/components/MembershipSheet";
 import BottomToolbar from "@/components/BottomToolbar";
 import MediaRenderer from "@/components/MediaRenderer";
 import PostModal from "@/components/PostModal";
+import TheatreMode from "@/components/TheatreMode";
 import OnboardingModal from "@/components/OnboardingModal";
 import AddToHomeScreenSheet from "@/components/AddToHomeScreenSheet";
 import { shouldShowA2HS } from "@/lib/pwaUtils";
@@ -533,6 +534,12 @@ const userLayoutId = stableLayoutId;
           </button>
         </div>
       </div>
+
+      {/* THEATRE MODE — landscape full-screen viewing of this profile's posts,
+          toggled by the eye icon in the tab row. Full-screen overlay. */}
+      {activeTab === 'theatre' && (
+        <TheatreMode posts={userPosts} onClose={() => setActiveTab('main')} />
+      )}
 
       {/* COLLECTED — the real page (ownership as identity): posts this user
           holds pieces of, EXCLUDING their own (ratified). */}

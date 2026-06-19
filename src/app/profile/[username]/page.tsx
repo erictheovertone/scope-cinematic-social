@@ -24,6 +24,7 @@ import { resolveBadges } from "@/lib/economy/badges";
 import { dividerBackground } from "@/lib/economy/dividerLines";
 import { useEconomy } from "@/components/EconomyProvider";
 import CollectedGrid from "@/components/economy/CollectedGrid";
+import TheatreMode from "@/components/TheatreMode";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -489,6 +490,12 @@ export default function PublicProfilePage() {
           ))}
         </div>
       </div>
+
+      {/* THEATRE MODE — landscape full-screen viewing of this profile's posts,
+          toggled by the eye icon in the tab row. Full-screen overlay. */}
+      {activeTab === 'theatre' && (
+        <TheatreMode posts={posts} onClose={() => setActiveTab('main')} />
+      )}
 
       <ProfileDataSheet
         isOpen={profileDataOpen}
