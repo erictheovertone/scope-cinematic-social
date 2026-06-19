@@ -62,6 +62,9 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
   // Tick-up payoff timing: hold a confirmed First Cut earn until the sheet closes
   // (= return to feed), so the home-feed count pulse plays where the user lands.
   const firstCutEarnRef = useRef<string | null>(null);
+  // The default post-buy close timer. When a buy EARNS First Cut, the celebration
+  // takes over the exit (this gets cancelled) so the whip fires as Moment 1 ends.
+  const closeTimerRef = useRef<number | null>(null);
   const sheetVisibleRef = useRef(visible);
   sheetVisibleRef.current = visible;
   const [market, setMarket] = useState<PostMarket | null>(null);
@@ -142,13 +145,29 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
     // The ONE post-trade refresh: MC chips re-read + wallet holdings refetch.
     // piecesDelta (+buy / −sell, receipt-true) drives the optimistic wallet patch.
     notifyTradeSettled(postId, piecesDelta != null ? { piecesDelta } : undefined);
-    // ~4s hold: time to read the count and watch the price move before the
-    // sheet returns the collector to where they came from. On close, release any
-    // held First Cut earn → the feed count ticks up red as the user lands there.
-    setTimeout(() => {
-      onClose();
-      if (firstCutEarnRef.current) { notifyFirstCutEarned(firstCutEarnRef.current); firstCutEarnRef.current = null; }
-    }, 4000);
+    // ~4s hold: time to read the count and watch the price move before the sheet
+    // returns the collector to where they came from. If THIS buy earns First Cut,
+    // checkFirstCut cancels this timer and the celebration owns the exit instead
+    // (Moment 1 plays full → its disappearance whips into the counter). The whip
+    // is NO LONGER fired here — it's the celebration's exit (see onFlourishDone).
+    closeTimerRef.current = window.setTimeout(() => { onClose(); }, 4000);
+  };
+
+  // The celebration's exit IS the whip. When the flourish finishes its extended
+  // hold, clear it, return the buyer to their ORIGIN (feed OR Lightbox — both now
+  // host a First Cut counter), then a beat later fire the earn signal so the mark
+  // whips from screen-centre into that counter and ticks it up. Origin-agnostic:
+  // the sheet is the same in every view, so this fires identically everywhere.
+  const onFlourishDone = () => {
+    setFirstCut(null);
+    if (sheetVisibleRef.current) onClose(); // back to origin (only if still open)
+    const earned = firstCutEarnRef.current;
+    firstCutEarnRef.current = null;
+    if (earned) {
+      // Small beat so the sheet begins sliding away and the destination counter
+      // is revealed for the whip to land on. reduced-motion: the chip just ticks.
+      window.setTimeout(() => notifyFirstCutEarned(earned), 260);
+    }
   };
 
   // Moment 1 — the in-flow First Cut check. Fire-and-forget AFTER the buy's own
@@ -179,12 +198,14 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
         .then((res) => res.json())
         .then((j) => {
           if (j?.earned && j?.firstTime) {
+            // The celebration now OWNS the exit + whip. Cancel the default
+            // sheet-close so Moment 1 plays full before anything happens; the
+            // whip fires off the flourish's onDone (onFlourishDone), whether the
+            // sheet is still open or already returned. One chained sequence:
+            // earn → celebration (full + hold) → exit → whip → tick-up.
+            if (closeTimerRef.current != null) { clearTimeout(closeTimerRef.current); closeTimerRef.current = null; }
+            firstCutEarnRef.current = postId; // the whip target, released on exit
             setFirstCut({ rank: j.rank ?? null }); // Moment 1
-            // Feed tick-up: fire on return. If the sheet is still open, hold it
-            // for the close; if the earn confirmed late (sheet already gone),
-            // the user is on the feed → fire now.
-            if (sheetVisibleRef.current) firstCutEarnRef.current = postId;
-            else notifyFirstCutEarned(postId);
             return;
           }
           // Retry ONLY a defer (genuine earn awaiting indexing). A definitive
@@ -694,8 +715,9 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
         )}
       </div>
 
-      {/* Moment 1 — quick First Cut flourish over the confirmation (additive). */}
-      <FirstCutFlourish show={!!firstCut} rank={firstCut?.rank} onDone={() => setFirstCut(null)} />
+      {/* Moment 1 — First Cut flourish over the confirmation (additive). Plays
+          full + holds, then its exit whips into the counter (onFlourishDone). */}
+      <FirstCutFlourish show={!!firstCut} rank={firstCut?.rank} onDone={onFlourishDone} />
     </>
   );
 }

@@ -159,13 +159,16 @@
    The badge mark punches in with an overshoot, a red ring flares past it, the
    "FIRST CUT" mark snaps up; the whole beat holds ~1.8s then clears. Energetic,
    rewarding, gone — additive over the buy's own confirmation, never blocking. */
+/* 3.3s timeline: fast punch-in (first ~24% ≈ 0.8s), long HOLD (to ~90%), quick
+   exit. The hold is what lets the moment be read; the exit hands off to the whip. */
 @keyframes fcMark {
   0%   { opacity: 0; transform: scale(0.3) rotate(-12deg); }
-  45%  { opacity: 1; transform: scale(1.18) rotate(0deg); }
-  62%  { transform: scale(0.96); }
-  78%  { transform: scale(1.04); }
-  88%  { opacity: 1; transform: scale(1); }
-  100% { opacity: 0; transform: scale(1.06); }
+  14%  { opacity: 1; transform: scale(1.18) rotate(0deg); }
+  19%  { transform: scale(0.96); }
+  24%  { transform: scale(1.04); }
+  30%  { opacity: 1; transform: scale(1); }
+  90%  { opacity: 1; transform: scale(1); }   /* HOLD */
+  100% { opacity: 0; transform: scale(1.06); } /* exit */
 }
 @keyframes fcRing {
   0%   { opacity: 0; transform: scale(0.4); }
@@ -173,28 +176,28 @@
   100% { opacity: 0; transform: scale(2.4); }
 }
 @keyframes fcLabel {
-  0%, 30% { opacity: 0; transform: translateY(8px); letter-spacing: 0.5em; }
-  50%     { opacity: 1; transform: translateY(0); letter-spacing: 0.24em; }
-  85%     { opacity: 1; }
+  0%, 16% { opacity: 0; transform: translateY(8px); letter-spacing: 0.5em; }
+  28%     { opacity: 1; transform: translateY(0); letter-spacing: 0.24em; }
+  90%     { opacity: 1; }   /* HOLD */
   100%    { opacity: 0; }
 }
-/* Backdrop dim — fades IN with the flourish, OUT with it (no lingering scrim). */
+/* Backdrop dim — fades IN with the flourish, holds, OUT with it (no lingering scrim). */
 @keyframes fcBackdrop {
   0%   { opacity: 0; }
-  14%  { opacity: 1; }
-  82%  { opacity: 1; }
+  8%   { opacity: 1; }
+  90%  { opacity: 1; }   /* HOLD */
   100% { opacity: 0; }
 }
 /* Red glow behind the mark — blooms, holds, clears with the moment. */
 @keyframes fcGlow {
   0%   { opacity: 0; transform: scale(0.6); }
-  30%  { opacity: 1; transform: scale(1); }
-  72%  { opacity: 0.9; transform: scale(1.08); }
+  18%  { opacity: 1; transform: scale(1); }
+  85%  { opacity: 0.9; transform: scale(1.08); }  /* HOLD */
   100% { opacity: 0; transform: scale(1.16); }
 }
 @media (prefers-reduced-motion: reduce) {
   .fc-mark, .fc-ring, .fc-label, .fc-glow { animation: simpleFade 0.4s ease both !important; }
-  .fc-backdrop { animation: fcBackdrop 1.6s ease both !important; }
+  .fc-backdrop { animation: fcBackdrop 3.3s ease both !important; }
 }
 
 /* Home-feed First Cut count tick-up — a brief red illumination as the count

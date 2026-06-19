@@ -13,7 +13,13 @@ import { useEffect } from 'react';
 import { BADGES } from '@/lib/economy/badges';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
-const DURATION_MS = 1800;
+// Extended hold (~+1.5s over the original 1.8s): the badge punches in fast, then
+// the moment HOLDS so it can be read in full before its exit. The exit itself is
+// the whip — the caller fires notifyFirstCutEarned() off this onDone, so the
+// celebration's disappearance IS the shrink-into-counter. Keep in lockstep with
+// the fcMark/fcLabel/fcBackdrop/fcGlow keyframe timelines in globals.css.
+const DURATION_MS = 3300;
+const DUR = `${DURATION_MS}ms`;
 
 export default function FirstCutFlourish({
   show,
@@ -45,7 +51,7 @@ export default function FirstCutFlourish({
         position: 'fixed', inset: 0, zIndex: 600, pointerEvents: 'none',
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
         background: 'rgba(0,0,0,0.9)',
-        animation: 'fcBackdrop 1.8s ease both',
+        animation: `fcBackdrop ${DUR} ease both`,
       }}
     >
       {/* Red glow blooming from BEHIND the mark — bright centre over the dark dim
@@ -55,7 +61,7 @@ export default function FirstCutFlourish({
         style={{
           position: 'absolute', width: 380, height: 380, borderRadius: '50%', pointerEvents: 'none',
           background: 'radial-gradient(circle, rgba(255,0,0,0.55) 0%, rgba(255,0,0,0.28) 28%, rgba(255,0,0,0.08) 50%, rgba(255,0,0,0) 70%)',
-          animation: 'fcGlow 1.8s ease both',
+          animation: `fcGlow ${DUR} ease both`,
         }}
       />
       <div style={{ position: 'relative', width: 96, height: 96, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -76,20 +82,20 @@ export default function FirstCutFlourish({
           style={{
             width: 72, height: 72, objectFit: 'contain', display: 'block',
             filter: 'drop-shadow(0 0 12px rgba(255,0,0,0.55))',
-            animation: 'fcMark 1.8s cubic-bezier(0.16,0.84,0.3,1) both',
+            animation: `fcMark ${DUR} cubic-bezier(0.16,0.84,0.3,1) both`,
           }}
         />
       </div>
       <div
         className="fc-label"
-        style={{ ...SKB, marginTop: 18, fontSize: 15, letterSpacing: '0.24em', color: '#FFFFFF', textTransform: 'uppercase', animation: 'fcLabel 1.8s ease both' }}
+        style={{ ...SKB, marginTop: 18, fontSize: 15, letterSpacing: '0.24em', color: '#FFFFFF', textTransform: 'uppercase', animation: `fcLabel ${DUR} ease both` }}
       >
         First Cut
       </div>
       {rank != null && (
         <div
           className="fc-label"
-          style={{ ...SKB, marginTop: 6, fontSize: 8, letterSpacing: '0.3em', color: '#FF0000', textTransform: 'uppercase', animation: 'fcLabel 1.8s ease both', animationDelay: '0.08s' }}
+          style={{ ...SKB, marginTop: 6, fontSize: 8, letterSpacing: '0.3em', color: '#FF0000', textTransform: 'uppercase', animation: `fcLabel ${DUR} ease both`, animationDelay: '0.08s' }}
         >
           Founding Nº {rank}
         </div>
