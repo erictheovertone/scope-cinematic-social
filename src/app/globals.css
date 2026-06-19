@@ -206,6 +206,11 @@
   100% { transform: scale(1);    text-shadow: none; color: rgba(255,255,255,0.6); }
 }
 @keyframes fcMarkPop { 0% { transform: scale(1); } 35% { transform: scale(1.22); } 100% { transform: scale(1); } }
+/* Ledger slots ripple down on expand — staggered via per-slot animation-delay. */
+@keyframes fcSlotRipple { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) {
+  .fc-slot { animation: none !important; } /* slots show/hide instantly, no ripple */
+}
 /* Whip-into-counter — the celebration mark shrinks FAST from where it played
    (screen centre) into the small First Cut counter; lands on it and drives the
    tick-up. Start offset + scale are passed as CSS vars (per-counter position).
