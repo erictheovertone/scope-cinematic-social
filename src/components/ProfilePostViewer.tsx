@@ -13,7 +13,7 @@ import CollectSheetGate from "@/components/economy/CollectSheetGate";
 import { isUntradeableCoin } from "@/lib/economy/pairing";
 import CreateCoinSheet from "@/components/economy/CreateCoinSheet";
 import { isCoinPost } from "@/components/EconomyProvider";
-import FirstCutLedger from "@/components/economy/FirstCutLedger";
+import FirstCutChip from "@/components/economy/FirstCutChip";
 import DeletePostSheet from "@/components/DeletePostSheet";
 import MediaRenderer from "@/components/MediaRenderer";
 import GradedVideo from "@/components/finishing/GradedVideo";
@@ -257,9 +257,12 @@ function PostViewerItem({
           {deckToast && (
             <span style={{ ...SKB, fontSize: 9, color: "rgba(255,255,255,0.5)", textTransform: "uppercase" }}>Added to {deckToast}</span>
           )}
-          {/* First Cut counter is NOT here — the canonical counter on full post
-              views is the FIRST CUT ledger row below the action row (also the whip
-              target). The feed uses the small chip; full post views use the row. */}
+          {/* First Cut counter — the SMALL icon + count, identical to the home
+              feed (all scrolls use this treatment; the full ledger row is
+              Lightbox-only). Whip-into-counter lands here. Left of COLLECT. */}
+          {isCoinPost(post as { coin_address?: string | null; token_standard?: string | null }) && (post as { coin_address?: string | null }).coin_address && (
+            <FirstCutChip coinAddress={(post as { coin_address?: string }).coin_address as string} postId={(post as { id?: string }).id as string} />
+          )}
           <button
             onClick={handleCollect}
             style={{
@@ -346,19 +349,6 @@ function PostViewerItem({
           />
         )}
       </div>
-
-      {/* ── FIRST CUT ledger row — the canonical First Cut counter on this full
-          post view (collapsed header + tappable ripple-down ledger), same
-          component/treatment as the Lightbox. Also the whip-into-counter target. */}
-      {isCoinPost(post as { coin_address?: string | null; token_standard?: string | null }) && (post as { coin_address?: string | null }).coin_address && (
-        <div style={{ padding: "0 4px", marginTop: 10, marginBottom: 4 }}>
-          <FirstCutLedger
-            coinAddress={(post as { coin_address?: string }).coin_address as string}
-            postId={(post as { id?: string }).id as string}
-            onHolderTap={(u) => onNavigateToProfile(u)}
-          />
-        </div>
-      )}
 
       <CollectSheetGate
         post={post}
