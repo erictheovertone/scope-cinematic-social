@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import FirstCutChip from "@/components/economy/FirstCutChip";
 import { usePrivy } from "@privy-io/react-auth";
 import {
   likePost,
@@ -214,6 +215,12 @@ export default function PostItem({ post, onImageClick, commentsOpen, onToggleCom
           {post.ticker && <TickerMark ticker={post.ticker} size={8} />}
           <span>MC: {mc ?? '…'}</span>
         </span>
+      )}
+      {/* First Cut compact indicator — bottom-left; taps to expand the ledger. */}
+      {post.token_standard === 'coin' && post.coin_address && (
+        <div style={{ position: 'absolute', bottom: '6px', left: '6px', zIndex: 10 }}>
+          <FirstCutChip coinAddress={post.coin_address} />
+        </div>
       )}
     </>
   );

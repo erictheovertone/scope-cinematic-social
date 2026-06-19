@@ -21,6 +21,8 @@ import MediaRenderer from "@/components/MediaRenderer";
 import GradedVideo from "@/components/finishing/GradedVideo";
 import { useEconomy, isCoinPost } from "@/components/EconomyProvider";
 import TickerMark from "@/components/economy/TickerMark";
+import FirstCutLedger from "@/components/economy/FirstCutLedger";
+import { useFirstCutLedger } from "@/lib/firstCutLedger";
 import DeletePostSheet from "@/components/DeletePostSheet";
 import ReframeOverlay from "@/components/ReframeOverlay";
 
@@ -74,6 +76,8 @@ const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fon
 
 export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDeleted, onScrollDown, onTheaterMode, layoutId }: PostModalProps) {
   const router = useRouter();
+  // First Cut ledger — founding collectors for this coin (null on non-coin posts).
+  const firstCutHolders = useFirstCutLedger(isCoinPost(post) ? (post.coin_address ?? null) : null);
   const { user } = usePrivy();
   const economy = useEconomy();
 
@@ -483,6 +487,13 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
                 </span>
               </button>
             </div>
+
+            {/* First Cut ledger — the post's founding collectors (coin posts) */}
+            {isCoinPost(post) && post.coin_address && (
+              <div style={{ marginBottom: 16 }}>
+                <FirstCutLedger holders={firstCutHolders} onHolderTap={(u) => router.push("/profile/" + u)} />
+              </div>
+            )}
 
             {/* Divider */}
             <div style={{ height: 1, background: "rgba(255,255,255,0.1)", marginBottom: 12 }} />
