@@ -22,8 +22,6 @@ import GradedVideo from "@/components/finishing/GradedVideo";
 import { useEconomy, isCoinPost } from "@/components/EconomyProvider";
 import TickerMark from "@/components/economy/TickerMark";
 import FirstCutLedger from "@/components/economy/FirstCutLedger";
-import FirstCutChip from "@/components/economy/FirstCutChip";
-import { useFirstCutLedger } from "@/lib/firstCutLedger";
 import DeletePostSheet from "@/components/DeletePostSheet";
 import ReframeOverlay from "@/components/ReframeOverlay";
 
@@ -77,8 +75,6 @@ const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fon
 
 export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDeleted, onScrollDown, onTheaterMode, layoutId }: PostModalProps) {
   const router = useRouter();
-  // First Cut ledger — founding collectors for this coin (null on non-coin posts).
-  const firstCutHolders = useFirstCutLedger(isCoinPost(post) ? (post.coin_address ?? null) : null);
   const { user } = usePrivy();
   const economy = useEconomy();
 
@@ -443,17 +439,10 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
               </p>
             ) : null}
 
-            {/* ADD TO DECK + COLLECT */}
+            {/* ADD TO DECK + COLLECT — the small First Cut counter is NOT here on
+                full post views; the canonical counter is the FIRST CUT ledger row
+                below (which is also the whip target). */}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 12, marginBottom: 16 }}>
-              {/* First Cut counter — the whip-into-counter target in the Lightbox
-                  (mirrors the feed + profile chip). Without it, a buy that
-                  originates HERE earns First Cut but has no counter to whip into
-                  on return. Sits at the left of the action cluster, like profile. */}
-              {isCoinPost(post) && post.coin_address && (
-                <span style={{ marginRight: "auto" }}>
-                  <FirstCutChip coinAddress={post.coin_address} postId={post.id} />
-                </span>
-              )}
               {deckToast && (
                 <span style={{ ...SKR, fontSize: 8, color: "rgba(255,255,255,0.55)", animation: "theater-fade-in 0.2s ease-out both" }}>
                   Added to {deckToast}
@@ -501,7 +490,7 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
             {/* First Cut ledger — the post's founding collectors (coin posts) */}
             {isCoinPost(post) && post.coin_address && (
               <div style={{ marginBottom: 16 }}>
-                <FirstCutLedger holders={firstCutHolders} onHolderTap={(u) => router.push("/profile/" + u)} />
+                <FirstCutLedger coinAddress={post.coin_address} postId={post.id} onHolderTap={(u) => router.push("/profile/" + u)} />
               </div>
             )}
 
