@@ -216,12 +216,6 @@ export default function PostItem({ post, onImageClick, commentsOpen, onToggleCom
           <span>MC: {mc ?? '…'}</span>
         </span>
       )}
-      {/* First Cut compact indicator — bottom-left; taps to expand the ledger. */}
-      {post.token_standard === 'coin' && post.coin_address && (
-        <div style={{ position: 'absolute', bottom: '6px', left: '6px', zIndex: 10 }}>
-          <FirstCutChip coinAddress={post.coin_address} />
-        </div>
-      )}
     </>
   );
 
@@ -312,22 +306,27 @@ export default function PostItem({ post, onImageClick, commentsOpen, onToggleCom
           <span style={{ ...SKR, fontSize: 7, color: "inherit" }}>{comments.length}</span>
         </button>
 
-        <button
-          onClick={(e) => { e.stopPropagation(); setShowCollectSheet(true); }}
-          style={{
-            marginLeft: "auto",
-            background: "transparent",
-            border: `1px solid ${showCollectSheet ? "#FF0000" : "rgba(255,255,255,0.7)"}`,
-            cursor: "pointer",
-            padding: "1px 5px",
-            lineHeight: 1,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <span style={{ ...SKB, fontSize: 7, color: showCollectSheet ? "#FF0000" : "rgba(255,255,255,0.7)", lineHeight: 1 }}>COLLECT</span>
-        </button>
+        {/* Right cluster — First Cut count (coin posts) sits to the LEFT of COLLECT. */}
+        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 10 }}>
+          {post.token_standard === 'coin' && post.coin_address && (
+            <FirstCutChip coinAddress={post.coin_address} />
+          )}
+          <button
+            onClick={(e) => { e.stopPropagation(); setShowCollectSheet(true); }}
+            style={{
+              background: "transparent",
+              border: `1px solid ${showCollectSheet ? "#FF0000" : "rgba(255,255,255,0.7)"}`,
+              cursor: "pointer",
+              padding: "1px 5px",
+              lineHeight: 1,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <span style={{ ...SKB, fontSize: 7, color: showCollectSheet ? "#FF0000" : "rgba(255,255,255,0.7)", lineHeight: 1 }}>COLLECT</span>
+          </button>
+        </div>
       </div>
 
       {post.caption && (
