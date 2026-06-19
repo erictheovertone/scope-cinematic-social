@@ -309,7 +309,7 @@ export default function PostItem({ post, onImageClick, commentsOpen, onToggleCom
         {/* Right cluster — First Cut count (coin posts) sits to the LEFT of COLLECT. */}
         <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 10 }}>
           {post.token_standard === 'coin' && post.coin_address && (
-            <FirstCutChip coinAddress={post.coin_address} />
+            <FirstCutChip coinAddress={post.coin_address} postId={post.id} />
           )}
           <button
             onClick={(e) => { e.stopPropagation(); setShowCollectSheet(true); }}

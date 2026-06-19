@@ -42,8 +42,9 @@ export async function getFirstCutLedger(coinAddress: string): Promise<FirstCutHo
   }));
 }
 
-/** Hook: the ledger for a coin. `null` = loading; `[]` = no founders yet. */
-export function useFirstCutLedger(coinAddress?: string | null): FirstCutHolder[] | null {
+/** Hook: the ledger for a coin. `null` = loading; `[]` = no founders yet.
+ *  `refreshKey` re-fetches when bumped (used to pull the new count after an earn). */
+export function useFirstCutLedger(coinAddress?: string | null, refreshKey = 0): FirstCutHolder[] | null {
   const [holders, setHolders] = useState<FirstCutHolder[] | null>(null);
   useEffect(() => {
     if (!coinAddress) { setHolders([]); return; }
@@ -52,6 +53,23 @@ export function useFirstCutLedger(coinAddress?: string | null): FirstCutHolder[]
       .then((h) => { if (!cancelled) setHolders(h); })
       .catch(() => { if (!cancelled) setHolders([]); });
     return () => { cancelled = true; };
-  }, [coinAddress]);
+  }, [coinAddress, refreshKey]);
   return holders;
+}
+
+// ── First Cut earned signal — drives the home-feed count tick-up payoff ───────
+// Fired when the buyer's own buy CONFIRMS a new First Cut earn (the same signal
+// that drives Moment 1), timed to the collect sheet closing (= return to feed).
+const FIRST_CUT_EARNED_EVENT = 'scope:first-cut-earned';
+
+export function notifyFirstCutEarned(postId: string): void {
+  if (typeof window === 'undefined' || !postId) return;
+  window.dispatchEvent(new CustomEvent(FIRST_CUT_EARNED_EVENT, { detail: { postId } }));
+}
+
+export function onFirstCutEarned(cb: (postId: string) => void): () => void {
+  if (typeof window === 'undefined') return () => {};
+  const handler = (e: Event) => { const id = (e as CustomEvent).detail?.postId; if (id) cb(id); };
+  window.addEventListener(FIRST_CUT_EARNED_EVENT, handler);
+  return () => window.removeEventListener(FIRST_CUT_EARNED_EVENT, handler);
 }

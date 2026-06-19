@@ -16,7 +16,7 @@
 //
 // Rendered in place of the real CollectSheet only when economyPreviewEnabled().
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { usePrivy } from '@privy-io/react-auth';
 import { useEconomy } from '@/components/EconomyProvider';
 import { economyPreviewEnabled } from '@/lib/economy/flag';
@@ -27,6 +27,7 @@ import TickerMark from '@/components/economy/TickerMark';
 import FrameLoader from '@/components/FrameLoader';
 import { getAspectRatio } from '@/lib/aspectRatio';
 import { notifyTradeSettled } from '@/lib/economy/tradeEvents';
+import { notifyFirstCutEarned } from '@/lib/firstCutLedger';
 import { openPostLightbox } from '@/lib/postLightbox';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
@@ -58,6 +59,11 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
   // Moment 1 (First Cut flourish) — set only when the in-flow check verifies
   // THIS buy newly earned First Cut. Additive over the buy's success state.
   const [firstCut, setFirstCut] = useState<{ rank: number | null } | null>(null);
+  // Tick-up payoff timing: hold a confirmed First Cut earn until the sheet closes
+  // (= return to feed), so the home-feed count pulse plays where the user lands.
+  const firstCutEarnRef = useRef<string | null>(null);
+  const sheetVisibleRef = useRef(visible);
+  sheetVisibleRef.current = visible;
   const [market, setMarket] = useState<PostMarket | null>(null);
   const [mode, setMode] = useState<'buy' | 'sell'>('buy');
   const [showSlots, setShowSlots] = useState(false);
@@ -137,8 +143,12 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
     // piecesDelta (+buy / −sell, receipt-true) drives the optimistic wallet patch.
     notifyTradeSettled(postId, piecesDelta != null ? { piecesDelta } : undefined);
     // ~4s hold: time to read the count and watch the price move before the
-    // sheet returns the collector to where they came from.
-    setTimeout(() => onClose(), 4000);
+    // sheet returns the collector to where they came from. On close, release any
+    // held First Cut earn → the feed count ticks up red as the user lands there.
+    setTimeout(() => {
+      onClose();
+      if (firstCutEarnRef.current) { notifyFirstCutEarned(firstCutEarnRef.current); firstCutEarnRef.current = null; }
+    }, 4000);
   };
 
   // Moment 1 — the in-flow First Cut check. Fire-and-forget AFTER the buy's own
@@ -168,7 +178,15 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
       })
         .then((res) => res.json())
         .then((j) => {
-          if (j?.earned && j?.firstTime) { setFirstCut({ rank: j.rank ?? null }); return; }
+          if (j?.earned && j?.firstTime) {
+            setFirstCut({ rank: j.rank ?? null }); // Moment 1
+            // Feed tick-up: fire on return. If the sheet is still open, hold it
+            // for the close; if the earn confirmed late (sheet already gone),
+            // the user is on the feed → fire now.
+            if (sheetVisibleRef.current) firstCutEarnRef.current = postId;
+            else notifyFirstCutEarned(postId);
+            return;
+          }
           // Retry ONLY a defer (genuine earn awaiting indexing). A definitive
           // earned:false (sub-floor / slot full / already held) never retries.
           if (j?.deferred && retryIdx < FIRST_CUT_RETRY_MS.length) {
