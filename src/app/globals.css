@@ -206,6 +206,15 @@
   100% { transform: scale(1);    text-shadow: none; }
 }
 @keyframes fcMarkPop { 0% { transform: scale(1); } 35% { transform: scale(1.22); } 100% { transform: scale(1); } }
+/* Whip-into-counter — the celebration mark shrinks FAST from where it played
+   (screen centre) into the small First Cut counter; lands on it and drives the
+   tick-up. Start offset + scale are passed as CSS vars (per-counter position).
+   translate(-50%,-50%) keeps the mark centred on the counter at the landing. */
+@keyframes fcWhip {
+  0%   { transform: translate(-50%, -50%) translate(var(--fc-sx), var(--fc-sy)) scale(var(--fc-ss)); opacity: 0.95; }
+  85%  { opacity: 1; }
+  100% { transform: translate(-50%, -50%) translate(0, 0) scale(1); opacity: 1; }
+}
 @media (prefers-reduced-motion: reduce) {
   .fc-tickup, .fc-markpop { animation: none !important; } /* count still updates, just no pulse */
 }
