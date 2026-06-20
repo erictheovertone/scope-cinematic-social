@@ -200,28 +200,20 @@ export default function TheatreMode({
   const arStr = getAspectRatio(f(post, 'layout_id') ?? '');
   const [aw, ah] = String(arStr).split('/').map((s) => parseFloat(s));
   const arNum = isFinite(aw) && isFinite(ah) && ah > 0 ? aw / ah : 2.39;
-  const availW = stageW * 0.9;
-  const availH = stageH * (showData ? 0.56 : 0.84);
+  // ── Arrows: ALWAYS in the side margins, vertically centered, moderate size ──
+  // (authoritative spec). The media width is capped so a guaranteed side margin
+  // remains for the arrows — they never overlap the media, for any AR.
+  const ARROW_AR = 72 / 140;                       // asset w/h (a tall chevron)
+  const ARROW_PAD = 6;                             // tap padding around the glyph
+  const arrowH = Math.min(46, stageH * 0.13);      // moderate, restrained
+  const arrowW = arrowH * ARROW_AR;
+  const MIN_SIDE = arrowW + ARROW_PAD * 2 + 12;    // margin reserved each side
+
+  const availW = Math.min(stageW * 0.92, stageW - MIN_SIDE * 2);
+  const availH = stageH * (showData ? 0.5 : 0.86);
   let boxW = availW, boxH = availW / arNum;
   if (boxH > availH) { boxH = availH; boxW = availH * arNum; }
-
-  // ── Arrow geometry — anchored to the IMAGE's rendered bounds, never over it ──
-  // The image is centered, so the black margins are (stage − box)/2 on each axis.
-  // Side arrows live centered in the side black bars; but a wide post (PANA/SCOPE)
-  // fills the width, leaving too little side margin — then the arrows drop into
-  // the BOTTOM black bar instead. Smaller than the hero so they sit clear. The
-  // arrow's full footprint (image + tap padding) is kept inside the margin.
-  const sideMargin = (stageW - boxW) / 2;
-  const bottomMargin = (stageH - boxH) / 2;
-  const ARROW_AR = 72 / 140; // asset w/h
-  const ARROW_PAD = 8;       // tap padding around the (smaller) glyph
-  let arrowH = Math.min(56, stageH * 0.15);
-  let arrowW = arrowH * ARROW_AR;
-  // Side arrows only when the full footprint clears the image with breathing room.
-  const arrowsBelow = sideMargin < arrowW + ARROW_PAD * 2 + 8;
-  if (arrowsBelow) { arrowH = Math.min(arrowH, Math.max(22, bottomMargin - 10)); arrowW = arrowH * ARROW_AR; }
-  const imgBottomY = (stageH + boxH) / 2;
-  const bottomArrowY = imgBottomY + bottomMargin / 2; // centre of the bottom black bar
+  const sideMargin = (stageW - boxW) / 2;          // ≥ MIN_SIDE, so arrows clear the media
 
   const isVideo = f(post, 'media_type') === 'video';
   const mediaUrl = (post['media_urls'] as string[] | undefined)?.[0];
@@ -245,7 +237,7 @@ export default function TheatreMode({
           on a rotated phone the field is solid so the portrait profile behind
           never shows through the rotation. */}
       <div
-        onClick={handleClose}
+        onClick={() => { if (showData) setShowData(false); else handleClose(); }}
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
         style={{
@@ -264,9 +256,11 @@ export default function TheatreMode({
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}
         >
-          {/* Hero media — true AR box, objectFit cover (same crop as the feed). */}
+          {/* Hero media — true AR box, objectFit cover (same crop as the feed).
+              Tapping the media: closes the data panel if open; otherwise does
+              nothing (the empty black field is what exits). */}
           <div
-            onClick={stop}
+            onClick={(e) => { stop(e); if (showData) setShowData(false); }}
             style={{ width: boxW, height: boxH, background: '#000', overflow: 'hidden', flexShrink: 0, transition: `height 300ms ${EASE}, width 300ms ${EASE}` }}
           >
             {isVideo ? (
@@ -286,64 +280,36 @@ export default function TheatreMode({
           </div>
         </div>
 
-        {/* ── Prev / Next arrows (theatre-mode-arrow-01.png) — ALWAYS in the black
-            margin around the image (anchored to its rendered edges), never over the
-            media. Sides when there's room; bottom bar for wide posts. Hidden while
-            the data panel is up. Left → previous, right → next. ── */}
-        {!showData && !arrowsBelow && (
-          <>
-            {index > 0 && (
-              <button
-                onClick={(e) => { stop(e); go(-1); }}
-                aria-label="Previous"
-                style={{ position: 'absolute', left: sideMargin / 2, top: '50%', transform: 'translate(-50%, -50%)', background: 'transparent', border: 'none', cursor: 'pointer', padding: ARROW_PAD, opacity: 0.85 }}
-              >
-                <img src="/theatre-mode-arrow-01.png" alt="" style={{ height: arrowH, width: 'auto', display: 'block' }} />
-              </button>
-            )}
-            {index < posts.length - 1 && (
-              <button
-                onClick={(e) => { stop(e); go(1); }}
-                aria-label="Next"
-                style={{ position: 'absolute', left: stageW - sideMargin / 2, top: '50%', transform: 'translate(-50%, -50%)', background: 'transparent', border: 'none', cursor: 'pointer', padding: ARROW_PAD, opacity: 0.85 }}
-              >
-                <img src="/theatre-mode-arrow-01.png" alt="" style={{ height: arrowH, width: 'auto', display: 'block', transform: 'scaleX(-1)' }} />
-              </button>
-            )}
-          </>
-        )}
-        {/* Wide posts: arrows in the BOTTOM black bar, flanking the centre (clear of
-            the "+" and the counter), still below the image — never on the media. */}
-        {!showData && arrowsBelow && (
-          <>
-            <button
-              onClick={(e) => { stop(e); go(-1); }}
-              disabled={index === 0}
-              aria-label="Previous"
-              style={{ position: 'absolute', left: stageW / 2 - 66, top: bottomArrowY, transform: 'translate(-50%, -50%)', background: 'transparent', border: 'none', cursor: index === 0 ? 'default' : 'pointer', padding: ARROW_PAD, opacity: index === 0 ? 0.25 : 0.85 }}
-            >
-              <img src="/theatre-mode-arrow-01.png" alt="" style={{ height: arrowH, width: 'auto', display: 'block' }} />
-            </button>
-            <button
-              onClick={(e) => { stop(e); go(1); }}
-              disabled={index === posts.length - 1}
-              aria-label="Next"
-              style={{ position: 'absolute', left: stageW / 2 + 66, top: bottomArrowY, transform: 'translate(-50%, -50%)', background: 'transparent', border: 'none', cursor: index === posts.length - 1 ? 'default' : 'pointer', padding: ARROW_PAD, opacity: index === posts.length - 1 ? 0.25 : 0.85 }}
-            >
-              <img src="/theatre-mode-arrow-01.png" alt="" style={{ height: arrowH, width: 'auto', display: 'block', transform: 'scaleX(-1)' }} />
-            </button>
-          </>
-        )}
-
-        {/* ── BACK (top-left) — mobile out (per the mobile node) ── */}
-        {portrait && (
+        {/* ── Prev (<) / Next (>) arrows — ALWAYS in the side black margins,
+            vertically centered, clear of the media. The asset points RIGHT, so the
+            LEFT arrow is mirrored (points left → prev) and the RIGHT arrow is as-is
+            (points right → next). Hidden while the data panel is up. ── */}
+        {!showData && index > 0 && (
           <button
-            onClick={(e) => { stop(e); handleClose(); }}
-            style={{ position: 'absolute', left: 16, top: 14, background: 'transparent', border: 'none', cursor: 'pointer', padding: 4 }}
+            onClick={(e) => { stop(e); go(-1); }}
+            aria-label="Previous"
+            style={{ position: 'absolute', left: sideMargin / 2, top: '50%', transform: 'translate(-50%, -50%)', background: 'transparent', border: 'none', cursor: 'pointer', padding: ARROW_PAD, opacity: 0.85 }}
           >
-            <span style={{ ...SKB, fontSize: 11, color: '#FFF', letterSpacing: '0.02em', textTransform: 'uppercase' }}>Back</span>
+            <img src="/theatre-mode-arrow-01.png" alt="Previous" style={{ height: arrowH, width: 'auto', display: 'block', transform: 'scaleX(-1)' }} />
           </button>
         )}
+        {!showData && index < posts.length - 1 && (
+          <button
+            onClick={(e) => { stop(e); go(1); }}
+            aria-label="Next"
+            style={{ position: 'absolute', left: stageW - sideMargin / 2, top: '50%', transform: 'translate(-50%, -50%)', background: 'transparent', border: 'none', cursor: 'pointer', padding: ARROW_PAD, opacity: 0.85 }}
+          >
+            <img src="/theatre-mode-arrow-01.png" alt="Next" style={{ height: arrowH, width: 'auto', display: 'block' }} />
+          </button>
+        )}
+
+        {/* ── BACK — top-LEFT, all surfaces (exits Theatre View) ── */}
+        <button
+          onClick={(e) => { stop(e); handleClose(); }}
+          style={{ position: 'absolute', left: 16, top: 14, background: 'transparent', border: 'none', cursor: 'pointer', padding: 4 }}
+        >
+          <span style={{ ...SKB, fontSize: 11, color: '#FFF', letterSpacing: '0.02em', textTransform: 'uppercase' }}>Back</span>
+        </button>
 
         {/* ── Framed-eye close (top-right) ── */}
         <button
@@ -354,14 +320,17 @@ export default function TheatreMode({
           <img src="/theatre-mode-eye-framed.png" alt="" style={{ height: 22, width: 'auto', display: 'block', opacity: 0.92 }} />
         </button>
 
-        {/* ── "+" data toggle (lower area) — hidden-by-default reveal ── */}
-        <button
-          onClick={(e) => { stop(e); setShowData((v) => !v); }}
-          aria-label={showData ? 'Hide data' : 'Show data'}
-          style={{ position: 'absolute', bottom: showData ? 'auto' : 14, top: showData ? 12 : 'auto', left: '50%', transform: 'translateX(-50%)', background: 'transparent', border: 'none', cursor: 'pointer', padding: 6, zIndex: 3 }}
-        >
-          <span style={{ ...SKL, fontSize: 34, lineHeight: 1, color: '#FFF', display: 'block', transform: showData ? 'rotate(45deg)' : 'none', transition: `transform 280ms ${EASE}` }}>+</span>
-        </button>
+        {/* ── "+" data toggle — bottom-LEFT, beneath the media (reveals the panel).
+            Hidden while the panel is up; the panel closes by tapping the image/away. ── */}
+        {!showData && (
+          <button
+            onClick={(e) => { stop(e); setShowData(true); }}
+            aria-label="Show data"
+            style={{ position: 'absolute', bottom: 8, left: 16, background: 'transparent', border: 'none', cursor: 'pointer', padding: 6, zIndex: 3 }}
+          >
+            <span style={{ ...SKL, fontSize: 34, lineHeight: 1, color: '#FFF', display: 'block' }}>+</span>
+          </button>
+        )}
 
         {/* ── DATA PANEL — slides up when "+" is tapped. Mirrors the home-feed
             shelf: COLLECT, First Cut ledger (tappable ripple), likes, comments
