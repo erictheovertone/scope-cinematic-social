@@ -23,10 +23,13 @@
 // signature easing cubic-bezier(0.16,0.84,0.3,1). No IBM Plex Mono.
 
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { usePrivy } from '@privy-io/react-auth';
 import { useEconomy, isCoinPost } from '@/components/EconomyProvider';
-import { useFirstCutLedger, FIRST_CUT_SLOTS } from '@/lib/firstCutLedger';
-import { getPostLikes, getPostComments } from '@/lib/postsService';
+import { getPostLikes, getPostComments, addComment, likePost, unlikePost, isPostLikedByUser } from '@/lib/postsService';
+import { getUserByPrivyId, getProfile } from '@/lib/userService';
 import { getAspectRatio } from '@/lib/aspectRatio';
+import CollectSheetGate from '@/components/economy/CollectSheetGate';
+import FirstCutLedger from '@/components/economy/FirstCutLedger';
 import type { PostMarket } from '@/lib/economy/types';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
@@ -48,10 +51,31 @@ export default function TheatreMode({
   onClose: () => void;
 }) {
   const economy = useEconomy();
+  const { user } = usePrivy();
   const [index, setIndex] = useState(() => Math.min(Math.max(0, startIndex), Math.max(0, posts.length - 1)));
   const [showData, setShowData] = useState(false);
   const [shown, setShown] = useState(false); // enter/exit transition flag
   const reduceMotion = useRef(false);
+
+  // ── Home-feed data shelf state (COLLECT, likes, comments) ──
+  const [viewerName, setViewerName] = useState('user');
+  const [showCollect, setShowCollect] = useState(false);
+  const [showComments, setShowComments] = useState(false);
+  const [likes, setLikes] = useState<{ user_id?: string }[]>([]);
+  const [isLiked, setIsLiked] = useState(false);
+  const [comments, setComments] = useState<{ id?: string; username?: string; content?: string }[]>([]);
+  const [newComment, setNewComment] = useState('');
+
+  // Viewer's @handle for like/comment writes (same path PostItem uses).
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    getUserByPrivyId(user.id)
+      .then((su) => (su ? getProfile(su.id) : null))
+      .then((p) => { if (!cancelled && p) setViewerName(((p as { username?: string }).username) ?? 'user'); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [user]);
 
   // Viewport + orientation. Portrait phone → force-landscape (rotate the stage).
   const [vp, setVp] = useState(() => (typeof window !== 'undefined' ? { w: window.innerWidth, h: window.innerHeight } : { w: 0, h: 0 }));
@@ -120,21 +144,48 @@ export default function TheatreMode({
   };
 
   // ── Current-post data (real / hardened sources) for the "+" panel ──
-  const holders = useFirstCutLedger(coinAddr);
   const [market, setMarket] = useState<PostMarket | null>(null);
-  const [counts, setCounts] = useState<{ likes: number; comments: number }>({ likes: 0, comments: 0 });
   useEffect(() => {
     if (!post) return;
     let cancelled = false;
     const id = f(post, 'id') as string;
-    setMarket(null);
-    setCounts({ likes: 0, comments: 0 });
+    setMarket(null); setLikes([]); setComments([]); setIsLiked(false);
+    setShowCollect(false); setShowComments(false);
+    // MC/price from the hardened boundary; likes/comments + viewer's like state.
     if (coinAddr) economy.getPostMarket(id).then((m) => { if (!cancelled) setMarket(m); }).catch(() => {});
-    Promise.all([getPostLikes(id), getPostComments(id)])
-      .then(([l, c]) => { if (!cancelled) setCounts({ likes: (l ?? []).length, comments: (c ?? []).length }); })
+    Promise.all([
+      getPostLikes(id),
+      getPostComments(id),
+      user ? isPostLikedByUser(id, user.id) : Promise.resolve(false),
+    ])
+      .then(([l, c, liked]) => {
+        if (cancelled) return;
+        setLikes((l ?? []) as { user_id?: string }[]);
+        setComments((c ?? []) as { id?: string; username?: string; content?: string }[]);
+        setIsLiked(!!liked);
+      })
       .catch(() => {});
     return () => { cancelled = true; };
-  }, [post, coinAddr, economy]);
+  }, [post, coinAddr, economy, user]);
+
+  // Like / comment — same services + identifiers PostItem uses.
+  const handleLike = async () => {
+    if (!post || !user) return;
+    const id = f(post, 'id') as string;
+    try {
+      if (isLiked) { await unlikePost(id, user.id); setLikes((p) => p.filter((l) => l.user_id !== user.id)); setIsLiked(false); }
+      else { const l = await likePost(id, user.id, viewerName); setLikes((p) => [...p, l as { user_id?: string }]); setIsLiked(true); }
+    } catch (e) { console.error('[theatre] like failed', e); }
+  };
+  const handleAddComment = async () => {
+    if (!post || !user || !newComment.trim()) return;
+    const id = f(post, 'id') as string;
+    try {
+      const c = await addComment(id, user.id, viewerName, newComment.trim());
+      setComments((p) => [...p, c as { id?: string; username?: string; content?: string }]);
+      setNewComment('');
+    } catch (e) { console.error('[theatre] comment failed', e); }
+  };
 
   if (!post || posts.length === 0) {
     // Nothing to show — exit straight back to the profile.
@@ -182,10 +233,13 @@ export default function TheatreMode({
     : { position: 'fixed', inset: 0, width: '100vw', height: '100vh' };
 
   const stop = (e: React.MouseEvent) => e.stopPropagation();
-  const fcCount = holders?.length ?? 0;
+  const isCoin = !!coinAddr;
 
   return (
-    <div style={{ ...stageStyle, zIndex: 900 }}>
+    <>
+    {/* Stage z=490: BELOW the collect sheet (500/501), First Cut celebration (600)
+        and whip (650), so a collect from theatre layers those above it. */}
+    <div style={{ ...stageStyle, zIndex: 490 }}>
       {/* Black field — tapping the empty space (not the image / panel) exits. On
           desktop a near-opaque dim lets the profile bleed ~8% (matches the ref);
           on a rotated phone the field is solid so the portrait profile behind
@@ -309,41 +363,94 @@ export default function TheatreMode({
           <span style={{ ...SKL, fontSize: 34, lineHeight: 1, color: '#FFF', display: 'block', transform: showData ? 'rotate(45deg)' : 'none', transition: `transform 280ms ${EASE}` }}>+</span>
         </button>
 
-        {/* ── DATA PANEL — slides up over the black field when "+" is tapped ── */}
+        {/* ── DATA PANEL — slides up when "+" is tapped. Mirrors the home-feed
+            shelf: COLLECT, First Cut ledger (tappable ripple), likes, comments
+            (ripple up), MC, price — all from real/hardened sources. ── */}
         <div
           onClick={stop}
           style={{
             position: 'absolute', left: 0, right: 0, bottom: 0,
             background: '#000', borderTop: '1px solid #FF0000',
-            padding: '16px 22px 18px',
+            padding: '14px 22px 16px', maxHeight: '72%', overflowY: 'auto',
             transform: showData ? 'translateY(0)' : 'translateY(101%)',
             transition: `transform ${reduceMotion.current ? 0 : 360}ms ${EASE}`,
             zIndex: 2,
           }}
         >
+          {/* @handle + caption + COLLECT */}
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 12 }}>
             <span style={{ ...SKB, fontSize: 13, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.02em' }}>@{f(post, 'username') ?? '—'}</span>
             {f(post, 'caption') && (
               <span style={{ ...SKR, fontSize: 11, color: 'rgba(255,255,255,0.55)', lineHeight: 1.35, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, minWidth: 0 }}>{f(post, 'caption')}</span>
             )}
+            {isCoin && (
+              <button
+                onClick={(e) => { stop(e); setShowCollect(true); }}
+                style={{ ...SKB, fontSize: 10, letterSpacing: '0.08em', color: '#FF0000', textTransform: 'uppercase', background: 'transparent', border: '1px solid #FF0000', cursor: 'pointer', padding: '6px 14px', flexShrink: 0 }}
+              >
+                Collect
+              </button>
+            )}
           </div>
-          {/* Stat row — likes · comments · First Cut · MC · price (real sources) */}
+
+          {/* Stat shelf — LIKES (tap to like) · COMMENTS (tap → ripple up) · MC · price */}
           <div style={{ display: 'flex', gap: 1, background: 'rgba(255,255,255,0.08)' }}>
-            {[
-              { k: 'LIKES', v: counts.likes.toLocaleString() },
-              { k: 'COMMENTS', v: counts.comments.toLocaleString() },
-              ...(coinAddr ? [
-                { k: 'FIRST CUT', v: `${fcCount} / ${FIRST_CUT_SLOTS}` },
-                { k: 'MARKET CAP', v: market ? usd(market.mcUsd) : '…' },
-                { k: 'PRICE / PIECE', v: market ? (market.priceUsd != null ? usd(market.priceUsd) : '—') : '…' },
-              ] : []),
-            ].map((c) => (
-              <div key={c.k} style={{ flex: 1, background: '#000', padding: '10px 8px' }}>
-                <p style={{ ...SKB, fontSize: 6.5, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 0 5px' }}>{c.k}</p>
-                <p style={{ ...SKB, fontSize: 13, color: c.k === 'FIRST CUT' && fcCount > 0 ? '#FF0000' : '#FFF', margin: 0, fontVariantNumeric: 'tabular-nums' }}>{c.v}</p>
+            <button onClick={(e) => { stop(e); handleLike(); }} style={{ flex: 1, background: '#000', padding: '10px 8px', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
+              <p style={{ ...SKB, fontSize: 6.5, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 0 5px' }}>LIKES</p>
+              <p style={{ ...SKB, fontSize: 13, color: isLiked ? '#FF0000' : '#FFF', margin: 0, fontVariantNumeric: 'tabular-nums' }}>{likes.length.toLocaleString()}</p>
+            </button>
+            <button onClick={(e) => { stop(e); setShowComments((v) => !v); }} style={{ flex: 1, background: '#000', padding: '10px 8px', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
+              <p style={{ ...SKB, fontSize: 6.5, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 0 5px' }}>COMMENTS</p>
+              <p style={{ ...SKB, fontSize: 13, color: showComments ? '#FF0000' : '#FFF', margin: 0, fontVariantNumeric: 'tabular-nums' }}>{comments.length.toLocaleString()}</p>
+            </button>
+            {isCoin && (
+              <div style={{ flex: 1, background: '#000', padding: '10px 8px' }}>
+                <p style={{ ...SKB, fontSize: 6.5, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 0 5px' }}>MARKET CAP</p>
+                <p style={{ ...SKB, fontSize: 13, color: '#FFF', margin: 0, fontVariantNumeric: 'tabular-nums' }}>{market ? usd(market.mcUsd) : '…'}</p>
               </div>
-            ))}
+            )}
+            {isCoin && (
+              <div style={{ flex: 1, background: '#000', padding: '10px 8px' }}>
+                <p style={{ ...SKB, fontSize: 6.5, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 0 5px' }}>PRICE / PIECE</p>
+                <p style={{ ...SKB, fontSize: 13, color: '#FFF', margin: 0, fontVariantNumeric: 'tabular-nums' }}>{market ? (market.priceUsd != null ? usd(market.priceUsd) : '—') : '…'}</p>
+              </div>
+            )}
           </div>
+
+          {/* First Cut — the tappable ripple-down ledger + whip target (coin posts) */}
+          {isCoin && coinAddr && (
+            <div style={{ marginTop: 14 }}>
+              <FirstCutLedger coinAddress={coinAddr} postId={f(post, 'id')} />
+            </div>
+          )}
+
+          {/* Comments — ripple up when COMMENTS is tapped */}
+          {showComments && (
+            <div className="fc-slot" style={{ marginTop: 14, animation: reduceMotion.current ? 'none' : `fcSlotRipple 0.32s ${EASE} both` }}>
+              <div style={{ maxHeight: 150, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {comments.length === 0 ? (
+                  <span style={{ ...SKR, fontSize: 10, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>No comments yet</span>
+                ) : comments.map((c, i) => (
+                  <div key={c.id ?? i} style={{ display: 'flex', gap: 7, alignItems: 'baseline' }}>
+                    <span style={{ ...SKB, fontSize: 10, color: '#FFF', textTransform: 'uppercase', flexShrink: 0 }}>@{c.username ?? '—'}</span>
+                    <span style={{ ...SKR, fontSize: 11, color: 'rgba(255,255,255,0.7)', lineHeight: 1.35 }}>{c.content}</span>
+                  </div>
+                ))}
+              </div>
+              {user && (
+                <div style={{ display: 'flex', gap: 8, marginTop: 10, alignItems: 'center' }}>
+                  <input
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') handleAddComment(); }}
+                    placeholder="Add a comment…"
+                    style={{ ...SKR, flex: 1, fontSize: 11, color: '#FFF', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.18)', outline: 'none', padding: '6px 0' }}
+                  />
+                  <button onClick={(e) => { stop(e); handleAddComment(); }} disabled={!newComment.trim()} style={{ ...SKB, fontSize: 9, letterSpacing: '0.1em', color: newComment.trim() ? '#FF0000' : 'rgba(255,255,255,0.3)', textTransform: 'uppercase', background: 'transparent', border: 'none', cursor: newComment.trim() ? 'pointer' : 'default', flexShrink: 0 }}>Post</button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Position counter — subtle, lower-right (which post you're on) */}
@@ -352,5 +459,18 @@ export default function TheatreMode({
         </div>
       </div>
     </div>
+
+    {/* Collect flow — rendered OUTSIDE the rotated stage so its fixed positioning
+        is viewport-true (not trapped by the rotate). Its own sheet (z 500/501),
+        the First Cut celebration (600) and the whip (650) all layer above the
+        theatre; the whip lands on the First Cut ledger in the panel. */}
+    {isCoin && (
+      <CollectSheetGate
+        post={post as unknown as React.ComponentProps<typeof CollectSheetGate>['post']}
+        visible={showCollect}
+        onClose={() => setShowCollect(false)}
+      />
+    )}
+    </>
   );
 }

@@ -7,6 +7,7 @@ import { getAllPosts } from "@/lib/postsService";
 import PostItem from "@/components/PostItem";
 import PostModal from "@/components/PostModal";
 import MirageView from "@/components/MirageView";
+import TheatreMode from "@/components/TheatreMode";
 
 type FeedState = "normal" | "exiting" | "entering";
 
@@ -16,6 +17,7 @@ export default function Home() {
   const [posts, setPosts] = useState<any[]>([]);
   const [lightboxPost, setLightboxPost] = useState<any>(null);
   const [mirageActive, setMirageActive] = useState(false);
+  const [theatreActive, setTheatreActive] = useState(false); // Theatre Mode over the feed
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuClosing, setMenuClosing] = useState(false); // playing the close fade
   const [reduceMotion, setReduceMotion] = useState(false);
@@ -247,17 +249,18 @@ export default function Home() {
               background: 'transparent', border: 'none', cursor: 'pointer',
               color: '#FFFFFF', fontSize: 24, lineHeight: 1, padding: 8,
               fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700,
-              animation: menuClosing ? 'menuFadeOut 0.2s ease both' : 'menuChromeIn 0.3s ease 0.3s both',
+              animation: menuClosing ? 'menuFadeOut 0.2s ease both' : 'menuChromeIn 0.3s ease 0.38s both',
             }}
           >
             ✕
           </button>
 
-          {/* Two doors — stacked, oversized, dominant. */}
+          {/* Three doors — stacked, oversized, dominant. Top→bottom: THEATRE MODE
+              · SCREENING ROOM · MIRAGE VIEW, staggered rise (0.08 / 0.18 / 0.28). */}
           <div style={{ position: 'absolute', top: '22vh', left: 0, right: 0, padding: '0 26px', display: 'flex', flexDirection: 'column', gap: 36 }}>
-            {/* Door 1 — SCREENING ROOM (rises ~0.08s in). */}
+            {/* Door 1 — THEATRE MODE (rises ~0.08s in) → Theatre Mode over the feed. */}
             <button
-              onClick={e => { e.stopPropagation(); selectDoor(() => router.push('/screening-room')); }}
+              onClick={e => { e.stopPropagation(); selectDoor(() => setTheatreActive(true)); }}
               style={{
                 background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, width: '100%',
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14, textAlign: 'left',
@@ -269,12 +272,31 @@ export default function Home() {
               }}
             >
               <span style={{ flex: '1 1 auto', minWidth: 0, fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'clamp(36px, 13vw, 56px)', lineHeight: 0.92, letterSpacing: '-0.03em', color: '#FFFFFF', textTransform: 'uppercase' }}>
+                Theatre Mode
+              </span>
+              <img src="/theatre-mode-logo-new-red-lg.png" alt="" style={{ width: 50, height: 'auto', objectFit: 'contain', flexShrink: 0 }} />
+            </button>
+
+            {/* Door 2 — SCREENING ROOM (rises ~0.18s in). */}
+            <button
+              onClick={e => { e.stopPropagation(); selectDoor(() => router.push('/screening-room')); }}
+              style={{
+                background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, width: '100%',
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14, textAlign: 'left',
+                animation: menuClosing
+                  ? 'menuFadeOut 0.22s ease both'
+                  : reduceMotion
+                    ? 'menuBackingIn 0.3s ease both'
+                    : 'menuDoorRise 0.55s cubic-bezier(0.16,0.84,0.3,1) 0.18s both',
+              }}
+            >
+              <span style={{ flex: '1 1 auto', minWidth: 0, fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'clamp(36px, 13vw, 56px)', lineHeight: 0.92, letterSpacing: '-0.03em', color: '#FFFFFF', textTransform: 'uppercase' }}>
                 Screening Room
               </span>
               <img src="/screening-room-logo-temp-01.png" alt="" style={{ width: 56, height: 'auto', objectFit: 'contain', flexShrink: 0 }} />
             </button>
 
-            {/* Door 2 — MIRAGE VIEW (rises ~0.18s in). */}
+            {/* Door 3 — MIRAGE VIEW (rises ~0.28s in). */}
             <button
               onClick={e => { e.stopPropagation(); selectDoor(() => enterMirage()); }}
               style={{
@@ -284,7 +306,7 @@ export default function Home() {
                   ? 'menuFadeOut 0.22s ease both'
                   : reduceMotion
                     ? 'menuBackingIn 0.3s ease both'
-                    : 'menuDoorRise 0.55s cubic-bezier(0.16,0.84,0.3,1) 0.18s both',
+                    : 'menuDoorRise 0.55s cubic-bezier(0.16,0.84,0.3,1) 0.28s both',
               }}
             >
               <span style={{ flex: '1 1 auto', minWidth: 0, fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'clamp(36px, 13vw, 56px)', lineHeight: 0.92, letterSpacing: '-0.03em', color: '#FFFFFF', textTransform: 'uppercase' }}>
@@ -326,6 +348,10 @@ export default function Home() {
 
       {/* Mirage View — mounts as fixed overlay above the feed */}
       {mirageActive && <MirageView onClose={exitMirage} />}
+
+      {/* Theatre Mode over the FEED's posts (feed order). Same component as the
+          profile eye-icon entry — just sourced from the feed. */}
+      {theatreActive && <TheatreMode posts={posts} onClose={() => setTheatreActive(false)} />}
     </div>
   );
 }
