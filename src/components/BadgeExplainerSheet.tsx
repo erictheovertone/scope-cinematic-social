@@ -240,13 +240,16 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
       />
       <div style={{
         position: 'fixed', bottom: 0, left: 0, right: 0,
+        // Full-page when a tier description is open (it fills the entire screen);
+        // bottom-sheet (85vh) for the list.
+        top: detailKey ? 0 : undefined,
         backgroundColor: '#080808',
         borderTop: '1px solid rgba(255,255,255,0.08)',
         zIndex: 401,
         transform: visible ? 'translateY(0)' : 'translateY(100%)',
         transition: 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)',
         padding: '28px 24px 48px',
-        maxHeight: '85vh',
+        maxHeight: detailKey ? '100vh' : '85vh',
         overflowY: 'auto',
       }}>
         {/* ── LEVEL 2 — in-sheet TIER DETAIL. Back returns to the list (this sheet
