@@ -64,11 +64,11 @@ export const TIER_DETAILS: Record<string, {
     sections: [
       {
         title: 'WHAT YOU UNLOCK',
-        body: "Unlimited posts. Full deck functionality — organize your work into collections, share them publicly, and let collectors browse your catalog. Post analytics showing views, collect rates, and earnings per post. Priority access to new features before they ship publicly.",
+        body: "A profile that means something. On Scope, your work doesn't disappear into a feed — it builds a body of evidence. Everything you make becomes part of a catalog you present exactly as you intend — a living portfolio that directors, collectors, and collaborators can read your eye and your style off of at a glance. Unlimited posts and decks, the full finishing suite, and a market underneath all of it — your work can be collected and traded, paying you and the people who back you early. A reputation you own, not one you rent.",
       },
       {
         title: 'YOUR BADGE',
-        body: "The red aperture badge on your profile signals to every collector and creator on Scope that you're a serious participant. It shows on your PFP across the feed, in comments, and on every post you make. It's a mark of commitment to the platform.",
+        body: "The white aperture badge marks you as a serious participant. It shows on your PFP across the feed, in comments, and on every post you make — a signal to every creator and collector on Scope that you're here for the craft, building something real.",
       },
       {
         title: 'PRICING',
