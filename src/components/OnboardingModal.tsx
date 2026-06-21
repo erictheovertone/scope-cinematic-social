@@ -7,21 +7,27 @@ const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fon
 
 const SCREENS = [
   {
-    label: '01 / 03',
+    label: '01 / 04',
     title: 'CINEMA\nFOR THE\nINTERNET',
-    body: 'Scope is a home for cinematic work — for filmmakers, photographers, and visual artists who care how their images are seen. Present your work in a space built for it: customizable grids, a theatrical viewing mode, and decks that sequence a body of work like a reel. Built for craft first.',
+    body: 'A home for cinematic work — for filmmakers, photographers, and visual artists who care how their images are seen. Present it in a space built for it: customizable grids, a theatrical viewing mode, and decks that sequence work like a reel. Craft first.',
     cta: 'NEXT',
   },
   {
-    label: '02 / 03',
+    label: '02 / 04',
     title: 'YOU HAVE\nA WALLET',
-    body: "When you joined, Scope set up a crypto wallet in your name on Base — no seed phrase, no setup, nothing to manage. It's how your work becomes ownable: every post can become a token that real fans collect. As you build here, your standing shows — early members, verified artists, and featured work carry badges that mark who you are in the community.",
+    body: "When you joined, Scope set up a wallet in your name on Base — no seed phrase, no setup, nothing to manage. It's how your work becomes ownable: every post can become a token real fans collect. As you build, your standing shows — early members, verified artists, and featured work carry badges that mark who you are.",
     cta: 'NEXT',
   },
   {
-    label: '03 / 03',
+    label: '03 / 04',
     title: 'POST.\nMINT.\nEARN.',
-    body: 'Share your work and let it travel. Every time your work is collected or traded, a fee on that transaction comes back to you — the original creator earns from all of it, every time. No follower counts to chase, no algorithm to game. Just your work, your collectors, and a reason to keep creating.',
+    body: "Share your work and let it travel. Every time it's collected or traded, a fee comes back to you — the creator earns from all of it, every time. No follower counts to chase, no algorithm to game. Just your work, your collectors, and a reason to keep creating.",
+    cta: 'NEXT',
+  },
+  {
+    label: '04 / 04',
+    title: "THIS ISN'T\nANOTHER FEED",
+    body: 'A platform where your work earns, your portfolio lives, and you present it your way — on desktop and mobile. Different for a reason: built for the people who use it.',
     cta: 'START CREATING',
   },
 ];
