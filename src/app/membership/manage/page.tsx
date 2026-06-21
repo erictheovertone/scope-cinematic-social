@@ -13,18 +13,26 @@ export default function ManageMembershipPage() {
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [cancelled, setCancelled] = useState(false);
+  const [cancelError, setCancelError] = useState<string | null>(null);
 
   const handleCancel = async () => {
     setCancelling(true);
+    setCancelError(null);
     try {
       const res = await fetch('/api/stripe/cancel-subscription', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: user?.id }),
       });
-      if (res.ok) setCancelled(true);
+      if (res.ok) { setCancelled(true); return; }
+      // Don't fail silently — surface it so "Cancel anytime" is honest.
+      const j = await res.json().catch(() => ({}));
+      setCancelError(j?.error === 'No subscription found' || j?.error === 'No active subscription'
+        ? "We couldn't find an active subscription to cancel."
+        : "Couldn't cancel right now — please try again.");
     } catch (e) {
       console.error('Cancel failed:', e);
+      setCancelError("Couldn't cancel right now — please try again.");
     } finally {
       setCancelling(false);
     }
@@ -127,6 +135,9 @@ export default function ManageMembershipPage() {
                 </span>
               </button>
             </div>
+            {cancelError && (
+              <p style={{ ...SKR, fontSize: 11, color: '#FF0000', lineHeight: 1.5, margin: '14px 0 0' }}>{cancelError}</p>
+            )}
           </div>
         )}
       </div>

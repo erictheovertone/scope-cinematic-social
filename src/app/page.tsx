@@ -62,28 +62,31 @@ export default function Home() {
     return () => cancelAnimationFrame(raf);
   }, [openCommentsPostId]);
 
-  // Direction-aware red frame — present at rest and on scroll-UP, hidden on
-  // scroll-DOWN. Native listener (React's synthetic onScroll misses iOS momentum
-  // scroll-up), rAF-throttled, with a small threshold so micro-scrolls don't
-  // flicker it. lastScrollY only advances past the threshold, so a continuous
-  // gesture reads as one direction instead of thrashing per sub-pixel event.
+  // Direction-aware red frame — ANY upward scroll reveals it (regardless of how far
+  // down the feed you are); downward hides it. Native listener (React's synthetic
+  // onScroll misses iOS momentum), rAF-throttled, small jitter threshold.
+  //
+  // ROOT CAUSE of the prior failure: the reference position only advanced on acted
+  // (past-threshold) events, so after a down-scroll the comparison point went stale
+  // — direction was computed against an old anchor and the up-reveal didn't fire
+  // mid-feed. FIX: advance the reference EVERY sample, so `dy` is always the true
+  // per-frame movement and direction is never stale.
   useEffect(() => {
     const el = feedRef.current;
     if (!el) return;
-    const THRESHOLD = 6; // px of intent before we act
+    const THRESHOLD = 4; // px of intent (absorbs jitter / iOS bounce)
+    lastScrollY.current = el.scrollTop;
     let ticking = false;
     const update = () => {
       ticking = false;
       const y = el.scrollTop;
-      if (y <= THRESHOLD) {            // at/near the top → always present
-        setShowFrame(true);
-        lastScrollY.current = y;
-        return;
-      }
-      const delta = y - lastScrollY.current;
-      if (Math.abs(delta) < THRESHOLD) return; // below intent → ignore (no flicker)
-      setShowFrame(delta < 0);         // up → show, down → hide
-      lastScrollY.current = y;
+      const dy = y - lastScrollY.current; // movement since the previous sample
+      lastScrollY.current = y;            // ALWAYS advance → direction never stale
+      if (Math.abs(dy) < THRESHOLD) return; // below intent → ignore (no flicker)
+      const show = dy < 0 || y <= THRESHOLD; // up (or near top) → show; down → hide
+      // TEMP diagnostic (remove after confirming on-device):
+      console.debug('[redframe] y=%s dy=%s dir=%s show=%s', Math.round(y), Math.round(dy), dy < 0 ? 'UP' : 'DOWN', show);
+      setShowFrame(show);
     };
     const onScroll = () => {
       if (!ticking) { ticking = true; requestAnimationFrame(update); }

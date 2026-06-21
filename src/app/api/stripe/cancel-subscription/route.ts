@@ -9,10 +9,21 @@ export async function POST(req: NextRequest) {
   try {
     const { userId } = await req.json();
 
+    // The caller passes the Privy DID (usePrivy user.id), but profiles.user_id is
+    // the Supabase users.id (UUID). Resolve DID → users.id so the lookup matches —
+    // this mismatch was why cancel silently 404'd. Falls back to the raw value if a
+    // UUID was already supplied.
+    const { data: u } = await supabase
+      .from('users')
+      .select('id')
+      .eq('privy_id', userId)
+      .single();
+    const supaUserId = u?.id ?? userId;
+
     const { data: profile } = await supabase
       .from('profiles')
       .select('stripe_customer_id')
-      .eq('user_id', userId)
+      .eq('user_id', supaUserId)
       .single();
 
     if (!profile?.stripe_customer_id) {

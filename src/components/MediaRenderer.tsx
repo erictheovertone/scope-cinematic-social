@@ -134,7 +134,7 @@ export default function MediaRenderer({
           aria-label="Play"
           style={{ position: 'absolute', bottom: 8, right: 8, lineHeight: 0, pointerEvents: 'none', filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.9))' }}
         >
-          <svg width="13" height="15" viewBox="0 0 13 15" fill="#FF0000"><path d="M1 1l11 6.5L1 14z"/></svg>
+          <svg width="13" height="15" viewBox="0 0 13 15" fill="#FFFFFF"><path d="M1 1l11 6.5L1 14z"/></svg>
         </div>
       )}
     </div>
