@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import type { ProfileLink } from "@/lib/userService";
 import { isProMember } from "@/lib/userService";
 import { BADGES, resolveBadges, BADGE_SHORT_BLURB, type BadgeKey } from "@/lib/economy/badges";
@@ -59,7 +60,7 @@ function getDomain(url: string): string {
 export default function ProfileDataSheet({
   isOpen, onClose, profile, links, isOwnProfile,
   followers, following, totalPosts, collectors = 0, portfolioMc = 0,
-  firstCutCount = 0,
+  firstCutCount = 0, onExploreBadges,
   isFollowing = false, followBusy = false, onUnfollow,
 }: Props) {
   const router = useRouter();
@@ -243,51 +244,10 @@ export default function ProfileDataSheet({
                 ))}
               </div>
 
-              {/* Blurb pop-up — anchored to the BOTTOM of the BADGES section,
-                  scale/fade entrance, dismiss on outside tap or × top-right. */}
-              {activeBlurb && (
-                <div onClick={(e) => e.stopPropagation()} style={{ position: 'absolute', top: '100%', left: 0, right: 4, marginTop: 4, zIndex: 481, background: '#000', border: '1px solid #FF0000', padding: '16px 18px', transformOrigin: 'top center', animation: 'blurbIn 240ms cubic-bezier(0.16,0.84,0.3,1)' }}>
-                  <button onClick={(e) => { e.stopPropagation(); setActiveBlurb(null); }} aria-label="Close" style={{ position: 'absolute', top: 8, right: 10, ...SKB, fontSize: 13, lineHeight: 1, color: 'rgba(255,255,255,0.55)', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>×</button>
-
-                  {/* icon LEFT (larger, focus-pulls in on each tap) · text RIGHT */}
-                  <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
-                    <img
-                      key={activeBlurb}
-                      className="focus-pull"
-                      src={BADGES[activeBlurb].bannerSrc ?? BADGES[activeBlurb].src}
-                      alt={BADGES[activeBlurb].title}
-                      style={{ width: 60, height: 60, objectFit: 'contain', flexShrink: 0, animation: 'focusPull 1.2s cubic-bezier(0.16,0.84,0.3,1) both' }}
-                    />
-                    <div style={{ flex: 1, minWidth: 0, paddingRight: 12 }}>
-                      <p style={{ ...SKB, fontSize: 10, color: '#FF0000', textTransform: 'uppercase', letterSpacing: '0.16em', margin: '0 0 6px' }}>
-                        {BADGES[activeBlurb].title}
-                      </p>
-                      <p style={{ ...SKR, fontSize: 11, color: 'rgba(255,255,255,0.70)', lineHeight: 1.45, margin: 0 }}>
-                        {BADGE_SHORT_BLURB[activeBlurb]}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* EXPLORE SCOPE BADGES — opens the full "Badges on Scope" tier
-                      list (BadgeExplainerSheet) via the parent. Falls back to the
-                      /badges route if no handler is wired. */}
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setActiveBlurb(null); onClose(); router.push('/badges'); }}
-                    style={{ ...SKB, fontSize: 9, letterSpacing: '0.12em', color: '#FF0000', textTransform: 'uppercase', background: 'transparent', border: '1px solid #FF0000', cursor: 'pointer', padding: '9px 14px', marginTop: 14, width: '100%' }}
-                  >
-                    EXPLORE SCOPE BADGES →
-                  </button>
-
-                  {activeBlurb === 'firstCut' && economyPreviewEnabled() && profile?.username && (
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setActiveBlurb(null); onClose(); router.push(`/first-cut/${profile.username}`); }}
-                      style={{ ...SKB, fontSize: 9, letterSpacing: '0.12em', color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', background: 'transparent', border: '1px solid rgba(255,255,255,0.25)', cursor: 'pointer', padding: '8px 14px', marginTop: 8, width: '100%' }}
-                    >
-                      VIEW FIRST CUT →
-                    </button>
-                  )}
-                </div>
-              )}
+              {/* Blurb pop-up is portaled to the document root (see end of file) so
+                  it sits ABOVE everything — it used to live here inside the sheet's
+                  zIndex:100 container, beneath the zIndex:300 stats overlay, which
+                  made it unreadable AND its buttons unreliable. */}
             </div>
             <Divider />
           </>
@@ -391,6 +351,53 @@ export default function ProfileDataSheet({
 
       </div>
     </div>
+
+    {/* ── Tier-description pop-up — PORTALED to the document root, above EVERYTHING
+        (z 900) with a full dark backdrop, so nothing overlaps it and the buttons
+        are always tappable. (Previously trapped in the sheet's zIndex:100 context,
+        beneath the zIndex:300 stats overlay.) ── */}
+    {activeBlurb && typeof document !== 'undefined' && createPortal(
+      <div
+        onClick={() => setActiveBlurb(null)}
+        style={{ position: 'fixed', inset: 0, zIndex: 900, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 22 }}
+      >
+        <div onClick={(e) => e.stopPropagation()} style={{ position: 'relative', width: '100%', maxWidth: 340, background: '#000', border: '1px solid #FF0000', padding: '18px 18px', animation: 'blurbIn 240ms cubic-bezier(0.16,0.84,0.3,1)' }}>
+          <button onClick={(e) => { e.stopPropagation(); setActiveBlurb(null); }} aria-label="Close" style={{ position: 'absolute', top: 8, right: 10, ...SKB, fontSize: 15, lineHeight: 1, color: 'rgba(255,255,255,0.55)', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>×</button>
+          <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+            <img
+              key={activeBlurb}
+              className="focus-pull"
+              src={BADGES[activeBlurb].bannerSrc ?? BADGES[activeBlurb].src}
+              alt={BADGES[activeBlurb].title}
+              style={{ width: 60, height: 60, objectFit: 'contain', flexShrink: 0, animation: 'focusPull 1.2s cubic-bezier(0.16,0.84,0.3,1) both' }}
+            />
+            <div style={{ flex: 1, minWidth: 0, paddingRight: 12 }}>
+              <p style={{ ...SKB, fontSize: 10, color: '#FF0000', textTransform: 'uppercase', letterSpacing: '0.16em', margin: '0 0 6px' }}>{BADGES[activeBlurb].title}</p>
+              <p style={{ ...SKR, fontSize: 11, color: 'rgba(255,255,255,0.70)', lineHeight: 1.45, margin: 0 }}>{BADGE_SHORT_BLURB[activeBlurb]}</p>
+            </div>
+          </div>
+
+          {/* EXPLORE SCOPE BADGES — opens the full "Badges on Scope" tier list
+              (BadgeExplainerSheet) via the parent; falls back to the /badges route. */}
+          <button
+            onClick={(e) => { e.stopPropagation(); setActiveBlurb(null); if (onExploreBadges) { onClose(); onExploreBadges(); } else { onClose(); router.push('/badges'); } }}
+            style={{ ...SKB, fontSize: 9, letterSpacing: '0.12em', color: '#FF0000', textTransform: 'uppercase', background: 'transparent', border: '1px solid #FF0000', cursor: 'pointer', padding: '9px 14px', marginTop: 14, width: '100%' }}
+          >
+            EXPLORE SCOPE BADGES →
+          </button>
+
+          {activeBlurb === 'firstCut' && economyPreviewEnabled() && profile?.username && (
+            <button
+              onClick={(e) => { e.stopPropagation(); setActiveBlurb(null); onClose(); router.push(`/first-cut/${profile.username}`); }}
+              style={{ ...SKB, fontSize: 9, letterSpacing: '0.12em', color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', background: 'transparent', border: '1px solid rgba(255,255,255,0.25)', cursor: 'pointer', padding: '8px 14px', marginTop: 8, width: '100%' }}
+            >
+              VIEW FIRST CUT →
+            </button>
+          )}
+        </div>
+      </div>,
+      document.body,
+    )}
 
     <style>{`
       @keyframes coinFlip {

@@ -21,6 +21,7 @@ import { usePrivy } from '@privy-io/react-auth';
 import { useEconomy } from '@/components/EconomyProvider';
 import { economyPreviewEnabled } from '@/lib/economy/flag';
 import FirstCutFlourish from '@/components/economy/FirstCutFlourish';
+import GradedVideo from '@/components/finishing/GradedVideo';
 import type { PostMarket, BuyQuote, SellQuote, TradeCurrency } from '@/lib/economy/types';
 import ApertureMark from '@/components/economy/ApertureMark';
 import TickerMark from '@/components/economy/TickerMark';
@@ -41,6 +42,8 @@ interface Props {
   post: {
     id: string; username: string; caption?: string; media_urls: string[]; ticker?: string | null;
     media_type?: string; poster_url?: string | null; thumbnail_url?: string | null; layout_id?: string;
+    edit_params?: unknown; autoplay_clip_url?: string | null;
+    crop_x?: number; crop_y?: number; crop_width?: number; crop_height?: number;
   };
   visible: boolean;
   onClose: () => void;
@@ -319,10 +322,9 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
         )}
 
         {/* Post head — media WIDE in the creator's actual aspect ratio (never
-            re-cropped square). Video = the graded poster (poster_url — also
-            the blank-thumb fix: never thumb the video element); image = the
-            baked/graded image. Wide ARs stack the text below; the taller 4:3
-            sits text-beside. */}
+            re-cropped square). Video now PLAYS (graded) via the feed's GradedVideo
+            (autoplay/muted/loop/playsInline); image = the baked/graded image. Wide
+            ARs stack the text below; the taller 4:3 sits text-beside. */}
         {(() => {
           const isVideo = post.media_type === 'video';
           const mediaSrc = isVideo
@@ -348,7 +350,24 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
               onClick={() => openPostLightbox(post.id)}
               style={{ position: 'relative', width: stacked ? '100%' : '55%', aspectRatio: String(arCss), background: '#111', overflow: 'hidden', flexShrink: 0, cursor: 'pointer' }}
             >
-              {mediaSrc && <img src={mediaSrc} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
+              {isVideo ? (
+                <GradedVideo
+                  url={post.media_urls?.[0] ?? ''}
+                  posterUrl={post.poster_url ?? post.thumbnail_url ?? null}
+                  clipUrl={post.autoplay_clip_url ?? null}
+                  editParams={post.edit_params}
+                  cropX={post.crop_x ?? 0}
+                  cropY={post.crop_y ?? 0}
+                  cropWidth={post.crop_width ?? 1}
+                  cropHeight={post.crop_height ?? 1}
+                  autoplayFlag
+                  gridMode
+                  style={{ width: '100%', height: '100%' }}
+                  onClick={() => openPostLightbox(post.id)}
+                />
+              ) : (
+                mediaSrc && <img src={mediaSrc} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              )}
               {/* BRACKET CAPTURE — the staggered corner lock (same family as
                   the look-saved choreography): the work is claimed. */}
               {captured && (

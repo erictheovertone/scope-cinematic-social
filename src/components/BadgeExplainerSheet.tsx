@@ -140,9 +140,13 @@ function getCurrentBadge(userTiers: BadgeExplainerSheetProps['userTiers']) {
 export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, userTiers, isPaidMember, paidMemberUntil, onManageMembership }: BadgeExplainerSheetProps) {
   const router = useRouter();
   const { user } = usePrivy();
+  // Two-level stack: list ↔ in-sheet tier detail. Tapping a tier opens its full
+  // description WITHOUT leaving the sheet; Back from the detail returns to the list
+  // (not the profile). Sheet close (onClose) returns to the profile.
+  const [detailKey, setDetailKey] = useState<string | null>(null);
   useEffect(() => {
     if (visible) document.body.style.overflow = 'hidden';
-    else document.body.style.overflow = '';
+    else { document.body.style.overflow = ''; setDetailKey(null); } // reset the stack on close
     return () => { document.body.style.overflow = ''; };
   }, [visible]);
 
@@ -244,6 +248,30 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
         maxHeight: '85vh',
         overflowY: 'auto',
       }}>
+        {/* ── LEVEL 2 — in-sheet TIER DETAIL. Back returns to the list (this sheet
+            stays open); the list's CLOSE returns to the profile. ── */}
+        {detailKey && (() => {
+          const t = tiers.find((x) => x.key === detailKey);
+          if (!t) return null;
+          const earned = tierEarned(t.key, vTiers, vIsPaid);
+          return (
+            <div style={{ position: 'absolute', inset: 0, backgroundColor: '#080808', zIndex: 5, overflowY: 'auto', padding: '20px 24px 48px' }}>
+              <button onClick={() => setDetailKey(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginBottom: 24 }}>
+                <span style={{ ...BOLD, fontSize: 10, color: 'rgba(255,255,255,0.5)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>← BACK</span>
+              </button>
+              <img src={t.img} alt={t.label} style={{ width: 84, height: 84, objectFit: 'contain', display: 'block', margin: '0 0 18px' }} />
+              <p style={{ ...BOLD, fontSize: 18, color: t.color, textTransform: 'uppercase', letterSpacing: '0.04em', margin: '0 0 8px', display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span>{t.title}</span>
+                {earned
+                  ? <span style={{ ...BOLD, fontSize: 8, color: '#FF0000', letterSpacing: '0.12em', border: '1px solid rgba(255,0,0,0.55)', padding: '2px 5px' }}>YOURS</span>
+                  : <span style={{ ...BOLD, fontSize: 8, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.12em' }}>NOT YET YOURS</span>}
+              </p>
+              <p style={{ ...REG, fontSize: 13, color: 'rgba(255,255,255,0.7)', lineHeight: 1.55, margin: '0 0 16px' }}>{t.description}</p>
+              <p style={{ ...BOLD, fontSize: 9, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>{t.sub}</p>
+            </div>
+          );
+        })()}
+
         {/* Status rows */}
         {/* Row 1 — Membership. Icon = the member's actual tier logo (min-design):
             Scope Pro badge when Pro, the Free mark otherwise (CHANGE 3). */}
@@ -316,7 +344,7 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
         {/* Tier list */}
         {tiers.map((tier, i) => (
           <div key={tier.key} id={`badge-tier-${tier.key}`}>
-            <div onClick={() => { onClose(); router.push(`/badge/${tier.key}`); }} style={{ display: 'flex', gap: 16, marginBottom: 24, alignItems: 'flex-start', cursor: 'pointer' }}>
+            <div onClick={() => setDetailKey(tier.key)} style={{ display: 'flex', gap: 16, marginBottom: 24, alignItems: 'flex-start', cursor: 'pointer' }}>
               <div style={{ flexShrink: 0, marginTop: 2, position: 'relative', width: tier.size, height: tier.size }}>
                 {/* Flat min-design icon — consistent with the BADGES EARNED grid
                     above (no 3D/glow; the new flat assets don't suit a round coin). */}
@@ -340,7 +368,7 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
                   {tier.description}
                 </p>
                 <button
-                  onClick={() => { onClose(); router.push(`/badge/${tier.key}`); }}
+                  onClick={() => setDetailKey(tier.key)}
                   style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px 0 0', display: 'inline-block' }}
                 >
                   <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 8, color: 'white', letterSpacing: '0.1em', textTransform: 'uppercase' }}>

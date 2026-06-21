@@ -37,6 +37,13 @@ export default function CollectSheetGate(props: CollectSheetProps) {
           poster_url: (p.poster_url as string | null) ?? null,
           thumbnail_url: (p.thumbnail_url as string | null) ?? null,
           layout_id: (p.layout_id as string | undefined),
+          // Forwarded so the sheet plays GRADED video (same params as the feed).
+          edit_params: p.edit_params,
+          autoplay_clip_url: (p.autoplay_clip_url as string | null) ?? null,
+          crop_x: (p.crop_x as number | undefined),
+          crop_y: (p.crop_y as number | undefined),
+          crop_width: (p.crop_width as number | undefined),
+          crop_height: (p.crop_height as number | undefined),
         }; })()}
         tradeable={tradeable}
         visible={visible}
