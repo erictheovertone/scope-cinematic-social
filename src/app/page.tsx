@@ -351,7 +351,7 @@ export default function Home() {
 
       {/* Theatre Mode over the FEED's posts (feed order). Same component as the
           profile eye-icon entry — just sourced from the feed. */}
-      {theatreActive && <TheatreMode posts={posts} onClose={() => setTheatreActive(false)} />}
+      {theatreActive && <TheatreMode posts={posts} source="feed" onClose={() => setTheatreActive(false)} />}
     </div>
   );
 }

@@ -28,11 +28,15 @@ import { useEconomy, isCoinPost } from '@/components/EconomyProvider';
 import { getPostLikes, getPostComments, addComment, likePost, unlikePost, isPostLikedByUser } from '@/lib/postsService';
 import { getUserByPrivyId, getProfile } from '@/lib/userService';
 import { getAspectRatio } from '@/lib/aspectRatio';
+import { useFirstCutLedger, FIRST_CUT_SLOTS } from '@/lib/firstCutLedger';
+import { BADGES } from '@/lib/economy/badges';
 import CollectSheetGate from '@/components/economy/CollectSheetGate';
 import FirstCutLedger from '@/components/economy/FirstCutLedger';
 import GradedVideo from '@/components/finishing/GradedVideo';
 import MediaRenderer from '@/components/MediaRenderer';
 import type { PostMarket } from '@/lib/economy/types';
+
+const FC_MARK = BADGES.firstCut.bannerSrc ?? BADGES.firstCut.src;
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -47,11 +51,16 @@ export default function TheatreMode({
   posts,
   startIndex = 0,
   onClose,
+  source = 'profile',
 }: {
   posts: AnyPost[];
   startIndex?: number;
   onClose: () => void;
+  /** 'feed' = home-feed entry (many creators, infinite) → show @handle + always-on
+      stats, no counter. 'profile' = one creator → expand-only stats, counter kept. */
+  source?: 'feed' | 'profile';
 }) {
+  const isFeed = source === 'feed';
   const economy = useEconomy();
   const { user } = usePrivy();
   const [index, setIndex] = useState(() => Math.min(Math.max(0, startIndex), Math.max(0, posts.length - 1)));
@@ -97,6 +106,11 @@ export default function TheatreMode({
   const post = posts[index] as AnyPost | undefined;
   const coinAddr = post && isCoinPost(post as { coin_address?: string | null; token_standard?: string | null })
     ? (f(post, 'coin_address') ?? null) : null;
+
+  // First Cut count for the always-on feed stat row (cheap; the panel ledger
+  // self-fetches separately). null on non-coin posts.
+  const fcHolders = useFirstCutLedger(coinAddr);
+  const fcCount = fcHolders?.length ?? 0;
 
   // ── Enter / exit animation (signature easing; reduced-motion = plain fade) ──
   useEffect(() => {
@@ -212,7 +226,7 @@ export default function TheatreMode({
   const MIN_SIDE = arrowW + ARROW_PAD * 2 + 12;    // margin reserved each side
 
   const availW = Math.min(stageW * 0.92, stageW - MIN_SIDE * 2);
-  const availH = stageH * (showData ? 0.5 : 0.86);
+  const availH = stageH * (showData ? 0.74 : 0.86); // compact panel → media stays largely visible
   let boxW = availW, boxH = availW / arNum;
   if (boxH > availH) { boxH = availH; boxW = availH * arNum; }
   const sideMargin = (stageW - boxW) / 2;          // ≥ MIN_SIDE, so arrows clear the media
@@ -331,6 +345,14 @@ export default function TheatreMode({
           <span style={{ ...SKB, fontSize: 11, color: '#FFF', letterSpacing: '0.02em', textTransform: 'uppercase' }}>Back</span>
         </button>
 
+        {/* ── Creator @handle — FEED only (many creators); beneath BACK, updates per
+            post. The profile view is one creator, so it shows no handle. ── */}
+        {isFeed && f(post, 'username') && (
+          <span style={{ position: 'absolute', left: 18, top: 36, ...SKB, fontSize: 10, color: 'rgba(255,255,255,0.85)', letterSpacing: '0.02em', textTransform: 'uppercase', pointerEvents: 'none' }}>
+            @{f(post, 'username')}
+          </span>
+        )}
+
         {/* ── Framed-eye close (top-right) ── */}
         <button
           onClick={(e) => { stop(e); handleClose(); }}
@@ -340,16 +362,38 @@ export default function TheatreMode({
           <img src="/theatre-mode-eye-framed.png" alt="" style={{ height: 22, width: 'auto', display: 'block', opacity: 0.92 }} />
         </button>
 
-        {/* ── "+" data toggle — bottom-LEFT, beneath the media (reveals the panel).
-            Hidden while the panel is up; the panel closes by tapping the image/away. ── */}
+        {/* ── Bottom-LEFT cluster — the "+" (reveals the full panel), plus (FEED
+            only) an always-on stats row: likes (tap to like) · comments (tap →
+            opens the panel's ripple-up) · First Cut X/10. Profile view shows just
+            the "+" (stats are expand-only there). Hidden while the panel is up. ── */}
         {!showData && (
-          <button
-            onClick={(e) => { stop(e); setShowData(true); }}
-            aria-label="Show data"
-            style={{ position: 'absolute', bottom: 8, left: 16, background: 'transparent', border: 'none', cursor: 'pointer', padding: 6, zIndex: 3 }}
-          >
-            <span style={{ ...SKL, fontSize: 34, lineHeight: 1, color: '#FFF', display: 'block' }}>+</span>
-          </button>
+          <div style={{ position: 'absolute', bottom: 10, left: 16, display: 'flex', alignItems: 'center', gap: 14, zIndex: 3 }}>
+            <button
+              onClick={(e) => { stop(e); setShowData(true); }}
+              aria-label="Show data"
+              style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, lineHeight: 0 }}
+            >
+              <span style={{ ...SKL, fontSize: 30, lineHeight: 1, color: '#FFF', display: 'block' }}>+</span>
+            </button>
+            {isFeed && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <button onClick={(e) => { stop(e); handleLike(); }} aria-label="Like" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill={isLiked ? '#FF0000' : 'none'} stroke={isLiked ? '#FF0000' : 'rgba(255,255,255,0.85)'} strokeWidth="2" strokeLinejoin="round"><path d="M12 21s-7-4.5-9.5-9C1 9 2.5 5.5 6 5.5c2 0 3.2 1.2 4 2.3.8-1.1 2-2.3 4-2.3 3.5 0 5 3.5 3.5 6.5C19 16.5 12 21 12 21z"/></svg>
+                  <span style={{ ...SKB, fontSize: 9, color: '#FFF', fontVariantNumeric: 'tabular-nums' }}>{likes.length}</span>
+                </button>
+                <button onClick={(e) => { stop(e); setShowData(true); setShowComments(true); }} aria-label="Comments" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2" strokeLinejoin="round"><path d="M21 11.5a8.5 8.5 0 0 1-12.5 7.5L3 21l2-5.5A8.5 8.5 0 1 1 21 11.5z"/></svg>
+                  <span style={{ ...SKB, fontSize: 9, color: '#FFF', fontVariantNumeric: 'tabular-nums' }}>{comments.length}</span>
+                </button>
+                {coinAddr && (
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                    <img src={FC_MARK} alt="First Cut" style={{ width: 12, height: 12, objectFit: 'contain', display: 'block' }} />
+                    <span style={{ ...SKB, fontSize: 9, color: fcCount > 0 ? '#FF0000' : '#FFF', fontVariantNumeric: 'tabular-nums' }}>{fcCount}/{FIRST_CUT_SLOTS}</span>
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
         )}
 
         {/* ── DATA PANEL — slides up when "+" is tapped. Mirrors the home-feed
@@ -360,22 +404,22 @@ export default function TheatreMode({
           style={{
             position: 'absolute', left: 0, right: 0, bottom: 0,
             background: '#000', borderTop: '1px solid #FF0000',
-            padding: '14px 22px 16px', maxHeight: '72%', overflowY: 'auto',
+            padding: '9px 16px 11px', maxHeight: '40%', overflowY: 'auto',
             transform: showData ? 'translateY(0)' : 'translateY(101%)',
             transition: `transform ${reduceMotion.current ? 0 : 360}ms ${EASE}`,
             zIndex: 2,
           }}
         >
-          {/* @handle + caption + COLLECT */}
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 12 }}>
-            <span style={{ ...SKB, fontSize: 13, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.02em' }}>@{f(post, 'username') ?? '—'}</span>
+          {/* @handle + caption + COLLECT — compact */}
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 8 }}>
+            <span style={{ ...SKB, fontSize: 12, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.02em' }}>@{f(post, 'username') ?? '—'}</span>
             {f(post, 'caption') && (
-              <span style={{ ...SKR, fontSize: 11, color: 'rgba(255,255,255,0.55)', lineHeight: 1.35, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, minWidth: 0 }}>{f(post, 'caption')}</span>
+              <span style={{ ...SKR, fontSize: 10, color: 'rgba(255,255,255,0.55)', lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, minWidth: 0 }}>{f(post, 'caption')}</span>
             )}
             {isCoin && (
               <button
                 onClick={(e) => { stop(e); setShowCollect(true); }}
-                style={{ ...SKB, fontSize: 10, letterSpacing: '0.08em', color: '#FF0000', textTransform: 'uppercase', background: 'transparent', border: '1px solid #FF0000', cursor: 'pointer', padding: '6px 14px', flexShrink: 0 }}
+                style={{ ...SKB, fontSize: 9, letterSpacing: '0.08em', color: '#FF0000', textTransform: 'uppercase', background: 'transparent', border: '1px solid #FF0000', cursor: 'pointer', padding: '4px 12px', flexShrink: 0 }}
               >
                 Collect
               </button>
@@ -384,22 +428,22 @@ export default function TheatreMode({
 
           {/* Stat shelf — LIKES (tap to like) · COMMENTS (tap → ripple up) · MC · price */}
           <div style={{ display: 'flex', gap: 1, background: 'rgba(255,255,255,0.08)' }}>
-            <button onClick={(e) => { stop(e); handleLike(); }} style={{ flex: 1, background: '#000', padding: '10px 8px', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
+            <button onClick={(e) => { stop(e); handleLike(); }} style={{ flex: 1, background: '#000', padding: '7px 6px', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
               <p style={{ ...SKB, fontSize: 6.5, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 0 5px' }}>LIKES</p>
               <p style={{ ...SKB, fontSize: 13, color: isLiked ? '#FF0000' : '#FFF', margin: 0, fontVariantNumeric: 'tabular-nums' }}>{likes.length.toLocaleString()}</p>
             </button>
-            <button onClick={(e) => { stop(e); setShowComments((v) => !v); }} style={{ flex: 1, background: '#000', padding: '10px 8px', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
+            <button onClick={(e) => { stop(e); setShowComments((v) => !v); }} style={{ flex: 1, background: '#000', padding: '7px 6px', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
               <p style={{ ...SKB, fontSize: 6.5, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 0 5px' }}>COMMENTS</p>
               <p style={{ ...SKB, fontSize: 13, color: showComments ? '#FF0000' : '#FFF', margin: 0, fontVariantNumeric: 'tabular-nums' }}>{comments.length.toLocaleString()}</p>
             </button>
             {isCoin && (
-              <div style={{ flex: 1, background: '#000', padding: '10px 8px' }}>
+              <div style={{ flex: 1, background: '#000', padding: '7px 6px' }}>
                 <p style={{ ...SKB, fontSize: 6.5, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 0 5px' }}>MARKET CAP</p>
                 <p style={{ ...SKB, fontSize: 13, color: '#FFF', margin: 0, fontVariantNumeric: 'tabular-nums' }}>{market ? usd(market.mcUsd) : '…'}</p>
               </div>
             )}
             {isCoin && (
-              <div style={{ flex: 1, background: '#000', padding: '10px 8px' }}>
+              <div style={{ flex: 1, background: '#000', padding: '7px 6px' }}>
                 <p style={{ ...SKB, fontSize: 6.5, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 0 5px' }}>PRICE / PIECE</p>
                 <p style={{ ...SKB, fontSize: 13, color: '#FFF', margin: 0, fontVariantNumeric: 'tabular-nums' }}>{market ? (market.priceUsd != null ? usd(market.priceUsd) : '—') : '…'}</p>
               </div>
@@ -408,15 +452,15 @@ export default function TheatreMode({
 
           {/* First Cut — the tappable ripple-down ledger + whip target (coin posts) */}
           {isCoin && coinAddr && (
-            <div style={{ marginTop: 14 }}>
+            <div style={{ marginTop: 9 }}>
               <FirstCutLedger coinAddress={coinAddr} postId={f(post, 'id')} />
             </div>
           )}
 
           {/* Comments — ripple up when COMMENTS is tapped */}
           {showComments && (
-            <div className="fc-slot" style={{ marginTop: 14, animation: reduceMotion.current ? 'none' : `fcSlotRipple 0.32s ${EASE} both` }}>
-              <div style={{ maxHeight: 150, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div className="fc-slot" style={{ marginTop: 9, animation: reduceMotion.current ? 'none' : `fcSlotRipple 0.32s ${EASE} both` }}>
+              <div style={{ maxHeight: 96, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 7 }}>
                 {comments.length === 0 ? (
                   <span style={{ ...SKR, fontSize: 10, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>No comments yet</span>
                 ) : comments.map((c, i) => (
@@ -442,10 +486,13 @@ export default function TheatreMode({
           )}
         </div>
 
-        {/* Position counter — subtle, lower-right (which post you're on) */}
-        <div style={{ position: 'absolute', right: 16, bottom: 14, ...SKB, fontSize: 9, color: 'rgba(255,255,255,0.45)', letterSpacing: '0.08em', pointerEvents: 'none' }}>
-          {index + 1} / {posts.length}
-        </div>
+        {/* Position counter — PROFILE only (finite posts). The feed is effectively
+            infinite, so the number climbs meaninglessly → removed there. */}
+        {!isFeed && (
+          <div style={{ position: 'absolute', right: 16, bottom: 14, ...SKB, fontSize: 9, color: 'rgba(255,255,255,0.45)', letterSpacing: '0.08em', pointerEvents: 'none' }}>
+            {index + 1} / {posts.length}
+          </div>
+        )}
       </div>
     </div>
 
