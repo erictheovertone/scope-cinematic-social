@@ -104,24 +104,16 @@ export default function BottomToolbar({ page, unreadCount = 0, onNotificationsCl
         bottom: 0,
         left: 0,
         right: 0,
-        height: isHome ? 60 : 'auto',
+        height: 'auto',
         zIndex: 50,
+        // Home keeps its transparent-over-feed look (it has its own fade div above);
+        // every other surface keeps the gradient. Spacing/positioning is now IDENTICAL
+        // across all pages (the icon row layout below no longer branches on isHome).
         background: isHome ? 'transparent' : 'linear-gradient(to top, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.18) 60%, transparent 100%)',
       }}
     >
       <div
-        style={isHome ? {
-          maxWidth: 375,
-          width: '100%',
-          height: '100%',
-          margin: '0 auto',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'flex-end',
-          paddingLeft: 8,
-          paddingRight: 8,
-          paddingBottom: 2,
-        } : {
+        style={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'flex-end',

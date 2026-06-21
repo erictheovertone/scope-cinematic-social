@@ -12,8 +12,9 @@ import DeckPickerSheet from "@/components/DeckPickerSheet";
 import CollectSheetGate from "@/components/economy/CollectSheetGate";
 import { isUntradeableCoin } from "@/lib/economy/pairing";
 import CreateCoinSheet from "@/components/economy/CreateCoinSheet";
-import { isCoinPost } from "@/components/EconomyProvider";
+import { isCoinPost, useEconomy } from "@/components/EconomyProvider";
 import FirstCutChip from "@/components/economy/FirstCutChip";
+import TickerMark from "@/components/economy/TickerMark";
 import DeletePostSheet from "@/components/DeletePostSheet";
 import MediaRenderer from "@/components/MediaRenderer";
 import GradedVideo from "@/components/finishing/GradedVideo";
@@ -59,6 +60,11 @@ function PostViewerItem({
   post, ownerUsername, ownerAvatarUrl, viewerUsername, viewerAvatar, onNavigateToProfile, onOpenPost, isOwnProfile, onDeletePress,
 }: ItemProps) {
   const { user } = usePrivy();
+  const economy = useEconomy();
+  // Real MC for coin posts via the SAME hardened boundary the feed uses (was a
+  // static "MC: —" here — the read was never wired on the profile post-scroll).
+  const [mc, setMc] = useState<string | null>(null);
+  const [mcKey, setMcKey] = useState(0);
   const [likes, setLikes] = useState<any[]>([]);
   const [comments, setComments] = useState<any[]>([]);
   const [isLiked, setIsLiked] = useState(false);
@@ -96,6 +102,33 @@ function PostViewerItem({
     };
     load();
   }, [post.id, user?.id]);
+
+  // Re-read MC when a trade on THIS post lands (post-trade truth, parity w/ feed).
+  useEffect(() => {
+    const onMoved = (e: Event) => { if ((e as CustomEvent).detail?.postId === post.id) setMcKey((k) => k + 1); };
+    window.addEventListener('scope:market-moved', onMoved);
+    return () => window.removeEventListener('scope:market-moved', onMoved);
+  }, [post.id]);
+
+  // Real MC via the hardened /api/market boundary (retry on transient empty reads;
+  // never render a misleading $0 — "…" while loading, "—" for a truly untraded coin).
+  useEffect(() => {
+    const coin = (post as { coin_address?: string | null }).coin_address;
+    const std = (post as { token_standard?: string | null }).token_standard;
+    if (!coin || std !== 'coin') return;
+    let cancelled = false; let tries = 0; const MAX_TRIES = 6;
+    const attempt = () => {
+      economy.getPostMarket(post.id)
+        .then((m) => {
+          if (cancelled) return;
+          if (m.marketResolved === false && tries < MAX_TRIES) { tries++; setTimeout(attempt, 1500); return; }
+          setMc(m.mcUsd > 0 ? `$${m.mcUsd < 1 ? m.mcUsd.toFixed(2) : Math.round(m.mcUsd).toLocaleString()}` : '—');
+        })
+        .catch((e) => console.error('[ProfilePostViewer] coin MC fetch error:', e));
+    };
+    attempt();
+    return () => { cancelled = true; };
+  }, [post, economy, mcKey]);
 
   const handleLike = async () => {
     if (!user) return;
@@ -187,12 +220,17 @@ function PostViewerItem({
                 @{ownerUsername}
               </span>
             </div>
-            <span
-              className="absolute"
-              style={{ top: 6, right: 6, ...SKB, fontSize: 8, color: "white", textShadow: "0 1px 2px rgba(0,0,0,1)", lineHeight: 1, opacity: 0.7, textTransform: "uppercase" }}
-            >
-              MC: —
-            </span>
+            {/* Market chrome — coin posts only (ticker + real MC via the boundary),
+                matching the feed. Legacy/non-coin posts show none. */}
+            {isCoinPost(post as { coin_address?: string | null; token_standard?: string | null }) && (post as { coin_address?: string | null }).coin_address && (
+              <span
+                className="absolute"
+                style={{ top: 6, right: 6, display: "flex", alignItems: "baseline", gap: 5, fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: 8, color: "white", textShadow: "0 1px 2px rgba(0,0,0,1)", lineHeight: 1, opacity: 0.85, zIndex: 10, textTransform: "uppercase" }}
+              >
+                {(post as { ticker?: string | null }).ticker && <TickerMark ticker={(post as { ticker?: string }).ticker as string} size={8} />}
+                <span>MC: {mc ?? "…"}</span>
+              </span>
+            )}
           </>
         );
         return is43 ? (

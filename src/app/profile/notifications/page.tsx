@@ -31,6 +31,8 @@ export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [loading, setLoading] = useState(true);
   const [openedPost, setOpenedPost] = useState<any>(null);
+  // Two classes: SOCIAL (engagement) vs ECONOMIC (money/economy events). Default SOCIAL.
+  const [tab, setTab] = useState<'social' | 'economic'>('social');
 
   useEffect(() => {
     if (!user) {
@@ -68,6 +70,16 @@ export default function NotificationsPage() {
   // Actor avatar/handle tap → that actor's profile (by handle).
   const goToActor = (handle: string) => router.push(`/profile/${handle}`);
 
+  // ── Notification classes ──
+  // SOCIAL = engagement: like, comment, follow (+ future mention/reply).
+  // ECONOMIC = money/economy: collect/buy (+ future sells, earnings/fees, First Cut
+  //   earned, badge/tier awards like SRH/Collector). Anything not explicitly social
+  //   is treated as economic, so new economy types land in the right tab by default.
+  const SOCIAL_TYPES = ['like', 'comment', 'follow', 'mention', 'reply'];
+  const filtered = notifications.filter((n) =>
+    tab === 'social' ? SOCIAL_TYPES.includes(n.type) : !SOCIAL_TYPES.includes(n.type),
+  );
+
   return (
     <div className="bg-black w-full max-w-[375px] min-h-screen mx-auto flex flex-col">
 
@@ -89,6 +101,25 @@ export default function NotificationsPage() {
         </span>
       </div>
 
+      {/* SOCIAL / ECONOMIC toggle — filters the list by class. */}
+      <div style={{ display: "flex", borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
+        {(["social", "economic"] as const).map((t) => (
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            style={{
+              flex: 1, background: "transparent", border: "none",
+              borderBottom: `1px solid ${tab === t ? "#FF0000" : "transparent"}`,
+              cursor: "pointer", padding: "9px 0",
+              ...SKB, fontSize: 9, letterSpacing: "0.12em",
+              color: tab === t ? "#FFF" : "rgba(255,255,255,0.4)", textTransform: "uppercase",
+            }}
+          >
+            {t === "social" ? "SOCIAL" : "ECONOMIC"}
+          </button>
+        ))}
+      </div>
+
       {/* List */}
       <div className="flex-1 overflow-y-auto">
         {loading ? (
@@ -101,14 +132,14 @@ export default function NotificationsPage() {
               Sign in to see notifications
             </p>
           </div>
-        ) : notifications.length === 0 ? (
+        ) : filtered.length === 0 ? (
           <div className="flex items-center justify-center mt-12">
             <p style={{ ...SKR, fontSize: 9, color: "rgba(255,255,255,0.4)" }}>
-              No notifications yet
+              No {tab} notifications yet
             </p>
           </div>
         ) : (
-          notifications.map((n) => (
+          filtered.map((n) => (
             <button
               key={n.id}
               onClick={() => handleClick(n)}
