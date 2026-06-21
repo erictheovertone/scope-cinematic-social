@@ -30,6 +30,8 @@ import { getUserByPrivyId, getProfile } from '@/lib/userService';
 import { getAspectRatio } from '@/lib/aspectRatio';
 import CollectSheetGate from '@/components/economy/CollectSheetGate';
 import FirstCutLedger from '@/components/economy/FirstCutLedger';
+import GradedVideo from '@/components/finishing/GradedVideo';
+import MediaRenderer from '@/components/MediaRenderer';
 import type { PostMarket } from '@/lib/economy/types';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
@@ -263,19 +265,37 @@ export default function TheatreMode({
             onClick={(e) => { stop(e); if (showData) setShowData(false); }}
             style={{ width: boxW, height: boxH, background: '#000', overflow: 'hidden', flexShrink: 0, transition: `height 300ms ${EASE}, width 300ms ${EASE}` }}
           >
+            {/* Reuse the feed's SHARED graded-media components so the grade is
+                inherited automatically — never a forked raw element. Video grade is
+                render-time (GradedVideo applies edit_params via the gl-react
+                pipeline + the baked graded poster/clip); image grade is baked into
+                media_urls[0] (MediaRenderer just loads it, no runtime crop — matches
+                the feed image path exactly). forcePlay = always-graded playback. */}
             {isVideo ? (
-              <video
+              <GradedVideo
                 key={f(post, 'id')}
-                src={mediaUrl}
-                poster={poster}
-                muted
-                loop
-                autoPlay
-                playsInline
-                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                url={mediaUrl ?? ''}
+                posterUrl={poster ?? null}
+                clipUrl={f(post, 'autoplay_clip_url') ?? null}
+                editParams={post['edit_params']}
+                cropX={(post['crop_x'] as number | undefined) ?? 0}
+                cropY={(post['crop_y'] as number | undefined) ?? 0}
+                cropWidth={(post['crop_width'] as number | undefined) ?? 1}
+                cropHeight={(post['crop_height'] as number | undefined) ?? 1}
+                forcePlay
+                showSoundToggle
+                style={{ width: '100%', height: '100%' }}
+                onClick={() => { if (showData) setShowData(false); }}
               />
             ) : (
-              mediaUrl && <img src={mediaUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              <MediaRenderer
+                url={mediaUrl ?? ''}
+                mediaType={f(post, 'media_type')}
+                thumbnailUrl={poster ?? null}
+                autoplay
+                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                onClick={() => { if (showData) setShowData(false); }}
+              />
             )}
           </div>
         </div>
