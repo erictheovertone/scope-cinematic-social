@@ -255,7 +255,10 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
           if (!t) return null;
           const earned = tierEarned(t.key, vTiers, vIsPaid);
           return (
-            <div style={{ position: 'absolute', inset: 0, backgroundColor: '#080808', zIndex: 5, overflowY: 'auto', padding: '20px 24px 48px' }}>
+            // Normal-flow view (NOT an absolute overlay — that collapsed inside the
+            // sheet's overflow:auto container, which was the regression). Rendered
+            // INSTEAD of the list, so it fills the sheet with no gap.
+            <div>
               <button onClick={() => setDetailKey(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginBottom: 24 }}>
                 <span style={{ ...BOLD, fontSize: 10, color: 'rgba(255,255,255,0.5)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>← BACK</span>
               </button>
@@ -272,6 +275,9 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
           );
         })()}
 
+        {/* LEVEL 1 — the tier LIST (+ membership/earned/CTA). Hidden while a tier
+            detail is open; shown again on Back. */}
+        {!detailKey && (<>
         {/* Status rows */}
         {/* Row 1 — Membership. Icon = the member's actual tier logo (min-design):
             Scope Pro badge when Pro, the Free mark otherwise (CHANGE 3). */}
@@ -403,6 +409,7 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
             CLOSE
           </span>
         </button>
+        </>)}
       </div>
       <style>{`
         @keyframes coinFlip {
