@@ -115,7 +115,7 @@ export default function NotificationsPage() {
               color: tab === t ? "#FFF" : "rgba(255,255,255,0.4)", textTransform: "uppercase",
             }}
           >
-            {t === "social" ? "SOCIAL" : "ECONOMIC"}
+            {t === "social" ? "SOCIAL" : "MARKET"}
           </button>
         ))}
       </div>
@@ -135,7 +135,7 @@ export default function NotificationsPage() {
         ) : filtered.length === 0 ? (
           <div className="flex items-center justify-center mt-12">
             <p style={{ ...SKR, fontSize: 9, color: "rgba(255,255,255,0.4)" }}>
-              No {tab} notifications yet
+              No {tab === "economic" ? "market" : "social"} notifications yet
             </p>
           </div>
         ) : (
