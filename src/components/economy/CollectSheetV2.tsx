@@ -68,6 +68,16 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
   // The default post-buy close timer. When a buy EARNS First Cut, the celebration
   // takes over the exit (this gets cancelled) so the whip fires as Moment 1 ends.
   const closeTimerRef = useRef<number | null>(null);
+  // Post-trade settle signal is DEFERRED until the sheet has animated OUT, so the
+  // wallet balance stays at its OLD value while the confirmation is up and the cash
+  // ticks up exactly as the sheet leaves (fired on the sheet's transitionend).
+  const pendingSettleRef = useRef<{ postId: string; piecesDelta?: number; proceedsUsd?: number; proceedsCurrency?: 'ETH' | 'USDC' } | null>(null);
+  const firePendingSettle = () => {
+    const p = pendingSettleRef.current;
+    if (!p) return;
+    pendingSettleRef.current = null;
+    notifyTradeSettled(p.postId, { piecesDelta: p.piecesDelta, proceedsUsd: p.proceedsUsd, proceedsCurrency: p.proceedsCurrency });
+  };
   const sheetVisibleRef = useRef(visible);
   sheetVisibleRef.current = visible;
   const [market, setMarket] = useState<PostMarket | null>(null);
@@ -145,18 +155,22 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
   // ORIGINATING context — it's an overlay, so closing it lands them exactly
   // where they were (feed or visited profile, scroll position intact).
   const ceremonyResolve = (postId: string, piecesDelta?: number, proceeds?: { usd: number; currency: 'ETH' | 'USDC' }) => {
-    // The ONE post-trade refresh: MC chips re-read + wallet holdings refetch.
-    // piecesDelta (+buy / −sell, receipt-true) drives the optimistic holdings patch;
-    // proceeds (receipt-true, sells) drives the INSTANT wallet-balance tick-up.
-    notifyTradeSettled(postId, (piecesDelta != null || proceeds != null)
-      ? { piecesDelta, proceedsUsd: proceeds?.usd, proceedsCurrency: proceeds?.currency }
-      : undefined);
+    // The ONE post-trade refresh (MC chips re-read + wallet holdings patch + the
+    // sell balance tick-up) is DEFERRED to the sheet's exit — held here, fired on
+    // the sheet's transitionend (firePendingSettle). The balance stays OLD while the
+    // confirmation is up; the cash lands as the sheet animates away.
+    pendingSettleRef.current = { postId, piecesDelta, proceedsUsd: proceeds?.usd, proceedsCurrency: proceeds?.currency };
     // ~4s hold: time to read the count and watch the price move before the sheet
     // returns the collector to where they came from. If THIS buy earns First Cut,
     // checkFirstCut cancels this timer and the celebration owns the exit instead
     // (Moment 1 plays full → its disappearance whips into the counter). The whip
     // is NO LONGER fired here — it's the celebration's exit (see onFlourishDone).
-    closeTimerRef.current = window.setTimeout(() => { onClose(); }, 4000);
+    closeTimerRef.current = window.setTimeout(() => {
+      onClose();
+      // Safety net: if the sheet's transitionend is ever missed, still release the
+      // settle shortly after the exit (no-op once transitionend has fired it).
+      window.setTimeout(firePendingSettle, 700);
+    }, 4000);
   };
 
   // The celebration's exit IS the whip. When the flourish finishes its extended
@@ -315,7 +329,14 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
           transition: 'opacity 0.3s ease',
         }}
       />
-      <div style={{
+      <div
+        // When the sheet finishes animating OUT, release the deferred post-trade
+        // settle → the wallet balance ticks up by the receipt-true proceeds exactly
+        // as the confirmation leaves (not while it's up or mid-dismiss).
+        onTransitionEnd={(e) => {
+          if (e.target === e.currentTarget && e.propertyName === 'transform' && !sheetVisibleRef.current) firePendingSettle();
+        }}
+        style={{
         position: 'fixed', bottom: 0, left: 0, right: 0, margin: '0 auto', maxWidth: 375,
         background: '#080808', borderTop: '1px solid rgba(255,255,255,0.08)', zIndex: 501,
         transform: visible ? 'translateY(0)' : 'translateY(100%)',
