@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 const BOLD: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const REG: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
 
-const TIER_DETAILS: Record<string, {
+export const TIER_DETAILS: Record<string, {
   img: string;
   size: number;
   label: string;

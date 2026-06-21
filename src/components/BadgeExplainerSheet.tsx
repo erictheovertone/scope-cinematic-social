@@ -6,6 +6,7 @@ import { usePrivy } from "@privy-io/react-auth";
 import { getUserByPrivyId, getProfile, isProMember } from "@/lib/userService";
 import { resolveBadges } from "@/lib/economy/badges";
 import { supabase } from "@/lib/supabase/client";
+import { TIER_DETAILS } from "@/app/badge/[tier]/page";
 
 const BOLD: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const REG: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -251,26 +252,45 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
         {/* ── LEVEL 2 — in-sheet TIER DETAIL. Back returns to the list (this sheet
             stays open); the list's CLOSE returns to the profile. ── */}
         {detailKey && (() => {
-          const t = tiers.find((x) => x.key === detailKey);
-          if (!t) return null;
-          const earned = tierEarned(t.key, vTiers, vIsPaid);
+          // RECOVERED full-page description — the ORIGINAL rich content (TIER_DETAILS,
+          // from the /badge/[tier] page) rendered with its exact original layout
+          // (hero + tagline + sectioned copy), now in-sheet. Normal flow, fills the
+          // sheet, no gap. Back → list (the list is unmounted while this shows).
+          const d = TIER_DETAILS[detailKey];
+          if (!d) return null;
           return (
-            // Normal-flow view (NOT an absolute overlay — that collapsed inside the
-            // sheet's overflow:auto container, which was the regression). Rendered
-            // INSTEAD of the list, so it fills the sheet with no gap.
             <div>
-              <button onClick={() => setDetailKey(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginBottom: 24 }}>
-                <span style={{ ...BOLD, fontSize: 10, color: 'rgba(255,255,255,0.5)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>← BACK</span>
+              <button onClick={() => setDetailKey(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+                <span style={{ ...BOLD, fontSize: 10, color: 'rgba(255,255,255,0.5)', letterSpacing: '0.1em' }}>← BACK</span>
               </button>
-              <img src={t.img} alt={t.label} style={{ width: 84, height: 84, objectFit: 'contain', display: 'block', margin: '0 0 18px' }} />
-              <p style={{ ...BOLD, fontSize: 18, color: t.color, textTransform: 'uppercase', letterSpacing: '0.04em', margin: '0 0 8px', display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span>{t.title}</span>
-                {earned
-                  ? <span style={{ ...BOLD, fontSize: 8, color: '#FF0000', letterSpacing: '0.12em', border: '1px solid rgba(255,0,0,0.55)', padding: '2px 5px' }}>YOURS</span>
-                  : <span style={{ ...BOLD, fontSize: 8, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.12em' }}>NOT YET YOURS</span>}
-              </p>
-              <p style={{ ...REG, fontSize: 13, color: 'rgba(255,255,255,0.7)', lineHeight: 1.55, margin: '0 0 16px' }}>{t.description}</p>
-              <p style={{ ...BOLD, fontSize: 9, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>{t.sub}</p>
+
+              {/* Badge hero */}
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '36px 0 32px' }}>
+                <div style={{ width: d.size, height: d.size, marginBottom: 20, position: 'relative' }}>
+                  <div className="badge-hero-glow" style={{ position: 'absolute', inset: -24, borderRadius: '50%', background: `radial-gradient(circle, ${d.color}55 0%, transparent 65%)`, animation: 'glowIn 2s ease 0.3s both', pointerEvents: 'none' }} />
+                  <img className="badge-hero-logo" src={d.img} alt={d.label} style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block', position: 'relative', animation: 'focusPull 2s cubic-bezier(0.16, 0.84, 0.3, 1) both' }} />
+                </div>
+                <p style={{ ...BOLD, fontSize: 18, color: d.color, textTransform: 'uppercase', letterSpacing: '-0.02em', margin: '0 0 12px', textAlign: 'center' }}>{d.label}</p>
+                <p style={{ ...REG, fontSize: 13, color: 'rgba(255,255,255,0.6)', textAlign: 'center', lineHeight: 1.6, margin: 0, maxWidth: 280 }}>{d.tagline}</p>
+              </div>
+
+              {/* Divider */}
+              <div style={{ height: 1, backgroundColor: 'rgba(255,255,255,0.06)', margin: '0 0 32px' }} />
+
+              {/* Sections — the original written copy */}
+              {d.sections.map((section, i) => (
+                <div key={i} style={{ padding: '0 0 32px' }}>
+                  <p style={{ ...BOLD, fontSize: 9, color: d.color, textTransform: 'uppercase', letterSpacing: '0.15em', margin: '0 0 10px' }}>{section.title}</p>
+                  <p style={{ ...REG, fontSize: 13, color: 'rgba(255,255,255,0.75)', lineHeight: 1.4, margin: 0 }}>{section.body}</p>
+                  {i < d.sections.length - 1 && <div style={{ height: 1, backgroundColor: 'rgba(255,255,255,0.05)', marginTop: 28 }} />}
+                </div>
+              ))}
+
+              {(detailKey === 'free' || detailKey === 'pro') && (
+                <button onClick={onJoinPress} style={{ width: '100%', background: '#FF0000', border: 'none', cursor: 'pointer', padding: '14px 0' }}>
+                  <span style={{ ...BOLD, fontSize: 12, color: 'white', textTransform: 'uppercase', letterSpacing: '0.08em' }}>BECOME A SCOPE MEMBER</span>
+                </button>
+              )}
             </div>
           );
         })()}
@@ -422,6 +442,11 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
         @keyframes glowPulse {
           0%, 100% { opacity: 0.4; }
           50% { opacity: 1; }
+        }
+        /* Tier-detail badge-hero glow bloom (focusPull is global). */
+        @keyframes glowIn { from { opacity: 0; } to { opacity: 1; } }
+        @media (prefers-reduced-motion: reduce) {
+          .badge-hero-logo, .badge-hero-glow { animation: glowIn 0.6s ease both !important; }
         }
       `}</style>
     </>
