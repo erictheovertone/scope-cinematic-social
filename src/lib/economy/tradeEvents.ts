@@ -18,13 +18,24 @@ export interface TradeSettledDetail {
    *  Receipt-true (the chain's word); value/order reconcile from the real read.
    *  Optional — listeners that only refetch ignore it (backward-compatible). */
   piecesDelta?: number;
+  /** SELL only — receipt-true realized proceeds in USD + the currency received.
+   *  Drives the INSTANT optimistic wallet-balance tick-up; the on-chain balance
+   *  refetch lags tx indexing (~7s), so the displayed cash would otherwise wait. */
+  proceedsUsd?: number;
+  proceedsCurrency?: 'ETH' | 'USDC';
 }
 
 /** Fire after ANY successful trade. `opts.piecesDelta` enables the optimistic
- *  wallet patch; omit it and listeners simply refetch as before. */
-export function notifyTradeSettled(postId: string, opts?: { piecesDelta?: number }): void {
+ *  holdings patch; `opts.proceedsUsd`/`proceedsCurrency` (sells) enable the
+ *  instant balance tick-up. Omit them and listeners simply refetch as before. */
+export function notifyTradeSettled(
+  postId: string,
+  opts?: { piecesDelta?: number; proceedsUsd?: number; proceedsCurrency?: 'ETH' | 'USDC' },
+): void {
   if (typeof window === 'undefined') return;
-  window.dispatchEvent(new CustomEvent(TRADE_SETTLED_EVENT, { detail: { postId, piecesDelta: opts?.piecesDelta } }));
+  window.dispatchEvent(new CustomEvent(TRADE_SETTLED_EVENT, {
+    detail: { postId, piecesDelta: opts?.piecesDelta, proceedsUsd: opts?.proceedsUsd, proceedsCurrency: opts?.proceedsCurrency },
+  }));
 }
 
 /** Subscribe; returns an unsubscribe. cb gets the postId + the full detail. */

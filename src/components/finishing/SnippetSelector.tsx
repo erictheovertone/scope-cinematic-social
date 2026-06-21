@@ -32,6 +32,7 @@ export default function SnippetSelector({ videoUrl, heroFrameTime, onChange }: P
   const [start, setStart] = useState(0);
   const trackRef = useRef<HTMLDivElement>(null);
   const draggingRef = useRef(false);
+  const previewRef = useRef<HTMLVideoElement>(null);
 
   // Read duration; seed the window at the hero frame (clamped so the clip fits).
   useEffect(() => {
@@ -49,6 +50,21 @@ export default function SnippetSelector({ videoUrl, heroFrameTime, onChange }: P
 
   const len = Math.min(CLIP_LEN, duration || CLIP_LEN);
   const maxStart = Math.max(0, duration - len);
+
+  // AUDITION — one muted/inline <video> looping the SELECTED window [start, start+len],
+  // exactly what the feed autoplay will show. Re-clamps live as the window moves.
+  useEffect(() => {
+    const v = previewRef.current;
+    if (!v) return;
+    const toStart = () => { try { v.currentTime = start; } catch { /* seek before metadata */ } };
+    if (v.currentTime < start - 0.05 || v.currentTime >= start + len) toStart();
+    v.play().catch(() => {});
+    const onTime = () => { if (v.currentTime >= start + len - 0.03) { toStart(); v.play().catch(() => {}); } };
+    const onEnded = () => { toStart(); v.play().catch(() => {}); };
+    v.addEventListener("timeupdate", onTime);
+    v.addEventListener("ended", onEnded);
+    return () => { v.removeEventListener("timeupdate", onTime); v.removeEventListener("ended", onEnded); };
+  }, [start, len]);
 
   const setFromClientX = (clientX: number) => {
     const el = trackRef.current;
@@ -70,6 +86,11 @@ export default function SnippetSelector({ videoUrl, heroFrameTime, onChange }: P
 
   return (
     <div style={{ padding: "8px 2px 2px" }}>
+      {/* Audition preview — the looping segment that will autoplay in the feed. */}
+      <div style={{ position: "relative", width: "100%", height: 132, background: "#000", overflow: "hidden", marginBottom: 8 }}>
+        <video ref={previewRef} src={videoUrl} muted playsInline autoPlay style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+        <span style={{ position: "absolute", bottom: 5, left: 6, ...SKB, fontSize: 6.5, color: "rgba(255,255,255,0.75)", letterSpacing: "0.14em", textTransform: "uppercase", textShadow: "0 1px 2px rgba(0,0,0,0.9)" }}>AUDITION</span>
+      </div>
       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
         <span style={{ ...SKB, fontSize: 8, color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: "0.1em" }}>AUTOPLAY CLIP · {Math.round(len)}s</span>
         <span style={{ ...REG, fontSize: 8, color: "rgba(255,255,255,0.5)", letterSpacing: "0.04em" }}>{fmt(start)}–{fmt(start + len)}</span>

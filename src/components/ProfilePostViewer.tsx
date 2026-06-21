@@ -239,17 +239,7 @@ function PostViewerItem({
           </button>
 
 
-          {/* Share — removed on the PERSONAL (own) profile per Eric; kept on
-              public (same component, gated by isOwnProfile). */}
-          {!isOwnProfile && (
-            <button style={{ background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", padding: 0 }}>
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.7 }}>
-                <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
-                <polyline points="16 6 12 2 8 6" />
-                <line x1="12" y1="2" x2="12" y2="15" />
-              </svg>
-            </button>
-          )}
+          {/* Share button removed from the profile post-scroll (own AND public). */}
         </div>
 
         {/* Right: add to deck · collect */}

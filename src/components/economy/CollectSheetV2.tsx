@@ -144,10 +144,13 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
   // After the held terminal beat, the sheet returns the collector to their
   // ORIGINATING context — it's an overlay, so closing it lands them exactly
   // where they were (feed or visited profile, scroll position intact).
-  const ceremonyResolve = (postId: string, piecesDelta?: number) => {
+  const ceremonyResolve = (postId: string, piecesDelta?: number, proceeds?: { usd: number; currency: 'ETH' | 'USDC' }) => {
     // The ONE post-trade refresh: MC chips re-read + wallet holdings refetch.
-    // piecesDelta (+buy / −sell, receipt-true) drives the optimistic wallet patch.
-    notifyTradeSettled(postId, piecesDelta != null ? { piecesDelta } : undefined);
+    // piecesDelta (+buy / −sell, receipt-true) drives the optimistic holdings patch;
+    // proceeds (receipt-true, sells) drives the INSTANT wallet-balance tick-up.
+    notifyTradeSettled(postId, (piecesDelta != null || proceeds != null)
+      ? { piecesDelta, proceedsUsd: proceeds?.usd, proceedsCurrency: proceeds?.currency }
+      : undefined);
     // ~4s hold: time to read the count and watch the price move before the sheet
     // returns the collector to where they came from. If THIS buy earns First Cut,
     // checkFirstCut cancels this timer and the celebration owns the exit instead
@@ -269,7 +272,12 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
         const proceeds = r.proceedsUsd != null ? ` · ${usd(r.proceedsUsd)}` : '';
         setDone(market?.live ? `[ SOLD · ${r.pieces} ${r.pieces === 1 ? 'PIECE' : 'PIECES'}${proceeds} ]` : `SOLD ${r.pieces} ${r.pieces === 1 ? 'PIECE' : 'PIECES'} (MOCK)`);
         setConfirmEndFirstCut(false); setSellPieces(0); refresh();
-        ceremonyResolve(post.id, r.pieces != null ? -r.pieces : undefined); // −pieces sold → optimistic patch
+        // −pieces (optimistic holdings) + receipt-true proceeds (instant balance tick-up).
+        ceremonyResolve(
+          post.id,
+          r.pieces != null ? -r.pieces : undefined,
+          r.proceedsUsd != null ? { usd: r.proceedsUsd, currency: sellCurrency } : undefined,
+        );
         expireCheckFirstCut(post.id, r.ref); // lifecycle — expire the slot if this sell drops below the keep-floor
       }
     } catch (e) {

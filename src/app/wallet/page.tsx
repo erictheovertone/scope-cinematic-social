@@ -65,6 +65,24 @@ export default function WalletPage() {
     setTimeout(() => setToast(""), 2000);
   };
 
+  // Optimistic-balance FLOOR (receipt-true sell proceeds): once a sell confirms we
+  // bump the displayed cash instantly; a subsequent on-chain read must NEVER show
+  // BELOW that until the chain catches up — then the floor clears (settle to truth).
+  // Keep-last-good for cash, mirroring the holdings rule.
+  const ethFloor = useRef<number | null>(null);
+  const usdcFloor = useRef<number | null>(null);
+  const ethUsdRateRef = useRef(ethUsdRate);
+  ethUsdRateRef.current = ethUsdRate;
+
+  const applyReadBalances = (ethStr: string, usdcStr: string) => {
+    const e = parseFloat(ethStr);
+    if (ethFloor.current != null && e + 1e-12 < ethFloor.current) setEthBalance(String(ethFloor.current));
+    else { ethFloor.current = null; setEthBalance(ethStr); }
+    const u = parseFloat(usdcStr);
+    if (usdcFloor.current != null && u + 1e-9 < usdcFloor.current) setUsdcBalance(String(usdcFloor.current));
+    else { usdcFloor.current = null; setUsdcBalance(usdcStr); }
+  };
+
   const fetchBalances = async () => {
     if (!walletAddress) return;
     setLoading(true);
@@ -75,8 +93,7 @@ export default function WalletPage() {
         getTransactionHistory(walletAddress),
         economy.getEthUsdRate(),
       ]);
-      setEthBalance(eth);
-      setUsdcBalance(usdc);
+      applyReadBalances(eth, usdc);
       setTxHistory(txs);
       setEthUsdRate(rate);
       setHoldings(null); // re-pull holdings on next tab view (pull-to-refresh)
@@ -97,8 +114,7 @@ export default function WalletPage() {
         getEthBalance(walletAddress),
         getUsdcBalance(walletAddress),
       ]);
-      setEthBalance(eth);
-      setUsdcBalance(usdc);
+      applyReadBalances(eth, usdc);
     } catch (e) {
       console.error("refreshAvailable error:", e);
     }
@@ -198,6 +214,24 @@ export default function WalletPage() {
           .filter((h) => h.pieces > 0)
           .sort((a, b) => b.valueUsd - a.valueUsd);
       });
+    }
+    // INSTANT balance tick-up (Fix): a SELL carries receipt-true proceeds — bump the
+    // received currency's balance NOW (don't wait the ~7s on-chain refetch). Sets a
+    // floor so the reconcile read can't lower it until the chain catches up. ETH is
+    // derived from proceedsUsd ÷ the live rate, so the displayed TOTAL ticks up by
+    // exactly the receipt-true USD.
+    const pUsd = detail?.proceedsUsd;
+    const pCur = detail?.proceedsCurrency;
+    if (pUsd != null && pUsd > 0 && pCur) {
+      if (pCur === "USDC") {
+        setUsdcBalance((prev) => { const next = (prev != null ? parseFloat(prev) : 0) + pUsd; usdcFloor.current = next; return String(next); });
+      } else {
+        const rate = ethUsdRateRef.current;
+        if (rate && rate > 0) {
+          const ethAmt = pUsd / rate;
+          setEthBalance((prev) => { const next = (prev != null ? parseFloat(prev) : 0) + ethAmt; ethFloor.current = next; return String(next); });
+        }
+      }
     }
     reconcileHoldings();
     refreshAvailable();
