@@ -3,6 +3,7 @@
 import { usePrivy } from "@privy-io/react-auth";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
+import { createPortal } from "react-dom";
 import { getAllPosts } from "@/lib/postsService";
 import PostItem from "@/components/PostItem";
 import PostModal from "@/components/PostModal";
@@ -205,42 +206,48 @@ export default function Home() {
       `}</style>
 
       {/* Frame icon — top right, opens Mirage menu.
-          TEMP localization proof (Round 4): magenta bg + cyan outline, opacity still
-          tied to showFrame. If the MAGENTA BOX toggles on scroll but the red icon
-          doesn't → the icon child isn't rendering. If magenta never shows/toggles →
-          binding/override/stacking. Remove bg+outline once localized. */}
-      <button
-        onClick={() => setMenuOpen(v => !v)}
-        aria-label="Open menu"
-        style={{
-          position: 'absolute',
-          top: 6,
-          right: 6,
-          background: '#f0f',          // TEMP proof
-          outline: '2px solid #0ff',   // TEMP proof
-          border: 'none',
-          cursor: 'pointer',
-          padding: 4,
-          lineHeight: 0,
-          opacity: menuOpen || !showFrame ? 0 : 1,
-          transform: menuOpen || !showFrame ? 'translateY(-12px)' : 'translateY(0)',
-          transition: 'opacity 0.25s cubic-bezier(0.16,0.84,0.3,1), transform 0.25s cubic-bezier(0.16,0.84,0.3,1)',
-          pointerEvents: menuOpen || !showFrame ? 'none' : 'auto',
-          filter: 'drop-shadow(0 0 8px rgba(0,0,0,0.9)) drop-shadow(0 2px 12px rgba(0,0,0,0.75))',
-          zIndex: 20,
-        }}
-      >
-        <svg width="28" height="14" viewBox="0 0 32 16" fill="none">
-          <line x1="1" y1="1" x2="1" y2="6" stroke="#FF0000" strokeWidth="1.1"/>
-          <line x1="1" y1="1" x2="7" y2="1" stroke="#FF0000" strokeWidth="0.85"/>
-          <line x1="31" y1="1" x2="31" y2="6" stroke="#FF0000" strokeWidth="1.1"/>
-          <line x1="25" y1="1" x2="31" y2="1" stroke="#FF0000" strokeWidth="0.85"/>
-          <line x1="1" y1="15" x2="1" y2="10" stroke="#FF0000" strokeWidth="1.1"/>
-          <line x1="1" y1="15" x2="7" y2="15" stroke="#FF0000" strokeWidth="0.85"/>
-          <line x1="31" y1="15" x2="31" y2="10" stroke="#FF0000" strokeWidth="1.1"/>
-          <line x1="25" y1="15" x2="31" y2="15" stroke="#FF0000" strokeWidth="0.85"/>
-        </svg>
-      </button>
+          ROOT CAUSE (Round 5): it was position:absolute relative to the min-h-screen
+          page wrapper, and the PAGE itself scrolls (document.scrollingElement) — so it
+          sat at the top of the scrolling content and scrolled off. FIX: PORTAL to
+          document.body + position:fixed → leaves the scroll container AND any
+          (future) transformed ancestor, so it's truly pinned to the viewport.
+          TEMP localization proof still on (magenta bg + cyan outline) — strip with the
+          overlay once Eric confirms it stays pinned, then drop in the bolder icon. */}
+      {typeof document !== 'undefined' && createPortal(
+        <button
+          onClick={() => setMenuOpen(v => !v)}
+          aria-label="Open menu"
+          style={{
+            position: 'fixed',
+            top: 6,
+            right: 6,
+            background: '#f0f',          // TEMP proof
+            outline: '2px solid #0ff',   // TEMP proof
+            border: 'none',
+            cursor: 'pointer',
+            padding: 4,
+            lineHeight: 0,
+            opacity: menuOpen || !showFrame ? 0 : 1,
+            transform: menuOpen || !showFrame ? 'translateY(-12px)' : 'translateY(0)',
+            transition: 'opacity 0.25s cubic-bezier(0.16,0.84,0.3,1), transform 0.25s cubic-bezier(0.16,0.84,0.3,1)',
+            pointerEvents: menuOpen || !showFrame ? 'none' : 'auto',
+            filter: 'drop-shadow(0 0 8px rgba(0,0,0,0.9)) drop-shadow(0 2px 12px rgba(0,0,0,0.75))',
+            zIndex: 50, // above feed (z20), below the menu overlay (z60)
+          }}
+        >
+          <svg width="28" height="14" viewBox="0 0 32 16" fill="none">
+            <line x1="1" y1="1" x2="1" y2="6" stroke="#FF0000" strokeWidth="1.1"/>
+            <line x1="1" y1="1" x2="7" y2="1" stroke="#FF0000" strokeWidth="0.85"/>
+            <line x1="31" y1="1" x2="31" y2="6" stroke="#FF0000" strokeWidth="1.1"/>
+            <line x1="25" y1="1" x2="31" y2="1" stroke="#FF0000" strokeWidth="0.85"/>
+            <line x1="1" y1="15" x2="1" y2="10" stroke="#FF0000" strokeWidth="1.1"/>
+            <line x1="1" y1="15" x2="7" y2="15" stroke="#FF0000" strokeWidth="0.85"/>
+            <line x1="31" y1="15" x2="31" y2="10" stroke="#FF0000" strokeWidth="1.1"/>
+            <line x1="25" y1="15" x2="31" y2="15" stroke="#FF0000" strokeWidth="0.85"/>
+          </svg>
+        </button>,
+        document.body,
+      )}
 
       {/* Home-feed menu — bold full-screen overlay: two typographic "doors". */}
       {menuOpen && (
