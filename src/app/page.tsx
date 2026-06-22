@@ -65,32 +65,42 @@ export default function Home() {
   // Direction-aware red frame — ANY upward scroll reveals it (regardless of position);
   // downward hides it.
   //
-  // ROOT CAUSE of the prior failures: the listener was bound in a useEffect with []
-  // deps + `if (!feedRef.current) return`. But Privy `ready` is false on first render,
-  // so the auth early-return below renders a LOADING div (not the feed) → feedRef is
-  // null when the [] effect runs → it bailed and the listener was NEVER attached, and
-  // the [] effect never re-ran after the feed mounted. So the handler never fired at
-  // all — no logic tweak could help. FIX: bind via the feed div's onScroll PROP, which
-  // attaches whenever that element renders (post-auth), immune to the mount-timing.
-  const FRAME_THRESHOLD = 4; // px of intent (absorbs jitter / iOS bounce)
-  const frameTick = useRef(false);
-  const [scrollDebug, setScrollDebug] = useState({ count: 0, top: 0, dy: 0, dir: '—' }); // TEMP
-  const handleFeedScroll = () => {
-    if (frameTick.current) return;
-    frameTick.current = true;
-    requestAnimationFrame(() => {
-      frameTick.current = false;
-      const el = feedRef.current;
-      if (!el) return;
-      const y = el.scrollTop;
-      const dy = y - lastScrollY.current;
-      lastScrollY.current = y;
-      // TEMP on-screen diagnostic (remove once confirmed on-device).
-      setScrollDebug((d) => ({ count: d.count + 1, top: Math.round(y), dy: Math.round(dy), dir: dy < 0 ? 'UP' : dy > 0 ? 'DOWN' : '—' }));
-      if (Math.abs(dy) < FRAME_THRESHOLD) return;
-      setShowFrame(dy < 0 || y <= FRAME_THRESHOLD); // up (or near top) → show; down → hide
-    });
-  };
+  // ROOT CAUSE of the prior failures (proven by the overlay reading evt:0):
+  //  1) useEffect([]) + `if(!feedRef.current) return` bailed during the auth loading
+  //     screen and never rebound; THEN
+  //  2) the onScroll PROP bound to the feed div — but native `scroll` events DON'T
+  //     bubble, so binding to a node that isn't the true scroller never fires.
+  // FIX (one mechanism for both): a CAPTURE-phase listener on `document`. Capture
+  // travels top-down and doesn't depend on bubbling, so it catches the scroll from
+  // WHATEVER element actually scrolls; and `document` always exists → no mount race.
+  const [scrollDebug, setScrollDebug] = useState({ evt: 0, top: 0, dy: 0, dir: '—', tgt: '?' }); // TEMP
+  useEffect(() => {
+    const THRESHOLD = 4; // px of intent (absorbs jitter / iOS bounce)
+    let last = 0;
+    const onScroll = (e: Event) => {
+      const t = e.target as (Document | HTMLElement);
+      const el: HTMLElement | null =
+        (t === document || t === document.documentElement)
+          ? (document.scrollingElement as HTMLElement | null)
+          : (t as HTMLElement);
+      const cur = el && typeof el.scrollTop === 'number' ? el.scrollTop : window.scrollY;
+      const dy = cur - last;
+      last = cur;
+      // TEMP on-screen diagnostic — incl. the REAL scroll element (tag.class).
+      // Functional updater: the [] effect captures state once, so a direct read
+      // would freeze the counter at 1.
+      setScrollDebug((d) => ({
+        evt: d.evt + 1, top: Math.round(cur), dy: Math.round(dy),
+        dir: dy < 0 ? 'up' : dy > 0 ? 'down' : '—',
+        tgt: (el?.tagName ?? '?') + '.' + String(el?.className ?? '').slice(0, 20),
+      }));
+      if (dy < -THRESHOLD) setShowFrame(true);       // up → reveal
+      else if (dy > THRESHOLD) setShowFrame(false);  // down → hide
+    };
+    document.addEventListener('scroll', onScroll, { capture: true, passive: true });
+    return () => document.removeEventListener('scroll', onScroll, { capture: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (!authenticated) router.push("/welcome");
@@ -318,15 +328,16 @@ export default function Home() {
         </div>
       )}
 
-      {/* TEMP scroll diagnostic — remove once the up-scroll reveal is confirmed. */}
+      {/* TEMP scroll diagnostic — shows the REAL scroll element (tgt). Remove once
+          the up-scroll reveal is confirmed on mobile. */}
       <div style={{ position: 'fixed', bottom: 70, left: 6, zIndex: 80, background: 'rgba(0,0,0,0.8)', color: '#FF0000', font: '9px monospace', padding: '3px 6px', pointerEvents: 'none', whiteSpace: 'nowrap' }}>
-        evt:{scrollDebug.count} top:{scrollDebug.top} dy:{scrollDebug.dy} {scrollDebug.dir} frame:{showFrame ? 'ON' : 'off'}
+        evt:{scrollDebug.evt} top:{scrollDebug.top} dy:{scrollDebug.dy} {scrollDebug.dir} frame:{showFrame ? 'ON' : 'off'} tgt:{scrollDebug.tgt}
       </div>
 
-      {/* Feed */}
+      {/* Feed — scroll is captured at document level (native scroll doesn't bubble),
+          so no onScroll here. */}
       <div
         ref={feedRef}
-        onScroll={handleFeedScroll}
         className="absolute left-[2px] right-[2px] top-[30px] bottom-0 overflow-y-auto"
         // @ts-ignore
         style={{ WebkitOverflowScrolling: 'touch' }}
