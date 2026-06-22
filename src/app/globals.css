@@ -429,3 +429,17 @@ button:active,
 @media (prefers-reduced-motion: reduce) {
   .focus-pull { animation: simpleFade 0.5s ease both !important; }
 }
+
+/* ── Stage 4.1 · Respect prefers-reduced-motion ───────────────────────────────
+   Global safety net: collapse all CSS animations/transitions to ~instant for users
+   who've opted out of motion. Essential affordances still SHOW (state changes apply
+   immediately) — only the movement is removed. Targeted reduced-motion rules above
+   (focus-pull, fc-*, menu doors via JS) still apply; this is the catch-all. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

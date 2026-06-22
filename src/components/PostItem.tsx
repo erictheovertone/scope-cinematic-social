@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo } from "react";
 import { useRouter } from "next/navigation";
 import FirstCutChip from "@/components/economy/FirstCutChip";
 import { usePrivy } from "@privy-io/react-auth";
@@ -63,7 +63,7 @@ interface PostItemProps {
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 
-export default function PostItem({ post, onImageClick, commentsOpen, onToggleComments }: PostItemProps) {
+function PostItem({ post, onImageClick, commentsOpen, onToggleComments }: PostItemProps) {
   const router = useRouter();
   const { user } = usePrivy();
   const [likes, setLikes] = useState<any[]>([]);
@@ -394,3 +394,15 @@ export default function PostItem({ post, onImageClick, commentsOpen, onToggleCom
     </div>
   );
 }
+
+// Stage 4.2 — memoize the feed card. The parent (home feed) re-renders on every
+// scroll frame (showFrame) and on any comment toggle; without this, the WHOLE list
+// re-rendered each time. Compare only the post identity + its controlled open state
+// and IGNORE the callback props' identity: the parent passes fresh inline arrows
+// each render, but they're behaviorally stable (they close over a stable post + stable
+// setters), so an older closure stays correct. → a scroll no longer re-renders cards;
+// a comment toggle re-renders only the two affected cards.
+export default memo(
+  PostItem,
+  (prev, next) => prev.post === next.post && prev.commentsOpen === next.commentsOpen,
+);
