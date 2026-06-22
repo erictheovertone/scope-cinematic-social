@@ -81,9 +81,14 @@
 }
 
 /* Capped + centered mobile column. Edge-to-edge below ~480px; centered above it on
-   black. Desktop (≥1024) lifts the cap — the desktop shell mounts in Stage 3. */
+   black at EVERY width — including ≥1024 (the desktop range) for now.
+   ── DESKTOP SEAM (Stage 3) ──────────────────────────────────────────────────
+   The cap is intentionally NOT lifted at ≥1024 yet. Until the real desktop layouts
+   are built, desktop widths show the clean centered mobile column on black — an
+   intentional interim, never a half-built stretched-full-width feed. When the
+   desktop shell lands, mount it behind useIsDesktop()/--bp-desktop and override
+   .app-shell at ≥1024 there — a clean swap with no shift at the 1024 line. */
 .app-shell { width: 100%; max-width: 30rem; margin-inline: auto; }
-@media (min-width: 1024px) { .app-shell { max-width: none; } }
 
 /* Safe-area chrome — needs viewportFit:'cover' (0.1). Fixes the footer drift on the
    home indicator and keeps fixed top chrome clear of the notch. */
