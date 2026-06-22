@@ -248,7 +248,7 @@ export default function PostItem({ post, onImageClick, commentsOpen, onToggleCom
   );
 
   return (
-    <div style={{ marginBottom: 32 }}>
+    <div className="feed-card" style={{ marginBottom: 32 }}>
 
       {/* ── Image with overlaid avatar + username ── */}
       {is43 ? (
