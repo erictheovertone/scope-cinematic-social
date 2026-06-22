@@ -1,5 +1,15 @@
 import "./globals.css";
+import type { Viewport } from "next";
 import Providers from '@/components/Providers';
+
+// Stage 0.1 — viewport via Next's export (replaces the manual <meta>). viewportFit
+// 'cover' is what makes env(safe-area-inset-*) resolve to real notch/home-indicator
+// values (otherwise they're 0). User zoom left enabled (accessibility).
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+};
 
 export default function RootLayout({
   children,
@@ -9,7 +19,6 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Scope - Cinematic Social Platform</title>
         <meta name="description" content="A cinematic social platform where creators post ultra-wide images/videos into customizable grids." />
         <link rel="preconnect" href="https://fonts.googleapis.com" />

@@ -174,7 +174,7 @@ export default function Home() {
   }
 
   return (
-    <div className="bg-black relative w-[375px] min-h-screen mx-auto">
+    <div className="bg-black relative app-shell screen-min">
       <style>{`
         @keyframes feed-item-out {
           from { transform: scale(1)    translateY(0);    opacity: 1; }
