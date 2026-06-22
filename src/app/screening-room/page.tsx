@@ -49,8 +49,15 @@ export default function ScreeningRoomPage() {
 
   useEffect(() => {
     let cancelled = false;
+
+    // ON-DEMAND refresh-on-view: after rendering the cache below, ask the server to
+    // recompute IF stale. Non-awaited (fire-and-forget) so it never blocks the view;
+    // the route is self-throttling (staleness + single-flight lock) so a burst of
+    // viewers triggers at most ONE recompute. The fresh ranking shows on the next view.
+    fetch('/api/screening-room/refresh', { method: 'POST', keepalive: true }).catch(() => {});
+
     (async () => {
-      // 1. The ranked cache (cheap read; the cron already did the work).
+      // 1. The ranked cache (cheap read; the cron / on-demand refresh did the work).
       const { data: cache } = await supabase
         .from('screening_room')
         .select('rank, coin_address, symbol, market_cap')

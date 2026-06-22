@@ -1,170 +1,29 @@
-// ── Cron · Screening Room ranking + SRH awarding (Awarding layer · Step 1) ────
+// ── Cron · Screening Room ranking + SRH awarding (DAILY BACKSTOP) ────────────
 //
-// Plan: docs/economy/Indexer_Decisions.md. NO self-hosted indexer — this reads
-// Zora's API for Scope's own coins, caches the top-50-by-MARKET-CAP ranking in
-// Supabase, and awards/clears the SRH badge on the creators of those posts.
-// Runs every 6h (vercel.json crons). Idempotent: re-running yields the same
-// state; SRH is pure CURRENT standing (in top-50 → flagged; out → cleared).
+// On-demand refresh-on-view (/api/screening-room/refresh) is now the PRIMARY path
+// that keeps the room live. This daily cron is the harmless free backstop —
+// guarantees freshness even with zero traffic. The recompute itself lives in the
+// shared lib (recomputeScreeningRoom) so cron + on-demand never drift.
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { getCoins, setApiKey } from '@zoralabs/coins-sdk';
-import { reconcileCoinFromTx } from '@/lib/zoraCoins';
+import { recomputeScreeningRoom } from '@/lib/economy/screeningRoom';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
-const BASE_CHAIN = 8453;
-const TOP_N = 50;
-const BATCH = 20;          // getCoins hard cap = 20 ids/call ("max batch size is 20"); page above this
-const RECONCILE_CAP = 25;  // bound the per-run reconcile of incomplete mints
-const MAX_RETRIES = 4;     // retry a 429'd batch before treating the run as incomplete
-
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
 export async function GET(req: NextRequest) {
-  // Vercel Cron sends `Authorization: Bearer <CRON_SECRET>` when CRON_SECRET is
-  // set. Require it if configured (recommended in prod); otherwise run open.
+  // Vercel Cron sends `Authorization: Bearer <CRON_SECRET>` when CRON_SECRET is set.
   const secret = process.env.CRON_SECRET;
   if (secret && req.headers.get('authorization') !== `Bearer ${secret}`) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
 
-  const t0 = Date.now();
-  if (process.env.ZORA_API_KEY) setApiKey(process.env.ZORA_API_KEY);
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
   );
 
-  let apiCalls = 0;
-
-  // ── Step A reconcile: posts with a coin tx but no coin_address (DB write lost
-  //    after an on-chain mint). Recover the address from the receipt so the
-  //    registry is complete. Bounded per run; unresolved ones are logged.
-  let reconciled = 0;
-  const reconcileFails: string[] = [];
-  try {
-    const { data: orphans } = await supabase
-      .from('posts')
-      .select('id, coin_tx_hash')
-      .is('coin_address', null)
-      .not('coin_tx_hash', 'is', null)
-      .limit(RECONCILE_CAP);
-    for (const o of orphans ?? []) {
-      const addr = await reconcileCoinFromTx(o.coin_tx_hash as string);
-      if (addr) {
-        await supabase.from('posts').update({ coin_address: addr }).eq('id', o.id);
-        reconciled++;
-      } else {
-        reconcileFails.push(o.id as string);
-      }
-    }
-  } catch (e: any) {
-    console.error('[screening-room] reconcile error:', e?.message);
-  }
-
-  // ── 1. Registry — every minted Scope coin (denormalized creator on the row).
-  const { data: rows, error: regErr } = await supabase
-    .from('posts')
-    .select('coin_address, creator_address, user_id, ticker')
-    .not('coin_address', 'is', null);
-  if (regErr) {
-    return NextResponse.json({ error: 'registry read failed', detail: regErr.message }, { status: 500 });
-  }
-  const coins = (rows ?? []).filter((r) => r.coin_address);
-
-  // ── 2. Batched getCoins → marketCap (+ volume for reference) per coin. Both
-  //    come off the SAME payload — no extra call. The room now ranks by VALUE.
-  //    Each batch RETRIES 429s. If a batch still fails after retries, the read
-  //    is INCOMPLETE — we must NOT rank/award on partial data (a dropped coin
-  //    would silently fall out of the room), so the run aborts below and keeps
-  //    the last good cache intact.
-  const stats = new Map<string, { marketCap: number; volume: number; symbol?: string }>();
-  let incompleteRead = false;
-  for (let i = 0; i < coins.length; i += BATCH) {
-    const batch = coins.slice(i, i + BATCH);
-    let ok = false;
-    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
-      try {
-        const res: any = await getCoins({ coins: batch.map((c) => ({ chainId: BASE_CHAIN, collectionAddress: c.coin_address! })) });
-        apiCalls++;
-        for (const z of res?.data?.zora20Tokens ?? []) {
-          if (z?.address) stats.set(z.address.toLowerCase(), {
-            marketCap: parseFloat(z.marketCap ?? '0') || 0,
-            volume: parseFloat(z.totalVolume ?? '0') || 0,
-            symbol: z.symbol,
-          });
-        }
-        ok = true;
-        break;
-      } catch (e: any) {
-        if (attempt < MAX_RETRIES - 1) { await sleep(500 * Math.pow(2, attempt)); continue; }
-        console.error('[screening-room] getCoins batch failed after retries:', e?.message);
-      }
-    }
-    if (!ok) incompleteRead = true;
-  }
-
-  // ABORT on an incomplete read — keep the existing valid cache rather than
-  // overwriting it with a partial (mis)ranking. SRH stays as last computed.
-  if (incompleteRead) {
-    console.warn('[screening-room] incomplete read (rate-limited after retries) — keeping existing cache, skipping write.');
-    return NextResponse.json({ ok: false, skipped: 'incomplete-read', ms: Date.now() - t0, apiCalls, reconciled });
-  }
-
-  // ── 3. Rank by MARKET CAP desc, take top 50 (only coins Zora returned).
-  //    Market cap is the room's metric: the most VALUABLE posts right now (more
-  //    live than cumulative volume — it moves with price, as SRH intends).
-  // Only coins with an ACTUAL market cap (>0) belong in a "most valuable" room.
-  // A marketCap of 0 is Zora's real value for an UNTRADED coin (totalVolume 0) —
-  // not a fetch gap — so excluding them is correct: they have no market to
-  // showcase, and their creators shouldn't earn SRH off a post with no market.
-  const ranked = coins
-    .map((c) => ({ ...c, m: stats.get(c.coin_address!.toLowerCase()) }))
-    .filter((c) => c.m && c.m.marketCap > 0)
-    .sort((a, b) => b.m!.marketCap - a.m!.marketCap)
-    .slice(0, TOP_N);
-
-  // ── 4. Cache table — overwrite (last-write-wins live snapshot).
-  await supabase.from('screening_room').delete().gte('rank', 0);
-  if (ranked.length) {
-    const now = new Date().toISOString();
-    await supabase.from('screening_room').insert(
-      ranked.map((c, i) => ({
-        rank: i + 1,
-        coin_address: c.coin_address,
-        creator_address: c.creator_address ?? null,
-        user_id: c.user_id ?? null,
-        symbol: c.m!.symbol ?? c.ticker ?? null,
-        market_cap: c.m!.marketCap,
-        volume: c.m!.volume,
-        computed_at: now,
-      })),
-    );
-  }
-
-  // ── 5. Award SRH to the CREATORS of the top-50; clear from those who fell out.
-  //    Reconcile against current holders so it reflects pure standing.
-  const eligible = [...new Set(ranked.map((c) => c.user_id).filter(Boolean))] as string[];
-  const { data: holders } = await supabase.from('profiles').select('user_id').eq('is_screening_room_holder', true);
-  const eligibleSet = new Set(eligible);
-  const toClear = (holders ?? []).map((h) => h.user_id).filter((u) => !eligibleSet.has(u));
-
-  if (eligible.length) await supabase.from('profiles').update({ is_screening_room_holder: true }).in('user_id', eligible);
-  if (toClear.length) await supabase.from('profiles').update({ is_screening_room_holder: false }).in('user_id', toClear);
-
-  const summary = {
-    ok: true,
-    ms: Date.now() - t0,
-    apiCalls,
-    registryCoins: coins.length,
-    ranked: ranked.length,
-    srhAwarded: eligible.length,
-    srhCleared: toClear.length,
-    reconciled,
-    reconcileUnresolved: reconcileFails,
-  };
-  console.log('[screening-room] done', JSON.stringify(summary));
-  return NextResponse.json(summary);
+  const result = await recomputeScreeningRoom(supabase);
+  return NextResponse.json(result, { status: result.ok ? 200 : 200 });
 }
