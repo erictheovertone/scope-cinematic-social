@@ -62,38 +62,35 @@ export default function Home() {
     return () => cancelAnimationFrame(raf);
   }, [openCommentsPostId]);
 
-  // Direction-aware red frame — ANY upward scroll reveals it (regardless of how far
-  // down the feed you are); downward hides it. Native listener (React's synthetic
-  // onScroll misses iOS momentum), rAF-throttled, small jitter threshold.
+  // Direction-aware red frame — ANY upward scroll reveals it (regardless of position);
+  // downward hides it.
   //
-  // ROOT CAUSE of the prior failure: the reference position only advanced on acted
-  // (past-threshold) events, so after a down-scroll the comparison point went stale
-  // — direction was computed against an old anchor and the up-reveal didn't fire
-  // mid-feed. FIX: advance the reference EVERY sample, so `dy` is always the true
-  // per-frame movement and direction is never stale.
-  useEffect(() => {
-    const el = feedRef.current;
-    if (!el) return;
-    const THRESHOLD = 4; // px of intent (absorbs jitter / iOS bounce)
-    lastScrollY.current = el.scrollTop;
-    let ticking = false;
-    const update = () => {
-      ticking = false;
+  // ROOT CAUSE of the prior failures: the listener was bound in a useEffect with []
+  // deps + `if (!feedRef.current) return`. But Privy `ready` is false on first render,
+  // so the auth early-return below renders a LOADING div (not the feed) → feedRef is
+  // null when the [] effect runs → it bailed and the listener was NEVER attached, and
+  // the [] effect never re-ran after the feed mounted. So the handler never fired at
+  // all — no logic tweak could help. FIX: bind via the feed div's onScroll PROP, which
+  // attaches whenever that element renders (post-auth), immune to the mount-timing.
+  const FRAME_THRESHOLD = 4; // px of intent (absorbs jitter / iOS bounce)
+  const frameTick = useRef(false);
+  const [scrollDebug, setScrollDebug] = useState({ count: 0, top: 0, dy: 0, dir: '—' }); // TEMP
+  const handleFeedScroll = () => {
+    if (frameTick.current) return;
+    frameTick.current = true;
+    requestAnimationFrame(() => {
+      frameTick.current = false;
+      const el = feedRef.current;
+      if (!el) return;
       const y = el.scrollTop;
-      const dy = y - lastScrollY.current; // movement since the previous sample
-      lastScrollY.current = y;            // ALWAYS advance → direction never stale
-      if (Math.abs(dy) < THRESHOLD) return; // below intent → ignore (no flicker)
-      const show = dy < 0 || y <= THRESHOLD; // up (or near top) → show; down → hide
-      // TEMP diagnostic (remove after confirming on-device):
-      console.debug('[redframe] y=%s dy=%s dir=%s show=%s', Math.round(y), Math.round(dy), dy < 0 ? 'UP' : 'DOWN', show);
-      setShowFrame(show);
-    };
-    const onScroll = () => {
-      if (!ticking) { ticking = true; requestAnimationFrame(update); }
-    };
-    el.addEventListener('scroll', onScroll, { passive: true });
-    return () => el.removeEventListener('scroll', onScroll);
-  }, []);
+      const dy = y - lastScrollY.current;
+      lastScrollY.current = y;
+      // TEMP on-screen diagnostic (remove once confirmed on-device).
+      setScrollDebug((d) => ({ count: d.count + 1, top: Math.round(y), dy: Math.round(dy), dir: dy < 0 ? 'UP' : dy > 0 ? 'DOWN' : '—' }));
+      if (Math.abs(dy) < FRAME_THRESHOLD) return;
+      setShowFrame(dy < 0 || y <= FRAME_THRESHOLD); // up (or near top) → show; down → hide
+    });
+  };
 
   useEffect(() => {
     if (!authenticated) router.push("/welcome");
@@ -321,9 +318,15 @@ export default function Home() {
         </div>
       )}
 
+      {/* TEMP scroll diagnostic — remove once the up-scroll reveal is confirmed. */}
+      <div style={{ position: 'fixed', bottom: 70, left: 6, zIndex: 80, background: 'rgba(0,0,0,0.8)', color: '#FF0000', font: '9px monospace', padding: '3px 6px', pointerEvents: 'none', whiteSpace: 'nowrap' }}>
+        evt:{scrollDebug.count} top:{scrollDebug.top} dy:{scrollDebug.dy} {scrollDebug.dir} frame:{showFrame ? 'ON' : 'off'}
+      </div>
+
       {/* Feed */}
       <div
         ref={feedRef}
+        onScroll={handleFeedScroll}
         className="absolute left-[2px] right-[2px] top-[30px] bottom-0 overflow-y-auto"
         // @ts-ignore
         style={{ WebkitOverflowScrolling: 'touch' }}
