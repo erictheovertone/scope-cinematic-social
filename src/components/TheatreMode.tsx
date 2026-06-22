@@ -188,19 +188,35 @@ export default function TheatreMode({
   const handleLike = async () => {
     if (!post || !user) return;
     const id = f(post, 'id') as string;
+    // OPTIMISTIC: flip now, network in background, revert on error.
+    const wasLiked = isLiked;
+    const prevLikes = likes;
+    setIsLiked(!wasLiked);
+    setLikes((p) => wasLiked ? p.filter((l) => l.user_id !== user.id) : [...p, { user_id: user.id }]);
     try {
-      if (isLiked) { await unlikePost(id, user.id); setLikes((p) => p.filter((l) => l.user_id !== user.id)); setIsLiked(false); }
-      else { const l = await likePost(id, user.id, viewerName); setLikes((p) => [...p, l as { user_id?: string }]); setIsLiked(true); }
-    } catch (e) { console.error('[theatre] like failed', e); }
+      if (wasLiked) await unlikePost(id, user.id);
+      else await likePost(id, user.id, viewerName);
+    } catch (e) {
+      console.error('[theatre] like failed', e);
+      setIsLiked(wasLiked);
+      setLikes(prevLikes);
+    }
   };
   const handleAddComment = async () => {
     if (!post || !user || !newComment.trim()) return;
     const id = f(post, 'id') as string;
+    // OPTIMISTIC: render immediately, reconcile on success / mark failed.
+    const text = newComment.trim();
+    const tempId = `temp-${Date.now()}`;
+    setComments((p) => [...p, { id: tempId, username: viewerName, content: text, pending: true } as { id?: string; username?: string; content?: string }]);
+    setNewComment('');
     try {
-      const c = await addComment(id, user.id, viewerName, newComment.trim());
-      setComments((p) => [...p, c as { id?: string; username?: string; content?: string }]);
-      setNewComment('');
-    } catch (e) { console.error('[theatre] comment failed', e); }
+      const c = await addComment(id, user.id, viewerName, text);
+      setComments((p) => p.map((x) => x.id === tempId ? (c as { id?: string; username?: string; content?: string }) : x));
+    } catch (e) {
+      console.error('[theatre] comment failed', e);
+      setComments((p) => p.map((x) => x.id === tempId ? ({ ...x, pending: false, failed: true } as { id?: string; username?: string; content?: string }) : x));
+    }
   };
 
   if (!post || posts.length === 0) {

@@ -232,40 +232,34 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
 
   const handleLike = async () => {
     if (!user) return;
-    setLoading(true);
+    // OPTIMISTIC: flip now, network in background, revert on error.
+    const wasLiked = isLiked;
+    const prevLikes = likes;
+    setIsLiked(!wasLiked);
+    setLikes((p) => wasLiked ? p.filter((l) => l.user_id !== user.id) : [...p, { user_id: user.id }]);
     try {
-      if (isLiked) {
-        await unlikePost(post.id, user.id);
-        setLikes((p) => p.filter((l) => l.user_id !== user.id));
-        setIsLiked(false);
-      } else {
-        const l = await likePost(post.id, user.id, user.email ? String(user.email).split("@")[0] : "user");
-        setLikes((p) => [...p, l]);
-        setIsLiked(true);
-      }
+      if (wasLiked) await unlikePost(post.id, user.id);
+      else await likePost(post.id, user.id, user.email ? String(user.email).split("@")[0] : "user");
     } catch (e) {
       console.error("Like error:", e);
-    } finally {
-      setLoading(false);
+      setIsLiked(wasLiked);
+      setLikes(prevLikes);
     }
   };
 
   const handleAddComment = async () => {
     if (!user || !newComment.trim()) return;
-    setLoading(true);
+    // OPTIMISTIC: render immediately, reconcile on success / mark failed.
+    const text = newComment.trim();
+    const tempId = `temp-${Date.now()}`;
+    setComments((p) => [...p, { id: tempId, content: text, username: viewerUsername || "user", user_id: user.id, profile_image_url: viewerAvatar, created_at: new Date().toISOString(), pending: true }]);
+    setNewComment("");
     try {
-      const c = await addComment(
-        post.id,
-        user.id,
-        viewerUsername || "user",
-        newComment.trim()
-      );
-      setComments((p) => [...p, { ...c, profile_image_url: viewerAvatar }]);
-      setNewComment("");
+      const c = await addComment(post.id, user.id, viewerUsername || "user", text);
+      setComments((p) => p.map((x) => x.id === tempId ? { ...c, profile_image_url: viewerAvatar } : x));
     } catch (e) {
       console.error("Comment error:", e);
-    } finally {
-      setLoading(false);
+      setComments((p) => p.map((x) => x.id === tempId ? { ...x, pending: false, failed: true } : x));
     }
   };
 

@@ -156,40 +156,35 @@ export default function PostItem({ post, onImageClick, commentsOpen, onToggleCom
   const handleLike = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!user) return;
-    setLoading(true);
+    // OPTIMISTIC: flip the UI now, fire the network in the background, revert on error.
+    const wasLiked = isLiked;
+    const prevLikes = likes;
+    setIsLiked(!wasLiked);
+    setLikes((prev) => wasLiked ? prev.filter((l) => l.user_id !== user.id) : [...prev, { user_id: user.id }]);
     try {
-      if (isLiked) {
-        await unlikePost(post.id, user.id);
-        setLikes((prev) => prev.filter((l) => l.user_id !== user.id));
-        setIsLiked(false);
-      } else {
-        const l = await likePost(post.id, user.id, user.email ? String(user.email).split("@")[0] : "user");
-        setLikes((prev) => [...prev, l]);
-        setIsLiked(true);
-      }
-    } catch (e) {
-      console.error("Error toggling like:", e);
-    } finally {
-      setLoading(false);
+      if (wasLiked) await unlikePost(post.id, user.id);
+      else await likePost(post.id, user.id, user.email ? String(user.email).split("@")[0] : "user");
+    } catch (err) {
+      console.error("Error toggling like:", err);
+      setIsLiked(wasLiked);
+      setLikes(prevLikes);
     }
   };
 
   const handleAddComment = async () => {
     if (!user || !newComment.trim()) return;
-    setLoading(true);
+    // OPTIMISTIC: render the comment immediately, reconcile on success / mark failed.
+    const text = newComment.trim();
+    const tempId = `temp-${Date.now()}`;
+    const optimistic = { id: tempId, content: text, username: viewerUsername || "user", user_id: user.id, created_at: new Date().toISOString(), pending: true };
+    setComments((prev) => [...prev, optimistic]);
+    setNewComment("");
     try {
-      const c = await addComment(
-        post.id,
-        user.id,
-        viewerUsername || "user",
-        newComment.trim()
-      );
-      setComments((prev) => [...prev, c]);
-      setNewComment("");
+      const c = await addComment(post.id, user.id, viewerUsername || "user", text);
+      setComments((prev) => prev.map((x) => (x.id === tempId ? c : x)));
     } catch (e) {
       console.error("Error adding comment:", e);
-    } finally {
-      setLoading(false);
+      setComments((prev) => prev.map((x) => (x.id === tempId ? { ...x, pending: false, failed: true } : x)));
     }
   };
 
