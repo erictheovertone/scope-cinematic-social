@@ -34,25 +34,42 @@
 }
 
 /* ── RESPONSIVE FOUNDATION · Stage 0 (tokens + container + safe-area + dvh) ─────
-   Fluid type/spacing that reproduce the CURRENT mobile sizes at 320–375 (each
-   clamp's floor = today's px) and scale gently toward a ~640px cap so they never
-   balloon on tablets (where the column is capped at 480). The scale was extended
-   DOWNWARD vs the brief (3xs + 8–9px-floored 2xs) because 77% of Scope's type is
-   6.5–11px — the brief's 10px floor would have upsized the app and broken 375px
-   parity. lg/xl/2xl/3xl cover the 18–42 display sizes; >42 is desktop display type. */
+   PX-NAMED ANCHORED type scale — one token per distinct source value, NO bucketing.
+   Each renders EXACTLY Npx at 375 (100vw=375 → N*375/375 = N), floors below 375 (no
+   shrink on small phones), and grows proportionally to a +28% cap at 480px (480/375
+   = 1.28) — exactly where the .app-shell column stops widening. Token set = the
+   distinct values in the inventory (6…38, incl. 6.5/7.5/9.5/10.5/15/15.7/20/22);
+   40/48/52 are left as-is (desktop display type). Decimal names use `_`. */
 :root {
   --bp-desktop: 1024px;
 
-  --fs-3xs:  clamp(6.5px, calc(6.5px + 0.5*(100vw - 320px)/320), 7px);
-  --fs-2xs:  clamp(8px,   calc(8px   + 1*(100vw - 320px)/320), 9px);
-  --fs-xs:   clamp(10px,  calc(10px  + 1*(100vw - 320px)/320), 11px);
-  --fs-sm:   clamp(12px,  calc(12px  + 1*(100vw - 320px)/320), 13px);
-  --fs-base: clamp(14px,  calc(14px  + 2*(100vw - 320px)/320), 16px);
-  --fs-md:   clamp(16px,  calc(16px  + 2*(100vw - 320px)/320), 18px);
-  --fs-lg:   clamp(18px,  calc(18px  + 3*(100vw - 320px)/320), 21px);
-  --fs-xl:   clamp(21px,  calc(21px  + 5*(100vw - 320px)/320), 26px);
-  --fs-2xl:  clamp(26px,  calc(26px  + 6*(100vw - 320px)/320), 32px);
-  --fs-3xl:  clamp(32px,  calc(32px  + 10*(100vw - 320px)/320), 42px);
+  --fs-6:    clamp(6px,    calc(6px    * 100vw / 375), calc(6px    * 1.28));
+  --fs-6_5:  clamp(6.5px,  calc(6.5px  * 100vw / 375), calc(6.5px  * 1.28));
+  --fs-7:    clamp(7px,    calc(7px    * 100vw / 375), calc(7px    * 1.28));
+  --fs-7_5:  clamp(7.5px,  calc(7.5px  * 100vw / 375), calc(7.5px  * 1.28));
+  --fs-8:    clamp(8px,    calc(8px    * 100vw / 375), calc(8px    * 1.28));
+  --fs-9:    clamp(9px,    calc(9px    * 100vw / 375), calc(9px    * 1.28));
+  --fs-9_5:  clamp(9.5px,  calc(9.5px  * 100vw / 375), calc(9.5px  * 1.28));
+  --fs-10:   clamp(10px,   calc(10px   * 100vw / 375), calc(10px   * 1.28));
+  --fs-10_5: clamp(10.5px, calc(10.5px * 100vw / 375), calc(10.5px * 1.28));
+  --fs-11:   clamp(11px,   calc(11px   * 100vw / 375), calc(11px   * 1.28));
+  --fs-12:   clamp(12px,   calc(12px   * 100vw / 375), calc(12px   * 1.28));
+  --fs-13:   clamp(13px,   calc(13px   * 100vw / 375), calc(13px   * 1.28));
+  --fs-14:   clamp(14px,   calc(14px   * 100vw / 375), calc(14px   * 1.28));
+  --fs-15:   clamp(15px,   calc(15px   * 100vw / 375), calc(15px   * 1.28));
+  --fs-15_7: clamp(15.7px, calc(15.7px * 100vw / 375), calc(15.7px * 1.28));
+  --fs-16:   clamp(16px,   calc(16px   * 100vw / 375), calc(16px   * 1.28));
+  --fs-18:   clamp(18px,   calc(18px   * 100vw / 375), calc(18px   * 1.28));
+  --fs-20:   clamp(20px,   calc(20px   * 100vw / 375), calc(20px   * 1.28));
+  --fs-22:   clamp(22px,   calc(22px   * 100vw / 375), calc(22px   * 1.28));
+  --fs-24:   clamp(24px,   calc(24px   * 100vw / 375), calc(24px   * 1.28));
+  --fs-26:   clamp(26px,   calc(26px   * 100vw / 375), calc(26px   * 1.28));
+  --fs-28:   clamp(28px,   calc(28px   * 100vw / 375), calc(28px   * 1.28));
+  --fs-30:   clamp(30px,   calc(30px   * 100vw / 375), calc(30px   * 1.28));
+  --fs-32:   clamp(32px,   calc(32px   * 100vw / 375), calc(32px   * 1.28));
+  --fs-34:   clamp(34px,   calc(34px   * 100vw / 375), calc(34px   * 1.28));
+  --fs-36:   clamp(36px,   calc(36px   * 100vw / 375), calc(36px   * 1.28));
+  --fs-38:   clamp(38px,   calc(38px   * 100vw / 375), calc(38px   * 1.28));
 
   --sp-1: 4px;
   --sp-2: 8px;
