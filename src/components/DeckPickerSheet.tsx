@@ -106,7 +106,7 @@ export default function DeckPickerSheet({ postId, onClose, onAdded }: Props) {
         className="bg-black"
         style={{
           position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 121,
-          maxWidth: 375, margin: "0 auto",
+          maxWidth: '30rem', margin: "0 auto",
           background: "#000",
           borderTop: "1px solid rgba(255,255,255,0.1)",
           padding: "16px 0 40px",
@@ -118,10 +118,10 @@ export default function DeckPickerSheet({ postId, onClose, onAdded }: Props) {
       >
         {/* Header */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 12px 12px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-          <span style={{ ...SKB, fontSize: 9, color: "white", letterSpacing: "-0.18px" }}>ADD TO DECK</span>
+          <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "white", letterSpacing: "-0.18px" }}>ADD TO DECK</span>
           <button
             onClick={handleClose}
-            style={{ background: "transparent", border: "none", cursor: "pointer", ...SKB, fontSize: 11, color: "rgba(255,255,255,0.5)", padding: 0, lineHeight: 1 }}
+            style={{ background: "transparent", border: "none", cursor: "pointer", ...SKB, fontSize: 'var(--fs-11)', color: "rgba(255,255,255,0.5)", padding: 0, lineHeight: 1 }}
           >
             ✕
           </button>
@@ -134,7 +134,7 @@ export default function DeckPickerSheet({ postId, onClose, onAdded }: Props) {
         ) : (
           <>
             {decks.length === 0 && !showNewDeck && (
-              <p style={{ ...SKR, fontSize: 8, color: "rgba(255,255,255,0.35)", padding: "14px 12px 0" }}>
+              <p style={{ ...SKR, fontSize: 'var(--fs-8)', color: "rgba(255,255,255,0.35)", padding: "14px 12px 0" }}>
                 No decks yet — create one below
               </p>
             )}
@@ -159,14 +159,14 @@ export default function DeckPickerSheet({ postId, onClose, onAdded }: Props) {
                     )}
                   </div>
                   <div style={{ textAlign: "left" }}>
-                    <p style={{ ...SKB, fontSize: 9, color: "white", margin: 0 }}>{deck.title}</p>
-                    <p style={{ ...SKR, fontSize: 7, color: "rgba(255,255,255,0.4)", margin: "2px 0 0" }}>
+                    <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: "white", margin: 0 }}>{deck.title}</p>
+                    <p style={{ ...SKR, fontSize: 'var(--fs-7)', color: "rgba(255,255,255,0.4)", margin: "2px 0 0" }}>
                       {deck.item_count} frames
                     </p>
                   </div>
                 </div>
                 {adding === deck.id && (
-                  <span style={{ ...SKR, fontSize: 7, color: "rgba(255,255,255,0.45)" }}>adding…</span>
+                  <span style={{ ...SKR, fontSize: 'var(--fs-7)', color: "rgba(255,255,255,0.45)" }}>adding…</span>
                 )}
               </button>
             ))}
@@ -176,7 +176,7 @@ export default function DeckPickerSheet({ postId, onClose, onAdded }: Props) {
                 onClick={() => setShowNewDeck(true)}
                 style={{ display: "block", width: "100%", background: "transparent", border: "none", cursor: "pointer", padding: "14px 12px", textAlign: "left" }}
               >
-                <span style={{ ...SKR, fontSize: 9, color: "rgba(255,255,255,0.5)" }}>+ Create new deck</span>
+                <span style={{ ...SKR, fontSize: 'var(--fs-9)', color: "rgba(255,255,255,0.5)" }}>+ Create new deck</span>
               </button>
             ) : (
               <div style={{ padding: "14px 12px" }}>
@@ -190,7 +190,7 @@ export default function DeckPickerSheet({ postId, onClose, onAdded }: Props) {
                   style={{
                     width: "100%", background: "transparent",
                     border: "none", borderBottom: "1px solid rgba(255,255,255,0.2)",
-                    outline: "none", ...SKR, fontSize: 10, color: "white",
+                    outline: "none", ...SKR, fontSize: 'var(--fs-10)', color: "white",
                     padding: "4px 0", boxSizing: "border-box",
                   }}
                 />
@@ -198,13 +198,13 @@ export default function DeckPickerSheet({ postId, onClose, onAdded }: Props) {
                   <button
                     onClick={handleCreateAndAdd}
                     disabled={!newTitle.trim() || creating}
-                    style={{ background: "transparent", border: "none", cursor: "pointer", ...SKB, fontSize: 9, color: newTitle.trim() ? "white" : "rgba(255,255,255,0.3)", padding: 0 }}
+                    style={{ background: "transparent", border: "none", cursor: "pointer", ...SKB, fontSize: 'var(--fs-9)', color: newTitle.trim() ? "white" : "rgba(255,255,255,0.3)", padding: 0 }}
                   >
                     {creating ? "Creating…" : "Create & add"}
                   </button>
                   <button
                     onClick={() => { setShowNewDeck(false); setNewTitle(""); }}
-                    style={{ background: "transparent", border: "none", cursor: "pointer", ...SKR, fontSize: 9, color: "rgba(255,255,255,0.4)", padding: 0 }}
+                    style={{ background: "transparent", border: "none", cursor: "pointer", ...SKR, fontSize: 'var(--fs-9)', color: "rgba(255,255,255,0.4)", padding: 0 }}
                   >
                     Cancel
                   </button>

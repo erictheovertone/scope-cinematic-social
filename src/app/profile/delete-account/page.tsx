@@ -35,7 +35,7 @@ export default function DeleteAccount() {
         >
           ←
         </button>
-        <h1 className="font-['IBM_Plex_Mono'] font-medium text-white text-[18px]">
+        <h1 className="font-['IBM_Plex_Mono'] font-medium text-white text-[var(--fs-18)]">
           Delete Account
         </h1>
         <div className="w-6" />
@@ -46,10 +46,10 @@ export default function DeleteAccount() {
         {isDeleting ? (
           <div className="flex flex-col items-center justify-center h-full">
             <div className="w-16 h-16 border-4 border-[#FF0000] border-t-transparent rounded-full animate-spin mb-6"></div>
-            <h2 className="font-['IBM_Plex_Mono'] font-medium text-white text-[18px] mb-4 text-center">
+            <h2 className="font-['IBM_Plex_Mono'] font-medium text-white text-[var(--fs-18)] mb-4 text-center">
               Deleting Account...
             </h2>
-            <p className="font-['IBM_Plex_Mono'] font-normal text-[#888888] text-[14px] text-center">
+            <p className="font-['IBM_Plex_Mono'] font-normal text-[#888888] text-[var(--fs-14)] text-center">
               This may take a few moments.
             </p>
           </div>
@@ -65,38 +65,38 @@ export default function DeleteAccount() {
                 </svg>
               </div>
               
-              <h2 className="font-['IBM_Plex_Mono'] font-medium text-white text-[20px] mb-4">
+              <h2 className="font-['IBM_Plex_Mono'] font-medium text-white text-[var(--fs-20)] mb-4">
                 Delete Your Account
               </h2>
               
-              <p className="font-['IBM_Plex_Mono'] font-normal text-[#888888] text-[14px] leading-relaxed">
+              <p className="font-['IBM_Plex_Mono'] font-normal text-[#888888] text-[var(--fs-14)] leading-relaxed">
                 This action cannot be undone. All your data will be permanently deleted.
               </p>
             </div>
 
             {/* What will be deleted */}
             <div className="bg-[#1A1A1A] border border-[#FF0000] border-opacity-30 rounded-lg p-6 mb-8">
-              <h3 className="font-['IBM_Plex_Mono'] font-medium text-white text-[16px] mb-4">
+              <h3 className="font-['IBM_Plex_Mono'] font-medium text-white text-[var(--fs-16)] mb-4">
                 What will be deleted:
               </h3>
               <ul className="space-y-3">
-                <li className="font-['IBM_Plex_Mono'] font-normal text-[#888888] text-[13px] flex items-start">
+                <li className="font-['IBM_Plex_Mono'] font-normal text-[#888888] text-[var(--fs-13)] flex items-start">
                   <span className="text-[#FF0000] mr-3">•</span>
                   All your posts and media content
                 </li>
-                <li className="font-['IBM_Plex_Mono'] font-normal text-[#888888] text-[13px] flex items-start">
+                <li className="font-['IBM_Plex_Mono'] font-normal text-[#888888] text-[var(--fs-13)] flex items-start">
                   <span className="text-[#FF0000] mr-3">•</span>
                   Your profile information and settings
                 </li>
-                <li className="font-['IBM_Plex_Mono'] font-normal text-[#888888] text-[13px] flex items-start">
+                <li className="font-['IBM_Plex_Mono'] font-normal text-[#888888] text-[var(--fs-13)] flex items-start">
                   <span className="text-[#FF0000] mr-3">•</span>
                   All trading history and transactions
                 </li>
-                <li className="font-['IBM_Plex_Mono'] font-normal text-[#888888] text-[13px] flex items-start">
+                <li className="font-['IBM_Plex_Mono'] font-normal text-[#888888] text-[var(--fs-13)] flex items-start">
                   <span className="text-[#FF0000] mr-3">•</span>
                   Connections with other users
                 </li>
-                <li className="font-['IBM_Plex_Mono'] font-normal text-[#888888] text-[13px] flex items-start">
+                <li className="font-['IBM_Plex_Mono'] font-normal text-[#888888] text-[var(--fs-13)] flex items-start">
                   <span className="text-[#FF0000] mr-3">•</span>
                   All notifications and messages
                 </li>
@@ -106,14 +106,14 @@ export default function DeleteAccount() {
             {/* Confirmation */}
             <div className="space-y-6">
               <div>
-                <label className="font-['IBM_Plex_Mono'] font-medium text-white text-[14px] block mb-3">
+                <label className="font-['IBM_Plex_Mono'] font-medium text-white text-[var(--fs-14)] block mb-3">
                   Type "DELETE" to confirm:
                 </label>
                 <input
                   type="text"
                   value={confirmText}
                   onChange={(e) => setConfirmText(e.target.value)}
-                  className="w-full bg-[#1A1A1A] border border-[#333333] rounded-lg px-4 py-3 font-['IBM_Plex_Mono'] text-white text-[14px] focus:border-[#FF0000] focus:outline-none"
+                  className="w-full bg-[#1A1A1A] border border-[#333333] rounded-lg px-4 py-3 font-['IBM_Plex_Mono'] text-white text-[var(--fs-14)] focus:border-[#FF0000] focus:outline-none"
                   placeholder="Type DELETE here"
                 />
               </div>
@@ -121,7 +121,7 @@ export default function DeleteAccount() {
               <button
                 onClick={handleDelete}
                 disabled={!isConfirmValid}
-                className={`w-full py-4 rounded-lg font-['IBM_Plex_Mono'] font-medium text-[16px] transition-colors ${
+                className={`w-full py-4 rounded-lg font-['IBM_Plex_Mono'] font-medium text-[var(--fs-16)] transition-colors ${
                   isConfirmValid
                     ? 'bg-[#FF0000] text-white hover:bg-[#CC0000]'
                     : 'bg-[#333333] text-[#666666] cursor-not-allowed'
@@ -132,7 +132,7 @@ export default function DeleteAccount() {
 
               <button
                 onClick={() => router.back()}
-                className="w-full bg-transparent border border-[#333333] text-white py-3 rounded-lg font-['IBM_Plex_Mono'] font-medium text-[14px] hover:border-[#555555] transition-colors"
+                className="w-full bg-transparent border border-[#333333] text-white py-3 rounded-lg font-['IBM_Plex_Mono'] font-medium text-[var(--fs-14)] hover:border-[#555555] transition-colors"
               >
                 Cancel
               </button>
@@ -140,10 +140,10 @@ export default function DeleteAccount() {
 
             {/* Final warning */}
             <div className="mt-8 p-4 bg-[#1A1A1A] border border-[#333333] rounded-lg">
-              <p className="font-['IBM_Plex_Mono'] font-medium text-[#FF0000] text-[12px] mb-2">
+              <p className="font-['IBM_Plex_Mono'] font-medium text-[#FF0000] text-[var(--fs-12)] mb-2">
                 ⚠️ Final Warning
               </p>
-              <p className="font-['IBM_Plex_Mono'] font-normal text-[#888888] text-[11px] leading-relaxed">
+              <p className="font-['IBM_Plex_Mono'] font-normal text-[#888888] text-[var(--fs-11)] leading-relaxed">
                 Account deletion is immediate and irreversible. We cannot recover your data once deleted. Consider downloading your content first if you want to keep it.
               </p>
             </div>

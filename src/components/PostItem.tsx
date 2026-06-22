@@ -204,14 +204,14 @@ export default function PostItem({ post, onImageClick, commentsOpen, onToggleCom
         )}
         <span
           onClick={(e) => { e.stopPropagation(); router.push('/profile/' + post.username); }}
-          style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: '8px', color: 'white', cursor: 'pointer', textShadow: '0 1px 2px rgba(0,0,0,1)', textTransform: 'uppercase' }}
+          style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-8)', color: 'white', cursor: 'pointer', textShadow: '0 1px 2px rgba(0,0,0,1)', textTransform: 'uppercase' }}
         >
           @{post.username}
         </span>
       </div>
       {/* Market chrome — coin posts only; legacy 1155 tiles show none. */}
       {post.token_standard === 'coin' && post.coin_address && (
-        <span style={{ position: 'absolute', top: '6px', right: '6px', display: 'flex', alignItems: 'baseline', gap: 5, fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: '8px', color: 'white', textShadow: '0 1px 2px rgba(0,0,0,1)', zIndex: 10, opacity: 0.85 }}>
+        <span style={{ position: 'absolute', top: '6px', right: '6px', display: 'flex', alignItems: 'baseline', gap: 5, fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: 'var(--fs-8)', color: 'white', textShadow: '0 1px 2px rgba(0,0,0,1)', zIndex: 10, opacity: 0.85 }}>
           {post.ticker && <TickerMark ticker={post.ticker} size={8} />}
           <span>MC: {mc ?? '…'}</span>
         </span>
@@ -293,7 +293,7 @@ export default function PostItem({ post, onImageClick, commentsOpen, onToggleCom
           <svg width="13" height="13" viewBox="0 0 24 24" fill={isLiked ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
           </svg>
-          <span style={{ ...SKR, fontSize: 7, color: "inherit" }}>{likes.length}</span>
+          <span style={{ ...SKR, fontSize: 'var(--fs-7)', color: "inherit" }}>{likes.length}</span>
         </button>
 
         <button
@@ -303,7 +303,7 @@ export default function PostItem({ post, onImageClick, commentsOpen, onToggleCom
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
           </svg>
-          <span style={{ ...SKR, fontSize: 7, color: "inherit" }}>{comments.length}</span>
+          <span style={{ ...SKR, fontSize: 'var(--fs-7)', color: "inherit" }}>{comments.length}</span>
         </button>
 
         {/* Right cluster — First Cut count (coin posts) sits to the LEFT of COLLECT. */}
@@ -324,13 +324,13 @@ export default function PostItem({ post, onImageClick, commentsOpen, onToggleCom
               justifyContent: "center",
             }}
           >
-            <span style={{ ...SKB, fontSize: 7, color: showCollectSheet ? "#FF0000" : "rgba(255,255,255,0.7)", lineHeight: 1 }}>COLLECT</span>
+            <span style={{ ...SKB, fontSize: 'var(--fs-7)', color: showCollectSheet ? "#FF0000" : "rgba(255,255,255,0.7)", lineHeight: 1 }}>COLLECT</span>
           </button>
         </div>
       </div>
 
       {post.caption && (
-        <p style={{ ...SKR, fontSize: 11, color: "white", letterSpacing: "-0.1px", lineHeight: 1.5, margin: "5px 2px 0" }}>
+        <p style={{ ...SKR, fontSize: 'var(--fs-11)', color: "white", letterSpacing: "-0.1px", lineHeight: 1.5, margin: "5px 2px 0" }}>
           {post.caption}
         </p>
       )}
@@ -364,12 +364,12 @@ export default function PostItem({ post, onImageClick, commentsOpen, onToggleCom
                   onChange={(e) => setNewComment(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleAddComment()}
                   placeholder="add a comment..."
-                  style={{ flex: 1, background: "transparent", border: "none", borderBottom: "1px solid rgba(255,255,255,0.15)", outline: "none", ...SKR, fontSize: 8, color: "white", padding: "2px 0" }}
+                  style={{ flex: 1, background: "transparent", border: "none", borderBottom: "1px solid rgba(255,255,255,0.15)", outline: "none", ...SKR, fontSize: 'var(--fs-8)', color: "white", padding: "2px 0" }}
                 />
                 <button
                   onClick={handleAddComment}
                   disabled={loading || !newComment.trim()}
-                  style={{ background: "transparent", border: "none", cursor: "pointer", ...SKB, fontSize: 8, color: newComment.trim() ? "white" : "rgba(255,255,255,0.25)", padding: 0 }}
+                  style={{ background: "transparent", border: "none", cursor: "pointer", ...SKB, fontSize: 'var(--fs-8)', color: newComment.trim() ? "white" : "rgba(255,255,255,0.25)", padding: 0 }}
                 >
                   post
                 </button>
@@ -387,9 +387,9 @@ export default function PostItem({ post, onImageClick, commentsOpen, onToggleCom
                   {/* Handle → commenter's profile (by handle). */}
                   <span
                     onClick={c.username ? (e) => { e.stopPropagation(); router.push('/profile/' + c.username); } : undefined}
-                    style={{ ...SKB, fontSize: 7, color: "white", marginRight: 6, textTransform: 'uppercase', cursor: c.username ? "pointer" : "default" }}
+                    style={{ ...SKB, fontSize: 'var(--fs-7)', color: "white", marginRight: 6, textTransform: 'uppercase', cursor: c.username ? "pointer" : "default" }}
                   >@{c.username}</span>
-                  <span style={{ ...SKR, fontSize: 10, color: "rgba(255,255,255,0.6)" }}>{c.content}</span>
+                  <span style={{ ...SKR, fontSize: 'var(--fs-10)', color: "rgba(255,255,255,0.6)" }}>{c.content}</span>
                 </div>
               ))}
             </div>

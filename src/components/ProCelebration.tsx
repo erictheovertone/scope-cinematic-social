@@ -46,9 +46,9 @@ export default function ProCelebration({ onDone }: { onDone: () => void }) {
       </div>
       {phase !== "loading" && (
         <>
-          <p style={{ ...BOLD, fontSize: 24, color: "white", textTransform: "uppercase", letterSpacing: "-0.02em", margin: "0 0 12px", animation: "fadeUp 0.8s ease forwards" }}>WELCOME TO SCOPE</p>
-          <p style={{ ...REG, fontSize: 13, color: "rgba(255,255,255,0.5)", margin: "0 0 8px", animation: "fadeUp 0.8s ease 0.2s forwards", opacity: 0 }}>You are now a Scope Pro member.</p>
-          <p style={{ ...REG, fontSize: 11, color: "rgba(255,255,255,0.3)", animation: "fadeUp 0.8s ease 0.4s forwards", opacity: 0 }}>Your badge is live on your profile.</p>
+          <p style={{ ...BOLD, fontSize: 'var(--fs-24)', color: "white", textTransform: "uppercase", letterSpacing: "-0.02em", margin: "0 0 12px", animation: "fadeUp 0.8s ease forwards" }}>WELCOME TO SCOPE</p>
+          <p style={{ ...REG, fontSize: 'var(--fs-13)', color: "rgba(255,255,255,0.5)", margin: "0 0 8px", animation: "fadeUp 0.8s ease 0.2s forwards", opacity: 0 }}>You are now a Scope Pro member.</p>
+          <p style={{ ...REG, fontSize: 'var(--fs-11)', color: "rgba(255,255,255,0.3)", animation: "fadeUp 0.8s ease 0.4s forwards", opacity: 0 }}>Your badge is live on your profile.</p>
         </>
       )}
       {phase === "reveal" && (

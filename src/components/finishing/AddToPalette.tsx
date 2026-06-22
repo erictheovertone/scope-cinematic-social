@@ -40,13 +40,13 @@ export default function AddToPalette({ isPro, onUpsell, onSave }: AddToPalettePr
           onChange={(e) => setName(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') save(); if (e.key === 'Escape') cancel(); }}
           placeholder="LOOK NAME"
-          style={{ ...SKB, flex: 1, minWidth: 0, fontSize: 10, color: 'white', background: 'transparent', border: '1px solid rgba(255,255,255,0.25)', padding: '7px 9px', textTransform: 'uppercase', letterSpacing: '0.06em', outline: 'none' }}
+          style={{ ...SKB, flex: 1, minWidth: 0, fontSize: 'var(--fs-10)', color: 'white', background: 'transparent', border: '1px solid rgba(255,255,255,0.25)', padding: '7px 9px', textTransform: 'uppercase', letterSpacing: '0.06em', outline: 'none' }}
         />
         <button onClick={save} style={{ background: RED, border: 'none', cursor: 'pointer', padding: '7px 12px' }}>
-          <span style={{ ...SKB, fontSize: 9, color: '#000', textTransform: 'uppercase', letterSpacing: '0.08em' }}>SAVE</span>
+          <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: '#000', textTransform: 'uppercase', letterSpacing: '0.08em' }}>SAVE</span>
         </button>
         <button onClick={cancel} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', cursor: 'pointer', padding: '7px 10px' }}>
-          <span style={{ ...SKB, fontSize: 9, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>✕</span>
+          <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>✕</span>
         </button>
       </div>
     );
@@ -57,7 +57,7 @@ export default function AddToPalette({ isPro, onUpsell, onSave }: AddToPalettePr
       onClick={start}
       style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, width: '100%', background: 'transparent', border: `1px solid ${RED}`, cursor: 'pointer', padding: '9px 12px' }}
     >
-      <span style={{ ...SKB, fontSize: 10, color: RED, textTransform: 'uppercase', letterSpacing: '0.08em' }}>+ ADD TO PALETTE</span>
+      <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: RED, textTransform: 'uppercase', letterSpacing: '0.08em' }}>+ ADD TO PALETTE</span>
       {!isPro && (
         <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke={RED} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <rect x="5" y="11" width="14" height="9" /><path d="M8 11V8a4 4 0 0 1 8 0v3" />

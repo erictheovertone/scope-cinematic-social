@@ -63,7 +63,7 @@ export default function Tier2Subcats({ subcats, active, onSelect }: Tier2Subcats
               padding: '2px 0', position: 'relative',
             }}
           >
-            <span style={{ ...SKB, fontSize: 9, color: on ? 'white' : 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em', whiteSpace: 'nowrap' }}>{s.label}</span>
+            <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: on ? 'white' : 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em', whiteSpace: 'nowrap' }}>{s.label}</span>
             {on && <div style={{ position: 'absolute', left: 0, right: 0, bottom: -4, height: 2, background: RED }} />}
           </button>
         );

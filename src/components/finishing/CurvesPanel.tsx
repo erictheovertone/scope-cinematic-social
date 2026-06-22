@@ -45,7 +45,7 @@ export default function CurvesPanel({ curves, onChange, isPro, onUpsell }: Curve
           const locked = c.pro && !isPro;
           return (
             <button key={c.key} onClick={() => tapTab(c.key)} style={{ position: 'relative', background: 'transparent', border: 'none', cursor: 'pointer', padding: '2px 6px', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
-              <span style={{ ...SKB, fontSize: 10, color: on ? 'white' : 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{c.label}</span>
+              <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: on ? 'white' : 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{c.label}</span>
               {locked && (
                 <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke={RED} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <rect x="5" y="11" width="14" height="9" /><path d="M8 11V8a4 4 0 0 1 8 0v3" />
@@ -67,7 +67,7 @@ export default function CurvesPanel({ curves, onChange, isPro, onUpsell }: Curve
         onClick={() => onChange({ ...curves, [active]: identityCurve(active) })}
         style={{ alignSelf: 'flex-end', background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', cursor: 'pointer', padding: '6px 12px' }}
       >
-        <span style={{ ...SKB, fontSize: 8, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>RESET {cfg.label}</span>
+        <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>RESET {cfg.label}</span>
       </button>
     </div>
   );

@@ -99,17 +99,17 @@ function CellOverlay({
             position: "absolute", top: 5, left: 6,
             background: selected ? "#FF0000" : "#d9d9d9", height: 11, padding: "0 3px",
             display: "flex", alignItems: "center",
-            fontFamily: "'Sk-Modernist', sans-serif", fontWeight: 700, fontSize: 8,
+            fontFamily: "'Sk-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-8)',
             color: selected ? "#ffffff" : "#000000", letterSpacing: "-0.16px", whiteSpace: "nowrap", lineHeight: 1, zIndex: 1,
           }}>
             {layout.label}
           </span>
 
           <div style={{ position: "absolute", top: 19, left: 6, display: "flex", alignItems: "center" }}>
-            <span style={{ fontFamily: "'Sk-Modernist', sans-serif", fontWeight: 700, fontSize: 7, color: "#ffffff", letterSpacing: "-0.14px" }}>
+            <span style={{ fontFamily: "'Sk-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-7)', color: "#ffffff", letterSpacing: "-0.14px" }}>
               {"AR     "}
             </span>
-            <span style={{ fontFamily: "'Sk-Modernist', sans-serif", fontWeight: 700, fontSize: 7, color: "#FF0000", letterSpacing: ratioLS, marginLeft: 4 }}>
+            <span style={{ fontFamily: "'Sk-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-7)', color: "#FF0000", letterSpacing: ratioLS, marginLeft: 4 }}>
               {layout.ratioLabel}
             </span>
           </div>
@@ -117,7 +117,7 @@ function CellOverlay({
           {layout.resolution && (() => {
             const [lp, rp] = layout.resolution.split("x");
             const ts: React.CSSProperties = {
-              fontFamily: "'Sk-Modernist', sans-serif", fontWeight: 700, fontSize: 7,
+              fontFamily: "'Sk-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-7)',
               color: "rgba(255,255,255,0.5)", letterSpacing: "22px", whiteSpace: "nowrap", lineHeight: 1,
             };
             return (
@@ -156,12 +156,12 @@ function LayoutSection({
             <div key={i} style={{ position: "absolute", left: cell.left, top: cell.top, width: cell.width, height: cell.height, border, background: "transparent" }}>
               {i === 0 && (
                 <>
-                  <span style={{ position: "absolute", top: 5, left: 6, background: selected ? "#FF0000" : "#d9d9d9", height: 11, padding: "0 3px", display: "flex", alignItems: "center", fontFamily: "'Sk-Modernist', sans-serif", fontWeight: 700, fontSize: 8, color: selected ? "#ffffff" : "#000000", letterSpacing: "-0.16px", whiteSpace: "nowrap", lineHeight: 1 }}>
+                  <span style={{ position: "absolute", top: 5, left: 6, background: selected ? "#FF0000" : "#d9d9d9", height: 11, padding: "0 3px", display: "flex", alignItems: "center", fontFamily: "'Sk-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-8)', color: selected ? "#ffffff" : "#000000", letterSpacing: "-0.16px", whiteSpace: "nowrap", lineHeight: 1 }}>
                     {layout.label}
                   </span>
                   <div style={{ position: "absolute", top: 18, left: 6, display: "flex", alignItems: "center" }}>
-                    <span style={{ fontFamily: "'Sk-Modernist', sans-serif", fontWeight: 700, fontSize: 7, color: "#ffffff", letterSpacing: "-0.14px" }}>AR{"     "}</span>
-                    <span style={{ fontFamily: "'Sk-Modernist', sans-serif", fontWeight: 700, fontSize: 7, color: "#FF0000", letterSpacing: "1.33px", marginLeft: 4 }}>mixed</span>
+                    <span style={{ fontFamily: "'Sk-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-7)', color: "#ffffff", letterSpacing: "-0.14px" }}>AR{"     "}</span>
+                    <span style={{ fontFamily: "'Sk-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-7)', color: "#FF0000", letterSpacing: "1.33px", marginLeft: 4 }}>mixed</span>
                   </div>
                 </>
               )}
@@ -269,12 +269,12 @@ function ConfirmationView({
         display: "flex", justifyContent: "space-between", alignItems: "center",
         padding: "14px 8px 10px",
       }}>
-        <span style={{ ...SKB, background: "#d9d9d9", padding: "2px 6px", fontSize: 9, color: "#000", letterSpacing: "-0.16px" }}>
+        <span style={{ ...SKB, background: "#d9d9d9", padding: "2px 6px", fontSize: 'var(--fs-9)', color: "#000", letterSpacing: "-0.16px" }}>
           {layout.label}
         </span>
         <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-          <span style={{ ...SKB, fontSize: 9, color: "#fff" }}>AR</span>
-          <span style={{ ...SKB, fontSize: 9, color: "#FF0000" }}>{layout.ratioLabel}</span>
+          <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "#fff" }}>AR</span>
+          <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "#FF0000" }}>{layout.ratioLabel}</span>
         </div>
       </div>
 
@@ -289,14 +289,14 @@ function ConfirmationView({
           onClick={onBack}
           style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.3)", cursor: "pointer", padding: "8px 20px" }}
         >
-          <span style={{ ...SKB, fontSize: 9, color: "rgba(255,255,255,0.6)", textTransform: "uppercase", letterSpacing: "0.1em" }}>BACK</span>
+          <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "rgba(255,255,255,0.6)", textTransform: "uppercase", letterSpacing: "0.1em" }}>BACK</span>
         </button>
         <button
           onClick={onConfirm}
           disabled={saving}
           style={{ background: saving ? "rgba(255,0,0,0.4)" : "#FF0000", border: "none", cursor: saving ? "default" : "pointer", padding: "8px 24px" }}
         >
-          <span style={{ ...SKB, fontSize: 9, color: "white", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+          <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "white", textTransform: "uppercase", letterSpacing: "0.1em" }}>
             {saving ? "SAVING..." : "CONFIRM"}
           </span>
         </button>
@@ -389,12 +389,12 @@ export default function GridLayoutPage() {
   // Layout selection list
   return (
     <>
-      <div style={{ background: "#000000", width: 375, minHeight: "100vh", margin: "0 auto", position: "relative", overflowX: "hidden", paddingBottom: 24 }}>
+      <div style={{ background: "#000000", width: 375, minHeight: "100dvh", margin: "0 auto", position: "relative", overflowX: "hidden", paddingBottom: 24 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 10, paddingBottom: 10, paddingLeft: 5, paddingRight: 5 }}>
-          <span style={{ fontFamily: "'Sk-Modernist', sans-serif", fontWeight: 700, fontSize: 12, color: "#ffffff", letterSpacing: "-0.24px" }}>
+          <span style={{ fontFamily: "'Sk-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-12)', color: "#ffffff", letterSpacing: "-0.24px" }}>
             WELCOME {username}
           </span>
-          <span style={{ fontFamily: "'Sk-Modernist', sans-serif", fontWeight: 700, fontSize: 12, color: "#ffffff", letterSpacing: "-0.24px" }}>
+          <span style={{ fontFamily: "'Sk-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-12)', color: "#ffffff", letterSpacing: "-0.24px" }}>
             CHOOSE YOUR GRID LAYOUT
           </span>
         </div>
@@ -507,14 +507,14 @@ export default function GridLayoutPage() {
             opacity: 0,
           }}>
             <div style={{ backgroundColor: "white", padding: "6px 14px" }}>
-              <span style={{ ...SKB, fontSize: 11, color: "#000", textTransform: "uppercase" }}>
+              <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: "#000", textTransform: "uppercase" }}>
                 {animatingLayout.label}
               </span>
             </div>
             {animatingLayout.id !== "collage" && (
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <span style={{ ...SKB, fontSize: 16, color: "white" }}>AR</span>
-                <span style={{ ...SKB, fontSize: 16, color: "#FF0000" }}>{animatingLayout.ratioLabel}</span>
+                <span style={{ ...SKB, fontSize: 'var(--fs-16)', color: "white" }}>AR</span>
+                <span style={{ ...SKB, fontSize: 'var(--fs-16)', color: "#FF0000" }}>{animatingLayout.ratioLabel}</span>
               </div>
             )}
           </div>

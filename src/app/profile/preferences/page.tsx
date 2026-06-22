@@ -132,11 +132,11 @@ export default function Preferences() {
       <div style={{ position: 'relative', display: 'flex', alignItems: 'center', padding: '14px 16px' }}>
         <button
           onClick={() => router.back()}
-          style={{ ...MONO, fontSize: 11, color: 'white', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textTransform: 'uppercase', letterSpacing: '0.06em' }}
+          style={{ ...MONO, fontSize: 'var(--fs-11)', color: 'white', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textTransform: 'uppercase', letterSpacing: '0.06em' }}
         >
           ← Back
         </button>
-        <span style={{ ...MONO, fontSize: 15, color: 'white', position: 'absolute', left: '50%', transform: 'translateX(-50%)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+        <span style={{ ...MONO, fontSize: 'var(--fs-15)', color: 'white', position: 'absolute', left: '50%', transform: 'translateX(-50%)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
           SETTINGS
         </span>
       </div>
@@ -153,7 +153,7 @@ export default function Preferences() {
               border: 'none', cursor: 'pointer', padding: '18px 20px', textAlign: 'left',
             }}
           >
-            <span style={{ ...MONO, fontSize: 11, color: item.danger ? '#FF0000' : photoError && item.label === photoLabel ? '#FF0000' : 'white', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+            <span style={{ ...MONO, fontSize: 'var(--fs-11)', color: item.danger ? '#FF0000' : photoError && item.label === photoLabel ? '#FF0000' : 'white', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
               {item.label}
             </span>
           </button>

@@ -256,7 +256,7 @@ export default function Home() {
             style={{
               position: 'absolute', top: 14, left: 14,
               background: 'transparent', border: 'none', cursor: 'pointer',
-              color: '#FFFFFF', fontSize: 24, lineHeight: 1, padding: 8,
+              color: '#FFFFFF', fontSize: 'var(--fs-24)', lineHeight: 1, padding: 8,
               fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700,
               animation: menuClosing ? 'menuFadeOut 0.2s ease both' : 'menuChromeIn 0.3s ease 0.38s both',
             }}

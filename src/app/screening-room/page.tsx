@@ -88,20 +88,20 @@ export default function ScreeningRoomPage() {
     p.media_type === 'video' ? (p.poster_url || p.thumbnail_url || null) : (p.media_urls?.[0] || null);
 
   return (
-    <div style={{ minHeight: '100vh', background: '#000', maxWidth: 375, margin: '0 auto', position: 'relative' }}>
+    <div style={{ minHeight: '100dvh', background: '#000', maxWidth: '30rem', margin: '0 auto', position: 'relative' }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '16px 16px 12px' }}>
         <button
           onClick={() => router.back()}
           aria-label="Back"
-          style={{ background: 'transparent', border: 'none', color: '#FFF', cursor: 'pointer', fontSize: 18, padding: '0 6px 0 0', lineHeight: 1 }}
+          style={{ background: 'transparent', border: 'none', color: '#FFF', cursor: 'pointer', fontSize: 'var(--fs-18)', padding: '0 6px 0 0', lineHeight: 1 }}
         >
           ‹
         </button>
         <img src="/screening-room-logo-temp-01.png" alt="" style={{ width: 22, height: 22, objectFit: 'contain', display: 'block' }} />
         <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <span style={{ ...SKB, fontSize: 13, color: '#FFF', letterSpacing: '0.14em', textTransform: 'uppercase' }}>Screening Room</span>
-          <span style={{ ...SKR, fontSize: 8, color: 'rgba(255,255,255,0.45)', letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: 2 }}>
+          <span style={{ ...SKB, fontSize: 'var(--fs-13)', color: '#FFF', letterSpacing: '0.14em', textTransform: 'uppercase' }}>Screening Room</span>
+          <span style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.45)', letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: 2 }}>
             Top 50 · market cap · refreshed 6h
           </span>
         </div>
@@ -109,7 +109,7 @@ export default function ScreeningRoomPage() {
 
       {/* Loading */}
       {rows === null && (
-        <p style={{ ...SKR, fontSize: 10, color: 'rgba(255,255,255,0.4)', textAlign: 'center', padding: '60px 0', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+        <p style={{ ...SKR, fontSize: 'var(--fs-10)', color: 'rgba(255,255,255,0.4)', textAlign: 'center', padding: '60px 0', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
           Assembling the room…
         </p>
       )}
@@ -117,8 +117,8 @@ export default function ScreeningRoomPage() {
       {/* Empty / stale cache — graceful, never a broken list. */}
       {rows !== null && rows.length === 0 && (
         <div style={{ padding: '70px 24px', textAlign: 'center' }}>
-          <p style={{ ...SKB, fontSize: 11, color: '#FF0000', letterSpacing: '0.16em', textTransform: 'uppercase', margin: '0 0 8px' }}>The room is empty</p>
-          <p style={{ ...SKR, fontSize: 10, color: 'rgba(255,255,255,0.45)', lineHeight: 1.6, margin: 0 }}>
+          <p style={{ ...SKB, fontSize: 'var(--fs-11)', color: '#FF0000', letterSpacing: '0.16em', textTransform: 'uppercase', margin: '0 0 8px' }}>The room is empty</p>
+          <p style={{ ...SKR, fontSize: 'var(--fs-10)', color: 'rgba(255,255,255,0.45)', lineHeight: 1.6, margin: 0 }}>
             The top 50 are assembled every 6 hours. Check back shortly.
           </p>
         </div>
@@ -147,7 +147,7 @@ export default function ScreeningRoomPage() {
             // container for legacy, matching how the feed places its overlays).
             const rankChip = (
               <div style={{ position: 'absolute', top: 0, left: 0, background: '#FF0000', padding: '2px 7px', zIndex: 10 }}>
-                <span style={{ ...SKB, fontSize: 11, color: '#000', letterSpacing: '0.04em' }}>{r.rank}</span>
+                <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: '#000', letterSpacing: '0.04em' }}>{r.rank}</span>
               </div>
             );
             return (
@@ -170,19 +170,19 @@ export default function ScreeningRoomPage() {
                 <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', padding: '8px 2px 0', gap: 12 }}>
                   <div style={{ minWidth: 0, flex: 1 }}>
                     {tickerMark && (
-                      <div style={{ ...SKB, fontSize: 11, color: '#FF0000', letterSpacing: '0.08em', marginBottom: 3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      <div style={{ ...SKB, fontSize: 'var(--fs-11)', color: '#FF0000', letterSpacing: '0.08em', marginBottom: 3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {tickerMark}
                       </div>
                     )}
                     {p?.username && (
-                      <div style={{ ...SKR, fontSize: 10, color: 'rgba(255,255,255,0.55)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      <div style={{ ...SKR, fontSize: 'var(--fs-10)', color: 'rgba(255,255,255,0.55)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         @{p.username}
                       </div>
                     )}
                   </div>
                   <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                    <div style={{ ...SKB, fontSize: 18, color: '#FFF', lineHeight: 1 }}>{usdMc(r.market_cap)}</div>
-                    <div style={{ ...SKR, fontSize: 7, color: '#FF0000', letterSpacing: '0.2em', textTransform: 'uppercase', marginTop: 3 }}>Market Cap</div>
+                    <div style={{ ...SKB, fontSize: 'var(--fs-18)', color: '#FFF', lineHeight: 1 }}>{usdMc(r.market_cap)}</div>
+                    <div style={{ ...SKR, fontSize: 'var(--fs-7)', color: '#FF0000', letterSpacing: '0.2em', textTransform: 'uppercase', marginTop: 3 }}>Market Cap</div>
                   </div>
                 </div>
               </div>

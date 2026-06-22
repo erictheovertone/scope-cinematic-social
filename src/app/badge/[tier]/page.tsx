@@ -199,21 +199,21 @@ export default function BadgeDetailPage() {
 
   if (!detail) {
     return (
-      <div style={{ backgroundColor: '#000', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <p style={{ ...BOLD, color: 'white', fontSize: 11 }}>BADGE NOT FOUND</p>
+      <div style={{ backgroundColor: '#000', minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <p style={{ ...BOLD, color: 'white', fontSize: 'var(--fs-11)' }}>BADGE NOT FOUND</p>
       </div>
     );
   }
 
   return (
-    <div style={{ backgroundColor: '#000', minHeight: '100vh', padding: '0 0 80px' }}>
+    <div style={{ backgroundColor: '#000', minHeight: '100dvh', padding: '0 0 80px' }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '24px 20px 0' }}>
         <button
           onClick={() => router.back()}
           style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}
         >
-          <span style={{ ...BOLD, fontSize: 10, color: 'rgba(255,255,255,0.5)', letterSpacing: '0.1em' }}>← BACK</span>
+          <span style={{ ...BOLD, fontSize: 'var(--fs-10)', color: 'rgba(255,255,255,0.5)', letterSpacing: '0.1em' }}>← BACK</span>
         </button>
       </div>
 
@@ -252,10 +252,10 @@ export default function BadgeDetailPage() {
             }}
           />
         </div>
-        <p style={{ ...BOLD, fontSize: 18, color: detail.color, textTransform: 'uppercase', letterSpacing: '-0.02em', margin: '0 0 12px', textAlign: 'center' }}>
+        <p style={{ ...BOLD, fontSize: 'var(--fs-18)', color: detail.color, textTransform: 'uppercase', letterSpacing: '-0.02em', margin: '0 0 12px', textAlign: 'center' }}>
           {detail.label}
         </p>
-        <p style={{ ...REG, fontSize: 13, color: 'rgba(255,255,255,0.6)', textAlign: 'center', lineHeight: 1.6, margin: 0, maxWidth: 280 }}>
+        <p style={{ ...REG, fontSize: 'var(--fs-13)', color: 'rgba(255,255,255,0.6)', textAlign: 'center', lineHeight: 1.6, margin: 0, maxWidth: 280 }}>
           {detail.tagline}
         </p>
       </div>
@@ -266,10 +266,10 @@ export default function BadgeDetailPage() {
       {/* Sections */}
       {detail.sections.map((section, i) => (
         <div key={i} style={{ padding: '0 20px 32px' }}>
-          <p style={{ ...BOLD, fontSize: 9, color: detail.color, textTransform: 'uppercase', letterSpacing: '0.15em', margin: '0 0 10px' }}>
+          <p style={{ ...BOLD, fontSize: 'var(--fs-9)', color: detail.color, textTransform: 'uppercase', letterSpacing: '0.15em', margin: '0 0 10px' }}>
             {section.title}
           </p>
-          <p style={{ ...REG, fontSize: 13, color: 'rgba(255,255,255,0.75)', lineHeight: 1.4, margin: 0 }}>
+          <p style={{ ...REG, fontSize: 'var(--fs-13)', color: 'rgba(255,255,255,0.75)', lineHeight: 1.4, margin: 0 }}>
             {section.body}
           </p>
           {i < detail.sections.length - 1 && (
@@ -285,7 +285,7 @@ export default function BadgeDetailPage() {
             onClick={() => router.push('/profile?showMembership=true')}
             style={{ width: '100%', background: '#FF0000', border: 'none', cursor: 'pointer', padding: '14px 0' }}
           >
-            <span style={{ ...BOLD, fontSize: 12, color: 'white', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+            <span style={{ ...BOLD, fontSize: 'var(--fs-12)', color: 'white', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
               BECOME A SCOPE MEMBER
             </span>
           </button>

@@ -75,7 +75,7 @@ export default function Tier3Items({ mode, editItems, toolTouched, toolEnabled, 
               >
                 {locked ? <LockGlyph /> : t.pro && <span style={{ position: 'absolute', top: 0, right: 2, width: 5, height: 5, background: RED }} />}
                 <ToolIcon toolKey={t.key} size={18} />
-                <span style={{ ...SKB, fontSize: 8, color: touched ? RED : 'white', textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>{t.label}</span>
+                <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: touched ? RED : 'white', textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>{t.label}</span>
               </button>
             );
           }
@@ -97,9 +97,9 @@ export default function Tier3Items({ mode, editItems, toolTouched, toolEnabled, 
               {/* Pro marker — lock glyph when locked (free user), else a small red dot */}
               {locked ? <LockGlyph /> : t.pro && <span style={{ position: 'absolute', top: 5, right: 5, width: 5, height: 5, background: RED }} />}
               <ToolIcon toolKey={t.key} size={22} />
-              <span style={{ ...SKB, fontSize: 9, color: touched ? RED : 'white', textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>{t.label}</span>
+              <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: touched ? RED : 'white', textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>{t.label}</span>
               <span style={{
-                ...SKB, fontSize: 7, textTransform: 'uppercase', letterSpacing: '0.1em', whiteSpace: 'nowrap',
+                ...SKB, fontSize: 'var(--fs-7)', textTransform: 'uppercase', letterSpacing: '0.1em', whiteSpace: 'nowrap',
                 color: !enabled ? RED : 'rgba(255,255,255,0.3)',
               }}>{sub}</span>
             </button>
@@ -115,9 +115,9 @@ export default function Tier3Items({ mode, editItems, toolTouched, toolEnabled, 
       {Array.from({ length: 4 }).map((_, i) => (
         <div key={i} style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, opacity: 0.4 }}>
           <div style={{ width: 64, height: 64, border: '1px solid rgba(255,255,255,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <span style={{ ...SKB, fontSize: 7, color: RED, textTransform: 'uppercase', letterSpacing: '0.1em' }}>SOON</span>
+            <span style={{ ...SKB, fontSize: 'var(--fs-7)', color: RED, textTransform: 'uppercase', letterSpacing: '0.1em' }}>SOON</span>
           </div>
-          <span style={{ ...SKB, fontSize: 8, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>—</span>
+          <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>—</span>
         </div>
       ))}
     </div>
@@ -126,7 +126,7 @@ export default function Tier3Items({ mode, editItems, toolTouched, toolEnabled, 
 
 function EmptyNote() {
   return (
-    <span style={{ ...SKB, fontSize: 9, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.1em', padding: '18px 0' }}>
+    <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.1em', padding: '18px 0' }}>
       NOTHING HERE YET
     </span>
   );

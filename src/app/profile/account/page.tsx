@@ -13,7 +13,7 @@ const INPUT: React.CSSProperties = {
   color: '#fff',
   fontFamily: "'SK-Modernist', sans-serif",
   fontWeight: 700,
-  fontSize: 13,
+  fontSize: 'var(--fs-13)',
   padding: '10px 12px',
   outline: 'none',
   boxSizing: 'border-box',
@@ -89,11 +89,11 @@ export default function AccountSettings() {
         <div style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: '#FF0000', flexShrink: 0, marginRight: 10 }} />
         <button
           onClick={() => router.back()}
-          style={{ ...MONO, fontSize: 11, color: 'white', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textTransform: 'uppercase', letterSpacing: '0.06em' }}
+          style={{ ...MONO, fontSize: 'var(--fs-11)', color: 'white', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textTransform: 'uppercase', letterSpacing: '0.06em' }}
         >
           ← Back
         </button>
-        <span style={{ ...MONO, fontSize: 11, color: 'white', position: 'absolute', left: '50%', transform: 'translateX(-50%)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+        <span style={{ ...MONO, fontSize: 'var(--fs-11)', color: 'white', position: 'absolute', left: '50%', transform: 'translateX(-50%)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
           EDIT PROFILE
         </span>
       </div>
@@ -102,7 +102,7 @@ export default function AccountSettings() {
       <div style={{ padding: '24px 20px' }}>
 
         <div style={{ marginBottom: 20 }}>
-          <label style={{ ...MONO, fontSize: 10, color: 'rgba(255,255,255,0.5)', display: 'block', marginBottom: 6 }}>DISPLAY NAME</label>
+          <label style={{ ...MONO, fontSize: 'var(--fs-10)', color: 'rgba(255,255,255,0.5)', display: 'block', marginBottom: 6 }}>DISPLAY NAME</label>
           <input
             className="edit-input"
             value={form.displayName}
@@ -113,7 +113,7 @@ export default function AccountSettings() {
         </div>
 
         <div style={{ marginBottom: 20 }}>
-          <label style={{ ...MONO, fontSize: 10, color: 'rgba(255,255,255,0.5)', display: 'block', marginBottom: 6 }}>USERNAME</label>
+          <label style={{ ...MONO, fontSize: 'var(--fs-10)', color: 'rgba(255,255,255,0.5)', display: 'block', marginBottom: 6 }}>USERNAME</label>
           <input
             className="edit-input"
             value={form.username}
@@ -124,7 +124,7 @@ export default function AccountSettings() {
         </div>
 
         <div style={{ marginBottom: 20 }}>
-          <label style={{ ...MONO, fontSize: 10, color: 'rgba(255,255,255,0.5)', display: 'block', marginBottom: 6 }}>BIO</label>
+          <label style={{ ...MONO, fontSize: 'var(--fs-10)', color: 'rgba(255,255,255,0.5)', display: 'block', marginBottom: 6 }}>BIO</label>
           <textarea
             className="edit-input"
             value={form.bio}
@@ -136,7 +136,7 @@ export default function AccountSettings() {
         </div>
 
         <div style={{ marginBottom: 32 }}>
-          <label style={{ ...MONO, fontSize: 10, color: 'rgba(255,255,255,0.5)', display: 'block', marginBottom: 6 }}>WEBSITE</label>
+          <label style={{ ...MONO, fontSize: 'var(--fs-10)', color: 'rgba(255,255,255,0.5)', display: 'block', marginBottom: 6 }}>WEBSITE</label>
           <input
             className="edit-input"
             value={form.websiteUrl}
@@ -148,14 +148,14 @@ export default function AccountSettings() {
         </div>
 
         {error && (
-          <p style={{ ...MONO, fontSize: 11, color: '#FF0000', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{error}</p>
+          <p style={{ ...MONO, fontSize: 'var(--fs-11)', color: '#FF0000', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{error}</p>
         )}
 
         <button
           onClick={handleSave}
           disabled={saving || saved}
           style={{
-            ...MONO, fontSize: 12,
+            ...MONO, fontSize: 'var(--fs-12)',
             color: saved ? '#4CAF50' : 'white',
             background: 'transparent',
             border: `1px solid ${saved ? '#4CAF50' : 'white'}`,

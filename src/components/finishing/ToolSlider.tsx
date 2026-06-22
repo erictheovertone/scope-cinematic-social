@@ -119,10 +119,10 @@ export default function ToolSlider({ type, value, onChange, label, trackGradient
   if (inline) {
     return (
       <div style={{ width: '100%', userSelect: 'none', display: 'flex', alignItems: 'center', gap: 12 }}>
-        <span style={{ ...SKB, fontSize: 9, color: 'white', textTransform: 'uppercase', letterSpacing: '0.1em', whiteSpace: 'nowrap' }}>{label}</span>
+        <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'white', textTransform: 'uppercase', letterSpacing: '0.1em', whiteSpace: 'nowrap' }}>{label}</span>
         {track}
         <span style={{
-          ...SKB, fontSize: 11, color: value !== 0 ? RED : 'rgba(255,255,255,0.4)',
+          ...SKB, fontSize: 'var(--fs-11)', color: value !== 0 ? RED : 'rgba(255,255,255,0.4)',
           fontVariantNumeric: 'tabular-nums', minWidth: 34, textAlign: 'right',
         }}>{readout}</span>
       </div>
@@ -133,9 +133,9 @@ export default function ToolSlider({ type, value, onChange, label, trackGradient
     <div style={{ width: '100%', userSelect: 'none' }}>
       {/* label + readout row */}
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 14 }}>
-        <span style={{ ...SKB, fontSize: 10, color: 'white', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{label}</span>
+        <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'white', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{label}</span>
         <span style={{
-          ...SKB, fontSize: 11, color: value !== 0 ? RED : 'rgba(255,255,255,0.4)',
+          ...SKB, fontSize: 'var(--fs-11)', color: value !== 0 ? RED : 'rgba(255,255,255,0.4)',
           opacity: dragging ? 1 : 0.35, transition: 'opacity 0.3s ease', fontVariantNumeric: 'tabular-nums',
         }}>{readout}</span>
       </div>

@@ -24,7 +24,7 @@ export default function FramesProUpsellSheet({ isOpen, onClose, onUpgrade }: Pro
       <div
         style={{
           position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 91,
-          maxWidth: 375, margin: "0 auto",
+          maxWidth: '30rem', margin: "0 auto",
           background: "#080808",
           borderTop: "1px solid rgba(255,255,255,0.12)",
           padding: "0 20px 28px",
@@ -38,10 +38,10 @@ export default function FramesProUpsellSheet({ isOpen, onClose, onUpgrade }: Pro
         {/* Header row */}
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", paddingTop: 16 }}>
           <div>
-            <p style={{ ...SKB, fontSize: 9, letterSpacing: "0.15em", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", margin: "0 0 4px" }}>
+            <p style={{ ...SKB, fontSize: 'var(--fs-9)', letterSpacing: "0.15em", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", margin: "0 0 4px" }}>
               FRAMES
             </p>
-            <p style={{ ...SKR, fontSize: 13, lineHeight: 1.5, color: "rgba(255,255,255,0.85)", margin: 0, maxWidth: 260 }}>
+            <p style={{ ...SKR, fontSize: 'var(--fs-13)', lineHeight: 1.5, color: "rgba(255,255,255,0.85)", margin: 0, maxWidth: 260 }}>
               Export your decks as cinematic frame stacks. Curate up to 6 images into a single 9:16 image ready to share. SCOPE Pro feature.
             </p>
           </div>
@@ -88,7 +88,7 @@ export default function FramesProUpsellSheet({ isOpen, onClose, onUpgrade }: Pro
         </div>
 
         {/* What you get */}
-        <p style={{ ...SKB, fontSize: 9, letterSpacing: "0.15em", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", margin: "0 0 12px" }}>
+        <p style={{ ...SKB, fontSize: 'var(--fs-9)', letterSpacing: "0.15em", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", margin: "0 0 12px" }}>
           WHAT YOU GET
         </p>
         <div style={{ marginBottom: 20 }}>
@@ -99,7 +99,7 @@ export default function FramesProUpsellSheet({ isOpen, onClose, onUpgrade }: Pro
           ].map((line, i) => (
             <p
               key={i}
-              style={{ ...SKR, fontSize: 12, lineHeight: 1.5, color: "rgba(255,255,255,0.7)", margin: i < 2 ? "0 0 12px" : 0 }}
+              style={{ ...SKR, fontSize: 'var(--fs-12)', lineHeight: 1.5, color: "rgba(255,255,255,0.7)", margin: i < 2 ? "0 0 12px" : 0 }}
             >
               {line}
             </p>
@@ -112,7 +112,7 @@ export default function FramesProUpsellSheet({ isOpen, onClose, onUpgrade }: Pro
             onClick={onUpgrade}
             style={{ width: "100%", padding: "14px 0", background: "#FF0000", border: "none", cursor: "pointer" }}
           >
-            <span style={{ ...SKB, fontSize: 11, color: "white", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+            <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: "white", textTransform: "uppercase", letterSpacing: "0.1em" }}>
               UPGRADE TO PRO
             </span>
           </button>
@@ -120,7 +120,7 @@ export default function FramesProUpsellSheet({ isOpen, onClose, onUpgrade }: Pro
             onClick={onClose}
             style={{ width: "100%", padding: "14px 0", background: "transparent", border: "1px solid rgba(255,255,255,0.2)", cursor: "pointer" }}
           >
-            <span style={{ ...SKB, fontSize: 11, color: "rgba(255,255,255,0.7)", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+            <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: "rgba(255,255,255,0.7)", textTransform: "uppercase", letterSpacing: "0.1em" }}>
               NOT NOW
             </span>
           </button>

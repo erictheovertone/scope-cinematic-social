@@ -89,11 +89,11 @@ export default function SnippetSelector({ videoUrl, heroFrameTime, onChange }: P
       {/* Audition preview — the looping segment that will autoplay in the feed. */}
       <div style={{ position: "relative", width: "100%", height: 132, background: "#000", overflow: "hidden", marginBottom: 8 }}>
         <video ref={previewRef} src={videoUrl} muted playsInline autoPlay style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-        <span style={{ position: "absolute", bottom: 5, left: 6, ...SKB, fontSize: 6.5, color: "rgba(255,255,255,0.75)", letterSpacing: "0.14em", textTransform: "uppercase", textShadow: "0 1px 2px rgba(0,0,0,0.9)" }}>AUDITION</span>
+        <span style={{ position: "absolute", bottom: 5, left: 6, ...SKB, fontSize: 'var(--fs-6_5)', color: "rgba(255,255,255,0.75)", letterSpacing: "0.14em", textTransform: "uppercase", textShadow: "0 1px 2px rgba(0,0,0,0.9)" }}>AUDITION</span>
       </div>
       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-        <span style={{ ...SKB, fontSize: 8, color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: "0.1em" }}>AUTOPLAY CLIP · {Math.round(len)}s</span>
-        <span style={{ ...REG, fontSize: 8, color: "rgba(255,255,255,0.5)", letterSpacing: "0.04em" }}>{fmt(start)}–{fmt(start + len)}</span>
+        <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: "0.1em" }}>AUTOPLAY CLIP · {Math.round(len)}s</span>
+        <span style={{ ...REG, fontSize: 'var(--fs-8)', color: "rgba(255,255,255,0.5)", letterSpacing: "0.04em" }}>{fmt(start)}–{fmt(start + len)}</span>
       </div>
       <div
         ref={trackRef}
@@ -108,7 +108,7 @@ export default function SnippetSelector({ videoUrl, heroFrameTime, onChange }: P
         <div style={{ position: "absolute", left: `${leftPct}%`, transform: "translateX(-50%)", width: 4, height: 12, background: RED }} />
         <div style={{ position: "absolute", left: `${leftPct + widthPct}%`, transform: "translateX(-50%)", width: 4, height: 12, background: RED }} />
       </div>
-      <p style={{ ...REG, fontSize: 7, color: "rgba(255,255,255,0.3)", letterSpacing: "0.04em", margin: "4px 0 0" }}>
+      <p style={{ ...REG, fontSize: 'var(--fs-7)', color: "rgba(255,255,255,0.3)", letterSpacing: "0.04em", margin: "4px 0 0" }}>
         DRAG TO CHOOSE THE LOOPING AUTOPLAY MOMENT · SKIP TO AUTO-PICK
       </p>
     </div>

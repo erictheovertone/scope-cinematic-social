@@ -73,7 +73,7 @@ export default function FirstCutChip({ coinAddress, postId }: { coinAddress: str
             // GREY at rest (ordinary metadata) — having holders does NOT make it
             // red. Red is the impact-only flash (fcTickUp flips the colour for a
             // beat, then settles back to this grey).
-            ...SKB, fontSize: 8, letterSpacing: '0.04em', lineHeight: 1, display: 'inline-block',
+            ...SKB, fontSize: 'var(--fs-8)', letterSpacing: '0.04em', lineHeight: 1, display: 'inline-block',
             color: 'rgba(255,255,255,0.6)',
             ...(pulse ? { animation: 'fcTickUp 0.5s cubic-bezier(0.16,0.84,0.3,1) both' } : null),
           }}

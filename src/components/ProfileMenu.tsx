@@ -135,7 +135,7 @@ export default function ProfileMenu({ isOpen, onClose }: ProfileMenuProps) {
         {/* Invite Link Popup */}
         {showInviteLink && (
           <div className="absolute -top-[60px] left-0 right-0 bg-[#FF0000] text-white p-2 rounded-lg text-center">
-            <p className="font-['IBM_Plex_Mono'] text-[10px]">
+            <p className="font-['IBM_Plex_Mono'] text-[var(--fs-10)]">
               Invite link copied!
             </p>
             <button 
@@ -159,7 +159,7 @@ export default function ProfileMenu({ isOpen, onClose }: ProfileMenuProps) {
                   }`}
                 >
                   <span className="mr-3">{item.icon}</span>
-                  <span className="font-['IBM_Plex_Mono'] text-[12px]">
+                  <span className="font-['IBM_Plex_Mono'] text-[var(--fs-12)]">
                     {item.label}
                   </span>
                 </Link>
@@ -174,7 +174,7 @@ export default function ProfileMenu({ isOpen, onClose }: ProfileMenuProps) {
                   }`}
                 >
                   <span className="mr-3">{item.icon}</span>
-                  <span className="font-['IBM_Plex_Mono'] text-[12px]">
+                  <span className="font-['IBM_Plex_Mono'] text-[var(--fs-12)]">
                     {item.label}
                   </span>
                 </button>

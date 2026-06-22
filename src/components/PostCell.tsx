@@ -97,7 +97,7 @@ export default function PostCell({ post, layoutId, index, onClick, showSoundTogg
           coin reads as such before the collect sheet is opened. */}
       {isUntradeableCoin(post) && (
         <div style={{ position: 'absolute', bottom: 6, left: 6, zIndex: 6, pointerEvents: 'none', background: 'rgba(0,0,0,0.72)', border: '1px solid rgba(255,0,0,0.5)', padding: '2px 5px' }}>
-          <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 6.5, letterSpacing: '0.14em', color: '#FF0000', textTransform: 'uppercase' }}>LEGACY</span>
+          <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-6_5)', letterSpacing: '0.14em', color: '#FF0000', textTransform: 'uppercase' }}>LEGACY</span>
         </div>
       )}
 

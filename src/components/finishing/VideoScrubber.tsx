@@ -114,7 +114,7 @@ export default function VideoScrubber({ video, onHeroFrame, compact = false }: P
       </div>
 
       {/* Timecode */}
-      <span style={{ ...REG, fontSize: 8, color: "rgba(255,255,255,0.55)", letterSpacing: "0.04em", flexShrink: 0, minWidth: 56, textAlign: "right" }}>
+      <span style={{ ...REG, fontSize: 'var(--fs-8)', color: "rgba(255,255,255,0.55)", letterSpacing: "0.04em", flexShrink: 0, minWidth: 56, textAlign: "right" }}>
         {fmt(current)} / {fmt(duration)}
       </span>
 

@@ -85,14 +85,14 @@ export default function ReframeOverlay({ post, layoutId, onSave, onCancel }: Ref
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', flexShrink: 0 }}>
         <button onClick={onCancel} style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}>
-          <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 10, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase' }}>CANCEL</span>
+          <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-10)', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase' }}>CANCEL</span>
         </button>
-        <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 10, color: 'white', textTransform: 'uppercase' }}>RE-FRAME</span>
+        <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-10)', color: 'white', textTransform: 'uppercase' }}>RE-FRAME</span>
         <button
           onClick={() => onSave(cropX, cropY, cropWidth, cropHeight)}
           style={{ background: '#FF0000', border: 'none', cursor: 'pointer', padding: '6px 14px' }}
         >
-          <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 10, color: 'white', textTransform: 'uppercase' }}>SAVE</span>
+          <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-10)', color: 'white', textTransform: 'uppercase' }}>SAVE</span>
         </button>
       </div>
 
@@ -169,7 +169,7 @@ export default function ReframeOverlay({ post, layoutId, onSave, onCancel }: Ref
       </div>
 
       <div style={{ padding: '12px 16px 40px', flexShrink: 0 }}>
-        <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: 9, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.08em', textAlign: 'center', margin: 0 }}>
+        <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.08em', textAlign: 'center', margin: 0 }}>
           DRAG TO REPOSITION · HANDLES TO RESIZE
         </p>
       </div>

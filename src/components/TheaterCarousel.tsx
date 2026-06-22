@@ -93,7 +93,7 @@ export default function TheaterCarousel({
           cursor: 'pointer', animation: 'theater-fade-in 0.25s ease-out both',
         }}
       >
-        <span style={{ ...SKR, fontSize: '9px', color: 'rgba(255,255,255,0.3)' }}>no posts yet</span>
+        <span style={{ ...SKR, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.3)' }}>no posts yet</span>
       </div>
     );
   }
@@ -181,7 +181,7 @@ export default function TheaterCarousel({
           transform: "translateX(-50%)",
           zIndex: 210,
           ...SKR,
-          fontSize: "8px",
+          fontSize: 'var(--fs-8)',
           color: "rgba(255,255,255,0.35)",
           letterSpacing: "0.8px",
           pointerEvents: "none",
@@ -201,7 +201,7 @@ export default function TheaterCarousel({
             transform: "translateX(-50%)",
             zIndex: 210,
             ...SKR,
-            fontSize: "7px",
+            fontSize: 'var(--fs-7)',
             color: "rgba(255,255,255,0.22)",
             letterSpacing: "-0.1px",
             whiteSpace: "nowrap",
@@ -260,7 +260,7 @@ export default function TheaterCarousel({
                 }}
               />
             ) : (
-              <div style={{ ...SKR, fontSize: "10px", color: "#333" }}>No media</div>
+              <div style={{ ...SKR, fontSize: 'var(--fs-10)', color: "#333" }}>No media</div>
             )}
           </div>
         ))}
@@ -322,7 +322,7 @@ export default function TheaterCarousel({
               <p
                 style={{
                   ...SKR,
-                  fontSize: "9px",
+                  fontSize: 'var(--fs-9)',
                   color: "rgba(255,255,255,0.8)",
                   lineHeight: 1.55,
                   margin: "0 0 10px",
@@ -344,10 +344,10 @@ export default function TheaterCarousel({
                 animation: "ripple-up 0.22s ease-out 0.05s both",
               }}
             >
-              <span style={{ ...SKR, fontSize: "8px", color: "rgba(255,255,255,0.45)" }}>
+              <span style={{ ...SKR, fontSize: 'var(--fs-8)', color: "rgba(255,255,255,0.45)" }}>
                 <span style={{ color: "white" }}>{likes.length}</span> likes
               </span>
-              <span style={{ ...SKR, fontSize: "8px", color: "rgba(255,255,255,0.45)" }}>
+              <span style={{ ...SKR, fontSize: 'var(--fs-8)', color: "rgba(255,255,255,0.45)" }}>
                 <span style={{ color: "white" }}>{comments.length}</span> comments
               </span>
             </div>
@@ -355,14 +355,14 @@ export default function TheaterCarousel({
             {/* Comments */}
             <div style={{ flex: 1, overflowY: "auto", marginBottom: 10 }}>
               {loadingDetail ? (
-                <p style={{ ...SKR, fontSize: "7px", color: "rgba(255,255,255,0.25)" }}>
+                <p style={{ ...SKR, fontSize: 'var(--fs-7)', color: "rgba(255,255,255,0.25)" }}>
                   loading...
                 </p>
               ) : comments.length === 0 ? (
                 <p
                   style={{
                     ...SKR,
-                    fontSize: "7px",
+                    fontSize: 'var(--fs-7)',
                     color: "rgba(255,255,255,0.22)",
                     animation: "ripple-up 0.2s ease-out 0.1s both",
                   }}
@@ -379,10 +379,10 @@ export default function TheaterCarousel({
                       animationDelay: `${0.1 + i * 0.04}s`,
                     }}
                   >
-                    <span style={{ ...SKB, fontSize: "8px", color: "white" }}>
+                    <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: "white" }}>
                       {c.username}{" "}
                     </span>
-                    <span style={{ ...SKR, fontSize: "8px", color: "rgba(255,255,255,0.55)" }}>
+                    <span style={{ ...SKR, fontSize: 'var(--fs-8)', color: "rgba(255,255,255,0.55)" }}>
                       {c.content}
                     </span>
                   </div>
@@ -414,7 +414,7 @@ export default function TheaterCarousel({
                     border: "none",
                     outline: "none",
                     ...SKR,
-                    fontSize: "8px",
+                    fontSize: 'var(--fs-8)',
                     color: "white",
                     letterSpacing: "-0.1px",
                   }}
@@ -427,7 +427,7 @@ export default function TheaterCarousel({
                     border: "none",
                     cursor: commentText.trim() ? "pointer" : "default",
                     ...SKB,
-                    fontSize: "8px",
+                    fontSize: 'var(--fs-8)',
                     color: commentText.trim() ? "white" : "rgba(255,255,255,0.2)",
                     letterSpacing: "-0.1px",
                     transition: "color 0.15s ease",

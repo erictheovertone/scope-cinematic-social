@@ -85,7 +85,7 @@ function MirageLightbox({
             strokeLinejoin="round"
           />
         </svg>
-        <span style={{ ...SKR, fontSize: 9, color: "white", letterSpacing: "-0.1px" }}>
+        <span style={{ ...SKR, fontSize: 'var(--fs-9)', color: "white", letterSpacing: "-0.1px" }}>
           back
         </span>
       </button>
@@ -121,7 +121,7 @@ function MirageLightbox({
           <span
             style={{
               ...SKR,
-              fontSize: 9,
+              fontSize: 'var(--fs-9)',
               color: "rgba(255,255,255,0.7)",
               letterSpacing: "-0.1px",
             }}

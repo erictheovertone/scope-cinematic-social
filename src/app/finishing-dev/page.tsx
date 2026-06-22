@@ -147,38 +147,38 @@ export default function FinishingDevPage() {
           display: 'flex', alignItems: 'center', gap: 8, padding: '5px 9px',
           background: '#111', border: '1px dashed #555',
         }}>
-          <span style={{ ...SKB, fontSize: 8, color: '#ff0', textTransform: 'uppercase', letterSpacing: '0.12em' }}>⚠ DEV</span>
-          <span style={{ ...SKB, fontSize: 8, color: '#888', textTransform: 'uppercase', letterSpacing: '0.08em' }}>GRID</span>
+          <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: '#ff0', textTransform: 'uppercase', letterSpacing: '0.12em' }}>⚠ DEV</span>
+          <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: '#888', textTransform: 'uppercase', letterSpacing: '0.08em' }}>GRID</span>
           {(['standard', 'collage'] as const).map((g) => {
             const active = mockGridLayout === g;
             return (
               <button key={g} onClick={() => setMockGridLayout(g)}
                 style={{ background: active ? RED : 'transparent', border: '1px solid #555', cursor: 'pointer', padding: '3px 7px' }}>
-                <span style={{ ...SKB, fontSize: 8, color: active ? '#000' : '#aaa', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{g}</span>
+                <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: active ? '#000' : '#aaa', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{g}</span>
               </button>
             );
           })}
-          <span style={{ ...SKB, fontSize: 8, color: '#888', textTransform: 'uppercase', letterSpacing: '0.08em' }}>SEED</span>
+          <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: '#888', textTransform: 'uppercase', letterSpacing: '0.08em' }}>SEED</span>
           {(['none', 'saved'] as const).map((m) => {
             const active = seedMode === m;
             return (
               <button key={m} onClick={() => applySeed(m)}
                 style={{ background: active ? RED : 'transparent', border: '1px solid #555', cursor: 'pointer', padding: '3px 7px' }}>
-                <span style={{ ...SKB, fontSize: 8, color: active ? '#000' : '#aaa', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{m}</span>
+                <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: active ? '#000' : '#aaa', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{m}</span>
               </button>
             );
           })}
-          <span style={{ ...SKB, fontSize: 8, color: '#888', textTransform: 'uppercase', letterSpacing: '0.08em' }}>TIER</span>
+          <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: '#888', textTransform: 'uppercase', letterSpacing: '0.08em' }}>TIER</span>
           {([['free', false], ['pro', true]] as const).map(([lbl, val]) => {
             const active = mockIsPro === val;
             return (
               <button key={lbl} onClick={() => setMockIsPro(val)}
                 style={{ background: active ? RED : 'transparent', border: '1px solid #555', cursor: 'pointer', padding: '3px 7px' }}>
-                <span style={{ ...SKB, fontSize: 8, color: active ? '#000' : '#aaa', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{lbl}</span>
+                <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: active ? '#000' : '#aaa', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{lbl}</span>
               </button>
             );
           })}
-          <span style={{ ...SKB, fontSize: 8, color: '#666', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+          <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: '#666', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
             layout_id {MOCK_LAYOUT_ID} 🔒 · ar {mockGeometry.ar}
           </span>
         </div>

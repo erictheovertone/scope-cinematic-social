@@ -68,29 +68,29 @@ export default function DeletePostSheet({ visible, postId, userId, onClose, onDe
         </div>
 
         {/* Title */}
-        <p style={{ ...SKB, fontSize: 16, color: 'white', textTransform: 'uppercase', letterSpacing: '-0.02em', margin: '0 0 16px' }}>
+        <p style={{ ...SKB, fontSize: 'var(--fs-16)', color: 'white', textTransform: 'uppercase', letterSpacing: '-0.02em', margin: '0 0 16px' }}>
           DELETE POST
         </p>
 
         {/* Warning */}
-        <p style={{ ...SKR, fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, margin: '0 0 8px' }}>
+        <p style={{ ...SKR, fontSize: 'var(--fs-12)', color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, margin: '0 0 8px' }}>
           Your post will be hidden from your profile and the Scope feed.
         </p>
-        <p style={{ ...SKR, fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, margin: '0 0 32px' }}>
+        <p style={{ ...SKR, fontSize: 'var(--fs-12)', color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, margin: '0 0 32px' }}>
           The token remains on-chain permanently. Anyone who has collected this post keeps their holdings.
         </p>
 
         {/* On-chain notice */}
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '12px 14px', border: '1px solid rgba(255,255,255,0.08)', marginBottom: 28 }}>
           <div style={{ width: 4, height: 4, borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.3)', flexShrink: 0, marginTop: 5 }} />
-          <p style={{ ...SKB, fontSize: 9, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.08em', lineHeight: 1.6, margin: 0 }}>
+          <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.08em', lineHeight: 1.6, margin: 0 }}>
             THIS ACTION CANNOT BE UNDONE. THE TOKEN LIVES ON BASE FOREVER.
           </p>
         </div>
 
         {/* Error */}
         {error && (
-          <p style={{ ...SKB, fontSize: 9, color: '#FF0000', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 12px', textAlign: 'center' }}>
+          <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: '#FF0000', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 12px', textAlign: 'center' }}>
             {error}
           </p>
         )}
@@ -108,7 +108,7 @@ export default function DeletePostSheet({ visible, postId, userId, onClose, onDe
             marginBottom: 10,
           }}
         >
-          <span style={{ ...SKB, fontSize: 12, color: 'white', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+          <span style={{ ...SKB, fontSize: 'var(--fs-12)', color: 'white', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
             {deleting ? 'DELETING...' : 'DELETE POST'}
           </span>
         </button>
@@ -125,7 +125,7 @@ export default function DeletePostSheet({ visible, postId, userId, onClose, onDe
             padding: '12px 0',
           }}
         >
-          <span style={{ ...SKB, fontSize: 11, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+          <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
             CANCEL
           </span>
         </button>

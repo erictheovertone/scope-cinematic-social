@@ -193,7 +193,7 @@ export default function CropTool({
         <button onClick={onCancel} aria-label="Cancel" style={{ background: "transparent", border: "none", cursor: "pointer", padding: 8, lineHeight: 0 }}>
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="white" strokeWidth="1.5" strokeLinecap="round" /></svg>
         </button>
-        <span style={{ ...SKB, fontSize: 11, color: "white", textTransform: "uppercase", letterSpacing: "0.1em" }}>CROP</span>
+        <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: "white", textTransform: "uppercase", letterSpacing: "0.1em" }}>CROP</span>
         <button onClick={handleConfirm} aria-label="Confirm" style={{ background: "transparent", border: "none", cursor: "pointer", padding: 8, lineHeight: 0 }}>
           <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M3 9.5l4 4L15 5" stroke={RED} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
         </button>
@@ -272,7 +272,7 @@ export default function CropTool({
       {/* ── AR row — exactly four chips, full-width, outline scaled to true ratio ── */}
       <div style={{ flexShrink: 0, padding: "10px 12px 6px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
         {!allowArChoice && (
-          <p style={{ ...SKB, fontSize: 8, color: "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: "0.1em", margin: "0 0 8px", textAlign: "center" }}>
+          <p style={{ ...SKB, fontSize: 'var(--fs-8)', color: "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: "0.1em", margin: "0 0 8px", textAlign: "center" }}>
             ASPECT LOCKED TO YOUR GRID
           </p>
         )}
@@ -296,10 +296,10 @@ export default function CropTool({
                 <div style={{ height: 28, display: "flex", alignItems: "center", justifyContent: "center" }}>
                   <div style={{ width: boxW, height: Math.max(boxH, 6), border: `1.5px solid ${active ? RED : "rgba(255,255,255,0.4)"}` }} />
                 </div>
-                <span style={{ ...SKB, fontSize: 8, color: active ? RED : "rgba(255,255,255,0.55)", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "center", lineHeight: 1.3 }}>
+                <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: active ? RED : "rgba(255,255,255,0.55)", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "center", lineHeight: 1.3 }}>
                   {c.label}
                 </span>
-                <span style={{ ...SKR, fontSize: 7, color: active ? RED : "rgba(255,255,255,0.3)" }}>{c.ratioLabel}</span>
+                <span style={{ ...SKR, fontSize: 'var(--fs-7)', color: active ? RED : "rgba(255,255,255,0.3)" }}>{c.ratioLabel}</span>
               </button>
             );
           })}
@@ -321,7 +321,7 @@ export default function CropTool({
               padding: "12px 0", borderBottom: tab === t.id ? `2px solid ${RED}` : "2px solid transparent",
             }}
           >
-            <span style={{ ...SKB, fontSize: 8, color: tab === t.id ? "white" : "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+            <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: tab === t.id ? "white" : "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
               {t.label}
             </span>
           </button>
@@ -333,7 +333,7 @@ export default function CropTool({
         {tab === "crop" && (
           <div>
             <div style={{ display: "flex", justifyContent: "center", marginBottom: 10 }}>
-              <span style={{ ...SKB, fontSize: 13, color: straighten === 0 ? "rgba(255,255,255,0.5)" : RED }}>
+              <span style={{ ...SKB, fontSize: 'var(--fs-13)', color: straighten === 0 ? "rgba(255,255,255,0.5)" : RED }}>
                 {straighten > 0 ? "+" : ""}{straighten.toFixed(1)}°
               </span>
             </div>
@@ -361,7 +361,7 @@ export default function CropTool({
               {/* center detent marker */}
               <div style={{ position: "absolute", left: "50%", top: 0, bottom: 0, width: 1.5, background: RED, transform: "translateX(-50%)" }} />
             </div>
-            <p style={{ ...SKR, fontSize: 7, color: "rgba(255,255,255,0.25)", textAlign: "center", textTransform: "uppercase", letterSpacing: "0.08em", margin: "8px 0 0" }}>
+            <p style={{ ...SKR, fontSize: 'var(--fs-7)', color: "rgba(255,255,255,0.25)", textAlign: "center", textTransform: "uppercase", letterSpacing: "0.08em", margin: "8px 0 0" }}>
               Drag to straighten · double-tap to reset
             </p>
           </div>
@@ -370,11 +370,11 @@ export default function CropTool({
         {tab === "rotate" && (
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 24 }}>
             <button onClick={() => setRotate((r) => (r - 90 + 360) % 360)} style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.2)", cursor: "pointer", padding: "10px 14px" }}>
-              <span style={{ ...SKB, fontSize: 10, color: "white", textTransform: "uppercase", letterSpacing: "0.06em" }}>↺ 90°</span>
+              <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: "white", textTransform: "uppercase", letterSpacing: "0.06em" }}>↺ 90°</span>
             </button>
-            <span style={{ ...SKB, fontSize: 12, color: "rgba(255,255,255,0.5)" }}>{rotate}°</span>
+            <span style={{ ...SKB, fontSize: 'var(--fs-12)', color: "rgba(255,255,255,0.5)" }}>{rotate}°</span>
             <button onClick={() => setRotate((r) => (r + 90) % 360)} style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.2)", cursor: "pointer", padding: "10px 14px" }}>
-              <span style={{ ...SKB, fontSize: 10, color: "white", textTransform: "uppercase", letterSpacing: "0.06em" }}>↻ 90°</span>
+              <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: "white", textTransform: "uppercase", letterSpacing: "0.06em" }}>↻ 90°</span>
             </button>
           </div>
         )}
@@ -385,8 +385,8 @@ export default function CropTool({
           // pipeline in the same build as the first color tool. Inert for now;
           // edit_geometry.skew is persisted as {x:0,y:0}.
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 6, opacity: 0.5 }}>
-            <span style={{ ...SKB, fontSize: 10, color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: "0.08em" }}>SKEW</span>
-            <span style={{ ...SKB, fontSize: 8, color: RED, textTransform: "uppercase", letterSpacing: "0.12em" }}>COMING SOON</span>
+            <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: "0.08em" }}>SKEW</span>
+            <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: RED, textTransform: "uppercase", letterSpacing: "0.12em" }}>COMING SOON</span>
           </div>
         )}
       </div>

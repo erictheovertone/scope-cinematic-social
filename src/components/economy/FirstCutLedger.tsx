@@ -83,7 +83,7 @@ export default function FirstCutLedger({
             alt=""
             style={{ width: 18, height: 18, objectFit: 'contain', display: 'block', ...(pulse ? { animation: 'fcMarkPop 0.5s cubic-bezier(0.16,0.84,0.3,1) both' } : null) }}
           />
-          <span style={{ ...SKB, fontSize: 11, letterSpacing: '0.18em', color: '#FFF', textTransform: 'uppercase' }}>First Cut</span>
+          <span style={{ ...SKB, fontSize: 'var(--fs-11)', letterSpacing: '0.18em', color: '#FFF', textTransform: 'uppercase' }}>First Cut</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span
@@ -91,7 +91,7 @@ export default function FirstCutLedger({
             style={{
               // GREY at rest (ordinary metadata). Red is the impact-only flash:
               // fcTickUp flips the colour for a beat, then settles back to this grey.
-              ...SKB, fontSize: 11, letterSpacing: '0.08em', color: 'rgba(255,255,255,0.6)', lineHeight: 1, display: 'inline-block',
+              ...SKB, fontSize: 'var(--fs-11)', letterSpacing: '0.08em', color: 'rgba(255,255,255,0.6)', lineHeight: 1, display: 'inline-block',
               ...(pulse ? { animation: 'fcTickUp 0.5s cubic-bezier(0.16,0.84,0.3,1) both' } : null),
             }}
           >
@@ -113,7 +113,7 @@ export default function FirstCutLedger({
           {filled === 0 && (
             <div
               className="fc-slot"
-              style={{ ...SKR, fontSize: 10, color: '#FF0000', letterSpacing: '0.16em', textTransform: 'uppercase', padding: '2px 0 10px', animation: 'fcSlotRipple 0.32s cubic-bezier(0.16,0.84,0.3,1) both' }}
+              style={{ ...SKR, fontSize: 'var(--fs-10)', color: '#FF0000', letterSpacing: '0.16em', textTransform: 'uppercase', padding: '2px 0 10px', animation: 'fcSlotRipple 0.32s cubic-bezier(0.16,0.84,0.3,1) both' }}
             >
               Be the first
             </div>
@@ -136,7 +136,7 @@ export default function FirstCutLedger({
                 }}
               >
                 {/* rank number */}
-                <span style={{ ...SKB, fontSize: 10, width: 16, color: h ? '#FF0000' : 'rgba(255,255,255,0.5)', letterSpacing: '0.02em' }}>
+                <span style={{ ...SKB, fontSize: 'var(--fs-10)', width: 16, color: h ? '#FF0000' : 'rgba(255,255,255,0.5)', letterSpacing: '0.02em' }}>
                   {rank}
                 </span>
                 {/* PFP (filled) or outline circle (open) */}
@@ -149,11 +149,11 @@ export default function FirstCutLedger({
                 )}
                 {/* handle (filled) or OPEN (empty) */}
                 {h ? (
-                  <span style={{ ...SKB, fontSize: 11, color: '#FFF', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: '#FFF', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     @{h.username ?? '—'}
                   </span>
                 ) : (
-                  <span style={{ ...SKR, fontSize: 9, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)' }}>
+                  <span style={{ ...SKR, fontSize: 'var(--fs-9)', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)' }}>
                     Open
                   </span>
                 )}

@@ -53,7 +53,7 @@ export default function SplitTonePanel({ value, onChange }: SplitTonePanelProps)
           const on = r === region;
           return (
             <button key={r} onClick={() => setRegion(r)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '2px 0', position: 'relative' }}>
-              <span style={{ ...SKB, fontSize: 10, color: on ? 'white' : 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{r === 'shadows' ? 'SHADOWS TINT' : 'HIGHLIGHTS TINT'}</span>
+              <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: on ? 'white' : 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{r === 'shadows' ? 'SHADOWS TINT' : 'HIGHLIGHTS TINT'}</span>
               {on && <div style={{ position: 'absolute', left: 0, right: 0, bottom: -4, height: 2, background: RED }} />}
             </button>
           );

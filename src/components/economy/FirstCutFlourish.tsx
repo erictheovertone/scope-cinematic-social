@@ -88,14 +88,14 @@ export default function FirstCutFlourish({
       </div>
       <div
         className="fc-label"
-        style={{ ...SKB, marginTop: 18, fontSize: 15, letterSpacing: '0.24em', color: '#FFFFFF', textTransform: 'uppercase', animation: `fcLabel ${DUR} ease both` }}
+        style={{ ...SKB, marginTop: 18, fontSize: 'var(--fs-15)', letterSpacing: '0.24em', color: '#FFFFFF', textTransform: 'uppercase', animation: `fcLabel ${DUR} ease both` }}
       >
         First Cut
       </div>
       {rank != null && (
         <div
           className="fc-label"
-          style={{ ...SKB, marginTop: 6, fontSize: 8, letterSpacing: '0.3em', color: '#FF0000', textTransform: 'uppercase', animation: `fcLabel ${DUR} ease both`, animationDelay: '0.08s' }}
+          style={{ ...SKB, marginTop: 6, fontSize: 'var(--fs-8)', letterSpacing: '0.3em', color: '#FF0000', textTransform: 'uppercase', animation: `fcLabel ${DUR} ease both`, animationDelay: '0.08s' }}
         >
           Founding Nº {rank}
         </div>

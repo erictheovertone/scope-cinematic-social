@@ -60,15 +60,15 @@ function CreatorCelebration({ onDone }: { onDone: () => void }) {
         </div>
       </div>
       {phase !== "loading" && (
-        <p style={{ ...BOLD, fontSize: 24, color: "white", textTransform: "uppercase", letterSpacing: "-0.02em", margin: "0 0 16px", animation: "fadeUp 0.8s ease forwards" }}>IN-HOUSE CREATOR</p>
+        <p style={{ ...BOLD, fontSize: 'var(--fs-24)', color: "white", textTransform: "uppercase", letterSpacing: "-0.02em", margin: "0 0 16px", animation: "fadeUp 0.8s ease forwards" }}>IN-HOUSE CREATOR</p>
       )}
       {(phase === "text" || phase === "done") && (
-        <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 13, color: "rgba(255,255,255,0.6)", letterSpacing: "0.1em" }}>
+        <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-13)', color: "rgba(255,255,255,0.6)", letterSpacing: "0.1em" }}>
           {typed}<span style={{ animation: "blink 1s step-end infinite" }}>_</span>
         </p>
       )}
       {phase === "done" && (
-        <p style={{ ...REG, fontSize: 11, color: "rgba(255,255,255,0.3)", marginTop: 12, animation: "fadeUp 0.8s ease forwards" }}>Post 10+ times monthly to keep your badge.</p>
+        <p style={{ ...REG, fontSize: 'var(--fs-11)', color: "rgba(255,255,255,0.3)", marginTop: 12, animation: "fadeUp 0.8s ease forwards" }}>Post 10+ times monthly to keep your badge.</p>
       )}
       <Styles />
     </div>
@@ -122,15 +122,15 @@ function Top1kCelebration({ onDone }: { onDone: () => void }) {
         </div>
       </div>
       {phase !== "loading" && (
-        <p style={{ ...BOLD, fontSize: 22, color: "#C9A84C", textTransform: "uppercase", letterSpacing: "-0.02em", margin: "0 0 8px", animation: "fadeUp 0.8s ease forwards" }}>TOP 1000 COLLECTOR</p>
+        <p style={{ ...BOLD, fontSize: 'var(--fs-22)', color: "#C9A84C", textTransform: "uppercase", letterSpacing: "-0.02em", margin: "0 0 8px", animation: "fadeUp 0.8s ease forwards" }}>TOP 1000 COLLECTOR</p>
       )}
       {(phase === "counter" || phase === "done") && (
         <p style={{ ...BOLD, fontSize: 48, color: "white", margin: "0 0 4px", animation: "fadeUp 0.5s ease forwards", lineHeight: 1 }}>#{count}</p>
       )}
       {phase === "done" && (
         <>
-          <p style={{ ...REG, fontSize: 11, color: "rgba(255,255,255,0.4)", margin: "4px 0 0", animation: "fadeUp 0.8s ease forwards" }}>Your collector rank on Scope</p>
-          <p style={{ ...REG, fontSize: 11, color: "rgba(201,168,76,0.6)", marginTop: 16, animation: "fadeUp 0.8s ease 0.2s forwards", opacity: 0 }}>Daily distributions begin tomorrow.</p>
+          <p style={{ ...REG, fontSize: 'var(--fs-11)', color: "rgba(255,255,255,0.4)", margin: "4px 0 0", animation: "fadeUp 0.8s ease forwards" }}>Your collector rank on Scope</p>
+          <p style={{ ...REG, fontSize: 'var(--fs-11)', color: "rgba(201,168,76,0.6)", marginTop: 16, animation: "fadeUp 0.8s ease 0.2s forwards", opacity: 0 }}>Daily distributions begin tomorrow.</p>
         </>
       )}
       <Styles />
@@ -306,7 +306,7 @@ function FoundingCelebration({ foundingNumber, onDone }: { foundingNumber?: numb
       <div style={{ position: "relative", zIndex: 4, textAlign: "center", padding: "0 32px" }}>
         {(phase === "reveal" || phase === "done") && (
           <>
-            <p style={{ ...BOLD, fontSize: 11, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.3em", margin: "0 0 8px", animation: "fadeUp 0.8s ease forwards" }}>
+            <p style={{ ...BOLD, fontSize: 'var(--fs-11)', color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.3em", margin: "0 0 8px", animation: "fadeUp 0.8s ease forwards" }}>
               FOUNDING MEMBER
             </p>
             <p style={{
@@ -317,17 +317,17 @@ function FoundingCelebration({ foundingNumber, onDone }: { foundingNumber?: numb
             }}>
               #{foundingNumber || 1}
             </p>
-            <p style={{ ...BOLD, fontSize: 10, color: "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: "0.2em", margin: "0 0 20px", animation: "fadeUp 0.8s ease 0.2s forwards", opacity: 0 }}>
+            <p style={{ ...BOLD, fontSize: 'var(--fs-10)', color: "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: "0.2em", margin: "0 0 20px", animation: "fadeUp 0.8s ease 0.2s forwards", opacity: 0 }}>
               OF 500
             </p>
           </>
         )}
         {phase === "done" && (
           <>
-            <p style={{ ...REG, fontSize: 13, color: "rgba(255,255,255,0.6)", lineHeight: 1.6, margin: "0 0 8px", animation: "fadeUp 0.8s ease forwards" }}>
+            <p style={{ ...REG, fontSize: 'var(--fs-13)', color: "rgba(255,255,255,0.6)", lineHeight: 1.6, margin: "0 0 8px", animation: "fadeUp 0.8s ease forwards" }}>
               You are one of the first 500 members of Scope.
             </p>
-            <p style={{ ...REG, fontSize: 11, color: "rgba(255,255,255,0.3)", animation: "fadeUp 0.8s ease 0.2s forwards", opacity: 0 }}>
+            <p style={{ ...REG, fontSize: 'var(--fs-11)', color: "rgba(255,255,255,0.3)", animation: "fadeUp 0.8s ease 0.2s forwards", opacity: 0 }}>
               Your founding spot is yours as long as you stay.
             </p>
           </>

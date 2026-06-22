@@ -117,7 +117,7 @@ export function TxNarratorProvider({ children }: { children: ReactNode }) {
         >
           <span style={{
             ...SKB,
-            fontSize: 10,
+            fontSize: 'var(--fs-10)',
             letterSpacing: '0.12em',
             textTransform: 'uppercase',
             color: status.phase === 'failed' ? '#FF0000' : status.phase === 'done' ? '#FF0000' : '#FFF',

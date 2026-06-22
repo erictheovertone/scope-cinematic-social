@@ -153,7 +153,7 @@ export default function FramesSheet({
       <div
         style={{
           position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 91,
-          maxWidth: 375, margin: "0 auto",
+          maxWidth: '30rem', margin: "0 auto",
           background: "#080808",
           borderTop: "1px solid rgba(255,255,255,0.12)",
           maxHeight: "92vh",
@@ -170,10 +170,10 @@ export default function FramesSheet({
         <div style={{ padding: "16px 20px 0", position: "relative" }}>
           <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
             <div>
-              <p style={{ ...SKB, fontSize: 9, letterSpacing: "0.15em", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", margin: "0 0 4px" }}>
+              <p style={{ ...SKB, fontSize: 'var(--fs-9)', letterSpacing: "0.15em", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", margin: "0 0 4px" }}>
                 FRAMES
               </p>
-              <p style={{ ...SKR, fontSize: 12, color: "rgba(255,255,255,0.7)", lineHeight: 1.5, margin: 0 }}>
+              <p style={{ ...SKR, fontSize: 'var(--fs-12)', color: "rgba(255,255,255,0.7)", lineHeight: 1.5, margin: 0 }}>
                 Select up to {maxImages} images from this deck
               </p>
             </div>
@@ -181,14 +181,14 @@ export default function FramesSheet({
               onClick={onClose}
               style={{ background: "transparent", border: "none", cursor: "pointer", padding: 0, flexShrink: 0, marginLeft: 8 }}
             >
-              <span style={{ fontSize: 18, color: "rgba(255,255,255,0.5)", lineHeight: 1, display: "block" }}>×</span>
+              <span style={{ fontSize: 'var(--fs-18)', color: "rgba(255,255,255,0.5)", lineHeight: 1, display: "block" }}>×</span>
             </button>
           </div>
 
           {/* Selection counter */}
           <div style={{ marginTop: 12 }}>
             <span style={{
-              ...SKB, fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase",
+              ...SKB, fontSize: 'var(--fs-10)', letterSpacing: "0.1em", textTransform: "uppercase",
               color: count > 0 ? "#FF0000" : "rgba(255,255,255,0.5)",
               transition: flashCount ? "color 0.1s ease" : undefined,
             }}>
@@ -203,7 +203,7 @@ export default function FramesSheet({
         {/* Image picker grid */}
         <div style={{ padding: "0 4px" }}>
           {items.length === 0 ? (
-            <p style={{ ...SKR, fontSize: 11, color: "rgba(255,255,255,0.4)", textAlign: "center", padding: "24px 0" }}>
+            <p style={{ ...SKR, fontSize: 'var(--fs-11)', color: "rgba(255,255,255,0.4)", textAlign: "center", padding: "24px 0" }}>
               No images in this deck
             </p>
           ) : (
@@ -240,7 +240,7 @@ export default function FramesSheet({
                           boxSizing: "border-box",
                         }}
                       >
-                        <span style={{ ...SKB, fontSize: 8, color: "#FF0000", letterSpacing: "0.04em", lineHeight: 1 }}>
+                        <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: "#FF0000", letterSpacing: "0.04em", lineHeight: 1 }}>
                           {String(selIdx + 1).padStart(2, '0')}
                         </span>
                       </div>
@@ -266,7 +266,7 @@ export default function FramesSheet({
 
         {/* Watermark credit line below preview */}
         <div style={{ padding: "8px 20px 0", textAlign: "center" }}>
-          <p style={{ ...SKB, fontSize: 8, letterSpacing: "0.1em", color: "rgba(255,255,255,0.5)", textTransform: "uppercase", margin: 0 }}>
+          <p style={{ ...SKB, fontSize: 'var(--fs-8)', letterSpacing: "0.1em", color: "rgba(255,255,255,0.5)", textTransform: "uppercase", margin: 0 }}>
             {isOwnDeck
               ? `@${currentUserUsername} · SCOPE`
               : `CURATED BY @${currentUserUsername} · WORK BY @${deckCreatorUsername}`
@@ -276,7 +276,7 @@ export default function FramesSheet({
 
         {/* Error */}
         {exportError && (
-          <p style={{ ...SKB, fontSize: 9, color: "#FF0000", textAlign: "center", margin: "12px 0 0", letterSpacing: "0.06em" }}>
+          <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: "#FF0000", textAlign: "center", margin: "12px 0 0", letterSpacing: "0.06em" }}>
             {exportError}
           </p>
         )}
@@ -291,13 +291,13 @@ export default function FramesSheet({
             }}
           >
             {exportDone ? (
-              <p style={{ ...SKB, fontSize: 10, letterSpacing: "0.15em", color: "white", textTransform: "uppercase" }}>
+              <p style={{ ...SKB, fontSize: 'var(--fs-10)', letterSpacing: "0.15em", color: "white", textTransform: "uppercase" }}>
                 EXPORTED ✓
               </p>
             ) : (
               <>
                 <FrameLoader />
-                <p style={{ ...SKB, fontSize: 10, letterSpacing: "0.15em", color: "rgba(255,255,255,0.7)", textTransform: "uppercase", margin: 0 }}>
+                <p style={{ ...SKB, fontSize: 'var(--fs-10)', letterSpacing: "0.15em", color: "rgba(255,255,255,0.7)", textTransform: "uppercase", margin: 0 }}>
                   RENDERING FRAMES...
                 </p>
               </>
@@ -318,7 +318,7 @@ export default function FramesSheet({
               opacity: count > 0 ? 1 : 0.5,
             }}
           >
-            <span style={{ ...SKB, fontSize: 11, color: "white", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+            <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: "white", textTransform: "uppercase", letterSpacing: "0.1em" }}>
               EXPORT FRAMES
             </span>
           </button>
@@ -331,7 +331,7 @@ export default function FramesSheet({
               cursor: "pointer",
             }}
           >
-            <span style={{ ...SKB, fontSize: 11, color: "rgba(255,255,255,0.7)", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+            <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: "rgba(255,255,255,0.7)", textTransform: "uppercase", letterSpacing: "0.1em" }}>
               CANCEL
             </span>
           </button>

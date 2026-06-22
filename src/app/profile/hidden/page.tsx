@@ -42,7 +42,7 @@ export default function HiddenPosts() {
         >
           ←
         </button>
-        <h1 className="font-['IBM_Plex_Mono'] font-medium text-white text-[18px]">
+        <h1 className="font-['IBM_Plex_Mono'] font-medium text-white text-[var(--fs-18)]">
           Hidden Posts
         </h1>
         <div className="w-6" />
@@ -57,10 +57,10 @@ export default function HiddenPosts() {
               <circle cx="12" cy="12" r="3"/>
               <path d="M3 3l18 18"/>
             </svg>
-            <p className="font-['IBM_Plex_Mono'] font-medium text-[#666666] text-[16px] mt-4 text-center">
+            <p className="font-['IBM_Plex_Mono'] font-medium text-[#666666] text-[var(--fs-16)] mt-4 text-center">
               No hidden posts
             </p>
-            <p className="font-['IBM_Plex_Mono'] font-normal text-[#666666] text-[12px] mt-2 text-center">
+            <p className="font-['IBM_Plex_Mono'] font-normal text-[#666666] text-[var(--fs-12)] mt-2 text-center">
               Posts you hide from your profile will appear here
             </p>
           </div>
@@ -81,15 +81,15 @@ export default function HiddenPosts() {
                   </div>
                   
                   <div className="flex-1">
-                    <p className="font-['IBM_Plex_Mono'] font-medium text-white text-[14px] mb-2">
+                    <p className="font-['IBM_Plex_Mono'] font-medium text-white text-[var(--fs-14)] mb-2">
                       {post.caption}
                     </p>
                     
                     <div className="flex items-center space-x-4 mb-3">
-                      <p className="font-['IBM_Plex_Mono'] font-normal text-[#666666] text-[11px]">
+                      <p className="font-['IBM_Plex_Mono'] font-normal text-[#666666] text-[var(--fs-11)]">
                         Hidden {post.hiddenDate}
                       </p>
-                      <p className="font-['IBM_Plex_Mono'] font-normal text-[#666666] text-[11px]">
+                      <p className="font-['IBM_Plex_Mono'] font-normal text-[#666666] text-[var(--fs-11)]">
                         {post.reason}
                       </p>
                     </div>
@@ -97,13 +97,13 @@ export default function HiddenPosts() {
                     <div className="flex space-x-3">
                       <button
                         onClick={() => unhidePost(post.id)}
-                        className="bg-[#333333] text-white px-4 py-2 rounded-lg font-['IBM_Plex_Mono'] text-[12px] hover:bg-[#444444] transition-colors"
+                        className="bg-[#333333] text-white px-4 py-2 rounded-lg font-['IBM_Plex_Mono'] text-[var(--fs-12)] hover:bg-[#444444] transition-colors"
                       >
                         Unhide
                       </button>
                       <button
                         onClick={() => deletePost(post.id)}
-                        className="bg-transparent border border-[#FF0000] text-[#FF0000] px-4 py-2 rounded-lg font-['IBM_Plex_Mono'] text-[12px] hover:bg-[#FF0000] hover:bg-opacity-10 transition-colors"
+                        className="bg-transparent border border-[#FF0000] text-[#FF0000] px-4 py-2 rounded-lg font-['IBM_Plex_Mono'] text-[var(--fs-12)] hover:bg-[#FF0000] hover:bg-opacity-10 transition-colors"
                       >
                         Delete
                       </button>
@@ -119,19 +119,19 @@ export default function HiddenPosts() {
       {/* Info */}
       <div className="border-t border-[#333333] p-6">
         <div className="bg-[#1A1A1A] border border-[#333333] rounded-lg p-4">
-          <p className="font-['IBM_Plex_Mono'] font-medium text-white text-[12px] mb-2">
+          <p className="font-['IBM_Plex_Mono'] font-medium text-white text-[var(--fs-12)] mb-2">
             About Hidden Posts:
           </p>
           <ul className="space-y-1">
-            <li className="font-['IBM_Plex_Mono'] font-normal text-[#888888] text-[11px] flex items-start">
+            <li className="font-['IBM_Plex_Mono'] font-normal text-[#888888] text-[var(--fs-11)] flex items-start">
               <span className="text-[#FF0000] mr-2">•</span>
               Hidden posts don't appear on your profile
             </li>
-            <li className="font-['IBM_Plex_Mono'] font-normal text-[#888888] text-[11px] flex items-start">
+            <li className="font-['IBM_Plex_Mono'] font-normal text-[#888888] text-[var(--fs-11)] flex items-start">
               <span className="text-[#FF0000] mr-2">•</span>
               You can unhide them anytime
             </li>
-            <li className="font-['IBM_Plex_Mono'] font-normal text-[#888888] text-[11px] flex items-start">
+            <li className="font-['IBM_Plex_Mono'] font-normal text-[#888888] text-[var(--fs-11)] flex items-start">
               <span className="text-[#FF0000] mr-2">•</span>
               Deleting removes them permanently
             </li>

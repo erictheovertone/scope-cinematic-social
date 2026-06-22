@@ -60,7 +60,7 @@ export default function PaletteTile({ look, selected = false, onTap }: { look: S
       }}>
         {src && <img src={src} alt={look.name} draggable={false} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
       </div>
-      <span style={{ ...SKB, fontSize: 7, color: selected ? '#FF0000' : 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.06em', maxWidth: 60, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{look.name}</span>
+      <span style={{ ...SKB, fontSize: 'var(--fs-7)', color: selected ? '#FF0000' : 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.06em', maxWidth: 60, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{look.name}</span>
     </button>
   );
 }

@@ -87,7 +87,7 @@ export default function DataPage() {
         >
           ←
         </button>
-        <h1 className="font-['IBM_Plex_Mono'] font-medium text-white text-[18px]">
+        <h1 className="font-['IBM_Plex_Mono'] font-medium text-white text-[var(--fs-18)]">
           Data
         </h1>
         <div className="w-6" />
@@ -97,71 +97,71 @@ export default function DataPage() {
       <div className="flex-1 overflow-y-auto px-6 py-6">
         {loading ? (
           <div className="flex items-center justify-center h-full">
-            <p className="font-['IBM_Plex_Mono'] text-white text-[14px]">Loading...</p>
+            <p className="font-['IBM_Plex_Mono'] text-white text-[var(--fs-14)]">Loading...</p>
           </div>
         ) : (
           <div className="space-y-6">
             {/* Account Statistics */}
             <div>
-              <h2 className="font-['IBM_Plex_Mono'] font-medium text-white text-[16px] mb-4">
+              <h2 className="font-['IBM_Plex_Mono'] font-medium text-white text-[var(--fs-16)] mb-4">
                 Account Statistics
               </h2>
               <div className="space-y-4">
                 <div className="flex justify-between items-center p-4 bg-[#1A1A1A] border border-[#333333] rounded-lg">
-                  <span className="font-['IBM_Plex_Mono'] text-white text-[14px]">Total Posts</span>
-                  <span className="font-['IBM_Plex_Mono'] font-medium text-[#FF0000] text-[14px]">{userData.totalPosts}</span>
+                  <span className="font-['IBM_Plex_Mono'] text-white text-[var(--fs-14)]">Total Posts</span>
+                  <span className="font-['IBM_Plex_Mono'] font-medium text-[#FF0000] text-[var(--fs-14)]">{userData.totalPosts}</span>
                 </div>
                 <div className="flex justify-between items-center p-4 bg-[#1A1A1A] border border-[#333333] rounded-lg">
-                  <span className="font-['IBM_Plex_Mono'] text-white text-[14px]">Total Likes Given</span>
-                  <span className="font-['IBM_Plex_Mono'] font-medium text-[#FF0000] text-[14px]">{userData.totalLikes}</span>
+                  <span className="font-['IBM_Plex_Mono'] text-white text-[var(--fs-14)]">Total Likes Given</span>
+                  <span className="font-['IBM_Plex_Mono'] font-medium text-[#FF0000] text-[var(--fs-14)]">{userData.totalLikes}</span>
                 </div>
                 <div className="flex justify-between items-center p-4 bg-[#1A1A1A] border border-[#333333] rounded-lg">
-                  <span className="font-['IBM_Plex_Mono'] text-white text-[14px]">Total Comments</span>
-                  <span className="font-['IBM_Plex_Mono'] font-medium text-[#FF0000] text-[14px]">{userData.totalComments}</span>
+                  <span className="font-['IBM_Plex_Mono'] text-white text-[var(--fs-14)]">Total Comments</span>
+                  <span className="font-['IBM_Plex_Mono'] font-medium text-[#FF0000] text-[var(--fs-14)]">{userData.totalComments}</span>
                 </div>
               </div>
             </div>
 
             {/* Account Information */}
             <div>
-              <h2 className="font-['IBM_Plex_Mono'] font-medium text-white text-[16px] mb-4">
+              <h2 className="font-['IBM_Plex_Mono'] font-medium text-white text-[var(--fs-16)] mb-4">
                 Account Information
               </h2>
               <div className="space-y-4">
                 <div className="flex justify-between items-center p-4 bg-[#1A1A1A] border border-[#333333] rounded-lg">
-                  <span className="font-['IBM_Plex_Mono'] text-white text-[14px]">Join Date</span>
-                  <span className="font-['IBM_Plex_Mono'] text-[#888888] text-[14px]">{userData.joinDate}</span>
+                  <span className="font-['IBM_Plex_Mono'] text-white text-[var(--fs-14)]">Join Date</span>
+                  <span className="font-['IBM_Plex_Mono'] text-[#888888] text-[var(--fs-14)]">{userData.joinDate}</span>
                 </div>
                 <div className="flex justify-between items-center p-4 bg-[#1A1A1A] border border-[#333333] rounded-lg">
-                  <span className="font-['IBM_Plex_Mono'] text-white text-[14px]">Last Active</span>
-                  <span className="font-['IBM_Plex_Mono'] text-[#888888] text-[14px]">{userData.lastActive}</span>
+                  <span className="font-['IBM_Plex_Mono'] text-white text-[var(--fs-14)]">Last Active</span>
+                  <span className="font-['IBM_Plex_Mono'] text-[#888888] text-[var(--fs-14)]">{userData.lastActive}</span>
                 </div>
                 <div className="flex justify-between items-center p-4 bg-[#1A1A1A] border border-[#333333] rounded-lg">
-                  <span className="font-['IBM_Plex_Mono'] text-white text-[14px]">Storage Used</span>
-                  <span className="font-['IBM_Plex_Mono'] text-[#888888] text-[14px]">{userData.storageUsed}</span>
+                  <span className="font-['IBM_Plex_Mono'] text-white text-[var(--fs-14)]">Storage Used</span>
+                  <span className="font-['IBM_Plex_Mono'] text-[#888888] text-[var(--fs-14)]">{userData.storageUsed}</span>
                 </div>
               </div>
             </div>
 
             {/* Data Export */}
             <div>
-              <h2 className="font-['IBM_Plex_Mono'] font-medium text-white text-[16px] mb-4">
+              <h2 className="font-['IBM_Plex_Mono'] font-medium text-white text-[var(--fs-16)] mb-4">
                 Data Export
               </h2>
               <div className="space-y-3">
                 <button className="w-full text-left p-4 bg-[#1A1A1A] border border-[#333333] rounded-lg hover:bg-[#222222] transition-colors">
-                  <p className="font-['IBM_Plex_Mono'] font-medium text-white text-[14px] mb-1">
+                  <p className="font-['IBM_Plex_Mono'] font-medium text-white text-[var(--fs-14)] mb-1">
                     Download My Data
                   </p>
-                  <p className="font-['IBM_Plex_Mono'] text-[#666666] text-[12px]">
+                  <p className="font-['IBM_Plex_Mono'] text-[#666666] text-[var(--fs-12)]">
                     Export all your posts, comments, and account data
                   </p>
                 </button>
                 <button className="w-full text-left p-4 bg-[#1A1A1A] border border-[#333333] rounded-lg hover:bg-[#222222] transition-colors">
-                  <p className="font-['IBM_Plex_Mono'] font-medium text-white text-[14px] mb-1">
+                  <p className="font-['IBM_Plex_Mono'] font-medium text-white text-[var(--fs-14)] mb-1">
                     Request Account Report
                   </p>
-                  <p className="font-['IBM_Plex_Mono'] text-[#666666] text-[12px]">
+                  <p className="font-['IBM_Plex_Mono'] text-[#666666] text-[var(--fs-12)]">
                     Get a detailed report of your account activity
                   </p>
                 </button>
@@ -170,23 +170,23 @@ export default function DataPage() {
 
             {/* Privacy Controls */}
             <div>
-              <h2 className="font-['IBM_Plex_Mono'] font-medium text-white text-[16px] mb-4">
+              <h2 className="font-['IBM_Plex_Mono'] font-medium text-white text-[var(--fs-16)] mb-4">
                 Privacy Controls
               </h2>
               <div className="space-y-3">
                 <button className="w-full text-left p-4 bg-[#1A1A1A] border border-[#333333] rounded-lg hover:bg-[#222222] transition-colors">
-                  <p className="font-['IBM_Plex_Mono'] font-medium text-white text-[14px] mb-1">
+                  <p className="font-['IBM_Plex_Mono'] font-medium text-white text-[var(--fs-14)] mb-1">
                     Data Sharing Settings
                   </p>
-                  <p className="font-['IBM_Plex_Mono'] text-[#666666] text-[12px]">
+                  <p className="font-['IBM_Plex_Mono'] text-[#666666] text-[var(--fs-12)]">
                     Control how your data is used and shared
                   </p>
                 </button>
                 <button className="w-full text-left p-4 bg-[#1A1A1A] border border-[#333333] rounded-lg hover:bg-[#222222] transition-colors">
-                  <p className="font-['IBM_Plex_Mono'] font-medium text-white text-[14px] mb-1">
+                  <p className="font-['IBM_Plex_Mono'] font-medium text-white text-[var(--fs-14)] mb-1">
                     Analytics Preferences
                   </p>
-                  <p className="font-['IBM_Plex_Mono'] text-[#666666] text-[12px]">
+                  <p className="font-['IBM_Plex_Mono'] text-[#666666] text-[var(--fs-12)]">
                     Manage data collection for analytics
                   </p>
                 </button>

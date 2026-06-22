@@ -15,7 +15,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       <EconomyProvider>
         <TxNarratorProvider>
           <UpsellProvider>
-            <Suspense fallback={<div style={{backgroundColor:'#000',minHeight:'100vh'}}/>}>
+            <Suspense fallback={<div style={{backgroundColor:'#000',minHeight:'100dvh'}}/>}>
               {children}
             </Suspense>
             <AppShell />

@@ -44,7 +44,7 @@ export default function ContactUs() {
         >
           ←
         </button>
-        <h1 className="font-['IBM_Plex_Mono'] font-medium text-white text-[18px]">
+        <h1 className="font-['IBM_Plex_Mono'] font-medium text-white text-[var(--fs-18)]">
           Contact Us
         </h1>
         <div className="w-6" />
@@ -59,10 +59,10 @@ export default function ContactUs() {
                 <polyline points="20,6 9,17 4,12"/>
               </svg>
             </div>
-            <h2 className="font-['IBM_Plex_Mono'] font-medium text-white text-[18px] mb-4 text-center">
+            <h2 className="font-['IBM_Plex_Mono'] font-medium text-white text-[var(--fs-18)] mb-4 text-center">
               Message Sent!
             </h2>
-            <p className="font-['IBM_Plex_Mono'] font-normal text-[#888888] text-[14px] text-center">
+            <p className="font-['IBM_Plex_Mono'] font-normal text-[#888888] text-[var(--fs-14)] text-center">
               We'll get back to you within 24 hours.
             </p>
           </div>
@@ -70,7 +70,7 @@ export default function ContactUs() {
           <>
             {/* Quick Support Topics */}
             <div className="mb-8">
-              <h2 className="font-['IBM_Plex_Mono'] font-medium text-white text-[16px] mb-4">
+              <h2 className="font-['IBM_Plex_Mono'] font-medium text-white text-[var(--fs-16)] mb-4">
                 Quick Help
               </h2>
               <div className="grid grid-cols-2 gap-3">
@@ -81,7 +81,7 @@ export default function ContactUs() {
                     className="p-4 bg-[#1A1A1A] border border-[#333333] rounded-lg hover:bg-[#222222] transition-colors text-left"
                   >
                     <div className="text-2xl mb-2">{topic.icon}</div>
-                    <p className="font-['IBM_Plex_Mono'] font-medium text-white text-[12px]">
+                    <p className="font-['IBM_Plex_Mono'] font-medium text-white text-[var(--fs-12)]">
                       {topic.label}
                     </p>
                   </button>
@@ -92,7 +92,7 @@ export default function ContactUs() {
             {/* Contact Form */}
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <label className="font-['IBM_Plex_Mono'] font-medium text-white text-[14px] block mb-2">
+                <label className="font-['IBM_Plex_Mono'] font-medium text-white text-[var(--fs-14)] block mb-2">
                   Email
                 </label>
                 <input
@@ -100,13 +100,13 @@ export default function ContactUs() {
                   value={formData.email}
                   onChange={(e) => handleChange('email', e.target.value)}
                   required
-                  className="w-full bg-[#1A1A1A] border border-[#333333] rounded-lg px-4 py-3 font-['IBM_Plex_Mono'] text-white text-[14px] focus:border-[#FF0000] focus:outline-none"
+                  className="w-full bg-[#1A1A1A] border border-[#333333] rounded-lg px-4 py-3 font-['IBM_Plex_Mono'] text-white text-[var(--fs-14)] focus:border-[#FF0000] focus:outline-none"
                   placeholder="your@email.com"
                 />
               </div>
 
               <div>
-                <label className="font-['IBM_Plex_Mono'] font-medium text-white text-[14px] block mb-2">
+                <label className="font-['IBM_Plex_Mono'] font-medium text-white text-[var(--fs-14)] block mb-2">
                   Subject
                 </label>
                 <input
@@ -114,13 +114,13 @@ export default function ContactUs() {
                   value={formData.subject}
                   onChange={(e) => handleChange('subject', e.target.value)}
                   required
-                  className="w-full bg-[#1A1A1A] border border-[#333333] rounded-lg px-4 py-3 font-['IBM_Plex_Mono'] text-white text-[14px] focus:border-[#FF0000] focus:outline-none"
+                  className="w-full bg-[#1A1A1A] border border-[#333333] rounded-lg px-4 py-3 font-['IBM_Plex_Mono'] text-white text-[var(--fs-14)] focus:border-[#FF0000] focus:outline-none"
                   placeholder="How can we help?"
                 />
               </div>
 
               <div>
-                <label className="font-['IBM_Plex_Mono'] font-medium text-white text-[14px] block mb-2">
+                <label className="font-['IBM_Plex_Mono'] font-medium text-white text-[var(--fs-14)] block mb-2">
                   Message
                 </label>
                 <textarea
@@ -128,14 +128,14 @@ export default function ContactUs() {
                   onChange={(e) => handleChange('message', e.target.value)}
                   required
                   rows={6}
-                  className="w-full bg-[#1A1A1A] border border-[#333333] rounded-lg px-4 py-3 font-['IBM_Plex_Mono'] text-white text-[14px] resize-none focus:border-[#FF0000] focus:outline-none"
+                  className="w-full bg-[#1A1A1A] border border-[#333333] rounded-lg px-4 py-3 font-['IBM_Plex_Mono'] text-white text-[var(--fs-14)] resize-none focus:border-[#FF0000] focus:outline-none"
                   placeholder="Tell us more about your issue or question..."
                 />
               </div>
 
               <button
                 type="submit"
-                className="w-full bg-[#FF0000] text-white py-4 rounded-lg font-['IBM_Plex_Mono'] font-medium text-[16px] hover:bg-[#CC0000] transition-colors"
+                className="w-full bg-[#FF0000] text-white py-4 rounded-lg font-['IBM_Plex_Mono'] font-medium text-[var(--fs-16)] hover:bg-[#CC0000] transition-colors"
               >
                 Send Message
               </button>
@@ -143,17 +143,17 @@ export default function ContactUs() {
 
             {/* Additional Support */}
             <div className="mt-8 p-4 bg-[#1A1A1A] border border-[#333333] rounded-lg">
-              <p className="font-['IBM_Plex_Mono'] font-medium text-white text-[12px] mb-3">
+              <p className="font-['IBM_Plex_Mono'] font-medium text-white text-[var(--fs-12)] mb-3">
                 Other ways to reach us:
               </p>
               <div className="space-y-2">
-                <p className="font-['IBM_Plex_Mono'] font-normal text-[#888888] text-[11px]">
+                <p className="font-['IBM_Plex_Mono'] font-normal text-[#888888] text-[var(--fs-11)]">
                   📧 support@scope.app
                 </p>
-                <p className="font-['IBM_Plex_Mono'] font-normal text-[#888888] text-[11px]">
+                <p className="font-['IBM_Plex_Mono'] font-normal text-[#888888] text-[var(--fs-11)]">
                   🐦 @ScopeSupport
                 </p>
-                <p className="font-['IBM_Plex_Mono'] font-normal text-[#888888] text-[11px]">
+                <p className="font-['IBM_Plex_Mono'] font-normal text-[#888888] text-[var(--fs-11)]">
                   ⏰ Response time: Usually within 24 hours
                 </p>
               </div>

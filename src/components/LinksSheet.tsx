@@ -92,10 +92,10 @@ export default function LinksSheet({ username, links, visible, onClose }: LinksS
         {/* Header */}
         <div style={{ flexShrink: 0, position: "relative", display: "flex", alignItems: "center", justifyContent: "center", padding: "10px 16px 8px" }}>
           <div style={{ position: "absolute", top: 8, left: "50%", transform: "translateX(-50%)", width: 40, height: 2, backgroundColor: "rgba(255,255,255,0.2)" }} />
-          <span style={{ ...SKR, fontSize: 10, color: "white", opacity: 0.6, marginTop: 8 }}>@{username}</span>
+          <span style={{ ...SKR, fontSize: 'var(--fs-10)', color: "white", opacity: 0.6, marginTop: 8 }}>@{username}</span>
           <button
             onClick={() => { setActiveVideo(null); onClose(); }}
-            style={{ position: "absolute", right: 16, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "white", fontSize: 18, lineHeight: 1, padding: 0, marginTop: 4 }}
+            style={{ position: "absolute", right: 16, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "white", fontSize: 'var(--fs-18)', lineHeight: 1, padding: 0, marginTop: 4 }}
           >
             ×
           </button>
@@ -109,7 +109,7 @@ export default function LinksSheet({ username, links, visible, onClose }: LinksS
             <div style={{ display: "flex", justifyContent: "flex-end", padding: "8px 12px", flexShrink: 0 }}>
               <button
                 onClick={() => setActiveVideo(null)}
-                style={{ background: "none", border: "none", cursor: "pointer", color: "white", fontSize: 20, lineHeight: 1, padding: 0 }}
+                style={{ background: "none", border: "none", cursor: "pointer", color: "white", fontSize: 'var(--fs-20)', lineHeight: 1, padding: 0 }}
               >
                 ×
               </button>
@@ -131,7 +131,7 @@ export default function LinksSheet({ username, links, visible, onClose }: LinksS
         <div style={{ flex: 1, overflowY: "auto", padding: "8px 12px" }}>
           {links.length === 0 ? (
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "60%" }}>
-              <span style={{ ...SKR, fontSize: 10, color: "rgba(255,255,255,0.3)" }}>No links yet</span>
+              <span style={{ ...SKR, fontSize: 'var(--fs-10)', color: "rgba(255,255,255,0.3)" }}>No links yet</span>
             </div>
           ) : (
             links.map(link => {
@@ -178,20 +178,20 @@ export default function LinksSheet({ username, links, visible, onClose }: LinksS
                       {/* Bottom gradient */}
                       <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 50%)", pointerEvents: "none" }} />
                       {/* ↗ arrow */}
-                      <span style={{ position: "absolute", top: 8, right: 8, fontSize: 14, color: "white", opacity: 0.7, lineHeight: 1, pointerEvents: "none" }}>↗</span>
+                      <span style={{ position: "absolute", top: 8, right: 8, fontSize: 'var(--fs-14)', color: "white", opacity: 0.7, lineHeight: 1, pointerEvents: "none" }}>↗</span>
                     </div>
                     {/* Title + description + domain */}
                     <div style={{ padding: "8px 0" }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8 }}>
-                        <p style={{ ...SKR, fontSize: 10, color: "white", margin: 0, lineHeight: 1.3, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis", flex: 1 }}>
+                        <p style={{ ...SKR, fontSize: 'var(--fs-10)', color: "white", margin: 0, lineHeight: 1.3, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis", flex: 1 }}>
                           {link.title || getDomain(link.url)}
                         </p>
-                        <p style={{ ...SKR, fontSize: 9, color: "white", opacity: 0.5, margin: 0, flexShrink: 0 }}>
+                        <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: "white", opacity: 0.5, margin: 0, flexShrink: 0 }}>
                           {getDomain(link.url)}
                         </p>
                       </div>
                       {link.description && (
-                        <p style={{ ...SKR, fontSize: 9, color: "white", opacity: 0.6, margin: "3px 0 0", lineHeight: 1.4, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
+                        <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: "white", opacity: 0.6, margin: "3px 0 0", lineHeight: 1.4, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
                           {link.description}
                         </p>
                       )}
@@ -221,19 +221,19 @@ export default function LinksSheet({ username, links, visible, onClose }: LinksS
                         style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
                       />
                       <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 50%)", pointerEvents: "none" }} />
-                      <span style={{ position: "absolute", top: 8, right: 8, fontSize: 14, color: "white", opacity: 0.7, lineHeight: 1 }}>↗</span>
+                      <span style={{ position: "absolute", top: 8, right: 8, fontSize: 'var(--fs-14)', color: "white", opacity: 0.7, lineHeight: 1 }}>↗</span>
                     </div>
                     <div style={{ padding: "8px 0" }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8 }}>
-                        <p style={{ ...SKR, fontSize: 10, color: "white", margin: 0, lineHeight: 1.3, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis", flex: 1 }}>
+                        <p style={{ ...SKR, fontSize: 'var(--fs-10)', color: "white", margin: 0, lineHeight: 1.3, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis", flex: 1 }}>
                           {link.title || getDomain(link.url)}
                         </p>
-                        <p style={{ ...SKR, fontSize: 9, color: "white", opacity: 0.5, margin: 0, flexShrink: 0 }}>
+                        <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: "white", opacity: 0.5, margin: 0, flexShrink: 0 }}>
                           {getDomain(link.url)}
                         </p>
                       </div>
                       {link.description && (
-                        <p style={{ ...SKR, fontSize: 9, color: "white", opacity: 0.6, margin: "3px 0 0", lineHeight: 1.4, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
+                        <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: "white", opacity: 0.6, margin: "3px 0 0", lineHeight: 1.4, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
                           {link.description}
                         </p>
                       )}
@@ -269,21 +269,21 @@ export default function LinksSheet({ username, links, visible, onClose }: LinksS
 
                   {/* Text */}
                   <div style={{ flex: 1, overflow: "hidden" }}>
-                    <p style={{ ...SKR, fontSize: 10, color: "white", margin: 0, lineHeight: 1.3, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>
+                    <p style={{ ...SKR, fontSize: 'var(--fs-10)', color: "white", margin: 0, lineHeight: 1.3, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>
                       {link.title || getDomain(link.url)}
                     </p>
-                    <p style={{ ...SKR, fontSize: 9, color: "white", opacity: 0.4, margin: "2px 0 0", overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>
+                    <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: "white", opacity: 0.4, margin: "2px 0 0", overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>
                       {getDomain(link.url)}
                     </p>
                     {link.description && (
-                      <p style={{ ...SKR, fontSize: 9, color: "white", opacity: 0.6, margin: "4px 0 0", lineHeight: 1.4, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
+                      <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: "white", opacity: 0.6, margin: "4px 0 0", lineHeight: 1.4, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
                         {link.description}
                       </p>
                     )}
                   </div>
 
                   {/* Arrow */}
-                  <span style={{ color: "white", opacity: 0.4, fontSize: 14, flexShrink: 0 }}>↗</span>
+                  <span style={{ color: "white", opacity: 0.4, fontSize: 'var(--fs-14)', flexShrink: 0 }}>↗</span>
                 </div>
               );
             })

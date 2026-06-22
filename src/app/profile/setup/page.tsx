@@ -166,8 +166,8 @@ export default function ProfileSetup() {
 
       {/* "PROFILE / SETUP" — left of photo box */}
       <div style={{ position: 'absolute', left: 40, top: 163, transform: 'translateY(-50%)' }}>
-        <p style={{ ...SKB, fontSize: 14, color: 'white', textTransform: 'uppercase', letterSpacing: '-0.28px', lineHeight: 1.4, margin: 0 }}>PROFILE</p>
-        <p style={{ ...SKB, fontSize: 14, color: 'white', textTransform: 'uppercase', letterSpacing: '-0.28px', lineHeight: 1.4, margin: 0 }}>SETUP</p>
+        <p style={{ ...SKB, fontSize: 'var(--fs-14)', color: 'white', textTransform: 'uppercase', letterSpacing: '-0.28px', lineHeight: 1.4, margin: 0 }}>PROFILE</p>
+        <p style={{ ...SKB, fontSize: 'var(--fs-14)', color: 'white', textTransform: 'uppercase', letterSpacing: '-0.28px', lineHeight: 1.4, margin: 0 }}>SETUP</p>
       </div>
 
       {/* Profile photo box — 130×130 with crosshair */}
@@ -196,18 +196,18 @@ export default function ProfileSetup() {
 
       {/* Username field */}
       <div style={{ position: 'absolute', left: 38, top: 349, width: 298, height: 25, border: '1px solid white', background: 'transparent', display: 'flex', alignItems: 'center' }}>
-        <span style={{ ...SKB, fontSize: 9, color: 'white', paddingLeft: 6, flexShrink: 0 }}>@</span>
+        <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'white', paddingLeft: 6, flexShrink: 0 }}>@</span>
         <input
           type="text"
           value={username}
           onChange={(e) => setUsername(e.target.value.toUpperCase())}
           placeholder="USERNAME"
-          style={{ flex: 1, height: '100%', background: 'transparent', border: 'none', outline: 'none', ...SKB, fontSize: 9, color: 'white', letterSpacing: '-0.18px', paddingLeft: 3, paddingRight: 6 }}
+          style={{ flex: 1, height: '100%', background: 'transparent', border: 'none', outline: 'none', ...SKB, fontSize: 'var(--fs-9)', color: 'white', letterSpacing: '-0.18px', paddingLeft: 3, paddingRight: 6 }}
         />
       </div>
       {usernameError && (
         <div style={{ position: 'absolute', left: 38, top: 378 }}>
-          <span style={{ ...SKB, fontSize: 9, color: '#FF0000', textTransform: 'uppercase', letterSpacing: '-0.18px' }}>{usernameError}</span>
+          <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: '#FF0000', textTransform: 'uppercase', letterSpacing: '-0.18px' }}>{usernameError}</span>
         </div>
       )}
 
@@ -218,7 +218,7 @@ export default function ProfileSetup() {
           value={displayName}
           onChange={(e) => setDisplayName(e.target.value.toUpperCase())}
           placeholder="DISPLAY NAME"
-          style={{ width: '100%', height: '100%', background: 'transparent', border: 'none', outline: 'none', ...SKB, fontSize: 9, color: 'white', letterSpacing: '-0.18px', paddingLeft: 6, paddingRight: 6 }}
+          style={{ width: '100%', height: '100%', background: 'transparent', border: 'none', outline: 'none', ...SKB, fontSize: 'var(--fs-9)', color: 'white', letterSpacing: '-0.18px', paddingLeft: 6, paddingRight: 6 }}
         />
       </div>
 
@@ -229,21 +229,21 @@ export default function ProfileSetup() {
           onChange={(e) => setBio(e.target.value)}
           maxLength={160}
           placeholder="BIO [ 160 CHARACTER MAX ]"
-          style={{ width: '100%', height: '100%', background: 'transparent', border: 'none', outline: 'none', resize: 'none', ...SKB, fontSize: 9, color: 'white', letterSpacing: '-0.18px', padding: '6px 6px', boxSizing: 'border-box' }}
+          style={{ width: '100%', height: '100%', background: 'transparent', border: 'none', outline: 'none', resize: 'none', ...SKB, fontSize: 'var(--fs-9)', color: 'white', letterSpacing: '-0.18px', padding: '6px 6px', boxSizing: 'border-box' }}
         />
       </div>
 
       {/* Image upload error */}
       {imageUploadError && (
         <div style={{ position: 'absolute', left: 38, top: 556 }}>
-          <span style={{ ...SKB, fontSize: 9, color: '#FF0000', textTransform: 'uppercase', letterSpacing: '-0.18px' }}>{imageUploadError}</span>
+          <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: '#FF0000', textTransform: 'uppercase', letterSpacing: '-0.18px' }}>{imageUploadError}</span>
         </div>
       )}
 
       {/* General error */}
       {error && (
         <div style={{ position: 'absolute', left: 38, top: 572, width: 298 }}>
-          <span style={{ ...SKB, fontSize: 9, color: '#FF0000', textTransform: 'uppercase', letterSpacing: '-0.18px' }}>{error}</span>
+          <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: '#FF0000', textTransform: 'uppercase', letterSpacing: '-0.18px' }}>{error}</span>
         </div>
       )}
 
@@ -258,7 +258,7 @@ export default function ProfileSetup() {
           opacity: (isLoading || imageUploading || !!imageUploadError) ? 0.4 : 1,
         }}
       >
-        <span style={{ ...SKB, fontSize: 10, color: 'white', textTransform: 'uppercase', letterSpacing: '-0.2px' }}>
+        <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'white', textTransform: 'uppercase', letterSpacing: '-0.2px' }}>
           {isLoading ? 'SAVING...' : 'CONTINUE'}
         </span>
       </button>

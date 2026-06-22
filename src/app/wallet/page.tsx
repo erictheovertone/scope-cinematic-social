@@ -398,7 +398,7 @@ export default function WalletPage() {
           background: "#111", border: "1px solid rgba(255,255,255,0.15)",
           padding: "8px 16px", zIndex: 999,
         }}>
-          <span style={{ ...SKB, fontSize: 10, color: "white", textTransform: "uppercase" }}>{toast}</span>
+          <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: "white", textTransform: "uppercase" }}>{toast}</span>
         </div>
       )}
 
@@ -413,7 +413,7 @@ export default function WalletPage() {
           purchase can actually draw on; HOLDINGS is position value. Never show
           a balance a buy can't spend. */}
       <div style={{ textAlign: "center", padding: "28px 16px 20px" }}>
-        <p style={{ ...SKB, fontSize: 10, color: "white", opacity: 0.5, margin: "0 0 8px", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+        <p style={{ ...SKB, fontSize: 'var(--fs-10)', color: "white", opacity: 0.5, margin: "0 0 8px", textTransform: "uppercase", letterSpacing: "0.06em" }}>
           Total
         </p>
         <div style={{ position: "relative" }}>
@@ -423,14 +423,14 @@ export default function WalletPage() {
               key={fundPulse.id}
               style={{
                 ...SKB, position: "absolute", left: 0, right: 0, top: -16,
-                fontSize: 11, color: "#FF0000", letterSpacing: "0.08em",
+                fontSize: 'var(--fs-11)', color: "#FF0000", letterSpacing: "0.08em",
                 animation: "fundPulse 2.6s ease-out forwards", pointerEvents: "none",
               }}
             >
               [ +${fundPulse.usd.toFixed(2)} ]
             </span>
           )}
-          <p style={{ ...SKB, fontSize: 32, color: "white", margin: "0 0 8px", lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>
+          <p style={{ ...SKB, fontSize: 'var(--fs-32)', color: "white", margin: "0 0 8px", lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>
             {loading && animatedTotal == null ? "..." : animatedTotal != null ? `$${animatedTotal.toFixed(2)}` : "$—"}
           </p>
         </div>
@@ -440,18 +440,18 @@ export default function WalletPage() {
             AVAILABLE/HOLDINGS pair appears (earnings summary etc.). */}
         <div style={{ display: "flex", justifyContent: "center", gap: 56, margin: "14px 0 10px" }}>
           <div onClick={() => setActiveTab("balances")} style={{ cursor: "pointer" }}>
-            <p style={{ ...SKB, fontSize: 8, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.14em", margin: "0 0 5px" }}>
+            <p style={{ ...SKB, fontSize: 'var(--fs-8)', color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.14em", margin: "0 0 5px" }}>
               AVAILABLE
             </p>
-            <p style={{ ...SKB, fontSize: 16, color: "#FFFFFF", margin: 0, fontVariantNumeric: "tabular-nums" }}>
+            <p style={{ ...SKB, fontSize: 'var(--fs-16)', color: "#FFFFFF", margin: 0, fontVariantNumeric: "tabular-nums" }}>
               {animatedAvailable != null ? `$${animatedAvailable.toFixed(2)}` : "$—"}
             </p>
           </div>
           <div onClick={() => setActiveTab("holdings")} style={{ cursor: "pointer" }}>
-            <p style={{ ...SKB, fontSize: 8, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.14em", margin: "0 0 5px" }}>
+            <p style={{ ...SKB, fontSize: 'var(--fs-8)', color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.14em", margin: "0 0 5px" }}>
               HOLDINGS
             </p>
-            <p style={{ ...SKB, fontSize: 16, color: "#FF0000", margin: 0, fontVariantNumeric: "tabular-nums" }}>
+            <p style={{ ...SKB, fontSize: 'var(--fs-16)', color: "#FF0000", margin: 0, fontVariantNumeric: "tabular-nums" }}>
               {holdingsUsd != null ? `$${holdingsUsd.toFixed(2)}` : "…"}
             </p>
           </div>
@@ -461,7 +461,7 @@ export default function WalletPage() {
             onClick={() => {
               navigator.clipboard.writeText(walletAddress).then(() => showToast("Address copied"));
             }}
-            style={{ ...SKR, fontSize: 9, color: "white", opacity: 0.4, margin: 0, cursor: "pointer" }}
+            style={{ ...SKR, fontSize: 'var(--fs-9)', color: "white", opacity: 0.4, margin: 0, cursor: "pointer" }}
           >
             {shortAddr(walletAddress)}
           </p>
@@ -474,25 +474,25 @@ export default function WalletPage() {
           onClick={() => walletAddress && fundWallet(walletAddress, { chain: base })}
           style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "rgba(255,255,255,0.06)", border: "none", cursor: "pointer", padding: "14px 28px" }}
         >
-          <span style={{ fontSize: 24, color: "white", lineHeight: 1 }}>+</span>
-          <span style={{ ...SKB, fontSize: 9, color: "white", textTransform: "uppercase", letterSpacing: "0.06em" }}>DEPOSIT</span>
+          <span style={{ fontSize: 'var(--fs-24)', color: "white", lineHeight: 1 }}>+</span>
+          <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "white", textTransform: "uppercase", letterSpacing: "0.06em" }}>DEPOSIT</span>
         </button>
         <button
           onClick={() => setShowSend(true)}
           style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "rgba(255,255,255,0.06)", border: "none", cursor: "pointer", padding: "14px 28px" }}
         >
-          <span style={{ fontSize: 24, color: "white", lineHeight: 1 }}>↗</span>
-          <span style={{ ...SKB, fontSize: 9, color: "white", textTransform: "uppercase", letterSpacing: "0.06em" }}>SEND</span>
+          <span style={{ fontSize: 'var(--fs-24)', color: "white", lineHeight: 1 }}>↗</span>
+          <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "white", textTransform: "uppercase", letterSpacing: "0.06em" }}>SEND</span>
         </button>
       </div>
 
       {/* Or deposit directly */}
       {walletAddress && (
         <div style={{ textAlign: "center", padding: "0 16px 20px" }}>
-          <p style={{ ...SKB, fontSize: 8, color: "white", opacity: 0.3, margin: "0 0 4px", textTransform: "uppercase", letterSpacing: "0.06em" }}>or deposit directly</p>
+          <p style={{ ...SKB, fontSize: 'var(--fs-8)', color: "white", opacity: 0.3, margin: "0 0 4px", textTransform: "uppercase", letterSpacing: "0.06em" }}>or deposit directly</p>
           <p
             onClick={() => navigator.clipboard.writeText(walletAddress).then(() => showToast("Address copied"))}
-            style={{ ...SKR, fontSize: 9, color: "white", opacity: 0.5, margin: 0, cursor: "pointer", wordBreak: "break-all" }}
+            style={{ ...SKR, fontSize: 'var(--fs-9)', color: "white", opacity: 0.5, margin: 0, cursor: "pointer", wordBreak: "break-all" }}
           >
             {walletAddress}
           </p>
@@ -506,7 +506,7 @@ export default function WalletPage() {
             key={tab}
             onClick={() => setActiveTab(tab)}
             style={{
-              ...SKB, fontSize: 10, background: "none", border: "none",
+              ...SKB, fontSize: 'var(--fs-10)', background: "none", border: "none",
               cursor: "pointer", padding: "8px 0", marginRight: 20,
               color: "white", textTransform: "uppercase", letterSpacing: "0.06em",
               opacity: activeTab === tab ? 1 : 0.4,
@@ -529,16 +529,16 @@ export default function WalletPage() {
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 0", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                 <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#627EEA", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  <span style={{ fontSize: 16, color: "white" }}>Ξ</span>
+                  <span style={{ fontSize: 'var(--fs-16)', color: "white" }}>Ξ</span>
                 </div>
                 <div>
-                  <p style={{ ...SKB, fontSize: 11, color: "white", margin: 0, textTransform: "uppercase" }}>ETH</p>
-                  <p style={{ ...SKB, fontSize: 9, color: "white", opacity: 0.5, margin: "2px 0 0" }}>
+                  <p style={{ ...SKB, fontSize: 'var(--fs-11)', color: "white", margin: 0, textTransform: "uppercase" }}>ETH</p>
+                  <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: "white", opacity: 0.5, margin: "2px 0 0" }}>
                     {loading && ethBalance == null ? "..." : `${parseFloat(ethBalance ?? "0").toFixed(4)} ETH`}
                   </p>
                 </div>
               </div>
-              <p style={{ ...SKB, fontSize: 11, color: "white", margin: 0 }}>
+              <p style={{ ...SKB, fontSize: 'var(--fs-11)', color: "white", margin: 0 }}>
                 {loading && ethUsd == null ? "..." : ethUsd != null ? `$${ethUsd}` : "$—"}
               </p>
             </div>
@@ -547,16 +547,16 @@ export default function WalletPage() {
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 0" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                 <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#2775CA", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  <span style={{ fontSize: 13, color: "white", fontWeight: "bold" }}>$</span>
+                  <span style={{ fontSize: 'var(--fs-13)', color: "white", fontWeight: "bold" }}>$</span>
                 </div>
                 <div>
-                  <p style={{ ...SKB, fontSize: 11, color: "white", margin: 0, textTransform: "uppercase" }}>USDC</p>
-                  <p style={{ ...SKB, fontSize: 9, color: "white", opacity: 0.5, margin: "2px 0 0" }}>
+                  <p style={{ ...SKB, fontSize: 'var(--fs-11)', color: "white", margin: 0, textTransform: "uppercase" }}>USDC</p>
+                  <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: "white", opacity: 0.5, margin: "2px 0 0" }}>
                     {loading && usdcBalance == null ? "..." : `${parseFloat(usdcBalance ?? "0").toFixed(2)} USDC`}
                   </p>
                 </div>
               </div>
-              <p style={{ ...SKB, fontSize: 11, color: "white", margin: 0 }}>
+              <p style={{ ...SKB, fontSize: 'var(--fs-11)', color: "white", margin: 0 }}>
                 {loading && usdcUsd == null ? "..." : `$${usdcUsd ?? "0.00"}`}
               </p>
             </div>
@@ -568,11 +568,11 @@ export default function WalletPage() {
         {activeTab === "holdings" && (
           holdings === null ? (
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "30vh" }}>
-              <p style={{ ...SKB, fontSize: 10, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em" }}>LOADING…</p>
+              <p style={{ ...SKB, fontSize: 'var(--fs-10)', color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em" }}>LOADING…</p>
             </div>
           ) : holdings.length === 0 ? (
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "30vh" }}>
-              <p style={{ ...SKB, fontSize: 11, color: "white", opacity: 0.5, textAlign: "center", lineHeight: 1.6, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+              <p style={{ ...SKB, fontSize: 'var(--fs-11)', color: "white", opacity: 0.5, textAlign: "center", lineHeight: 1.6, textTransform: "uppercase", letterSpacing: "0.06em" }}>
                 No coin holdings yet
               </p>
             </div>
@@ -580,8 +580,8 @@ export default function WalletPage() {
             <div>
               {/* Total holdings value — austere, dollars. "+" marks unpriced pools. */}
               <div style={{ borderBottom: "1px solid #FF0000", padding: "4px 0 14px", marginBottom: 14 }}>
-                <p style={{ ...SKB, fontSize: 7, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.16em", margin: "0 0 6px" }}>HOLDINGS VALUE</p>
-                <p style={{ ...SKB, fontSize: 26, color: "#FF0000", margin: 0, fontVariantNumeric: "tabular-nums" }}>
+                <p style={{ ...SKB, fontSize: 'var(--fs-7)', color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.16em", margin: "0 0 6px" }}>HOLDINGS VALUE</p>
+                <p style={{ ...SKB, fontSize: 'var(--fs-26)', color: "#FF0000", margin: 0, fontVariantNumeric: "tabular-nums" }}>
                   ${holdings.reduce((s, h) => s + h.valueUsd, 0).toFixed(2)}
                 </p>
               </div>
@@ -595,12 +595,12 @@ export default function WalletPage() {
                     ? <img src={h.thumbUrl} alt="" style={{ width: 44, height: 30, objectFit: "cover", flexShrink: 0, background: "#111" }} />
                     : <div style={{ width: 44, height: 30, background: "#111", flexShrink: 0 }} />}
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    {h.ticker ? <TickerMark ticker={h.ticker} size={10} /> : <span style={{ ...SKB, fontSize: 10, color: "rgba(255,255,255,0.4)" }}>—</span>}
-                    <p style={{ ...SKR, fontSize: 9, color: "rgba(255,255,255,0.45)", margin: "3px 0 0", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                    {h.ticker ? <TickerMark ticker={h.ticker} size={10} /> : <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: "rgba(255,255,255,0.4)" }}>—</span>}
+                    <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: "rgba(255,255,255,0.45)", margin: "3px 0 0", textTransform: "uppercase", letterSpacing: "0.06em" }}>
                       {h.pieces.toLocaleString()} {h.pieces === 1 ? "PIECE" : "PIECES"}
                     </p>
                   </div>
-                  <span style={{ ...SKB, fontSize: 13, color: "white", fontVariantNumeric: "tabular-nums" }}>
+                  <span style={{ ...SKB, fontSize: 'var(--fs-13)', color: "white", fontVariantNumeric: "tabular-nums" }}>
                     {`$${h.valueUsd.toFixed(2)}`}
                   </span>
                 </div>
@@ -622,9 +622,9 @@ export default function WalletPage() {
         {activeTab === "activity" && (
           <div>
             {loading && txHistory.length === 0 ? (
-              <p style={{ ...SKB, fontSize: 10, color: "white", opacity: 0.4, textAlign: "center", marginTop: 40, textTransform: "uppercase" }}>Loading…</p>
+              <p style={{ ...SKB, fontSize: 'var(--fs-10)', color: "white", opacity: 0.4, textAlign: "center", marginTop: 40, textTransform: "uppercase" }}>Loading…</p>
             ) : txHistory.length === 0 ? (
-              <p style={{ ...SKB, fontSize: 10, color: "white", opacity: 0.4, textAlign: "center", marginTop: 40, textTransform: "uppercase" }}>No transactions yet</p>
+              <p style={{ ...SKB, fontSize: 'var(--fs-10)', color: "white", opacity: 0.4, textAlign: "center", marginTop: 40, textTransform: "uppercase" }}>No transactions yet</p>
             ) : (
               txHistory.map((tx: any, i: number) => {
                 const isSent = tx.from?.toLowerCase() === walletAddress.toLowerCase();
@@ -640,18 +640,18 @@ export default function WalletPage() {
                     style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid rgba(255,255,255,0.06)" }}
                   >
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      <span style={{ fontSize: 16, color: isSent ? "rgba(255,255,255,0.5)" : "white" }}>
+                      <span style={{ fontSize: 'var(--fs-16)', color: isSent ? "rgba(255,255,255,0.5)" : "white" }}>
                         {isSent ? "↑" : "↓"}
                       </span>
                       <div>
-                        <p style={{ fontSize: 10, color: "white", margin: 0 }}>
+                        <p style={{ fontSize: 'var(--fs-10)', color: "white", margin: 0 }}>
                           <span style={{ ...SKB, textTransform: "uppercase", letterSpacing: "0.04em" }}>{isSent ? "To" : "From"} </span>
                           <span style={{ ...SKR }}>{counterpart ? shortAddr(counterpart) : "—"}</span>
                         </p>
-                        <p style={{ ...SKB, fontSize: 9, color: "white", opacity: 0.4, margin: "2px 0 0", textTransform: "uppercase" }}>{date}</p>
+                        <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: "white", opacity: 0.4, margin: "2px 0 0", textTransform: "uppercase" }}>{date}</p>
                       </div>
                     </div>
-                    <p style={{ ...SKB, fontSize: 10, color: "white", margin: 0, textTransform: "uppercase" }}>
+                    <p style={{ ...SKB, fontSize: 'var(--fs-10)', color: "white", margin: 0, textTransform: "uppercase" }}>
                       {isSent ? "-" : "+"}{amount} {asset}
                     </p>
                   </div>
@@ -685,10 +685,10 @@ export default function WalletPage() {
           {/* Header */}
           <div style={{ flexShrink: 0, position: "relative", display: "flex", alignItems: "center", justifyContent: "center", padding: "10px 16px 8px" }}>
             <div style={{ position: "absolute", top: 8, left: "50%", transform: "translateX(-50%)", width: 40, height: 2, backgroundColor: "rgba(255,255,255,0.2)" }} />
-            <span style={{ ...SKB, fontSize: 11, color: "white", marginTop: 8, textTransform: "uppercase", letterSpacing: "0.06em" }}>SEND</span>
+            <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: "white", marginTop: 8, textTransform: "uppercase", letterSpacing: "0.06em" }}>SEND</span>
             <button
               onClick={() => setShowSend(false)}
-              style={{ position: "absolute", right: 16, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "white", fontSize: 18, lineHeight: 1, padding: 0, marginTop: 4 }}
+              style={{ position: "absolute", right: 16, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "white", fontSize: 'var(--fs-18)', lineHeight: 1, padding: 0, marginTop: 4 }}
             >×</button>
           </div>
           <div style={{ height: 1, background: "rgba(255,255,255,0.08)" }} />
@@ -697,38 +697,38 @@ export default function WalletPage() {
             {sendStep === "sent" ? (
               /* TERMINAL — bracket state, then the sheet resolves itself. */
               <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: 180 }}>
-                <span style={{ ...SKB, fontSize: 14, color: "#FF0000", textTransform: "uppercase", letterSpacing: "0.12em" }}>{sentLabel}</span>
+                <span style={{ ...SKB, fontSize: 'var(--fs-14)', color: "#FF0000", textTransform: "uppercase", letterSpacing: "0.12em" }}>{sentLabel}</span>
               </div>
             ) : sendStep === "sending" ? (
               <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, minHeight: 180 }}>
                 <FrameLoader size={22} />
-                <span style={{ ...SKB, fontSize: 11, color: "white", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+                <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: "white", textTransform: "uppercase", letterSpacing: "0.1em" }}>
                   SENDING · ${isFinite(sendUsdNum) ? sendUsdNum.toFixed(2) : ""}…
                 </span>
               </div>
             ) : sendStep === "review" ? (
               /* THE REVIEW STEP — the sanctioned two-step (irreversible act). */
               <>
-                <p style={{ ...SKB, fontSize: 9, color: "rgba(255,255,255,0.5)", margin: "0 0 6px", textTransform: "uppercase", letterSpacing: "0.12em" }}>REVIEW — SENDING</p>
-                <p style={{ ...SKB, fontSize: 22, color: "white", margin: "0 0 2px", fontVariantNumeric: "tabular-nums" }}>${sendUsdNum.toFixed(2)}</p>
-                <p style={{ ...SKR, fontSize: 10, color: "rgba(255,255,255,0.5)", margin: "0 0 16px" }}>
+                <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: "rgba(255,255,255,0.5)", margin: "0 0 6px", textTransform: "uppercase", letterSpacing: "0.12em" }}>REVIEW — SENDING</p>
+                <p style={{ ...SKB, fontSize: 'var(--fs-22)', color: "white", margin: "0 0 2px", fontVariantNumeric: "tabular-nums" }}>${sendUsdNum.toFixed(2)}</p>
+                <p style={{ ...SKR, fontSize: 'var(--fs-10)', color: "rgba(255,255,255,0.5)", margin: "0 0 16px" }}>
                   = {sendToken === "USDC" ? `${sendUsdNum.toFixed(2)} USDC` : `${(sendNativeNum ?? 0).toFixed(6)} ETH`}
                 </p>
-                <p style={{ ...SKB, fontSize: 9, color: "rgba(255,255,255,0.5)", margin: "0 0 6px", textTransform: "uppercase", letterSpacing: "0.12em" }}>TO</p>
-                <p style={{ ...SKR, fontSize: 11, color: "white", margin: "0 0 16px", wordBreak: "break-all", lineHeight: 1.5 }}>{(() => { try { return getAddress(sendTo.trim()); } catch { return sendTo; } })()}</p>
-                <p style={{ ...SKR, fontSize: 9, color: "rgba(255,255,255,0.45)", margin: "0 0 14px", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: "rgba(255,255,255,0.5)", margin: "0 0 6px", textTransform: "uppercase", letterSpacing: "0.12em" }}>TO</p>
+                <p style={{ ...SKR, fontSize: 'var(--fs-11)', color: "white", margin: "0 0 16px", wordBreak: "break-all", lineHeight: 1.5 }}>{(() => { try { return getAddress(sendTo.trim()); } catch { return sendTo; } })()}</p>
+                <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: "rgba(255,255,255,0.45)", margin: "0 0 14px", textTransform: "uppercase", letterSpacing: "0.06em" }}>
                   EST. GAS {sendGasUsd != null ? `$${sendGasUsd.toFixed(4)}` : "$—"}
                 </p>
                 <div style={{ border: "1px solid rgba(255,0,0,0.55)", padding: "10px 12px", marginBottom: 16 }}>
-                  <p style={{ ...SKB, fontSize: 9, color: "#FF0000", textTransform: "uppercase", letterSpacing: "0.08em", margin: 0, lineHeight: 1.5 }}>
+                  <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: "#FF0000", textTransform: "uppercase", letterSpacing: "0.08em", margin: 0, lineHeight: 1.5 }}>
                     BASE NETWORK ONLY — funds sent to addresses on other networks are unrecoverable.
                   </p>
                 </div>
-                {sendError && <p style={{ ...SKR, fontSize: 10, color: "#FF0000", margin: "0 0 12px", lineHeight: 1.4 }}>{sendError}</p>}
-                <button onClick={doSend} style={{ ...SKB, fontSize: 11, color: "white", background: "#FF0000", border: "none", cursor: "pointer", padding: "13px", width: "100%", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>
+                {sendError && <p style={{ ...SKR, fontSize: 'var(--fs-10)', color: "#FF0000", margin: "0 0 12px", lineHeight: 1.4 }}>{sendError}</p>}
+                <button onClick={doSend} style={{ ...SKB, fontSize: 'var(--fs-11)', color: "white", background: "#FF0000", border: "none", cursor: "pointer", padding: "13px", width: "100%", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>
                   SEND · ${sendUsdNum.toFixed(2)}
                 </button>
-                <button onClick={() => { setSendStep("input"); setSendError(null); }} style={{ ...SKB, fontSize: 10, color: "rgba(255,255,255,0.5)", background: "transparent", border: "1px solid rgba(255,255,255,0.15)", cursor: "pointer", padding: "11px", width: "100%", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                <button onClick={() => { setSendStep("input"); setSendError(null); }} style={{ ...SKB, fontSize: 'var(--fs-10)', color: "rgba(255,255,255,0.5)", background: "transparent", border: "1px solid rgba(255,255,255,0.15)", cursor: "pointer", padding: "11px", width: "100%", textTransform: "uppercase", letterSpacing: "0.08em" }}>
                   BACK
                 </button>
               </>
@@ -741,7 +741,7 @@ export default function WalletPage() {
                       key={t}
                       onClick={() => { setSendToken(t); setSendError(null); }}
                       style={{
-                        ...SKB, fontSize: 10, background: "transparent",
+                        ...SKB, fontSize: 'var(--fs-10)', background: "transparent",
                         border: `1px solid ${sendToken === t ? "white" : "rgba(255,255,255,0.3)"}`,
                         color: "white", opacity: sendToken === t ? 1 : 0.4,
                         cursor: "pointer", padding: "6px 16px", textTransform: "uppercase", letterSpacing: "0.06em",
@@ -750,50 +750,50 @@ export default function WalletPage() {
                   ))}
                 </div>
 
-                <p style={{ ...SKB, fontSize: 9, color: "white", opacity: 0.5, margin: "0 0 6px", textTransform: "uppercase", letterSpacing: "0.06em" }}>TO</p>
+                <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: "white", opacity: 0.5, margin: "0 0 6px", textTransform: "uppercase", letterSpacing: "0.06em" }}>TO</p>
                 <input
                   type="text"
                   value={sendTo}
                   onChange={e => { setSendTo(e.target.value); setSendError(null); }}
                   placeholder="0x… wallet address (Base)"
                   style={{
-                    ...SKR, fontSize: 11, color: "white", background: "transparent",
+                    ...SKR, fontSize: 'var(--fs-11)', color: "white", background: "transparent",
                     border: "none", borderBottom: "1px solid rgba(255,255,255,0.3)",
                     outline: "none", width: "100%", padding: "4px 0", marginBottom: 20,
                     boxSizing: "border-box",
                   }}
                 />
 
-                <p style={{ ...SKB, fontSize: 9, color: "white", opacity: 0.5, margin: "0 0 6px", textTransform: "uppercase", letterSpacing: "0.06em" }}>AMOUNT · DOLLARS</p>
+                <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: "white", opacity: 0.5, margin: "0 0 6px", textTransform: "uppercase", letterSpacing: "0.06em" }}>AMOUNT · DOLLARS</p>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
-                  <span style={{ ...SKB, fontSize: 14, color: sendAmount ? "white" : "rgba(255,255,255,0.3)" }}>$</span>
+                  <span style={{ ...SKB, fontSize: 'var(--fs-14)', color: sendAmount ? "white" : "rgba(255,255,255,0.3)" }}>$</span>
                   <input
                     inputMode="decimal"
                     value={sendAmount}
                     onChange={e => { setSendAmount(e.target.value.replace(/[^0-9.]/g, "")); setSendError(null); }}
                     placeholder="0.00"
                     style={{
-                      ...SKB, fontSize: 14, color: "white", background: "transparent",
+                      ...SKB, fontSize: 'var(--fs-14)', color: "white", background: "transparent",
                       border: "none", borderBottom: "1px solid rgba(255,255,255,0.3)",
                       outline: "none", flex: 1, padding: "4px 0", fontVariantNumeric: "tabular-nums",
                     }}
                   />
-                  <button onClick={sendMax} style={{ ...SKB, fontSize: 9, color: "white", background: "transparent", border: "1px solid rgba(255,255,255,0.3)", cursor: "pointer", padding: "5px 10px", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                  <button onClick={sendMax} style={{ ...SKB, fontSize: 'var(--fs-9)', color: "white", background: "transparent", border: "1px solid rgba(255,255,255,0.3)", cursor: "pointer", padding: "5px 10px", textTransform: "uppercase", letterSpacing: "0.08em" }}>
                     MAX
                   </button>
                 </div>
-                <p style={{ ...SKB, fontSize: 9, color: "white", opacity: 0.5, margin: "0 0 20px", textTransform: "uppercase" }}>
+                <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: "white", opacity: 0.5, margin: "0 0 20px", textTransform: "uppercase" }}>
                   Available: {sendToken === "ETH"
                     ? `${parseFloat(ethBalance ?? "0").toFixed(4)} ETH${ethUsd != null ? ` ($${ethUsd})` : ""}`
                     : `${parseFloat(usdcBalance ?? "0").toFixed(2)} USDC`}
                 </p>
 
-                {sendError && <p style={{ ...SKR, fontSize: 10, color: "#FF0000", margin: "0 0 12px", lineHeight: 1.4 }}>{sendError}</p>}
+                {sendError && <p style={{ ...SKR, fontSize: 'var(--fs-10)', color: "#FF0000", margin: "0 0 12px", lineHeight: 1.4 }}>{sendError}</p>}
 
                 <button
                   onClick={goReview}
                   style={{
-                    ...SKB, fontSize: 11, color: "white", background: "transparent",
+                    ...SKB, fontSize: 'var(--fs-11)', color: "white", background: "transparent",
                     border: "1px solid white", cursor: "pointer", padding: "12px",
                     width: "100%", textTransform: "uppercase", letterSpacing: "0.06em",
                   }}

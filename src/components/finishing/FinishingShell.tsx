@@ -63,8 +63,8 @@ const menuItem: React.CSSProperties = {
   width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
   gap: 10, padding: '10px 12px', background: 'transparent', border: 'none', cursor: 'pointer',
 };
-const menuLabel: React.CSSProperties = { ...SKB, fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'inherit' };
-const menuTag: React.CSSProperties = { ...SKB, fontSize: 7, textTransform: 'uppercase', letterSpacing: '0.1em', color: RED };
+const menuLabel: React.CSSProperties = { ...SKB, fontSize: 'var(--fs-9)', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'inherit' };
+const menuTag: React.CSSProperties = { ...SKB, fontSize: 'var(--fs-7)', textTransform: 'uppercase', letterSpacing: '0.1em', color: RED };
 
 type Source = HTMLImageElement | HTMLVideoElement;
 
@@ -517,11 +517,11 @@ export default function FinishingShell({
           </div>
         )
       ) : (
-        <span style={{ ...SKB, fontSize: 10, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>LOADING…</span>
+        <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>LOADING…</span>
       )}
       {showingOriginal && (
         <div style={{ position: 'absolute', top: 10, left: 10, background: RED, padding: '3px 7px' }}>
-          <span style={{ ...SKB, fontSize: 9, color: '#000', textTransform: 'uppercase', letterSpacing: '0.1em' }}>BEFORE</span>
+          <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: '#000', textTransform: 'uppercase', letterSpacing: '0.1em' }}>BEFORE</span>
         </div>
       )}
     </>
@@ -545,7 +545,7 @@ export default function FinishingShell({
       <div style={{ padding: '12px 16px 14px', display: 'flex', flexDirection: 'column', gap: 12 }}>
         <AddToPalette isPro={isPro} onUpsell={() => showUpsell('edit')} onSave={saveLook} />
         {savedLooks.length === 0 ? (
-          <span style={{ ...SKB, fontSize: 9, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.08em', lineHeight: 1.6 }}>NO SAVED LOOKS YET · ADD TO PALETTE SAVES YOUR CURRENT EDIT</span>
+          <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.08em', lineHeight: 1.6 }}>NO SAVED LOOKS YET · ADD TO PALETTE SAVES YOUR CURRENT EDIT</span>
         ) : (
           <div style={{ display: 'flex', gap: 8, overflowX: 'auto' }}>
             {savedLooks.map((look) => (
@@ -603,8 +603,8 @@ export default function FinishingShell({
         <>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
             {backToBrowsing}
-            <span style={{ ...SKB, fontSize: 10, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{activeTool.label}</span>
-            {activeTool.pro && <span style={{ ...SKB, fontSize: 7, color: RED, textTransform: 'uppercase', letterSpacing: '0.12em', border: `1px solid ${RED}`, padding: '1px 4px' }}>PRO</span>}
+            <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{activeTool.label}</span>
+            {activeTool.pro && <span style={{ ...SKB, fontSize: 'var(--fs-7)', color: RED, textTransform: 'uppercase', letterSpacing: '0.12em', border: `1px solid ${RED}`, padding: '1px 4px' }}>PRO</span>}
           </div>
           {toolControlBody}
         </>
@@ -673,10 +673,10 @@ export default function FinishingShell({
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 3L5 8l5 5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
               </button>
             )}
-            <span style={{ ...SKB, fontSize: 12, color: 'white', textTransform: 'uppercase', letterSpacing: '0.06em' }}>FINISHING</span>
+            <span style={{ ...SKB, fontSize: 'var(--fs-12)', color: 'white', textTransform: 'uppercase', letterSpacing: '0.06em' }}>FINISHING</span>
           </div>
           <button onClick={onDone} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4 }}>
-            <span style={{ ...SKB, fontSize: 12, color: RED, textTransform: 'uppercase', letterSpacing: '0.06em' }}>DONE</span>
+            <span style={{ ...SKB, fontSize: 'var(--fs-12)', color: RED, textTransform: 'uppercase', letterSpacing: '0.06em' }}>DONE</span>
           </button>
         </div>
       )}
@@ -747,7 +747,7 @@ export default function FinishingShell({
           {/* Theatre AR label — viewing-at-size cue (portrait shows it via the dock context) */}
           {theatre && (
             <div style={{ position: 'absolute', bottom: 8, left: 0, right: 0, display: 'flex', justifyContent: 'center', pointerEvents: 'none' }}>
-              <span style={{ ...SKB, fontSize: 8, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>{arChip.ratioLabel}{showingOriginal ? ' · BEFORE' : ''}</span>
+              <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>{arChip.ratioLabel}{showingOriginal ? ' · BEFORE' : ''}</span>
             </div>
           )}
         </div>
@@ -767,14 +767,14 @@ export default function FinishingShell({
       {/* ── Zoom level slider — only while Zoom is active ── */}
       {zoom.active && (
         <div key="zoom" style={{ flexShrink: 0, padding: theatre ? '8px 18px' : '10px 18px', borderTop: '1px solid rgba(255,255,255,0.08)', background: '#000', display: 'flex', alignItems: 'center', gap: 12 }}>
-          <span style={{ ...SKB, fontSize: 9, color: RED, textTransform: 'uppercase', letterSpacing: '0.08em', whiteSpace: 'nowrap' }}>ZOOM {zoom.level.toFixed(1)}×</span>
+          <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: RED, textTransform: 'uppercase', letterSpacing: '0.08em', whiteSpace: 'nowrap' }}>ZOOM {zoom.level.toFixed(1)}×</span>
           <input
             type="range" min={1} max={8} step={0.1} value={zoom.level}
             onChange={(e) => setZoom((z) => ({ ...z, level: parseFloat(e.target.value) }))}
             style={{ flex: 1, accentColor: RED }}
           />
           <button onClick={() => setZoom({ active: false, level: 2, panX: 0.5, panY: 0.5 })} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', cursor: 'pointer', padding: '4px 8px' }}>
-            <span style={{ ...SKB, fontSize: 8, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>EXIT</span>
+            <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>EXIT</span>
           </button>
         </div>
       )}
@@ -835,8 +835,8 @@ export default function FinishingShell({
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 3l8 8M11 3l-8 8" stroke="white" strokeWidth="1.4" strokeLinecap="round" /></svg>
             </button>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}>
-              <span style={{ ...SKB, fontSize: 10, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{activeTool?.label ?? ''}</span>
-              {activeTool?.pro && <span style={{ ...SKB, fontSize: 7, color: RED, textTransform: 'uppercase', letterSpacing: '0.12em', border: `1px solid ${RED}`, padding: '1px 4px' }}>PRO</span>}
+              <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{activeTool?.label ?? ''}</span>
+              {activeTool?.pro && <span style={{ ...SKB, fontSize: 'var(--fs-7)', color: RED, textTransform: 'uppercase', letterSpacing: '0.12em', border: `1px solid ${RED}`, padding: '1px 4px' }}>PRO</span>}
             </span>
             <button onClick={commitTool} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4, lineHeight: 0 }}>
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3.5 3.5L13 4.5" stroke={RED} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
@@ -855,7 +855,7 @@ export default function FinishingShell({
           <div style={{ display: 'flex', flexDirection: 'column', gap: 2, background: '#000', border: subcatMenuOpen ? '1px solid rgba(255,255,255,0.18)' : '1px solid transparent', transformOrigin: 'bottom left', transform: subcatMenuOpen ? 'scale(1)' : 'scale(0.7)', opacity: subcatMenuOpen ? 1 : 0, pointerEvents: subcatMenuOpen ? 'auto' : 'none', transition: `transform ${subcatMenuOpen ? 0.3 : 0.2}s ${SNAP}, opacity ${subcatMenuOpen ? 0.3 : 0.2}s ${SNAP}` }}>
             {modeDef(activeMode).subcats.map((s) => (
               <button key={s.key} onClick={() => { setActiveSubcat(s.key); setSubcatMenuOpen(false); }} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '8px 14px', textAlign: 'left' }}>
-                <span style={{ ...SKB, fontSize: 9, color: s.key === activeSubcat ? RED : 'white', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{s.label}</span>
+                <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: s.key === activeSubcat ? RED : 'white', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{s.label}</span>
               </button>
             ))}
           </div>

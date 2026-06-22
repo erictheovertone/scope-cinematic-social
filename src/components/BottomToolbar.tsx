@@ -177,7 +177,7 @@ export default function BottomToolbar({ page, unreadCount = 0, onNotificationsCl
                   color: 'white',
                   fontFamily: "'SK-Modernist', sans-serif",
                   fontWeight: 700,
-                  fontSize: 8,
+                  fontSize: 'var(--fs-8)',
                   lineHeight: 1,
                   padding: '1px 3px',
                   minWidth: 14,

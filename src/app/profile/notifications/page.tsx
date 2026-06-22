@@ -81,7 +81,7 @@ export default function NotificationsPage() {
   );
 
   return (
-    <div className="bg-black w-full max-w-[375px] min-h-screen mx-auto flex flex-col">
+    <div className="bg-black w-full app-shell screen-min mx-auto flex flex-col">
 
       {/* Header */}
       <div className="relative flex items-center px-[4px] pt-[12px] pb-[10px]">
@@ -89,13 +89,13 @@ export default function NotificationsPage() {
           onClick={() => router.back()}
           className="bg-transparent border-none cursor-pointer p-0"
         >
-          <span style={{ ...SKR, fontSize: 9, color: "white", letterSpacing: "-0.18px" }}>
+          <span style={{ ...SKR, fontSize: 'var(--fs-9)', color: "white", letterSpacing: "-0.18px" }}>
             ← Back
           </span>
         </button>
         <span
           className="absolute left-1/2"
-          style={{ ...SKB, fontSize: 9, color: "white", letterSpacing: "-0.18px", transform: "translateX(-50%)" }}
+          style={{ ...SKB, fontSize: 'var(--fs-9)', color: "white", letterSpacing: "-0.18px", transform: "translateX(-50%)" }}
         >
           NOTIFICATIONS
         </span>
@@ -111,7 +111,7 @@ export default function NotificationsPage() {
               flex: 1, background: "transparent", border: "none",
               borderBottom: `1px solid ${tab === t ? "#FF0000" : "transparent"}`,
               cursor: "pointer", padding: "9px 0",
-              ...SKB, fontSize: 9, letterSpacing: "0.12em",
+              ...SKB, fontSize: 'var(--fs-9)', letterSpacing: "0.12em",
               color: tab === t ? "#FFF" : "rgba(255,255,255,0.4)", textTransform: "uppercase",
             }}
           >
@@ -128,13 +128,13 @@ export default function NotificationsPage() {
           </div>
         ) : !user ? (
           <div className="flex items-center justify-center mt-12">
-            <p style={{ ...SKR, fontSize: 9, color: "rgba(255,255,255,0.4)" }}>
+            <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: "rgba(255,255,255,0.4)" }}>
               Sign in to see notifications
             </p>
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex items-center justify-center mt-12">
-            <p style={{ ...SKR, fontSize: 9, color: "rgba(255,255,255,0.4)" }}>
+            <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: "rgba(255,255,255,0.4)" }}>
               No {tab === "economic" ? "market" : "social"} notifications yet
             </p>
           </div>
@@ -162,10 +162,10 @@ export default function NotificationsPage() {
 
               {/* Message + timestamp — bumped up for legibility (8→11 / 6→8). */}
               <div className="flex-1 min-w-0">
-                <p style={{ ...SKR, fontSize: 11, color: "white", letterSpacing: "-0.16px", lineHeight: 1.4, margin: 0, wordBreak: "break-word" }}>
+                <p style={{ ...SKR, fontSize: 'var(--fs-11)', color: "white", letterSpacing: "-0.16px", lineHeight: 1.4, margin: 0, wordBreak: "break-word" }}>
                   <NotificationActorMessage handle={n.actor_handle ?? null} type={n.type} onNavigate={goToActor} />
                 </p>
-                <p style={{ ...SKR, fontSize: 8, color: "rgba(255,255,255,0.4)", letterSpacing: "-0.1px", margin: "2px 0 0" }}>
+                <p style={{ ...SKR, fontSize: 'var(--fs-8)', color: "rgba(255,255,255,0.4)", letterSpacing: "-0.1px", margin: "2px 0 0" }}>
                   {timeAgo(n.created_at)}
                 </p>
               </div>

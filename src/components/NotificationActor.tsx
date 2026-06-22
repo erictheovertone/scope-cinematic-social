@@ -48,7 +48,7 @@ export function NotificationActorAvatar({ handle, avatar, size = 24, onNavigate 
       {avatar ? (
         <img src={avatar} alt={handle ?? ""} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
       ) : (
-        <span style={{ ...SKB, fontSize: 9, color: "white" }}>
+        <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "white" }}>
           {handle?.[0]?.toUpperCase() ?? "?"}
         </span>
       )}

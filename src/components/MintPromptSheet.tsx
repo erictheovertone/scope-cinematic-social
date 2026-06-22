@@ -146,13 +146,13 @@ export default function MintPromptSheet({ visible, onMint, onSkip, onCoinSkipped
              itself needs gas). Onramp ETH directly — the one path that works on a
              zero-gas wallet. (Swap-as-primary needs a paymaster; see notes.) */
           <div>
-            <p style={{ ...SKB, fontSize: 16, color: 'white', textTransform: 'uppercase', letterSpacing: '-0.02em', margin: '0 0 6px' }}>
+            <p style={{ ...SKB, fontSize: 'var(--fs-16)', color: 'white', textTransform: 'uppercase', letterSpacing: '-0.02em', margin: '0 0 6px' }}>
               YOU NEED A LITTLE ETH
             </p>
-            <p style={{ ...SKB, fontSize: 16, color: '#FF0000', textTransform: 'uppercase', letterSpacing: '-0.02em', margin: '0 0 20px' }}>
+            <p style={{ ...SKB, fontSize: 'var(--fs-16)', color: '#FF0000', textTransform: 'uppercase', letterSpacing: '-0.02em', margin: '0 0 20px' }}>
               TO CREATE A COIN.
             </p>
-            <p style={{ ...SKR, fontSize: 12, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, margin: '0 0 28px' }}>
+            <p style={{ ...SKR, fontSize: 'var(--fs-12)', color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, margin: '0 0 28px' }}>
               Creating a coin takes a tiny network fee, paid in ETH — usually less than a cent on Base. Add a little ETH to your wallet with a card or Apple Pay and you&rsquo;re set.
             </p>
             {[
@@ -162,7 +162,7 @@ export default function MintPromptSheet({ visible, onMint, onSkip, onCoinSkipped
             ].map((item, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 8 }}>
                 <div style={{ width: 4, height: 4, borderRadius: '50%', backgroundColor: '#FF0000', flexShrink: 0, marginTop: 4 }} />
-                <p style={{ ...SKR, fontSize: 11, color: 'rgba(255,255,255,0.6)', margin: 0, lineHeight: 1.5 }}>{item}</p>
+                <p style={{ ...SKR, fontSize: 'var(--fs-11)', color: 'rgba(255,255,255,0.6)', margin: 0, lineHeight: 1.5 }}>{item}</p>
               </div>
             ))}
             <button
@@ -173,7 +173,7 @@ export default function MintPromptSheet({ visible, onMint, onSkip, onCoinSkipped
               }}
               style={{ width: '100%', background: '#FF0000', border: 'none', cursor: 'pointer', padding: '14px 0', marginTop: 24, marginBottom: 10 }}
             >
-              <span style={{ ...SKB, fontSize: 12, color: 'white', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+              <span style={{ ...SKB, fontSize: 'var(--fs-12)', color: 'white', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                 ADD ETH · CARD OR APPLE PAY
               </span>
             </button>
@@ -181,12 +181,12 @@ export default function MintPromptSheet({ visible, onMint, onSkip, onCoinSkipped
               onClick={() => { setInsufficientFunds(false); onCoinSkipped(); }}
               style={{ width: '100%', background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', cursor: 'pointer', padding: '12px 0' }}
             >
-              <span style={{ ...SKB, fontSize: 10, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+              <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                 SKIP FOR NOW
               </span>
             </button>
             {embeddedWallet && (
-              <p style={{ ...SKR, fontSize: 8, color: 'rgba(255,255,255,0.2)', textAlign: 'center', margin: '12px 0 0' }}>
+              <p style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.2)', textAlign: 'center', margin: '12px 0 0' }}>
                 YOUR WALLET · {embeddedWallet.address.slice(0, 6)}...{embeddedWallet.address.slice(-4)}
               </p>
             )}
@@ -211,14 +211,14 @@ export default function MintPromptSheet({ visible, onMint, onSkip, onCoinSkipped
                 )}
               </div>
             )}
-            <p style={{ ...SKB, fontSize: 16, color: 'white', textTransform: 'uppercase', letterSpacing: '-0.02em', margin: '0 0 10px' }}>
+            <p style={{ ...SKB, fontSize: 'var(--fs-16)', color: 'white', textTransform: 'uppercase', letterSpacing: '-0.02em', margin: '0 0 10px' }}>
               YOUR POST IS LIVE.
             </p>
-            <p style={{ ...SKB, fontSize: 16, color: '#FF0000', textTransform: 'uppercase', letterSpacing: '-0.02em', margin: '0 0 20px' }}>
+            <p style={{ ...SKB, fontSize: 'var(--fs-16)', color: '#FF0000', textTransform: 'uppercase', letterSpacing: '-0.02em', margin: '0 0 20px' }}>
               WANT TO EARN FROM IT?
             </p>
 
-            <p style={{ ...SKR, fontSize: 12, color: 'rgba(255,255,255,0.6)', lineHeight: 1.6, margin: '0 0 20px' }}>
+            <p style={{ ...SKR, fontSize: 'var(--fs-12)', color: 'rgba(255,255,255,0.6)', lineHeight: 1.6, margin: '0 0 20px' }}>
               Mint this post to Base and earn ETH every time someone collects it. Your work becomes a token — and you get a cut of every trade, forever.
             </p>
 
@@ -226,7 +226,7 @@ export default function MintPromptSheet({ visible, onMint, onSkip, onCoinSkipped
               onClick={() => setExpanded(v => !v)}
               style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '0 0 16px', display: 'flex', alignItems: 'center', gap: 8 }}
             >
-              <span style={{ ...SKB, fontSize: 9, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+              <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
                 {expanded ? 'LESS' : 'HOW DOES THIS WORK?'}
               </span>
               <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ transform: expanded ? 'rotate(45deg)' : 'none', transition: 'transform 0.2s ease' }}>
@@ -247,10 +247,10 @@ export default function MintPromptSheet({ visible, onMint, onSkip, onCoinSkipped
                 { step: '3', title: 'YOU EARN. EVERY TIME. FOREVER.', text: 'Every time anyone buys or sells a piece — today, next year, ten years from now — a small fee is taken, and a slice goes straight to your wallet. Not just the first sale. Every sale.' },
               ].map(({ step, title, text }) => (
                 <div key={step} style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
-                  <span style={{ ...SKB, fontSize: 8, color: '#FF0000', letterSpacing: '0.1em', flexShrink: 0, marginTop: 2 }}>{step}</span>
+                  <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: '#FF0000', letterSpacing: '0.1em', flexShrink: 0, marginTop: 2 }}>{step}</span>
                   <div>
-                    <p style={{ ...SKB, fontSize: 11, color: 'white', textTransform: 'uppercase', letterSpacing: '0.04em', margin: '0 0 3px', lineHeight: 1.3 }}>{title}</p>
-                    <p style={{ ...SKR, fontSize: 11, color: 'rgba(255,255,255,0.55)', lineHeight: 1.5, margin: 0 }}>{text}</p>
+                    <p style={{ ...SKB, fontSize: 'var(--fs-11)', color: 'white', textTransform: 'uppercase', letterSpacing: '0.04em', margin: '0 0 3px', lineHeight: 1.3 }}>{title}</p>
+                    <p style={{ ...SKR, fontSize: 'var(--fs-11)', color: 'rgba(255,255,255,0.55)', lineHeight: 1.5, margin: 0 }}>{text}</p>
                   </div>
                 </div>
               ))}
@@ -259,42 +259,42 @@ export default function MintPromptSheet({ visible, onMint, onSkip, onCoinSkipped
             {/* Ticker — creator-assigned symbol, caption-derived suggestion. */}
             <div style={{ marginBottom: 14 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                <span style={{ ...SKB, fontSize: 9, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>TICKER</span>
-                <span style={{ ...SKR, fontSize: 8, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>3–6 · A–Z 0–9</span>
+                <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>TICKER</span>
+                <span style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>3–6 · A–Z 0–9</span>
               </div>
               {/* Bracket frame, not the $ cashtag — $ appears ONLY on money. */}
               <div style={{ display: 'flex', alignItems: 'center', border: '1px solid rgba(255,255,255,0.18)', padding: '0 12px' }}>
-                <span style={{ ...SKB, fontSize: 16, color: '#FF0000' }}>[</span>
+                <span style={{ ...SKB, fontSize: 'var(--fs-16)', color: '#FF0000' }}>[</span>
                 <input
                   value={ticker}
                   onChange={(e) => onTickerChange(e.target.value)}
                   placeholder="TICKER"
                   maxLength={6}
-                  style={{ ...SKB, fontSize: 16, color: '#FFF', background: 'transparent', border: 'none', outline: 'none', width: '100%', padding: '11px 8px', letterSpacing: '0.08em', textTransform: 'uppercase', textAlign: 'center' }}
+                  style={{ ...SKB, fontSize: 'var(--fs-16)', color: '#FFF', background: 'transparent', border: 'none', outline: 'none', width: '100%', padding: '11px 8px', letterSpacing: '0.08em', textTransform: 'uppercase', textAlign: 'center' }}
                 />
-                <span style={{ ...SKB, fontSize: 16, color: '#FF0000' }}>]</span>
+                <span style={{ ...SKB, fontSize: 'var(--fs-16)', color: '#FF0000' }}>]</span>
               </div>
               {tickerError(ticker) && (
-                <p style={{ ...SKR, fontSize: 9, color: '#FF0000', margin: '6px 0 0', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{tickerError(ticker)}</p>
+                <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: '#FF0000', margin: '6px 0 0', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{tickerError(ticker)}</p>
               )}
             </div>
 
             {/* Optional "Back your post" — creator self-buy at the curve price. */}
             <div style={{ marginBottom: 18 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                <span style={{ ...SKB, fontSize: 9, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>BACK YOUR POST <span style={{ color: 'rgba(255,255,255,0.3)' }}>· OPTIONAL</span></span>
+                <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>BACK YOUR POST <span style={{ color: 'rgba(255,255,255,0.3)' }}>· OPTIONAL</span></span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', border: '1px solid rgba(255,255,255,0.18)', padding: '0 12px' }}>
-                <span style={{ ...SKB, fontSize: 16, color: selfBuyUsd ? '#FFF' : 'rgba(255,255,255,0.3)' }}>$</span>
+                <span style={{ ...SKB, fontSize: 'var(--fs-16)', color: selfBuyUsd ? '#FFF' : 'rgba(255,255,255,0.3)' }}>$</span>
                 <input
                   inputMode="decimal"
                   value={selfBuyUsd}
                   onChange={(e) => onSelfBuyChange(e.target.value.replace(/[^0-9.]/g, ''))}
                   placeholder="0"
-                  style={{ ...SKB, fontSize: 16, color: '#FFF', background: 'transparent', border: 'none', outline: 'none', width: '100%', padding: '11px 6px' }}
+                  style={{ ...SKB, fontSize: 'var(--fs-16)', color: '#FFF', background: 'transparent', border: 'none', outline: 'none', width: '100%', padding: '11px 6px' }}
                 />
               </div>
-              <p style={{ ...SKR, fontSize: 8, color: 'rgba(255,255,255,0.3)', margin: '6px 0 0', lineHeight: 1.4 }}>
+              <p style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.3)', margin: '6px 0 0', lineHeight: 1.4 }}>
                 Buy some of your own post at launch — at the same price as everyone. Leave blank to skip.
               </p>
             </div>
@@ -306,20 +306,20 @@ export default function MintPromptSheet({ visible, onMint, onSkip, onCoinSkipped
                  parent routes onRetry by phase. No auto-navigation. */
               <div style={{ marginBottom: 10 }}>
                 <div style={{ width: '100%', border: '1px solid #FF0000', padding: '14px 14px', marginBottom: 10, textAlign: 'center' }}>
-                  <p style={{ ...SKB, fontSize: 12, color: '#FF0000', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 6px' }}>
+                  <p style={{ ...SKB, fontSize: 'var(--fs-12)', color: '#FF0000', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 6px' }}>
                     {sequencePhase === 'backing-failed' ? '[ BACKING DIDN’T LAND ]' : '[ COIN FAILED ]'}
                   </p>
-                  <p style={{ ...SKR, fontSize: 10, color: 'rgba(255,255,255,0.65)', lineHeight: 1.45, margin: 0 }}>
+                  <p style={{ ...SKR, fontSize: 'var(--fs-10)', color: 'rgba(255,255,255,0.65)', lineHeight: 1.45, margin: 0 }}>
                     {sequencePhase === 'backing-failed'
                       ? 'Your coin is live and your post is safe — only the backing buy didn’t go through. Retry it now, or back it later from your post.'
                       : (sequenceLine ?? 'Something failed on the way to the chain. Your post is safe.')}
                   </p>
                 </div>
                 <button onClick={onRetry} style={{ width: '100%', background: '#FF0000', border: 'none', cursor: 'pointer', padding: '13px 0', marginBottom: 8 }}>
-                  <span style={{ ...SKB, fontSize: 11, color: 'white', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{sequencePhase === 'backing-failed' ? 'RETRY BACKING' : 'RETRY'}</span>
+                  <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: 'white', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{sequencePhase === 'backing-failed' ? 'RETRY BACKING' : 'RETRY'}</span>
                 </button>
                 <button onClick={onContinue} style={{ width: '100%', background: 'transparent', border: '1px solid rgba(255,255,255,0.15)', cursor: 'pointer', padding: '11px 0' }}>
-                  <span style={{ ...SKB, fontSize: 10, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>CONTINUE TO PROFILE</span>
+                  <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>CONTINUE TO PROFILE</span>
                 </button>
               </div>
             ) : sequencePhase !== 'idle' ? (
@@ -331,12 +331,12 @@ export default function MintPromptSheet({ visible, onMint, onSkip, onCoinSkipped
                   {sequenceLine && !sequenceLine.startsWith('[') && !sequenceLine.includes('DIDN’T') ? (
                     <FrameLoader size={22} />
                   ) : null}
-                  <span style={{ ...SKB, fontSize: 11, color: sequenceLine?.includes('DIDN’T') ? '#FF0000' : sequenceLine?.startsWith('[') ? '#FF0000' : 'white', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                  <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: sequenceLine?.includes('DIDN’T') ? '#FF0000' : sequenceLine?.startsWith('[') ? '#FF0000' : 'white', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
                     {sequenceLine ?? 'WORKING…'}
                   </span>
                 </div>
                 {ceremonySub && (
-                  <p style={{ ...SKB, fontSize: 8, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.14em', textAlign: 'center', margin: '8px 0 0' }}>
+                  <p style={{ ...SKB, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.14em', textAlign: 'center', margin: '8px 0 0' }}>
                     {ceremonySub}
                   </p>
                 )}
@@ -348,7 +348,7 @@ export default function MintPromptSheet({ visible, onMint, onSkip, onCoinSkipped
                   disabled={!walletReady || checkingBalance || !isValidTicker(ticker)}
                   style={{ width: '100%', background: (!walletReady || checkingBalance || !isValidTicker(ticker)) ? 'rgba(255,0,0,0.4)' : '#FF0000', border: 'none', cursor: (!walletReady || checkingBalance || !isValidTicker(ticker)) ? 'default' : 'pointer', padding: '14px 0', marginBottom: 10 }}
                 >
-                  <span style={{ ...SKB, fontSize: 12, color: 'white', textTransform: 'uppercase', letterSpacing: '0.08em', animation: !walletReady ? 'mp-connect-pulse 1.4s ease-in-out infinite' : 'none' }}>
+                  <span style={{ ...SKB, fontSize: 'var(--fs-12)', color: 'white', textTransform: 'uppercase', letterSpacing: '0.08em', animation: !walletReady ? 'mp-connect-pulse 1.4s ease-in-out infinite' : 'none' }}>
                     {/* The button carries the plain-language contract — this tap IS
                         the consent for everything it names (no second confirm). */}
                     {/* Amount = the consented spend. No word that can read as
@@ -366,13 +366,13 @@ export default function MintPromptSheet({ visible, onMint, onSkip, onCoinSkipped
                   onClick={onSkip}
                   style={{ width: '100%', background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', cursor: 'pointer', padding: '12px 0' }}
                 >
-                  <span style={{ ...SKB, fontSize: 10, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                  <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                     SKIP FOR NOW
                   </span>
                 </button>
               </>
             )}
-            <p style={{ ...SKR, fontSize: 8, color: 'rgba(255,255,255,0.2)', textAlign: 'center', margin: '12px 0 0', lineHeight: 1.5 }}>
+            <p style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.2)', textAlign: 'center', margin: '12px 0 0', lineHeight: 1.5 }}>
               MINTING REQUIRES A SMALL GAS FEE ON BASE. YOU CAN ALWAYS MINT LATER FROM YOUR PROFILE.
             </p>
           </>

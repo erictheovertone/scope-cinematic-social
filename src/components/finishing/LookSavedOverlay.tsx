@@ -87,7 +87,7 @@ export default function LookSavedOverlay({ source, target, onArrive, onDone }: P
 
       {/* "[ ADDED TO PALETTE ]" — red brackets enclosing the words. */}
       <div style={{ position: "fixed", left: 0, right: 0, bottom: "14%", textAlign: "center", opacity: textIn ? 1 : 0, transition: `opacity 0.3s ${EASE}` }}>
-        <span style={{ ...SKB, fontSize: 11, color: RED, letterSpacing: "0.22em", textTransform: "uppercase" }}>[ ADDED TO PALETTE ]</span>
+        <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: RED, letterSpacing: "0.22em", textTransform: "uppercase" }}>[ ADDED TO PALETTE ]</span>
       </div>
 
       <style>{`

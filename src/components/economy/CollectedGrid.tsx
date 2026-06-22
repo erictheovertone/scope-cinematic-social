@@ -45,7 +45,7 @@ export default function CollectedGrid({
   if (rows === null) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '30vh' }}>
-        <p style={{ ...SKB, fontSize: 10, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>LOADING…</p>
+        <p style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>LOADING…</p>
       </div>
     );
   }
@@ -53,7 +53,7 @@ export default function CollectedGrid({
   if (rows.length === 0) {
     return isOwn ? (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '30vh', padding: '0 32px' }}>
-        <p style={{ ...SKB, fontSize: 10, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', textAlign: 'center', letterSpacing: '0.08em', lineHeight: 1.8 }}>
+        <p style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', textAlign: 'center', letterSpacing: '0.08em', lineHeight: 1.8 }}>
           NOTHING COLLECTED YET.<br />COLLECT IS HOW YOU KEEP THINGS ON SCOPE.
         </p>
       </div>

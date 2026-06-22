@@ -80,7 +80,7 @@ export default function DecksPage() {
 
   if (loading) {
     return (
-      <div className="bg-black w-full max-w-[375px] min-h-screen mx-auto flex items-center justify-center">
+      <div className="bg-black w-full app-shell screen-min mx-auto flex items-center justify-center">
         <FrameLoader variant="page" />
       </div>
     );
@@ -88,14 +88,14 @@ export default function DecksPage() {
 
   if (notFound) {
     return (
-      <div className="bg-black w-full max-w-[375px] min-h-screen mx-auto flex items-center justify-center">
-        <p style={{ ...SKB, fontSize: 10, color: "white" }}>Profile not found</p>
+      <div className="bg-black w-full app-shell screen-min mx-auto flex items-center justify-center">
+        <p style={{ ...SKB, fontSize: 'var(--fs-10)', color: "white" }}>Profile not found</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-black w-full max-w-[375px] min-h-screen mx-auto pb-[80px]">
+    <div className="bg-black w-full app-shell screen-min mx-auto pb-[80px]">
 
       {/* Red dot */}
       <div
@@ -112,11 +112,11 @@ export default function DecksPage() {
           onClick={() => router.back()}
           style={{ background: "transparent", border: "none", cursor: "pointer", padding: 0 }}
         >
-          <span style={{ ...SKB, fontSize: 9, color: "white", letterSpacing: "-0.18px" }}>← Back</span>
+          <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "white", letterSpacing: "-0.18px" }}>← Back</span>
         </button>
         <span
           style={{
-            ...SKB, fontSize: 9, color: "white", letterSpacing: "-0.18px",
+            ...SKB, fontSize: 'var(--fs-9)', color: "white", letterSpacing: "-0.18px",
             position: "absolute", left: "50%", transform: "translateX(-50%)",
             whiteSpace: "nowrap",
           }}
@@ -128,7 +128,7 @@ export default function DecksPage() {
             onClick={() => setShowCreate(true)}
             style={{ marginLeft: "auto", background: "transparent", border: "1px solid rgba(255,255,255,0.35)", cursor: "pointer", padding: "3px 8px" }}
           >
-            <span style={{ ...SKB, fontSize: 8, color: "white" }}>+ NEW DECK</span>
+            <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: "white" }}>+ NEW DECK</span>
           </button>
         )}
       </div>
@@ -136,7 +136,7 @@ export default function DecksPage() {
       {/* Deck list */}
       {decks.length === 0 ? (
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: 200 }}>
-          <p style={{ ...SKB, fontSize: 9, color: "rgba(255,255,255,0.4)" }}>No decks yet</p>
+          <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: "rgba(255,255,255,0.4)" }}>No decks yet</p>
         </div>
       ) : (
         <div style={{ padding: "0 0 8px" }}>
@@ -166,10 +166,10 @@ export default function DecksPage() {
               </div>
               {/* Meta */}
               <div style={{ padding: "6px 4px 10px" }}>
-                <p style={{ ...SKB, fontSize: 9, color: "white", margin: 0, letterSpacing: "-0.18px" }}>
+                <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: "white", margin: 0, letterSpacing: "-0.18px" }}>
                   {deck.title}
                 </p>
-                <p style={{ ...SKR, fontSize: 7, color: "rgba(255,255,255,0.4)", margin: "2px 0 0" }}>
+                <p style={{ ...SKR, fontSize: 'var(--fs-7)', color: "rgba(255,255,255,0.4)", margin: "2px 0 0" }}>
                   {deck.item_count} {deck.item_count === 1 ? "frame" : "frames"}
                 </p>
               </div>
@@ -188,14 +188,14 @@ export default function DecksPage() {
           <div
             style={{
               position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 81,
-              maxWidth: 375, margin: "0 auto",
+              maxWidth: '30rem', margin: "0 auto",
               background: "#080808",
               borderTop: "1px solid rgba(255,255,255,0.12)",
               padding: "20px 20px 36px",
             }}
           >
             {/* Sheet title */}
-            <p style={{ ...SKB, fontSize: 11, letterSpacing: "0.15em", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", margin: "0 0 8px" }}>
+            <p style={{ ...SKB, fontSize: 'var(--fs-11)', letterSpacing: "0.15em", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", margin: "0 0 8px" }}>
               NEW DECK
             </p>
 
@@ -211,14 +211,14 @@ export default function DecksPage() {
                 display: "block", width: "100%", background: "transparent",
                 border: "none", borderBottom: "1px solid rgba(255,255,255,0.2)",
                 outline: "none",
-                ...SKB, fontSize: 24, letterSpacing: "0.02em", color: "white",
+                ...SKB, fontSize: 'var(--fs-24)', letterSpacing: "0.02em", color: "white",
                 textTransform: "uppercase",
                 padding: "4px 0", marginBottom: 16, boxSizing: "border-box",
               }}
             />
 
             {/* Description input */}
-            <p style={{ ...SKB, fontSize: 9, letterSpacing: "0.15em", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", margin: "0 0 6px" }}>
+            <p style={{ ...SKB, fontSize: 'var(--fs-9)', letterSpacing: "0.15em", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", margin: "0 0 6px" }}>
               DESCRIPTION
             </p>
             <input
@@ -230,7 +230,7 @@ export default function DecksPage() {
                 display: "block", width: "100%", background: "transparent",
                 border: "none", borderBottom: "1px solid rgba(255,255,255,0.12)",
                 outline: "none",
-                ...SKR, fontSize: 14, color: "white",
+                ...SKR, fontSize: 'var(--fs-14)', color: "white",
                 padding: "4px 0", marginBottom: 24, boxSizing: "border-box",
               }}
             />
@@ -242,7 +242,7 @@ export default function DecksPage() {
                 disabled={!newTitle.trim() || creating}
                 style={{ width: "100%", padding: "14px 0", background: "#FF0000", border: "none", cursor: newTitle.trim() && !creating ? "pointer" : "default", opacity: newTitle.trim() ? 1 : 0.5 }}
               >
-                <span style={{ ...SKB, fontSize: 11, color: "white", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+                <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: "white", textTransform: "uppercase", letterSpacing: "0.1em" }}>
                   {creating ? "CREATING…" : "CREATE DECK"}
                 </span>
               </button>
@@ -250,7 +250,7 @@ export default function DecksPage() {
                 onClick={() => { setShowCreate(false); setNewTitle(""); setNewDesc(""); }}
                 style={{ width: "100%", padding: "14px 0", background: "transparent", border: "1px solid rgba(255,255,255,0.2)", cursor: "pointer" }}
               >
-                <span style={{ ...SKB, fontSize: 11, color: "rgba(255,255,255,0.7)", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+                <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: "rgba(255,255,255,0.7)", textTransform: "uppercase", letterSpacing: "0.1em" }}>
                   CANCEL
                 </span>
               </button>

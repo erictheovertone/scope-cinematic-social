@@ -20,12 +20,12 @@ const INPUT: React.CSSProperties = {
   display: 'block', width: '100%', background: 'transparent',
   border: '1px solid rgba(255,255,255,0.2)', color: 'white',
   fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400,
-  fontSize: 12, padding: '10px 12px', outline: 'none',
+  fontSize: 'var(--fs-12)', padding: '10px 12px', outline: 'none',
   boxSizing: 'border-box',
 };
 
 const LABEL: React.CSSProperties = {
-  ...SKB, fontSize: 9, letterSpacing: '0.12em',
+  ...SKB, fontSize: 'var(--fs-9)', letterSpacing: '0.12em',
   color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase',
   display: 'block', marginBottom: 6,
 };
@@ -34,12 +34,12 @@ const BTN: React.CSSProperties = {
   width: '100%', padding: '12px 0',
   background: 'transparent', border: '1px solid rgba(255,255,255,0.3)',
   color: 'white', cursor: 'pointer',
-  ...SKB, fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase',
+  ...SKB, fontSize: 'var(--fs-10)', letterSpacing: '0.1em', textTransform: 'uppercase',
 };
 
 const DIVIDER = () => <div style={{ height: 1, background: '#FF0000', margin: '28px -20px 20px' }} />;
 const SECTION = ({ label }: { label: string }) => (
-  <p style={{ ...SKB, fontSize: 9, letterSpacing: '0.15em', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', margin: '0 0 16px' }}>{label}</p>
+  <p style={{ ...SKB, fontSize: 'var(--fs-9)', letterSpacing: '0.15em', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', margin: '0 0 16px' }}>{label}</p>
 );
 
 export default function EditProfilePage() {
@@ -275,27 +275,27 @@ export default function EditProfilePage() {
 
       {isDirty && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 200, background: '#000', borderBottom: '1px solid rgba(255,255,255,0.15)', padding: '10px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <span style={{ ...SKB, fontSize: 9, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>UNSAVED CHANGES</span>
+          <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.4)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>UNSAVED CHANGES</span>
           <button
             onClick={handleSaveAll}
             disabled={floatingSaving}
             style={{ background: '#FF0000', border: 'none', cursor: floatingSaving ? 'default' : 'pointer', padding: '8px 18px' }}
           >
-            <span style={{ ...SKB, fontSize: 9, color: 'white', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+            <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'white', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
               {floatingSaving ? 'SAVING…' : 'SAVE'}
             </span>
           </button>
         </div>
       )}
 
-      <div style={{ maxWidth: 375, margin: '0 auto', padding: isDirty ? '44px 20px 60px' : '0 20px 60px' }}>
+      <div style={{ maxWidth: '30rem', margin: '0 auto', padding: isDirty ? '44px 20px 60px' : '0 20px 60px' }}>
 
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', padding: '16px 0 20px', position: 'relative' }}>
           <button onClick={() => router.back()} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-            <span style={{ ...SKB, fontSize: 10, color: 'white', letterSpacing: '0.1em', textTransform: 'uppercase' }}>← BACK</span>
+            <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'white', letterSpacing: '0.1em', textTransform: 'uppercase' }}>← BACK</span>
           </button>
-          <span style={{ ...SKB, fontSize: 10, color: 'white', position: 'absolute', left: '50%', transform: 'translateX(-50%)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>EDIT PROFILE</span>
+          <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'white', position: 'absolute', left: '50%', transform: 'translateX(-50%)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>EDIT PROFILE</span>
         </div>
 
         <div style={{ height: 1, background: '#FF0000', margin: '0 -20px 24px' }} />
@@ -308,7 +308,7 @@ export default function EditProfilePage() {
           <div style={{ width: 56, height: 56, flexShrink: 0, overflow: 'hidden', background: '#222', cursor: 'pointer' }} onClick={() => photoInputRef.current?.click()}>
             {profileImageUrl
               ? <img src={profileImageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-              : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span style={{ ...SKB, fontSize: 22, color: 'white' }}>{(displayName || username || '?')[0].toUpperCase()}</span></div>
+              : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span style={{ ...SKB, fontSize: 'var(--fs-22)', color: 'white' }}>{(displayName || username || '?')[0].toUpperCase()}</span></div>
             }
           </div>
           <button
@@ -339,7 +339,7 @@ export default function EditProfilePage() {
           />
         </div>
 
-        {profileError && <p style={{ ...SKB, fontSize: 9, color: '#FF0000', margin: '0 0 10px', letterSpacing: '0.06em' }}>{profileError}</p>}
+        {profileError && <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: '#FF0000', margin: '0 0 10px', letterSpacing: '0.06em' }}>{profileError}</p>}
         <button
           onClick={handleSaveProfile}
           disabled={savingProfile}
@@ -369,15 +369,15 @@ export default function EditProfilePage() {
               >
                 {/* THICK swatch — gradient preview (the real divider is 0.5px). */}
                 <div style={{ width: 20, height: 60, background: line.gradient, border: selected ? '1.5px solid #FF0000' : '1px solid rgba(255,255,255,0.18)', boxSizing: 'border-box' }} />
-                <span style={{ ...SKB, fontSize: 7.5, letterSpacing: '0.05em', color: selected ? '#FF0000' : 'rgba(255,255,255,0.7)', textTransform: 'uppercase' }}>{line.name}</span>
+                <span style={{ ...SKB, fontSize: 'var(--fs-7_5)', letterSpacing: '0.05em', color: selected ? '#FF0000' : 'rgba(255,255,255,0.7)', textTransform: 'uppercase' }}>{line.name}</span>
                 {!unlocked && line.tier > 0 && (
-                  <span style={{ ...SKR, fontSize: 6, letterSpacing: '0.08em', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase' }}>{TIER_UNLOCK_LABEL[line.tier as 1 | 2 | 3]}</span>
+                  <span style={{ ...SKR, fontSize: 'var(--fs-6)', letterSpacing: '0.08em', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase' }}>{TIER_UNLOCK_LABEL[line.tier as 1 | 2 | 3]}</span>
                 )}
               </button>
             );
           })}
         </div>
-        <p style={{ ...SKR, fontSize: 9, color: 'rgba(255,255,255,0.35)', lineHeight: 1.5, margin: '0 0 4px' }}>
+        <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.35)', lineHeight: 1.5, margin: '0 0 4px' }}>
           The line between your badges and your photo. Default is invisible — climb tiers to unlock colours.
         </p>
 
@@ -392,11 +392,11 @@ export default function EditProfilePage() {
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <p style={{ ...LABEL, marginBottom: 4 }}>HOLO BANNER</p>
-              <p style={{ ...SKR, fontSize: 9, color: 'rgba(255,255,255,0.35)', lineHeight: 1.4, margin: 0 }}>Augmented only — an iridescent backdrop for the founding 500.</p>
+              <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.35)', lineHeight: 1.4, margin: 0 }}>Augmented only — an iridescent backdrop for the founding 500.</p>
             </div>
             <button
               onClick={() => { setHoloBanner(v => !v); setIsDirty(true); }}
-              style={{ ...SKB, fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '8px 14px', cursor: 'pointer', flexShrink: 0, background: holoBanner ? '#FF0000' : 'transparent', color: holoBanner ? '#fff' : 'rgba(255,255,255,0.6)', border: holoBanner ? 'none' : '1px solid rgba(255,255,255,0.3)' }}
+              style={{ ...SKB, fontSize: 'var(--fs-9)', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '8px 14px', cursor: 'pointer', flexShrink: 0, background: holoBanner ? '#FF0000' : 'transparent', color: holoBanner ? '#fff' : 'rgba(255,255,255,0.6)', border: holoBanner ? 'none' : '1px solid rgba(255,255,255,0.3)' }}
             >
               {holoBanner ? 'ON' : 'OFF'}
             </button>
@@ -420,7 +420,7 @@ export default function EditProfilePage() {
           <input style={INPUT} value={kitTool} onChange={e => { setKitTool(e.target.value); setIsDirty(true); }} placeholder="e.g. Lightroom, DaVinci" />
         </div>
 
-        {kitError && <p style={{ ...SKB, fontSize: 9, color: '#FF0000', margin: '0 0 10px', letterSpacing: '0.06em' }}>{kitError}</p>}
+        {kitError && <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: '#FF0000', margin: '0 0 10px', letterSpacing: '0.06em' }}>{kitError}</p>}
         <button
           onClick={handleSaveKit}
           disabled={savingKit}
@@ -441,16 +441,16 @@ export default function EditProfilePage() {
               return (
                 <div key={link.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ ...SKB, fontSize: 10, color: 'white', margin: '0 0 2px', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    <p style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'white', margin: '0 0 2px', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {link.title || domain}
                     </p>
-                    <p style={{ ...SKR, fontSize: 9, color: 'rgba(255,255,255,0.4)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.4)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {domain}
                     </p>
                   </div>
                   <button
                     onClick={() => handleDeleteLink(link.id)}
-                    style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '0 0 0 14px', ...SKB, fontSize: 16, color: 'rgba(255,255,255,0.35)', lineHeight: 1, flexShrink: 0 }}
+                    style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '0 0 0 14px', ...SKB, fontSize: 'var(--fs-16)', color: 'rgba(255,255,255,0.35)', lineHeight: 1, flexShrink: 0 }}
                   >
                     ×
                   </button>
@@ -476,7 +476,7 @@ export default function EditProfilePage() {
               onChange={e => setNewLinkTitle(e.target.value)}
               placeholder="Title (optional)"
             />
-            {linkError && <p style={{ ...SKB, fontSize: 9, color: '#FF0000', margin: '0 0 8px', letterSpacing: '0.06em' }}>{linkError}</p>}
+            {linkError && <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: '#FF0000', margin: '0 0 8px', letterSpacing: '0.06em' }}>{linkError}</p>}
             <div style={{ display: 'flex', gap: 8 }}>
               <button onClick={handleAddLink} disabled={!newLinkUrl.trim() || addingLink} style={{ ...BTN, flex: 1, opacity: newLinkUrl.trim() ? 1 : 0.4 }}>
                 {addingLink ? 'ADDING...' : 'ADD'}
@@ -493,7 +493,7 @@ export default function EditProfilePage() {
         )}
 
         <a href="/profile/links" style={{ display: 'block', marginTop: 8, marginBottom: 4 }}>
-          <span style={{ ...SKB, fontSize: 11, color: 'rgba(255,255,255,0.6)', letterSpacing: '0.06em' }}>Advanced link settings ↗</span>
+          <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: 'rgba(255,255,255,0.6)', letterSpacing: '0.06em' }}>Advanced link settings ↗</span>
         </a>
 
         <DIVIDER />
@@ -511,10 +511,10 @@ export default function EditProfilePage() {
           >
             <div style={{ position: 'absolute', top: 3, left: contactPublic ? 16 : 3, width: 12, height: 12, background: 'white', transition: 'left 0.2s' }} />
           </button>
-          <span style={{ ...SKR, fontSize: 10, color: 'rgba(255,255,255,0.6)' }}>Show publicly on profile</span>
+          <span style={{ ...SKR, fontSize: 'var(--fs-10)', color: 'rgba(255,255,255,0.6)' }}>Show publicly on profile</span>
         </div>
 
-        {contactError && <p style={{ ...SKB, fontSize: 9, color: '#FF0000', margin: '0 0 10px', letterSpacing: '0.06em' }}>{contactError}</p>}
+        {contactError && <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: '#FF0000', margin: '0 0 10px', letterSpacing: '0.06em' }}>{contactError}</p>}
         <button
           onClick={handleSaveContact}
           disabled={savingContact}

@@ -1015,24 +1015,24 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
         {mintStatus === 'minting' && (
           <>
             <FrameLoader />
-            <p style={{ ...SKB, fontSize: 10, color: 'white', textAlign: 'center', lineHeight: 1.6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+            <p style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'white', textAlign: 'center', lineHeight: 1.6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
               Creating your coin on Base...
             </p>
           </>
         )}
         {mintStatus === 'minted' && (
-          <p style={{ ...SKB, fontSize: 10, color: 'white', textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+          <p style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'white', textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
             Posted &amp; coined ✓
           </p>
         )}
         {(mintStatus === 'coin-failed' || mintStatus === 'mint-failed') && (
-          <p style={{ ...SKB, fontSize: 10, color: '#FF0000', textAlign: 'center', lineHeight: 1.6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+          <p style={{ ...SKB, fontSize: 'var(--fs-10)', color: '#FF0000', textAlign: 'center', lineHeight: 1.6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
             Posted — coin not created. You can create it later from your profile.
           </p>
         )}
         {/* Slim signature narration — which approval is in front of you, never a modal. */}
         {backingNarration && (mintStatus === 'minting' || mintStatus === 'minted') && (
-          <p style={{ ...SKB, fontSize: 9, color: '#FF0000', textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.12em', margin: 0 }}>
+          <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: '#FF0000', textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.12em', margin: 0 }}>
             {backingNarration}
           </p>
         )}
@@ -1044,11 +1044,11 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
     <div className="h-full flex flex-col">
       <div className="flex items-center justify-between p-4 border-b border-[#333333]">
         <button onClick={onClose} className="text-white text-lg">×</button>
-        <h2 style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 16, color: 'white', textTransform: 'uppercase', letterSpacing: '0.04em', margin: 0 }}>New Post</h2>
+        <h2 style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-16)', color: 'white', textTransform: 'uppercase', letterSpacing: '0.04em', margin: 0 }}>New Post</h2>
         <button
           onClick={() => setStep('crop')}
           disabled={selectedMedia.length === 0}
-          style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: '0.04em', background: 'none', border: 'none', cursor: selectedMedia.length > 0 ? 'pointer' : 'default', color: selectedMedia.length > 0 ? '#FF0000' : '#666666' }}
+          style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-13)', textTransform: 'uppercase', letterSpacing: '0.04em', background: 'none', border: 'none', cursor: selectedMedia.length > 0 ? 'pointer' : 'default', color: selectedMedia.length > 0 ? '#FF0000' : '#666666' }}
         >
           Next
         </button>
@@ -1057,14 +1057,14 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
       <div className="flex-1 p-4 flex flex-col">
         {/* Optimising indicator */}
         {isOptimising && (
-          <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 11, color: '#888888', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 12, textAlign: 'center' }}>
+          <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-11)', color: '#888888', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 12, textAlign: 'center' }}>
             Optimising…
           </p>
         )}
 
         {/* Video error */}
         {videoError && (
-          <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 11, color: '#FF0000', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 12 }}>
+          <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-11)', color: '#FF0000', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 12 }}>
             {videoError}
           </p>
         )}
@@ -1076,15 +1076,15 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
                 <path d="M21 19V5C21 3.9 20.1 3 19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19ZM8.5 13.5L11 16.51L14.5 12L19 18H5L8.5 13.5Z" fill="#666666"/>
               </svg>
             </div>
-            <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 11, color: '#666666', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 8, textAlign: 'center' }}>
+            <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-11)', color: '#666666', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 8, textAlign: 'center' }}>
               Select photos and videos from your library
             </p>
-            <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 9, color: '#444444', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 24, textAlign: 'center' }}>
+            <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-9)', color: '#444444', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 24, textAlign: 'center' }}>
               Videos up to 50MB · MP4 recommended
             </p>
             <button
               onClick={() => fileInputRef.current?.click()}
-              style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.06em', background: '#FF0000', color: 'white', border: 'none', padding: '12px 24px', cursor: 'pointer' }}
+              style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-12)', textTransform: 'uppercase', letterSpacing: '0.06em', background: '#FF0000', color: 'white', border: 'none', padding: '12px 24px', cursor: 'pointer' }}
             >
               Choose from Library
             </button>
@@ -1115,7 +1115,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
                 <span className="text-[#666666] text-2xl">+</span>
               </button>
             </div>
-            <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 9, color: '#444444', textTransform: 'uppercase', letterSpacing: '0.04em', textAlign: 'center' }}>
+            <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-9)', color: '#444444', textTransform: 'uppercase', letterSpacing: '0.04em', textAlign: 'center' }}>
               Videos up to 50MB · MP4 recommended
             </p>
             <input ref={fileInputRef} type="file" multiple accept="image/*,video/*" onChange={handleMediaSelect} className="hidden" />
@@ -1129,11 +1129,11 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
     <div className="h-full flex flex-col">
       <div className="flex items-center justify-between p-4 border-b border-[#333333]">
         <button onClick={() => setStep('media')} className="text-white text-lg">←</button>
-        <h2 style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 14, color: 'white', textTransform: 'uppercase', letterSpacing: '0.04em', margin: 0 }}>Edit & Post</h2>
+        <h2 style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-14)', color: 'white', textTransform: 'uppercase', letterSpacing: '0.04em', margin: 0 }}>Edit & Post</h2>
         <button
           onClick={() => { setStep('deck'); loadDecksForStep(); }}
           disabled={isUploading}
-          style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: '0.04em', background: 'none', border: 'none', cursor: isUploading ? 'default' : 'pointer', color: isUploading ? '#666666' : '#FF0000' }}
+          style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-13)', textTransform: 'uppercase', letterSpacing: '0.04em', background: 'none', border: 'none', cursor: isUploading ? 'default' : 'pointer', color: isUploading ? '#666666' : '#FF0000' }}
         >
           Next
         </button>
@@ -1160,7 +1160,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
               onClick={() => setStep('crop')}
               style={{ position: 'absolute', bottom: 8, right: 8, background: 'rgba(0,0,0,0.6)', border: '1px solid rgba(255,255,255,0.25)', cursor: 'pointer', padding: '5px 9px' }}
             >
-              <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 8, color: 'white', textTransform: 'uppercase', letterSpacing: '0.06em' }}>ADJUST CROP</span>
+              <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-8)', color: 'white', textTransform: 'uppercase', letterSpacing: '0.06em' }}>ADJUST CROP</span>
             </button>
           </div>
           {/* Autoplay-clip window selector (video only). Optional — untouched = auto
@@ -1176,14 +1176,14 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
             value={caption}
             onChange={(e) => setCaption(e.target.value)}
             placeholder="Write a caption..."
-            className="w-full bg-transparent text-[14px] resize-none border-none outline-none placeholder-[#666666]"
+            className="w-full bg-transparent text-[var(--fs-14)] resize-none border-none outline-none placeholder-[#666666]"
             style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, color: '#FFFFFF', caretColor: '#FFFFFF', backgroundColor: 'transparent' }}
             rows={4}
           />
           {selectedMedia[0]?.type === 'video' && (
             <>
             <div style={{ marginTop: 12 }}>
-              <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 9, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 8px' }}>
+              <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 8px' }}>
                 CUSTOM THUMBNAIL (OPTIONAL)
               </p>
               {customThumbnail ? (
@@ -1191,7 +1191,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
                   <img src={URL.createObjectURL(customThumbnail)} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                   <button
                     onClick={() => setCustomThumbnail(null)}
-                    style={{ position: 'absolute', top: -6, right: -6, width: 16, height: 16, borderRadius: '50%', background: '#FF0000', border: 'none', cursor: 'pointer', color: 'white', fontSize: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    style={{ position: 'absolute', top: -6, right: -6, width: 16, height: 16, borderRadius: '50%', background: '#FF0000', border: 'none', cursor: 'pointer', color: 'white', fontSize: 'var(--fs-10)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                   >×</button>
                 </div>
               ) : (
@@ -1199,13 +1199,13 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
                   onClick={() => thumbnailInputRef.current?.click()}
                   style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', padding: '6px 12px', cursor: 'pointer' }}
                 >
-                  <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 9, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase' }}>+ ADD THUMBNAIL</span>
+                  <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase' }}>+ ADD THUMBNAIL</span>
                 </button>
               )}
               <input ref={thumbnailInputRef} type="file" accept="image/*" onChange={(e) => { const f = e.target.files?.[0]; if (f) setCustomThumbnail(f); e.target.value = ''; }} style={{ display: 'none' }} />
             </div>
             <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 9, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>
+              <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>
                 AUTOPLAY
               </p>
               <button
@@ -1220,18 +1220,18 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
         </div>
 
         <div className="border-t border-[#333333] p-4">
-          <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 10, color: '#666666', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 4 }}>
+          <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-10)', color: '#666666', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 4 }}>
             {/* Collage posts read the AR chosen in the crop tool; non-collage keeps the grid layout. */}
             LAYOUT: {(() => {
               const footerLayoutId = userLayoutId === 'collage' ? (chosenLayoutId || userLayoutId) : userLayoutId;
               return `${profileLayoutName(footerLayoutId)} (${profileLayoutLabel(footerLayoutId)})`;
             })()}
           </p>
-          <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 9, color: '#666666', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+          <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-9)', color: '#666666', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
             {selectedMedia.length} media item{selectedMedia.length !== 1 ? 's' : ''} selected
           </p>
           {postError && (
-            <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 10, color: '#FF0000', textTransform: 'uppercase', letterSpacing: '0.04em', marginTop: 8 }}>
+            <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-10)', color: '#FF0000', textTransform: 'uppercase', letterSpacing: '0.04em', marginTop: 8 }}>
               {postError}
             </p>
           )}
@@ -1246,11 +1246,11 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
       <div className="h-full flex flex-col">
         <div className="flex items-center justify-between p-4 border-b border-[#1a1a1a]">
           <button onClick={() => setStep('edit')} className="text-white text-lg">←</button>
-          <span style={{ ...MONO_S, fontSize: 11, color: 'white', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Add to a deck?</span>
+          <span style={{ ...MONO_S, fontSize: 'var(--fs-11)', color: 'white', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Add to a deck?</span>
           <button
             onClick={() => handlePost(null)}
             disabled={isUploading}
-            style={{ ...MONO_S, fontSize: 11, color: 'white', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, textTransform: 'uppercase', letterSpacing: '0.04em' }}
+            style={{ ...MONO_S, fontSize: 'var(--fs-11)', color: 'white', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, textTransform: 'uppercase', letterSpacing: '0.04em' }}
           >
             Skip
           </button>
@@ -1264,7 +1264,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
           ) : (
             <>
               {userDecks.length === 0 && !showNewDeckForm && (
-                <p style={{ ...MONO_S, fontSize: 8, color: 'rgba(255,255,255,0.35)', padding: '16px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                <p style={{ ...MONO_S, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.35)', padding: '16px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                   No decks yet — create one below
                 </p>
               )}
@@ -1286,13 +1286,13 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
                     )}
                   </div>
                   <div style={{ textAlign: 'left' }}>
-                    <p style={{ ...MONO_S, fontSize: 9, color: 'white', margin: 0, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{deck.title}</p>
-                    <p style={{ ...MONO_S, fontSize: 7, color: 'rgba(255,255,255,0.4)', margin: '2px 0 0', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                    <p style={{ ...MONO_S, fontSize: 'var(--fs-9)', color: 'white', margin: 0, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{deck.title}</p>
+                    <p style={{ ...MONO_S, fontSize: 'var(--fs-7)', color: 'rgba(255,255,255,0.4)', margin: '2px 0 0', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                       {deck.item_count} frames
                     </p>
                   </div>
                   {selectedDeckId === deck.id && (
-                    <span style={{ marginLeft: 'auto', ...MONO_S, fontSize: 9, color: '#FF0000' }}>✓</span>
+                    <span style={{ marginLeft: 'auto', ...MONO_S, fontSize: 'var(--fs-9)', color: '#FF0000' }}>✓</span>
                   )}
                 </button>
               ))}
@@ -1302,7 +1302,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
                   onClick={() => setShowNewDeckForm(true)}
                   style={{ display: 'block', width: '100%', background: 'transparent', border: 'none', cursor: 'pointer', padding: '14px 16px', textAlign: 'left' }}
                 >
-                  <span style={{ ...MONO_S, fontSize: 9, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>+ Create new deck</span>
+                  <span style={{ ...MONO_S, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>+ Create new deck</span>
                 </button>
               ) : (
                 <div style={{ padding: '14px 16px' }}>
@@ -1316,7 +1316,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
                     style={{
                       display: 'block', width: '100%', background: 'transparent',
                       border: 'none', borderBottom: '1px solid rgba(255,255,255,0.2)',
-                      outline: 'none', ...MONO_S, fontSize: 10, color: 'white',
+                      outline: 'none', ...MONO_S, fontSize: 'var(--fs-10)', color: 'white',
                       padding: '4px 0', marginBottom: 12, boxSizing: 'border-box',
                     }}
                   />
@@ -1324,13 +1324,13 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
                     <button
                       onClick={handleCreateDeckAndSelect}
                       disabled={!newDeckTitle.trim() || creatingDeck}
-                      style={{ background: 'transparent', border: 'none', cursor: 'pointer', ...MONO_S, fontSize: 9, color: newDeckTitle.trim() ? 'white' : 'rgba(255,255,255,0.3)', padding: 0, textTransform: 'uppercase', letterSpacing: '0.04em' }}
+                      style={{ background: 'transparent', border: 'none', cursor: 'pointer', ...MONO_S, fontSize: 'var(--fs-9)', color: newDeckTitle.trim() ? 'white' : 'rgba(255,255,255,0.3)', padding: 0, textTransform: 'uppercase', letterSpacing: '0.04em' }}
                     >
                       {creatingDeck ? 'Creating…' : 'Create'}
                     </button>
                     <button
                       onClick={() => { setShowNewDeckForm(false); setNewDeckTitle(''); }}
-                      style={{ background: 'transparent', border: 'none', cursor: 'pointer', ...MONO_S, fontSize: 9, color: 'rgba(255,255,255,0.4)', padding: 0, textTransform: 'uppercase', letterSpacing: '0.04em' }}
+                      style={{ background: 'transparent', border: 'none', cursor: 'pointer', ...MONO_S, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.4)', padding: 0, textTransform: 'uppercase', letterSpacing: '0.04em' }}
                     >
                       Cancel
                     </button>
@@ -1343,7 +1343,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
 
         <div className="border-t border-[#1a1a1a] p-4">
           {postError && (
-            <p style={{ ...MONO_S, fontSize: 10, color: '#FF0000', marginBottom: 10 }}>{postError}</p>
+            <p style={{ ...MONO_S, fontSize: 'var(--fs-10)', color: '#FF0000', marginBottom: 10 }}>{postError}</p>
           )}
           <div style={{ display: 'flex', gap: 8 }}>
             <button
@@ -1358,7 +1358,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
               onPointerUp={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
               onPointerLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
             >
-              <span style={{ ...MONO_S, fontSize: 11, color: isUploading ? 'rgba(255,255,255,0.4)' : 'white', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              <span style={{ ...MONO_S, fontSize: 'var(--fs-11)', color: isUploading ? 'rgba(255,255,255,0.4)' : 'white', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                 {isPosting ? 'POSTING...' : 'Skip'}
               </span>
             </button>
@@ -1371,7 +1371,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
                 padding: '8px',
               }}
             >
-              <span style={{ ...MONO_S, fontSize: 11, color: isUploading || !selectedDeckId ? 'rgba(255,255,255,0.4)' : 'white', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              <span style={{ ...MONO_S, fontSize: 'var(--fs-11)', color: isUploading || !selectedDeckId ? 'rgba(255,255,255,0.4)' : 'white', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                 {isUploading ? 'Posting…' : 'Add to deck'}
               </span>
             </button>
@@ -1460,7 +1460,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           animation: 'fadeInBlack 0.2s ease forwards',
         }}>
-          <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 12, color: 'white', textTransform: 'uppercase', letterSpacing: '0.15em' }}>
+          <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-12)', color: 'white', textTransform: 'uppercase', letterSpacing: '0.15em' }}>
             POSTING...
           </p>
         </div>

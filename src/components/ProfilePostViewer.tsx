@@ -216,7 +216,7 @@ function PostViewerItem({
               style={{ top: 6, left: 6, display: "flex", alignItems: "center", gap: 4, cursor: "pointer", zIndex: 10, opacity: 0.85 }}
             >
               <img src={ownerAvatarUrl || undefined} style={{ width: 14, height: 14, borderRadius: "50%", objectFit: "cover", flexShrink: 0, background: "#333" }} />
-              <span style={{ ...SKB, fontSize: 8, color: "white", textShadow: "0 1px 2px rgba(0,0,0,1)", lineHeight: 1, textTransform: "uppercase" }}>
+              <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: "white", textShadow: "0 1px 2px rgba(0,0,0,1)", lineHeight: 1, textTransform: "uppercase" }}>
                 @{ownerUsername}
               </span>
             </div>
@@ -225,7 +225,7 @@ function PostViewerItem({
             {isCoinPost(post as { coin_address?: string | null; token_standard?: string | null }) && (post as { coin_address?: string | null }).coin_address && (
               <span
                 className="absolute"
-                style={{ top: 6, right: 6, display: "flex", alignItems: "baseline", gap: 5, fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: 8, color: "white", textShadow: "0 1px 2px rgba(0,0,0,1)", lineHeight: 1, opacity: 0.85, zIndex: 10, textTransform: "uppercase" }}
+                style={{ top: 6, right: 6, display: "flex", alignItems: "baseline", gap: 5, fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: 'var(--fs-8)', color: "white", textShadow: "0 1px 2px rgba(0,0,0,1)", lineHeight: 1, opacity: 0.85, zIndex: 10, textTransform: "uppercase" }}
               >
                 {(post as { ticker?: string | null }).ticker && <TickerMark ticker={(post as { ticker?: string }).ticker as string} size={8} />}
                 <span>MC: {mc ?? "…"}</span>
@@ -263,7 +263,7 @@ function PostViewerItem({
                 fill={isLiked ? "#FF0000" : "none"} stroke={isLiked ? "#FF0000" : "white"} strokeWidth="1.8"
               />
             </svg>
-            <span style={{ ...SKB, fontSize: 8, color: isLiked ? "#FF0000" : "white", opacity: isLiked ? 1 : 0.7 }}>{likes.length}</span>
+            <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: isLiked ? "#FF0000" : "white", opacity: isLiked ? 1 : 0.7 }}>{likes.length}</span>
           </button>
 
           <button
@@ -273,7 +273,7 @@ function PostViewerItem({
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" style={{ opacity: 0.7 }}>
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
             </svg>
-            <span style={{ ...SKB, fontSize: 8, color: "white", opacity: 0.7 }}>{comments.length}</span>
+            <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: "white", opacity: 0.7 }}>{comments.length}</span>
           </button>
 
 
@@ -283,7 +283,7 @@ function PostViewerItem({
         {/* Right: add to deck · collect */}
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           {deckToast && (
-            <span style={{ ...SKB, fontSize: 9, color: "rgba(255,255,255,0.5)", textTransform: "uppercase" }}>Added to {deckToast}</span>
+            <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "rgba(255,255,255,0.5)", textTransform: "uppercase" }}>Added to {deckToast}</span>
           )}
           {/* First Cut counter — the SMALL icon + count, identical to the home
               feed (all scrolls use this treatment; the full ledger row is
@@ -304,7 +304,7 @@ function PostViewerItem({
               justifyContent: "center",
             }}
           >
-            <span style={{ ...SKB, fontSize: 8, color: showCollectSheet ? "#FF0000" : "rgba(255,255,255,0.7)", lineHeight: 1, textTransform: "uppercase" }}>{isUntradeableCoin(post as { coin_address?: string | null; coin_currency?: string | null }) ? "LEGACY" : "COLLECT"}</span>
+            <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: showCollectSheet ? "#FF0000" : "rgba(255,255,255,0.7)", lineHeight: 1, textTransform: "uppercase" }}>{isUntradeableCoin(post as { coin_address?: string | null; coin_currency?: string | null }) ? "LEGACY" : "COLLECT"}</span>
           </button>
 
           {isOwnProfile && (
@@ -342,7 +342,7 @@ function PostViewerItem({
                       onClick={() => { setMenuOpen(false); setShowDeckPicker(true); }}
                       style={{ display: "block", width: "100%", textAlign: "left", background: "transparent", border: "none", borderBottom: "1px solid rgba(255,255,255,0.08)", cursor: "pointer", padding: "11px 14px" }}
                     >
-                      <span style={{ ...SKB, fontSize: 9, color: "white", textTransform: "uppercase", letterSpacing: "0.06em" }}>ADD TO DECK</span>
+                      <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "white", textTransform: "uppercase", letterSpacing: "0.06em" }}>ADD TO DECK</span>
                     </button>
                     {/* Coin-pending: offer the idempotent "Create coin" retry.
                         Excludes legacy 1155-minted posts — those remain
@@ -353,14 +353,14 @@ function PostViewerItem({
                         onClick={() => { setMenuOpen(false); setShowCreateCoin(true); }}
                         style={{ display: "block", width: "100%", textAlign: "left", background: "transparent", border: "none", borderBottom: "1px solid rgba(255,255,255,0.08)", cursor: "pointer", padding: "11px 14px" }}
                       >
-                        <span style={{ ...SKB, fontSize: 9, color: "#FF0000", textTransform: "uppercase", letterSpacing: "0.06em" }}>CREATE COIN</span>
+                        <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "#FF0000", textTransform: "uppercase", letterSpacing: "0.06em" }}>CREATE COIN</span>
                       </button>
                     )}
                     <button
                       onClick={() => { setMenuOpen(false); onDeletePress?.(post.id); }}
                       style={{ display: "block", width: "100%", textAlign: "left", background: "transparent", border: "none", cursor: "pointer", padding: "11px 14px" }}
                     >
-                      <span style={{ ...SKB, fontSize: 9, color: "#FF0000", textTransform: "uppercase", letterSpacing: "0.06em" }}>DELETE</span>
+                      <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "#FF0000", textTransform: "uppercase", letterSpacing: "0.06em" }}>DELETE</span>
                     </button>
                   </div>
                 </>
@@ -396,7 +396,7 @@ function PostViewerItem({
       {/* ── CAPTION — marginTop: 3, marginBottom: 16 (separator) ── */}
       <div style={{ padding: "0 4px", marginTop: 2, marginBottom: 31 }}>
         {post.caption ? (
-          <p style={{ ...SKR, fontSize: 10, color: "white", margin: 0, lineHeight: 1.4 }}>
+          <p style={{ ...SKR, fontSize: 'var(--fs-10)', color: "white", margin: 0, lineHeight: 1.4 }}>
             {post.caption}
           </p>
         ) : null}
@@ -405,7 +405,7 @@ function PostViewerItem({
         {showComments && (
           <div style={{ marginTop: 8 }}>
             {comments.length === 0 ? (
-              <p style={{ ...SKR, fontSize: 9, color: "rgba(255,255,255,0.25)", margin: 0, textTransform: "uppercase" }}>NO COMMENTS YET</p>
+              <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: "rgba(255,255,255,0.25)", margin: 0, textTransform: "uppercase" }}>NO COMMENTS YET</p>
             ) : (
               comments.map((c, i) => (
                 <div key={c.id} style={{ display: "flex", alignItems: "flex-start", gap: 6, marginBottom: 8, animation: "ripple-down 0.2s ease-out both", animationDelay: `${i * 50}ms` }}>
@@ -417,16 +417,16 @@ function PostViewerItem({
                   >
                     {c.profile_image_url
                       ? <img src={c.profile_image_url} alt={c.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                      : <span style={{ ...SKB, fontSize: 6, color: "white", textTransform: "uppercase" }}>{c.username?.[0] ?? "?"}</span>
+                      : <span style={{ ...SKB, fontSize: 'var(--fs-6)', color: "white", textTransform: "uppercase" }}>{c.username?.[0] ?? "?"}</span>
                     }
                   </div>
                   <div>
                     {/* Handle → commenter's profile (by handle). */}
                     <span
                       onClick={c.username ? (e) => { e.stopPropagation(); onNavigateToProfile(c.username); } : undefined}
-                      style={{ ...SKB, fontSize: 9, color: "white", marginRight: 5, textTransform: "uppercase", cursor: c.username ? "pointer" : "default" }}
+                      style={{ ...SKB, fontSize: 'var(--fs-9)', color: "white", marginRight: 5, textTransform: "uppercase", cursor: c.username ? "pointer" : "default" }}
                     >@{c.username}</span>
-                    <span style={{ ...SKR, fontSize: 9, color: "rgba(255,255,255,0.6)", textTransform: "none" }}>{c.content}</span>
+                    <span style={{ ...SKR, fontSize: 'var(--fs-9)', color: "rgba(255,255,255,0.6)", textTransform: "none" }}>{c.content}</span>
                   </div>
                 </div>
               ))
@@ -440,12 +440,12 @@ function PostViewerItem({
                   onChange={e => setNewComment(e.target.value)}
                   onKeyDown={e => e.key === "Enter" && handleAddComment()}
                   placeholder="add a comment..."
-                  style={{ flex: 1, background: "transparent", border: "none", borderBottom: "1px solid rgba(255,255,255,0.15)", outline: "none", ...SKR, fontSize: 9, color: "white", padding: "2px 0" }}
+                  style={{ flex: 1, background: "transparent", border: "none", borderBottom: "1px solid rgba(255,255,255,0.15)", outline: "none", ...SKR, fontSize: 'var(--fs-9)', color: "white", padding: "2px 0" }}
                 />
                 <button
                   onClick={handleAddComment}
                   disabled={loading || !newComment.trim()}
-                  style={{ background: "transparent", border: "none", cursor: newComment.trim() ? "pointer" : "default", ...SKB, fontSize: 9, color: newComment.trim() ? "white" : "rgba(255,255,255,0.2)", padding: 0, textTransform: "uppercase" }}
+                  style={{ background: "transparent", border: "none", cursor: newComment.trim() ? "pointer" : "default", ...SKB, fontSize: 'var(--fs-9)', color: newComment.trim() ? "white" : "rgba(255,255,255,0.2)", padding: 0, textTransform: "uppercase" }}
                 >
                   POST
                 </button>
@@ -563,7 +563,7 @@ export default function ProfilePostViewer({
           <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
             <path d="M8.5 1.5L3.5 6.5l5 5" stroke="white" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-          <span style={{ ...SKB, fontSize: 9, color: "white", letterSpacing: "-0.1px", textTransform: "uppercase" }}>BACK</span>
+          <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "white", letterSpacing: "-0.1px", textTransform: "uppercase" }}>BACK</span>
         </button>
       </div>
 

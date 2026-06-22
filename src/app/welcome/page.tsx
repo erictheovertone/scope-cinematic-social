@@ -34,7 +34,7 @@ export default function Welcome() {
     return (
       <div style={{
         backgroundColor: '#000000',
-        minHeight: '100vh',
+        minHeight: '100dvh',
         width: '100%',
         display: 'flex',
         alignItems: 'center',
@@ -79,7 +79,7 @@ export default function Welcome() {
             top: '2px',
             left: '2px',
             color: 'white',
-            fontSize: '12px',
+            fontSize: 'var(--fs-12)',
             fontFamily: "'SK-Modernist', sans-serif",
             fontWeight: 700,
             textDecoration: 'none',
@@ -112,7 +112,7 @@ export default function Welcome() {
             bottom: '2px',
             right: '2px',
             color: 'white',
-            fontSize: '12px',
+            fontSize: 'var(--fs-12)',
             fontFamily: "'SK-Modernist', sans-serif",
             fontWeight: 700,
             textDecoration: 'none',
