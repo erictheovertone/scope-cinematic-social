@@ -74,7 +74,6 @@ export default function Home() {
   // FIX (one mechanism for both): a CAPTURE-phase listener on `document`. Capture
   // travels top-down and doesn't depend on bubbling, so it catches the scroll from
   // WHATEVER element actually scrolls; and `document` always exists → no mount race.
-  const [scrollDebug, setScrollDebug] = useState({ evt: 0, top: 0, dy: 0, dir: '—', tgt: '?' }); // TEMP
   useEffect(() => {
     const THRESHOLD = 4; // px of intent (absorbs jitter / iOS bounce)
     let last = 0;
@@ -87,20 +86,11 @@ export default function Home() {
       const cur = el && typeof el.scrollTop === 'number' ? el.scrollTop : window.scrollY;
       const dy = cur - last;
       last = cur;
-      // TEMP on-screen diagnostic — incl. the REAL scroll element (tag.class).
-      // Functional updater: the [] effect captures state once, so a direct read
-      // would freeze the counter at 1.
-      setScrollDebug((d) => ({
-        evt: d.evt + 1, top: Math.round(cur), dy: Math.round(dy),
-        dir: dy < 0 ? 'up' : dy > 0 ? 'down' : '—',
-        tgt: (el?.tagName ?? '?') + '.' + String(el?.className ?? '').slice(0, 20),
-      }));
       if (dy < -THRESHOLD) setShowFrame(true);       // up → reveal
       else if (dy > THRESHOLD) setShowFrame(false);  // down → hide
     };
     document.addEventListener('scroll', onScroll, { capture: true, passive: true });
     return () => document.removeEventListener('scroll', onScroll, { capture: true });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -205,14 +195,10 @@ export default function Home() {
         @keyframes menuFadeOut   { from { opacity: 1; } to { opacity: 0; } }
       `}</style>
 
-      {/* Frame icon — top right, opens Mirage menu.
-          ROOT CAUSE (Round 5): it was position:absolute relative to the min-h-screen
-          page wrapper, and the PAGE itself scrolls (document.scrollingElement) — so it
-          sat at the top of the scrolling content and scrolled off. FIX: PORTAL to
-          document.body + position:fixed → leaves the scroll container AND any
-          (future) transformed ancestor, so it's truly pinned to the viewport.
-          TEMP localization proof still on (magenta bg + cyan outline) — strip with the
-          overlay once Eric confirms it stays pinned, then drop in the bolder icon. */}
+      {/* Frame icon — top-right, opens the home menu. PORTALED to document.body +
+          position:fixed so it's pinned to the viewport (the page is the scroller;
+          absolute positioning let it scroll off). Reveal is driven by showFrame
+          (up-scroll) / menuOpen. */}
       {typeof document !== 'undefined' && createPortal(
         <button
           onClick={() => setMenuOpen(v => !v)}
@@ -221,8 +207,7 @@ export default function Home() {
             position: 'fixed',
             top: 6,
             right: 6,
-            background: '#f0f',          // TEMP proof
-            outline: '2px solid #0ff',   // TEMP proof
+            background: 'transparent',
             border: 'none',
             cursor: 'pointer',
             padding: 4,
@@ -235,15 +220,16 @@ export default function Home() {
             zIndex: 50, // above feed (z20), below the menu overlay (z60)
           }}
         >
-          <svg width="28" height="14" viewBox="0 0 32 16" fill="none">
-            <line x1="1" y1="1" x2="1" y2="6" stroke="#FF0000" strokeWidth="1.1"/>
-            <line x1="1" y1="1" x2="7" y2="1" stroke="#FF0000" strokeWidth="0.85"/>
-            <line x1="31" y1="1" x2="31" y2="6" stroke="#FF0000" strokeWidth="1.1"/>
-            <line x1="25" y1="1" x2="31" y2="1" stroke="#FF0000" strokeWidth="0.85"/>
-            <line x1="1" y1="15" x2="1" y2="10" stroke="#FF0000" strokeWidth="1.1"/>
-            <line x1="1" y1="15" x2="7" y2="15" stroke="#FF0000" strokeWidth="0.85"/>
-            <line x1="31" y1="15" x2="31" y2="10" stroke="#FF0000" strokeWidth="1.1"/>
-            <line x1="25" y1="15" x2="31" y2="15" stroke="#FF0000" strokeWidth="0.85"/>
+          {/* Aperture corner-brackets — bolder + larger so it reads clearly on black. */}
+          <svg width="34" height="21" viewBox="0 0 34 21" fill="none">
+            <line x1="1.3" y1="1.3" x2="1.3" y2="9"  stroke="#FF0000" strokeWidth="2.3"/>
+            <line x1="1.3" y1="1.3" x2="9"  y2="1.3" stroke="#FF0000" strokeWidth="2.3"/>
+            <line x1="32.7" y1="1.3" x2="32.7" y2="9"  stroke="#FF0000" strokeWidth="2.3"/>
+            <line x1="32.7" y1="1.3" x2="25" y2="1.3" stroke="#FF0000" strokeWidth="2.3"/>
+            <line x1="1.3" y1="19.7" x2="1.3" y2="12" stroke="#FF0000" strokeWidth="2.3"/>
+            <line x1="1.3" y1="19.7" x2="9"  y2="19.7" stroke="#FF0000" strokeWidth="2.3"/>
+            <line x1="32.7" y1="19.7" x2="32.7" y2="12" stroke="#FF0000" strokeWidth="2.3"/>
+            <line x1="32.7" y1="19.7" x2="25" y2="19.7" stroke="#FF0000" strokeWidth="2.3"/>
           </svg>
         </button>,
         document.body,
@@ -340,12 +326,6 @@ export default function Home() {
           </div>
         </div>
       )}
-
-      {/* TEMP scroll diagnostic — shows the REAL scroll element (tgt). Remove once
-          the up-scroll reveal is confirmed on mobile. */}
-      <div style={{ position: 'fixed', bottom: 70, left: 6, zIndex: 80, background: 'rgba(0,0,0,0.8)', color: '#FF0000', font: '9px monospace', padding: '3px 6px', pointerEvents: 'none', whiteSpace: 'nowrap' }}>
-        evt:{scrollDebug.evt} top:{scrollDebug.top} dy:{scrollDebug.dy} {scrollDebug.dir} frame:{showFrame ? 'ON' : 'off'} tgt:{scrollDebug.tgt}
-      </div>
 
       {/* Feed — scroll is captured at document level (native scroll doesn't bubble),
           so no onScroll here. */}
