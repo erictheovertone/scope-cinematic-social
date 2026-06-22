@@ -204,7 +204,11 @@ export default function Home() {
         @keyframes menuFadeOut   { from { opacity: 1; } to { opacity: 0; } }
       `}</style>
 
-      {/* Frame icon — top right, opens Mirage menu */}
+      {/* Frame icon — top right, opens Mirage menu.
+          TEMP localization proof (Round 4): magenta bg + cyan outline, opacity still
+          tied to showFrame. If the MAGENTA BOX toggles on scroll but the red icon
+          doesn't → the icon child isn't rendering. If magenta never shows/toggles →
+          binding/override/stacking. Remove bg+outline once localized. */}
       <button
         onClick={() => setMenuOpen(v => !v)}
         aria-label="Open menu"
@@ -212,13 +216,15 @@ export default function Home() {
           position: 'absolute',
           top: 6,
           right: 6,
-          background: 'transparent',
+          background: '#f0f',          // TEMP proof
+          outline: '2px solid #0ff',   // TEMP proof
           border: 'none',
           cursor: 'pointer',
           padding: 4,
           lineHeight: 0,
           opacity: menuOpen || !showFrame ? 0 : 1,
-          transition: 'opacity 0.42s cubic-bezier(0.16,0.84,0.3,1)',
+          transform: menuOpen || !showFrame ? 'translateY(-12px)' : 'translateY(0)',
+          transition: 'opacity 0.25s cubic-bezier(0.16,0.84,0.3,1), transform 0.25s cubic-bezier(0.16,0.84,0.3,1)',
           pointerEvents: menuOpen || !showFrame ? 'none' : 'auto',
           filter: 'drop-shadow(0 0 8px rgba(0,0,0,0.9)) drop-shadow(0 2px 12px rgba(0,0,0,0.75))',
           zIndex: 20,
