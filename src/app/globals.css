@@ -44,33 +44,37 @@
 :root {
   --bp-desktop: 1024px;
 
-  --fs-6:    6px;
-  --fs-6_5:  6.5px;
-  --fs-7:    7px;
-  --fs-7_5:  7.5px;
-  --fs-8:    8px;
-  --fs-9:    9px;
-  --fs-9_5:  9.5px;
-  --fs-10:   10px;
-  --fs-10_5: 10.5px;
-  --fs-11:   11px;
-  --fs-12:   12px;
-  --fs-13:   13px;
-  --fs-14:   14px;
-  --fs-15:   15px;
-  --fs-15_7: 15.7px;
-  --fs-16:   16px;
-  --fs-18:   18px;
-  --fs-20:   20px;
-  --fs-22:   22px;
-  --fs-24:   24px;
-  --fs-26:   26px;
-  --fs-28:   28px;
-  --fs-30:   30px;
-  --fs-32:   32px;
-  --fs-34:   34px;
-  --fs-36:   36px;
-  --fs-38:   38px;
+  /* Global UI bump — one lever for every tokenized size. Raise/lower app-wide type
+     in one place; var(--fs-N) references never change. (Icon sizes use --icon-bump
+     below.) */
+  --ui-bump: 1.5px;
+  --fs-6:    calc(6px    + var(--ui-bump));
+  --fs-6_5:  calc(6.5px  + var(--ui-bump));
+  --fs-7:    calc(7px    + var(--ui-bump));
+  --fs-7_5:  calc(7.5px  + var(--ui-bump));
+  --fs-8:    calc(8px    + var(--ui-bump));
+  --fs-9:    calc(9px    + var(--ui-bump));
+  --fs-9_5:  calc(9.5px  + var(--ui-bump));
+  --fs-10:   calc(10px   + var(--ui-bump));
+  --fs-10_5: calc(10.5px + var(--ui-bump));
+  --fs-11:   calc(11px   + var(--ui-bump));
+  --fs-12:   calc(12px   + var(--ui-bump));
+  --fs-13:   calc(13px   + var(--ui-bump));
+  --fs-14:   calc(14px   + var(--ui-bump));
+  --fs-15:   calc(15px   + var(--ui-bump));
+  --fs-15_7: calc(15.7px + var(--ui-bump));
+  --fs-16:   calc(16px   + var(--ui-bump));
+  --fs-18:   calc(18px   + var(--ui-bump));
+  --fs-20:   calc(20px   + var(--ui-bump));
+  --fs-22:   calc(22px   + var(--ui-bump));
+  --fs-24:   calc(24px   + var(--ui-bump));
+  --fs-26:   calc(26px   + var(--ui-bump));
+  --fs-28:   calc(28px   + var(--ui-bump));
+  --fs-30:   calc(30px   + var(--ui-bump));
+  --fs-32:   calc(32px   + var(--ui-bump));
+  --fs-34:   calc(34px   + var(--ui-bump));
+  --fs-36:   calc(36px   + var(--ui-bump));
+  --fs-38:   calc(38px   + var(--ui-bump));
 
   --sp-1: 4px;
   --sp-2: 8px;
@@ -130,6 +134,18 @@ button:active,
    content-visibility skips layout/paint for cards outside the viewport; the
    intrinsic-size estimate reserves space so the scrollbar/position doesn't jump. */
 .feed-card { content-visibility: auto; contain-intrinsic-size: 0 480px; }
+
+/* ── UI bump · Tap targets ────────────────────────────────────────────────────
+   Grow a small control's HIT AREA with an invisible ::after overlay (negative
+   inset) — taps bubble to the parent control, ZERO layout shift (can't fight flex
+   gap). Governing rule: horizontal inset ≤ gap/2 so neighbours MEET, never overlap.
+   .tap-target  → standalone / far-apart controls (10px v, 6px h).
+   .tap-target-x6 → rows with gap 12 (6px h = exactly gap/2, meet not overlap).
+   The icon size token bumps the GLYPH; this bumps the touchable region. */
+.tap-target { position: relative; }
+.tap-target::after { content: ''; position: absolute; inset: -10px; }
+.tap-target-x6 { position: relative; }
+.tap-target-x6::after { content: ''; position: absolute; inset: -10px -6px; }
 
 @keyframes fade-in {
   from {

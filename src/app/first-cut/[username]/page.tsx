@@ -77,7 +77,7 @@ export default function FirstCutPage() {
           <img src={BADGES.firstCut.src} alt="First Cut" style={{ width: 44, height: 44, borderRadius: '50%', flexShrink: 0, filter: `drop-shadow(0 0 6px ${BADGES.firstCut.color}66)` }} />
           <div style={{ minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <ApertureMark size={14} />
+              <ApertureMark size={15.5} />
               <span style={{ ...SKB, fontSize: 'var(--fs-15)', color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.06em' }}>FIRST CUT</span>
             </div>
             <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.45)', margin: '6px 0 0', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
@@ -115,7 +115,7 @@ export default function FirstCutPage() {
                 <p style={{ ...SKB, fontSize: 'var(--fs-11)', color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.03em', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {p.postTitle}
                 </p>
-                {p.ticker && <TickerMark ticker={p.ticker} size={8} />}
+                {p.ticker && <TickerMark ticker={p.ticker} size={9.5} />}
               </div>
               <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.45)', margin: 0, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                 @{p.creatorHandle} · holding {p.holdingDays} days

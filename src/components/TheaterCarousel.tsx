@@ -167,7 +167,7 @@ export default function TheaterCarousel({
           lineHeight: 0,
         }}
       >
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+        <svg width="15.5" height="15.5" viewBox="0 0 14 14" fill="none">
           <path d="M1 1l12 12M13 1L1 13" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
         </svg>
       </button>

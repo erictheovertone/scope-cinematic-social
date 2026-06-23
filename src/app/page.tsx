@@ -221,7 +221,7 @@ export default function Home() {
           }}
         >
           {/* Aperture corner-brackets — bolder + larger so it reads clearly on black. */}
-          <svg width="34" height="21" viewBox="0 0 34 21" fill="none">
+          <svg width="35.5" height="22.5" viewBox="0 0 34 21" fill="none">
             <line x1="1.3" y1="1.3" x2="1.3" y2="9"  stroke="#FF0000" strokeWidth="2.3"/>
             <line x1="1.3" y1="1.3" x2="9"  y2="1.3" stroke="#FF0000" strokeWidth="2.3"/>
             <line x1="32.7" y1="1.3" x2="32.7" y2="9"  stroke="#FF0000" strokeWidth="2.3"/>

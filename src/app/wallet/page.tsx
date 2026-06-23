@@ -595,7 +595,7 @@ export default function WalletPage() {
                     ? <img src={h.thumbUrl} alt="" style={{ width: 44, height: 30, objectFit: "cover", flexShrink: 0, background: "#111" }} />
                     : <div style={{ width: 44, height: 30, background: "#111", flexShrink: 0 }} />}
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    {h.ticker ? <TickerMark ticker={h.ticker} size={10} /> : <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: "rgba(255,255,255,0.4)" }}>—</span>}
+                    {h.ticker ? <TickerMark ticker={h.ticker} size={11.5} /> : <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: "rgba(255,255,255,0.4)" }}>—</span>}
                     <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: "rgba(255,255,255,0.45)", margin: "3px 0 0", textTransform: "uppercase", letterSpacing: "0.06em" }}>
                       {h.pieces.toLocaleString()} {h.pieces === 1 ? "PIECE" : "PIECES"}
                     </p>
@@ -701,7 +701,7 @@ export default function WalletPage() {
               </div>
             ) : sendStep === "sending" ? (
               <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, minHeight: 180 }}>
-                <FrameLoader size={22} />
+                <FrameLoader size={23.5} />
                 <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: "white", textTransform: "uppercase", letterSpacing: "0.1em" }}>
                   SENDING · ${isFinite(sendUsdNum) ? sendUsdNum.toFixed(2) : ""}…
                 </span>

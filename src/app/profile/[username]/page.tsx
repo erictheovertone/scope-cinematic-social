@@ -316,7 +316,7 @@ export default function PublicProfilePage() {
             filter: 'drop-shadow(0 0 8px rgba(0,0,0,0.9)) drop-shadow(0 2px 12px rgba(0,0,0,0.75))',
           }}
         >
-          <svg width="28" height="14" viewBox="0 0 32 16" fill="none">
+          <svg width="29.5" height="15.5" viewBox="0 0 32 16" fill="none">
             <line x1="1" y1="1" x2="1" y2="6" stroke="#FF0000" strokeWidth="1.1"/>
             <line x1="1" y1="1" x2="7" y2="1" stroke="#FF0000" strokeWidth="0.85"/>
             <line x1="31" y1="1" x2="31" y2="6" stroke="#FF0000" strokeWidth="1.1"/>
@@ -354,7 +354,7 @@ export default function PublicProfilePage() {
               onClick={dismissSnapMenu}
               style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', animation: headerUnsnapping ? 'snapOutLeft 0.28s cubic-bezier(0.16,1,0.3,1) 165ms both' : 'snapInLeft 0.32s cubic-bezier(0.16,1,0.3,1) 0ms both' }}
             >
-              <svg width="28" height="14" viewBox="0 0 32 16" fill="none">
+              <svg width="29.5" height="15.5" viewBox="0 0 32 16" fill="none">
                 <line x1="1" y1="1" x2="1" y2="6" stroke="#FF0000" strokeWidth="1.1"/>
                 <line x1="1" y1="1" x2="7" y2="1" stroke="#FF0000" strokeWidth="0.85"/>
                 <line x1="31" y1="1" x2="31" y2="6" stroke="#FF0000" strokeWidth="1.1"/>

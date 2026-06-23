@@ -138,7 +138,7 @@ export default function AddToHomeScreenSheet({ isOpen, onClose, privyId, forceSh
                 label: 'TAP THE SHARE ICON',
                 subtitle: 'Bottom of your Safari window',
                 icon: (
-                  <svg width="20" height="26" viewBox="0 0 16 20" fill="none">
+                  <svg width="21.5" height="27.5" viewBox="0 0 16 20" fill="none">
                     <path d="M8 1 L8 13" stroke="#FFFFFF" strokeWidth="1.5"/>
                     <path d="M4 5 L8 1 L12 5" stroke="#FFFFFF" strokeWidth="1.5" fill="none"/>
                     <path d="M2 8 L2 18 L14 18 L14 8" stroke="#FFFFFF" strokeWidth="1.5" fill="none"/>
@@ -150,7 +150,7 @@ export default function AddToHomeScreenSheet({ isOpen, onClose, privyId, forceSh
                 label: 'ADD TO HOME SCREEN',
                 subtitle: 'Scroll down in the share menu',
                 icon: (
-                  <svg width="20" height="20" viewBox="0 0 16 16" fill="none">
+                  <svg width="21.5" height="21.5" viewBox="0 0 16 16" fill="none">
                     <rect x="1" y="1" width="14" height="14" stroke="#FFFFFF" strokeWidth="1.5" fill="none"/>
                     <path d="M8 4 L8 12 M4 8 L12 8" stroke="#FFFFFF" strokeWidth="1.5"/>
                   </svg>

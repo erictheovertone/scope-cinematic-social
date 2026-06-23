@@ -37,7 +37,7 @@ interface Tier3ItemsProps {
 function LockGlyph() {
   return (
     <span style={{ position: 'absolute', top: 4, right: 4, lineHeight: 0 }}>
-      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke={RED} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <svg width="12.5" height="12.5" viewBox="0 0 24 24" fill="none" stroke={RED} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         <rect x="5" y="11" width="14" height="9" />
         <path d="M8 11V8a4 4 0 0 1 8 0v3" />
       </svg>
@@ -74,7 +74,7 @@ export default function Tier3Items({ mode, editItems, toolTouched, toolEnabled, 
                 }}
               >
                 {locked ? <LockGlyph /> : t.pro && <span style={{ position: 'absolute', top: 0, right: 2, width: 5, height: 5, background: RED }} />}
-                <ToolIcon toolKey={t.key} size={18} />
+                <ToolIcon toolKey={t.key} size={19.5} />
                 <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: touched ? RED : 'white', textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>{t.label}</span>
               </button>
             );
@@ -96,7 +96,7 @@ export default function Tier3Items({ mode, editItems, toolTouched, toolEnabled, 
             >
               {/* Pro marker — lock glyph when locked (free user), else a small red dot */}
               {locked ? <LockGlyph /> : t.pro && <span style={{ position: 'absolute', top: 5, right: 5, width: 5, height: 5, background: RED }} />}
-              <ToolIcon toolKey={t.key} size={22} />
+              <ToolIcon toolKey={t.key} size={23.5} />
               <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: touched ? RED : 'white', textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>{t.label}</span>
               <span style={{
                 ...SKB, fontSize: 'var(--fs-7)', textTransform: 'uppercase', letterSpacing: '0.1em', whiteSpace: 'nowrap',

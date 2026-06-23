@@ -191,11 +191,11 @@ export default function CropTool({
       {/* ── Top bar ── */}
       <div style={{ flexShrink: 0, height: 48, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
         <button onClick={onCancel} aria-label="Cancel" style={{ background: "transparent", border: "none", cursor: "pointer", padding: 8, lineHeight: 0 }}>
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="white" strokeWidth="1.5" strokeLinecap="round" /></svg>
+          <svg width="17.5" height="17.5" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="white" strokeWidth="1.5" strokeLinecap="round" /></svg>
         </button>
         <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: "white", textTransform: "uppercase", letterSpacing: "0.1em" }}>CROP</span>
         <button onClick={handleConfirm} aria-label="Confirm" style={{ background: "transparent", border: "none", cursor: "pointer", padding: 8, lineHeight: 0 }}>
-          <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M3 9.5l4 4L15 5" stroke={RED} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
+          <svg width="19.5" height="19.5" viewBox="0 0 18 18" fill="none"><path d="M3 9.5l4 4L15 5" stroke={RED} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
         </button>
       </div>
 

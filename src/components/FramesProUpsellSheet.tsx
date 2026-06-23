@@ -49,7 +49,7 @@ export default function FramesProUpsellSheet({ isOpen, onClose, onUpgrade }: Pro
             onClick={onClose}
             style={{ background: "transparent", border: "none", cursor: "pointer", padding: 0, width: 18, height: 18, flexShrink: 0, marginLeft: 8 }}
           >
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <svg width="19.5" height="19.5" viewBox="0 0 18 18" fill="none">
               <path d="M3 3L15 15M15 3L3 15" stroke="rgba(255,255,255,0.5)" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
           </button>

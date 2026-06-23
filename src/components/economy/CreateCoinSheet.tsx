@@ -171,7 +171,7 @@ export default function CreateCoinSheet({
             {working ? (
               /* THE WHEEL — pressed button transformed into live narration. */
               <div style={{ width: '100%', border: '1px solid rgba(255,0,0,0.55)', padding: '13px 0', marginBottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, minHeight: 46 }}>
-                <FrameLoader size={22} />
+                <FrameLoader size={23.5} />
                 <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: 'white', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
                   {narration ?? 'CREATING YOUR COIN…'}
                 </span>

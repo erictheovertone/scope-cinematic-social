@@ -52,7 +52,7 @@ export default function HiddenPosts() {
       <div className="flex-1 overflow-y-auto">
         {hiddenPosts.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full px-6">
-            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#333333" strokeWidth="1">
+            <svg width="65.5" height="65.5" viewBox="0 0 24 24" fill="none" stroke="#333333" strokeWidth="1">
               <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
               <circle cx="12" cy="12" r="3"/>
               <path d="M3 3l18 18"/>
@@ -73,7 +73,7 @@ export default function HiddenPosts() {
               >
                 <div className="flex items-start space-x-4">
                   <div className="w-16 h-16 bg-[#333333] rounded-lg flex-shrink-0 flex items-center justify-center">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#666666" strokeWidth="1.5">
+                    <svg width="25.5" height="25.5" viewBox="0 0 24 24" fill="none" stroke="#666666" strokeWidth="1.5">
                       <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
                       <circle cx="9" cy="9" r="2"/>
                       <path d="M21 15l-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>

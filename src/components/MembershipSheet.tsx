@@ -255,7 +255,7 @@ export default function MembershipSheet({ visible, onClose, onSuccess, isPaidMem
           <div style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 18px", borderBottom: "1px solid rgba(255,255,255,0.08)", background: "#000" }}>
             <span style={{ ...BOLD, fontSize: 'var(--fs-12)', color: "white", textTransform: "uppercase", letterSpacing: "0.06em" }}>SCOPE PRO</span>
             <button onClick={closeEmbedded} aria-label="Cancel" style={{ background: "transparent", border: "none", cursor: "pointer", padding: 6, lineHeight: 0 }}>
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="white" strokeWidth="1.5" strokeLinecap="round" /></svg>
+              <svg width="17.5" height="17.5" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="white" strokeWidth="1.5" strokeLinecap="round" /></svg>
             </button>
           </div>
           <div style={{ flex: 1, minHeight: 0, overflowY: "auto", WebkitOverflowScrolling: "touch" }}>

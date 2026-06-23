@@ -94,9 +94,9 @@ export default function VideoScrubber({ video, onHeroFrame, compact = false }: P
       {/* Play / pause */}
       <button onClick={togglePlay} aria-label={playing ? "Pause" : "Play"} style={{ background: "transparent", border: "none", cursor: "pointer", padding: 0, lineHeight: 0, flexShrink: 0 }}>
         {playing ? (
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="2" y="1.5" width="2.6" height="9" fill="#fff" /><rect x="7.4" y="1.5" width="2.6" height="9" fill="#fff" /></svg>
+          <svg width="13.5" height="13.5" viewBox="0 0 12 12" fill="none"><rect x="2" y="1.5" width="2.6" height="9" fill="#fff" /><rect x="7.4" y="1.5" width="2.6" height="9" fill="#fff" /></svg>
         ) : (
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 1.5l8 4.5-8 4.5z" fill="#fff" /></svg>
+          <svg width="13.5" height="13.5" viewBox="0 0 12 12" fill="none"><path d="M2.5 1.5l8 4.5-8 4.5z" fill="#fff" /></svg>
         )}
       </button>
 
@@ -121,12 +121,12 @@ export default function VideoScrubber({ video, onHeroFrame, compact = false }: P
       {/* Mute / unmute — austere speaker; red when audible so it reads as active */}
       <button onClick={toggleMute} aria-label={muted ? "Unmute" : "Mute"} style={{ background: "transparent", border: "none", cursor: "pointer", padding: 0, lineHeight: 0, flexShrink: 0 }}>
         {muted ? (
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="rgba(255,255,255,0.7)">
+          <svg width="14.5" height="14.5" viewBox="0 0 24 24" fill="rgba(255,255,255,0.7)">
             <path d="M3.5 9v6h4l5 5V4l-5 5h-4z" />
             <path d="M15.5 8.5l5 7M20.5 8.5l-5 7" stroke="rgba(255,255,255,0.7)" strokeWidth="1.6" strokeLinecap="round" />
           </svg>
         ) : (
-          <svg width="13" height="13" viewBox="0 0 24 24" fill={RED}>
+          <svg width="14.5" height="14.5" viewBox="0 0 24 24" fill={RED}>
             <path d="M3.5 9v6h4l5 5V4l-5 5h-4z" />
             <path d="M16.5 8.2a5 5 0 010 7.6M18.8 6a8 8 0 010 12" fill="none" stroke={RED} strokeWidth="1.6" strokeLinecap="round" />
           </svg>

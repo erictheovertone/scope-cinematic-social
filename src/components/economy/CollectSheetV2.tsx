@@ -369,7 +369,7 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, margin: '0 0 3px' }}>
                 <p style={{ ...SKB, fontSize: 'var(--fs-11)', color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.02em', margin: 0 }}>@{post.username}</p>
-                {post.ticker && <TickerMark ticker={post.ticker} size={10} />}
+                {post.ticker && <TickerMark ticker={post.ticker} size={11.5} />}
               </div>
               <p style={{ ...SKR, fontSize: 'var(--fs-10)', color: 'rgba(255,255,255,0.5)', margin: 0, lineHeight: 1.35, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const }}>{post.caption || ''}</p>
             </div>
@@ -542,7 +542,7 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
                 {busy ? (
                   /* THE WHEEL — pressed button transformed into narration. */
                   <div style={{ width: '100%', border: '1px solid rgba(255,0,0,0.55)', padding: '13px 0', marginBottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, minHeight: 46 }}>
-                    <FrameLoader size={22} />
+                    <FrameLoader size={23.5} />
                     <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: 'white', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
                       BUYING · {buyQuote ? usd(buyQuote.usdAmount) : ''}…
                     </span>
@@ -653,7 +653,7 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
                     {/* FIRST CUT guard */}
                     {sellEndsFirstCut && (
                       <div style={{ border: '1px solid #FF0000', padding: '12px 12px', marginBottom: 14, display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-                        <ApertureMark size={12} />
+                        <ApertureMark size={13.5} />
                         <p style={{ ...SKR, fontSize: 'var(--fs-10)', color: '#FFF', lineHeight: 1.4, margin: 0 }}>
                           This sale ends your First Cut on this post — <span style={{ color: '#FF0000', ...SKB }}>permanently.</span>
                         </p>
@@ -666,7 +666,7 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
                     {busy ? (
                       /* THE WHEEL — pressed button transformed into narration. */
                       <div style={{ width: '100%', border: '1px solid rgba(255,0,0,0.55)', padding: '13px 0', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, minHeight: 46 }}>
-                        <FrameLoader size={22} />
+                        <FrameLoader size={23.5} />
                         <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: 'white', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
                           SELLING · {sellPieces} {sellPieces === 1 ? 'PIECE' : 'PIECES'}…
                         </span>
@@ -703,7 +703,7 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
           style={{ border: '1px solid rgba(255,255,255,0.1)', padding: '12px 12px', marginTop: 18, cursor: 'pointer' }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-            <ApertureMark size={12} />
+            <ApertureMark size={13.5} />
             <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.12em' }}>FIRST CUT</span>
             <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6 }}>
               {openCount > 0 ? (
@@ -732,7 +732,7 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
           {showSlots && (
             <div style={{ marginTop: 12, borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 12 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-                <ApertureMark size={11} />
+                <ApertureMark size={12.5} />
                 <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.12em' }}>FIRST CUT</span>
                 <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.4)', marginLeft: 'auto', textTransform: 'uppercase', letterSpacing: '0.08em' }}>THE FIRST 10 · PERMANENT</span>
               </div>

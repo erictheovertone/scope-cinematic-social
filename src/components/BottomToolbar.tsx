@@ -19,7 +19,7 @@ const BTN: React.CSSProperties = {
 function HomeIcon({ active }: { active: boolean }) {
   const c = active ? '#FF0000' : 'white';
   return (
-    <svg width="13.5" height="13.5" viewBox="0 0 27 27" fill="none">
+    <svg width="15" height="15" viewBox="0 0 27 27" fill="none">
       <path d="M3.375 10.125L13.5 3.375L23.625 10.125V22.5C23.625 23.0967 23.3879 23.669 22.9597 24.0972C22.5315 24.5254 21.9592 24.7625 21.3625 24.7625H5.6375C5.04076 24.7625 4.46851 24.5254 4.04029 24.0972C3.61207 23.669 3.375 23.0967 3.375 22.5V10.125Z" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
       <path d="M10.125 24.7625V13.5H16.875V24.7625" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
@@ -28,7 +28,7 @@ function HomeIcon({ active }: { active: boolean }) {
 
 function CreateIcon() {
   return (
-    <svg width="13.5" height="13.5" viewBox="0 0 27 27" fill="none">
+    <svg width="15" height="15" viewBox="0 0 27 27" fill="none">
       <path d="M13.5 5.0625V21.9375M5.0625 13.5H21.9375" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   );
@@ -36,7 +36,7 @@ function CreateIcon() {
 
 function ProfileIcon() {
   return (
-    <svg width="13.5" height="13.5" viewBox="0 0 27 27" fill="none">
+    <svg width="15" height="15" viewBox="0 0 27 27" fill="none">
       <path d="M20.25 23.625V21.375C20.25 20.1815 19.7759 19.037 18.9331 18.1942C18.0903 17.3514 16.9458 16.875 15.75 16.875H11.25C10.0542 16.875 8.90973 17.3514 8.06694 18.1942C7.22414 19.037 6.75 20.1815 6.75 21.375V23.625" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
       <path d="M13.5 12.375C15.9853 12.375 18 10.3603 18 7.875C18 5.38972 15.9853 3.375 13.5 3.375C11.0147 3.375 9 5.38972 9 7.875C9 10.3603 11.0147 12.375 13.5 12.375Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
@@ -45,7 +45,7 @@ function ProfileIcon() {
 
 function BellIcon() {
   return (
-    <svg width="13" height="13.5" viewBox="0 0 24 25" fill="none">
+    <svg width="14.5" height="15" viewBox="0 0 24 25" fill="none">
       <path d="M18 9A6 6 0 0 0 6 9c0 7-3 9-3 9h18s-3-2-3-9" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
       <path d="M13.73 22a2 2 0 0 1-3.46 0" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
@@ -54,7 +54,7 @@ function BellIcon() {
 
 function WalletIcon() {
   return (
-    <svg width="13" height="13" viewBox="0 0 26 26" fill="none">
+    <svg width="14.5" height="14.5" viewBox="0 0 26 26" fill="none">
       <path d="M22.75 6.5H3.25C2.42157 6.5 1.75 7.17157 1.75 8V20.5C1.75 21.3284 2.42157 22 3.25 22H22.75C23.5784 22 24.25 21.3284 24.25 20.5V8C24.25 7.17157 23.5784 6.5 22.75 6.5Z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
       <path d="M17.5 4V6.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
       <path d="M8.5 4V6.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -72,7 +72,7 @@ interface Props {
 
 function HamburgerIcon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 18 18" fill="none">
+    <svg width="15.5" height="15.5" viewBox="0 0 18 18" fill="none">
       <rect x="0" y="3" width="18" height="1.5" fill="white"/>
       <rect x="0" y="8.25" width="18" height="1.5" fill="white"/>
       <rect x="0" y="13.5" width="18" height="1.5" fill="white"/>
@@ -128,23 +128,23 @@ export default function BottomToolbar({ page, unreadCount = 0, onNotificationsCl
         }}
       >
         {/* 1 — Home */}
-        <Link href="/" style={{ ...BTN, opacity: page === 'home' ? 1 : 0.7 }} aria-label="Home">
+        <Link className="tap-target" href="/" style={{ ...BTN, opacity: page === 'home' ? 1 : 0.7 }} aria-label="Home">
           <HomeIcon active={page === 'home'} />
         </Link>
 
         {/* 2 — Create */}
-        <Link href="/create" style={{ ...BTN, opacity: 0.7 }} aria-label="Create post">
+        <Link className="tap-target" href="/create" style={{ ...BTN, opacity: 0.7 }} aria-label="Create post">
           <CreateIcon />
         </Link>
 
         {/* 3 — Profile (home/wallet) | Hamburger (profile / public-profile) */}
         {isHome || page === 'wallet' || page === 'public-profile' ? (
-          <Link href="/profile" style={{ ...BTN, opacity: 0.7 }} aria-label="Profile">
+          <Link className="tap-target" href="/profile" style={{ ...BTN, opacity: 0.7 }} aria-label="Profile">
             <ProfileIcon />
           </Link>
         ) : (
           <button
-            onClick={onHamburgerPress}
+            onClick={onHamburgerPress} className="tap-target"
             style={{ ...BTN, opacity: 0.7 }}
             aria-label="Menu"
           >
@@ -154,7 +154,7 @@ export default function BottomToolbar({ page, unreadCount = 0, onNotificationsCl
 
         {/* 4 — Bell (home) | Wallet (profile / public-profile) */}
         {!isHome && (
-          <Link href="/wallet" style={{ ...BTN, opacity: 0.7 }} aria-label="Wallet">
+          <Link className="tap-target" href="/wallet" style={{ ...BTN, opacity: 0.7 }} aria-label="Wallet">
             <WalletIcon />
           </Link>
         )}
@@ -163,7 +163,7 @@ export default function BottomToolbar({ page, unreadCount = 0, onNotificationsCl
           <Link
             href="/profile/notifications"
             onClick={onNotificationsClick}
-            className="relative"
+            className="relative tap-target"
             style={{ ...BTN, opacity: 0.7 }}
             aria-label="Notifications"
           >

@@ -156,7 +156,7 @@ export default function DecksPage() {
                   />
                 ) : (
                   <div style={{ width: "100%", height: "100%", background: "#111", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <svg width="24" height="16" viewBox="0 0 24 16" fill="none">
+                    <svg width="25.5" height="17.5" viewBox="0 0 24 16" fill="none">
                       <rect width="24" height="3.5" fill="rgba(255,255,255,0.15)" />
                       <rect y="6.25" width="24" height="3.5" fill="rgba(255,255,255,0.15)" />
                       <rect y="12.5" width="24" height="3.5" fill="rgba(255,255,255,0.15)" />

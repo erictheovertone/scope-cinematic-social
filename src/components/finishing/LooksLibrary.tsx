@@ -131,7 +131,7 @@ function LookTile({ name, url, selected, locked, onTap }: { name: string; url: s
         {url && <img src={url} alt={name} draggable={false} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
         {locked && (
           <span style={{ position: 'absolute', top: 3, right: 3, lineHeight: 0 }}>
-            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke={RED} strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="11" width="14" height="9" /><path d="M8 11V8a4 4 0 0 1 8 0v3" /></svg>
+            <svg width="10.5" height="10.5" viewBox="0 0 24 24" fill="none" stroke={RED} strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="11" width="14" height="9" /><path d="M8 11V8a4 4 0 0 1 8 0v3" /></svg>
           </span>
         )}
       </div>

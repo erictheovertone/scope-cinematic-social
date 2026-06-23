@@ -54,7 +54,7 @@ export default function HistoryRipple({ events }: HistoryRippleProps) {
             ) : (
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
                 <span style={{ color: current ? RED : 'white', lineHeight: 0, flexShrink: 0 }}>
-                  <ToolIcon toolKey={row.e.toolKey as IconKey} size={15} />
+                  <ToolIcon toolKey={row.e.toolKey as IconKey} size={16.5} />
                 </span>
                 <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: current ? RED : 'white', textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>{row.e.label}</span>
                 <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.4)', letterSpacing: '0.04em', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' }}>{row.e.value}</span>

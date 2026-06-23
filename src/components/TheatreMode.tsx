@@ -394,11 +394,11 @@ export default function TheatreMode({
             {isFeed && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <button onClick={(e) => { stop(e); handleLike(); }} aria-label="Like" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill={isLiked ? '#FF0000' : 'none'} stroke={isLiked ? '#FF0000' : 'rgba(255,255,255,0.85)'} strokeWidth="2" strokeLinejoin="round"><path d="M12 21s-7-4.5-9.5-9C1 9 2.5 5.5 6 5.5c2 0 3.2 1.2 4 2.3.8-1.1 2-2.3 4-2.3 3.5 0 5 3.5 3.5 6.5C19 16.5 12 21 12 21z"/></svg>
+                  <svg width="12.5" height="12.5" viewBox="0 0 24 24" fill={isLiked ? '#FF0000' : 'none'} stroke={isLiked ? '#FF0000' : 'rgba(255,255,255,0.85)'} strokeWidth="2" strokeLinejoin="round"><path d="M12 21s-7-4.5-9.5-9C1 9 2.5 5.5 6 5.5c2 0 3.2 1.2 4 2.3.8-1.1 2-2.3 4-2.3 3.5 0 5 3.5 3.5 6.5C19 16.5 12 21 12 21z"/></svg>
                   <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: '#FFF', fontVariantNumeric: 'tabular-nums' }}>{likes.length}</span>
                 </button>
                 <button onClick={(e) => { stop(e); setShowData(true); setShowComments(true); }} aria-label="Comments" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2" strokeLinejoin="round"><path d="M21 11.5a8.5 8.5 0 0 1-12.5 7.5L3 21l2-5.5A8.5 8.5 0 1 1 21 11.5z"/></svg>
+                  <svg width="12.5" height="12.5" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2" strokeLinejoin="round"><path d="M21 11.5a8.5 8.5 0 0 1-12.5 7.5L3 21l2-5.5A8.5 8.5 0 1 1 21 11.5z"/></svg>
                   <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: '#FFF', fontVariantNumeric: 'tabular-nums' }}>{comments.length}</span>
                 </button>
                 {coinAddr && (

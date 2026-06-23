@@ -76,7 +76,7 @@ function MirageLightbox({
           zIndex: 1,
         }}
       >
-        <svg width="12" height="12" viewBox="0 0 13 13" fill="none">
+        <svg width="13.5" height="13.5" viewBox="0 0 13 13" fill="none">
           <path
             d="M8.5 1.5L3.5 6.5l5 5"
             stroke="white"

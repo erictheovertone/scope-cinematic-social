@@ -59,7 +59,7 @@ export default function AddToPalette({ isPro, onUpsell, onSave }: AddToPalettePr
     >
       <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: RED, textTransform: 'uppercase', letterSpacing: '0.08em' }}>+ ADD TO PALETTE</span>
       {!isPro && (
-        <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke={RED} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <svg width="10.5" height="10.5" viewBox="0 0 24 24" fill="none" stroke={RED} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <rect x="5" y="11" width="14" height="9" /><path d="M8 11V8a4 4 0 0 1 8 0v3" />
         </svg>
       )}
