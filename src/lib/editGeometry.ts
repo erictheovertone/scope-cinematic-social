@@ -67,66 +67,77 @@ export async function bakeImageGeometry(
   exportW: number,
   exportH: number,
 ): Promise<File> {
-  return new Promise((resolve) => {
-    const objectUrl = URL.createObjectURL(file);
-    const img = new Image();
-    img.onload = () => {
-      URL.revokeObjectURL(objectUrl);
-      try {
-        const nW = img.naturalWidth;
-        const nH = img.naturalHeight;
-        const rot = ((geom.rotate % 360) + 360) % 360;
+  // CRASH FIX (iOS OOM): a full-res camera photo (12–48MP) decoded as a full bitmap
+  // is width×height×4 bytes (~190MB at 48MP) → the WebKit tab OOMs and crashes to the
+  // springboard. Decode at a CAPPED width via createImageBitmap, which scales DURING
+  // decode so the full-res buffer is never materialized. The crop window is normalized
+  // (0–1 fractions of the source), so a uniformly downscaled source yields an identical
+  // export — only the OOM is removed. Never below the export width (no needless loss).
+  const MAX_EDGE = Math.max(2048, exportW);
+  let src: ImageBitmap;
+  try {
+    src = await createImageBitmap(file, { resizeWidth: MAX_EDGE, resizeQuality: 'high' });
+  } catch {
+    // Older engines without resize options: fall back to a plain decode (desktop;
+    // small images). Still avoids the long-lived HTMLImageElement bitmap.
+    try { src = await createImageBitmap(file); } catch { return file; }
+  }
 
-        // Oriented source dims after the 90° rotate.
-        const oW = rot === 90 || rot === 270 ? nH : nW;
-        const oH = rot === 90 || rot === 270 ? nW : nH;
+  try {
+    const nW = src.width;
+    const nH = src.height;
+    const rot = ((geom.rotate % 360) + 360) % 360;
 
-        // Crop window in oriented space (px).
-        const cw = geom.crop.w * oW;
-        const ch = geom.crop.h * oH;
-        const ccx = (geom.crop.x + geom.crop.w / 2) * oW;
-        const ccy = (geom.crop.y + geom.crop.h / 2) * oH;
+    // Oriented source dims after the 90° rotate.
+    const oW = rot === 90 || rot === 270 ? nH : nW;
+    const oH = rot === 90 || rot === 270 ? nW : nH;
 
-        const canvas = document.createElement('canvas');
-        canvas.width = exportW;
-        canvas.height = exportH;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) { resolve(file); return; }
-        ctx.fillStyle = '#000';
-        ctx.fillRect(0, 0, exportW, exportH);
+    // Crop window in oriented space (px).
+    const cw = geom.crop.w * oW;
+    const ch = geom.crop.h * oH;
+    const ccx = (geom.crop.x + geom.crop.w / 2) * oW;
+    const ccy = (geom.crop.y + geom.crop.h / 2) * oH;
 
-        // Map the oriented crop window onto the full canvas.
-        ctx.translate(exportW / 2, exportH / 2);
-        ctx.scale(exportW / cw, exportH / ch);
+    const canvas = document.createElement('canvas');
+    canvas.width = exportW;
+    canvas.height = exportH;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) { src.close?.(); return file; }
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, exportW, exportH);
 
-        // Straighten rotation about the crop centre, with cover-scale.
-        if (geom.straighten !== 0) {
-          const cover = rotateCoverScale(geom.straighten, cw, ch);
-          ctx.scale(cover, cover);
-          ctx.rotate((geom.straighten * Math.PI) / 180);
-        }
+    // Map the oriented crop window onto the full canvas.
+    ctx.translate(exportW / 2, exportH / 2);
+    ctx.scale(exportW / cw, exportH / ch);
 
-        // Move to oriented crop centre.
-        ctx.translate(-ccx, -ccy);
+    // Straighten rotation about the crop centre, with cover-scale.
+    if (geom.straighten !== 0) {
+      const cover = rotateCoverScale(geom.straighten, cw, ch);
+      ctx.scale(cover, cover);
+      ctx.rotate((geom.straighten * Math.PI) / 180);
+    }
 
-        // Apply the 90° orientation, then draw the source at natural origin.
-        if (rot !== 0) {
-          ctx.translate(oW / 2, oH / 2);
-          ctx.rotate((rot * Math.PI) / 180);
-          ctx.translate(-nW / 2, -nH / 2);
-        }
-        ctx.drawImage(img, 0, 0);
+    // Move to oriented crop centre.
+    ctx.translate(-ccx, -ccy);
 
-        canvas.toBlob((blob) => {
-          if (!blob) { resolve(file); return; }
-          const base = file.name.replace(/\.[^.]+$/, '');
-          resolve(new File([blob], `${base}-cropped.jpg`, { type: 'image/jpeg' }));
-        }, 'image/jpeg', 0.9);
-      } catch { resolve(file); }
-    };
-    img.onerror = () => { URL.revokeObjectURL(objectUrl); resolve(file); };
-    img.src = objectUrl;
-  });
+    // Apply the 90° orientation, then draw the source at natural origin.
+    if (rot !== 0) {
+      ctx.translate(oW / 2, oH / 2);
+      ctx.rotate((rot * Math.PI) / 180);
+      ctx.translate(-nW / 2, -nH / 2);
+    }
+    ctx.drawImage(src, 0, 0);
+    src.close?.(); // release the decoded bitmap immediately
+
+    const blob = await new Promise<Blob | null>((r) => canvas.toBlob(r, 'image/jpeg', 0.9));
+    canvas.width = canvas.height = 0; // release the canvas buffer
+    if (!blob) return file;
+    const base = file.name.replace(/\.[^.]+$/, '');
+    return new File([blob], `${base}-cropped.jpg`, { type: 'image/jpeg' });
+  } catch {
+    src.close?.();
+    return file;
+  }
 }
 
 /**

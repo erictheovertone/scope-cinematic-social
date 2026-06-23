@@ -130,10 +130,13 @@ button:active,
   overscroll-behavior: contain;
 }
 
-/* ── Stage 2 · Off-screen feed cost ───────────────────────────────────────────
-   content-visibility skips layout/paint for cards outside the viewport; the
-   intrinsic-size estimate reserves space so the scrollbar/position doesn't jump. */
-.feed-card { content-visibility: auto; contain-intrinsic-size: 0 480px; }
+/* ── Stage 2 · Off-screen feed cost — REMOVED (regression) ────────────────────
+   content-visibility:auto with a fixed contain-intrinsic-size mis-estimated real
+   card heights (cards vary widely by AR + open comments), which broke/jumped feed
+   scrolling and threw off scroll height on iOS Safari. Reverted to a no-op — the
+   feed renders normally. (A correct per-card intrinsic-size could revisit this, but
+   not worth a broken feed.) The .feed-card className on PostItem is now inert. */
+.feed-card { /* intentionally empty — see above */ }
 
 /* ── UI bump · Tap targets ────────────────────────────────────────────────────
    Grow a small control's HIT AREA with an invisible ::after overlay (negative

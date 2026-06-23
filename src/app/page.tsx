@@ -205,7 +205,8 @@ export default function Home() {
           aria-label="Open menu"
           style={{
             position: 'fixed',
-            top: 6,
+            // Clear the status bar under viewport-fit=cover (env=0 on non-notch).
+            top: 'calc(6px + env(safe-area-inset-top, 0px))',
             right: 6,
             background: 'transparent',
             border: 'none',
