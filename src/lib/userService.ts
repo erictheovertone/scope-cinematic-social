@@ -597,7 +597,20 @@ export const addPostToDeck = async (deckId: string, postId: string): Promise<Dec
     supabase.from('posts').select('user_id').eq('id', postId).single(),
   ])
   if (!deck || !post) throw new Error('Deck or post not found')
-  if (deck.user_id !== post.user_id) throw new Error('Decks hold your own work only')
+
+  // OWNERSHIP — compare in ONE id space (Supabase UUID). The two columns live in
+  // DIFFERENT spaces: decks.user_id holds the Privy DID (createDeck keys off user.id),
+  // posts.user_id holds the Supabase UUID (= profiles.user_id). A raw DID !== UUID
+  // compare ALWAYS failed — rejecting you from your own decks. Resolve the deck
+  // owner's DID → users.id, then compare to post.user_id. The own-work-only rule is
+  // preserved: someone else's post (a different UUID) is still rejected.
+  let deckOwnerUuid: string | null = deck.user_id
+  if (typeof deck.user_id === 'string' && deck.user_id.startsWith('did:')) {
+    const { data: ownerRow } = await supabase
+      .from('users').select('id').eq('privy_id', deck.user_id).single()
+    deckOwnerUuid = ownerRow?.id ?? null
+  }
+  if (!deckOwnerUuid || deckOwnerUuid !== post.user_id) throw new Error('Decks hold your own work only')
 
   const { data: duplicate } = await supabase
     .from('deck_items')
