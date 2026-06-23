@@ -332,9 +332,22 @@ export default function Home() {
           so no onScroll here. */}
       <div
         ref={feedRef}
-        className="absolute left-[2px] right-[2px] top-[30px] bottom-0 overflow-y-auto"
-        // @ts-ignore
-        style={{ WebkitOverflowScrolling: 'touch' }}
+        className="overflow-y-auto"
+        // FIXED, not absolute — measured against the VIEWPORT, so its height can't grow
+        // to fit content the way `absolute … bottom-0` did against the min-height-only
+        // .app-shell/.screen-min ancestor (which had no height ceiling → the scroller
+        // grew to scrollHeight === clientHeight and couldn't scroll). top:30/bottom:0 vs
+        // the viewport caps it at 100dvh − 30. Centered (max-width 30rem) so the ≥480
+        // column stays intact; 2px side padding preserved.
+        style={{
+          position: 'fixed',
+          top: 30, bottom: 0, left: 0, right: 0,
+          maxWidth: '30rem', marginInline: 'auto',
+          paddingLeft: 2, paddingRight: 2,
+          WebkitOverflowScrolling: 'touch',
+          overscrollBehavior: 'contain',
+          zIndex: 1,
+        }}
       >
         <div style={{ paddingTop: 16, paddingBottom: 60 }}>
           {posts.map((post, index) => (
