@@ -23,18 +23,22 @@ export interface TradeSettledDetail {
    *  refetch lags tx indexing (~7s), so the displayed cash would otherwise wait. */
   proceedsUsd?: number;
   proceedsCurrency?: 'ETH' | 'USDC';
+  /** BUY only — receipt-true USD spent. Values the NEW holdings at what was paid so
+   *  the wallet total can't dip below the spend (the market-price read lags Zora's
+   *  index, so valuing new pieces at the stale pre-trade price under-counts them). */
+  spentUsd?: number;
 }
 
 /** Fire after ANY successful trade. `opts.piecesDelta` enables the optimistic
- *  holdings patch; `opts.proceedsUsd`/`proceedsCurrency` (sells) enable the
- *  instant balance tick-up. Omit them and listeners simply refetch as before. */
+ *  holdings patch; `proceedsUsd`/`proceedsCurrency` (sells) + `spentUsd` (buys)
+ *  enable the instant, receipt-true value. Omit them and listeners refetch as before. */
 export function notifyTradeSettled(
   postId: string,
-  opts?: { piecesDelta?: number; proceedsUsd?: number; proceedsCurrency?: 'ETH' | 'USDC' },
+  opts?: { piecesDelta?: number; proceedsUsd?: number; proceedsCurrency?: 'ETH' | 'USDC'; spentUsd?: number },
 ): void {
   if (typeof window === 'undefined') return;
   window.dispatchEvent(new CustomEvent(TRADE_SETTLED_EVENT, {
-    detail: { postId, piecesDelta: opts?.piecesDelta, proceedsUsd: opts?.proceedsUsd, proceedsCurrency: opts?.proceedsCurrency },
+    detail: { postId, piecesDelta: opts?.piecesDelta, proceedsUsd: opts?.proceedsUsd, proceedsCurrency: opts?.proceedsCurrency, spentUsd: opts?.spentUsd },
   }));
 }
 

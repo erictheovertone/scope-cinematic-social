@@ -71,12 +71,12 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
   // Post-trade settle signal is DEFERRED until the sheet has animated OUT, so the
   // wallet balance stays at its OLD value while the confirmation is up and the cash
   // ticks up exactly as the sheet leaves (fired on the sheet's transitionend).
-  const pendingSettleRef = useRef<{ postId: string; piecesDelta?: number; proceedsUsd?: number; proceedsCurrency?: 'ETH' | 'USDC' } | null>(null);
+  const pendingSettleRef = useRef<{ postId: string; piecesDelta?: number; proceedsUsd?: number; proceedsCurrency?: 'ETH' | 'USDC'; spentUsd?: number } | null>(null);
   const firePendingSettle = () => {
     const p = pendingSettleRef.current;
     if (!p) return;
     pendingSettleRef.current = null;
-    notifyTradeSettled(p.postId, { piecesDelta: p.piecesDelta, proceedsUsd: p.proceedsUsd, proceedsCurrency: p.proceedsCurrency });
+    notifyTradeSettled(p.postId, { piecesDelta: p.piecesDelta, proceedsUsd: p.proceedsUsd, proceedsCurrency: p.proceedsCurrency, spentUsd: p.spentUsd });
   };
   const sheetVisibleRef = useRef(visible);
   sheetVisibleRef.current = visible;
@@ -154,12 +154,12 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
   // After the held terminal beat, the sheet returns the collector to their
   // ORIGINATING context — it's an overlay, so closing it lands them exactly
   // where they were (feed or visited profile, scroll position intact).
-  const ceremonyResolve = (postId: string, piecesDelta?: number, proceeds?: { usd: number; currency: 'ETH' | 'USDC' }) => {
+  const ceremonyResolve = (postId: string, piecesDelta?: number, proceeds?: { usd: number; currency: 'ETH' | 'USDC' }, spentUsd?: number) => {
     // The ONE post-trade refresh (MC chips re-read + wallet holdings patch + the
-    // sell balance tick-up) is DEFERRED to the sheet's exit — held here, fired on
-    // the sheet's transitionend (firePendingSettle). The balance stays OLD while the
-    // confirmation is up; the cash lands as the sheet animates away.
-    pendingSettleRef.current = { postId, piecesDelta, proceedsUsd: proceeds?.usd, proceedsCurrency: proceeds?.currency };
+    // sell balance tick-up / buy receipt-true valuation) is DEFERRED to the sheet's
+    // exit — held here, fired on the sheet's transitionend (firePendingSettle). The
+    // balance stays OLD while the confirmation is up; the value lands as it animates away.
+    pendingSettleRef.current = { postId, piecesDelta, proceedsUsd: proceeds?.usd, proceedsCurrency: proceeds?.currency, spentUsd };
     // ~4s hold: time to read the count and watch the price move before the sheet
     // returns the collector to where they came from. If THIS buy earns First Cut,
     // checkFirstCut cancels this timer and the celebration owns the exit instead
@@ -265,7 +265,10 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
         setDone(market?.live ? `[ COLLECTED · ${n} ${n === 1 ? 'PIECE' : 'PIECES'} ]` : `COLLECTED ${n} ${n === 1 ? 'PIECE' : 'PIECES'} (MOCK)`);
         setCaptured(true); // bracket-capture snaps onto the media
         refresh();         // price/MC re-read — the buyer sees the price they moved
-        ceremonyResolve(post.id, n); // +pieces bought → optimistic wallet patch
+        // +pieces bought → optimistic wallet patch; spentUsd = the USD paid (v) →
+        // the new holdings are valued receipt-true so the wallet total can't dip
+        // below the spend while the market-price read catches up to the trade.
+        ceremonyResolve(post.id, n, undefined, v);
         checkFirstCut(post.id, r.ref, v); // Moment 1 — additive, non-blocking ($ floor)
       }
     } catch (e) {

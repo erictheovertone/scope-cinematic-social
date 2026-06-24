@@ -83,6 +83,33 @@ export default function WalletPage() {
     else { usdcFloor.current = null; setUsdcBalance(usdcStr); }
   };
 
+  // Per-post HOLDINGS-VALUE floor (receipt-true buy). After a BUY the new pieces are
+  // worth ≈ what was PAID, but the market-price read lags Zora's index — so a reconcile
+  // BEFORE the index would value them at the stale PRE-trade price and the wallet total
+  // would dip below the spend (the "shows less than spent" trust bug). The floor holds
+  // the displayed value at the receipt-true amount ONLY until Zora indexes the trade
+  // (detected by the coin's price moving off its pre-trade value, or — for a first buy —
+  // the coin gaining a price). Then it RELEASES to the true market value, even if that's
+  // slightly below the spend (the legitimate AMM buy spread — NOT faked away). A 90s
+  // safety timer clears any floor regardless, so nothing can persist.
+  const holdingFloor = useRef<Map<string, { value: number; prePrice: number | null }>>(new Map());
+  const applyHoldingFloors = (list: Holding[]): Holding[] => {
+    if (holdingFloor.current.size === 0) return list;
+    return list.map((h) => {
+      const f = holdingFloor.current.get(h.postId);
+      if (!f) return h;
+      const indexed = f.prePrice != null
+        ? (h.priceUsd != null && Math.abs(h.priceUsd - f.prePrice) > f.prePrice * 1e-3) // price moved → indexed
+        : (h.priceUsd != null && h.valueUsd > 0); // first buy: coin gained a price → indexed
+      if (indexed) { holdingFloor.current.delete(h.postId); return h; } // settle to truth (incl. spread)
+      return { ...h, valueUsd: f.value }; // still pre-index → show ≈ what was paid, not a stale-low flash
+    });
+  };
+  const setHoldingFloor = (postId: string, value: number, prePrice: number | null) => {
+    holdingFloor.current.set(postId, { value, prePrice });
+    window.setTimeout(() => holdingFloor.current.delete(postId), 90_000); // safety: never persist
+  };
+
   const fetchBalances = async () => {
     if (!walletAddress) return;
     setLoading(true);
@@ -190,9 +217,10 @@ export default function WalletPage() {
   const reconcileHoldings = useCallback(() => {
     [0, 1500, 4000].forEach((delay) => setTimeout(() => {
       economy.getHoldings()
-        .then((h) => { if (mountedRef.current) setHoldings(h); })
+        .then((h) => { if (mountedRef.current) setHoldings(applyHoldingFloors(h)); })
         .catch(() => {});
     }, delay));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [economy]);
 
   // POST-TRADE: OPTIMISTIC pieces patch (Change 2, holdings-only) THEN reconcile.
@@ -202,6 +230,7 @@ export default function WalletPage() {
   // No blanking — the optimistic state shows until the real read replaces it.
   useEffect(() => onTradeSettled((postId, detail) => {
     const delta = detail?.piecesDelta;
+    const spentUsd = detail?.spentUsd;
     if (postId && typeof delta === "number" && delta !== 0) {
       setHoldings((prev) => {
         if (!prev) return prev;
@@ -209,11 +238,24 @@ export default function WalletPage() {
           .map((h) => {
             if (h.postId !== postId) return h;
             const pieces = Math.max(0, h.pieces + delta);
+            // BUY with receipt-true spend → value the position at old + paid (the new
+            // pieces are worth what you paid). Floor it so the reconcile's lagged-price
+            // read can't drop it below the spend. SELL / no-spent → last-known price.
+            if (delta > 0 && spentUsd != null && spentUsd > 0) {
+              const valueUsd = h.valueUsd + spentUsd;
+              setHoldingFloor(postId, valueUsd, h.priceUsd ?? null); // release when this price moves
+              return { ...h, pieces, valueUsd };
+            }
             return { ...h, pieces, valueUsd: (h.priceUsd ?? 0) * pieces };
           })
           .filter((h) => h.pieces > 0)
           .sort((a, b) => b.valueUsd - a.valueUsd);
       });
+    }
+    // BRAND-NEW holding (first buy of this coin → no prev entry to patch): floor at the
+    // spend (prePrice null → releases once the coin gains a price = Zora indexed).
+    if (postId && typeof delta === "number" && delta > 0 && spentUsd != null && spentUsd > 0 && !holdingFloor.current.has(postId)) {
+      setHoldingFloor(postId, spentUsd, null);
     }
     // INSTANT balance tick-up (Fix): a SELL carries receipt-true proceeds — bump the
     // received currency's balance NOW (don't wait the ~7s on-chain refetch). Sets a
@@ -256,9 +298,9 @@ export default function WalletPage() {
         .then((next) => {
           if (!mountedRef.current) return;
           setHoldings((prev) => {
-            if (!prev) return next;
+            if (!prev) return applyHoldingFloors(next);
             const prevByPost = new Map(prev.map((h) => [h.postId, h]));
-            return next
+            const merged = next
               .map((h) => {
                 if (h.priceUsd != null && h.valueUsd > 0) return h; // resolved — use it
                 const old = prevByPost.get(h.postId);
@@ -267,8 +309,8 @@ export default function WalletPage() {
                   return { ...h, priceUsd: old.priceUsd, valueUsd: old.priceUsd * h.pieces };
                 }
                 return h; // genuinely unpriced (untraded) → stays $0
-              })
-              .sort((a, b) => b.valueUsd - a.valueUsd);
+              });
+            return applyHoldingFloors(merged).sort((a, b) => b.valueUsd - a.valueUsd);
           });
         })
         .catch(() => {});

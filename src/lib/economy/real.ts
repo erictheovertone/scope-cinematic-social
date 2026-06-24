@@ -87,9 +87,14 @@ const CLIENT_TTL_MS = 30_000;
 const marketCache = new Map<string, { data: CoinRead; at: number }>();
 
 // A settled trade invalidates the cached prices so the very next read (holdings
-// refetch, MC chip) is post-trade fresh — not a stale cached value.
+// refetch, MC chip) is post-trade fresh — not a stale cached value. It also pokes the
+// Screening Room to recompute its ranking immediately (self-throttled single-flight),
+// so buying into a post can move the leaderboard without waiting for the next view/cron.
 if (typeof window !== "undefined") {
-  import("./tradeEvents").then(({ onTradeSettled }) => onTradeSettled(() => marketCache.clear()));
+  import("./tradeEvents").then(({ onTradeSettled }) => onTradeSettled(() => {
+    marketCache.clear();
+    fetch("/api/screening-room/refresh", { method: "POST", keepalive: true }).catch(() => {});
+  }));
 }
 let pendingAddrs = new Map<string, Array<(r: CoinRead) => void>>();
 let batchTimer: ReturnType<typeof setTimeout> | null = null;
