@@ -62,12 +62,18 @@ const num = (v: unknown): number => {
 // falls back to the normal TTL. The next GET re-reads through the hardened path.
 async function bustServerMarket(coinAddress: string): Promise<void> {
   try {
+    // Hard timeout so this best-effort read can NEVER hang resources. (Always called
+    // fire-and-forget — never awaited in a trade path — so the trade can't wait on it.)
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 4000);
     await fetch("/api/market", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ bust: [coinAddress.toLowerCase()] }),
+      signal: ctrl.signal,
     });
-  } catch { /* fall back to TTL */ }
+    clearTimeout(t);
+  } catch { /* timeout / abort / failure → fall back to the normal TTL */ }
 }
 
 // ── Market transport: /api/market (server-side batch/cache/key) ──────────────
@@ -295,7 +301,10 @@ export function createRealEconomy(
       if (!viewerAddress || !getWalletClient) throw new Error("Wallet not ready — try again in a moment.");
       const walletClient = await getWalletClient();
       const { hash, pieces } = await buyCoin({ walletClient, sender: getAddress(viewerAddress), coinAddress, usdAmount, currency });
-      await bustServerMarket(coinAddress); // freshness: next read isn't the pre-trade price
+      // FIRE-AND-FORGET — the trade is DONE the moment buyCoin confirms; never block
+      // completion on a post-trade read (awaiting this hung the buy when /api/market
+      // stalled). Freshness still happens, just off the critical path.
+      void bustServerMarket(coinAddress);
       return { ok: true, pieces: pieces ?? 0, ref: hash };
     },
 
@@ -305,7 +314,8 @@ export function createRealEconomy(
       if (!viewerAddress || !getWalletClient) throw new Error("Wallet not ready — try again in a moment.");
       const walletClient = await getWalletClient();
       const r = await sellCoin({ walletClient, sender: getAddress(viewerAddress), coinAddress, pieces, currency });
-      await bustServerMarket(coinAddress); // freshness: next read isn't the pre-trade price
+      // FIRE-AND-FORGET (see buy) — never block trade completion on a post-trade read.
+      void bustServerMarket(coinAddress);
       // Receipt-true: pieces and proceeds from the trade result, never estimates.
       return { ok: true, pieces: r.pieces ?? pieces, ref: r.hash, proceedsUsd: r.proceedsUsd };
     },
