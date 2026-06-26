@@ -70,6 +70,10 @@ export async function bakeAutoplayClip(
   let video: HTMLVideoElement | null = null;
   let container: HTMLDivElement | null = null;
   let root: ReturnType<typeof createRoot> | null = null;
+  // Hoisted to function scope so the finally can stop the capture stream + recorder
+  // (they were const-scoped inside the try → unreachable for teardown = the leak).
+  let stream: MediaStream | null = null;
+  let recorder: MediaRecorder | null = null;
   try {
     // 1. Decode the video.
     video = document.createElement("video");
@@ -121,14 +125,15 @@ export async function bakeAutoplayClip(
     await raf(); await raf(); // let a graded frame land before recording (no black head)
 
     // 5. Record.
-    const stream = (canvas as unknown as { captureStream: (fps?: number) => MediaStream }).captureStream(30);
-    const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 2_500_000 });
+    stream = (canvas as unknown as { captureStream: (fps?: number) => MediaStream }).captureStream(30);
+    recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 2_500_000 });
+    const rec = recorder; // non-null local — the function-scoped `recorder` loses narrowing inside the callbacks below
     const chunks: BlobPart[] = [];
-    recorder.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
-    const stopped = new Promise<void>((res) => { recorder.onstop = () => res(); });
-    recorder.start();
+    rec.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
+    const stopped = new Promise<void>((res) => { rec.onstop = () => res(); });
+    rec.start();
     await delay(clipLen * 1000 + 80);
-    recorder.stop();
+    rec.stop();
     await stopped;
 
     const blob = new Blob(chunks, { type: mimeType });
@@ -140,7 +145,23 @@ export async function bakeAutoplayClip(
     console.warn("[bakeClip] failed (post will use poster for autoplay):", e);
     return null;
   } finally {
-    try { video?.pause(); if (video) video.src = ""; } catch { /* noop */ }
+    // Teardown runs AFTER the blob is captured + returned above, so the clip is never
+    // truncated. Every step is independently try/caught so cleanup can't throw and lose
+    // the result. (videoUrl is the CALLER's media object URL — never revoked here.)
+    // B. Fully release the MediaRecorder: stop if still recording, then drop handlers so
+    //    their closures (which retain the canvas/video) can be GC'd.
+    try {
+      if (recorder) {
+        if (recorder.state !== "inactive") recorder.stop();
+        recorder.ondataavailable = null;
+        recorder.onstop = null;
+      }
+    } catch { /* noop */ }
+    // A. Stop the canvas capture-stream tracks — the core fix (releases the stream).
+    try { stream?.getTracks().forEach((t) => t.stop()); } catch { /* noop */ }
+    // C. Release the <video> + its decoder: pause, drop the source, and load() to abort
+    //    any pending fetch/decode (frees the decoder more reliably than src='' on iOS).
+    try { if (video) { video.pause(); video.removeAttribute("src"); video.load(); } } catch { /* noop */ }
     if (root && container) {
       const r = root, c = container;
       setTimeout(() => { try { r.unmount(); } catch { /* noop */ } c.remove(); }, 0);
