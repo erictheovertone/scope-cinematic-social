@@ -33,18 +33,27 @@ export function getMaxBakeWidth(gl?: WebGLRenderingContext | WebGL2RenderingCont
     //    under 8192 is treated as constrained.
     if (gl) {
       const maxTex = gl.getParameter(gl.MAX_TEXTURE_SIZE) as number;
-      if (typeof maxTex === 'number' && maxTex < 8192) return CAPPED_WIDTH;
+      if (typeof maxTex === 'number' && maxTex < 8192) {
+        console.log('[BUDGET] capped via MAX_TEXTURE_SIZE', maxTex); // TEMP DIAGNOSTIC
+        return CAPPED_WIDTH;
+      }
     }
 
     // SSR / no DOM → fail safe.
-    if (typeof window === 'undefined') return CAPPED_WIDTH;
+    if (typeof window === 'undefined') {
+      console.log('[BUDGET] capped via SSR/no-window'); // TEMP DIAGNOSTIC
+      return CAPPED_WIDTH;
+    }
 
     // 2. Touch device (coarse pointer AND no hover) → constrained GPU budget.
     const mm = typeof window.matchMedia === 'function' ? window.matchMedia.bind(window) : null;
     if (mm) {
       const coarse = mm('(pointer: coarse)').matches;
       const noHover = mm('(hover: none)').matches;
-      if (coarse && noHover) return CAPPED_WIDTH;
+      if (coarse && noHover) {
+        console.log('[BUDGET] capped via coarse-pointer'); // TEMP DIAGNOSTIC
+        return CAPPED_WIDTH;
+      }
     }
 
     // 3. iOS / iPadOS — tightest GPU budget, no deviceMemory API. Catch iPhone/iPod/
@@ -56,13 +65,18 @@ export function getMaxBakeWidth(gl?: WebGLRenderingContext | WebGL2RenderingCont
       const touchPoints = navigator.maxTouchPoints || 0;
       const isIOS = /iPad|iPhone|iPod/.test(platform) || /iPad|iPhone|iPod/.test(ua);
       const isIPadOS = platform === 'MacIntel' && touchPoints > 1;
-      if (isIOS || isIPadOS) return CAPPED_WIDTH;
+      if (isIOS || isIPadOS) {
+        console.log('[BUDGET] capped via iOS', { platform, touchPoints, isIOS, isIPadOS }); // TEMP DIAGNOSTIC
+        return CAPPED_WIDTH;
+      }
     }
 
     // 4. Confident desktop (fine pointer, capable GPU) → full resolution.
+    console.log('[BUDGET] FULL 4096 desktop'); // TEMP DIAGNOSTIC
     return FULL_WIDTH;
-  } catch {
+  } catch (e) {
     // 5. Any throw → fail safe.
+    console.log('[BUDGET] capped via catch', e); // TEMP DIAGNOSTIC
     return CAPPED_WIDTH;
   }
 }

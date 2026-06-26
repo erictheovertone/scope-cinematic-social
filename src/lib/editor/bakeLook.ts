@@ -104,6 +104,9 @@ export async function bakeLook(image: HTMLImageElement, params: EditParams, w: n
     renderW = Math.round(w * scale);
     renderH = Math.round(h * scale); // keep the AR exact
   }
+  // TEMP DIAGNOSTIC (strip after on-device crash is diagnosed): confirm the cap engaged.
+  console.log('[BAKE] getMaxBakeWidth=', maxW, 'requested w×h=', w, h,
+              '→ renderW×H=', renderW, renderH);
 
   const container = document.createElement('div');
   container.style.cssText = 'position:fixed;left:-99999px;top:0;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none;';
@@ -112,6 +115,7 @@ export async function bakeLook(image: HTMLImageElement, params: EditParams, w: n
   const ref = createRef<CaptureSurface>();
 
   try {
+    console.log('[BAKE] starting render', renderW, renderH); // TEMP DIAGNOSTIC
     root.render(
       React.createElement(Pipeline, {
         source: image,
@@ -128,6 +132,13 @@ export async function bakeLook(image: HTMLImageElement, params: EditParams, w: n
     await raf(); await raf(); await raf();
     await delay(160);
 
+    // TEMP DIAGNOSTIC: surface a GPU context kill (iOS WebContent OOM) instead of
+    // dying silently — print something the on-device inspector can catch.
+    const canvasEl = container.querySelector('canvas') as HTMLCanvasElement | null;
+    canvasEl?.addEventListener('webglcontextlost', (e) => {
+      console.error('[BAKE] WEBGL CONTEXT LOST', e);
+    });
+
     const surface = ref.current;
     if (!surface || typeof surface.captureAsBlob !== 'function') {
       throw new Error('bakeLook: surface unavailable (pipeline did not mount)');
@@ -135,6 +146,9 @@ export async function bakeLook(image: HTMLImageElement, params: EditParams, w: n
     const blob = await surface.captureAsBlob('image/jpeg', 0.92);
     if (!blob) throw new Error('bakeLook: readback produced no image');
     return blob;
+  } catch (err) {
+    console.error('[BAKE] render failed:', err); // TEMP DIAGNOSTIC
+    throw err; // GATE B preserved — publish still aborts on a bake failure.
   } finally {
     // SYNCHRONOUS WebGL teardown (iOS-critical). Readback (captureAsBlob) has already
     // completed above, so this NEVER changes the baked pixels. Each bakeLook spins up a
