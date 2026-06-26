@@ -33,6 +33,21 @@
   }
 }
 
+/* ── Standalone PWA: LOCK THE DOCUMENT ROOT ───────────────────────────────────
+   Installed (standalone) iOS has no browser chrome, so the body itself rubber-bands
+   and drags the whole web view (the home feed's symptom). Lock html/body so the page
+   can NEVER scroll/drag — only inner containers scroll (the home feed's fixed scroller,
+   and the .screen-min page roots below). Correct in BOTH browser and standalone by
+   construction — no display-mode fork. Plain rule, outside @layer, so it wins. */
+html, body {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+  position: fixed;
+  inset: 0;
+}
+
 /* ── RESPONSIVE FOUNDATION · Stage 0 (tokens + container + safe-area + dvh) ─────
    PX-NAMED type scale — one token per distinct source value, NO bucketing. STATIC at
    the designed px (no viewport growth): the design is calibrated for 375 and the
@@ -102,7 +117,17 @@
 /* Dynamic viewport height — stops mobile browser chrome from clipping full-height
    screens. vh first as the fallback, dvh override where supported. */
 .screen     { height: 100vh; height: 100dvh; }
-.screen-min { min-height: 100vh; min-height: 100dvh; }
+/* With the document root locked, a page ROOT must be its OWN scroller — otherwise its
+   content is clipped by the fixed body (e.g. the decks grid, which had no inner
+   scroller). Full dynamic-viewport height + internal scroll; momentum + contained
+   overscroll so it can't chain back to the (locked) body. Pages that already have an
+   inner scroller just have an empty (non-scrolling) root — no double scroll. */
+.screen-min {
+  height: 100vh; height: 100dvh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
 
 /* ── Stage 1 · Snappiness (interaction feel) ──────────────────────────────────
    1.2 Kill the ~300ms tap delay + accidental double-tap zoom. */
