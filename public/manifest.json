@@ -10,7 +10,7 @@
   "icons": [
     {
       "src": "/scope-square-thumbnail-logo-v2.png",
-      "sizes": "512x530",
+      "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
     }
