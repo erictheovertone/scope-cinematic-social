@@ -322,6 +322,7 @@ const userLayoutId = stableLayoutId;
   }, [gridScrollY, headerSnapped, headerUnsnapping]);
 
   return (
+    <div className="relative">{/* Non-scrolling viewport root — fixed chrome (footer + snapped frame) is lifted OUT below as SIBLINGS of the scroller, so on iOS standalone it anchors to the VIEWPORT, not the .screen-min scroll container (which floated the footer above the screen bottom). */}
     <div className="bg-black relative w-full app-shell screen-min mx-auto pb-[60px]">
       <OnboardingModal
         onComplete={() => {
@@ -433,39 +434,13 @@ const userLayoutId = stableLayoutId;
 
       </div>{/* end header */}
 
-      {/* Frame icon — appears when header is hidden, tapping snaps header back */}
-      {!headerSnapped && gridScrollY > 20 && (
-        <div
-          onClick={(e) => { e.stopPropagation(); e.preventDefault(); snapScrollYRef.current = gridScrollY; setHeaderSnapped(true); setSnapAnimKey(k => k + 1); }}
-          style={{
-            position: 'fixed',
-            top: 8,
-            left: 8,
-            zIndex: 50,
-            cursor: 'pointer',
-            pointerEvents: 'auto',
-            opacity: Math.min(1, (gridScrollY - 20) / 20),
-            transition: 'opacity 0.2s ease',
-            filter: 'drop-shadow(0 0 8px rgba(0,0,0,0.9)) drop-shadow(0 2px 12px rgba(0,0,0,0.75))',
-          }}
-        >
-          <svg width="29.5" height="15.5" viewBox="0 0 32 16" fill="none">
-            <line x1="1" y1="1" x2="1" y2="6" stroke="#FF0000" strokeWidth="1.1"/>
-            <line x1="1" y1="1" x2="7" y2="1" stroke="#FF0000" strokeWidth="0.85"/>
-            <line x1="31" y1="1" x2="31" y2="6" stroke="#FF0000" strokeWidth="1.1"/>
-            <line x1="25" y1="1" x2="31" y2="1" stroke="#FF0000" strokeWidth="0.85"/>
-            <line x1="1" y1="15" x2="1" y2="10" stroke="#FF0000" strokeWidth="1.1"/>
-            <line x1="1" y1="15" x2="7" y2="15" stroke="#FF0000" strokeWidth="0.85"/>
-            <line x1="31" y1="15" x2="31" y2="10" stroke="#FF0000" strokeWidth="1.1"/>
-            <line x1="25" y1="15" x2="31" y2="15" stroke="#FF0000" strokeWidth="0.85"/>
-          </svg>
-        </div>
-      )}
+      {/* Snapped frame icon — LIFTED out of this scroller to sibling level (see end of return)
+          so it anchors to the viewport, not the scroll container. */}
 
       {/* Tab row — absolute until scrolled past 101px, then fixed. When snapped, always fixed + aligned with frame icon. */}
       <div style={{
         position: (headerSnapped || headerUnsnapping || gridScrollY > 101) ? 'fixed' : 'absolute',
-        top: (headerSnapped || headerUnsnapping) ? 0 : gridScrollY > 101 ? 2 : `${103 - tabRowOffset}px`,
+        top: (headerSnapped || headerUnsnapping) ? 'env(safe-area-inset-top, 0px)' : gridScrollY > 101 ? 'calc(2px + env(safe-area-inset-top, 0px))' : `${103 - tabRowOffset}px`,
         left: (headerSnapped || headerUnsnapping || gridScrollY > 101) ? '50%' : 0,
         right: (headerSnapped || headerUnsnapping || gridScrollY > 101) ? 'auto' : 0,
         transform: (headerSnapped || headerUnsnapping || gridScrollY > 101) ? 'translateX(-50%)' : 'none',
@@ -892,13 +867,44 @@ const userLayoutId = stableLayoutId;
         }}
       />
 
+    </div>
+
+      {/* ── Fixed chrome LIFTED out of the scroller → SIBLINGS of it, so on iOS
+          standalone they anchor to the VIEWPORT, not the .screen-min scroll container
+          (which floated the footer above the screen bottom). State (gridScrollY,
+          headerSnapped, …) is component-level, so it's in scope here unchanged. ── */}
+      {!headerSnapped && gridScrollY > 20 && (
+        <div
+          onClick={(e) => { e.stopPropagation(); e.preventDefault(); snapScrollYRef.current = gridScrollY; setHeaderSnapped(true); setSnapAnimKey(k => k + 1); }}
+          style={{
+            position: 'fixed',
+            top: 'calc(8px + env(safe-area-inset-top, 0px))',
+            left: 8,
+            zIndex: 50,
+            cursor: 'pointer',
+            pointerEvents: 'auto',
+            opacity: Math.min(1, (gridScrollY - 20) / 20),
+            transition: 'opacity 0.2s ease',
+            filter: 'drop-shadow(0 0 8px rgba(0,0,0,0.9)) drop-shadow(0 2px 12px rgba(0,0,0,0.75))',
+          }}
+        >
+          <svg width="29.5" height="15.5" viewBox="0 0 32 16" fill="none">
+            <line x1="1" y1="1" x2="1" y2="6" stroke="#FF0000" strokeWidth="1.1"/>
+            <line x1="1" y1="1" x2="7" y2="1" stroke="#FF0000" strokeWidth="0.85"/>
+            <line x1="31" y1="1" x2="31" y2="6" stroke="#FF0000" strokeWidth="1.1"/>
+            <line x1="25" y1="1" x2="31" y2="1" stroke="#FF0000" strokeWidth="0.85"/>
+            <line x1="1" y1="15" x2="1" y2="10" stroke="#FF0000" strokeWidth="1.1"/>
+            <line x1="1" y1="15" x2="7" y2="15" stroke="#FF0000" strokeWidth="0.85"/>
+            <line x1="31" y1="15" x2="31" y2="10" stroke="#FF0000" strokeWidth="1.1"/>
+            <line x1="25" y1="15" x2="31" y2="15" stroke="#FF0000" strokeWidth="0.85"/>
+          </svg>
+        </div>
+      )}
+
       <BottomToolbar
         page="profile"
         onHamburgerPress={() => router.push('/profile/preferences')}
       />
-
-
-
     </div>
   );
 }
