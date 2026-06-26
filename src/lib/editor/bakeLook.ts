@@ -19,6 +19,7 @@ import { CHANNELS, isIdentityChannel } from './curveEngine';
 import { grainStockByKey } from '@/components/finishing/grainStocks';
 import { lookById } from '@/components/finishing/looksCatalog';
 import { ensureLut } from './lut';
+import { getMaxBakeWidth } from './renderBudget';
 
 void DEFAULT_PARAMS; // (kept for reference parity; comparisons are explicit below)
 
@@ -86,6 +87,24 @@ export async function bakeLook(image: HTMLImageElement, params: EditParams, w: n
     }
   }
 
+  // MEMORY CAP (iOS crash fix). The finishing chain renders ~10 full-size
+  // framebuffers + a preserveDrawingBuffer through ONE WebGL Surface; at the
+  // cinematic export width (4096) that GPU peak exceeds the iOS WebKit per-context
+  // budget → WebContent process killed → app crash. Cap the RENDER TARGET width on
+  // constrained/mobile clients (desktop keeps 4096). The cap is on the Surface size
+  // ONLY — input texture, look math and node chain are unchanged. Aspect ratio is
+  // preserved EXACTLY (uniform scale), so the upload/display path is identical, just
+  // fewer pixels. No gl context exists yet here (the Surface mounts below), so the
+  // platform/pointer heuristics decide.
+  const maxW = getMaxBakeWidth();
+  let renderW = w;
+  let renderH = h;
+  if (w > maxW) {
+    const scale = maxW / w;
+    renderW = Math.round(w * scale);
+    renderH = Math.round(h * scale); // keep the AR exact
+  }
+
   const container = document.createElement('div');
   container.style.cssText = 'position:fixed;left:-99999px;top:0;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none;';
   document.body.appendChild(container);
@@ -97,8 +116,8 @@ export async function bakeLook(image: HTMLImageElement, params: EditParams, w: n
       React.createElement(Pipeline, {
         source: image,
         params,
-        width: w,
-        height: h,
+        width: renderW,
+        height: renderH,
         surfaceRef: ref as unknown as React.Ref<unknown>,
         preserve: true,
         activeLut,
