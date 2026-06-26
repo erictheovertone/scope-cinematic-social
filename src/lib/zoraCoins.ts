@@ -334,14 +334,33 @@ export async function buyCoin({
     receipt = exec.receipt;
   }
 
-  // Receipt is the source of truth for the count; balance delta is the
-  // cross-check fallback only.
-  const receiptPieces = piecesFromReceipt(receipt, coinAddress, sender);
-  const piecesAfter = await readPieces(coinAddress, sender);
+  // ── RECEIPT-TRUE GATE (A) ───────────────────────────────────────────────────
+  // A buy is "real" ONLY if the tx MINED with status:success AND the coins actually
+  // arrived in THIS buyer's wallet on-chain. A ghost or MIS-ROUTED tx (delivered
+  // nowhere, or to a different address than `sender`) must throw — surfacing a FAILURE,
+  // never a confirmation or an optimistic balance. We re-read receipt + balance from the
+  // chain (not the SDK result), so the truth comes from on-chain, not the SDK's word.
+  if (!hash) throw new Error("Purchase didn't broadcast — no transaction hash. You were not charged for tokens.");
+  const minedReceipt = await publicClient.waitForTransactionReceipt({ hash });
+  if (minedReceipt.status !== "success") {
+    throw new Error(`Purchase reverted on-chain (tx ${hash}) — no tokens were bought.`);
+  }
+  // On-chain delivery to the BUYER, with a few retries to absorb RPC index lag on a
+  // just-mined tx (a real buy reflects within a couple seconds; a mis-routed/ghost one
+  // never does → it throws).
+  let piecesAfter: number | null = null;
+  for (let i = 0; i < 4; i++) {
+    piecesAfter = await readPieces(coinAddress, sender);
+    if (piecesAfter != null && piecesBefore != null && piecesAfter > piecesBefore) break;
+    if (i < 3) await new Promise((r) => setTimeout(r, 1500));
+  }
   const deltaPieces = piecesBefore != null && piecesAfter != null ? piecesAfter - piecesBefore : null;
-  const pieces = receiptPieces ?? deltaPieces;
-  console.log(`[zoraCoins] buyCoin COMPLETE — tx: ${hash} | pieces (receipt): ${receiptPieces ?? "?"} | (balance delta cross-check): ${deltaPieces ?? "?"}`);
-  return { hash, pieces };
+  if (deltaPieces == null || deltaPieces <= 0) {
+    // The tx mined but the coins are NOT in this wallet — mis-routed or undelivered.
+    throw new Error(`Purchase didn't deliver coins to your wallet (tx ${hash}). Your balance was not changed — please try again.`);
+  }
+  console.log(`[zoraCoins] buyCoin COMPLETE — tx: ${hash} | delivered pieces (on-chain): ${deltaPieces} | receipt-parsed: ${piecesFromReceipt(receipt, coinAddress, sender) ?? "?"}`);
+  return { hash, pieces: deltaPieces };
 }
 
 // Pieces SOLD from the receipt: coin Transfers FROM the seller, summed.
@@ -402,6 +421,14 @@ export async function sellCoin({
   const { tradeCoin } = await import("@zoralabs/coins-sdk");
   const res: any = await tradeCoin({ tradeParameters, walletClient, publicClient: publicClient as any, account: sender, validateTransaction: true });
   const hash = (res?.transactionHash ?? res?.hash) as `0x${string}`;
+
+  // RECEIPT-TRUE GATE (A): only a tx that MINED with status:success is a real sale —
+  // never confirm proceeds for a ghost/reverted tx.
+  if (!hash) throw new Error("Sale didn't broadcast — no transaction hash.");
+  const minedReceipt = await publicClient.waitForTransactionReceipt({ hash });
+  if (minedReceipt.status !== "success") {
+    throw new Error(`Sale reverted on-chain (tx ${hash}) — nothing was sold.`);
+  }
 
   // RECEIPT-TRUE numbers — pieces and proceeds are never estimates.
   const soldPieces = piecesSoldFromReceipt(res, coinAddress, sender);
