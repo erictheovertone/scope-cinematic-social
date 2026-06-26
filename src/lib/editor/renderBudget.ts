@@ -35,6 +35,7 @@ export function getMaxBakeWidth(gl?: WebGLRenderingContext | WebGL2RenderingCont
       const maxTex = gl.getParameter(gl.MAX_TEXTURE_SIZE) as number;
       if (typeof maxTex === 'number' && maxTex < 8192) {
         console.log('[BUDGET] capped via MAX_TEXTURE_SIZE', maxTex); // TEMP DIAGNOSTIC
+        if (typeof window !== 'undefined') window.__dbg?.(`[BUDGET] MAX_TEXTURE_SIZE=${maxTex} → ${CAPPED_WIDTH}`); // TEMP DEBUG
         return CAPPED_WIDTH;
       }
     }
@@ -52,6 +53,7 @@ export function getMaxBakeWidth(gl?: WebGLRenderingContext | WebGL2RenderingCont
       const noHover = mm('(hover: none)').matches;
       if (coarse && noHover) {
         console.log('[BUDGET] capped via coarse-pointer'); // TEMP DIAGNOSTIC
+        if (typeof window !== 'undefined') window.__dbg?.(`[BUDGET] coarse-pointer → ${CAPPED_WIDTH}`); // TEMP DEBUG
         return CAPPED_WIDTH;
       }
     }
@@ -67,16 +69,19 @@ export function getMaxBakeWidth(gl?: WebGLRenderingContext | WebGL2RenderingCont
       const isIPadOS = platform === 'MacIntel' && touchPoints > 1;
       if (isIOS || isIPadOS) {
         console.log('[BUDGET] capped via iOS', { platform, touchPoints, isIOS, isIPadOS }); // TEMP DIAGNOSTIC
+        if (typeof window !== 'undefined') window.__dbg?.(`[BUDGET] iOS plat=${platform} tp=${touchPoints} → ${CAPPED_WIDTH}`); // TEMP DEBUG
         return CAPPED_WIDTH;
       }
     }
 
     // 4. Confident desktop (fine pointer, capable GPU) → full resolution.
     console.log('[BUDGET] FULL 4096 desktop'); // TEMP DIAGNOSTIC
+    if (typeof window !== 'undefined') window.__dbg?.(`[BUDGET] FULL desktop → ${FULL_WIDTH}`); // TEMP DEBUG
     return FULL_WIDTH;
   } catch (e) {
     // 5. Any throw → fail safe.
     console.log('[BUDGET] capped via catch', e); // TEMP DIAGNOSTIC
+    if (typeof window !== 'undefined') window.__dbg?.(`[BUDGET] catch → ${CAPPED_WIDTH}`); // TEMP DEBUG
     return CAPPED_WIDTH;
   }
 }

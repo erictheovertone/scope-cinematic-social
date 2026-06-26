@@ -8,6 +8,7 @@ import { UpsellProvider } from '@/components/UpsellProvider';
 import { EconomyProvider } from '@/components/EconomyProvider';
 import { TxNarratorProvider } from '@/components/TxNarrator';
 import PostLightboxHost from '@/components/PostLightboxHost';
+import DebugOverlay from '@/components/DebugOverlay'; // TEMP DEBUG
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -20,6 +21,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
             </Suspense>
             <AppShell />
             <PostLightboxHost />
+            <DebugOverlay /> {/* TEMP DEBUG — strip with the rest */}
           </UpsellProvider>
         </TxNarratorProvider>
       </EconomyProvider>

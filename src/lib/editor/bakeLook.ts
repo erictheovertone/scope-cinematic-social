@@ -107,6 +107,7 @@ export async function bakeLook(image: HTMLImageElement, params: EditParams, w: n
   // TEMP DIAGNOSTIC (strip after on-device crash is diagnosed): confirm the cap engaged.
   console.log('[BAKE] getMaxBakeWidth=', maxW, 'requested w×h=', w, h,
               '→ renderW×H=', renderW, renderH);
+  if (typeof window !== 'undefined') window.__dbg?.(`[BAKE] maxW=${maxW} req=${w}x${h} → ${renderW}x${renderH}`); // TEMP DEBUG
 
   const container = document.createElement('div');
   container.style.cssText = 'position:fixed;left:-99999px;top:0;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none;';
@@ -116,6 +117,7 @@ export async function bakeLook(image: HTMLImageElement, params: EditParams, w: n
 
   try {
     console.log('[BAKE] starting render', renderW, renderH); // TEMP DIAGNOSTIC
+    if (typeof window !== 'undefined') window.__dbg?.(`[BAKE] starting render ${renderW}x${renderH}`); // TEMP DEBUG
     root.render(
       React.createElement(Pipeline, {
         source: image,
@@ -137,6 +139,7 @@ export async function bakeLook(image: HTMLImageElement, params: EditParams, w: n
     const canvasEl = container.querySelector('canvas') as HTMLCanvasElement | null;
     canvasEl?.addEventListener('webglcontextlost', (e) => {
       console.error('[BAKE] WEBGL CONTEXT LOST', e);
+      if (typeof window !== 'undefined') window.__dbg?.('[BAKE] WEBGL CONTEXT LOST'); // TEMP DEBUG
     });
 
     const surface = ref.current;
@@ -148,6 +151,7 @@ export async function bakeLook(image: HTMLImageElement, params: EditParams, w: n
     return blob;
   } catch (err) {
     console.error('[BAKE] render failed:', err); // TEMP DIAGNOSTIC
+    if (typeof window !== 'undefined') window.__dbg?.('[BAKE] render failed: ' + ((err as Error)?.stack || (err as Error)?.message || String(err))); // TEMP DEBUG
     throw err; // GATE B preserved — publish still aborts on a bake failure.
   } finally {
     // SYNCHRONOUS WebGL teardown (iOS-critical). Readback (captureAsBlob) has already
