@@ -93,6 +93,23 @@ export default function Home() {
     return () => document.removeEventListener('scroll', onScroll, { capture: true });
   }, []);
 
+  // Belt-and-suspenders for the iOS standalone rubber-band: body{touch-action:none}
+  // is NOT fully honored under a position:fixed body (known iOS quirk), so a drag on a
+  // non-scroll surface can still pan the whole web view. Block touchmove UNLESS the
+  // touch is inside a real scroll container — so the feed, the .screen-min page roots,
+  // and any overflow sheet/modal still scroll, but empty/feed-chrome surfaces can't be
+  // dragged. passive:false is required for preventDefault to cancel the native pan.
+  useEffect(() => {
+    const onTouchMove = (e: TouchEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (t && !t.closest('[data-scroll], .screen-min, .overflow-y-auto, [style*="overflow"]')) {
+        e.preventDefault();
+      }
+    };
+    document.addEventListener('touchmove', onTouchMove, { passive: false });
+    return () => document.removeEventListener('touchmove', onTouchMove);
+  }, []);
+
   useEffect(() => {
     if (!authenticated) router.push("/welcome");
   }, [authenticated, router]);
@@ -333,6 +350,7 @@ export default function Home() {
       <div
         ref={feedRef}
         className="overflow-y-auto"
+        data-scroll
         // FIXED, not absolute — measured against the VIEWPORT, so its height can't grow
         // to fit content the way `absolute … bottom-0` did against the min-height-only
         // .app-shell/.screen-min ancestor (which had no height ceiling → the scroller

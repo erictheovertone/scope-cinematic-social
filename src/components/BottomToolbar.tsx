@@ -117,8 +117,12 @@ export default function BottomToolbar({ page, unreadCount = 0, onNotificationsCl
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'flex-end',
-          paddingLeft: 2,
-          paddingRight: 2,
+          // Horizontal safe-area: keep the edge icons clear of rounded corners /
+          // the notch in landscape. env() = 0 in portrait → floored at 8px so the
+          // outermost icons sit fully inside the safe width (space-between spreads
+          // the rest fluidly across it).
+          paddingLeft: 'max(8px, env(safe-area-inset-left, 0px))',
+          paddingRight: 'max(8px, env(safe-area-inset-right, 0px))',
           // Safe-area: lift the nav above the home indicator. env() = 0 on non-notch
           // viewports, so 375px is unchanged; on iPhone it fixes the footer drift.
           //
