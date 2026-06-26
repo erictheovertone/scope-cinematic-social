@@ -346,10 +346,13 @@ export default function Home() {
           paddingLeft: 2, paddingRight: 2,
           WebkitOverflowScrolling: 'touch',
           overscrollBehavior: 'contain',
+          // Root (html,body) sets touch-action:none to kill the iOS standalone
+          // visual-viewport pan; this scroller must opt BACK IN to vertical scroll.
+          touchAction: 'pan-y',
           zIndex: 1,
         }}
       >
-        <div style={{ paddingTop: 16, paddingBottom: 60 }}>
+        <div style={{ paddingTop: 16, paddingBottom: 'calc(72px + env(safe-area-inset-bottom, 0px))' }}>
           {posts.map((post, index) => (
             <div key={post.id} data-post-id={post.id} style={getPostAnimStyle(index)}>
               <PostItem

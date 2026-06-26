@@ -121,7 +121,14 @@ export default function BottomToolbar({ page, unreadCount = 0, onNotificationsCl
           paddingRight: 2,
           // Safe-area: lift the nav above the home indicator. env() = 0 on non-notch
           // viewports, so 375px is unchanged; on iPhone it fixes the footer drift.
-          paddingBottom: 'calc(2px + env(safe-area-inset-bottom, 0px))',
+          //
+          // Option B (ACTIVE): icons get a small fixed home-indicator clearance instead
+          // of the full inset; the bar is already bottom:0 so its background still reaches
+          // the physical edge. Clearance = inset − 24, floored at 10px → on iPhone 12
+          // (inset≈34) = 10px above the edge, ~just above the home indicator.
+          paddingBottom: 'max(10px, calc(env(safe-area-inset-bottom, 0px) - 24px))',
+          // Option A (full-inset hug, the safe iOS standard) left them ~34px up — too high:
+          //   paddingBottom: 'max(8px, env(safe-area-inset-bottom, 0px))',
           paddingTop: 8,
           width: '100%',
           boxSizing: 'border-box' as const,

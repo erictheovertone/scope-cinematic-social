@@ -46,6 +46,9 @@ html, body {
   overscroll-behavior: none;
   position: fixed;
   inset: 0;
+  touch-action: none;          /* block iOS standalone visual-viewport pan gesture
+                                  (overscroll-behavior does NOT govern this; touch-action does).
+                                  Inner scrollers must opt back in with touch-action: pan-y. */
 }
 
 /* ── RESPONSIVE FOUNDATION · Stage 0 (tokens + container + safe-area + dvh) ─────
@@ -127,6 +130,10 @@ html, body {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
+  /* Opt BACK IN to vertical scroll: body{touch-action:none} (the iOS standalone
+     visual-viewport pan block) can reach these page roots under the fixed lock.
+     Centrally covers every .screen-min root (profile, decks, wallet, settings). */
+  touch-action: pan-y;
 }
 
 /* ── Stage 1 · Snappiness (interaction feel) ──────────────────────────────────
