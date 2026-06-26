@@ -103,7 +103,7 @@ export default function AddToHomeScreenSheet({ isOpen, onClose, privyId, forceSh
         {/* Header row */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 20 }}>
           <img
-            src="/scope-square-thumbnail-logo.png"
+            src="/scope-square-thumbnail-logo-v2.png"
             alt="Scope"
             style={{
               width: 56, height: 56,
