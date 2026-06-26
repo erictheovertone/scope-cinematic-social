@@ -117,7 +117,23 @@ export async function bakeLook(image: HTMLImageElement, params: EditParams, w: n
     if (!blob) throw new Error('bakeLook: readback produced no image');
     return blob;
   } finally {
-    // Defer unmount to avoid React "synchronous unmount during render" warnings.
+    // SYNCHRONOUS WebGL teardown (iOS-critical). Readback (captureAsBlob) has already
+    // completed above, so this NEVER changes the baked pixels. Each bakeLook spins up a
+    // fresh gl-react Surface = a WebGL context; iOS caps active contexts (~8–16), and a
+    // deferred/GC'd release lets them pile up (the palette bakes are serialized, but a
+    // serialized chain still stacks contexts if each isn't freed before the next starts).
+    // Free the GPU context NOW via WEBGL_lose_context so at most ONE is alive at a time.
+    // The DOM unmount stays deferred (avoids React's "unmount during render" warning) —
+    // the context is already lost, so nothing GPU-heavy is held in the meantime.
+    try {
+      const canvas = container.querySelector('canvas') as HTMLCanvasElement | null;
+      const gl = (canvas && (
+        canvas.getContext('webgl') ||
+        canvas.getContext('webgl2') ||
+        canvas.getContext('experimental-webgl')
+      )) as WebGLRenderingContext | null;
+      gl?.getExtension('WEBGL_lose_context')?.loseContext();
+    } catch { /* teardown must never mask the bake result */ }
     setTimeout(() => { try { root.unmount(); } catch { /* noop */ } container.remove(); }, 0);
   }
 }
