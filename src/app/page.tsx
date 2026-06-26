@@ -94,20 +94,44 @@ export default function Home() {
   }, []);
 
   // Belt-and-suspenders for the iOS standalone rubber-band: body{touch-action:none}
-  // is NOT fully honored under a position:fixed body (known iOS quirk), so a drag on a
-  // non-scroll surface can still pan the whole web view. Block touchmove UNLESS the
-  // touch is inside a real scroll container — so the feed, the .screen-min page roots,
-  // and any overflow sheet/modal still scroll, but empty/feed-chrome surfaces can't be
-  // dragged. passive:false is required for preventDefault to cancel the native pan.
+  // is NOT fully honored under a position:fixed body (known iOS quirk), so a drag can
+  // still pan the whole web view. Two cases handled, axis-aware:
+  //  1) Touch OUTSIDE any scroll container (empty/feed chrome) → block any drag.
+  //  2) Touch INSIDE the home-feed scroller → allow vertical scroll, but kill a
+  //     predominantly HORIZONTAL drag (dx > dy) — that's the sideways visual-viewport
+  //     drift pan-y doesn't fully suppress. Scoped to feedRef + body ONLY, so genuine
+  //     horizontal scrollers elsewhere (TheaterCarousel, finishing nav rows) are
+  //     untouched — a touch inside them is in neither branch.
+  // passive:false is required for preventDefault to cancel the native pan.
   useEffect(() => {
+    const start = { x: 0, y: 0 };
+    const onTouchStart = (e: TouchEvent) => {
+      const tch = e.touches[0];
+      if (tch) { start.x = tch.clientX; start.y = tch.clientY; }
+    };
     const onTouchMove = (e: TouchEvent) => {
       const t = e.target as HTMLElement | null;
-      if (t && !t.closest('[data-scroll], .screen-min, .overflow-y-auto, [style*="overflow"]')) {
-        e.preventDefault();
+      if (!t) return;
+      const insideScroller = t.closest('[data-scroll], .screen-min, .overflow-y-auto, [style*="overflow"]');
+      // Case 1 — static / non-scroll surface: block any drag (rubber-band).
+      if (!insideScroller) { e.preventDefault(); return; }
+      // Case 2 — inside the vertical home feed: kill horizontal drift, keep vertical.
+      const feed = feedRef.current;
+      if (feed && feed.contains(t)) {
+        const tch = e.touches[0];
+        if (tch) {
+          const dx = Math.abs(tch.clientX - start.x);
+          const dy = Math.abs(tch.clientY - start.y);
+          if (dx > dy && dx > 8) e.preventDefault(); // predominantly horizontal → block
+        }
       }
     };
+    document.addEventListener('touchstart', onTouchStart, { passive: true });
     document.addEventListener('touchmove', onTouchMove, { passive: false });
-    return () => document.removeEventListener('touchmove', onTouchMove);
+    return () => {
+      document.removeEventListener('touchstart', onTouchStart);
+      document.removeEventListener('touchmove', onTouchMove);
+    };
   }, []);
 
   useEffect(() => {
@@ -367,6 +391,10 @@ export default function Home() {
           // Root (html,body) sets touch-action:none to kill the iOS standalone
           // visual-viewport pan; this scroller must opt BACK IN to vertical scroll.
           touchAction: 'pan-y',
+          // No horizontal scroll/pan room — removes the sideways drift surface that
+          // pan-y alone doesn't fully suppress under the iOS standalone quirk. Clips
+          // any residual sub-pixel child overflow so there's nothing to pan sideways.
+          overflowX: 'hidden',
           zIndex: 1,
         }}
       >
