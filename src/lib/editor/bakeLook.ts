@@ -13,7 +13,7 @@
 
 import React, { createRef } from 'react';
 import { createRoot } from 'react-dom/client';
-import Pipeline from '@/components/finishing/Pipeline';
+import Pipeline, { liveContexts } from '@/components/finishing/Pipeline';
 import { DEFAULT_PARAMS, type EditParams } from './params';
 import { CHANNELS, isIdentityChannel } from './curveEngine';
 import { grainStockByKey } from '@/components/finishing/grainStocks';
@@ -126,6 +126,7 @@ export async function bakeLook(image: HTMLImageElement, params: EditParams, w: n
   try {
     console.log('[BAKE] starting render', renderW, renderH); // TEMP DIAGNOSTIC
     if (typeof window !== 'undefined') window.__dbg?.(`[BAKE] starting render ${renderW}x${renderH}`); // TEMP DEBUG
+    dbg('[GL] live contexts BEFORE publish mount = ' + liveContexts()); // TEMP DEBUG (#1.2 — >8 = confirmed)
     dbg('[BAKE] surface mounting'); // TEMP DEBUG
     root.render(
       React.createElement(Pipeline, {

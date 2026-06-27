@@ -36,6 +36,11 @@ import { lookShaders } from './passes/look';
 
 // Labeled pass-through used for every not-yet-implemented stage. Sampling the
 // input unchanged keeps the chain intact and ordered.
+// TEMP DEBUG — module-level live WebGL Surface/context counter (across ALL pipelines:
+// live preview, palette bakes, publish bake). Strip with the rest.
+let LIVE_CONTEXTS = 0;
+export function liveContexts() { return LIVE_CONTEXTS; }
+
 const passthrough = Shaders.create({
   passthrough: {
     frag: `
@@ -192,6 +197,20 @@ export default function Pipeline({ source, params, width, height, surfaceRef, pr
     try { gl = canvas.getContext('webgl2') || canvas.getContext('webgl'); } catch { gl = null; }
     dbg('[GL] context obtained ' + (gl ? 'ok' : 'NULL'));
   }, [preserve]);
+
+  // TEMP DEBUG — track live Surface/context count as pipelines mount/unmount, so the
+  // overlay shows the count climb (palette/preview) and whether it falls before publish.
+  // Tied to an actual rendered Surface (texSource present) so a null render isn't counted.
+  useEffect(() => {
+    const mounted = !!texSource && width > 0 && height > 0;
+    if (!mounted) return;
+    LIVE_CONTEXTS++;
+    if (typeof window !== 'undefined') window.__dbg?.('[GL] live contexts = ' + LIVE_CONTEXTS + (preserve ? ' (bake mount)' : ' (live mount)'));
+    return () => {
+      LIVE_CONTEXTS--;
+      if (typeof window !== 'undefined') window.__dbg?.('[GL] live contexts = ' + LIVE_CONTEXTS + ' (unmount)');
+    };
+  }, [texSource, width, height, preserve]);
 
   if (!texSource || width <= 0 || height <= 0) return null;
 
