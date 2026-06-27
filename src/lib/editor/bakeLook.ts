@@ -155,9 +155,18 @@ export async function bakeLook(image: HTMLImageElement, params: EditParams, w: n
     );
     dbg('[GL] Surface render returned'); // TEMP DEBUG
 
+    // TEMP DEBUG: nested try so any THROW in the post-render block is named. (A hard
+    // WebContent process kill is NOT catchable — but the brackets below pin WHICH yield
+    // dies; on iPhone 'surface mounted' never prints, so the kill is in these raf/delay
+    // compositing yields, not the readback.)
+    try {
+    dbg('[BAKE] pr: no flush() in capture path (already skipped — isolating compositing/capture)'); // TEMP DEBUG
     // Allow mount + first draw + any async textures (LUTs are sync; grain pre-warmed).
-    await raf(); await raf(); await raf();
-    await delay(160);
+    // Each yield bracketed so the LAST line printed on iOS names the exact dying step.
+    dbg('[BAKE] pr: before raf1'); await raf(); dbg('[BAKE] pr: raf1 done'); // TEMP DEBUG
+    dbg('[BAKE] pr: before raf2'); await raf(); dbg('[BAKE] pr: raf2 done'); // TEMP DEBUG
+    dbg('[BAKE] pr: before raf3'); await raf(); dbg('[BAKE] pr: raf3 done'); // TEMP DEBUG
+    dbg('[BAKE] pr: before delay'); await delay(160); dbg('[BAKE] pr: delay done'); // TEMP DEBUG
     dbg('[BAKE] surface mounted'); // TEMP DEBUG
 
     // TEMP DIAGNOSTIC: surface a GPU context kill (iOS WebContent OOM) instead of
@@ -185,7 +194,9 @@ export async function bakeLook(image: HTMLImageElement, params: EditParams, w: n
     if (typeof surface.capture !== 'function') {
       throw new Error('bakeLook: surface.capture unavailable');
     }
+    dbg('[BAKE] about to capture'); // TEMP DEBUG
     const captured = surface.capture(); // ndarray-like { data, shape:[w,h,4] }
+    dbg('[BAKE] capture returned'); // TEMP DEBUG
     const cw = captured.shape[0]; // width  (pixelRatio-scaled backing size)
     const ch = captured.shape[1]; // height
     const raw = captured.data;    // raw RGBA, bottom-up rows ([h][w][4] row-major)
@@ -217,6 +228,10 @@ export async function bakeLook(image: HTMLImageElement, params: EditParams, w: n
     dbg('[BAKE] blob=' + (blob ? blob.size : 'null')); // TEMP DEBUG
     if (!blob) throw new Error('bakeLook: readback produced no image');
     return blob;
+    } catch (prerr: any) {
+      dbg('[BAKE] POST-RENDER CAUGHT: ' + (prerr?.message || prerr)); // TEMP DEBUG
+      throw prerr;
+    }
   } catch (err) {
     console.error('[BAKE] render failed:', err); // TEMP DIAGNOSTIC
     dbg('[BAKE] CAUGHT: ' + ((err as Error)?.message || String(err))); // TEMP DEBUG (#4)
