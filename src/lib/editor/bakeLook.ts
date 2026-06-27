@@ -67,6 +67,9 @@ export function decodeImageFile(file: File): Promise<HTMLImageElement> {
  * a JPEG Blob. Throws on any failure (GATE B).
  */
 export async function bakeLook(image: HTMLImageElement, params: EditParams, w: number, h: number): Promise<Blob> {
+  const dbg = (m: string) => { if (typeof window !== 'undefined') window.__dbg?.(m); }; // TEMP DEBUG
+  dbg('[BAKE] ENTER bakeLook'); // TEMP DEBUG — did we even get into bakeLook on the iPhone 12?
+  try { // TEMP DEBUG entry guard — catches a synchronous/early throw before the render try
   if (typeof document === 'undefined') throw new Error('bakeLook: not in a browser');
 
   // Pre-warm the grain stock so its texture is cached before the pipeline
@@ -115,9 +118,6 @@ export async function bakeLook(image: HTMLImageElement, params: EditParams, w: n
   console.log('[BAKE] getMaxBakeWidth=', maxW, 'requested w×h=', w, h,
               '→ renderW×H=', renderW, renderH);
   if (typeof window !== 'undefined') window.__dbg?.(`[BAKE] maxW=${maxW} req=${w}x${h} → ${renderW}x${renderH}`); // TEMP DEBUG
-
-  // TEMP DEBUG helper — routes to the on-screen overlay. Strip with the rest.
-  const dbg = (m: string) => { if (typeof window !== 'undefined') window.__dbg?.(m); };
 
   const container = document.createElement('div');
   // TEMP EXPERIMENT (#3): offscreen container position fixed→ABSOLUTE. The body-lock
@@ -257,6 +257,10 @@ export async function bakeLook(image: HTMLImageElement, params: EditParams, w: n
       gl?.getExtension('WEBGL_lose_context')?.loseContext();
     } catch { /* teardown must never mask the bake result */ }
     setTimeout(() => { try { root.unmount(); } catch { /* noop */ } container.remove(); }, 0);
+  }
+  } catch (entryErr: any) { // TEMP DEBUG entry guard
+    dbg('[BAKE] ENTER CAUGHT: ' + (entryErr?.message || entryErr)); // TEMP DEBUG
+    throw entryErr;
   }
 }
 

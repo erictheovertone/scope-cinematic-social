@@ -18,7 +18,7 @@
  * aspect ratio and the downstream upload path are all unchanged (fewer pixels).
  */
 
-const CAPPED_WIDTH = 2048; // safe on iOS / mobile GPU budgets
+const CAPPED_WIDTH = 1024; // was 2048 — TEMP: finding the iOS GPU present/alloc ceiling
 const FULL_WIDTH = 4096;   // desktop with comfortable headroom
 
 /**
