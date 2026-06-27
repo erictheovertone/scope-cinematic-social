@@ -641,7 +641,7 @@ export default function FinishingShell({
 
       {/* ── TOP BAR ── (Theatre: thin bar w/ inline "+" menu · Portrait: standard bar) */}
       {theatre ? (
-        <div key="topbar" style={{ flexShrink: 0, height: compactRail ? 30 : 44, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 14px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+        <div key="topbar" style={{ flexShrink: 0, height: `calc(${compactRail ? 30 : 44}px + env(safe-area-inset-top, 0px))`, paddingTop: 'env(safe-area-inset-top, 0px)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingLeft: 14, paddingRight: 14, borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             {onBack && (
               <button onClick={onBack} aria-label="Back" style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4, lineHeight: 0 }}>
@@ -666,7 +666,7 @@ export default function FinishingShell({
           </div>
         </div>
       ) : (
-        <div key="topbar" style={{ flexShrink: 0, height: 50, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 18px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+        <div key="topbar" style={{ flexShrink: 0, height: 'calc(50px + env(safe-area-inset-top, 0px))', paddingTop: 'env(safe-area-inset-top, 0px)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingLeft: 18, paddingRight: 18, borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             {onBack && (
               <button onClick={onBack} aria-label="Back" style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4, lineHeight: 0 }}>

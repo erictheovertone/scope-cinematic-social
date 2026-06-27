@@ -1042,7 +1042,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
 
   const renderMediaStep = () => (
     <div className="h-full flex flex-col">
-      <div className="flex items-center justify-between p-4 border-b border-[#333333]">
+      <div className="flex items-center justify-between p-4 border-b border-[#333333]" style={{ paddingTop: 'calc(1rem + env(safe-area-inset-top, 0px))' }}>
         <button onClick={onClose} className="text-white text-lg">×</button>
         <h2 style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-16)', color: 'white', textTransform: 'uppercase', letterSpacing: '0.04em', margin: 0 }}>New Post</h2>
         <button
@@ -1127,7 +1127,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
 
   const renderEditStep = () => (
     <div className="h-full flex flex-col">
-      <div className="flex items-center justify-between p-4 border-b border-[#333333]">
+      <div className="flex items-center justify-between p-4 border-b border-[#333333]" style={{ paddingTop: 'calc(1rem + env(safe-area-inset-top, 0px))' }}>
         <button onClick={() => setStep('media')} className="text-white text-lg">←</button>
         <h2 style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-14)', color: 'white', textTransform: 'uppercase', letterSpacing: '0.04em', margin: 0 }}>Edit & Post</h2>
         <button
@@ -1244,7 +1244,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
     const MONO_S: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
     return (
       <div className="h-full flex flex-col">
-        <div className="flex items-center justify-between p-4 border-b border-[#1a1a1a]">
+        <div className="flex items-center justify-between p-4 border-b border-[#1a1a1a]" style={{ paddingTop: 'calc(1rem + env(safe-area-inset-top, 0px))' }}>
           <button onClick={() => setStep('edit')} className="text-white text-lg">←</button>
           <span style={{ ...MONO_S, fontSize: 'var(--fs-11)', color: 'white', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Add to a deck?</span>
           <button

@@ -357,7 +357,7 @@ const userLayoutId = stableLayoutId;
           0.5px divider between (default hairline; Piece 2 colours it). Same
           component on own + public. Renders the user's earned badges generically
           (min-design icons, fixed 16px, symmetric for any count). */}
-      <div style={{ position: 'absolute', left: 8, top: 10, zIndex: 3 }}>
+      <div style={{ position: 'absolute', left: 8, top: 'calc(10px + env(safe-area-inset-top, 0px))', zIndex: 3 }}>
         <BannerBadgeStrip
           height={80}
           dividerColor={dividerBackground(dividerLine)}
@@ -371,7 +371,7 @@ const userLayoutId = stableLayoutId;
       </div>
 
       {/* PFP container — right of the 27px strip (cluster left-edge aligns with MAIN). */}
-      <div style={{ position: 'absolute', left: 36, top: 10, width: 80, height: 80 }}>
+      <div style={{ position: 'absolute', left: 36, top: 'calc(10px + env(safe-area-inset-top, 0px))', width: 80, height: 80 }}>
 
         <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', zIndex: 1 }}>
           {userProfile.profileImage ? (
@@ -387,14 +387,14 @@ const userLayoutId = stableLayoutId;
       </div>
 
       {/* Name */}
-      <div style={{ position: 'absolute', left: 126, top: 10 }}>
+      <div style={{ position: 'absolute', left: 126, top: 'calc(10px + env(safe-area-inset-top, 0px))' }}>
         <p style={{ ...SKB, fontSize: 'var(--fs-13)', color: 'white', letterSpacing: '-0.02em', lineHeight: 1.2, margin: 0, textTransform: 'uppercase' }}>
           {userProfile.displayName}
         </p>
       </div>
 
       {/* Handle — 2px smaller than the display name's neighbours (fontSize 8). */}
-      <div style={{ position: 'absolute', left: 126, top: 26 }}>
+      <div style={{ position: 'absolute', left: 126, top: 'calc(26px + env(safe-area-inset-top, 0px))' }}>
         <p style={{ ...SKB, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.6)', letterSpacing: '-0.02em', lineHeight: 1.2, margin: 0, textTransform: 'uppercase' }}>
           {userProfile.username ? `@${userProfile.username}` : ''}
         </p>
@@ -404,7 +404,7 @@ const userLayoutId = stableLayoutId;
       <button
         onClick={() => setProfileDataOpen(true)}
         style={{
-          position: 'absolute', top: 0, right: 0,
+          position: 'absolute', top: 'env(safe-area-inset-top, 0px)', right: 0,
           background: 'transparent', border: 'none', cursor: 'pointer', padding: 7,
           display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end',
           opacity: profileDataOpen ? 0 : 1,
@@ -440,7 +440,7 @@ const userLayoutId = stableLayoutId;
       {/* Tab row — absolute until scrolled past 101px, then fixed. When snapped, always fixed + aligned with frame icon. */}
       <div style={{
         position: (headerSnapped || headerUnsnapping || gridScrollY > 101) ? 'fixed' : 'absolute',
-        top: (headerSnapped || headerUnsnapping) ? 'env(safe-area-inset-top, 0px)' : gridScrollY > 101 ? 'calc(2px + env(safe-area-inset-top, 0px))' : `${103 - tabRowOffset}px`,
+        top: (headerSnapped || headerUnsnapping) ? 'env(safe-area-inset-top, 0px)' : gridScrollY > 101 ? 'calc(2px + env(safe-area-inset-top, 0px))' : `calc(${103 - tabRowOffset}px + env(safe-area-inset-top, 0px))`,
         left: (headerSnapped || headerUnsnapping || gridScrollY > 101) ? '50%' : 0,
         right: (headerSnapped || headerUnsnapping || gridScrollY > 101) ? 'auto' : 0,
         transform: (headerSnapped || headerUnsnapping || gridScrollY > 101) ? 'translateX(-50%)' : 'none',
@@ -519,7 +519,7 @@ const userLayoutId = stableLayoutId;
       {/* COLLECTED — the real page (ownership as identity): posts this user
           holds pieces of, EXCLUDING their own (ratified). */}
       {activeTab === 'collected' && supabaseUserId && (
-        <div style={{ position: 'absolute', top: 140, left: 0, right: 0, bottom: 60, overflowY: 'auto' }}>
+        <div style={{ position: 'absolute', top: 'calc(140px + env(safe-area-inset-top, 0px))', left: 0, right: 0, bottom: 60, overflowY: 'auto' }}>
           <CollectedGrid userId={supabaseUserId} isOwn />
         </div>
       )}
@@ -539,7 +539,7 @@ const userLayoutId = stableLayoutId;
                 minHeight: '50vh',
                 cursor: 'pointer',
                 gap: '16px',
-                paddingTop: 140,
+                paddingTop: 'calc(140px + env(safe-area-inset-top, 0px))',
               }}
               onClick={() => {
                 setSpinning(true);
@@ -571,7 +571,7 @@ const userLayoutId = stableLayoutId;
                 });
               }}
             >
-              <div style={{ height: 140, flexShrink: 0 }} />
+              <div style={{ height: 'calc(140px + env(safe-area-inset-top, 0px))', flexShrink: 0 }} />
               {(() => {
                 const openPost = (post: any, index: number) => {
                   const isVid = post.media_type === 'video' ||

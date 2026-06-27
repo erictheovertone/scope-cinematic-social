@@ -369,6 +369,16 @@ export default function Home() {
         </div>
       )}
 
+      {/* Subtle top scrim (IG pattern) — keeps the floating frame bracket legible over
+          bright edge-to-edge content. Soft black→transparent, no blur (brand). Above the
+          feed (z1), below the bracket (z50). */}
+      <div style={{
+        position: 'fixed', top: 0, left: 0, right: 0,
+        height: 'calc(48px + env(safe-area-inset-top, 0px))',
+        background: 'linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0) 100%)',
+        zIndex: 2, pointerEvents: 'none',
+      }} />
+
       {/* Feed — scroll is captured at document level (native scroll doesn't bubble),
           so no onScroll here. */}
       <div
@@ -383,7 +393,11 @@ export default function Home() {
         // column stays intact; 2px side padding preserved.
         style={{
           position: 'fixed',
-          top: 30, bottom: 0, left: 0, right: 0,
+          // Edge-to-edge (IG pattern): content extends to the true top (under the
+          // status bar) — was top:30, which left an ugly black bar. The floating frame
+          // bracket (portaled, fixed, inset-aware) stays clickable above this; the first
+          // post is held below it by the inner content's top padding (next div).
+          top: 0, bottom: 0, left: 0, right: 0,
           maxWidth: '30rem', marginInline: 'auto',
           paddingLeft: 2, paddingRight: 2,
           WebkitOverflowScrolling: 'touch',
@@ -398,7 +412,9 @@ export default function Home() {
           zIndex: 1,
         }}
       >
-        <div style={{ paddingTop: 16, paddingBottom: 'calc(72px + env(safe-area-inset-bottom, 0px))' }}>
+        {/* First post sits below the floating bracket (status-bar inset + ~34px chrome
+            clearance) at rest, but scrolls up UNDER the status bar (edge-to-edge). */}
+        <div style={{ paddingTop: 'calc(34px + env(safe-area-inset-top, 0px))', paddingBottom: 'calc(72px + env(safe-area-inset-bottom, 0px))' }}>
           {posts.map((post, index) => (
             <div key={post.id} data-post-id={post.id} style={getPostAnimStyle(index)}>
               <PostItem
