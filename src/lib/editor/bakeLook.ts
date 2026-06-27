@@ -41,6 +41,11 @@ const delay = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
 interface CaptureSurface {
   captureAsBlob: (type?: string, quality?: number) => Promise<Blob | null>;
+  // The gl-react Surface ref also exposes the live WebGL context and a SYNCHRONOUS
+  // flush (forces _draw). We use these for a preserveDrawingBuffer-free readback via
+  // gl.readPixels — see the readback block in bakeLook below.
+  gl?: WebGLRenderingContext | WebGL2RenderingContext | null;
+  flush?: () => void;
 }
 
 /** Decode a File into a fully-ready HTMLImageElement (for the texture source). */
@@ -130,7 +135,6 @@ export async function bakeLook(image: HTMLImageElement, params: EditParams, w: n
     if (typeof window !== 'undefined') window.__dbg?.(`[BAKE] starting render ${renderW}x${renderH}`); // TEMP DEBUG
     dbg('[GL] live contexts BEFORE publish mount = ' + liveContexts()); // TEMP DEBUG
     dbg('[BAKE] surface mounting'); // TEMP DEBUG
-    dbg('[BAKE] EXPERIMENT preserve=false'); // TEMP DEBUG (Experiment A)
     dbg('[GL] rendering Surface'); // TEMP DEBUG
     root.render(
       React.createElement(Pipeline, {
@@ -139,10 +143,10 @@ export async function bakeLook(image: HTMLImageElement, params: EditParams, w: n
         width: renderW,
         height: renderH,
         surfaceRef: ref as unknown as React.Ref<unknown>,
-        // EXPERIMENT A — was true. Test whether preserveDrawingBuffer:true is what
-        // hard-faults the Surface mount on iOS WebKit. With false, captureAsBlob may
-        // return a blank/null blob — fine for this test; we only care if the MOUNT
-        // survives (reaches "Surface render returned" / "surface mounted").
+        // preserveDrawingBuffer MUST stay false: true hard-kills the Surface mount on
+        // iOS WebKit (the publish crash). We read pixels back via gl.readPixels below
+        // instead of relying on the preserved drawing buffer — so the flag stays off
+        // AND we still get the real rendered output.
         preserve: false,
         activeLut,
       }),
@@ -164,12 +168,39 @@ export async function bakeLook(image: HTMLImageElement, params: EditParams, w: n
     });
 
     const surface = ref.current;
-    if (!surface || typeof surface.captureAsBlob !== 'function') {
+    if (!surface) {
       throw new Error('bakeLook: surface unavailable (pipeline did not mount)');
     }
-    dbg('[BAKE] pre-captureAsBlob'); // TEMP DEBUG
-    const blob = await surface.captureAsBlob('image/jpeg', 0.92);
-    dbg('[BAKE] post-captureAsBlob ' + (blob ? blob.size : 'null')); // TEMP DEBUG
+
+    // READBACK — preserveDrawingBuffer-free (the flag is the iOS crash trigger).
+    // Force a SYNCHRONOUS redraw (gl-react flush → _draw), then gl.readPixels from the
+    // freshly-drawn buffer in the SAME tick — valid even with preserve:false because we
+    // read before the compositor clears it (no awaits between flush and read). readPixels
+    // is bottom-up, so we flip rows into a top-down 2D canvas and JPEG-encode THAT. Only
+    // the read mechanism changed — the pipeline math (look/colors) is untouched, so the
+    // output matches the live preview.
+    dbg('[BAKE] readback method=readPixels-fbo'); // TEMP DEBUG
+    if (typeof surface.flush === 'function') surface.flush();
+    const glr = surface.gl;
+    if (!glr) throw new Error('bakeLook: gl context unavailable for readback');
+    glr.bindFramebuffer(glr.FRAMEBUFFER, null); // default framebuffer = the root's final output
+    const pixels = new Uint8Array(renderW * renderH * 4);
+    glr.readPixels(0, 0, renderW, renderH, glr.RGBA, glr.UNSIGNED_BYTE, pixels);
+
+    const out = document.createElement('canvas');
+    out.width = renderW;
+    out.height = renderH;
+    const ctx = out.getContext('2d');
+    if (!ctx) throw new Error('bakeLook: 2D context unavailable for readback encode');
+    const imgData = ctx.createImageData(renderW, renderH);
+    const rowBytes = renderW * 4;
+    for (let y = 0; y < renderH; y++) {
+      const srcStart = (renderH - 1 - y) * rowBytes; // flip vertical (GL is bottom-up)
+      imgData.data.set(pixels.subarray(srcStart, srcStart + rowBytes), y * rowBytes);
+    }
+    ctx.putImageData(imgData, 0, 0);
+    const blob = await new Promise<Blob | null>((resolve) => out.toBlob(resolve, 'image/jpeg', 0.92));
+    dbg('[BAKE] blob=' + (blob ? blob.size : 'null')); // TEMP DEBUG
     if (!blob) throw new Error('bakeLook: readback produced no image');
     return blob;
   } catch (err) {
