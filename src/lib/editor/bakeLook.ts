@@ -109,8 +109,16 @@ export async function bakeLook(image: HTMLImageElement, params: EditParams, w: n
               '→ renderW×H=', renderW, renderH);
   if (typeof window !== 'undefined') window.__dbg?.(`[BAKE] maxW=${maxW} req=${w}x${h} → ${renderW}x${renderH}`); // TEMP DEBUG
 
+  // TEMP DEBUG helper — routes to the on-screen overlay. Strip with the rest.
+  const dbg = (m: string) => { if (typeof window !== 'undefined') window.__dbg?.(m); };
+
   const container = document.createElement('div');
-  container.style.cssText = 'position:fixed;left:-99999px;top:0;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none;';
+  // TEMP EXPERIMENT (#3): offscreen container position fixed→ABSOLUTE. The body-lock
+  // (html,body position:fixed overflow:hidden) may break compositing of an offscreen
+  // FIXED WebGL surface on iOS; absolute keeps it off-screen without a fixed containing
+  // block. Revert to 'fixed' if this doesn't move the death point.
+  container.style.cssText = 'position:absolute;left:-99999px;top:0;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none;';
+  dbg('[BAKE] container=absolute EXPERIMENT'); // TEMP DEBUG
   document.body.appendChild(container);
   const root = createRoot(container);
   const ref = createRef<CaptureSurface>();
@@ -118,6 +126,7 @@ export async function bakeLook(image: HTMLImageElement, params: EditParams, w: n
   try {
     console.log('[BAKE] starting render', renderW, renderH); // TEMP DIAGNOSTIC
     if (typeof window !== 'undefined') window.__dbg?.(`[BAKE] starting render ${renderW}x${renderH}`); // TEMP DEBUG
+    dbg('[BAKE] surface mounting'); // TEMP DEBUG
     root.render(
       React.createElement(Pipeline, {
         source: image,
@@ -133,27 +142,33 @@ export async function bakeLook(image: HTMLImageElement, params: EditParams, w: n
     // Allow mount + first draw + any async textures (LUTs are sync; grain pre-warmed).
     await raf(); await raf(); await raf();
     await delay(160);
+    dbg('[BAKE] surface mounted'); // TEMP DEBUG
 
     // TEMP DIAGNOSTIC: surface a GPU context kill (iOS WebContent OOM) instead of
     // dying silently — print something the on-device inspector can catch.
     const canvasEl = container.querySelector('canvas') as HTMLCanvasElement | null;
+    dbg('[BAKE] canvas ' + (canvasEl ? 'found' : 'NULL')); // TEMP DEBUG
     canvasEl?.addEventListener('webglcontextlost', (e) => {
       console.error('[BAKE] WEBGL CONTEXT LOST', e);
-      if (typeof window !== 'undefined') window.__dbg?.('[BAKE] WEBGL CONTEXT LOST'); // TEMP DEBUG
+      dbg('[BAKE] WEBGL CONTEXT LOST'); // TEMP DEBUG
     });
 
     const surface = ref.current;
     if (!surface || typeof surface.captureAsBlob !== 'function') {
       throw new Error('bakeLook: surface unavailable (pipeline did not mount)');
     }
+    dbg('[BAKE] pre-captureAsBlob'); // TEMP DEBUG
     const blob = await surface.captureAsBlob('image/jpeg', 0.92);
+    dbg('[BAKE] post-captureAsBlob ' + (blob ? blob.size : 'null')); // TEMP DEBUG
     if (!blob) throw new Error('bakeLook: readback produced no image');
     return blob;
   } catch (err) {
     console.error('[BAKE] render failed:', err); // TEMP DIAGNOSTIC
+    dbg('[BAKE] CAUGHT: ' + ((err as Error)?.message || String(err))); // TEMP DEBUG (#4)
     if (typeof window !== 'undefined') window.__dbg?.('[BAKE] render failed: ' + ((err as Error)?.stack || (err as Error)?.message || String(err))); // TEMP DEBUG
     throw err; // GATE B preserved — publish still aborts on a bake failure.
   } finally {
+    dbg('[BAKE] teardown'); // TEMP DEBUG
     // SYNCHRONOUS WebGL teardown (iOS-critical). Readback (captureAsBlob) has already
     // completed above, so this NEVER changes the baked pixels. Each bakeLook spins up a
     // fresh gl-react Surface = a WebGL context; iOS caps active contexts (~8–16), and a
