@@ -188,8 +188,9 @@ export default function CropTool({
 
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 200, background: "#000", display: "flex", flexDirection: "column" }}>
-      {/* ── Top bar ── */}
-      <div style={{ flexShrink: 0, height: 48, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+      {/* ── Top bar ── (safe-area: sits BELOW the status bar so Cancel/Confirm are never
+          buried under the notch — inset-relative, identical across devices) */}
+      <div style={{ flexShrink: 0, height: "calc(48px + env(safe-area-inset-top, 0px))", paddingTop: "env(safe-area-inset-top, 0px)", display: "flex", alignItems: "center", justifyContent: "space-between", paddingLeft: 16, paddingRight: 16, borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
         <button onClick={onCancel} aria-label="Cancel" style={{ background: "transparent", border: "none", cursor: "pointer", padding: 8, lineHeight: 0 }}>
           <svg width="17.5" height="17.5" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="white" strokeWidth="1.5" strokeLinecap="round" /></svg>
         </button>

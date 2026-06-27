@@ -87,14 +87,16 @@ export default function BottomToolbar({ page, unreadCount = 0, onNotificationsCl
 
   return (
     <>
-      {/* Gradient fade behind toolbar */}
+      {/* Gradient fade behind toolbar — softened + inset-relative so the home-indicator
+          safe-area zone isn't a hard dark band (content runs edge-to-edge UNDER the footer,
+          IG pattern). Height extends through the bottom inset; tint feathers up gently. */}
       <div style={{
         position: 'fixed',
         bottom: 0,
         left: 0,
         right: 0,
-        height: 50,
-        background: 'linear-gradient(to top, rgba(0,0,0,0.69) 0%, rgba(0,0,0,0) 100%)',
+        height: 'calc(50px + env(safe-area-inset-bottom, 0px))',
+        background: 'linear-gradient(to top, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0) 100%)',
         zIndex: 49,
         pointerEvents: 'none',
       }} />

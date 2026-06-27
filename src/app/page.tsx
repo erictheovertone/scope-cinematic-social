@@ -369,13 +369,19 @@ export default function Home() {
         </div>
       )}
 
-      {/* Subtle top scrim (IG pattern) — keeps the floating frame bracket legible over
-          bright edge-to-edge content. Soft black→transparent, no blur (brand). Above the
-          feed (z1), below the bracket (z50). */}
+      {/* Top blur feather (IG pattern) — keeps the status bar + floating bracket legible
+          over bright edge-to-edge content. backdrop-blur that FEATHERS OUT via a mask
+          (strong at the very top, fading to nothing) + a faint dark tint. Deliberate,
+          contained blur exception (brand bans blur generally) — scoped ONLY to the
+          status-bar feather. Above the feed (z1), below the bracket (z50). */}
       <div style={{
         position: 'fixed', top: 0, left: 0, right: 0,
-        height: 'calc(48px + env(safe-area-inset-top, 0px))',
-        background: 'linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0) 100%)',
+        height: 'calc(env(safe-area-inset-top, 0px) + 14px)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
+        maskImage: 'linear-gradient(to bottom, black 0%, black 45%, transparent 100%)',
+        WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 45%, transparent 100%)',
+        background: 'linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0) 100%)',
         zIndex: 2, pointerEvents: 'none',
       }} />
 
