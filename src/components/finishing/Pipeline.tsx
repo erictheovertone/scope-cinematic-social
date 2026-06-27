@@ -186,8 +186,9 @@ export default function Pipeline({ source, params, width, height, surfaceRef, pr
   const hostRef = useRef<HTMLDivElement>(null);
   const nodeCountRef = useRef(0);
   useEffect(() => {
-    if (!preserve) return; // bake path only — keep the live editor overlay quiet
+    if (!surfaceRef) return; // bake path only (gated on surfaceRef so it still logs with preserve=false)
     const dbg = (m: string) => { if (typeof window !== 'undefined') window.__dbg?.(m); };
+    dbg('[GL] requesting context preserve=' + preserve); // TEMP DEBUG
     dbg('[GL] node count ' + nodeCountRef.current);
     const canvas = hostRef.current?.querySelector('canvas') as HTMLCanvasElement | null;
     if (!canvas) { dbg('[GL] canvas NULL'); return; }
@@ -195,8 +196,8 @@ export default function Pipeline({ source, params, width, height, surfaceRef, pr
     canvas.addEventListener('webglcontextlost', () => dbg('[GL] CONTEXT LOST'), false);
     let gl: WebGLRenderingContext | WebGL2RenderingContext | null = null;
     try { gl = canvas.getContext('webgl2') || canvas.getContext('webgl'); } catch { gl = null; }
-    dbg('[GL] context obtained ' + (gl ? 'ok' : 'NULL'));
-  }, [preserve]);
+    dbg('[GL] context = ' + (gl ? 'OK' : 'NULL')); // TEMP DEBUG
+  }, [surfaceRef, preserve]);
 
   // TEMP DEBUG — track live Surface/context count as pipelines mount/unmount, so the
   // overlay shows the count climb (palette/preview) and whether it falls before publish.

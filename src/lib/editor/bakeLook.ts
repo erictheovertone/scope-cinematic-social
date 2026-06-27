@@ -120,14 +120,18 @@ export async function bakeLook(image: HTMLImageElement, params: EditParams, w: n
   container.style.cssText = 'position:absolute;left:-99999px;top:0;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none;';
   dbg('[BAKE] container=absolute EXPERIMENT'); // TEMP DEBUG
   document.body.appendChild(container);
+  dbg('[GL] creating root'); // TEMP DEBUG
   const root = createRoot(container);
+  dbg('[GL] root created'); // TEMP DEBUG
   const ref = createRef<CaptureSurface>();
 
   try {
     console.log('[BAKE] starting render', renderW, renderH); // TEMP DIAGNOSTIC
     if (typeof window !== 'undefined') window.__dbg?.(`[BAKE] starting render ${renderW}x${renderH}`); // TEMP DEBUG
-    dbg('[GL] live contexts BEFORE publish mount = ' + liveContexts()); // TEMP DEBUG (#1.2 — >8 = confirmed)
+    dbg('[GL] live contexts BEFORE publish mount = ' + liveContexts()); // TEMP DEBUG
     dbg('[BAKE] surface mounting'); // TEMP DEBUG
+    dbg('[BAKE] EXPERIMENT preserve=false'); // TEMP DEBUG (Experiment A)
+    dbg('[GL] rendering Surface'); // TEMP DEBUG
     root.render(
       React.createElement(Pipeline, {
         source: image,
@@ -135,10 +139,15 @@ export async function bakeLook(image: HTMLImageElement, params: EditParams, w: n
         width: renderW,
         height: renderH,
         surfaceRef: ref as unknown as React.Ref<unknown>,
-        preserve: true,
+        // EXPERIMENT A — was true. Test whether preserveDrawingBuffer:true is what
+        // hard-faults the Surface mount on iOS WebKit. With false, captureAsBlob may
+        // return a blank/null blob — fine for this test; we only care if the MOUNT
+        // survives (reaches "Surface render returned" / "surface mounted").
+        preserve: false,
         activeLut,
       }),
     );
+    dbg('[GL] Surface render returned'); // TEMP DEBUG
 
     // Allow mount + first draw + any async textures (LUTs are sync; grain pre-warmed).
     await raf(); await raf(); await raf();
