@@ -607,6 +607,8 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
 
   const handlePost = async (deckId?: string | null) => {
     if (!user || selectedMedia.length === 0) return;
+    const dbg = (m: string) => { if (typeof window !== 'undefined') window.__dbg?.(m); }; // TEMP DEBUG
+    dbg('[POST] start, media count=' + selectedMedia.length); // TEMP DEBUG
     console.log('[handlePost] start — deckId:', deckId, 'media:', selectedMedia.length);
 
     setIsPosting(true);
@@ -614,11 +616,14 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
     setPostError(null);
 
     try {
+      dbg('[POST] getUserByPrivyId'); // TEMP DEBUG
       const supabaseUser = await getUserByPrivyId(user.id);
+      dbg('[POST] got user ' + (supabaseUser ? 'ok' : 'NULL')); // TEMP DEBUG
       if (!supabaseUser) throw new Error('User not found in database');
       console.log('[handlePost] supabaseUser:', supabaseUser.id, '| privy_id:', (supabaseUser as any).privy_id);
 
       const profile = await getProfile(supabaseUser.id);
+      dbg('[POST] got profile ' + (profile?.username || 'NULL')); // TEMP DEBUG
       console.log('[handlePost] profile result — id:', profile?.id, '| user_id:', (profile as any)?.user_id, '| username:', profile?.username);
       if (!profile) throw new Error('Profile not found — please complete profile setup at /profile/setup');
       if (!profile.username) throw new Error('Username not set — please add a username at /profile/setup');
@@ -644,16 +649,27 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
         let fileToUpload = media.file;
         if (media.type === 'image') {
           // 1) Bake the affine geometry (crop + straighten + rotate) at canonical dims.
-          fileToUpload = await bakeImageGeometry(media.file, geometry, exportChip.exportW, exportChip.exportH);
+          dbg('[POST] bakeImageGeometry start'); // TEMP DEBUG
+          try {
+            fileToUpload = await bakeImageGeometry(media.file, geometry, exportChip.exportW, exportChip.exportH);
+          } catch (ge: any) {
+            dbg('[POST] bakeImageGeometry FAILED: ' + (ge?.message || ge)); // TEMP DEBUG
+            throw ge;
+          }
+          dbg('[POST] geometry done'); // TEMP DEBUG
           console.log('[handlePost] geometry baked at', exportChip.exportW, 'x', exportChip.exportH);
           // 2) Bake the FINISHING look on top (color/grain/curves) via the gl-react
           //    pipeline → readback JPEG. Skipped when there are no look edits (the
           //    un-edited path stays byte-identical to before). GATE B: a bake/readback
           //    failure THROWS → caught below → publish aborts (never uploads an
           //    un-graded image as if it were graded).
-          if (hasLookEdits(editParams)) {
+          const looked = hasLookEdits(editParams);
+          dbg('[POST] hasLookEdits=' + looked); // TEMP DEBUG
+          if (looked) {
+            dbg('[POST] calling bakeLook'); // TEMP DEBUG
             const baseImg = await decodeImageFile(fileToUpload);
             const lookBlob = await bakeLook(baseImg, editParams, exportChip.exportW, exportChip.exportH);
+            dbg('[POST] bakeLook done blob=' + (lookBlob ? lookBlob.size : 'null')); // TEMP DEBUG
             fileToUpload = new File(
               [lookBlob],
               fileToUpload.name.replace(/\.[^.]+$/, '') + '-graded.jpg',
@@ -662,7 +678,9 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
             console.log('[handlePost] look baked (graded)');
           }
         }
+        dbg('[POST] uploadImage start'); // TEMP DEBUG
         const url = await uploadImage(fileToUpload, 'post-media', user.id);
+        dbg('[POST] uploadImage done ' + url); // TEMP DEBUG
         mediaUrls.push(url);
         console.log('[handlePost] uploaded:', url);
       }
@@ -747,7 +765,9 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
         } : {}),
       };
       console.log('[handlePost] createPost payload:', postPayload);
+      dbg('[POST] createPost start'); // TEMP DEBUG
       const newPost = await createPost(postPayload);
+      dbg('[POST] createPost done'); // TEMP DEBUG
       console.log('[handlePost] post created:', newPost?.id);
 
       if (deckId && newPost?.id) {
@@ -776,6 +796,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
       setShowMintPrompt(true);
 
     } catch (e: any) {
+      dbg('[POST] CAUGHT: ' + (e?.message || e) + ' @ ' + (e?.stack || '').split('\n')[1]); // TEMP DEBUG
       const lt = getScopeLimitType(e);
       if (lt) { setIsPosting(false); setIsUploading(false); showUpsell(lt); return; }
       console.error('[handlePost] FAILED:', errInfo(e));
