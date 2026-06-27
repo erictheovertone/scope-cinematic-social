@@ -41,11 +41,13 @@ const delay = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
 interface CaptureSurface {
   captureAsBlob: (type?: string, quality?: number) => Promise<Blob | null>;
-  // The gl-react Surface ref also exposes the live WebGL context and a SYNCHRONOUS
-  // flush (forces _draw). We use these for a preserveDrawingBuffer-free readback via
-  // gl.readPixels — see the readback block in bakeLook below.
+  // gl-react's capture() reads the ROOT node's OWN framebuffer (the full composited
+  // pipeline incl. geometry/crop) — preserveDrawingBuffer-free and reliable on iOS,
+  // unlike the volatile default backbuffer. No-args = the full FBO. Returns an
+  // ndarray-like { data: raw RGBA (bottom-up), shape: [w, h, 4] }. (gl/flush kept for ref.)
   gl?: WebGLRenderingContext | WebGL2RenderingContext | null;
   flush?: () => void;
+  capture?: (x?: number, y?: number, w?: number, h?: number) => { data: Uint8Array; shape: number[] };
 }
 
 /** Decode a File into a fully-ready HTMLImageElement (for the texture source). */
@@ -172,33 +174,45 @@ export async function bakeLook(image: HTMLImageElement, params: EditParams, w: n
       throw new Error('bakeLook: surface unavailable (pipeline did not mount)');
     }
 
-    // READBACK — preserveDrawingBuffer-free (the flag is the iOS crash trigger).
-    // Force a SYNCHRONOUS redraw (gl-react flush → _draw), then gl.readPixels from the
-    // freshly-drawn buffer in the SAME tick — valid even with preserve:false because we
-    // read before the compositor clears it (no awaits between flush and read). readPixels
-    // is bottom-up, so we flip rows into a top-down 2D canvas and JPEG-encode THAT. Only
-    // the read mechanism changed — the pipeline math (look/colors) is untouched, so the
-    // output matches the live preview.
-    dbg('[BAKE] readback method=readPixels-fbo'); // TEMP DEBUG
-    if (typeof surface.flush === 'function') surface.flush();
-    const glr = surface.gl;
-    if (!glr) throw new Error('bakeLook: gl context unavailable for readback');
-    glr.bindFramebuffer(glr.FRAMEBUFFER, null); // default framebuffer = the root's final output
-    const pixels = new Uint8Array(renderW * renderH * 4);
-    glr.readPixels(0, 0, renderW, renderH, glr.RGBA, glr.UNSIGNED_BYTE, pixels);
+    // READBACK via gl-react's OWN framebuffer capture (preserveDrawingBuffer-free —
+    // the flag is the iOS crash trigger). surface.capture() binds the ROOT node's FBO
+    // and readPixels from it: it holds the FULL composited pipeline (geometry/crop +
+    // look) and is reliable on iOS, unlike the volatile default backbuffer (which my
+    // earlier flush()+readPixels(null) hung on / read a DPR-zoomed corner of). No-args
+    // captures the entire FBO at its true (pixelRatio-scaled) size. Pipeline math is
+    // untouched — only the read mechanism — so output matches the live preview.
+    dbg('[BAKE] capture via surface.capture'); // TEMP DEBUG
+    if (typeof surface.capture !== 'function') {
+      throw new Error('bakeLook: surface.capture unavailable');
+    }
+    const captured = surface.capture(); // ndarray-like { data, shape:[w,h,4] }
+    const cw = captured.shape[0]; // width  (pixelRatio-scaled backing size)
+    const ch = captured.shape[1]; // height
+    const raw = captured.data;    // raw RGBA, bottom-up rows ([h][w][4] row-major)
+    dbg('[BAKE] capture dims ' + cw + 'x' + ch); // TEMP DEBUG
 
+    // Flip vertical (GL is bottom-up → top-down) into a full-res canvas...
+    const full = document.createElement('canvas');
+    full.width = cw;
+    full.height = ch;
+    const fctx = full.getContext('2d');
+    if (!fctx) throw new Error('bakeLook: 2D context unavailable for readback encode');
+    const fImg = fctx.createImageData(cw, ch);
+    const rowBytes = cw * 4;
+    for (let y = 0; y < ch; y++) {
+      const srcStart = (ch - 1 - y) * rowBytes; // bottom-up → top-down
+      fImg.data.set(raw.subarray(srcStart, srcStart + rowBytes), y * rowBytes);
+    }
+    fctx.putImageData(fImg, 0, 0);
+
+    // ...then downscale to the capped renderW×renderH (predictable output size across
+    // device pixelRatios; honors the 2048 cap regardless of DPR).
     const out = document.createElement('canvas');
     out.width = renderW;
     out.height = renderH;
-    const ctx = out.getContext('2d');
-    if (!ctx) throw new Error('bakeLook: 2D context unavailable for readback encode');
-    const imgData = ctx.createImageData(renderW, renderH);
-    const rowBytes = renderW * 4;
-    for (let y = 0; y < renderH; y++) {
-      const srcStart = (renderH - 1 - y) * rowBytes; // flip vertical (GL is bottom-up)
-      imgData.data.set(pixels.subarray(srcStart, srcStart + rowBytes), y * rowBytes);
-    }
-    ctx.putImageData(imgData, 0, 0);
+    const octx = out.getContext('2d');
+    if (!octx) throw new Error('bakeLook: 2D context unavailable for downscale');
+    octx.drawImage(full, 0, 0, renderW, renderH);
     const blob = await new Promise<Blob | null>((resolve) => out.toBlob(resolve, 'image/jpeg', 0.92));
     dbg('[BAKE] blob=' + (blob ? blob.size : 'null')); // TEMP DEBUG
     if (!blob) throw new Error('bakeLook: readback produced no image');
