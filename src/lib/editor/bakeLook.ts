@@ -50,6 +50,12 @@ interface CaptureSurface {
   capture?: (x?: number, y?: number, w?: number, h?: number) => { data: Uint8Array; shape: number[] };
 }
 
+// A gl-react child Node ref — its capture() reads from the node's OWN FBO (the full
+// pipeline output), which survives the iOS present clear (unlike the root/default buffer).
+interface CaptureNode {
+  capture: (x?: number, y?: number, w?: number, h?: number) => { data: Uint8Array; shape: number[] };
+}
+
 /** Decode a File into a fully-ready HTMLImageElement (for the texture source). */
 export function decodeImageFile(file: File): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
@@ -131,6 +137,7 @@ export async function bakeLook(image: HTMLImageElement, params: EditParams, w: n
   const root = createRoot(container);
   dbg('[GL] root created'); // TEMP DEBUG
   const ref = createRef<CaptureSurface>();
+  const captureRef = createRef<CaptureNode>(); // child-FBO node for the readback
 
   try {
     console.log('[BAKE] starting render', renderW, renderH); // TEMP DIAGNOSTIC
@@ -145,6 +152,7 @@ export async function bakeLook(image: HTMLImageElement, params: EditParams, w: n
         width: renderW,
         height: renderH,
         surfaceRef: ref as unknown as React.Ref<unknown>,
+        captureRef: captureRef as unknown as React.Ref<unknown>,
         // preserveDrawingBuffer MUST stay false: true hard-kills the Surface mount on
         // iOS WebKit (the publish crash). We read pixels back via gl.readPixels below
         // instead of relying on the preserved drawing buffer — so the flag stays off
@@ -183,24 +191,27 @@ export async function bakeLook(image: HTMLImageElement, params: EditParams, w: n
       throw new Error('bakeLook: surface unavailable (pipeline did not mount)');
     }
 
-    // READBACK via gl-react's OWN framebuffer capture (preserveDrawingBuffer-free —
-    // the flag is the iOS crash trigger). surface.capture() binds the ROOT node's FBO
-    // and readPixels from it: it holds the FULL composited pipeline (geometry/crop +
-    // look) and is reliable on iOS, unlike the volatile default backbuffer (which my
-    // earlier flush()+readPixels(null) hung on / read a DPR-zoomed corner of). No-args
-    // captures the entire FBO at its true (pixelRatio-scaled) size. Pipeline math is
-    // untouched — only the read mechanism — so output matches the live preview.
-    dbg('[BAKE] capture via surface.capture'); // TEMP DEBUG
-    if (typeof surface.capture !== 'function') {
-      throw new Error('bakeLook: surface.capture unavailable');
+    // READBACK from the CHILD node's OWN FBO (render-to-texture). The gl-react ROOT node
+    // has no framebuffer (renders to the default buffer, which iOS clears after present →
+    // black). Pipeline wraps the full pipeline as a CHILD under an outer passthrough root,
+    // so captureRef points at a node that owns an FBO holding the complete output; its
+    // capture() readPixels from THAT FBO and survives the present clear. preserve stays
+    // false. pixelRatio:1 on the bake Surface → FBO is exactly renderW×renderH.
+    dbg('[BAKE] readback=node.capture'); // TEMP DEBUG
+    const node = captureRef.current;
+    if (!node || typeof node.capture !== 'function') {
+      throw new Error('bakeLook: capture node unavailable');
     }
     dbg('[BAKE] about to capture'); // TEMP DEBUG
-    const captured = surface.capture(); // ndarray-like { data, shape:[w,h,4] }
+    const captured = node.capture(); // child-FBO read — ndarray-like { data, shape:[w,h,4] }
     dbg('[BAKE] capture returned'); // TEMP DEBUG
-    const cw = captured.shape[0]; // width  (pixelRatio-scaled backing size)
+    const cw = captured.shape[0]; // width
     const ch = captured.shape[1]; // height
     const raw = captured.data;    // raw RGBA, bottom-up rows ([h][w][4] row-major)
-    dbg('[BAKE] capture dims ' + cw + 'x' + ch); // TEMP DEBUG
+    dbg('[BAKE] cap shape ' + cw + 'x' + ch); // TEMP DEBUG
+    // Non-black sanity: sample the centre pixel from the raw buffer (RGBA).
+    const ci = ((ch >> 1) * cw + (cw >> 1)) * 4;
+    dbg('[BAKE] sample px=' + raw[ci] + ',' + raw[ci + 1] + ',' + raw[ci + 2] + ',' + raw[ci + 3]); // TEMP DEBUG
 
     // Flip vertical (GL is bottom-up → top-down) into a full-res canvas...
     const full = document.createElement('canvas');

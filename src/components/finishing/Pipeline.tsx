@@ -17,7 +17,7 @@
  * client-only (WebGL) — the dev route imports it via next/dynamic ssr:false.
  */
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { cloneElement, useEffect, useMemo, useRef, useState } from 'react';
 import { Node, Shaders } from 'gl-react';
 import { Surface } from 'gl-react-dom';
 import type { EditParams } from '@/lib/editor/params';
@@ -63,11 +63,14 @@ interface PipelineProps {
   surfaceRef?: React.Ref<unknown>;
   /** Bake-only: enable preserveDrawingBuffer so the canvas can be read back. */
   preserve?: boolean;
+  /** Bake-only: ref to the CHILD node that owns an FBO holding the full pipeline output,
+   *  so the bake can readPixels from that FBO (survives the iOS present clear). */
+  captureRef?: React.Ref<unknown>;
   /** Active LOOK LUT (2D-tiled canvas + cube size). Applied in the LOOK stage. */
   activeLut?: { canvas: HTMLCanvasElement; size: number } | null;
 }
 
-export default function Pipeline({ source, params, width, height, surfaceRef, preserve, activeLut }: PipelineProps) {
+export default function Pipeline({ source, params, width, height, surfaceRef, preserve, captureRef, activeLut }: PipelineProps) {
   // Drive a redraw every frame ONLY while the video is actually PLAYING (the
   // texture re-uploads per frame). A PAUSED video — the hero-frame grading
   // default — draws ONCE and stops: the old code looped at 60fps forever even
@@ -357,15 +360,26 @@ export default function Pipeline({ source, params, width, height, surfaceRef, pr
     1 + (params.clarity > 0 ? 3 : 0) + (params.blur > 0 ? 2 : 0) + 1 + 1 +
     ((params.bloom !== 0 || params.halation !== 0) ? 4 : 0) + ((grainStock && params.grainIntensity > 0) ? 1 : 0);
 
+  // BAKE READBACK FIX: the gl-react ROOT node owns NO framebuffer (it renders to the
+  // default buffer, which iOS clears after present → black readback). So for the bake
+  // (captureRef present) we wrap the full pipeline under ONE outer passthrough root: the
+  // passthrough becomes the root (copies to screen), and `texture` (the complete pipeline)
+  // becomes a CHILD that owns its own FBO. We read THAT child's FBO via captureRef.capture()
+  // — it survives the present clear. pixelRatio:1 makes the FBO exactly renderW×renderH.
+  // Live preview (no captureRef) renders `texture` directly, unchanged.
+  const surfaceChild = captureRef
+    ? <Node shader={passthrough.passthrough} uniforms={{ t: cloneElement(texture, { ref: captureRef } as Record<string, unknown>) }} />
+    : texture;
   return (
     <div ref={hostRef} style={{ display: 'contents' }}>
       <Surface
         ref={surfaceRef as never}
         width={width}
         height={height}
+        pixelRatio={captureRef ? 1 : undefined}
         webglContextAttributes={preserve ? { preserveDrawingBuffer: true } : undefined}
       >
-        {texture}
+        {surfaceChild}
       </Surface>
     </div>
   );
