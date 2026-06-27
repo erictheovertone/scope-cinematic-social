@@ -13,7 +13,7 @@
 
 import React, { createRef } from 'react';
 import { createRoot } from 'react-dom/client';
-import Pipeline, { liveContexts } from '@/components/finishing/Pipeline';
+import Pipeline from '@/components/finishing/Pipeline';
 import { DEFAULT_PARAMS, type EditParams } from './params';
 import { CHANNELS, isIdentityChannel } from './curveEngine';
 import { grainStockByKey } from '@/components/finishing/grainStocks';
@@ -39,17 +39,6 @@ export function hasLookEdits(p: EditParams): boolean {
 const raf = () => new Promise<void>((r) => requestAnimationFrame(() => r()));
 const delay = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
-interface CaptureSurface {
-  captureAsBlob: (type?: string, quality?: number) => Promise<Blob | null>;
-  // gl-react's capture() reads the ROOT node's OWN framebuffer (the full composited
-  // pipeline incl. geometry/crop) — preserveDrawingBuffer-free and reliable on iOS,
-  // unlike the volatile default backbuffer. No-args = the full FBO. Returns an
-  // ndarray-like { data: raw RGBA (bottom-up), shape: [w, h, 4] }. (gl/flush kept for ref.)
-  gl?: WebGLRenderingContext | WebGL2RenderingContext | null;
-  flush?: () => void;
-  capture?: (x?: number, y?: number, w?: number, h?: number) => { data: Uint8Array; shape: number[] };
-}
-
 // A gl-react child Node ref — its capture() reads from the node's OWN FBO (the full
 // pipeline output), which survives the iOS present clear (unlike the root/default buffer).
 interface CaptureNode {
@@ -73,9 +62,6 @@ export function decodeImageFile(file: File): Promise<HTMLImageElement> {
  * a JPEG Blob. Throws on any failure (GATE B).
  */
 export async function bakeLook(image: HTMLImageElement, params: EditParams, w: number, h: number): Promise<Blob> {
-  const dbg = (m: string) => { if (typeof window !== 'undefined') window.__dbg?.(m); }; // TEMP DEBUG
-  dbg('[BAKE] ENTER bakeLook'); // TEMP DEBUG — did we even get into bakeLook on the iPhone 12?
-  try { // TEMP DEBUG entry guard — catches a synchronous/early throw before the render try
   if (typeof document === 'undefined') throw new Error('bakeLook: not in a browser');
 
   // Pre-warm the grain stock so its texture is cached before the pipeline
@@ -103,15 +89,11 @@ export async function bakeLook(image: HTMLImageElement, params: EditParams, w: n
     }
   }
 
-  // MEMORY CAP (iOS crash fix). The finishing chain renders ~10 full-size
-  // framebuffers + a preserveDrawingBuffer through ONE WebGL Surface; at the
-  // cinematic export width (4096) that GPU peak exceeds the iOS WebKit per-context
-  // budget → WebContent process killed → app crash. Cap the RENDER TARGET width on
-  // constrained/mobile clients (desktop keeps 4096). The cap is on the Surface size
-  // ONLY — input texture, look math and node chain are unchanged. Aspect ratio is
-  // preserved EXACTLY (uniform scale), so the upload/display path is identical, just
-  // fewer pixels. No gl context exists yet here (the Surface mounts below), so the
-  // platform/pointer heuristics decide.
+  // MEMORY CAP (iOS crash fix). The finishing chain renders the look through ONE WebGL
+  // Surface; at the cinematic export width (4096) the GPU peak exceeds the iOS WebKit
+  // per-context budget → WebContent process killed. Cap the RENDER TARGET width on
+  // constrained/mobile clients (desktop keeps 4096). Aspect ratio is preserved exactly,
+  // so the upload/display path is identical — just fewer pixels.
   const maxW = getMaxBakeWidth();
   let renderW = w;
   let renderH = h;
@@ -120,98 +102,49 @@ export async function bakeLook(image: HTMLImageElement, params: EditParams, w: n
     renderW = Math.round(w * scale);
     renderH = Math.round(h * scale); // keep the AR exact
   }
-  // TEMP DIAGNOSTIC (strip after on-device crash is diagnosed): confirm the cap engaged.
-  console.log('[BAKE] getMaxBakeWidth=', maxW, 'requested w×h=', w, h,
-              '→ renderW×H=', renderW, renderH);
-  if (typeof window !== 'undefined') window.__dbg?.(`[BAKE] maxW=${maxW} req=${w}x${h} → ${renderW}x${renderH}`); // TEMP DEBUG
 
   const container = document.createElement('div');
-  // TEMP EXPERIMENT (#3): offscreen container position fixed→ABSOLUTE. The body-lock
-  // (html,body position:fixed overflow:hidden) may break compositing of an offscreen
-  // FIXED WebGL surface on iOS; absolute keeps it off-screen without a fixed containing
-  // block. Revert to 'fixed' if this doesn't move the death point.
+  // Offscreen, position:absolute (NOT fixed — a fixed offscreen surface composites
+  // unreliably under the standalone body-lock on iOS).
   container.style.cssText = 'position:absolute;left:-99999px;top:0;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none;';
-  dbg('[BAKE] container=absolute EXPERIMENT'); // TEMP DEBUG
   document.body.appendChild(container);
-  dbg('[GL] creating root'); // TEMP DEBUG
   const root = createRoot(container);
-  dbg('[GL] root created'); // TEMP DEBUG
-  const ref = createRef<CaptureSurface>();
   const captureRef = createRef<CaptureNode>(); // child-FBO node for the readback
 
   try {
-    console.log('[BAKE] starting render', renderW, renderH); // TEMP DIAGNOSTIC
-    if (typeof window !== 'undefined') window.__dbg?.(`[BAKE] starting render ${renderW}x${renderH}`); // TEMP DEBUG
-    dbg('[GL] live contexts BEFORE publish mount = ' + liveContexts()); // TEMP DEBUG
-    dbg('[BAKE] surface mounting'); // TEMP DEBUG
-    dbg('[GL] rendering Surface'); // TEMP DEBUG
     root.render(
       React.createElement(Pipeline, {
         source: image,
         params,
         width: renderW,
         height: renderH,
-        surfaceRef: ref as unknown as React.Ref<unknown>,
         captureRef: captureRef as unknown as React.Ref<unknown>,
-        // preserveDrawingBuffer MUST stay false: true hard-kills the Surface mount on
-        // iOS WebKit (the publish crash). We read pixels back via gl.readPixels below
-        // instead of relying on the preserved drawing buffer — so the flag stays off
-        // AND we still get the real rendered output.
+        // preserveDrawingBuffer MUST stay false: true hard-kills the Surface mount on iOS
+        // WebKit (the publish crash). We read the rendered pixels back from a child node's
+        // own FBO (render-to-texture) instead — see the readback below.
         preserve: false,
         activeLut,
       }),
     );
-    dbg('[GL] Surface render returned'); // TEMP DEBUG
 
-    // TEMP DEBUG: nested try so any THROW in the post-render block is named. (A hard
-    // WebContent process kill is NOT catchable — but the brackets below pin WHICH yield
-    // dies; on iPhone 'surface mounted' never prints, so the kill is in these raf/delay
-    // compositing yields, not the readback.)
-    try {
-    dbg('[BAKE] pr: no flush() in capture path (already skipped — isolating compositing/capture)'); // TEMP DEBUG
     // Allow mount + first draw + any async textures (LUTs are sync; grain pre-warmed).
-    // Each yield bracketed so the LAST line printed on iOS names the exact dying step.
-    dbg('[BAKE] pr: before raf1'); await raf(); dbg('[BAKE] pr: raf1 done'); // TEMP DEBUG
-    dbg('[BAKE] pr: before raf2'); await raf(); dbg('[BAKE] pr: raf2 done'); // TEMP DEBUG
-    dbg('[BAKE] pr: before raf3'); await raf(); dbg('[BAKE] pr: raf3 done'); // TEMP DEBUG
-    dbg('[BAKE] pr: before delay'); await delay(160); dbg('[BAKE] pr: delay done'); // TEMP DEBUG
-    dbg('[BAKE] surface mounted'); // TEMP DEBUG
-
-    // TEMP DIAGNOSTIC: surface a GPU context kill (iOS WebContent OOM) instead of
-    // dying silently — print something the on-device inspector can catch.
-    const canvasEl = container.querySelector('canvas') as HTMLCanvasElement | null;
-    dbg('[BAKE] canvas ' + (canvasEl ? 'found' : 'NULL')); // TEMP DEBUG
-    canvasEl?.addEventListener('webglcontextlost', (e) => {
-      console.error('[BAKE] WEBGL CONTEXT LOST', e);
-      dbg('[BAKE] WEBGL CONTEXT LOST'); // TEMP DEBUG
-    });
-
-    const surface = ref.current;
-    if (!surface) {
-      throw new Error('bakeLook: surface unavailable (pipeline did not mount)');
-    }
+    await raf(); await raf(); await raf();
+    await delay(160);
 
     // READBACK from the CHILD node's OWN FBO (render-to-texture). The gl-react ROOT node
-    // has no framebuffer (renders to the default buffer, which iOS clears after present →
-    // black). Pipeline wraps the full pipeline as a CHILD under an outer passthrough root,
-    // so captureRef points at a node that owns an FBO holding the complete output; its
-    // capture() readPixels from THAT FBO and survives the present clear. preserve stays
-    // false. pixelRatio:1 on the bake Surface → FBO is exactly renderW×renderH.
-    dbg('[BAKE] readback=node.capture'); // TEMP DEBUG
+    // has no framebuffer (it renders to the default buffer, which iOS clears after present
+    // → black). Pipeline wraps the full pipeline as a CHILD under an outer passthrough
+    // root, so captureRef points at a node that owns an FBO holding the complete output;
+    // its capture() reads from THAT FBO and survives the present clear. preserve stays
+    // false. pixelRatio:1 on the bake Surface → the FBO is exactly renderW×renderH.
     const node = captureRef.current;
     if (!node || typeof node.capture !== 'function') {
-      throw new Error('bakeLook: capture node unavailable');
+      throw new Error('bakeLook: capture node unavailable (pipeline did not mount)');
     }
-    dbg('[BAKE] about to capture'); // TEMP DEBUG
-    const captured = node.capture(); // child-FBO read — ndarray-like { data, shape:[w,h,4] }
-    dbg('[BAKE] capture returned'); // TEMP DEBUG
+    const captured = node.capture(); // ndarray-like { data, shape:[w,h,4] }
     const cw = captured.shape[0]; // width
     const ch = captured.shape[1]; // height
     const raw = captured.data;    // raw RGBA, bottom-up rows ([h][w][4] row-major)
-    dbg('[BAKE] cap shape ' + cw + 'x' + ch); // TEMP DEBUG
-    // Non-black sanity: sample the centre pixel from the raw buffer (RGBA).
-    const ci = ((ch >> 1) * cw + (cw >> 1)) * 4;
-    dbg('[BAKE] sample px=' + raw[ci] + ',' + raw[ci + 1] + ',' + raw[ci + 2] + ',' + raw[ci + 3]); // TEMP DEBUG
 
     // Flip vertical (GL is bottom-up → top-down) into a full-res canvas...
     const full = document.createElement('canvas');
@@ -228,7 +161,7 @@ export async function bakeLook(image: HTMLImageElement, params: EditParams, w: n
     fctx.putImageData(fImg, 0, 0);
 
     // ...then downscale to the capped renderW×renderH (predictable output size across
-    // device pixelRatios; honors the 2048 cap regardless of DPR).
+    // device pixelRatios; honors the cap regardless of DPR).
     const out = document.createElement('canvas');
     out.width = renderW;
     out.height = renderH;
@@ -236,28 +169,15 @@ export async function bakeLook(image: HTMLImageElement, params: EditParams, w: n
     if (!octx) throw new Error('bakeLook: 2D context unavailable for downscale');
     octx.drawImage(full, 0, 0, renderW, renderH);
     const blob = await new Promise<Blob | null>((resolve) => out.toBlob(resolve, 'image/jpeg', 0.92));
-    dbg('[BAKE] blob=' + (blob ? blob.size : 'null')); // TEMP DEBUG
     if (!blob) throw new Error('bakeLook: readback produced no image');
     return blob;
-    } catch (prerr: any) {
-      dbg('[BAKE] POST-RENDER CAUGHT: ' + (prerr?.message || prerr)); // TEMP DEBUG
-      throw prerr;
-    }
-  } catch (err) {
-    console.error('[BAKE] render failed:', err); // TEMP DIAGNOSTIC
-    dbg('[BAKE] CAUGHT: ' + ((err as Error)?.message || String(err))); // TEMP DEBUG (#4)
-    if (typeof window !== 'undefined') window.__dbg?.('[BAKE] render failed: ' + ((err as Error)?.stack || (err as Error)?.message || String(err))); // TEMP DEBUG
-    throw err; // GATE B preserved — publish still aborts on a bake failure.
   } finally {
-    dbg('[BAKE] teardown'); // TEMP DEBUG
-    // SYNCHRONOUS WebGL teardown (iOS-critical). Readback (captureAsBlob) has already
-    // completed above, so this NEVER changes the baked pixels. Each bakeLook spins up a
-    // fresh gl-react Surface = a WebGL context; iOS caps active contexts (~8–16), and a
-    // deferred/GC'd release lets them pile up (the palette bakes are serialized, but a
-    // serialized chain still stacks contexts if each isn't freed before the next starts).
-    // Free the GPU context NOW via WEBGL_lose_context so at most ONE is alive at a time.
-    // The DOM unmount stays deferred (avoids React's "unmount during render" warning) —
-    // the context is already lost, so nothing GPU-heavy is held in the meantime.
+    // SYNCHRONOUS WebGL teardown (iOS-critical). Readback has already completed above, so
+    // this NEVER changes the baked pixels. Each bakeLook spins up a fresh gl-react Surface
+    // = a WebGL context; iOS caps active contexts (~8–16) and a deferred/GC'd release lets
+    // them pile up. Free the GPU context NOW via WEBGL_lose_context so at most ONE is alive
+    // at a time. The DOM unmount stays deferred (avoids React's "unmount during render"
+    // warning) — the context is already lost, so nothing GPU-heavy is held meanwhile.
     try {
       const canvas = container.querySelector('canvas') as HTMLCanvasElement | null;
       const gl = (canvas && (
@@ -269,16 +189,12 @@ export async function bakeLook(image: HTMLImageElement, params: EditParams, w: n
     } catch { /* teardown must never mask the bake result */ }
     setTimeout(() => { try { root.unmount(); } catch { /* noop */ } container.remove(); }, 0);
   }
-  } catch (entryErr: any) { // TEMP DEBUG entry guard
-    dbg('[BAKE] ENTER CAUGHT: ' + (entryErr?.message || entryErr)); // TEMP DEBUG
-    throw entryErr;
-  }
 }
 
 /**
  * captureLookThumb — a small JPEG of the CURRENT source frame with `params`
  * applied, for the PALETTE tile (memory anchor). Reuses bakeLook (same pipeline +
- * captureAsBlob) at thumbnail scale (~480px wide, source aspect preserved). For a
+ * readback) at thumbnail scale (~480px wide, source aspect preserved). For a
  * VIDEO source it snapshots the current frame to a still first, then bakes it.
  * Returns null on any failure — the thumbnail is an enhancement, never a save
  * dependency, so the caller must keep saving regardless.

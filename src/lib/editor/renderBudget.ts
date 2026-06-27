@@ -11,14 +11,14 @@
  * 4096 on confidently high-headroom desktop GPUs.
  *
  * FAIL-SAFE: default to the CAPPED width whenever we can't be confident — SSR,
- * unknown platform, missing APIs, or any throw all resolve to 2048. We never
- * gamble the full 4096 unless every signal says "capable desktop".
+ * unknown platform, missing APIs, or any throw all resolve to the capped width. We
+ * never gamble the full 4096 unless every signal says "capable desktop".
  *
  * The cap is on the render target ONLY — input texture, look math, node chain,
  * aspect ratio and the downstream upload path are all unchanged (fewer pixels).
  */
 
-const CAPPED_WIDTH = 1024; // was 2048 — TEMP: finding the iOS GPU present/alloc ceiling
+const CAPPED_WIDTH = 1024; // iOS / mobile GPU budget (present + per-context ceiling)
 const FULL_WIDTH = 4096;   // desktop with comfortable headroom
 
 /**
@@ -33,29 +33,18 @@ export function getMaxBakeWidth(gl?: WebGLRenderingContext | WebGL2RenderingCont
     //    under 8192 is treated as constrained.
     if (gl) {
       const maxTex = gl.getParameter(gl.MAX_TEXTURE_SIZE) as number;
-      if (typeof maxTex === 'number' && maxTex < 8192) {
-        console.log('[BUDGET] capped via MAX_TEXTURE_SIZE', maxTex); // TEMP DIAGNOSTIC
-        if (typeof window !== 'undefined') window.__dbg?.(`[BUDGET] MAX_TEXTURE_SIZE=${maxTex} → ${CAPPED_WIDTH}`); // TEMP DEBUG
-        return CAPPED_WIDTH;
-      }
+      if (typeof maxTex === 'number' && maxTex < 8192) return CAPPED_WIDTH;
     }
 
     // SSR / no DOM → fail safe.
-    if (typeof window === 'undefined') {
-      console.log('[BUDGET] capped via SSR/no-window'); // TEMP DIAGNOSTIC
-      return CAPPED_WIDTH;
-    }
+    if (typeof window === 'undefined') return CAPPED_WIDTH;
 
     // 2. Touch device (coarse pointer AND no hover) → constrained GPU budget.
     const mm = typeof window.matchMedia === 'function' ? window.matchMedia.bind(window) : null;
     if (mm) {
       const coarse = mm('(pointer: coarse)').matches;
       const noHover = mm('(hover: none)').matches;
-      if (coarse && noHover) {
-        console.log('[BUDGET] capped via coarse-pointer'); // TEMP DIAGNOSTIC
-        if (typeof window !== 'undefined') window.__dbg?.(`[BUDGET] coarse-pointer → ${CAPPED_WIDTH}`); // TEMP DEBUG
-        return CAPPED_WIDTH;
-      }
+      if (coarse && noHover) return CAPPED_WIDTH;
     }
 
     // 3. iOS / iPadOS — tightest GPU budget, no deviceMemory API. Catch iPhone/iPod/
@@ -67,21 +56,13 @@ export function getMaxBakeWidth(gl?: WebGLRenderingContext | WebGL2RenderingCont
       const touchPoints = navigator.maxTouchPoints || 0;
       const isIOS = /iPad|iPhone|iPod/.test(platform) || /iPad|iPhone|iPod/.test(ua);
       const isIPadOS = platform === 'MacIntel' && touchPoints > 1;
-      if (isIOS || isIPadOS) {
-        console.log('[BUDGET] capped via iOS', { platform, touchPoints, isIOS, isIPadOS }); // TEMP DIAGNOSTIC
-        if (typeof window !== 'undefined') window.__dbg?.(`[BUDGET] iOS plat=${platform} tp=${touchPoints} → ${CAPPED_WIDTH}`); // TEMP DEBUG
-        return CAPPED_WIDTH;
-      }
+      if (isIOS || isIPadOS) return CAPPED_WIDTH;
     }
 
     // 4. Confident desktop (fine pointer, capable GPU) → full resolution.
-    console.log('[BUDGET] FULL 4096 desktop'); // TEMP DIAGNOSTIC
-    if (typeof window !== 'undefined') window.__dbg?.(`[BUDGET] FULL desktop → ${FULL_WIDTH}`); // TEMP DEBUG
     return FULL_WIDTH;
-  } catch (e) {
+  } catch {
     // 5. Any throw → fail safe.
-    console.log('[BUDGET] capped via catch', e); // TEMP DIAGNOSTIC
-    if (typeof window !== 'undefined') window.__dbg?.(`[BUDGET] catch → ${CAPPED_WIDTH}`); // TEMP DEBUG
     return CAPPED_WIDTH;
   }
 }

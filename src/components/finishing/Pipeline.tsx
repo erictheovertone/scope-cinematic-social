@@ -36,11 +36,6 @@ import { lookShaders } from './passes/look';
 
 // Labeled pass-through used for every not-yet-implemented stage. Sampling the
 // input unchanged keeps the chain intact and ordered.
-// TEMP DEBUG — module-level live WebGL Surface/context counter (across ALL pipelines:
-// live preview, palette bakes, publish bake). Strip with the rest.
-let LIVE_CONTEXTS = 0;
-export function liveContexts() { return LIVE_CONTEXTS; }
-
 const passthrough = Shaders.create({
   passthrough: {
     frag: `
@@ -183,39 +178,6 @@ export default function Pipeline({ source, params, width, height, surfaceRef, pr
     return cv;
   }, [params.curves.hue]);
 
-  // TEMP DEBUG (bake only) — GL diagnostics to the on-screen overlay. hostRef gives a
-  // DOM handle to the Surface's canvas without affecting layout (display:contents).
-  // Strip this block + the host wrapper + nodeCountRef with the rest.
-  const hostRef = useRef<HTMLDivElement>(null);
-  const nodeCountRef = useRef(0);
-  useEffect(() => {
-    if (!surfaceRef) return; // bake path only (gated on surfaceRef so it still logs with preserve=false)
-    const dbg = (m: string) => { if (typeof window !== 'undefined') window.__dbg?.(m); };
-    dbg('[GL] requesting context preserve=' + preserve); // TEMP DEBUG
-    dbg('[GL] node count ' + nodeCountRef.current);
-    const canvas = hostRef.current?.querySelector('canvas') as HTMLCanvasElement | null;
-    if (!canvas) { dbg('[GL] canvas NULL'); return; }
-    canvas.addEventListener('webglcontextcreationerror', (e) => dbg('[GL] creation error: ' + ((e as WebGLContextEvent).statusMessage || '')), false);
-    canvas.addEventListener('webglcontextlost', () => dbg('[GL] CONTEXT LOST'), false);
-    let gl: WebGLRenderingContext | WebGL2RenderingContext | null = null;
-    try { gl = canvas.getContext('webgl2') || canvas.getContext('webgl'); } catch { gl = null; }
-    dbg('[GL] context = ' + (gl ? 'OK' : 'NULL')); // TEMP DEBUG
-  }, [surfaceRef, preserve]);
-
-  // TEMP DEBUG — track live Surface/context count as pipelines mount/unmount, so the
-  // overlay shows the count climb (palette/preview) and whether it falls before publish.
-  // Tied to an actual rendered Surface (texSource present) so a null render isn't counted.
-  useEffect(() => {
-    const mounted = !!texSource && width > 0 && height > 0;
-    if (!mounted) return;
-    LIVE_CONTEXTS++;
-    if (typeof window !== 'undefined') window.__dbg?.('[GL] live contexts = ' + LIVE_CONTEXTS + (preserve ? ' (bake mount)' : ' (live mount)'));
-    return () => {
-      LIVE_CONTEXTS--;
-      if (typeof window !== 'undefined') window.__dbg?.('[GL] live contexts = ' + LIVE_CONTEXTS + ' (unmount)');
-    };
-  }, [texSource, width, height, preserve]);
-
   if (!texSource || width <= 0 || height <= 0) return null;
 
   // All stop→value mapping happens in JS (mapStop); shaders read final uniforms.
@@ -352,14 +314,6 @@ export default function Pipeline({ source, params, width, height, surfaceRef, pr
     )
     : glowed;
 
-  // TEMP DEBUG: rough active-node count for the [GL] log (bake only). Mirrors the
-  // chain built above; approximate, strip with the rest.
-  nodeCountRef.current =
-    1 + ((!isVideoSrc && params.denoise > 0) ? 1 : 0) + 1 + 1 + (lutCanvas ? 1 : 0) + 1 + 1 +
-    (rgbLutCanvas ? 1 : 0) + 1 + 1 + (hueLutCanvas ? 1 : 0) + ((stShAmt > 0 || stHiAmt > 0) ? 1 : 0) +
-    1 + (params.clarity > 0 ? 3 : 0) + (params.blur > 0 ? 2 : 0) + 1 + 1 +
-    ((params.bloom !== 0 || params.halation !== 0) ? 4 : 0) + ((grainStock && params.grainIntensity > 0) ? 1 : 0);
-
   // BAKE READBACK FIX: the gl-react ROOT node owns NO framebuffer (it renders to the
   // default buffer, which iOS clears after present → black readback). So for the bake
   // (captureRef present) we wrap the full pipeline under ONE outer passthrough root: the
@@ -371,17 +325,15 @@ export default function Pipeline({ source, params, width, height, surfaceRef, pr
     ? <Node shader={passthrough.passthrough} uniforms={{ t: cloneElement(texture, { ref: captureRef } as Record<string, unknown>) }} />
     : texture;
   return (
-    <div ref={hostRef} style={{ display: 'contents' }}>
-      <Surface
-        ref={surfaceRef as never}
-        width={width}
-        height={height}
-        pixelRatio={captureRef ? 1 : undefined}
-        webglContextAttributes={preserve ? { preserveDrawingBuffer: true } : undefined}
-      >
-        {surfaceChild}
-      </Surface>
-    </div>
+    <Surface
+      ref={surfaceRef as never}
+      width={width}
+      height={height}
+      pixelRatio={captureRef ? 1 : undefined}
+      webglContextAttributes={preserve ? { preserveDrawingBuffer: true } : undefined}
+    >
+      {surfaceChild}
+    </Surface>
   );
 }
 
