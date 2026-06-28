@@ -41,6 +41,15 @@
    construction — no display-mode fork. Plain rule, outside @layer, so it wins. */
 html, body {
   height: 100%;
+  /* iOS standalone PWA: `height:100%` + `position:fixed; inset:0` resolve to the SMALL
+     viewport (797 on iPhone 12 — excludes the bottom safe-area), so the root ends 47px
+     above the device bottom and the OS paints black there (the "bottom black bar" + the
+     "everything bumped up" symptom). 100dvh = the LARGE/dynamic viewport that INCLUDES
+     the inset zone → the root fills the TRUE screen (844). The explicit height overrides
+     inset:0's bottom (over-constrained → bottom ignored), so the body spans top:0 →
+     100dvh. The footer keeps its OWN paddingBottom:env(safe-area-inset-bottom) to lift
+     icons above the home indicator — container to the edge, icons inset. */
+  height: 100dvh;
   width: 100%;
   overflow: hidden;
   overscroll-behavior: none;
