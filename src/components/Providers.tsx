@@ -8,6 +8,7 @@ import { UpsellProvider } from '@/components/UpsellProvider';
 import { EconomyProvider } from '@/components/EconomyProvider';
 import { TxNarratorProvider } from '@/components/TxNarrator';
 import PostLightboxHost from '@/components/PostLightboxHost';
+import HeightProbe from '@/components/HeightProbe'; // TEMP DEBUG
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -20,6 +21,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
             </Suspense>
             <AppShell />
             <PostLightboxHost />
+            <HeightProbe /> {/* TEMP DEBUG — strip after reading the numbers */}
           </UpsellProvider>
         </TxNarratorProvider>
       </EconomyProvider>

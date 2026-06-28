@@ -96,7 +96,7 @@ export default function BottomToolbar({ page, unreadCount = 0, onNotificationsCl
         left: 0,
         right: 0,
         height: 'calc(50px + env(safe-area-inset-bottom, 0px))',
-        background: 'transparent', // TEMP DEBUG — gradient neutralized so it doesn't darken the probe
+        background: 'linear-gradient(to top, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0) 100%)',
         zIndex: 49,
         pointerEvents: 'none',
       }} />
@@ -111,7 +111,7 @@ export default function BottomToolbar({ page, unreadCount = 0, onNotificationsCl
         // Home keeps its transparent-over-feed look (it has its own fade div above);
         // every other surface keeps the gradient. Spacing/positioning is now IDENTICAL
         // across all pages (the icon row layout below no longer branches on isHome).
-        background: 'rgba(0,0,255,0.5)', // TEMP DEBUG — footer bar = BLUE (forced on all pages)
+        background: isHome ? 'transparent' : 'linear-gradient(to top, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.18) 60%, transparent 100%)',
       }}
     >
       <div
