@@ -415,6 +415,7 @@ export default function Home() {
           // pan-y alone doesn't fully suppress under the iOS standalone quirk. Clips
           // any residual sub-pixel child overflow so there's nothing to pan sideways.
           overflowX: 'hidden',
+          background: 'rgba(255,0,0,0.5)', // TEMP DEBUG — scroll container = RED
           zIndex: 1,
         }}
       >
