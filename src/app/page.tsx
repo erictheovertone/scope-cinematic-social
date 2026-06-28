@@ -296,7 +296,7 @@ export default function Home() {
             onClick={e => { e.stopPropagation(); closeMenu(); }}
             aria-label="Close menu"
             style={{
-              position: 'absolute', top: 14, left: 14,
+              position: 'absolute', top: 'calc(14px + env(safe-area-inset-top, 0px))', left: 14,
               background: 'transparent', border: 'none', cursor: 'pointer',
               color: '#FFFFFF', fontSize: 'var(--fs-24)', lineHeight: 1, padding: 8,
               fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700,
@@ -420,7 +420,12 @@ export default function Home() {
       >
         {/* First post sits below the floating bracket (status-bar inset + ~34px chrome
             clearance) at rest, but scrolls up UNDER the status bar (edge-to-edge). */}
-        <div style={{ paddingTop: 'calc(34px + env(safe-area-inset-top, 0px))', paddingBottom: 'calc(72px + env(safe-area-inset-bottom, 0px))' }}>
+        {/* paddingBottom is footer-clearance ONLY — NOT + inset-bottom. The footer floats
+            with its OWN bottom-inset padding, so adding the inset here double-counts it and
+            leaves a body-black gap in the home-indicator zone (invisible in Safari behind
+            its chrome, but a black bar in the standalone PWA). Content now runs edge-to-edge
+            to the true bottom under the floating footer. */}
+        <div style={{ paddingTop: 'calc(34px + env(safe-area-inset-top, 0px))', paddingBottom: 72 }}>
           {posts.map((post, index) => (
             <div key={post.id} data-post-id={post.id} style={getPostAnimStyle(index)}>
               <PostItem

@@ -337,6 +337,21 @@ const userLayoutId = stableLayoutId;
         privyId={user?.id ?? ''}
       />
 
+      {/* Top blur feather (IG pattern) — same overlay as the home feed: blurs grid
+          content passing under the status bar, feathered out via a mask. Sits ABOVE the
+          grid (zIndex 5) but BELOW the header chrome (PFP / handle / info at z10), which
+          stay on top + clickable + unmoved. Deliberate, contained blur exception. */}
+      <div style={{
+        position: 'fixed', top: 0, left: 0, right: 0,
+        height: 'calc(env(safe-area-inset-top, 0px) + 14px)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
+        maskImage: 'linear-gradient(to bottom, black 0%, black 45%, transparent 100%)',
+        WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 45%, transparent 100%)',
+        background: 'linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0) 100%)',
+        zIndex: 5, pointerEvents: 'none',
+      }} />
+
       {/* Header */}
       <div
         onClick={profileDataOpen ? () => setProfileDataOpen(false) : undefined}

@@ -298,14 +298,17 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
           transition: "transform 0.34s cubic-bezier(0.32, 0.72, 0, 1)",
         }}
       >
-        {/* ── Back bar ── */}
+        {/* ── Back bar ── (safe-area: clears the PWA black-translucent status bar so the
+            back control is never buried under the notch; inset-relative, no reposition) */}
         <div
           style={{
             flexShrink: 0,
-            height: 44,
+            height: "calc(44px + env(safe-area-inset-top, 0px))",
+            paddingTop: "env(safe-area-inset-top, 0px)",
             display: "flex",
             alignItems: "center",
-            padding: "0 14px",
+            paddingLeft: 14,
+            paddingRight: 14,
             borderBottom: "1px solid rgba(255,255,255,0.06)",
           }}
         >
