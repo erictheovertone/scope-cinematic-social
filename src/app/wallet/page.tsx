@@ -753,15 +753,15 @@ export default function WalletPage() {
 
                     {/* MIDDLE — hero line + muted sub line */}
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ ...SKB, fontSize: 15, color: "#ffffff", margin: 0, lineHeight: 1.25, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      <p style={{ ...SKB, fontSize: 15, color: "#ffffff", margin: 0, lineHeight: 1.25, textTransform: "uppercase", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                         {heroText}
                         {showTicker && row.ticker && (
-                          <span style={{ marginLeft: 5 }}>
+                          <span style={{ marginLeft: 10 }}>
                             <TickerMark ticker={row.ticker} size={15} color="#FF0000" />
                           </span>
                         )}
                       </p>
-                      <p style={{ ...SKR, fontSize: 12, color: "#5a5a5a", margin: "3px 0 0", lineHeight: 1 }}>
+                      <p style={{ ...SKR, fontSize: 12, color: "#5a5a5a", margin: "3px 0 0", lineHeight: 1, textTransform: "uppercase" }}>
                         {subParts.join(" · ")}
                       </p>
                     </div>

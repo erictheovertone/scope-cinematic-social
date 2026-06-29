@@ -40,15 +40,11 @@ export async function getTransactionHistory(address: string) {
   // self-transfers (≈always empty). Activity needs BOTH directions, so we make two calls
   // (outgoing + incoming) and merge. category includes erc1155 so Zora-coin movements show
   // alongside ETH (external) + the erc20 trade legs.
-  // 'internal' is required for SELL proceeds: Zora pays ETH back via an internal
-  // contract transfer (not a top-level external tx), so without it the cash-in leg —
-  // and thus the "+$ made" on sells — is never fetched. Base mainnet supports internal.
-  const CATEGORY = ['external', 'internal', 'erc20', 'erc1155']
   // order: 'desc' — Alchemy defaults to ASCENDING (oldest-first); without it each call's
   // maxCount window returns the EARLIEST transfers, so recent trades never get fetched and
   // activity stalls at the wallet's first transactions. desc = newest-first per call.
   // maxCount 0x32 (50) per direction → a useful recent window after merge.
-  const call = (params: Record<string, unknown>) =>
+  const call = (params: Record<string, unknown>, category: string[]) =>
     fetch(`${process.env.NEXT_PUBLIC_ALCHEMY_BASE_URL}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -56,23 +52,29 @@ export async function getTransactionHistory(address: string) {
         jsonrpc: '2.0',
         id: 1,
         method: 'alchemy_getAssetTransfers',
-        params: [{ category: CATEGORY, withMetadata: true, order: 'desc', maxCount: '0x32', ...params }],
+        params: [{ category, withMetadata: true, order: 'desc', maxCount: '0x32', ...params }],
       }),
     })
       .then((r) => r.json())
       .then((d) => (d.result?.transfers as any[]) || [])
       .catch(() => [] as any[])
 
+  // 'internal' is fetched as its OWN incoming call: Zora pays SELL proceeds as an internal
+  // ETH transfer (router→wallet, not a top-level tx), so without it the cash-in leg — the
+  // "+$ made" — is missing. Isolating it means a network that rejects the 'internal'
+  // category can't take down the main external/erc20 fetch.
+  const BASE_CATS = ['external', 'erc20', 'erc1155']
   try {
-    const [outgoing, incoming] = await Promise.all([
-      call({ fromAddress: address }), // sends + buy ETH-out legs
-      call({ toAddress: address }),   // receives + coin-in legs
+    const [outgoing, incoming, incomingInternal] = await Promise.all([
+      call({ fromAddress: address }, BASE_CATS), // sends + buy ETH-out legs
+      call({ toAddress: address }, BASE_CATS),   // receives + coin-in legs
+      call({ toAddress: address }, ['internal']), // sell proceeds (internal ETH back to wallet)
     ])
 
     // Dedupe: a transfer is either from OR to the wallet, but guard for self-transfers
     // (would land in both) by hash + uniqueId/logIndex.
     const seen = new Set<string>()
-    const merged = [...outgoing, ...incoming].filter((tx) => {
+    const merged = [...outgoing, ...incoming, ...incomingInternal].filter((tx) => {
       const key = `${tx.hash ?? ''}:${tx.uniqueId ?? tx.logIndex ?? ''}`
       if (seen.has(key)) return false
       seen.add(key)
