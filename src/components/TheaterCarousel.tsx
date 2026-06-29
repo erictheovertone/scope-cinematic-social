@@ -144,6 +144,7 @@ export default function TheaterCarousel({
 
   return (
     <div
+      data-swipe-exclude
       style={{
         position: "fixed",
         inset: 0,

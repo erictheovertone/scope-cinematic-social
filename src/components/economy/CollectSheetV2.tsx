@@ -326,6 +326,7 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
     <>
       <div
         onClick={onClose}
+        data-swipe-exclude
         style={{
           position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 500,
           opacity: visible ? 1 : 0, pointerEvents: visible ? 'auto' : 'none',
@@ -333,6 +334,7 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
         }}
       />
       <div
+        data-swipe-exclude
         // When the sheet finishes animating OUT, release the deferred post-trade
         // settle → the wallet balance ticks up by the receipt-true proceeds exactly
         // as the confirmation leaves (not while it's up or mid-dismiss).

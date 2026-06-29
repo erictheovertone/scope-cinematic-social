@@ -194,6 +194,25 @@ button:active,
   100% { transform: scale(1); }
 }
 
+/* ── Surface slide-on-commit (SlideShell) ─────────────────────────────────────
+   REST = display:contents (no box → no containing-block effect on the app's
+   position:fixed scrollers). On a swipe-committed nav the wrapper becomes a fixed
+   full-viewport layer and the destination slides in (transform:translateX only,
+   GPU). prefers-reduced-motion collapses it via the Stage 4.1 net (instant). */
+.slide-shell { display: contents; }
+.slide-shell.slide-sliding {
+  display: block;
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  background: #000;
+  will-change: transform;
+}
+.slide-shell.slide-from-right { animation: surfaceFromRight 300ms cubic-bezier(0.22, 0.61, 0.36, 1) both; }
+.slide-shell.slide-from-left  { animation: surfaceFromLeft  300ms cubic-bezier(0.22, 0.61, 0.36, 1) both; }
+@keyframes surfaceFromRight { from { transform: translateX(100%); }  to { transform: translateX(0); } }
+@keyframes surfaceFromLeft  { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+
 /* 1.4 Momentum scrolling + stop scroll-chaining/pull-to-refresh bounce inside scroll
    regions (the feed + any overflow-y container + opt-in classes). */
 [class*="overflow-y-auto"],

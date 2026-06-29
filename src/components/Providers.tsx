@@ -8,6 +8,8 @@ import { UpsellProvider } from '@/components/UpsellProvider';
 import { EconomyProvider } from '@/components/EconomyProvider';
 import { TxNarratorProvider } from '@/components/TxNarrator';
 import PostLightboxHost from '@/components/PostLightboxHost';
+import SlideShell from '@/components/SlideShell';
+import SwipeNav from '@/components/SwipeNav';
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -16,9 +18,10 @@ export default function Providers({ children }: { children: React.ReactNode }) {
         <TxNarratorProvider>
           <UpsellProvider>
             <Suspense fallback={<div style={{backgroundColor:'#000',minHeight:'100dvh'}}/>}>
-              {children}
+              <SlideShell>{children}</SlideShell>
             </Suspense>
             <AppShell />
+            <SwipeNav />
             <PostLightboxHost />
           </UpsellProvider>
         </TxNarratorProvider>

@@ -281,6 +281,7 @@ export default function Home() {
       {menuOpen && (
         <div
           onClick={closeMenu}
+          data-swipe-exclude
           style={{
             position: 'fixed',
             inset: 0,

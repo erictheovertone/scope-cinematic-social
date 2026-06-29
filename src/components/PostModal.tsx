@@ -288,6 +288,7 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
       */}
       <div
         className="bg-black"
+        data-swipe-exclude
         style={{
           position: "fixed",
           inset: 0,
