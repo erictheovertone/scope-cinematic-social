@@ -454,7 +454,12 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
           <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 16 }}>
             <span style={{ ...SKR, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>YOU HOLD</span>
             <span style={{ ...SKB, fontSize: 'var(--fs-13)', color: '#FFF', fontVariantNumeric: 'tabular-nums' }}>
-              {held.toLocaleString()} {held === 1 ? 'FRAGMENT' : 'FRAGMENTS'}
+              {held.toLocaleString()}{' '}
+              <img
+                src="/fragments-wordmark-v3.png"
+                alt="FRAGMENTS"
+                style={{ height: '0.82em', width: 'auto', display: 'inline-block', verticalAlign: 'baseline', transform: 'translateY(0.06em)' }}
+              />
               {market?.priceUsd != null && (
                 <span style={{ ...SKR, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.45)', marginLeft: 7 }}>· {usd(held * market.priceUsd)}</span>
               )}
@@ -512,7 +517,12 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
                   <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
                     <span style={{ ...SKR, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>YOU RECEIVE</span>
                     <span style={{ ...SKB, fontSize: 'var(--fs-18)', color: '#FFF', fontVariantNumeric: 'tabular-nums' }}>
-                      ≈ {buyQuote ? buyQuote.pieces.toLocaleString() : 0} {buyQuote && buyQuote.pieces === 1 ? 'FRAGMENT' : 'FRAGMENTS'}
+                      ≈ {buyQuote ? buyQuote.pieces.toLocaleString() : 0}{' '}
+                      <img
+                        src="/fragments-wordmark-v3.png"
+                        alt="FRAGMENTS"
+                        style={{ height: '0.82em', width: 'auto', display: 'inline-block', verticalAlign: 'baseline', transform: 'translateY(0.06em)' }}
+                      />
                     </span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginTop: 6 }}>
