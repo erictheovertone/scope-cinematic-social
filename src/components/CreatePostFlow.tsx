@@ -1170,6 +1170,9 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
               videoUrl={selectedMedia[0].url}
               heroFrameTime={editParams.heroFrameTime}
               onChange={(w) => setSnippetWindow(w)}
+              params={editParams}
+              geometry={editGeometry ?? neutralGeometry(chipForLayout(chosenLayoutId || userLayoutId).id)}
+              layoutId={chosenLayoutId || userLayoutId}
             />
           )}
           <textarea

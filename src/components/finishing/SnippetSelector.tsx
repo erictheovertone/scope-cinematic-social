@@ -6,14 +6,28 @@
  * Optional creative control: if untouched, the publish step auto-chooses the
  * window (hero frame, else randomized) and bakes the clip regardless — every video
  * post gets a clip. Reports { start, length } in seconds via onChange.
+ *
+ * AUDITION THUMBNAIL — shows the EDITED look (not raw media) by reusing the editor's
+ * live graded-display component (FinishingPreview → Pipeline), fed the SAME edit
+ * params as the main preview. It's a small fixed thumbnail (not a full post). The
+ * graded Surface is gated behind an IntersectionObserver so a 2nd WebGL context only
+ * exists while the thumbnail is on-screen (the main preview owns the other). DISPLAY-
+ * ONLY: no bake / captureAsBlob / preserveDrawingBuffer (that path is the iOS crash).
  */
 
 import { useEffect, useRef, useState } from "react";
+import FinishingPreview from "./FinishingPreview";
+import { getAspectRatio } from "@/lib/aspectRatio";
+import type { EditParams } from "@/lib/editor/params";
+import type { EditGeometry } from "@/lib/editGeometry";
 
 const RED = "#FF0000";
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const REG: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
 const CLIP_LEN = 4; // seconds (3–5s band)
+
+// Thumbnail width — the ONE tunable. Reads as a small inset, never a full post.
+const SNIPPET_W = 132;
 
 function fmt(t: number): string {
   if (!isFinite(t) || t < 0) t = 0;
@@ -25,14 +39,17 @@ interface Props {
   videoUrl: string;
   heroFrameTime?: number | null;
   onChange: (window: { start: number; length: number }) => void;
+  /** SAME edit state the main editor preview reads (single source of truth). */
+  params: EditParams;
+  geometry: EditGeometry;
+  layoutId: string;
 }
 
-export default function SnippetSelector({ videoUrl, heroFrameTime, onChange }: Props) {
+export default function SnippetSelector({ videoUrl, heroFrameTime, onChange, params, geometry, layoutId }: Props) {
   const [duration, setDuration] = useState(0);
   const [start, setStart] = useState(0);
   const trackRef = useRef<HTMLDivElement>(null);
   const draggingRef = useRef(false);
-  const previewRef = useRef<HTMLVideoElement>(null);
 
   // Read duration; seed the window at the hero frame (clamped so the clip fits).
   useEffect(() => {
@@ -51,20 +68,20 @@ export default function SnippetSelector({ videoUrl, heroFrameTime, onChange }: P
   const len = Math.min(CLIP_LEN, duration || CLIP_LEN);
   const maxStart = Math.max(0, duration - len);
 
-  // AUDITION — one muted/inline <video> looping the SELECTED window [start, start+len],
-  // exactly what the feed autoplay will show. Re-clamps live as the window moves.
+  // Gate the graded Surface: only mount FinishingPreview (a 2nd WebGL context) while
+  // the thumbnail is actually visible — the main editor preview owns the other context.
+  const thumbRef = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
   useEffect(() => {
-    const v = previewRef.current;
-    if (!v) return;
-    const toStart = () => { try { v.currentTime = start; } catch { /* seek before metadata */ } };
-    if (v.currentTime < start - 0.05 || v.currentTime >= start + len) toStart();
-    v.play().catch(() => {});
-    const onTime = () => { if (v.currentTime >= start + len - 0.03) { toStart(); v.play().catch(() => {}); } };
-    const onEnded = () => { toStart(); v.play().catch(() => {}); };
-    v.addEventListener("timeupdate", onTime);
-    v.addEventListener("ended", onEnded);
-    return () => { v.removeEventListener("timeupdate", onTime); v.removeEventListener("ended", onEnded); };
-  }, [start, len]);
+    const el = thumbRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") { setVisible(true); return; }
+    const io = new IntersectionObserver(
+      (entries) => setVisible(entries.some((e) => e.isIntersecting)),
+      { rootMargin: "80px", threshold: 0.01 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
 
   const setFromClientX = (clientX: number) => {
     const el = trackRef.current;
@@ -86,10 +103,21 @@ export default function SnippetSelector({ videoUrl, heroFrameTime, onChange }: P
 
   return (
     <div style={{ padding: "8px 2px 2px" }}>
-      {/* Audition preview — the looping segment that will autoplay in the feed. */}
-      <div style={{ position: "relative", width: "100%", height: 132, background: "#000", overflow: "hidden", marginBottom: 8 }}>
-        <video ref={previewRef} src={videoUrl} muted playsInline autoPlay style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-        <span style={{ position: "absolute", bottom: 5, left: 6, ...SKB, fontSize: 'var(--fs-6_5)', color: "rgba(255,255,255,0.75)", letterSpacing: "0.14em", textTransform: "uppercase", textShadow: "0 1px 2px rgba(0,0,0,0.9)" }}>AUDITION</span>
+      {/* Audition thumbnail — small, GRADED (reflects current edits), not full-post. */}
+      <div
+        ref={thumbRef}
+        style={{ position: "relative", width: SNIPPET_W, aspectRatio: getAspectRatio(layoutId), background: "#000", overflow: "hidden", marginBottom: 8 }}
+      >
+        {visible && (
+          <FinishingPreview
+            mediaUrl={videoUrl}
+            mediaType="video"
+            params={params}
+            geometry={geometry}
+            layoutId={layoutId}
+          />
+        )}
+        <span style={{ position: "absolute", bottom: 4, left: 5, ...SKB, fontSize: 'var(--fs-6_5)', color: "rgba(255,255,255,0.75)", letterSpacing: "0.14em", textTransform: "uppercase", textShadow: "0 1px 2px rgba(0,0,0,0.9)" }}>AUDITION</span>
       </div>
       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
         <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: "0.1em" }}>AUTOPLAY CLIP · {Math.round(len)}s</span>
