@@ -8,7 +8,6 @@ import { UpsellProvider } from '@/components/UpsellProvider';
 import { EconomyProvider } from '@/components/EconomyProvider';
 import { TxNarratorProvider } from '@/components/TxNarrator';
 import PostLightboxHost from '@/components/PostLightboxHost';
-import BodyHeightLog from '@/components/BodyHeightLog'; // TEMP DEBUG
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -21,7 +20,6 @@ export default function Providers({ children }: { children: React.ReactNode }) {
             </Suspense>
             <AppShell />
             <PostLightboxHost />
-            <BodyHeightLog /> {/* TEMP DEBUG — strip after confirming body=844 */}
           </UpsellProvider>
         </TxNarratorProvider>
       </EconomyProvider>
