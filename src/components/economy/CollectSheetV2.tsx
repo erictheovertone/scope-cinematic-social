@@ -28,6 +28,7 @@ import TickerMark from '@/components/economy/TickerMark';
 import FrameLoader from '@/components/FrameLoader';
 import { getAspectRatio } from '@/lib/aspectRatio';
 import { notifyTradeSettled } from '@/lib/economy/tradeEvents';
+import { TOKENS_PER_PIECE } from '@/lib/economy/tokenomics';
 import { notifyFirstCutEarned } from '@/lib/firstCutLedger';
 import { openPostLightbox } from '@/lib/postLightbox';
 
@@ -36,7 +37,6 @@ const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fon
 
 const usd = (n: number) => (n >= 1000 ? `$${Math.round(n).toLocaleString()}` : `$${n.toFixed(2)}`);
 const eth = (n: number) => `${n.toFixed(n < 0.1 ? 5 : 4)} ETH`;
-const BASE_PER_PIECE = 100_000; // 1 piece = 100,000 base tokens (display detail)
 
 interface Props {
   post: {
@@ -262,7 +262,7 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
         // r.pieces is RECEIPT-derived (the chain's word) — never a quote
         // estimate or stale balance.
         const n = r.pieces;
-        setDone(market?.live ? `[ COLLECTED · ${n} ${n === 1 ? 'PIECE' : 'PIECES'} ]` : `COLLECTED ${n} ${n === 1 ? 'PIECE' : 'PIECES'} (MOCK)`);
+        setDone(market?.live ? `[ COLLECTED · ${n} ${n === 1 ? 'FRAGMENT' : 'FRAGMENTS'} ]` : `COLLECTED ${n} ${n === 1 ? 'FRAGMENT' : 'FRAGMENTS'} (MOCK)`);
         setCaptured(true); // bracket-capture snaps onto the media
         refresh();         // price/MC re-read — the buyer sees the price they moved
         // +pieces bought → optimistic wallet patch; spentUsd = the USD paid (v) →
@@ -287,7 +287,7 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
         // Receipt-true pieces AND proceeds. Quieter than the collect ceremony —
         // no bracket capture (that celebrates acquiring; selling is matter-of-fact).
         const proceeds = r.proceedsUsd != null ? ` · ${usd(r.proceedsUsd)}` : '';
-        setDone(market?.live ? `[ SOLD · ${r.pieces} ${r.pieces === 1 ? 'PIECE' : 'PIECES'}${proceeds} ]` : `SOLD ${r.pieces} ${r.pieces === 1 ? 'PIECE' : 'PIECES'} (MOCK)`);
+        setDone(market?.live ? `[ SOLD · ${r.pieces} ${r.pieces === 1 ? 'FRAGMENT' : 'FRAGMENTS'}${proceeds} ]` : `SOLD ${r.pieces} ${r.pieces === 1 ? 'FRAGMENT' : 'FRAGMENTS'} (MOCK)`);
         setConfirmEndFirstCut(false); setSellPieces(0); refresh();
         // −pieces (optimistic holdings) + receipt-true proceeds (instant balance tick-up).
         ceremonyResolve(
@@ -435,9 +435,9 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
             discovered price yet — show "—", never a fabricated number. */}
         <div style={{ display: 'flex', gap: 1, marginBottom: 18, background: 'rgba(255,255,255,0.08)' }}>
           {[
-            { k: 'PRICE / PIECE', v: market ? (market.priceUsd != null ? usd(market.priceUsd) : '—') : '—' },
+            { k: 'PRICE / FRAGMENT', v: market ? (market.priceUsd != null ? usd(market.priceUsd) : '—') : '—' },
             { k: 'MARKET CAP', v: market ? usd(market.mcUsd) : '—' },
-            { k: 'PIECES', v: market ? market.supply.toLocaleString() : '10,000' },
+            { k: 'FRAGMENTS', v: market ? market.supply.toLocaleString() : '10,000' },
           ].map((c) => (
             <div key={c.k} style={{ flex: 1, background: '#080808', padding: '12px 10px' }}>
               <p style={{ ...SKB, fontSize: 'var(--fs-6_5)', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.14em', margin: '0 0 5px' }}>{c.k}</p>
@@ -454,7 +454,7 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
           <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 16 }}>
             <span style={{ ...SKR, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>YOU HOLD</span>
             <span style={{ ...SKB, fontSize: 'var(--fs-13)', color: '#FFF', fontVariantNumeric: 'tabular-nums' }}>
-              {held.toLocaleString()} {held === 1 ? 'PIECE' : 'PIECES'}
+              {held.toLocaleString()} {held === 1 ? 'FRAGMENT' : 'FRAGMENTS'}
               {market?.priceUsd != null && (
                 <span style={{ ...SKR, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.45)', marginLeft: 7 }}>· {usd(held * market.priceUsd)}</span>
               )}
@@ -512,11 +512,11 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
                   <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
                     <span style={{ ...SKR, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>YOU RECEIVE</span>
                     <span style={{ ...SKB, fontSize: 'var(--fs-18)', color: '#FFF', fontVariantNumeric: 'tabular-nums' }}>
-                      ≈ {buyQuote ? buyQuote.pieces.toLocaleString() : 0} {buyQuote && buyQuote.pieces === 1 ? 'PIECE' : 'PIECES'}
+                      ≈ {buyQuote ? buyQuote.pieces.toLocaleString() : 0} {buyQuote && buyQuote.pieces === 1 ? 'FRAGMENT' : 'FRAGMENTS'}
                     </span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginTop: 6 }}>
-                    <span style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>1 PIECE = {BASE_PER_PIECE.toLocaleString()} TOKENS</span>
+                    <span style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>1 FRAGMENT = {TOKENS_PER_PIECE.toLocaleString()} TOKENS</span>
                     <span style={{ ...SKR, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.4)' }}>
                       {buyCurrency === 'ETH' ? (buyQuote ? `≈ ${eth(buyQuote.ethAmount)}` : '') : (buyQuote ? `≈ ${buyQuote.usdAmount.toFixed(2)} USDC` : '')}
                     </span>
@@ -574,7 +574,7 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
                 <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 12 }}>
                   <span style={{ ...SKR, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>YOU HOLD</span>
                   <span style={{ ...SKB, fontSize: 'var(--fs-18)', color: '#FFF', fontVariantNumeric: 'tabular-nums' }}>
-                    {held.toLocaleString()} {held === 1 ? 'PIECE' : 'PIECES'}
+                    {held.toLocaleString()} {held === 1 ? 'FRAGMENT' : 'FRAGMENTS'}
                     {market?.priceUsd != null && held > 0 && (
                       <span style={{ ...SKR, fontSize: 'var(--fs-11)', color: 'rgba(255,255,255,0.45)', marginLeft: 7 }}>· {usd(held * market.priceUsd)}</span>
                     )}
@@ -596,7 +596,7 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
                         onChange={(e) => { setConfirmEndFirstCut(false); setSellPieces(Math.min(held, Math.max(0, parseInt(e.target.value.replace(/[^0-9]/g, '') || '0', 10)))); }}
                         style={{ ...SKB, fontSize: 'var(--fs-30)', color: '#FFF', background: 'transparent', border: 'none', outline: 'none', width: '100%', padding: 0, fontVariantNumeric: 'tabular-nums' }}
                       />
-                      <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em', whiteSpace: 'nowrap' }}>PIECES</span>
+                      <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em', whiteSpace: 'nowrap' }}>FRAGMENTS</span>
                     </div>
 
                     {/* 25% / 50% / MAX chips + custom (the input is custom entry) */}
@@ -671,7 +671,7 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
                       <div style={{ width: '100%', border: '1px solid rgba(255,0,0,0.55)', padding: '13px 0', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, minHeight: 46 }}>
                         <FrameLoader size={23.5} />
                         <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: 'white', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-                          SELLING · {sellPieces} {sellPieces === 1 ? 'PIECE' : 'PIECES'}…
+                          SELLING · {sellPieces} {sellPieces === 1 ? 'FRAGMENT' : 'FRAGMENTS'}…
                         </span>
                       </div>
                     ) : (
@@ -681,7 +681,7 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
                         style={{ width: '100%', background: sellPieces <= 0 ? 'rgba(255,255,255,0.08)' : (sellEndsFirstCut && confirmEndFirstCut ? '#FF0000' : 'transparent'), border: sellPieces <= 0 ? 'none' : '1px solid #FF0000', cursor: sellPieces <= 0 ? 'default' : 'pointer', padding: '14px 0' }}
                       >
                         <span style={{ ...SKB, fontSize: 'var(--fs-12)', color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                          {sellPieces <= 0 ? 'ENTER PIECES'
+                          {sellPieces <= 0 ? 'ENTER FRAGMENTS'
                             : sellEndsFirstCut && !confirmEndFirstCut ? 'SELL — END FIRST CUT'
                             : sellEndsFirstCut && confirmEndFirstCut ? 'CONFIRM — END FIRST CUT'
                             : `SELL${sellQuote ? ` · ${usd(sellQuote.usdAmount)}` : ''}`}

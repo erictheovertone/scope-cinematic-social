@@ -242,9 +242,9 @@ export default function MintPromptSheet({ visible, onMint, onSkip, onCoinSkipped
             }}>
               {/* Canonical EARN copy — Scope_Economy.docx §7, verbatim. */}
               {[
-                { step: '1', title: 'POST IT.', text: 'When you post, your work becomes a token — 10,000 pieces of something you made. You own it from the start.' },
-                { step: '2', title: 'PEOPLE COLLECT IT.', text: 'Anyone can buy pieces of your post. The more people want in, the more each piece is worth.' },
-                { step: '3', title: 'YOU EARN. EVERY TIME. FOREVER.', text: 'Every time anyone buys or sells a piece — today, next year, ten years from now — a small fee is taken, and a slice goes straight to your wallet. Not just the first sale. Every sale.' },
+                { step: '1', title: 'POST IT.', text: 'When you post, your work becomes a token — 10,000 fragments of something you made. You own it from the start.' },
+                { step: '2', title: 'PEOPLE COLLECT IT.', text: 'Anyone can buy fragments of your post. The more people want in, the more each fragment is worth.' },
+                { step: '3', title: 'YOU EARN. EVERY TIME. FOREVER.', text: 'Every time anyone buys or sells a fragment — today, next year, ten years from now — a small fee is taken, and a slice goes straight to your wallet. Not just the first sale. Every sale.' },
               ].map(({ step, title, text }) => (
                 <div key={step} style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
                   <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: '#FF0000', letterSpacing: '0.1em', flexShrink: 0, marginTop: 2 }}>{step}</span>

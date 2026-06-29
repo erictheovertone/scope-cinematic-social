@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { usePrivy, useFundWallet, useWallets } from "@privy-io/react-auth";
 import { base } from "viem/chains";
 import { createWalletClient, custom, getAddress, parseEther, encodeFunctionData } from "viem";
@@ -13,6 +13,7 @@ import CollectSheetGate from "@/components/economy/CollectSheetGate";
 import type { Holding } from "@/lib/economy/types";
 import { onTradeSettled } from "@/lib/economy/tradeEvents";
 import { useCountUp } from "@/lib/economy/useCountUp";
+import { groupActivity, type ActivityRow } from "@/lib/walletActivity";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -323,6 +324,13 @@ export default function WalletPage() {
     ? (parseFloat(ethBalance) * ethUsdRate).toFixed(2)
     : null;
   const usdcUsd = usdcBalance != null ? parseFloat(usdcBalance).toFixed(2) : null;
+
+  // Activity: group raw transfer legs into readable trade rows (fragments, not raw
+  // on-chain amounts). Reuses the single-source tokenomics conversion via walletActivity.
+  const activityRows = useMemo<ActivityRow[]>(
+    () => (walletAddress ? groupActivity(txHistory, walletAddress, ethUsdRate) : []),
+    [txHistory, walletAddress, ethUsdRate],
+  );
   // WALLET STRUCTURE (decided): holdings never blend into available.
   // AVAILABLE = spendable USDC+ETH — the ONLY balance buy flows draw on.
   // HOLDINGS = positions value (price × pieces). TOTAL = the headline.
@@ -639,7 +647,7 @@ export default function WalletPage() {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     {h.ticker ? <TickerMark ticker={h.ticker} size={11.5} /> : <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: "rgba(255,255,255,0.4)" }}>—</span>}
                     <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: "rgba(255,255,255,0.45)", margin: "3px 0 0", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-                      {h.pieces.toLocaleString()} {h.pieces === 1 ? "PIECE" : "PIECES"}
+                      {h.pieces.toLocaleString()} {h.pieces === 1 ? "FRAGMENT" : "FRAGMENTS"}
                     </p>
                   </div>
                   <span style={{ ...SKB, fontSize: 'var(--fs-13)', color: "white", fontVariantNumeric: "tabular-nums" }}>
@@ -660,42 +668,64 @@ export default function WalletPage() {
           />
         )}
 
-        {/* ACTIVITY */}
+        {/* ACTIVITY — one readable row per trade (legs grouped by tx hash; amounts
+            shown in FRAGMENTS via the single-source tokenomics conversion). */}
         {activeTab === "activity" && (
           <div>
-            {loading && txHistory.length === 0 ? (
+            {loading && activityRows.length === 0 ? (
               <p style={{ ...SKB, fontSize: 'var(--fs-10)', color: "white", opacity: 0.4, textAlign: "center", marginTop: 40, textTransform: "uppercase" }}>Loading…</p>
-            ) : txHistory.length === 0 ? (
+            ) : activityRows.length === 0 ? (
               <p style={{ ...SKB, fontSize: 'var(--fs-10)', color: "white", opacity: 0.4, textAlign: "center", marginTop: 40, textTransform: "uppercase" }}>No transactions yet</p>
             ) : (
-              txHistory.map((tx: any, i: number) => {
-                const isSent = tx.from?.toLowerCase() === walletAddress.toLowerCase();
-                const amount = tx.value ? Number(tx.value).toFixed(4) : "—";
-                const asset = tx.asset || "ETH";
-                const counterpart = isSent ? tx.to : tx.from;
-                const date = tx.metadata?.blockTimestamp
-                  ? new Date(tx.metadata.blockTimestamp).toLocaleDateString()
-                  : "";
+              activityRows.map((row, i) => {
+                // Inbound (received value) = bright + down arrow; outbound = dimmed + up.
+                const inbound = row.kind === 'buy' || row.kind === 'mint' || row.kind === 'receive';
+                const frag = row.fragments != null ? row.fragments.toLocaleString() : '';
+                const dollars =
+                  row.usd != null
+                    ? `$${row.usd >= 1000 ? Math.round(row.usd).toLocaleString() : row.usd.toFixed(2)}`
+                    : row.cashAmount != null
+                    ? `${Number(row.cashAmount).toFixed(4)} ${row.cashAsset ?? ''}`.trim()
+                    : '';
+
+                // Primary line per trade kind.
+                let primary: string;
+                let secondary = dollars;
+                if (row.kind === 'buy') {
+                  primary = `Bought ${frag} ${row.ticker ?? ''}`.trim();
+                  secondary = dollars ? `For ${dollars}` : '';
+                } else if (row.kind === 'sell') {
+                  primary = `Sold ${frag} ${row.ticker ?? ''}`.trim();
+                  secondary = dollars ? `Made ${dollars}` : '';
+                } else if (row.kind === 'mint') {
+                  primary = `Minted ${frag} ${row.ticker ?? ''}`.trim();
+                  secondary = '';
+                } else if (row.kind === 'send') {
+                  primary = `Sent ${dollars}`;
+                  secondary = row.counterparty ? `To ${shortAddr(row.counterparty)}` : '';
+                } else {
+                  primary = `Received ${dollars}`;
+                  secondary = row.counterparty ? `From ${shortAddr(row.counterparty)}` : '';
+                }
+
                 return (
                   <div
-                    key={i}
+                    key={row.hash + i}
                     style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid rgba(255,255,255,0.06)" }}
                   >
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      <span style={{ fontSize: 'var(--fs-16)', color: isSent ? "rgba(255,255,255,0.5)" : "white" }}>
-                        {isSent ? "↑" : "↓"}
+                      <span style={{ fontSize: 'var(--fs-16)', color: inbound ? "white" : "rgba(255,255,255,0.5)" }}>
+                        {inbound ? "↓" : "↑"}
                       </span>
                       <div>
-                        <p style={{ fontSize: 'var(--fs-10)', color: "white", margin: 0 }}>
-                          <span style={{ ...SKB, textTransform: "uppercase", letterSpacing: "0.04em" }}>{isSent ? "To" : "From"} </span>
-                          <span style={{ ...SKR }}>{counterpart ? shortAddr(counterpart) : "—"}</span>
+                        <p style={{ ...SKB, fontSize: 'var(--fs-10)', color: "white", margin: 0, textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                          {primary}
                         </p>
-                        <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: "white", opacity: 0.4, margin: "2px 0 0", textTransform: "uppercase" }}>{date}</p>
+                        <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: "white", opacity: 0.4, margin: "2px 0 0", textTransform: "uppercase" }}>
+                          {[secondary, row.date].filter(Boolean).join(" · ")}
+                        </p>
                       </div>
                     </div>
-                    <p style={{ ...SKB, fontSize: 'var(--fs-10)', color: "white", margin: 0, textTransform: "uppercase" }}>
-                      {isSent ? "-" : "+"}{amount} {asset}
-                    </p>
                   </div>
                 );
               })

@@ -22,9 +22,8 @@ import { supabase } from "@/lib/supabase/client";
 import { mockEconomy, PIECE_SUPPLY, FOUNDING_AMOUNT } from "./mock";
 import { publicClient, buyCoin, sellCoin } from "@/lib/zoraCoins";
 import { getEthUsdRate } from "@/lib/coingecko";
+import { TOKENS_PER_PIECE } from "./tokenomics";
 import type { EconomyApi, PostMarket, Holding, BuyQuote, SellQuote, TradeCurrency, CollectResult, Badges } from "./types";
-
-const TOKENS_PER_PIECE = 100_000;
 
 const BALANCE_OF_ABI = [
   {

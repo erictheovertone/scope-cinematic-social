@@ -21,6 +21,7 @@ import { createPublicClient, http, getAddress, parseEther, formatEther } from "v
 import { base } from "viem/chains";
 import { supabase } from "@/lib/supabase/client";
 import { getEthUsdRate } from "@/lib/coingecko";
+import { TOKENS_PER_PIECE } from "@/lib/economy/tokenomics";
 
 export const publicClient = createPublicClient({
   chain: base,
@@ -571,7 +572,6 @@ export async function backOwnCoin({
 // simulate the exact call (surfaces any real revert reason BEFORE spending
 // gas), estimate against fresh state, and send with a 1.5× buffer. Used by
 // backing now and the collect-sheet trades (Stage B) next.
-const TOKENS_PER_PIECE = 100_000;
 const ERC20_BAL = [{ name: "balanceOf", type: "function", stateMutability: "view", inputs: [{ name: "account", type: "address" }], outputs: [{ name: "", type: "uint256" }] }] as const;
 
 export async function readPieces(coinAddress: string, holder: `0x${string}`): Promise<number | null> {

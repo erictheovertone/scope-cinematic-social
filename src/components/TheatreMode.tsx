@@ -460,7 +460,7 @@ export default function TheatreMode({
             )}
             {isCoin && (
               <div style={{ flex: 1, background: '#000', padding: '7px 6px' }}>
-                <p style={{ ...SKB, fontSize: 'var(--fs-6_5)', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 0 5px' }}>PRICE / PIECE</p>
+                <p style={{ ...SKB, fontSize: 'var(--fs-6_5)', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 0 5px' }}>PRICE / FRAGMENT</p>
                 <p style={{ ...SKB, fontSize: 'var(--fs-13)', color: '#FFF', margin: 0, fontVariantNumeric: 'tabular-nums' }}>{market ? (market.priceUsd != null ? usd(market.priceUsd) : '—') : '…'}</p>
               </div>
             )}
