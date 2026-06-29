@@ -160,6 +160,39 @@ button:active,
   transition: transform 0.1s cubic-bezier(0.16,0.84,0.3,1), opacity 0.1s;
 }
 
+/* 1.3b Press-pop — JS-retriggered scale "pop" on tap (the <PressPop> primitive).
+   transform-origin center, transform-only (GPU). The pop OWNS the scale on these
+   elements, so we cancel the global :active scale above to avoid stacking the two
+   (opacity dim is kept — it complements, doesn't fight). prefers-reduced-motion is
+   handled by the Stage 4.1 catch-all (animations → instant). */
+.press-pop {
+  transform-origin: center;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.press-pop:active { transform: none; }
+.press-pop.pop-active.pop-subtle { animation: pressPopSubtle 200ms ease-out; }
+.press-pop.pop-active.pop-mid    { animation: pressPopMid 250ms cubic-bezier(0.34, 1.4, 0.64, 1); }
+.press-pop.pop-active.pop-punchy { animation: pressPopPunchy 300ms cubic-bezier(0.34, 1.4, 0.64, 1); }
+
+@keyframes pressPopSubtle {
+  0%   { transform: scale(1); }
+  45%  { transform: scale(0.92); }
+  100% { transform: scale(1); }
+}
+@keyframes pressPopMid {
+  0%   { transform: scale(1); }
+  38%  { transform: scale(0.89); }
+  72%  { transform: scale(1.03); }
+  100% { transform: scale(1); }
+}
+@keyframes pressPopPunchy {
+  0%   { transform: scale(1); }
+  38%  { transform: scale(0.86); }
+  72%  { transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
+
 /* 1.4 Momentum scrolling + stop scroll-chaining/pull-to-refresh bounce inside scroll
    regions (the feed + any overflow-y container + opt-in classes). */
 [class*="overflow-y-auto"],

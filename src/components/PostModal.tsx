@@ -13,6 +13,7 @@ import {
 } from "@/lib/postsService";
 import { getUserByPrivyId, getProfile } from "@/lib/userService";
 import DeckPickerSheet from "@/components/DeckPickerSheet";
+import PressPop from "@/components/PressPop";
 import CollectSheetGate from "@/components/economy/CollectSheetGate";
 import { isUntradeableCoin } from "@/lib/economy/pairing";
 import { supabase } from "@/lib/supabase/client";
@@ -497,6 +498,7 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
             {/* Like + comments toggle */}
             <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 14 }}>
               {/* Like */}
+              <PressPop>
               <button
                 onClick={handleLike}
                 disabled={loading || !user}
@@ -517,6 +519,7 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
                 </svg>
                 <span style={{ ...SKR, fontSize: 'var(--fs-8)', color: "inherit" }}>{likes.length}</span>
               </button>
+              </PressPop>
 
               {/* Comments toggle */}
               <button
@@ -532,6 +535,7 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
                   heart is feeling, COLLECT is conviction (ratified). */}
 
               {/* Share */}
+              <PressPop>
               <button
                 onClick={handleShare}
                 style={{ background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", padding: 0 }}
@@ -542,6 +546,7 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
                   <line x1="12" y1="2" x2="12" y2="15" />
                 </svg>
               </button>
+              </PressPop>
 
               {/* ••• — owner controls reveal (ripple-down). Non-owners have no
                   extra actions today (share is already in the row) → hidden. */}

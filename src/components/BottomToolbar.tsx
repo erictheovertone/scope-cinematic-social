@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import PressPop from "@/components/PressPop";
 
 type Page = 'home' | 'profile' | 'public-profile' | 'wallet';
 
@@ -141,38 +142,49 @@ export default function BottomToolbar({ page, unreadCount = 0, onNotificationsCl
         }}
       >
         {/* 1 — Home */}
-        <Link className="tap-target" href="/" style={{ ...BTN, opacity: page === 'home' ? 1 : 0.7 }} aria-label="Home">
-          <HomeIcon active={page === 'home'} />
-        </Link>
+        <PressPop>
+          <Link className="tap-target" href="/" style={{ ...BTN, opacity: page === 'home' ? 1 : 0.7 }} aria-label="Home">
+            <HomeIcon active={page === 'home'} />
+          </Link>
+        </PressPop>
 
         {/* 2 — Create */}
-        <Link className="tap-target" href="/create" style={{ ...BTN, opacity: 0.7 }} aria-label="Create post">
-          <CreateIcon />
-        </Link>
+        <PressPop>
+          <Link className="tap-target" href="/create" style={{ ...BTN, opacity: 0.7 }} aria-label="Create post">
+            <CreateIcon />
+          </Link>
+        </PressPop>
 
         {/* 3 — Profile (home/wallet) | Hamburger (profile / public-profile) */}
         {isHome || page === 'wallet' || page === 'public-profile' ? (
-          <Link className="tap-target" href="/profile" style={{ ...BTN, opacity: 0.7 }} aria-label="Profile">
-            <ProfileIcon />
-          </Link>
+          <PressPop>
+            <Link className="tap-target" href="/profile" style={{ ...BTN, opacity: 0.7 }} aria-label="Profile">
+              <ProfileIcon />
+            </Link>
+          </PressPop>
         ) : (
-          <button
-            onClick={onHamburgerPress} className="tap-target"
-            style={{ ...BTN, opacity: 0.7 }}
-            aria-label="Menu"
-          >
-            <HamburgerIcon />
-          </button>
+          <PressPop>
+            <button
+              onClick={onHamburgerPress} className="tap-target"
+              style={{ ...BTN, opacity: 0.7 }}
+              aria-label="Menu"
+            >
+              <HamburgerIcon />
+            </button>
+          </PressPop>
         )}
 
         {/* 4 — Bell (home) | Wallet (profile / public-profile) */}
         {!isHome && (
-          <Link className="tap-target" href="/wallet" style={{ ...BTN, opacity: 0.7 }} aria-label="Wallet">
-            <WalletIcon />
-          </Link>
+          <PressPop>
+            <Link className="tap-target" href="/wallet" style={{ ...BTN, opacity: 0.7 }} aria-label="Wallet">
+              <WalletIcon />
+            </Link>
+          </PressPop>
         )}
 
         {isHome && (
+          <PressPop>
           <Link
             href="/profile/notifications"
             onClick={onNotificationsClick}
@@ -202,6 +214,7 @@ export default function BottomToolbar({ page, unreadCount = 0, onNotificationsCl
               </div>
             )}
           </Link>
+          </PressPop>
         )}
       </div>
     </div>

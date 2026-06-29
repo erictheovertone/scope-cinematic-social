@@ -3,6 +3,7 @@
 import { useState, useEffect, memo } from "react";
 import { useRouter } from "next/navigation";
 import FirstCutChip from "@/components/economy/FirstCutChip";
+import PressPop from "@/components/PressPop";
 import { usePrivy } from "@privy-io/react-auth";
 import {
   likePost,
@@ -280,6 +281,7 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments }: PostIt
 
       {/* ── Below-image row: like · comment · COLLECT ── */}
       <div style={{ display: "flex", alignItems: "center", padding: "5px 2px 0", gap: 12 }}>
+        <PressPop>
         <button
           className="tap-target-x6"
           onClick={handleLike}
@@ -291,7 +293,9 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments }: PostIt
           </svg>
           <span style={{ ...SKR, fontSize: 'var(--fs-7)', color: "inherit" }}>{likes.length}</span>
         </button>
+        </PressPop>
 
+        <PressPop>
         <button
           className="tap-target-x6"
           onClick={(e) => { e.stopPropagation(); toggleComments(); }}
@@ -302,6 +306,7 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments }: PostIt
           </svg>
           <span style={{ ...SKR, fontSize: 'var(--fs-7)', color: "inherit" }}>{comments.length}</span>
         </button>
+        </PressPop>
 
         {/* Right cluster — First Cut count (coin posts) sits to the LEFT of COLLECT. */}
         <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 10 }}>
