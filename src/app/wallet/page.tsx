@@ -721,9 +721,9 @@ export default function WalletPage() {
                 // Hero verb + amount (white); ticker rendered red via TickerMark.
                 const showTicker = row.kind === 'buy' || row.kind === 'sell' || row.kind === 'mint';
                 const heroText =
-                  row.kind === 'buy'  ? `Bought ${frag} ` :
-                  row.kind === 'sell' ? `Sold ${frag} ` :
-                  row.kind === 'mint' ? `Minted ${frag ? frag + ' ' : ''}` :
+                  row.kind === 'buy'  ? `Bought${frag ? ' ' + frag : ''}` :
+                  row.kind === 'sell' ? `Sold${frag ? ' ' + frag : ''}` :
+                  row.kind === 'mint' ? `Minted${frag ? ' ' + frag : ''}` :
                   row.kind === 'send' ? `Sent ${cashLabel}` :
                                         `Received ${cashLabel}`;
 
@@ -755,7 +755,11 @@ export default function WalletPage() {
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <p style={{ ...SKB, fontSize: 15, color: "#ffffff", margin: 0, lineHeight: 1.25, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                         {heroText}
-                        {showTicker && row.ticker && <TickerMark ticker={row.ticker} size={15} color="#ff4d4d" />}
+                        {showTicker && row.ticker && (
+                          <span style={{ marginLeft: 5 }}>
+                            <TickerMark ticker={row.ticker} size={15} color="#FF0000" />
+                          </span>
+                        )}
                       </p>
                       <p style={{ ...SKR, fontSize: 12, color: "#5a5a5a", margin: "3px 0 0", lineHeight: 1 }}>
                         {subParts.join(" · ")}

@@ -40,7 +40,10 @@ export async function getTransactionHistory(address: string) {
   // self-transfers (≈always empty). Activity needs BOTH directions, so we make two calls
   // (outgoing + incoming) and merge. category includes erc1155 so Zora-coin movements show
   // alongside ETH (external) + the erc20 trade legs.
-  const CATEGORY = ['external', 'erc20', 'erc1155']
+  // 'internal' is required for SELL proceeds: Zora pays ETH back via an internal
+  // contract transfer (not a top-level external tx), so without it the cash-in leg —
+  // and thus the "+$ made" on sells — is never fetched. Base mainnet supports internal.
+  const CATEGORY = ['external', 'internal', 'erc20', 'erc1155']
   // order: 'desc' — Alchemy defaults to ASCENDING (oldest-first); without it each call's
   // maxCount window returns the EARLIEST transfers, so recent trades never get fetched and
   // activity stalls at the wallet's first transactions. desc = newest-first per call.
