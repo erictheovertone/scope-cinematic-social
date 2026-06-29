@@ -13,7 +13,8 @@ import CollectSheetGate from "@/components/economy/CollectSheetGate";
 import type { Holding } from "@/lib/economy/types";
 import { onTradeSettled } from "@/lib/economy/tradeEvents";
 import { useCountUp } from "@/lib/economy/useCountUp";
-import { groupActivity, type ActivityRow } from "@/lib/walletActivity";
+import { groupActivity, shortAddr as shortAddr0x, type ActivityRow } from "@/lib/walletActivity";
+import { supabase } from "@/lib/supabase/client";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -38,6 +39,9 @@ export default function WalletPage() {
   const [ethBalance, setEthBalance] = useState<string | null>(null);
   const [usdcBalance, setUsdcBalance] = useState<string | null>(null);
   const [txHistory, setTxHistory] = useState<any[]>([]);
+  // coin_address(lowercase) → ticker, from posts — the app's ticker source of truth,
+  // so activity resolves real tickers (never a bare numeric on-chain symbol).
+  const [coinTickers, setCoinTickers] = useState<Map<string, string>>(new Map());
   const [holdings, setHoldings] = useState<Holding[] | null>(null); // null = not loaded
   const [openHolding, setOpenHolding] = useState<Holding | null>(null);
   const [loading, setLoading] = useState(false);
@@ -328,9 +332,27 @@ export default function WalletPage() {
   // Activity: group raw transfer legs into readable trade rows (fragments, not raw
   // on-chain amounts). Reuses the single-source tokenomics conversion via walletActivity.
   const activityRows = useMemo<ActivityRow[]>(
-    () => (walletAddress ? groupActivity(txHistory, walletAddress, ethUsdRate) : []),
-    [txHistory, walletAddress, ethUsdRate],
+    () => (walletAddress ? groupActivity(txHistory, walletAddress, ethUsdRate, coinTickers) : []),
+    [txHistory, walletAddress, ethUsdRate, coinTickers],
   );
+  // Load coin_address→ticker once (the posts table is the app's ticker source of truth).
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const { data } = await supabase
+        .from("posts")
+        .select("coin_address, ticker")
+        .not("coin_address", "is", null)
+        .eq("token_standard", "coin");
+      if (!alive || !data) return;
+      const m = new Map<string, string>();
+      for (const p of data as { coin_address: string | null; ticker: string | null }[]) {
+        if (p.coin_address && p.ticker) m.set(p.coin_address.toLowerCase(), p.ticker);
+      }
+      setCoinTickers(m);
+    })();
+    return () => { alive = false; };
+  }, []);
   // WALLET STRUCTURE (decided): holdings never blend into available.
   // AVAILABLE = spendable USDC+ETH — the ONLY balance buy flows draw on.
   // HOLDINGS = positions value (price × pieces). TOTAL = the headline.
@@ -678,54 +700,72 @@ export default function WalletPage() {
               <p style={{ ...SKB, fontSize: 'var(--fs-10)', color: "white", opacity: 0.4, textAlign: "center", marginTop: 40, textTransform: "uppercase" }}>No transactions yet</p>
             ) : (
               activityRows.map((row, i) => {
-                // Inbound (received value) = bright + down arrow; outbound = dimmed + up.
-                const inbound = row.kind === 'buy' || row.kind === 'mint' || row.kind === 'receive';
-                const frag = row.fragments != null ? row.fragments.toLocaleString() : '';
-                const dollars =
-                  row.usd != null
-                    ? `$${row.usd >= 1000 ? Math.round(row.usd).toLocaleString() : row.usd.toFixed(2)}`
-                    : row.cashAmount != null
-                    ? `${Number(row.cashAmount).toFixed(4)} ${row.cashAsset ?? ''}`.trim()
-                    : '';
+                const frag = row.fragments != null && row.fragments > 0 ? row.fragments.toLocaleString() : '';
+                const usdAbs = row.usd != null
+                  ? (row.usd >= 1000 ? `$${Math.round(row.usd).toLocaleString()}` : `$${row.usd.toFixed(2)}`)
+                  : null;
+                // Plain-transfer hero amount (raw asset, e.g. "10.00 USDC").
+                const cashLabel = row.cashAmount != null
+                  ? `${Number(row.cashAmount).toFixed(row.cashAsset?.toUpperCase().startsWith('USD') ? 2 : 4)} ${row.cashAsset ?? ''}`.trim()
+                  : '';
 
-                // Primary line per trade kind.
-                let primary: string;
-                let secondary = dollars;
-                if (row.kind === 'buy') {
-                  primary = `Bought ${frag} ${row.ticker ?? ''}`.trim();
-                  secondary = dollars ? `For ${dollars}` : '';
-                } else if (row.kind === 'sell') {
-                  primary = `Sold ${frag} ${row.ticker ?? ''}`.trim();
-                  secondary = dollars ? `Made ${dollars}` : '';
-                } else if (row.kind === 'mint') {
-                  primary = `Minted ${frag} ${row.ticker ?? ''}`.trim();
-                  secondary = '';
-                } else if (row.kind === 'send') {
-                  primary = `Sent ${dollars}`;
-                  secondary = row.counterparty ? `To ${shortAddr(row.counterparty)}` : '';
-                } else {
-                  primary = `Received ${dollars}`;
-                  secondary = row.counterparty ? `From ${shortAddr(row.counterparty)}` : '';
-                }
+                // Directional icon circle: tint + glyph + color by action.
+                const cfg = ({
+                  buy:     { tint: 'rgba(255,0,0,0.10)',     glyph: '↓', color: '#ff4d4d' },
+                  sell:    { tint: 'rgba(74,222,128,0.10)',  glyph: '↑', color: '#4ade80' },
+                  mint:    { tint: 'rgba(255,255,255,0.06)', glyph: '✦', color: '#888888' },
+                  receive: { tint: 'rgba(74,222,128,0.10)',  glyph: '↓', color: '#4ade80' },
+                  send:    { tint: 'rgba(255,0,0,0.10)',     glyph: '↑', color: '#ff4d4d' },
+                } as const)[row.kind];
+
+                // Hero verb + amount (white); ticker rendered red via TickerMark.
+                const showTicker = row.kind === 'buy' || row.kind === 'sell' || row.kind === 'mint';
+                const heroText =
+                  row.kind === 'buy'  ? `Bought ${frag} ` :
+                  row.kind === 'sell' ? `Sold ${frag} ` :
+                  row.kind === 'mint' ? `Minted ${frag ? frag + ' ' : ''}` :
+                  row.kind === 'send' ? `Sent ${cashLabel}` :
+                                        `Received ${cashLabel}`;
+
+                // Sub line: counterparty (plain transfers) + date, muted.
+                const subParts: string[] = [];
+                if (row.kind === 'send' && row.counterparty) subParts.push(`To ${shortAddr0x(row.counterparty)}`);
+                if (row.kind === 'receive' && row.counterparty) subParts.push(`From ${shortAddr0x(row.counterparty)}`);
+                if (row.date) subParts.push(row.date);
+
+                // Right ledger value: signed $; sell/receive green, buy/send neutral, mint CREATED.
+                const positive = row.kind === 'sell' || row.kind === 'receive';
+                const rightVal = usdAbs ?? (cashLabel || '');
+                const rightText = row.kind === 'mint'
+                  ? 'CREATED'
+                  : rightVal ? `${positive ? '+' : '−'}${rightVal}` : '';
+                const rightColor = row.kind === 'mint' ? '#5a5a5a' : positive ? '#4ade80' : '#ffffff';
 
                 return (
                   <div
                     key={row.hash + i}
-                    style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+                    style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 0", borderBottom: "1px solid #141414" }}
                   >
-                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      <span style={{ fontSize: 'var(--fs-16)', color: inbound ? "white" : "rgba(255,255,255,0.5)" }}>
-                        {inbound ? "↓" : "↑"}
-                      </span>
-                      <div>
-                        <p style={{ ...SKB, fontSize: 'var(--fs-10)', color: "white", margin: 0, textTransform: "uppercase", letterSpacing: "0.04em" }}>
-                          {primary}
-                        </p>
-                        <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: "white", opacity: 0.4, margin: "2px 0 0", textTransform: "uppercase" }}>
-                          {[secondary, row.date].filter(Boolean).join(" · ")}
-                        </p>
-                      </div>
+                    {/* LEFT — tinted directional icon circle */}
+                    <div style={{ width: 30, height: 30, borderRadius: "50%", background: cfg.tint, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <span style={{ fontSize: 14, lineHeight: 1, color: cfg.color }}>{cfg.glyph}</span>
                     </div>
+
+                    {/* MIDDLE — hero line + muted sub line */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ ...SKB, fontSize: 15, color: "#ffffff", margin: 0, lineHeight: 1.25, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                        {heroText}
+                        {showTicker && row.ticker && <TickerMark ticker={row.ticker} size={15} color="#ff4d4d" />}
+                      </p>
+                      <p style={{ ...SKR, fontSize: 12, color: "#5a5a5a", margin: "3px 0 0", lineHeight: 1 }}>
+                        {subParts.join(" · ")}
+                      </p>
+                    </div>
+
+                    {/* RIGHT — signed $ ledger value */}
+                    <p style={{ ...SKB, fontSize: 14, color: rightColor, margin: 0, textAlign: "right", flexShrink: 0, fontVariantNumeric: "tabular-nums", letterSpacing: row.kind === 'mint' ? "0.08em" : 0 }}>
+                      {rightText}
+                    </p>
                   </div>
                 );
               })

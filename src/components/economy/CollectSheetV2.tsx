@@ -574,7 +574,14 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
                 <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 12 }}>
                   <span style={{ ...SKR, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>YOU HOLD</span>
                   <span style={{ ...SKB, fontSize: 'var(--fs-18)', color: '#FFF', fontVariantNumeric: 'tabular-nums' }}>
-                    {held.toLocaleString()} {held === 1 ? 'FRAGMENT' : 'FRAGMENTS'}
+                    {held.toLocaleString()}{' '}
+                    {/* Holographic wordmark replaces ONLY the word; cap-height matched to
+                        the surrounding text, nudged onto the baseline. Scoped to this sell line. */}
+                    <img
+                      src="/fragments-wordmark-v3.png"
+                      alt="FRAGMENTS"
+                      style={{ height: '0.82em', width: 'auto', display: 'inline-block', verticalAlign: 'baseline', transform: 'translateY(0.06em)' }}
+                    />
                     {market?.priceUsd != null && held > 0 && (
                       <span style={{ ...SKR, fontSize: 'var(--fs-11)', color: 'rgba(255,255,255,0.45)', marginLeft: 7 }}>· {usd(held * market.priceUsd)}</span>
                     )}
