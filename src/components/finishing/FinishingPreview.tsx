@@ -46,9 +46,12 @@ interface FinishingPreviewProps {
   params: EditParams;
   geometry: EditGeometry;
   layoutId: string;
+  /** Optional — loop only this [start, start+length] window (the audition snippet's
+   *  selected autoplay moment). Omitted (editor preview) → full-video loop, unchanged. */
+  clipWindow?: { start: number; length: number };
 }
 
-export default function FinishingPreview({ mediaUrl, mediaType, params, geometry, layoutId }: FinishingPreviewProps) {
+export default function FinishingPreview({ mediaUrl, mediaType, params, geometry, layoutId, clipWindow }: FinishingPreviewProps) {
   const [source, setSource] = useState<Source | null>(null);
   const [activeLut, setActiveLut] = useState<{ canvas: HTMLCanvasElement; size: number } | null>(null);
   const boxRef = useRef<HTMLDivElement>(null);
@@ -73,6 +76,24 @@ export default function FinishingPreview({ mediaUrl, mediaType, params, geometry
       .catch(() => { img.onload = () => { if (!cancelled) setSource(img); }; });
     return () => { cancelled = true; };
   }, [mediaUrl, mediaType]);
+
+  // Optional clip-window loop — keep the graded video pinned to the selected
+  // [start, start+length] moment (the audition snippet). No-op without clipWindow.
+  useEffect(() => {
+    if (mediaType !== 'video' || !clipWindow) return;
+    const v = source;
+    if (!(typeof HTMLVideoElement !== 'undefined' && v instanceof HTMLVideoElement)) return;
+    const { start, length } = clipWindow;
+    v.loop = false; // our window controls looping, not the native end-loop
+    const toStart = () => { try { v.currentTime = start; } catch { /* seek before metadata */ } };
+    if (v.currentTime < start - 0.05 || v.currentTime >= start + length) toStart();
+    v.play().catch(() => {});
+    const onTime = () => { if (v.currentTime >= start + length - 0.03) { toStart(); v.play().catch(() => {}); } };
+    const onEnded = () => { toStart(); v.play().catch(() => {}); };
+    v.addEventListener('timeupdate', onTime);
+    v.addEventListener('ended', onEnded);
+    return () => { v.removeEventListener('timeupdate', onTime); v.removeEventListener('ended', onEnded); };
+  }, [source, mediaType, clipWindow?.start, clipWindow?.length]);
 
   // Load the active LOOK LUT so the preview shows the look too.
   useEffect(() => {
