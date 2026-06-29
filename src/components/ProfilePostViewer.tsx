@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
+import PressPop from "@/components/PressPop";
 import {
   likePost, unlikePost, getPostLikes, isPostLikedByUser,
   addComment, getPostComments,
@@ -252,6 +253,7 @@ function PostViewerItem({
 
         {/* Left: like · comment · share (no bookmark: the heart is feeling, COLLECT is conviction) */}
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <PressPop>
           <button
             onClick={handleLike}
             disabled={loading || !user}
@@ -264,7 +266,9 @@ function PostViewerItem({
             </svg>
             <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: isLiked ? "#FF0000" : "white", opacity: isLiked ? 1 : 0.7 }}>{likes.length}</span>
           </button>
+          </PressPop>
 
+          <PressPop>
           <button
             onClick={() => setShowComments(v => !v)}
             style={{ background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 4, padding: 0 }}
@@ -274,6 +278,7 @@ function PostViewerItem({
             </svg>
             <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: "white", opacity: 0.7 }}>{comments.length}</span>
           </button>
+          </PressPop>
 
 
           {/* Share button removed from the profile post-scroll (own AND public). */}

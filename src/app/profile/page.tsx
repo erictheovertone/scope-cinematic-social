@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
 import { getUserByPrivyId, getProfile, getFollowerCount, getFollowingCount, getUserDecks, createDeck, getProfileLinks, isProMember, type Deck, type ProfileLink } from "@/lib/userService";
 import ProfileDataSheet from "@/components/ProfileDataSheet";
+import PressPop from "@/components/PressPop";
 import { getUserPosts } from '@/lib/postsService';
 import CreatePostFlow from "@/components/CreatePostFlow";
 import FollowListModal from "@/components/FollowListModal";
@@ -416,6 +417,7 @@ const userLayoutId = stableLayoutId;
       </div>
 
       {/* Info sheet trigger */}
+      <PressPop>
       <button
         onClick={() => setProfileDataOpen(true)}
         style={{
@@ -446,6 +448,7 @@ const userLayoutId = stableLayoutId;
           }}>i</span>
         </div>
       </button>
+      </PressPop>
 
       </div>{/* end header */}
 

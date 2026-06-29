@@ -173,7 +173,7 @@ button:active,
 .press-pop:active { transform: none; }
 .press-pop.pop-active.pop-subtle { animation: pressPopSubtle 200ms ease-out; }
 .press-pop.pop-active.pop-mid    { animation: pressPopMid 250ms cubic-bezier(0.34, 1.4, 0.64, 1); }
-.press-pop.pop-active.pop-punchy { animation: pressPopPunchy 300ms cubic-bezier(0.34, 1.4, 0.64, 1); }
+.press-pop.pop-active.pop-punchy { animation: pressPopPunchy 320ms cubic-bezier(0.34, 1.7, 0.5, 1); }
 
 @keyframes pressPopSubtle {
   0%   { transform: scale(1); }
@@ -188,8 +188,9 @@ button:active,
 }
 @keyframes pressPopPunchy {
   0%   { transform: scale(1); }
-  38%  { transform: scale(0.86); }
-  72%  { transform: scale(1.06); }
+  30%  { transform: scale(0.82); }
+  60%  { transform: scale(1.10); }
+  80%  { transform: scale(0.97); }
   100% { transform: scale(1); }
 }
 
