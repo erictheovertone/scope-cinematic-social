@@ -36,30 +36,45 @@ export async function getUsdcBalance(address: string): Promise<string> {
 }
 
 export async function getTransactionHistory(address: string) {
+  // Alchemy ANDs fromAddress + toAddress when both are in ONE call — that returns only
+  // self-transfers (≈always empty). Activity needs BOTH directions, so we make two calls
+  // (outgoing + incoming) and merge. category includes erc1155 so Zora-coin movements show
+  // alongside ETH (external) + the erc20 trade legs.
+  const CATEGORY = ['external', 'erc20', 'erc1155']
+  const call = (params: Record<string, unknown>) =>
+    fetch(`${process.env.NEXT_PUBLIC_ALCHEMY_BASE_URL}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'alchemy_getAssetTransfers',
+        params: [{ category: CATEGORY, withMetadata: true, maxCount: '0x14', ...params }],
+      }),
+    })
+      .then((r) => r.json())
+      .then((d) => (d.result?.transfers as any[]) || [])
+      .catch(() => [] as any[])
+
   try {
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_ALCHEMY_BASE_URL}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          jsonrpc: '2.0',
-          id: 1,
-          method: 'alchemy_getAssetTransfers',
-          params: [
-            {
-              fromAddress: address,
-              toAddress: address,
-              category: ['external', 'erc20'],
-              withMetadata: true,
-              maxCount: '0x14',
-            },
-          ],
-        }),
-      },
-    )
-    const data = await response.json()
-    return data.result?.transfers || []
+    const [outgoing, incoming] = await Promise.all([
+      call({ fromAddress: address }), // sends + buy ETH-out legs
+      call({ toAddress: address }),   // receives + coin-in legs
+    ])
+
+    // Dedupe: a transfer is either from OR to the wallet, but guard for self-transfers
+    // (would land in both) by hash + uniqueId/logIndex.
+    const seen = new Set<string>()
+    const merged = [...outgoing, ...incoming].filter((tx) => {
+      const key = `${tx.hash ?? ''}:${tx.uniqueId ?? tx.logIndex ?? ''}`
+      if (seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
+
+    // Sort newest-first by block number (hex → int), then cap.
+    merged.sort((a, b) => parseInt(b.blockNum ?? '0x0', 16) - parseInt(a.blockNum ?? '0x0', 16))
+    return merged.slice(0, 20)
   } catch {
     return []
   }

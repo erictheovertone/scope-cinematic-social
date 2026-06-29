@@ -11,7 +11,7 @@ doesn't support. Posts are minted as ERC-1155 tokens on Base, making content col
 - **Auth**: Privy — email, Google, Farcaster, X login; auto-creates embedded wallet on Base
 - **Database**: Supabase (Postgres with RLS)
 - **Storage**: Supabase Storage (bucket: `post-media`, public)
-- **Blockchain**: Base Sepolia testnet (active), Base mainnet (when ready)
+- **Blockchain**: Base mainnet (active — live trades confirmed on mainnet)
 - **Web3**: `@zoralabs/protocol-sdk` for ERC-1155 minting/collecting; `viem` for RPC
 - **Onramp**: Privy `useFundWallet` — card, Apple Pay, Google Pay, Coinbase Pay
 - **Deployment**: Vercel (target), Netlify (current config)
