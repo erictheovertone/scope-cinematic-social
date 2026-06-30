@@ -28,13 +28,6 @@ const fmtRowProceeds = (final: number, e: number): string => {
   return `+$${(final * e).toFixed(2)}`;
 };
 
-function timeGreeting(h: number): string {
-  if (h < 5) return 'Up late';
-  if (h < 12) return 'Good morning';
-  if (h < 17) return 'Good afternoon';
-  if (h < 22) return 'Good evening';
-  return 'Up late';
-}
 
 // ── Inline Tabler-outline icons (no raster assets) ───────────────────────────
 const ICON = (d: React.ReactNode, size = 14, color = 'rgba(255,255,255,0.8)'): React.ReactNode => (
@@ -86,16 +79,6 @@ export default function WhileYouWereAwaySheet({ visible, recap, username, onClos
       reduced.current = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     }
   }, []);
-
-  // Greeting entrance (fade + translateY), ~60ms after open.
-  const [greetIn, setGreetIn] = useState(false);
-  useEffect(() => {
-    if (!visible) { setGreetIn(reduced.current); return; }
-    if (reduced.current) { setGreetIn(true); return; }
-    setGreetIn(false);
-    const id = setTimeout(() => setGreetIn(true), 60);
-    return () => clearTimeout(id);
-  }, [visible]);
 
   const e = useCountProgress(visible, reduced.current);
 
@@ -163,16 +146,16 @@ export default function WhileYouWereAwaySheet({ visible, recap, username, onClos
 
   if (!mounted || !recap) return null;
 
-  const greeting = `${timeGreeting(new Date().getHours())}, ${(username || 'there').toUpperCase()}`;
   const hero = recap.hero;
   const s = recap.social;
 
   const stat = (icon: React.ReactNode, n: number, label: string) => (
-    <div style={{ flex: 1, position: 'relative', padding: '14px 12px 12px', minWidth: 0 }}>
-      <div style={{ position: 'absolute', top: 10, left: 10 }}>{icon}</div>
+    <div style={{ flex: 1, position: 'relative', padding: '14px 8px 12px', minWidth: 0 }}>
+      <div style={{ position: 'absolute', top: 10, left: 8 }}>{icon}</div>
       <p style={{ ...SKB, fontSize: 28, color: '#fff', margin: '14px 0 0', lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>+{Math.round(n * e)}</p>
-      <p style={{ ...SKB, fontSize: 'var(--fs-8)', color: W65, margin: '6px 0 0', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'flex', alignItems: 'center', gap: 4 }}>
-        {label} {TrendingUp(10)}
+      {/* −0.5px (fs-7_5) + nowrap so NEW COMMENTS fits one line alongside the others */}
+      <p style={{ ...SKB, fontSize: 'var(--fs-7_5)', color: W65, margin: '6px 0 0', textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 3 }}>
+        {label} {TrendingUp(9)}
       </p>
     </div>
   );
@@ -198,22 +181,17 @@ export default function WhileYouWereAwaySheet({ visible, recap, username, onClos
           padding: 'calc(env(safe-area-inset-top, 0px) + 22px) calc(env(safe-area-inset-right, 0px) + 18px) calc(env(safe-area-inset-bottom, 0px) + 28px) calc(env(safe-area-inset-left, 0px) + 18px)',
         }}
       >
-        {/* GREETING */}
-        <p style={{
-          ...SKB, fontSize: 17, color: '#fff', margin: '0 0 14px',
-          opacity: greetIn ? 1 : 0,
-          transform: greetIn ? 'translateY(0)' : 'translateY(10px)',
-          transition: reduced.current ? 'none' : 'opacity 0.45s ease, transform 0.45s ease',
-        }}>{greeting}</p>
-
-        {/* SECTION ROW */}
+        {/* SECTION ROW — top element now (greeting removed) */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
           <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: W65, textTransform: 'uppercase', letterSpacing: '0.14em' }}>WHILE YOU WERE AWAY</span>
-          <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: '#fff', background: RED, padding: '3px 8px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{recap.sinceDays} DAYS</span>
+          {/* N DAYS pill — dark gradient + dark-red border, RED text (Figma 793:323), radius 2 */}
+          <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: RED, background: 'linear-gradient(93.77deg, #181818 24.12%, #000 64.5%)', border: '0.5px solid #7a2e2e', borderRadius: 2, padding: '3px 8px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{recap.sinceDays} DAYS</span>
         </div>
 
-        {/* HERO CARD */}
-        <div style={{ background: 'linear-gradient(180deg, #181818 0%, #0d0d0d 100%)', border: '0.5px solid #1f1f1f', padding: '18px 16px 20px', marginBottom: 20 }}>
+        {/* HERO / EARNED CARD — Figma gradient (DELIBERATE, do not flatten), radius 2,
+            reduced side padding, holo scope logo top-right. */}
+        <div style={{ position: 'relative', overflow: 'hidden', background: 'linear-gradient(93.84deg, #181818 24.12%, #000 64.5%)', border: '0.5px solid #1f1f1f', borderRadius: 2, padding: '18px 12px 20px', marginBottom: 20 }}>
+          <img src="/opaque-scope-logo-holo.png" alt="" style={{ position: 'absolute', top: 12, right: 12, width: 90, height: 'auto', pointerEvents: 'none' }} />
           <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: W65, margin: 0, textTransform: 'uppercase', letterSpacing: '0.12em' }}>YOUR WORK EARNED</p>
           <p style={{ ...SKB, fontSize: 46, color: '#fff', margin: '6px 0 2px', lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>{fmtMoney(hero.earned * e)}</p>
           <p style={{ ...SKR, fontSize: 'var(--fs-10)', color: W65, margin: 0, textTransform: 'uppercase', letterSpacing: '0.04em' }}>across {hero.postCount} of your posts</p>
@@ -237,12 +215,12 @@ export default function WhileYouWereAwaySheet({ visible, recap, username, onClos
               className="tap-target"
               style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '8px 0', background: 'transparent', border: 'none', borderBottom: '0.5px solid #141414', cursor: 'pointer', textAlign: 'left' }}
             >
-              <div style={{ width: 44, height: 44, flexShrink: 0, background: '#0d0d0d', overflow: 'hidden' }}>
+              <div style={{ width: 133, height: 48, flexShrink: 0, background: '#0d0d0d', overflow: 'hidden' }}>
                 {row.thumbnailUrl && <img src={row.thumbnailUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <p style={{ ...SKB, fontSize: 'var(--fs-11)', color: RED, margin: 0, letterSpacing: '0.04em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>[ {row.ticker ?? '—'} ]</p>
-                <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: W65, margin: '3px 0 0', textTransform: 'uppercase', letterSpacing: '0.04em' }}>collected {row.collectCount} {row.collectCount === 1 ? 'time' : 'times'}</p>
+                <p style={{ ...SKR, fontSize: 'var(--fs-8)', color: W65, margin: '3px 0 0', textTransform: 'uppercase', letterSpacing: '0.04em' }}>collected {row.collectCount} {row.collectCount === 1 ? 'time' : 'times'}</p>
               </div>
               <span style={{ ...SKB, fontSize: 'var(--fs-12)', color: GREEN, fontVariantNumeric: 'tabular-nums' }}>{fmtRowProceeds(row.proceeds, e)}</span>
               <span style={{ display: 'flex' }}>{Chevron}</span>
@@ -250,18 +228,19 @@ export default function WhileYouWereAwaySheet({ visible, recap, username, onClos
           ))}
         </div>
 
-        {/* STAT STRIP */}
-        <div style={{ display: 'flex', gap: 1, background: '#141414', marginBottom: 20 }}>
-          <div style={{ flex: 1, background: '#0a0a0a', display: 'flex' }}>{stat(UserPlus, s.follows, 'NEW FOLLOWS')}</div>
-          <div style={{ flex: 1, background: '#0a0a0a', display: 'flex' }}>{stat(MessageCircle, s.comments, 'NEW COMMENTS')}</div>
-          <div style={{ flex: 1, background: '#0a0a0a', display: 'flex' }}>{stat(Heart, s.likes, 'NEW LIKES')}</div>
+        {/* STAT STRIP (audience) — single Figma-gradient card (DELIBERATE), radius 2,
+            reduced side padding (in `stat`), thin dividers between the 3 columns. */}
+        <div style={{ display: 'flex', background: 'linear-gradient(94.90deg, #181818 24.12%, #000 64.5%)', border: '0.5px solid #1f1f1f', borderRadius: 2, overflow: 'hidden', marginBottom: 20 }}>
+          <div style={{ flex: 1, display: 'flex' }}>{stat(UserPlus, s.follows, 'NEW FOLLOWS')}</div>
+          <div style={{ flex: 1, display: 'flex', borderLeft: '0.5px solid #1f1f1f' }}>{stat(MessageCircle, s.comments, 'NEW COMMENTS')}</div>
+          <div style={{ flex: 1, display: 'flex', borderLeft: '0.5px solid #1f1f1f' }}>{stat(Heart, s.likes, 'NEW LIKES')}</div>
         </div>
 
-        {/* ENTER */}
+        {/* ENTER — red→dark-red gradient (DELIBERATE), 0.25px white border, radius 2 */}
         <button
           onClick={onClose}
           className="tap-target"
-          style={{ width: '100%', background: RED, border: 'none', cursor: 'pointer', padding: '15px 0' }}
+          style={{ width: '100%', background: 'linear-gradient(to right, #FF0000 0%, #990000 100%)', border: '0.25px solid #FFFFFF', borderRadius: 2, cursor: 'pointer', padding: '15px 0' }}
         >
           <span style={{ ...SKB, fontSize: 'var(--fs-12)', color: '#fff', textTransform: 'uppercase', letterSpacing: '0.14em' }}>ENTER</span>
         </button>
