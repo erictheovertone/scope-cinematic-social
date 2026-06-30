@@ -50,7 +50,7 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 // USD value of a swap from its currency leg: priceUsdc (USD per currency unit) ×
 // the amount spent. Returns 0 when price/amount can't be read — a missing value
 // never clears the $5 floor (safe: a buy of unknown value can't farm a slot).
-function swapUsd(n: any): number {
+export function swapUsd(n: any): number {
   const price = parseFloat(n?.currencyAmountWithPrice?.priceUsdc ?? '0');
   const amt = n?.currencyAmountWithPrice?.currencyAmount?.amountDecimal;
   const usd = (Number.isFinite(price) ? price : 0) * (typeof amt === 'number' ? amt : 0);
