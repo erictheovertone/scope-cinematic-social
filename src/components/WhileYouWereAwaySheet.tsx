@@ -21,6 +21,13 @@ const W65 = 'rgba(255,255,255,0.65)';
 
 const fmtMoney = (n: number) => `+$${(Number.isFinite(n) ? n : 0).toFixed(2)}`;
 
+// Per-row proceeds: sub-cent reads "< $0.01" (no tick — it's a string, not a number);
+// ≥ $0.01 ticks up to "+$X.XX". `final` is the real value, `e` the count-up easing.
+const fmtRowProceeds = (final: number, e: number): string => {
+  if (final > 0 && final < 0.01) return '< $0.01';
+  return `+$${(final * e).toFixed(2)}`;
+};
+
 function timeGreeting(h: number): string {
   if (h < 5) return 'Up late';
   if (h < 12) return 'Good morning';
@@ -174,7 +181,7 @@ export default function WhileYouWereAwaySheet({ visible, recap, username, onClos
                 <p style={{ ...SKB, fontSize: 'var(--fs-11)', color: RED, margin: 0, letterSpacing: '0.04em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>[ {row.ticker ?? '—'} ]</p>
                 <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: W65, margin: '3px 0 0', textTransform: 'uppercase', letterSpacing: '0.04em' }}>collected {row.collectCount} {row.collectCount === 1 ? 'time' : 'times'}</p>
               </div>
-              <span style={{ ...SKB, fontSize: 'var(--fs-12)', color: GREEN, fontVariantNumeric: 'tabular-nums' }}>{fmtMoney(row.proceeds * e)}</span>
+              <span style={{ ...SKB, fontSize: 'var(--fs-12)', color: GREEN, fontVariantNumeric: 'tabular-nums' }}>{fmtRowProceeds(row.proceeds, e)}</span>
               <span style={{ display: 'flex' }}>{Chevron}</span>
             </button>
           ))}

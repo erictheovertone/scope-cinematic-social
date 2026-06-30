@@ -104,6 +104,24 @@ export const getProfile = async (userId: string): Promise<Profile | null> => {
   }
 }
 
+/** Reset the recap cutoff to now (called on recap dismiss). Needs profiles.last_seen_at. */
+export const setLastSeen = async (userId: string): Promise<void> => {
+  try {
+    await supabase.from('profiles').update({ last_seen_at: new Date().toISOString() }).eq('user_id', userId)
+  } catch (error) {
+    console.error('Error setting last_seen_at:', sbErr(error))
+  }
+}
+
+/** Persist the "show While You Were Away on return" setting. Needs profiles.show_recap. */
+export const setShowRecap = async (userId: string, show: boolean): Promise<void> => {
+  try {
+    await supabase.from('profiles').update({ show_recap: show }).eq('user_id', userId)
+  } catch (error) {
+    console.error('Error setting show_recap:', sbErr(error))
+  }
+}
+
 /**
  * Single source of truth for "is this user Pro". A member is Pro while their
  * `paid_member_until` is in the future. Pass the profile loaded via the verified

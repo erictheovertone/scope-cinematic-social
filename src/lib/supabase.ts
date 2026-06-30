@@ -22,6 +22,10 @@ export interface Profile {
   bio: string
   profile_image_url?: string
   grid_layout?: string
+  /** "While you were away" recap: last app-entry the viewer dismissed the recap at
+   *  (the cutoff for the next recap), and whether to show it on return (default ON). */
+  last_seen_at?: string | null
+  show_recap?: boolean | null
   kit_camera?: string
   kit_lens?: string
   kit_favorite_tool?: string

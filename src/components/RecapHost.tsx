@@ -1,19 +1,22 @@
 'use client';
 
-// ── RecapHost — resolves the user, fetches /api/recap, mounts the recap sheet ─
+// ── RecapHost — show-on-entry orchestration for WHILE YOU WERE AWAY ───────────
 //
-// Stage 2: NO show-on-entry logic and NO settings toggle yet (that's Stage 3).
-// DEV TRIGGER for device testing: open the sheet by either
-//   • navigating to any page with ?recap=1, or
-//   • dispatching window 'scope:open-recap'.
-// It resolves the viewer's Supabase UUID (posts.user_id) + handle, fetches the
-// real recap, and shows the sheet.
+// On the first authenticated load (cold launch), resolves the viewer's Supabase
+// uuid + profile, then PREFETCHES /api/recap in the background (overlaps with feed
+// load → instant render, no spinner). Shows the sheet on entry only if: setting ON,
+// recap.hasActivity, away ≥ MIN_AWAY, and not already shown this session. Dismiss
+// resets profiles.last_seen_at (the canonical reset — the user has actually seen it),
+// so the next recap starts fresh. CustomEvent 'scope:open-recap' is a manual re-trigger.
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePrivy } from '@privy-io/react-auth';
-import { getUserByPrivyId, getProfile } from '@/lib/userService';
+import { getUserByPrivyId, getProfile, setLastSeen } from '@/lib/userService';
 import type { Recap } from '@/lib/economy/recap';
 import WhileYouWereAwaySheet from '@/components/WhileYouWereAwaySheet';
+
+const MIN_AWAY_MS = 6 * 60 * 60 * 1000;        // 6h — don't pop on quick re-opens
+const SESSION_KEY = 'scope:recap-shown';        // show ONCE per app launch (sessionStorage)
 
 export default function RecapHost() {
   const { user, authenticated } = usePrivy();
@@ -22,59 +25,80 @@ export default function RecapHost() {
   const [recap, setRecap] = useState<Recap | null>(null);
   const [open, setOpen] = useState(false);
 
-  // Resolve UUID + handle once authenticated.
+  const startedRef = useRef(false);             // prefetch ONCE per app session
+  const showRecapRef = useRef(true);            // setting (default ON)
+  const lastSeenRef = useRef<string | null>(null);
+
+  const fetchRecap = useCallback(async (id: string): Promise<Recap | null> => {
+    try {
+      const res = await fetch(`/api/recap?userId=${id}`);
+      if (!res.ok) { console.error('[recap] HTTP', res.status); return null; }
+      return (await res.json()) as Recap;
+    } catch (err) {
+      console.error('[recap] fetch failed', err);
+      return null;
+    }
+  }, []);
+
+  // First authenticated load → resolve user + profile, then prefetch + maybe show. The
+  // startedRef guard makes this run once per app session (RecapHost is mounted once in the
+  // provider tree, so it survives route changes / foreground flips → no re-show).
   useEffect(() => {
-    if (!authenticated || !user) return;
+    if (!authenticated || !user || startedRef.current) return;
     let alive = true;
     (async () => {
       const u = await getUserByPrivyId(user.id);
       if (!alive || !u) return;
       setUuid(u.id);
       const prof = await getProfile(u.id);
-      if (alive) setUsername(prof?.username ?? '');
+      if (!alive) return;
+      setUsername(prof?.username ?? '');
+      showRecapRef.current = prof?.show_recap !== false;       // default ON (null/undefined)
+      lastSeenRef.current = prof?.last_seen_at ?? null;
+
+      // Setting OFF → skip the prefetch entirely (saves the call); manual event still works.
+      if (!showRecapRef.current || startedRef.current) return;
+      startedRef.current = true;
+
+      const data = await fetchRecap(u.id);
+      if (!alive || !data) return;
+      setRecap(data);
+
+      // SHOW-ON-ENTRY gate.
+      const awayEnough = !lastSeenRef.current || Date.now() - Date.parse(lastSeenRef.current) > MIN_AWAY_MS;
+      const shownThisSession = typeof sessionStorage !== 'undefined' && sessionStorage.getItem(SESSION_KEY) === '1';
+      if (data.hasActivity && awayEnough && !shownThisSession) {
+        try { sessionStorage.setItem(SESSION_KEY, '1'); } catch { /* private mode */ }
+        setOpen(true);
+      }
     })();
     return () => { alive = false; };
-  }, [authenticated, user]);
+  }, [authenticated, user, fetchRecap]);
 
-  const trigger = useCallback(async () => {
-    if (!uuid) return;
-    try {
-      const res = await fetch(`/api/recap?userId=${uuid}`);
-      if (!res.ok) { console.error('[recap] HTTP', res.status); return; }
-      const data = (await res.json()) as Recap;
-      setRecap(data);
-      setOpen(true);
-    } catch (err) {
-      console.error('[recap] fetch failed', err);
-    }
+  // Manual / dev re-trigger — always shows (bypasses session + MIN_AWAY gates), fetches if
+  // we don't already have data. Works even when the setting is OFF (for testing).
+  useEffect(() => {
+    const onEvt = async () => {
+      if (!uuid) return;
+      const data = recap ?? (await fetchRecap(uuid));
+      if (data) { setRecap(data); setOpen(true); }
+    };
+    window.addEventListener('scope:open-recap', onEvt as EventListener);
+    return () => window.removeEventListener('scope:open-recap', onEvt as EventListener);
+  }, [uuid, recap, fetchRecap]);
+
+  // Dismiss (ENTER / backdrop) → reset the recap cutoff to now so the next recap is fresh.
+  const handleClose = useCallback(() => {
+    setOpen(false);
+    if (uuid) { void setLastSeen(uuid); lastSeenRef.current = new Date().toISOString(); }
   }, [uuid]);
-
-  // Dev trigger A: custom event (URL-independent).
-  useEffect(() => {
-    const onEvt = () => { void trigger(); };
-    window.addEventListener('scope:open-recap', onEvt);
-    return () => window.removeEventListener('scope:open-recap', onEvt);
-  }, [trigger]);
-
-  // Dev trigger B: ?recap=1. LATCH the intent on first mount — before any redirect
-  // can strip the query — then fire once uuid resolves. Reading the param late (in the
-  // uuid-gated effect) was the bug: the param was already gone by then.
-  const wantRecapRef = useRef(false);
-  useEffect(() => {
-    if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('recap') === '1') {
-      wantRecapRef.current = true;
-    }
-  }, []);
-  useEffect(() => {
-    if (uuid && wantRecapRef.current) { wantRecapRef.current = false; void trigger(); }
-  }, [uuid, trigger]);
 
   return (
     <WhileYouWereAwaySheet
       visible={open}
       recap={recap}
       username={username}
-      onClose={() => setOpen(false)}
+      onClose={handleClose}
     />
   );
 }

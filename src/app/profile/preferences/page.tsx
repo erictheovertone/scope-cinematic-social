@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
-import { getUserByPrivyId, getProfile, saveProfile, uploadImage } from "@/lib/userService";
+import { getUserByPrivyId, getProfile, saveProfile, uploadImage, setShowRecap } from "@/lib/userService";
 import AddToHomeScreenSheet from "@/components/AddToHomeScreenSheet";
 import { isStandalone } from "@/lib/pwaUtils";
 
@@ -48,6 +48,7 @@ export default function Preferences() {
   const [sbUserId, setSbUserId] = useState("");
   const [showA2HS, setShowA2HS] = useState(false);
   const [currentProfile, setCurrentProfile] = useState({ displayName: "", username: "", bio: "" });
+  const [showRecap, setShowRecapState] = useState(true); // "While you were away" on return (default ON)
   const [photoUploading, setPhotoUploading] = useState(false);
   const [photoSuccess, setPhotoSuccess] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
@@ -68,6 +69,7 @@ export default function Preferences() {
             username: profile.username || "",
             bio: profile.bio || "",
           });
+          setShowRecapState(profile.show_recap !== false); // default ON
         }
       } catch (e) {
         console.error("Preferences load error:", e);
@@ -111,11 +113,18 @@ export default function Preferences() {
 
   const photoLabel = photoUploading ? 'Uploading…' : photoSuccess ? 'Photo updated ✓' : photoError ?? 'Change Profile Photo';
 
+  const toggleShowRecap = () => {
+    const next = !showRecap;
+    setShowRecapState(next);            // optimistic
+    if (sbUserId) void setShowRecap(sbUserId, next);
+  };
+
   const menuItems: { label: string; action: () => void; danger?: boolean }[] = [
     { label: photoLabel, action: () => photoInputRef.current?.click() },
     { label: 'Edit Profile', action: () => router.push('/profile/edit') },
     { label: 'Change Grid Layout', action: () => router.push('/profile/grid-layout') },
     ...(mounted && !isStandalone() ? [{ label: 'ADD TO HOME SCREEN', action: () => setShowA2HS(true) }] : []),
+    { label: `While You Were Away · ${showRecap ? 'ON' : 'OFF'}`, action: toggleShowRecap },
     { label: 'Link Manager', action: () => router.push('/profile/edit') },
     { label: 'Notifications', action: () => router.push('/profile/notifications') },
     { label: 'Privacy', action: () => {} },
