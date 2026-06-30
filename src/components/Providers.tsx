@@ -10,6 +10,7 @@ import { TxNarratorProvider } from '@/components/TxNarrator';
 import PostLightboxHost from '@/components/PostLightboxHost';
 import SlideShell from '@/components/SlideShell';
 import SwipeNav from '@/components/SwipeNav';
+import RecapHost from '@/components/RecapHost';
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -23,6 +24,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
             <AppShell />
             <SwipeNav />
             <PostLightboxHost />
+            <RecapHost />
           </UpsellProvider>
         </TxNarratorProvider>
       </EconomyProvider>
