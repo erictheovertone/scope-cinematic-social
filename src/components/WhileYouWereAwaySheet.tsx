@@ -99,6 +99,68 @@ export default function WhileYouWereAwaySheet({ visible, recap, username, onClos
 
   const e = useCountProgress(visible, reduced.current);
 
+  // ── Swipe-DOWN to dismiss ──────────────────────────────────────────────────
+  // Drag the full-page takeover down with the finger; past a threshold (or a fast
+  // downward flick) → onClose. Gated like swipe-nav: it engages ONLY when the content
+  // is scrolled to the top AND the first movement is downward — otherwise the gesture
+  // is released to the inner scroll (direction-locked per gesture, no mid-swipe switch).
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [dragY, setDragY] = useState(0);
+  const [dragging, setDragging] = useState(false);
+  const dragYRef = useRef(0);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    let startY = 0, lastY = 0, lastT = 0, vy = 0, active = false;
+    let lock: 'none' | 'dismiss' | 'scroll' = 'none';
+    const set = (y: number) => { dragYRef.current = y; setDragY(y); };
+
+    const onStart = (ev: TouchEvent) => {
+      if (ev.touches.length !== 1) { active = false; return; }
+      startY = ev.touches[0].clientY; lastY = startY; lastT = ev.timeStamp; vy = 0; lock = 'none'; active = true;
+    };
+    const onMove = (ev: TouchEvent) => {
+      if (!active) return;
+      const y = ev.touches[0].clientY; const dy = y - startY;
+      if (lock === 'none') {
+        if (el.scrollTop <= 0 && dy > 8) lock = 'dismiss';   // at top + downward → dismiss
+        else if (Math.abs(dy) > 8) { lock = 'scroll'; return; } // else release to content scroll
+        else return;
+      }
+      if (lock === 'dismiss') {
+        ev.preventDefault();                                  // suppress native overscroll/rubber-band
+        vy = (y - lastY) / Math.max(1, ev.timeStamp - lastT); lastY = y; lastT = ev.timeStamp;
+        setDragging(true);
+        set(Math.max(0, dy));
+      }
+    };
+    const onEnd = () => {
+      if (!active) return;
+      active = false;
+      if (lock === 'dismiss') {
+        const dismissed = dragYRef.current > window.innerHeight * 0.27 || vy > 0.5; // threshold OR flick
+        setDragging(false);
+        if (dismissed) onCloseRef.current();
+        set(0);                                               // spring back (or reset for the slide-out)
+      }
+      lock = 'none';
+    };
+
+    el.addEventListener('touchstart', onStart, { passive: true });
+    el.addEventListener('touchmove', onMove, { passive: false });
+    el.addEventListener('touchend', onEnd, { passive: true });
+    el.addEventListener('touchcancel', onEnd, { passive: true });
+    return () => {
+      el.removeEventListener('touchstart', onStart);
+      el.removeEventListener('touchmove', onMove);
+      el.removeEventListener('touchend', onEnd);
+      el.removeEventListener('touchcancel', onEnd);
+    };
+  }, [recap]);
+
   if (!mounted || !recap) return null;
 
   const greeting = `${timeGreeting(new Date().getHours())}, ${(username || 'there').toUpperCase()}`;
@@ -116,23 +178,24 @@ export default function WhileYouWereAwaySheet({ visible, recap, username, onClos
   );
 
   return createPortal(
-    <>
-      {/* Backdrop */}
+    // FULL-PAGE takeover — fixed edge-to-edge, black, slides up on open. The whole page
+    // translates with the dismiss drag (transform on the container); the inner div scrolls.
+    <div
+      data-swipe-exclude
+      style={{
+        position: 'fixed', inset: 0, zIndex: 600, background: '#000', overflow: 'hidden',
+        pointerEvents: visible ? 'auto' : 'none',
+        transform: visible ? `translateY(${dragY}px)` : 'translateY(100%)',
+        transition: dragging ? 'none' : 'transform 0.36s cubic-bezier(0.32,0.72,0,1)',
+      }}
+    >
       <div
-        data-swipe-exclude
-        onClick={onClose}
-        style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 600, opacity: visible ? 1 : 0, pointerEvents: visible ? 'auto' : 'none', transition: 'opacity 0.3s ease' }}
-      />
-      {/* Sheet */}
-      <div
-        data-swipe-exclude
+        ref={scrollRef}
         style={{
-          position: 'fixed', bottom: 0, left: 0, right: 0, margin: '0 auto', maxWidth: '30rem',
-          background: '#000', zIndex: 601, borderTop: '0.5px solid #1f1f1f',
-          transform: visible ? 'translateY(0)' : 'translateY(100%)',
-          transition: 'transform 0.4s cubic-bezier(0.32,0.72,0,1)',
-          padding: '20px 18px calc(18px + env(safe-area-inset-bottom, 0px))',
-          maxHeight: '92vh', overflowY: 'auto',
+          position: 'absolute', inset: 0, overflowY: 'auto',
+          WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain',
+          // Safe-area insets on every edge — content never hides under status bar / home indicator.
+          padding: 'calc(env(safe-area-inset-top, 0px) + 22px) calc(env(safe-area-inset-right, 0px) + 18px) calc(env(safe-area-inset-bottom, 0px) + 28px) calc(env(safe-area-inset-left, 0px) + 18px)',
         }}
       >
         {/* GREETING */}
@@ -208,7 +271,7 @@ export default function WhileYouWereAwaySheet({ visible, recap, username, onClos
           SHOW ON RETURN · TURN OFF IN SETTINGS
         </p>
       </div>
-    </>,
+    </div>,
     document.body,
   );
 }
