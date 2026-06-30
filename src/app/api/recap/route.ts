@@ -19,8 +19,23 @@ const SWAP_PAGE = 100;
 const RECAP_MAX_PAGES = 6;        // bound per-coin pagination (recent cutoff → usually ~1 page)
 const DEFAULT_LOOKBACK_DAYS = 7;  // when last_seen is unknown (first run / column not yet added)
 const DAY_MS = 86_400_000;
+const COIN_CONCURRENCY = 8;       // getCoinSwaps in flight at once (bounded — respect Zora rate limits)
 
 const lc = (s?: string | null) => (s ?? '').toLowerCase();
+
+// Bounded-concurrency map: at most `limit` of `fn` run at once. Preserves input order.
+async function mapPool<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
+  const results: R[] = new Array(items.length);
+  let next = 0;
+  const worker = async () => {
+    while (next < items.length) {
+      const i = next++;
+      results[i] = await fn(items[i]);
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+  return results;
+}
 
 let _keyed = false;
 function ensureKey() {
@@ -71,8 +86,12 @@ export async function GET(req: NextRequest) {
 
   ensureKey();
 
-  const rows: RecapBreakdownRow[] = [];
-  for (const p of posts ?? []) {
+  // Per coin: page getCoinSwaps newest-first, stop once we cross last_seen, tally BUYs by
+  // OTHERS. One coin's failure must not sink the recap (returns a zero row).
+  const processCoin = async (p: {
+    id: string; coin_address: string | null; creator_address: string | null; ticker: string | null;
+    media_type?: string | null; poster_url?: string | null; thumbnail_url?: string | null; media_urls?: string[] | null;
+  }): Promise<RecapBreakdownRow> => {
     const creator = lc(p.creator_address);
     let after: string | undefined;
     let collectCount = 0;
@@ -83,7 +102,7 @@ export async function GET(req: NextRequest) {
       let res: { data?: { zora20Token?: { swapActivities?: { edges?: { node?: Record<string, unknown> }[]; pageInfo?: { hasNextPage?: boolean; endCursor?: string } } } } };
       try {
         res = await getCoinSwaps({ address: p.coin_address as `0x${string}`, chain: BASE_CHAIN, first: SWAP_PAGE, after }) as typeof res;
-      } catch { break; } // one coin's failure must not sink the whole recap
+      } catch { break; }
       const sa = res?.data?.zora20Token?.swapActivities;
       const edges = sa?.edges ?? [];
       for (const e of edges) {
@@ -100,15 +119,19 @@ export async function GET(req: NextRequest) {
       after = sa.pageInfo.endCursor;
     }
 
-    rows.push({
+    return {
       postId: p.id,
       ticker: p.ticker ?? null,
       thumbnailUrl: thumbOf(p),
       collectCount,
       volumeUsd,
       proceeds: volumeUsd * CREATOR_FEE_RATE,
-    });
-  }
+    };
+  };
+
+  // PARALLEL (bounded): per-coin getCoinSwaps in flight at most COIN_CONCURRENCY at once,
+  // so the earnings phase ≈ the slowest single call, not the sum of all 21.
+  const rows = await mapPool(posts ?? [], COIN_CONCURRENCY, processCoin);
 
   // Top earners first; only posts with collects since last_seen appear.
   const breakdown = rows.filter((r) => r.collectCount > 0).sort((a, b) => b.proceeds - a.proceeds);
