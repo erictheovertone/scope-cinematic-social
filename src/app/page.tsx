@@ -135,8 +135,11 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (!authenticated) router.push("/welcome");
-  }, [authenticated, router]);
+    // Guard on `ready`: before Privy hydrates, authenticated is false on the first
+    // paint — redirecting then bounces to /welcome and STRIPS query params (e.g.
+    // ?recap=1). Wait until Privy is ready so we only redirect genuinely-signed-out users.
+    if (ready && !authenticated) router.push("/welcome");
+  }, [ready, authenticated, router]);
 
   useEffect(() => {
     const load = async () => {
