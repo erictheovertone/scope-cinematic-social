@@ -27,5 +27,8 @@ export function feedImage(url: string | null | undefined, width: number, quality
   if (!IMAGE_EXT.test(path)) return url;
 
   const transformed = url.split('?')[0].replace(PUBLIC_OBJECT, '/storage/v1/render/image/public/');
-  return `${transformed}?width=${width}&quality=${quality}&format=webp`;
+  // resize=contain: width-only transforms otherwise keep the ORIGINAL height (distorting the
+  // aspect → the normalized crop render lands zoomed/off). contain scales proportionally, so
+  // getCropStyle (untouched) gets a right-aspect image and renders the crop exactly as full-res.
+  return `${transformed}?width=${width}&quality=${quality}&format=webp&resize=contain`;
 }
