@@ -13,37 +13,7 @@ import FrameLoader from "@/components/FrameLoader";
 import { useEconomy } from "@/components/EconomyProvider";
 import { economyPreviewEnabled } from "@/lib/economy/flag";
 import { DIVIDER_ORDER, DIVIDER_LINES, dividerTier, isDividerUnlocked, TIER_UNLOCK_LABEL, type DividerLineKey } from "@/lib/economy/dividerLines";
-
-// Client-side downscale before upload (avatars were the heaviest raw images) — same
-// util the setup / preferences / create flows use.
-async function compressImage(file: File): Promise<File> {
-  return new Promise((resolve) => {
-    const MAX = 1920, QUALITY = 0.82;
-    const url = URL.createObjectURL(file);
-    const img = new Image();
-    img.onload = () => {
-      URL.revokeObjectURL(url);
-      try {
-        let { width, height } = img;
-        if (width > MAX || height > MAX) {
-          if (width >= height) { height = Math.round((height * MAX) / width); width = MAX; }
-          else { width = Math.round((width * MAX) / height); height = MAX; }
-        }
-        const canvas = document.createElement('canvas');
-        canvas.width = width; canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) { resolve(file); return; }
-        ctx.drawImage(img, 0, 0, width, height);
-        canvas.toBlob((blob) => {
-          if (!blob) { resolve(file); return; }
-          resolve(new File([blob], file.name.replace(/\.[^.]+$/, '') + '-compressed.jpg', { type: 'image/jpeg' }));
-        }, 'image/jpeg', QUALITY);
-      } catch { resolve(file); }
-    };
-    img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
-    img.src = url;
-  });
-}
+import PfpCropModal from "@/components/PfpCropModal";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -93,6 +63,7 @@ export default function EditProfilePage() {
   const [profileSaved, setProfileSaved] = useState(false);
   const [profileError, setProfileError] = useState<string | null>(null);
   const [photoUploading, setPhotoUploading] = useState(false);
+  const [cropFile, setCropFile] = useState<File | null>(null);
 
   // KIT
   const [kitCamera, setKitCamera] = useState('');
@@ -180,20 +151,26 @@ export default function EditProfilePage() {
     setIsDirty(true);     // hydrate the top-right SAVE button (any edit change does)
   };
 
-  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Photo selected → open the square crop UI (bake happens on confirm).
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !user || !sbUserId) return;
     e.target.value = '';
-    // OPTIMISTIC: show the picked photo INSTANTLY via a local object URL (feedImage
-    // passes blob: URLs through unchanged) — no wait for the upload round-trip.
-    const localUrl = URL.createObjectURL(file);
+    if (file) setCropFile(file);
+  };
+
+  // Crop confirmed → a small baked SQUARE blob. Optimistic preview + upload; SAVE persists.
+  const handleCropConfirm = async (blob: Blob) => {
+    setCropFile(null);
+    if (!user || !sbUserId) return;
+    // OPTIMISTIC: show the baked square INSTANTLY (feedImage passes blob: through unchanged).
+    const localUrl = URL.createObjectURL(blob);
     setProfileImageUrl(localUrl);
     setIsDirty(true);   // the PFP is a change like any other → SAVE appears; persisted on SAVE
     setPhotoUploading(true);
     try {
-      // Downscale before upload (avatars were the app's heaviest images — 1–2.5MB raw).
-      const compressed = await compressImage(file);
-      const url = await uploadImage(compressed, 'profile-images', user.id);
+      // The baked square is already small (512² JPEG) → fast upload; cacheControl set by uploadImage.
+      const cropped = new File([blob], `avatar-${Date.now()}.jpg`, { type: blob.type || 'image/jpeg' });
+      const url = await uploadImage(cropped, 'profile-images', user.id);
       setProfileImageUrl(url);          // swap blob → real URL (feedImage sizes it on display)
       URL.revokeObjectURL(localUrl);
       // No auto-save — SAVE (handleSaveProfile) persists it, consistent with the text fields.
@@ -362,6 +339,9 @@ export default function EditProfilePage() {
           </button>
         </div>
         <input ref={photoInputRef} type="file" accept="image/*" onChange={handlePhotoChange} style={{ display: 'none' }} />
+        {cropFile && (
+          <PfpCropModal file={cropFile} onCancel={() => setCropFile(null)} onConfirm={handleCropConfirm} />
+        )}
 
         <div style={{ marginBottom: 14 }}>
           <label style={LABEL}>DISPLAY NAME</label>
