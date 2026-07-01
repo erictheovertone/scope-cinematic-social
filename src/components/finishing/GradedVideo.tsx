@@ -28,6 +28,7 @@ import { hasLookEdits } from "@/lib/editor/bakeLook";
 import { lookById } from "./looksCatalog";
 import { ensureLut } from "@/lib/editor/lut";
 import { registerAutoplayVideo, reportVisibility } from "@/lib/videoPlayback";
+import { feedImage } from "@/lib/mediaUrl";
 
 const Pipeline = dynamic(() => import("./Pipeline"), { ssr: false });
 
@@ -44,6 +45,9 @@ class PipelineBoundary extends Component<{ onError: () => void; children: React.
 interface Props {
   url: string;
   posterUrl?: string | null;
+  /** Resize the at-rest poster IMAGE to this display width via feedImage (loading-only;
+   *  video element + crop render untouched). Unset → full-res poster. */
+  posterWidth?: number;
   /** Pre-baked 3–5s graded MUTED clip (post.autoplay_clip_url). Autoplay loops THIS
    *  as a plain <video> — no pipeline. Null/absent → autoplay shows the poster. */
   clipUrl?: string | null;
@@ -61,7 +65,7 @@ interface Props {
 }
 
 export default function GradedVideo({
-  url, posterUrl, clipUrl, editParams, cropX = 0, cropY = 0, cropWidth = 1, cropHeight = 1,
+  url, posterUrl, posterWidth, clipUrl, editParams, cropX = 0, cropY = 0, cropWidth = 1, cropHeight = 1,
   autoplayFlag = false, gridMode = false, forcePlay = false, style, onClick, showSoundToggle = false,
 }: Props) {
   const id = useId();
@@ -212,7 +216,7 @@ export default function GradedVideo({
     <div ref={boxRef} onClick={onClick} style={{ position: "relative", overflow: "hidden", cursor: onClick ? "pointer" : "default", background: "#0a0a0a", ...style }}>
       {/* Graded poster — the at-rest layer, and what shows until a tile actually plays. */}
       {posterUrl && (
-        <img src={posterUrl} alt="" draggable={false} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+        <img src={posterWidth ? feedImage(posterUrl, posterWidth) : posterUrl} alt="" draggable={false} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
       )}
 
       {/* The <video> — for AUTOPLAY this is the pre-baked graded CLIP (plain, no

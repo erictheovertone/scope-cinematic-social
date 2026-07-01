@@ -71,7 +71,7 @@ export const DATABASE_PROVIDERS = {
 export const FILE_CONSTRAINTS = {
   maxFileSize: 50 * 1024 * 1024, // 50MB
   allowedImageTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/heic'],
-  allowedVideoTypes: ['video/mp4', 'video/webm', 'video/quicktime'],
+  allowedVideoTypes: ['video/mp4', 'video/webm'], // .mov/quicktime rejected at upload (handleMediaSelect); not web-playable,
   maxVideoDuration: 60, // seconds
   imageQuality: 0.8, // compression quality
   thumbnailSize: { width: 300, height: 300 }

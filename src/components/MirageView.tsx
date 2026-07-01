@@ -302,6 +302,7 @@ export default function MirageView({ onClose }: { onClose: () => void }) {
                       <GradedVideo
                         url={post.media_urls[0]}
                         posterUrl={post.poster_url ?? post.thumbnail_url}
+                        posterWidth={750}
                         clipUrl={post.autoplay_clip_url}
                         editParams={post.edit_params}
                         autoplayFlag={post.autoplay !== false}
@@ -314,6 +315,7 @@ export default function MirageView({ onClose }: { onClose: () => void }) {
                     <GradedVideo
                       url={post.media_urls[0]}
                       posterUrl={post.poster_url ?? post.thumbnail_url}
+                      posterWidth={750}
                       clipUrl={post.autoplay_clip_url}
                       editParams={post.edit_params}
                       autoplayFlag={post.autoplay !== false}

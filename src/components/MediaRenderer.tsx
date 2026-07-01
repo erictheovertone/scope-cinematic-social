@@ -103,7 +103,7 @@ export default function MediaRenderer({
       <video
         ref={videoRef}
         src={near ? url : undefined}       /* lazy: no bytes until near-viewport; dropped when scrolled away */
-        poster={thumbnailUrl ?? undefined}
+        poster={thumbnailUrl ? (width ? feedImage(thumbnailUrl, width) : thumbnailUrl) : undefined}
         preload="none"
         muted={muted}
         loop

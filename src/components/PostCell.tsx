@@ -62,6 +62,7 @@ export default function PostCell({ post, layoutId, index, onClick, showSoundTogg
             <GradedVideo
               url={post.media_urls[0]}
               posterUrl={post.poster_url ?? post.thumbnail_url}
+              posterWidth={600}
               clipUrl={post.autoplay_clip_url}
               editParams={post.edit_params}
               autoplayFlag={post.autoplay !== false}

@@ -448,6 +448,13 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
     const newMedia: MediaItem[] = [];
 
     for (const file of files) {
+      // .mov / QuickTime isn't web-playable (Chrome/Firefox can't decode it). Reject at
+      // upload. INTERIM GUARD: auto-transcode of .mov is deferred to the async-media-bake
+      // build, which will replace this rejection with a convert-on-upload "just works" flow.
+      if (file.type === "video/quicktime" || file.name.toLowerCase().endsWith(".mov")) {
+        setVideoError("Please use MP4 — QuickTime (.MOV) isn't web-playable yet.");
+        continue;
+      }
       if (file.type.startsWith("video/")) {
         if (file.size > VIDEO_MAX_BYTES) {
           setVideoError("Video must be under 50MB. Please trim or compress before uploading.");
@@ -1088,7 +1095,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
             >
               Choose from Library
             </button>
-            <input ref={fileInputRef} type="file" multiple accept="image/*,video/*" onChange={handleMediaSelect} className="hidden" />
+            <input ref={fileInputRef} type="file" multiple accept="image/*,video/mp4,video/webm" onChange={handleMediaSelect} className="hidden" />
           </div>
         ) : (
           <div className="flex-1">
@@ -1118,7 +1125,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
             <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-9)', color: '#444444', textTransform: 'uppercase', letterSpacing: '0.04em', textAlign: 'center' }}>
               Videos up to 50MB · MP4 recommended
             </p>
-            <input ref={fileInputRef} type="file" multiple accept="image/*,video/*" onChange={handleMediaSelect} className="hidden" />
+            <input ref={fileInputRef} type="file" multiple accept="image/*,video/mp4,video/webm" onChange={handleMediaSelect} className="hidden" />
           </div>
         )}
       </div>
