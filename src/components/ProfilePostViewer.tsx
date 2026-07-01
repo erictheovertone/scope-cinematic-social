@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { feedImage } from "@/lib/mediaUrl";
 import { useRouter } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
 import PressPop from "@/components/PressPop";
@@ -421,7 +422,7 @@ function PostViewerItem({
                     style={{ width: 16, height: 16, borderRadius: "50%", background: "#2a2a2a", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", cursor: c.username ? "pointer" : "default" }}
                   >
                     {c.profile_image_url
-                      ? <img src={c.profile_image_url} alt={c.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      ? <img src={feedImage(c.profile_image_url, 96)} alt={c.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                       : <span style={{ ...SKB, fontSize: 'var(--fs-6)', color: "white", textTransform: "uppercase" }}>{c.username?.[0] ?? "?"}</span>
                     }
                   </div>

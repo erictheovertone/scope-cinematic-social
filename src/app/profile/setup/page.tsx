@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { feedImage } from "@/lib/mediaUrl";
 import { useRouter } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
 import { saveProfile, uploadImage, getUserByPrivyId, getProfileByUsername, syncUserWithSupabase } from "@/lib/userService";
@@ -176,7 +177,7 @@ export default function ProfileSetup() {
         style={{ position: 'absolute', left: 122, top: 146, width: 130, height: 130, border: '1px solid white', background: 'transparent', cursor: 'pointer', overflow: 'hidden' }}
       >
         {profileImage ? (
-          <img src={profileImage} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+          <img src={feedImage(profileImage, 320)} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
         ) : (
           <>
             {/* Vertical line */}

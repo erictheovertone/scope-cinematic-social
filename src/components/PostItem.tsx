@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, memo } from "react";
+import { feedImage } from "@/lib/mediaUrl";
 import { useRouter } from "next/navigation";
 import FirstCutChip from "@/components/economy/FirstCutChip";
 import PressPop from "@/components/PressPop";
@@ -200,7 +201,7 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments }: PostIt
     <>
       <div style={{ position: 'absolute', top: '6px', left: '6px', display: 'flex', alignItems: 'center', gap: '4px', zIndex: 10 }}>
         {post.profile_image_url && (
-          <img src={post.profile_image_url} style={{ width: '14px', height: '14px', borderRadius: '50%', objectFit: 'cover' }} />
+          <img src={feedImage(post.profile_image_url, 96)} style={{ width: '14px', height: '14px', borderRadius: '50%', objectFit: 'cover' }} />
         )}
         <span
           onClick={(e) => { e.stopPropagation(); router.push('/profile/' + post.username); }}

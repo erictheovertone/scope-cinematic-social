@@ -17,6 +17,7 @@
 // Rendered in place of the real CollectSheet only when economyPreviewEnabled().
 
 import { useEffect, useState, useRef } from 'react';
+import { feedImage } from "@/lib/mediaUrl";
 import { usePrivy } from '@privy-io/react-auth';
 import { useEconomy } from '@/components/EconomyProvider';
 import { economyPreviewEnabled } from '@/lib/economy/flag';
@@ -742,7 +743,7 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
               return (
                 <div key={i} style={{ marginLeft: i === 0 ? 0 : -7 }}>
                   {slot && slot.avatarUrl ? (
-                    <img src={slot.avatarUrl} alt={slot.handle} style={{ width: 18, height: 18, borderRadius: '50%', border: '1px solid #080808', display: 'block', opacity: slot.holding ? 1 : 0.3, filter: slot.holding ? 'none' : 'grayscale(1)' }} />
+                    <img src={feedImage(slot.avatarUrl, 96)} alt={slot.handle} style={{ width: 18, height: 18, borderRadius: '50%', border: '1px solid #080808', display: 'block', opacity: slot.holding ? 1 : 0.3, filter: slot.holding ? 'none' : 'grayscale(1)' }} />
                   ) : (
                     <div style={{ width: 18, height: 18, borderRadius: '50%', border: '1px dashed rgba(255,255,255,0.25)', background: 'transparent' }} />
                   )}
@@ -770,7 +771,7 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
                       <span style={{ ...SKR, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>OPEN</span>
                     ) : (
                       <>
-                        {slot!.avatarUrl && <img src={slot!.avatarUrl} alt="" style={{ width: 24, height: 24, borderRadius: '50%' }} />}
+                        {slot!.avatarUrl && <img src={feedImage(slot!.avatarUrl, 96)} alt="" style={{ width: 24, height: 24, borderRadius: '50%' }} />}
                         <span style={{ ...SKR, fontSize: 'var(--fs-10)', color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.04em' }}>@{slot!.handle}</span>
                         <span style={{ ...SKB, fontSize: 'var(--fs-8)', marginLeft: 'auto', color: lit ? '#FF0000' : 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>{lit ? 'HOLDING' : 'DEPARTED'}</span>
                       </>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { feedImage } from "@/lib/mediaUrl";
 import { useRouter } from "next/navigation";
 import { getFollowers, getFollowing } from "@/lib/userService";
 import FrameLoader from "@/components/FrameLoader";
@@ -78,7 +79,7 @@ export default function FollowListModal({ type, privyUserId, onClose }: Props) {
               >
                 {p.profile_image_url ? (
                   <img
-                    src={p.profile_image_url}
+                    src={feedImage(p.profile_image_url, 96)}
                     alt={p.username}
                     className="w-full h-full object-cover"
                   />

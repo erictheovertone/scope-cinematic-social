@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { feedImage } from "@/lib/mediaUrl";
 import { useRouter } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
 import {
@@ -307,7 +308,7 @@ export default function EditProfilePage() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 20 }}>
           <div style={{ width: 56, height: 56, flexShrink: 0, overflow: 'hidden', background: '#222', cursor: 'pointer' }} onClick={() => photoInputRef.current?.click()}>
             {profileImageUrl
-              ? <img src={profileImageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              ? <img src={feedImage(profileImageUrl, 160)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
               : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span style={{ ...SKB, fontSize: 'var(--fs-22)', color: 'white' }}>{(displayName || username || '?')[0].toUpperCase()}</span></div>
             }
           </div>

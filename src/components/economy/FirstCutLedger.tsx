@@ -15,6 +15,7 @@
 // #FF0000 (impact only), grey at rest, SK-Modernist Bold, sharp corners.
 
 import { useState, useEffect, useRef } from 'react';
+import { feedImage } from "@/lib/mediaUrl";
 import { createPortal } from 'react-dom';
 import { BADGES } from '@/lib/economy/badges';
 import { useFirstCutLedger, FIRST_CUT_SLOTS, onFirstCutEarned } from '@/lib/firstCutLedger';
@@ -142,7 +143,7 @@ export default function FirstCutLedger({
                 {/* PFP (filled) or outline circle (open) */}
                 {h ? (
                   h.avatarUrl
-                    ? <img src={h.avatarUrl} alt="" style={{ width: 22, height: 22, objectFit: 'cover', display: 'block', flexShrink: 0 }} />
+                    ? <img src={feedImage(h.avatarUrl, 96)} alt="" style={{ width: 22, height: 22, objectFit: 'cover', display: 'block', flexShrink: 0 }} />
                     : <div style={{ width: 22, height: 22, background: '#1a1a1a', flexShrink: 0 }} />
                 ) : (
                   <div style={{ width: 22, height: 22, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.25)', flexShrink: 0 }} />

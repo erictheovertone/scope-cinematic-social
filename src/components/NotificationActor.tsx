@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { feedImage } from "@/lib/mediaUrl";
 
 /**
  * Shared notification-actor rendering — ONE place every notification type draws
@@ -46,7 +47,7 @@ export function NotificationActorAvatar({ handle, avatar, size = 24, onNavigate 
       }}
     >
       {avatar ? (
-        <img src={avatar} alt={handle ?? ""} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        <img src={feedImage(avatar, 96)} alt={handle ?? ""} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
       ) : (
         <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "white" }}>
           {handle?.[0]?.toUpperCase() ?? "?"}

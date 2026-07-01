@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { feedImage } from "@/lib/mediaUrl";
 import { useParams, useRouter } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
 import {
@@ -241,7 +242,7 @@ export default function PublicProfilePage() {
               by the BannerBadgeStrip + Piece 2's divider colour. */}
           <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', zIndex: 1 }}>
             {profile?.profile_image_url
-              ? <img src={profile.profile_image_url} alt={username} style={{ width: 80, height: 80, objectFit: 'cover', display: 'block' }} />
+              ? <img src={feedImage(profile.profile_image_url, 160)} alt={username} style={{ width: 80, height: 80, objectFit: 'cover', display: 'block' }} />
               : <div style={{ width: 80, height: 80, backgroundColor: '#222', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span style={{ ...SKB, fontSize: 'var(--fs-28)', color: 'white' }}>{username?.[0]?.toUpperCase() ?? '?'}</span></div>
             }
           </div>

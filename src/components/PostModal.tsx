@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { feedImage } from "@/lib/mediaUrl";
 import { useRouter } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
 import {
@@ -406,7 +407,7 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
                 }}
               >
                 {post.profile_image_url ? (
-                  <img src={post.profile_image_url} alt={post.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  <img src={feedImage(post.profile_image_url, 96)} alt={post.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 ) : (
                   <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "white", textTransform: "uppercase" }}>
                     {post.username?.[0] ?? "?"}
@@ -594,7 +595,7 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
                         }}
                       >
                         {c.profile_image_url ? (
-                          <img src={c.profile_image_url} alt={c.username} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                          <img src={feedImage(c.profile_image_url, 96)} alt={c.username} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                         ) : (
                           <span style={{ ...SKB, fontSize: 'var(--fs-7)', color: "white", textTransform: "uppercase", lineHeight: 1 }}>
                             {c.username?.[0] ?? "?"}

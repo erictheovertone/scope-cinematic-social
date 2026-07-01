@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { feedImage } from "@/lib/mediaUrl";
 import { useRouter, useSearchParams } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
 import { getUserByPrivyId, getProfile, getFollowerCount, getFollowingCount, getUserDecks, createDeck, getProfileLinks, isProMember, type Deck, type ProfileLink } from "@/lib/userService";
@@ -391,7 +392,7 @@ const userLayoutId = stableLayoutId;
 
         <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', zIndex: 1 }}>
           {userProfile.profileImage ? (
-            <img src={userProfile.profileImage} alt="Profile" style={{ width: 80, height: 80, objectFit: 'cover', display: 'block' }} />
+            <img src={feedImage(userProfile.profileImage, 160)} alt="Profile" style={{ width: 80, height: 80, objectFit: 'cover', display: 'block' }} />
           ) : (
             <div style={{ width: 80, height: 80, backgroundColor: '#222' }} />
           )}
