@@ -63,17 +63,23 @@ export default function PfpCropModal({ file, onCancel, onConfirm }: Props) {
   const natRef = useRef(nat); natRef.current = nat;
   const minRef = useRef(minScale); minRef.current = minScale;
 
-  useEffect(() => () => URL.revokeObjectURL(url), [url]);
-
-  // Fit-to-COVER on load: the smaller dimension fills the frame (larger overflows → cropped).
-  const onImgLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
-    const w = e.currentTarget.naturalWidth, h = e.currentTarget.naturalHeight;
-    const cover = FRAME / Math.min(w, h);
-    setNat({ w, h });
-    setMinScale(cover);
-    setScale(cover);
-    setOffset({ x: (FRAME - w * cover) / 2, y: (FRAME - h * cover) / 2 }); // centred
-  };
+  // Load the source dimensions IMPERATIVELY — a JSX onLoad can miss the event for a
+  // blob: URL that decodes before React binds the handler, leaving the image invisible.
+  // Fit-to-COVER: the smaller dimension fills the frame (larger overflows → cropped).
+  useEffect(() => {
+    const img = new Image();
+    img.onload = () => {
+      const w = img.naturalWidth, h = img.naturalHeight;
+      if (!w || !h) return;
+      const cover = FRAME / Math.min(w, h);
+      setNat({ w, h });
+      setMinScale(cover);
+      setScale(cover);
+      setOffset({ x: (FRAME - w * cover) / 2, y: (FRAME - h * cover) / 2 }); // centred
+    };
+    img.src = url;
+    return () => URL.revokeObjectURL(url);
+  }, [url]);
 
   const clampOffset = (x: number, y: number, s: number) => {
     const n = natRef.current; if (!n) return { x, y };
@@ -172,8 +178,6 @@ export default function PfpCropModal({ file, onCancel, onConfirm }: Props) {
             style={{ position: 'absolute', left: offset.x, top: offset.y, width: nat.w * scale, height: nat.h * scale, maxWidth: 'none', userSelect: 'none', pointerEvents: 'none', display: 'block' }}
           />
         )}
-        {/* hidden loader img to read natural dims before showing the positioned one */}
-        {!nat && <img src={url} alt="" onLoad={onImgLoad} style={{ position: 'absolute', opacity: 0, width: 1, height: 1 }} />}
         {/* circular guide so the user frames for the round avatar */}
         <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', boxShadow: '0 0 0 9999px rgba(0,0,0,0.35)', pointerEvents: 'none' }} />
       </div>
