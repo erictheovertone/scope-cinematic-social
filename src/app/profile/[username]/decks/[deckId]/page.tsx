@@ -758,7 +758,7 @@ export default function DeckDetailPage() {
               onClick={() => handleItemTap(item)}
             >
               {item.media_url ? (
-                <MediaRenderer url={item.media_url} autoplay={true} />
+                <MediaRenderer url={item.media_url} autoplay={true} width={600} />
               ) : (
                 <div className="w-full h-full bg-[#1a1a1a]" />
               )}
@@ -1040,7 +1040,7 @@ export default function DeckDetailPage() {
                       style={{ aspectRatio: getAspectRatio(layoutId, index) }}
                     >
                       {item.media_url ? (
-                        <MediaRenderer url={item.media_url} autoplay={false} />
+                        <MediaRenderer url={item.media_url} autoplay={false} width={600} />
                       ) : (
                         <div className="w-full h-full bg-[#1a1a1a]" />
                       )}

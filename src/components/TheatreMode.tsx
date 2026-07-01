@@ -320,6 +320,7 @@ export default function TheatreMode({
             ) : (
               <MediaRenderer
                 url={mediaUrl ?? ''}
+                width={1280}
                 mediaType={f(post, 'media_type')}
                 thumbnailUrl={poster ?? null}
                 autoplay

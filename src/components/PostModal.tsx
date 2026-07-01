@@ -363,6 +363,7 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
                 ) : (
                   <MediaRenderer
                     url={post.media_urls[0]}
+                    width={1280}
                     mediaType={post.media_type}
                     caption={post.caption || ""}
                     thumbnailUrl={post.poster_url ?? post.thumbnail_url}

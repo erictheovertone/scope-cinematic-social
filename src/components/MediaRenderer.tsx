@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
+import { feedImage } from "@/lib/mediaUrl";
 
 interface MediaRendererProps {
   url: string;
@@ -16,6 +17,9 @@ interface MediaRendererProps {
   cropY?: number;
   cropWidth?: number;
   cropHeight?: number;
+  /** Request a resized WebP at this display width (retina-aware). Unset → full-res
+   *  original (editor / any un-migrated caller). Images only; video is unaffected. */
+  width?: number;
 }
 
 function isVideo(url: string, mediaType?: string): boolean {
@@ -44,7 +48,7 @@ function getCropStyle(cropX = 0, cropY = 0, cropWidth = 1, cropHeight = 1): Reac
 export default function MediaRenderer({
   url, mediaType, caption, autoplay = false,
   showSoundToggle = false, className, style, onClick, thumbnailUrl,
-  cropX, cropY, cropWidth, cropHeight,
+  cropX, cropY, cropWidth, cropHeight, width,
 }: MediaRendererProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [muted, setMuted] = useState(true);
@@ -73,7 +77,7 @@ export default function MediaRenderer({
   if (!video) {
     return (
       <img
-        src={url}
+        src={width ? feedImage(url, width) : url}
         alt="" /* never the caption — alt text paints as a visible "ghost
                   caption" over slow-loading media, duplicating the real one */
         className={className}

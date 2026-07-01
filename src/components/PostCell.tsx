@@ -77,6 +77,7 @@ export default function PostCell({ post, layoutId, index, onClick, showSoundTogg
           ) : (
             <MediaRenderer
               url={post.media_urls[0]}
+              width={600}
               mediaType={post.media_type}
               caption={post.caption || 'Post'}
               thumbnailUrl={post.thumbnail_url}
