@@ -2,7 +2,7 @@
 
 import { usePrivy } from "@privy-io/react-auth";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { getAllPosts } from "@/lib/postsService";
 import PostItem from "@/components/PostItem";
@@ -33,12 +33,13 @@ export default function Home() {
   // the feed reflows (another post may collapse above it).
   const anchorRef = useRef<{ id: string; top: number } | null>(null);
 
-  const toggleComments = (postId: string) => {
+  // Stable (refs + setState only) so PostItem's memo holds across home re-renders.
+  const toggleComments = useCallback((postId: string) => {
     const container = feedRef.current;
     const el = container?.querySelector(`[data-post-id="${postId}"]`) as HTMLElement | null;
     if (el) anchorRef.current = { id: postId, top: el.getBoundingClientRect().top };
     setOpenCommentsPostId((prev) => (prev === postId ? null : postId));
-  };
+  }, []);
 
   // Pin the tapped post in place across the 0.32s comment-section reflow. We
   // re-anchor every frame for the animation's duration so any collapse above
@@ -434,9 +435,9 @@ export default function Home() {
             <div key={post.id} data-post-id={post.id} style={getPostAnimStyle(index)}>
               <PostItem
                 post={post}
-                onImageClick={() => setLightboxPost(post)}
+                onImageClick={setLightboxPost}
                 commentsOpen={openCommentsPostId === post.id}
-                onToggleComments={() => toggleComments(post.id)}
+                onToggleComments={toggleComments}
               />
             </div>
           ))}

@@ -1,6 +1,28 @@
 import { supabase } from './supabase/client'
 import type { User, Profile } from './supabase'
 
+// ── Session cache + in-flight dedup for profile/user reads ───────────────────
+//
+// The feed fetched the viewer's profile/user PER CARD (46 posts × re-render churn
+// = ~2,000 identical requests). These rows barely change mid-session, so we cache
+// the resolved value (session-lived — no TTL) and, crucially, return the SAME
+// in-flight promise for concurrent callers so N simultaneous reads = 1 round-trip.
+// Writes invalidate the key so edits still show. Only successful non-null results
+// are cached (a null/error is retriable — never a stuck empty entry).
+const profileCache = new Map<string, Profile>();
+const profileInflight = new Map<string, Promise<Profile | null>>();
+const userCache = new Map<string, User>();
+const userInflight = new Map<string, Promise<User | null>>();
+
+/** Bust a cached profile (call after any write to profiles.<user_id>). */
+export const invalidateProfileCache = (userId: string): void => {
+  profileCache.delete(userId); profileInflight.delete(userId);
+};
+/** Bust a cached user (call after a write to the users row). */
+export const invalidateUserCache = (privyId: string): void => {
+  userCache.delete(privyId); userInflight.delete(privyId);
+};
+
 function sbErr(error: unknown): string {
   if (!error || typeof error !== 'object') return String(error);
   const e = error as Record<string, unknown>;
@@ -27,6 +49,8 @@ export const syncUserWithSupabase = async (privyUser: { id: string; wallet?: { a
     }
 
     console.log('[syncUserWithSupabase] upsert result — id:', data?.id, 'privy_id:', data?.privy_id);
+    invalidateUserCache(privyUser.id); // fresh sync (e.g. wallet linked) → drop stale cache
+    if (data) userCache.set(privyUser.id, data as User);
     return data;
   } catch (error) {
     console.error('[syncUserWithSupabase] failed:', sbErr(error));
@@ -75,6 +99,7 @@ export const saveProfile = async (userId: string, profileData: {
     .single()
 
   if (error) throw error
+  invalidateProfileCache(userId)
   return data
 }
 
@@ -83,31 +108,42 @@ export const saveGridLayout = async (userId: string, gridLayout: string): Promis
     .from('profiles')
     .upsert({ user_id: userId, grid_layout: gridLayout }, { onConflict: 'user_id' })
   if (error) throw error
+  invalidateProfileCache(userId)
 }
 
 export const getProfile = async (userId: string): Promise<Profile | null> => {
-  try {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('user_id', userId)
-      .single()
+  const cached = profileCache.get(userId)
+  if (cached) return cached
+  const inflight = profileInflight.get(userId)
+  if (inflight) return inflight
 
-    if (error && error.code !== 'PGRST116') {
-      throw error
+  const p = (async (): Promise<Profile | null> => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .single()
+      if (error && error.code !== 'PGRST116') throw error
+      const val = (data as Profile) || null
+      if (val) profileCache.set(userId, val)   // cache only real hits (null is retriable)
+      return val
+    } catch (error) {
+      console.error('Error fetching profile:', sbErr(error))
+      return null
+    } finally {
+      profileInflight.delete(userId)
     }
-
-    return data || null
-  } catch (error) {
-    console.error('Error fetching profile:', sbErr(error))
-    return null
-  }
+  })()
+  profileInflight.set(userId, p)
+  return p
 }
 
 /** Reset the recap cutoff to now (called on recap dismiss). Needs profiles.last_seen_at. */
 export const setLastSeen = async (userId: string): Promise<void> => {
   try {
     await supabase.from('profiles').update({ last_seen_at: new Date().toISOString() }).eq('user_id', userId)
+    invalidateProfileCache(userId)
   } catch (error) {
     console.error('Error setting last_seen_at:', sbErr(error))
   }
@@ -117,6 +153,7 @@ export const setLastSeen = async (userId: string): Promise<void> => {
 export const setShowRecap = async (userId: string, show: boolean): Promise<void> => {
   try {
     await supabase.from('profiles').update({ show_recap: show }).eq('user_id', userId)
+    invalidateProfileCache(userId)
   } catch (error) {
     console.error('Error setting show_recap:', sbErr(error))
   }
@@ -202,22 +239,31 @@ export const uploadImage = async (file: File, bucket: string = 'profile-images',
 }
 
 export const getUserByPrivyId = async (privyId: string): Promise<User | null> => {
-  try {
-    const { data, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('privy_id', privyId)
-      .single()
+  const cached = userCache.get(privyId)
+  if (cached) return cached
+  const inflight = userInflight.get(privyId)
+  if (inflight) return inflight
 
-    if (error && error.code !== 'PGRST116') {
-      throw error
+  const p = (async (): Promise<User | null> => {
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('privy_id', privyId)
+        .single()
+      if (error && error.code !== 'PGRST116') throw error
+      const val = (data as User) || null
+      if (val) userCache.set(privyId, val)   // cache only real hits (null is retriable)
+      return val
+    } catch (error) {
+      console.error('Error fetching user by Privy ID:', sbErr(error))
+      return null
+    } finally {
+      userInflight.delete(privyId)
     }
-
-    return data || null
-  } catch (error) {
-    console.error('Error fetching user by Privy ID:', sbErr(error))
-    return null
-  }
+  })()
+  userInflight.set(privyId, p)
+  return p
 }
 
 export const getUserById = async (userId: string): Promise<User | null> => {
@@ -825,6 +871,7 @@ export const updateProfileFields = async (
     .update({ ...fields, updated_at: new Date().toISOString() })
     .eq('user_id', supabaseUserId);
   if (error) throw error;
+  invalidateProfileCache(supabaseUserId);
 };
 
 export const addProfileLink = async (

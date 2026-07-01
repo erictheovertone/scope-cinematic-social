@@ -54,11 +54,13 @@ interface Post {
 
 interface PostItemProps {
   post: Post;
-  onImageClick?: () => void;
+  /** Receives the post so the feed can pass a STABLE handler (memo holds). */
+  onImageClick?: (post: Post) => void;
   /** Controlled inline-comments open state (one-at-a-time, owned by the feed).
    *  Falls back to internal state if the feed doesn't control it. */
   commentsOpen?: boolean;
-  onToggleComments?: () => void;
+  /** Receives the post id so the feed can pass a STABLE handler (memo holds). */
+  onToggleComments?: (postId: string) => void;
 }
 
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -73,7 +75,9 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments }: PostIt
   const [internalComments, setInternalComments] = useState(false);
   // Open state is controlled by the feed (one-at-a-time) when provided.
   const showComments = commentsOpen ?? internalComments;
-  const toggleComments = onToggleComments ?? (() => setInternalComments((v) => !v));
+  const toggleComments = onToggleComments ? () => onToggleComments(post.id) : (() => setInternalComments((v) => !v));
+  // Internal wrapper so the feed's onImageClick prop can stay stable (post passed here).
+  const openLightbox = onImageClick ? () => onImageClick(post) : undefined;
   const [newComment, setNewComment] = useState("");
   const [loading, setLoading] = useState(false);
   const [viewerUsername, setViewerUsername] = useState("");
@@ -233,7 +237,7 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments }: PostIt
       cropHeight={post.crop_height ?? 1}
       showSoundToggle={true}
       style={{ width: '100%', height: '100%' }}
-      onClick={onImageClick}
+      onClick={openLightbox}
     />
   ) : (
     <MediaRenderer
@@ -245,7 +249,7 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments }: PostIt
       autoplay={post.autoplay !== false}
       showSoundToggle={true}
       style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-      onClick={onImageClick}
+      onClick={openLightbox}
     />
   );
 
@@ -255,7 +259,7 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments }: PostIt
       {/* ── Image with overlaid avatar + username ── */}
       {is43 ? (
         <PillarboxFrame
-          onClick={onImageClick}
+          onClick={openLightbox}
           cursor={onImageClick ? 'pointer' : 'default'}
           overlays={mediaOverlays}
         >
@@ -263,7 +267,7 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments }: PostIt
         </PillarboxFrame>
       ) : (
         <div
-          onClick={onImageClick}
+          onClick={openLightbox}
           style={{
             position: 'relative',
             width: '100%',
