@@ -193,7 +193,7 @@ export const uploadImage = async (file: File, bucket: string = 'profile-images',
 
   const { error } = await supabase.storage
     .from(bucket)
-    .upload(fileName, file, { cacheControl: '3600', upsert: false })
+    .upload(fileName, file, { cacheControl: '31536000', upsert: false }) // 1yr — filenames are unique, safe to cache immutably
 
   if (error) throw error
 

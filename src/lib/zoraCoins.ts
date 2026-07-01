@@ -116,7 +116,7 @@ async function uploadCoinMetadata(args: {
   const path = `${args.postId}.json`;
   const { error } = await supabase.storage
     .from("coin-metadata")
-    .upload(path, blob, { cacheControl: "3600", upsert: true, contentType: "application/json" });
+    .upload(path, blob, { cacheControl: "31536000", upsert: true, contentType: "application/json" });
   if (error) throw error;
 
   const { data } = supabase.storage.from("coin-metadata").getPublicUrl(path);

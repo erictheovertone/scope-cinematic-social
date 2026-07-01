@@ -107,7 +107,7 @@ export default function LinkManager() {
       const blob = await new Promise<Blob>((res) => canvas.toBlob((b) => res(b!), "image/jpeg", 0.82));
 
       const filename = `link-thumb-${Date.now()}.jpg`;
-      const { data, error } = await supabase.storage.from("profile-images").upload(filename, blob, { contentType: "image/jpeg", upsert: true });
+      const { data, error } = await supabase.storage.from("profile-images").upload(filename, blob, { contentType: "image/jpeg", upsert: true, cacheControl: "31536000" });
       if (error) throw error;
       const { data: pub } = supabase.storage.from("profile-images").getPublicUrl(data.path);
       markDirty(prev => prev.map((l, j) => j === idx ? { ...l, custom_thumbnail_url: pub.publicUrl } : l));

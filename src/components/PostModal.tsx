@@ -734,7 +734,7 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
                       try {
                         const ext = file.name.split(".").pop();
                         const path = `${ownerSbId}/${Date.now()}-thumb.${ext}`;
-                        await supabase.storage.from("post-media").upload(path, file, { upsert: true });
+                        await supabase.storage.from("post-media").upload(path, file, { upsert: true, cacheControl: "31536000" });
                         const { data: urlData } = supabase.storage.from("post-media").getPublicUrl(path);
                         const newThumbUrl = urlData.publicUrl;
                         if (post.thumbnail_url) {

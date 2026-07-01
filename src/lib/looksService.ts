@@ -75,7 +75,7 @@ export async function uploadLookThumb(blob: Blob, privyUserId: string, lookId: s
   const prefix = privyUserId.replace(/[^a-zA-Z0-9-]/g, '_');
   const path = `look-thumbs/${prefix}/${lookId}.jpg`;
   const file = new File([blob], `${lookId}.jpg`, { type: 'image/jpeg' });
-  const { error } = await supabase.storage.from(THUMB_BUCKET).upload(path, file, { cacheControl: '3600', upsert: true });
+  const { error } = await supabase.storage.from(THUMB_BUCKET).upload(path, file, { cacheControl: '31536000', upsert: true });
   if (error) throw error;
   const { data: { publicUrl } } = supabase.storage.from(THUMB_BUCKET).getPublicUrl(path);
   return publicUrl;
