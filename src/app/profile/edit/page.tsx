@@ -14,6 +14,37 @@ import { useEconomy } from "@/components/EconomyProvider";
 import { economyPreviewEnabled } from "@/lib/economy/flag";
 import { DIVIDER_ORDER, DIVIDER_LINES, dividerTier, isDividerUnlocked, TIER_UNLOCK_LABEL, type DividerLineKey } from "@/lib/economy/dividerLines";
 
+// Client-side downscale before upload (avatars were the heaviest raw images) — same
+// util the setup / preferences / create flows use.
+async function compressImage(file: File): Promise<File> {
+  return new Promise((resolve) => {
+    const MAX = 1920, QUALITY = 0.82;
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      try {
+        let { width, height } = img;
+        if (width > MAX || height > MAX) {
+          if (width >= height) { height = Math.round((height * MAX) / width); width = MAX; }
+          else { width = Math.round((width * MAX) / height); height = MAX; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width; canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) { resolve(file); return; }
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob((blob) => {
+          if (!blob) { resolve(file); return; }
+          resolve(new File([blob], file.name.replace(/\.[^.]+$/, '') + '-compressed.jpg', { type: 'image/jpeg' }));
+        }, 'image/jpeg', QUALITY);
+      } catch { resolve(file); }
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
+    img.src = url;
+  });
+}
+
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
 
@@ -153,11 +184,19 @@ export default function EditProfilePage() {
     const file = e.target.files?.[0];
     if (!file || !user || !sbUserId) return;
     e.target.value = '';
+    // OPTIMISTIC: show the picked photo INSTANTLY via a local object URL (feedImage
+    // passes blob: URLs through unchanged) — no wait for the upload round-trip.
+    const localUrl = URL.createObjectURL(file);
+    setProfileImageUrl(localUrl);
+    setIsDirty(true);   // the PFP is a change like any other → SAVE appears; persisted on SAVE
     setPhotoUploading(true);
     try {
-      const url = await uploadImage(file, 'profile-images', user.id);
-      await saveProfile(sbUserId, { displayName, username, bio, profileImageUrl: url });
-      setProfileImageUrl(url);
+      // Downscale before upload (avatars were the app's heaviest images — 1–2.5MB raw).
+      const compressed = await compressImage(file);
+      const url = await uploadImage(compressed, 'profile-images', user.id);
+      setProfileImageUrl(url);          // swap blob → real URL (feedImage sizes it on display)
+      URL.revokeObjectURL(localUrl);
+      // No auto-save — SAVE (handleSaveProfile) persists it, consistent with the text fields.
     } catch (err) {
       console.error('Photo upload error:', err);
     } finally {
@@ -171,7 +210,9 @@ export default function EditProfilePage() {
     setProfileError(null);
     setProfileSaved(false);
     try {
-      await saveProfile(sbUserId, { displayName, username, bio, profileImageUrl: profileImageUrl || undefined });
+      // Guard: never persist a still-uploading blob: URL (undefined → keeps the existing image).
+      const savableImage = profileImageUrl && !profileImageUrl.startsWith('blob:') ? profileImageUrl : undefined;
+      await saveProfile(sbUserId, { displayName, username, bio, profileImageUrl: savableImage });
       await updateProfileFields(sbUserId, { divider_line: selectedLine === 'default' ? null : selectedLine, holo_banner: holoBanner });
       setProfileSaved(true);
       setTimeout(() => setProfileSaved(false), 2500);
