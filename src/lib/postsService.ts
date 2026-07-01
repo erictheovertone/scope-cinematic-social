@@ -114,12 +114,21 @@ export const createPost = async (postData: {
   return data;
 };
 
-export const getAllPosts = async (): Promise<(Post & { profile_image_url?: string | null })[]> => {
+// Feed page size — the home feed loads one page, then appends more on scroll.
+export const FEED_PAGE_SIZE = 10;
+
+export const getAllPosts = async (
+  page = 0,
+  pageSize = FEED_PAGE_SIZE,
+): Promise<(Post & { profile_image_url?: string | null })[]> => {
+  const from = page * pageSize;
+  const to = from + pageSize - 1;
   const { data: posts, error } = await supabase
     .from('posts')
     .select('*')
     .eq('is_deleted', false)
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false })
+    .range(from, to);   // paginate — was: load ALL posts in one query
 
   if (error || !posts) {
     console.error('Error fetching posts:', error);

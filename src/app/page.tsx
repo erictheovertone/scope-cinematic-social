@@ -4,7 +4,7 @@ import { usePrivy } from "@privy-io/react-auth";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { getAllPosts } from "@/lib/postsService";
+import { getAllPosts, FEED_PAGE_SIZE } from "@/lib/postsService";
 import PostItem from "@/components/PostItem";
 import PostModal from "@/components/PostModal";
 import MirageView from "@/components/MirageView";
@@ -26,6 +26,12 @@ export default function Home() {
   const [feedState, setFeedState] = useState<FeedState>("normal");
   // Inline comments are one-at-a-time: only one feed post's section is open.
   const [openCommentsPostId, setOpenCommentsPostId] = useState<string | null>(null);
+  // Feed pagination — load one page, append more on scroll.
+  const [feedPage, setFeedPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const loadingMoreRef = useRef(false);   // guards against double-fire from the sentinel
+  const sentinelRef = useRef<HTMLDivElement>(null);
   const transitioningRef = useRef(false);
   const lastScrollY = useRef(0);
   const feedRef = useRef<HTMLDivElement>(null);
@@ -145,16 +151,17 @@ export default function Home() {
   useEffect(() => {
     const load = async () => {
       try {
-        const all = await getAllPosts();
-        console.log('First post media_urls:', all[0]?.media_urls);
+        const all = await getAllPosts(0);   // first page only — rest appends on scroll
         if (all.length === 0) {
           setPosts([
             { id: "mock1", username: "creator1",    caption: "Cinematic shot from my latest project", media_urls: [], created_at: new Date().toISOString() },
             { id: "mock2", username: "filmmaker2",   caption: "Ultra-wide landscape composition",      media_urls: [], created_at: new Date().toISOString() },
             { id: "mock3", username: "visualartist", caption: "Experimental grid layout design",       media_urls: [], created_at: new Date().toISOString() },
           ]);
+          setHasMore(false);
         } else {
           setPosts(all);
+          setHasMore(all.length >= FEED_PAGE_SIZE);   // a short first page = end of feed
         }
       } catch (e) {
         console.error("Error loading posts:", e);
@@ -162,6 +169,44 @@ export default function Home() {
     };
     load();
   }, []);
+
+  // Append the next page. Dedupes by id (page-boundary safety); stops when a page
+  // comes back short. Author profiles still batch per page inside getAllPosts.
+  const loadMore = useCallback(async () => {
+    if (loadingMoreRef.current || !hasMore) return;
+    loadingMoreRef.current = true;
+    setLoadingMore(true);
+    try {
+      const next = feedPage + 1;
+      const more = await getAllPosts(next);
+      if (more.length > 0) {
+        setPosts((prev) => {
+          const seen = new Set(prev.map((p) => p.id));
+          return [...prev, ...more.filter((p) => !seen.has(p.id))];
+        });
+        setFeedPage(next);
+      }
+      if (more.length < FEED_PAGE_SIZE) setHasMore(false);
+    } catch (e) {
+      console.error("Error loading more posts:", e);
+    } finally {
+      loadingMoreRef.current = false;
+      setLoadingMore(false);
+    }
+  }, [feedPage, hasMore]);
+
+  // Infinite scroll — a sentinel below the list; when it nears view, fetch the next
+  // page. root = the feed scroller; rootMargin prefetches ~1.5 screens early.
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el || !hasMore) return;
+    const io = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) loadMore(); },
+      { root: feedRef.current, rootMargin: '800px 0px' },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [loadMore, hasMore]);
 
   // Respect prefers-reduced-motion (JS, not a CSS !important — so it can't fight
   // the close fade): reduced → doors fade in place, no stagger/rise.
@@ -441,6 +486,14 @@ export default function Home() {
               />
             </div>
           ))}
+          {/* Infinite-scroll sentinel + subtle bottom loader (hidden at end of feed). */}
+          {hasMore && posts.length > 0 && (
+            <div ref={sentinelRef} style={{ height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {loadingMore && (
+                <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.35)', letterSpacing: '0.14em', textTransform: 'uppercase' }}>LOADING…</span>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
