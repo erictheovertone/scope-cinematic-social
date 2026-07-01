@@ -1186,8 +1186,10 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
             value={caption}
             onChange={(e) => setCaption(e.target.value)}
             placeholder="Write a caption..."
-            className="w-full bg-transparent text-[var(--fs-14)] resize-none border-none outline-none placeholder-[#666666]"
-            style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, color: '#FFFFFF', caretColor: '#FFFFFF', backgroundColor: 'transparent' }}
+            className="w-full bg-transparent resize-none border-none outline-none placeholder-[#666666]"
+            /* fontSize MUST be ≥16px: iOS Safari auto-zooms a focused input under 16px and
+               won't restore it (trapping the user). 16px is fine for an active caption field. */
+            style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: 16, color: '#FFFFFF', caretColor: '#FFFFFF', backgroundColor: 'transparent' }}
             rows={4}
           />
           {selectedMedia[0]?.type === 'video' && (
