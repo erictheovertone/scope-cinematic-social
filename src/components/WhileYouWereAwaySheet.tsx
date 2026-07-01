@@ -150,11 +150,12 @@ export default function WhileYouWereAwaySheet({ visible, recap, username, onClos
   const s = recap.social;
 
   const stat = (icon: React.ReactNode, n: number, label: string) => (
-    <div style={{ flex: 1, position: 'relative', padding: '14px 8px 12px', minWidth: 0 }}>
+    // Icon TOP-LEFT (unchanged); number + label + trend mark CENTER-aligned in the column.
+    <div style={{ flex: 1, position: 'relative', padding: '14px 8px 12px', minWidth: 0, textAlign: 'center' }}>
       <div style={{ position: 'absolute', top: 10, left: 8 }}>{icon}</div>
       <p style={{ ...SKB, fontSize: 28, color: '#fff', margin: '14px 0 0', lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>+{Math.round(n * e)}</p>
       {/* −0.5px (fs-7_5) + nowrap so NEW COMMENTS fits one line alongside the others */}
-      <p style={{ ...SKB, fontSize: 'var(--fs-7_5)', color: W65, margin: '6px 0 0', textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 3 }}>
+      <p style={{ ...SKB, fontSize: 'var(--fs-7_5)', color: W65, margin: '6px 0 0', textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3 }}>
         {label} {TrendingUp(9)}
       </p>
     </div>
@@ -182,7 +183,7 @@ export default function WhileYouWereAwaySheet({ visible, recap, username, onClos
           // to the bottom; sections get Figma breathing room) — no crowding, no dead gap.
           display: 'flex', flexDirection: 'column',
           // Safe-area insets on every edge — content never hides under status bar / home indicator.
-          padding: 'calc(env(safe-area-inset-top, 0px) + 24px) calc(env(safe-area-inset-right, 0px) + 18px) calc(env(safe-area-inset-bottom, 0px) + 24px) calc(env(safe-area-inset-left, 0px) + 18px)',
+          padding: 'calc(env(safe-area-inset-top, 0px) + 24px) calc(env(safe-area-inset-right, 0px) + 14px) calc(env(safe-area-inset-bottom, 0px) + 24px) calc(env(safe-area-inset-left, 0px) + 14px)',
         }}
       >
         {/* SECTION ROW — top element now (greeting removed) */}
@@ -192,14 +193,17 @@ export default function WhileYouWereAwaySheet({ visible, recap, username, onClos
           <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: RED, background: 'linear-gradient(93.77deg, #181818 24.12%, #000 64.5%)', border: '0.5px solid #7a2e2e', borderRadius: 2, padding: '3px 8px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{recap.sinceDays} DAYS</span>
         </div>
 
-        {/* HERO / EARNED CARD — SMOOTH full-width gradient (DELIBERATE, no hard line), radius 2,
-            ~127px tall, holo scope logo top-right. */}
-        <div style={{ position: 'relative', overflow: 'hidden', background: 'linear-gradient(93.84deg, #1a1a1a 0%, #000 90%)', border: '0.5px solid #1f1f1f', borderRadius: 2, padding: '16px 14px', minHeight: 127, boxSizing: 'border-box', display: 'flex', flexDirection: 'column', justifyContent: 'center', marginBottom: 28, flexShrink: 0 }}>
-          <img src="/opaque-scope-logo-holo.png" alt="" style={{ position: 'absolute', top: 12, right: 12, width: 90, height: 'auto', pointerEvents: 'none' }} />
-          <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: W65, margin: 0, textTransform: 'uppercase', letterSpacing: '0.12em' }}>YOUR WORK EARNED</p>
-          <p style={{ ...SKB, fontSize: 46, color: '#fff', margin: '6px 0 0', lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>{fmtMoney(hero.earned * e)}</p>
-          {/* −3px (fs-10→fs-7), tight ~4px under the number, slightly indented per Figma 788:297 */}
-          <p style={{ ...SKR, fontSize: 'var(--fs-7)', color: W65, margin: '4px 0 0 3px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>across {hero.postCount} of your posts</p>
+        {/* HERO / EARNED CARD — baked PNG background (fills + scales), radius 2, h 127,
+            elements absolutely placed per Figma 787:248. */}
+        <div style={{ position: 'relative', overflow: 'hidden', border: '0.5px solid #1f1f1f', borderRadius: 2, height: 127, boxSizing: 'border-box', marginBottom: 28, flexShrink: 0 }}>
+          {/* PNG background — behind all content, stretches to fill the card edge-to-edge */}
+          <img src="/your-work-earned-rect.png" alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'fill', zIndex: 0, pointerEvents: 'none' }} />
+          {/* Holo logo top-right (~19px from top, ~124×81) */}
+          <img src="/opaque-scope-logo-holo.png" alt="" style={{ position: 'absolute', top: 19, right: 12, width: 124, height: 'auto', zIndex: 2, pointerEvents: 'none' }} />
+          <p style={{ position: 'absolute', top: 21, left: 12, zIndex: 1, ...SKB, fontSize: 'var(--fs-9)', color: W65, margin: 0, textTransform: 'uppercase', letterSpacing: '0.12em' }}>YOUR WORK EARNED</p>
+          <p style={{ position: 'absolute', top: 39, left: 16, zIndex: 1, ...SKB, fontSize: 48, color: '#fff', margin: 0, lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>{fmtMoney(hero.earned * e)}</p>
+          {/* across — indented (~86px from left), just below the number */}
+          <p style={{ position: 'absolute', top: 98, left: 86, zIndex: 1, ...SKR, fontSize: 'var(--fs-7)', color: W65, margin: 0, textTransform: 'uppercase', letterSpacing: '0.04em' }}>across {hero.postCount} of your posts</p>
         </div>
 
         {/* BREAKDOWN HEADER */}
@@ -218,7 +222,7 @@ export default function WhileYouWereAwaySheet({ visible, recap, username, onClos
               key={row.postId}
               onClick={() => { onClose(); openPostLightbox(row.postId); }}
               className="tap-target"
-              style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '13px 0', background: 'transparent', border: 'none', borderBottom: '0.5px solid #141414', cursor: 'pointer', textAlign: 'left' }}
+              style={{ width: '100%', display: 'flex', alignItems: 'flex-start', gap: 12, padding: '13px 0', background: 'transparent', border: 'none', borderBottom: '0.5px solid #141414', cursor: 'pointer', textAlign: 'left' }}
             >
               <div style={{ width: 133, height: 48, flexShrink: 0, background: '#0d0d0d', overflow: 'hidden' }}>
                 {row.thumbnailUrl && <img src={row.thumbnailUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
@@ -227,18 +231,22 @@ export default function WhileYouWereAwaySheet({ visible, recap, username, onClos
                 <p style={{ ...SKB, fontSize: 'var(--fs-11)', color: RED, margin: 0, letterSpacing: '0.04em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>[ {row.ticker ?? '—'} ]</p>
                 <p style={{ ...SKR, fontSize: 'var(--fs-8)', color: W65, margin: '3px 0 0', textTransform: 'uppercase', letterSpacing: '0.04em' }}>collected {row.collectCount} {row.collectCount === 1 ? 'time' : 'times'}</p>
               </div>
-              <span style={{ ...SKB, fontSize: 'var(--fs-12)', color: GREEN, fontVariantNumeric: 'tabular-nums' }}>{fmtRowProceeds(row.proceeds, e)}</span>
-              <span style={{ display: 'flex' }}>{Chevron}</span>
+              {/* aligned with the "collected" line (upper area), not the ticker line */}
+              <span style={{ ...SKB, fontSize: 'var(--fs-12)', color: GREEN, fontVariantNumeric: 'tabular-nums', marginTop: 16 }}>{fmtRowProceeds(row.proceeds, e)}</span>
+              <span style={{ display: 'flex', marginTop: 15 }}>{Chevron}</span>
             </button>
           ))}
         </div>
 
-        {/* STAT STRIP (audience) — single SMOOTH-gradient card (DELIBERATE, no hard line),
-            radius 2, ~98px tall, thin dividers between the 3 columns. */}
-        <div style={{ display: 'flex', alignItems: 'stretch', minHeight: 98, flexShrink: 0, background: 'linear-gradient(94.90deg, #1a1a1a 0%, #000 90%)', border: '0.5px solid #1f1f1f', borderRadius: 2, overflow: 'hidden' }}>
-          <div style={{ flex: 1, display: 'flex' }}>{stat(UserPlus, s.follows, 'NEW FOLLOWS')}</div>
-          <div style={{ flex: 1, display: 'flex', borderLeft: '0.5px solid #1f1f1f' }}>{stat(MessageCircle, s.comments, 'NEW COMMENTS')}</div>
-          <div style={{ flex: 1, display: 'flex', borderLeft: '0.5px solid #1f1f1f' }}>{stat(Heart, s.likes, 'NEW LIKES')}</div>
+        {/* STAT STRIP (audience) — baked PNG background (fills + scales), radius 2, h 98,
+            3 equal columns above it. */}
+        <div style={{ position: 'relative', overflow: 'hidden', height: 98, flexShrink: 0, border: '0.5px solid #1f1f1f', borderRadius: 2 }}>
+          <img src="/audience-growth-rect.png" alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'fill', zIndex: 0, pointerEvents: 'none' }} />
+          <div style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'stretch', height: '100%' }}>
+            <div style={{ flex: 1, display: 'flex' }}>{stat(UserPlus, s.follows, 'NEW FOLLOWS')}</div>
+            <div style={{ flex: 1, display: 'flex' }}>{stat(MessageCircle, s.comments, 'NEW COMMENTS')}</div>
+            <div style={{ flex: 1, display: 'flex' }}>{stat(Heart, s.likes, 'NEW LIKES')}</div>
+          </div>
         </div>
 
         {/* SPACER — absorbs extra height so ENTER + footer sit at the BOTTOM (fills the page;
