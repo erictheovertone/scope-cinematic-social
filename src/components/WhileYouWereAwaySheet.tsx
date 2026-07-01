@@ -177,28 +177,33 @@ export default function WhileYouWereAwaySheet({ visible, recap, username, onClos
         style={{
           position: 'absolute', inset: 0, overflowY: 'auto',
           WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain',
+          boxSizing: 'border-box',
+          // Flex column so content fills the full page top→bottom (spacer pushes ENTER/footer
+          // to the bottom; sections get Figma breathing room) — no crowding, no dead gap.
+          display: 'flex', flexDirection: 'column',
           // Safe-area insets on every edge — content never hides under status bar / home indicator.
-          padding: 'calc(env(safe-area-inset-top, 0px) + 22px) calc(env(safe-area-inset-right, 0px) + 18px) calc(env(safe-area-inset-bottom, 0px) + 28px) calc(env(safe-area-inset-left, 0px) + 18px)',
+          padding: 'calc(env(safe-area-inset-top, 0px) + 24px) calc(env(safe-area-inset-right, 0px) + 18px) calc(env(safe-area-inset-bottom, 0px) + 24px) calc(env(safe-area-inset-left, 0px) + 18px)',
         }}
       >
         {/* SECTION ROW — top element now (greeting removed) */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 26, flexShrink: 0 }}>
           <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: W65, textTransform: 'uppercase', letterSpacing: '0.14em' }}>WHILE YOU WERE AWAY</span>
           {/* N DAYS pill — dark gradient + dark-red border, RED text (Figma 793:323), radius 2 */}
           <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: RED, background: 'linear-gradient(93.77deg, #181818 24.12%, #000 64.5%)', border: '0.5px solid #7a2e2e', borderRadius: 2, padding: '3px 8px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{recap.sinceDays} DAYS</span>
         </div>
 
-        {/* HERO / EARNED CARD — Figma gradient (DELIBERATE, do not flatten), radius 2,
-            reduced side padding, holo scope logo top-right. */}
-        <div style={{ position: 'relative', overflow: 'hidden', background: 'linear-gradient(93.84deg, #181818 24.12%, #000 64.5%)', border: '0.5px solid #1f1f1f', borderRadius: 2, padding: '18px 12px 20px', marginBottom: 20 }}>
+        {/* HERO / EARNED CARD — SMOOTH full-width gradient (DELIBERATE, no hard line), radius 2,
+            ~127px tall, holo scope logo top-right. */}
+        <div style={{ position: 'relative', overflow: 'hidden', background: 'linear-gradient(93.84deg, #1a1a1a 0%, #000 90%)', border: '0.5px solid #1f1f1f', borderRadius: 2, padding: '16px 14px', minHeight: 127, boxSizing: 'border-box', display: 'flex', flexDirection: 'column', justifyContent: 'center', marginBottom: 28, flexShrink: 0 }}>
           <img src="/opaque-scope-logo-holo.png" alt="" style={{ position: 'absolute', top: 12, right: 12, width: 90, height: 'auto', pointerEvents: 'none' }} />
           <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: W65, margin: 0, textTransform: 'uppercase', letterSpacing: '0.12em' }}>YOUR WORK EARNED</p>
-          <p style={{ ...SKB, fontSize: 46, color: '#fff', margin: '6px 0 2px', lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>{fmtMoney(hero.earned * e)}</p>
-          <p style={{ ...SKR, fontSize: 'var(--fs-10)', color: W65, margin: 0, textTransform: 'uppercase', letterSpacing: '0.04em' }}>across {hero.postCount} of your posts</p>
+          <p style={{ ...SKB, fontSize: 46, color: '#fff', margin: '6px 0 0', lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>{fmtMoney(hero.earned * e)}</p>
+          {/* −3px (fs-10→fs-7), tight ~4px under the number, slightly indented per Figma 788:297 */}
+          <p style={{ ...SKR, fontSize: 'var(--fs-7)', color: W65, margin: '4px 0 0 3px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>across {hero.postCount} of your posts</p>
         </div>
 
         {/* BREAKDOWN HEADER */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, flexShrink: 0 }}>
           <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: '#fff', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'flex', alignItems: 'center', gap: 7 }}>
             <svg width="9" height="11" viewBox="0 0 9 11" fill={RED}><path d="M0 0v11l9 -5.5z" /></svg>
             BREAKDOWN
@@ -206,14 +211,14 @@ export default function WhileYouWereAwaySheet({ visible, recap, username, onClos
           <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: W65, textTransform: 'uppercase', letterSpacing: '0.06em' }}>VIEW ALL ›</span>
         </div>
 
-        {/* PER-POST ROWS */}
-        <div style={{ marginBottom: 20 }}>
+        {/* PER-POST ROWS — pitch ~74px (48px thumb + ~26px gap) per Figma */}
+        <div style={{ marginBottom: 28, flexShrink: 0 }}>
           {recap.breakdown.map((row) => (
             <button
               key={row.postId}
               onClick={() => { onClose(); openPostLightbox(row.postId); }}
               className="tap-target"
-              style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '8px 0', background: 'transparent', border: 'none', borderBottom: '0.5px solid #141414', cursor: 'pointer', textAlign: 'left' }}
+              style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '13px 0', background: 'transparent', border: 'none', borderBottom: '0.5px solid #141414', cursor: 'pointer', textAlign: 'left' }}
             >
               <div style={{ width: 133, height: 48, flexShrink: 0, background: '#0d0d0d', overflow: 'hidden' }}>
                 {row.thumbnailUrl && <img src={row.thumbnailUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
@@ -228,25 +233,29 @@ export default function WhileYouWereAwaySheet({ visible, recap, username, onClos
           ))}
         </div>
 
-        {/* STAT STRIP (audience) — single Figma-gradient card (DELIBERATE), radius 2,
-            reduced side padding (in `stat`), thin dividers between the 3 columns. */}
-        <div style={{ display: 'flex', background: 'linear-gradient(94.90deg, #181818 24.12%, #000 64.5%)', border: '0.5px solid #1f1f1f', borderRadius: 2, overflow: 'hidden', marginBottom: 20 }}>
+        {/* STAT STRIP (audience) — single SMOOTH-gradient card (DELIBERATE, no hard line),
+            radius 2, ~98px tall, thin dividers between the 3 columns. */}
+        <div style={{ display: 'flex', alignItems: 'stretch', minHeight: 98, flexShrink: 0, background: 'linear-gradient(94.90deg, #1a1a1a 0%, #000 90%)', border: '0.5px solid #1f1f1f', borderRadius: 2, overflow: 'hidden' }}>
           <div style={{ flex: 1, display: 'flex' }}>{stat(UserPlus, s.follows, 'NEW FOLLOWS')}</div>
           <div style={{ flex: 1, display: 'flex', borderLeft: '0.5px solid #1f1f1f' }}>{stat(MessageCircle, s.comments, 'NEW COMMENTS')}</div>
           <div style={{ flex: 1, display: 'flex', borderLeft: '0.5px solid #1f1f1f' }}>{stat(Heart, s.likes, 'NEW LIKES')}</div>
         </div>
 
-        {/* ENTER — red→dark-red gradient (DELIBERATE), 0.25px white border, radius 2 */}
+        {/* SPACER — absorbs extra height so ENTER + footer sit at the BOTTOM (fills the page;
+            collapses to 0 when content overflows and the page scrolls). */}
+        <div style={{ flex: '1 1 24px', minHeight: 24 }} />
+
+        {/* ENTER — red→dark-red gradient (DELIBERATE), 0.25px white border, radius 2, ~44px (tap floor) */}
         <button
           onClick={onClose}
           className="tap-target"
-          style={{ width: '100%', background: 'linear-gradient(to right, #FF0000 0%, #990000 100%)', border: '0.25px solid #FFFFFF', borderRadius: 2, cursor: 'pointer', padding: '15px 0' }}
+          style={{ width: '100%', flexShrink: 0, background: 'linear-gradient(to right, #FF0000 0%, #990000 100%)', border: '0.25px solid #FFFFFF', borderRadius: 2, cursor: 'pointer', padding: '13px 0' }}
         >
           <span style={{ ...SKB, fontSize: 'var(--fs-12)', color: '#fff', textTransform: 'uppercase', letterSpacing: '0.14em' }}>ENTER</span>
         </button>
 
         {/* FOOTER */}
-        <p style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.35)', textAlign: 'center', margin: '12px 0 0', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+        <p style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.35)', textAlign: 'center', margin: '12px 0 0', flexShrink: 0, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
           SHOW ON RETURN · TURN OFF IN SETTINGS
         </p>
       </div>
