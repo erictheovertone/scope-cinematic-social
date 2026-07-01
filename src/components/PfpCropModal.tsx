@@ -78,7 +78,8 @@ export default function PfpCropModal({ file, onCancel, onConfirm }: Props) {
       setOffset({ x: (FRAME - w * cover) / 2, y: (FRAME - h * cover) / 2 }); // centred
     };
     img.src = url;
-    return () => URL.revokeObjectURL(url);
+    // NOTE: do NOT revoke on cleanup — StrictMode's mount→cleanup→mount would revoke the
+    // blob the visible <img src={url}> still needs, leaving it blank. Revoked on confirm/cancel.
   }, [url]);
 
   const clampOffset = (x: number, y: number, s: number) => {
@@ -145,6 +146,7 @@ export default function PfpCropModal({ file, onCancel, onConfirm }: Props) {
       const s = scale;
       const sx = -offset.x / s, sy = -offset.y / s, sSize = FRAME / s; // visible square, natural px
       const blob = await bakeSquare(file, nat.w, sx, sy, sSize);
+      URL.revokeObjectURL(url);   // done with the display source
       onConfirm(blob);
     } catch (err) {
       console.error('[PfpCropModal] bake failed:', err);
@@ -153,6 +155,8 @@ export default function PfpCropModal({ file, onCancel, onConfirm }: Props) {
       setBaking(false);
     }
   };
+
+  const cancel = () => { URL.revokeObjectURL(url); onCancel(); };
 
   if (typeof document === 'undefined') return null;
 
@@ -183,7 +187,7 @@ export default function PfpCropModal({ file, onCancel, onConfirm }: Props) {
       </div>
 
       <div style={{ display: 'flex', gap: 12, marginTop: 22, width: FRAME }}>
-        <button onClick={onCancel} disabled={baking} style={{ ...SKB, flex: 1, fontSize: 'var(--fs-11)', color: '#fff', background: 'transparent', border: '1px solid rgba(255,255,255,0.4)', padding: '12px 0', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.1em' }}>CANCEL</button>
+        <button onClick={cancel} disabled={baking} style={{ ...SKB, flex: 1, fontSize: 'var(--fs-11)', color: '#fff', background: 'transparent', border: '1px solid rgba(255,255,255,0.4)', padding: '12px 0', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.1em' }}>CANCEL</button>
         <button onClick={confirm} disabled={baking || !nat} style={{ ...SKB, flex: 1, fontSize: 'var(--fs-11)', color: '#fff', background: '#FF0000', border: 'none', padding: '12px 0', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.1em', opacity: baking ? 0.6 : 1 }}>{baking ? 'CROPPING…' : 'USE PHOTO'}</button>
       </div>
     </div>,
