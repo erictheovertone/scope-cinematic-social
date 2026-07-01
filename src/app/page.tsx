@@ -199,14 +199,14 @@ export default function Home() {
   // page. root = the feed scroller; rootMargin prefetches ~1.5 screens early.
   useEffect(() => {
     const el = sentinelRef.current;
-    if (!el || !hasMore) return;
+    if (!el || !hasMore) return;   // posts.length in deps re-runs this once the sentinel mounts
     const io = new IntersectionObserver(
       ([entry]) => { if (entry.isIntersecting) loadMore(); },
       { root: feedRef.current, rootMargin: '800px 0px' },
     );
     io.observe(el);
     return () => io.disconnect();
-  }, [loadMore, hasMore]);
+  }, [loadMore, hasMore, posts.length]);
 
   // Respect prefers-reduced-motion (JS, not a CSS !important — so it can't fight
   // the close fade): reduced → doors fade in place, no stagger/rise.
