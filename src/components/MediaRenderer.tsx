@@ -53,6 +53,10 @@ export default function MediaRenderer({
   const videoRef = useRef<HTMLVideoElement>(null);
   const [muted, setMuted] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
+  // LAZY: don't fetch video bytes until near the viewport. `near` gates the <video>
+  // src (below) — off-screen videos download nothing; scrolling away drops the src
+  // (disposes/frees the decoder). preload="none" keeps it from buffering ahead of play.
+  const [near, setNear] = useState(false);
   const video = isVideo(url, mediaType);
 
   useEffect(() => {
@@ -60,15 +64,14 @@ export default function MediaRenderer({
     const el = videoRef.current;
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting && autoplay) {
-          el.play().catch(() => {});
-          setIsPlaying(true);
-        } else {
-          el.pause();
-          setIsPlaying(false);
-        }
+        const on = entry.isIntersecting;
+        setNear(on);                       // load bytes only when at/near the viewport
+        if (autoplay) {
+          if (on) { el.play().catch(() => {}); setIsPlaying(true); }
+          else { el.pause(); setIsPlaying(false); }
+        } else if (!on) { el.pause(); setIsPlaying(false); }
       },
-      { threshold: 0.5 }
+      { rootMargin: '250px 0px', threshold: 0 },   // start loading just before visible
     );
     observer.observe(el);
     return () => observer.disconnect();
@@ -99,8 +102,9 @@ export default function MediaRenderer({
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
       <video
         ref={videoRef}
-        src={url}
+        src={near ? url : undefined}       /* lazy: no bytes until near-viewport; dropped when scrolled away */
         poster={thumbnailUrl ?? undefined}
+        preload="none"
         muted={muted}
         loop
         playsInline
