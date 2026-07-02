@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import ProCelebration from "@/components/ProCelebration";
+import VideoCelebration from "@/components/VideoCelebration";
 
 const BOLD: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const REG: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -404,9 +405,23 @@ export default function MembershipSuccess() {
   return (
     <>
       {tier === "founding" && <FoundingCelebration foundingNumber={foundingNumber} onDone={handleDone} />}
-      {tier === "top1k" && <Top1kCelebration onDone={handleDone} />}
+      {tier === "top1k" && (
+        <VideoCelebration
+          videoSrc="/badges/top-1k-celebration-animation.mp4"
+          badgeSrc="/badges/collector-badge-min-design-01.png"
+          onDone={handleDone}
+          renderFallback={(d) => <Top1kCelebration onDone={d} />}
+        />
+      )}
       {tier === "creator" && <CreatorCelebration onDone={handleDone} />}
-      {tier === "pro" && <ProCelebration onDone={handleDone} />}
+      {tier === "pro" && (
+        <VideoCelebration
+          videoSrc="/badges/welcome-scope-pro-animation.mp4"
+          badgeSrc="/badges/scope-pro-badge-min-design-01.png"
+          onDone={handleDone}
+          renderFallback={(d) => <ProCelebration onDone={d} />}
+        />
+      )}
     </>
   );
 }

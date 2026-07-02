@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import UpsellSheet, { UpsellLimit } from '@/components/UpsellSheet';
 import MembershipSheet from '@/components/MembershipSheet';
 import ProCelebration from '@/components/ProCelebration';
+import VideoCelebration from '@/components/VideoCelebration';
 
 const Ctx = createContext<{ showUpsell: (l: UpsellLimit) => void }>({ showUpsell: () => {} });
 export const useUpsell = () => useContext(Ctx);
@@ -47,7 +48,14 @@ export function UpsellProvider({ children }: { children: ReactNode }) {
         onSuccess={handleMembershipSuccess}
         fromFinishing={fromFinishing}
       />
-      {celebrate && <ProCelebration onDone={() => setCelebrate(false)} />}
+      {celebrate && (
+        <VideoCelebration
+          videoSrc="/badges/welcome-scope-pro-animation.mp4"
+          badgeSrc="/badges/scope-pro-badge-min-design-01.png"
+          onDone={() => setCelebrate(false)}
+          renderFallback={(d) => <ProCelebration onDone={d} />}
+        />
+      )}
     </Ctx.Provider>
   );
 }
