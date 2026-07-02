@@ -15,6 +15,9 @@ import { onTradeSettled } from "@/lib/economy/tradeEvents";
 import { useCountUp } from "@/lib/economy/useCountUp";
 import { groupActivity, shortAddr as shortAddr0x, type ActivityRow } from "@/lib/walletActivity";
 import { supabase } from "@/lib/supabase/client";
+import { getUserByPrivyId } from "@/lib/userService";
+import { getEarnings, sumAll, type EarningsData } from "@/lib/economy/earnings";
+import EarningsSheet from "@/components/economy/EarningsSheet";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -44,6 +47,13 @@ export default function WalletPage() {
   const [coinTickers, setCoinTickers] = useState<Map<string, string>>(new Map());
   const [holdings, setHoldings] = useState<Holding[] | null>(null); // null = not loaded
   const [openHolding, setOpenHolding] = useState<Holding | null>(null);
+  // SCOPE EARNINGS — historical cumulative from the session-cached /api/earnings
+  // dataset. NEVER summed into TOTAL (it would double-count: much of it is
+  // already held or spent). earnTarget goes 0 → allTime so the stat counts up
+  // on wallet open (useCountUp lands the first value instantly by design).
+  const [earnings, setEarnings] = useState<EarningsData | null>(null);
+  const [earnTarget, setEarnTarget] = useState<number | null>(null);
+  const [earnOpen, setEarnOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState("");
   // Incoming-funds acknowledgment: { id } restarts the [ +$X ] pulse animation.
@@ -342,6 +352,23 @@ export default function WalletPage() {
     return () => clearInterval(id);
   }, [walletAddress, economy]);
 
+  // SCOPE EARNINGS load — once per app session (getEarnings caches by uuid);
+  // wallet re-opens read the cache. 0 → allTime two-step drives the count-up.
+  useEffect(() => {
+    if (!user?.id) return;
+    let alive = true;
+    (async () => {
+      const u = await getUserByPrivyId(user.id);
+      if (!alive || !u) return;
+      const data = await getEarnings(u.id);
+      if (!alive || !data) return;
+      setEarnings(data);
+      setEarnTarget(0);
+      requestAnimationFrame(() => { if (alive) setEarnTarget(sumAll(data.events)); });
+    })();
+    return () => { alive = false; };
+  }, [user?.id]);
+
   // Dollar figures only when the live rate exists — "$—" beats a wrong number.
   const ethUsd = ethBalance != null && ethUsdRate != null
     ? (parseFloat(ethBalance) * ethUsdRate).toFixed(2)
@@ -385,6 +412,7 @@ export default function WalletPage() {
   // TOTAL and AVAILABLE roll to new values (deposits, proceeds, holdings load).
   const animatedTotal = useCountUp(totalNum);
   const animatedAvailable = useCountUp(availableUsd);
+  const animatedEarned = useCountUp(earnTarget); // 0 → allTime on wallet open (~700ms)
 
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartY.current = e.touches[0].clientY;
@@ -533,7 +561,7 @@ export default function WalletPage() {
             stat pattern). White = spendable cash, red = invested/at-market.
             Columns index the tabs beneath them. Reuse this layout wherever the
             AVAILABLE/HOLDINGS pair appears (earnings summary etc.). */}
-        <div style={{ display: "flex", justifyContent: "center", gap: 56, margin: "14px 0 10px" }}>
+        <div style={{ display: "flex", justifyContent: "center", gap: 32, margin: "14px 0 10px" }}>
           <div onClick={() => setActiveTab("balances")} style={{ cursor: "pointer" }}>
             <p style={{ ...SKB, fontSize: 'var(--fs-8)', color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.14em", margin: "0 0 5px" }}>
               AVAILABLE
@@ -548,6 +576,16 @@ export default function WalletPage() {
             </p>
             <p style={{ ...SKB, fontSize: 'var(--fs-16)', color: "#FF0000", margin: 0, fontVariantNumeric: "tabular-nums" }}>
               {holdingsUsd != null ? `$${holdingsUsd.toFixed(2)}` : "…"}
+            </p>
+          </div>
+          {/* SCOPE EARNINGS — historical cumulative, NOT part of TOTAL (double-
+              count). The whole stat is one tap target → the detail sheet. */}
+          <div onClick={() => { if (earnings) setEarnOpen(true); }} style={{ cursor: "pointer" }}>
+            <p style={{ ...SKB, fontSize: 'var(--fs-8)', color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.14em", margin: "0 0 5px" }}>
+              SCOPE EARNINGS <span style={{ letterSpacing: 0, opacity: 0.8 }}>ⓘ</span>
+            </p>
+            <p style={{ ...SKB, fontSize: 'var(--fs-16)', color: "#4ade80", margin: 0, fontVariantNumeric: "tabular-nums" }}>
+              {animatedEarned != null ? `$${animatedEarned.toFixed(2)}` : "$—"}
             </p>
           </div>
         </div>
@@ -702,6 +740,11 @@ export default function WalletPage() {
               ))}
             </div>
           )
+        )}
+
+        {/* SCOPE EARNINGS detail sheet — reads the same session-cached dataset. */}
+        {earnOpen && earnings && (
+          <EarningsSheet data={earnings} onClose={() => setEarnOpen(false)} />
         )}
 
         {/* Tap-through: the holding opens its post's collect sheet. */}
