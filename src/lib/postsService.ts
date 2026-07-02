@@ -178,6 +178,38 @@ export const getUserPosts = async (userId: string): Promise<Post[]> => {
   return data || [];
 };
 
+// ── Pin to the top of the profile grid (getUserPosts already sorts is_pinned desc,
+//    then recency). Max 2 pins per user — enforced HERE (service layer) so the UI
+//    can't bypass it. Pinned order among the two = recency (created_at desc). ──
+export const MAX_PINNED_POSTS = 2;
+
+export const pinPost = async (
+  postId: string,
+  userId: string,
+): Promise<{ ok: boolean; error?: string }> => {
+  // Count the user's OTHER currently-pinned posts (this one is being pinned now).
+  const { count, error: countErr } = await supabase
+    .from('posts')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', userId)
+    .eq('is_pinned', true)
+    .eq('is_deleted', false)
+    .neq('id', postId);
+  if (countErr) return { ok: false, error: 'Could not pin — try again.' };
+  if ((count ?? 0) >= MAX_PINNED_POSTS) {
+    return { ok: false, error: `Max ${MAX_PINNED_POSTS} pinned posts — unpin one first.` };
+  }
+  const { error } = await supabase.from('posts').update({ is_pinned: true }).eq('id', postId);
+  if (error) return { ok: false, error: 'Could not pin — try again.' };
+  return { ok: true };
+};
+
+export const unpinPost = async (postId: string): Promise<{ ok: boolean; error?: string }> => {
+  const { error } = await supabase.from('posts').update({ is_pinned: false }).eq('id', postId);
+  if (error) return { ok: false, error: 'Could not unpin — try again.' };
+  return { ok: true };
+};
+
 export const getPostsByUsername = async (username: string): Promise<Post[]> => {
   const { data, error } = await supabase
     .from('posts')

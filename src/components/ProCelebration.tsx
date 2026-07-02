@@ -40,8 +40,8 @@ export default function ProCelebration({ onDone }: { onDone: () => void }) {
       <div style={{ perspective: 500, width: 80, height: 80, marginBottom: 32, position: "relative", opacity: phase === "loading" ? 0 : 1, transform: phase === "loading" ? "scale(0.7)" : "scale(1)", transition: "all 0.8s cubic-bezier(0.16,1,0.3,1)" }}>
         <div style={{ position: "absolute", inset: -20, borderRadius: "50%", background: "radial-gradient(circle, rgba(255,0,0,0.4) 0%, transparent 70%)", animation: "glowPulse 2s ease-in-out infinite" }} />
         <div style={{ width: 80, height: 80, transformStyle: "preserve-3d", animation: "coinFlip 5s ease-in-out infinite", position: "relative" }}>
-          <img src="/scope-pro-icon-aperture.png" style={{ width: 80, height: 80, position: "absolute", backfaceVisibility: "hidden", filter: "drop-shadow(0 0 16px rgba(255,0,0,0.9))", borderRadius: "50%" }} />
-          <img src="/scope-pro-icon-aperture.png" style={{ width: 80, height: 80, position: "absolute", backfaceVisibility: "hidden", transform: "rotateY(180deg)", filter: "drop-shadow(0 0 16px rgba(255,0,0,0.9))", borderRadius: "50%" }} />
+          <img src="/badges/scope-pro-badge-min-design-01.png" style={{ width: 80, height: 80, position: "absolute", backfaceVisibility: "hidden", filter: "drop-shadow(0 0 16px rgba(255,0,0,0.9))", borderRadius: "50%" }} />
+          <img src="/badges/scope-pro-badge-min-design-01.png" style={{ width: 80, height: 80, position: "absolute", backfaceVisibility: "hidden", transform: "rotateY(180deg)", filter: "drop-shadow(0 0 16px rgba(255,0,0,0.9))", borderRadius: "50%" }} />
         </div>
       </div>
       {phase !== "loading" && (

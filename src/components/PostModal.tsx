@@ -11,6 +11,8 @@ import {
   isPostLikedByUser,
   addComment,
   getPostComments,
+  pinPost,
+  unpinPost,
 } from "@/lib/postsService";
 import { getUserByPrivyId, getProfile } from "@/lib/userService";
 import DeckPickerSheet from "@/components/DeckPickerSheet";
@@ -107,6 +109,7 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
 
   // Owner section state (ported intact from the profile lightbox)
   const [pinned, setPinned] = useState(post.is_pinned || false);
+  const [pinError, setPinError] = useState<string | null>(null);
   const [autoplayOn, setAutoplayOn] = useState(post.autoplay !== false);
   const [replacingThumb, setReplacingThumb] = useState(false);
   const [showReframe, setShowReframe] = useState(false);
@@ -661,25 +664,35 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
               <div onClick={(e) => e.stopPropagation()} style={{ borderTop: "1px solid rgba(255,255,255,0.08)", padding: "16px 0 90px", display: "flex", flexDirection: "column", gap: 14 }}>
                 <p style={{ ...SKB, fontSize: 'var(--fs-7)', color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.18em", margin: 0, animation: "ripple-down 0.2s ease-out both" }}>OWNER</p>
 
-                {/* Pin to grid */}
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", animation: "ripple-down 0.2s ease-out both", animationDelay: "50ms" }}>
-                  <div>
-                    <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: "white", textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 2px" }}>PIN</p>
-                    <p style={{ ...SKR, fontSize: 'var(--fs-8)', color: "rgba(255,255,255,0.4)", margin: 0 }}>{pinned ? "Pinned to the top of your grid" : "Pin to the top of your grid"}</p>
+                {/* Pin to grid — max 2 (enforced in pinPost service). */}
+                <div>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", animation: "ripple-down 0.2s ease-out both", animationDelay: "50ms" }}>
+                    <div>
+                      <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: "white", textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 2px" }}>PIN</p>
+                      <p style={{ ...SKR, fontSize: 'var(--fs-8)', color: "rgba(255,255,255,0.4)", margin: 0 }}>{pinned ? "Pinned to the top of your grid" : "Pin to the top of your grid (max 2)"}</p>
+                    </div>
+                    <button
+                      onClick={async () => {
+                        setPinError(null);
+                        if (pinned) {
+                          setPinned(false);   // optimistic
+                          const r = await unpinPost(post.id);
+                          if (!r.ok) { setPinned(true); setPinError(r.error ?? "Could not unpin."); }
+                        } else {
+                          if (!ownerSbId) return;
+                          const r = await pinPost(post.id, ownerSbId);   // service enforces max 2
+                          if (r.ok) setPinned(true);
+                          else setPinError(r.error ?? "Could not pin.");
+                        }
+                      }}
+                      style={{ background: "transparent", border: `1px solid ${pinned ? "rgba(255,0,0,0.5)" : "rgba(255,255,255,0.2)"}`, cursor: "pointer", padding: "5px 10px" }}
+                    >
+                      <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: pinned ? "#FF0000" : "rgba(255,255,255,0.6)", textTransform: "uppercase", letterSpacing: "0.08em" }}>{pinned ? "PINNED" : "PIN"}</span>
+                    </button>
                   </div>
-                  <button
-                    onClick={async () => {
-                      const newPinned = !pinned;
-                      setPinned(newPinned);
-                      await supabase.from("posts").update({ is_pinned: newPinned }).eq("id", post.id);
-                      if (newPinned && ownerSbId) {
-                        await supabase.from("posts").update({ is_pinned: false }).eq("user_id", ownerSbId).neq("id", post.id);
-                      }
-                    }}
-                    style={{ background: "transparent", border: `1px solid ${pinned ? "rgba(255,0,0,0.5)" : "rgba(255,255,255,0.2)"}`, cursor: "pointer", padding: "5px 10px" }}
-                  >
-                    <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: pinned ? "#FF0000" : "rgba(255,255,255,0.6)", textTransform: "uppercase", letterSpacing: "0.08em" }}>{pinned ? "PINNED" : "PIN"}</span>
-                  </button>
+                  {pinError && (
+                    <p style={{ ...SKR, fontSize: 'var(--fs-8)', color: "#FF0000", margin: "6px 0 0" }}>{pinError}</p>
+                  )}
                 </div>
 
                 {/* Autoplay toggle (video) */}

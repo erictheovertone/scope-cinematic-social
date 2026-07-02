@@ -117,8 +117,8 @@ function Top1kCelebration({ onDone }: { onDone: () => void }) {
       <div style={{ perspective: 500, width: 88, height: 88, marginBottom: 24, position: "relative", opacity: phase === "loading" ? 0 : 1, transform: phase === "loading" ? "translateY(40px)" : "translateY(0)", transition: "all 1s cubic-bezier(0.16,1,0.3,1)" }}>
         <div style={{ position: "absolute", inset: -24, borderRadius: "50%", background: "radial-gradient(circle, rgba(201,168,76,0.5) 0%, transparent 70%)", animation: "glowPulse 2s ease-in-out infinite" }} />
         <div style={{ width: 88, height: 88, transformStyle: "preserve-3d", animation: "coinFlip 5s ease-in-out infinite", position: "relative" }}>
-          <img src="/top-1k-collector-aperture-gold.png" style={{ width: 88, height: 88, position: "absolute", backfaceVisibility: "hidden", filter: "drop-shadow(0 0 20px rgba(201,168,76,1))", borderRadius: "50%" }} />
-          <img src="/top-1k-collector-aperture-gold.png" style={{ width: 88, height: 88, position: "absolute", backfaceVisibility: "hidden", transform: "rotateY(180deg)", filter: "drop-shadow(0 0 20px rgba(201,168,76,1))", borderRadius: "50%" }} />
+          <img src="/badges/collector-badge-min-design-01.png" style={{ width: 88, height: 88, position: "absolute", backfaceVisibility: "hidden", filter: "drop-shadow(0 0 20px rgba(201,168,76,1))", borderRadius: "50%" }} />
+          <img src="/badges/collector-badge-min-design-01.png" style={{ width: 88, height: 88, position: "absolute", backfaceVisibility: "hidden", transform: "rotateY(180deg)", filter: "drop-shadow(0 0 20px rgba(201,168,76,1))", borderRadius: "50%" }} />
         </div>
       </div>
       {phase !== "loading" && (

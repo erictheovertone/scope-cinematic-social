@@ -137,8 +137,9 @@ export default function Preferences() {
     <>
     <div className="bg-black" style={{ position: 'fixed', inset: 0, overflowY: 'auto' }}>
 
-      {/* Header */}
-      <div style={{ position: 'relative', display: 'flex', alignItems: 'center', padding: '14px 16px' }}>
+      {/* Header — top padding rides the safe-area inset so the back button clears the
+          status bar on notched devices (iPhone 12 etc.), not a hardcoded 14px. */}
+      <div style={{ position: 'relative', display: 'flex', alignItems: 'center', padding: '14px 16px', paddingTop: 'calc(14px + env(safe-area-inset-top, 0px))' }}>
         <button
           onClick={() => router.back()}
           style={{ ...MONO, fontSize: 'var(--fs-11)', color: 'white', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textTransform: 'uppercase', letterSpacing: '0.06em' }}
