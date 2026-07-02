@@ -10,6 +10,7 @@ import MediaRenderer from '@/components/MediaRenderer';
 // NOTE: the 1155 path (mintNewPost) is DORMANT — intact in src/lib/zora.ts as the
 // rollback lifeboat, deliberately unreferenced here. New posts mint as coins.
 import { createScopeCoin, backOwnCoin, errInfo } from '@/lib/zoraCoins';
+import { preflightTrade, preflightMessage } from '@/lib/economy/preflight';
 import { suggestTicker, normalizeTicker, isValidTicker } from '@/lib/economy/ticker';
 import { useTxNarrator } from '@/components/TxNarrator';
 import { notifyTradeSettled } from '@/lib/economy/tradeEvents';
@@ -289,6 +290,11 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
   // Slim inline narration for multi-signature sequences (labeling, not gating):
   // "1 OF 2 — CREATING YOUR COIN…" → "2 OF 2 — BACKING YOUR POST · $1.00".
   const [backingNarration, setBackingNarration] = useState<string | null>(null);
+  // Funds pre-flight verdict for the BACKING leg only (never gates the coin):
+  // set when the wallet can't afford the typed backing → MintPromptSheet shows
+  // the specific "you need ~$X more USDC" + FUND WALLET instead of the generic
+  // backing-failed copy. Null = a genuine route/market failure (generic copy).
+  const [backingFundsLine, setBackingFundsLine] = useState<string | null>(null);
   // CEREMONY IN THE FLOW: codified = the red corner brackets have snapped onto
   // the post's media inside the mint sheet; ceremonySub = honest sub-line when
   // a slow backing leg hands off to the global chip.
@@ -899,6 +905,19 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
         // slippage absorbs its high price impact. Context is captured for an
         // isolated retry.
         backingCtxRef.current = { walletClient, creatorAddress: embeddedWallet.address, coinAddress, usdAmount: plannedBuyUsd, postId, sym };
+        // FUNDS PRE-FLIGHT (backing leg ONLY — the coin above is already live and
+        // is never gated on USDC): the backing spends USDC; a wallet without it
+        // was a doomed attempt ending in an opaque route-500. Answer it here
+        // with the specific shortfall + fund path instead.
+        setBackingFundsLine(null);
+        const pf = await preflightTrade({ wallet: embeddedWallet.address, requireUsdc: plannedBuyUsd });
+        if (!pf.ok) {
+          console.warn('[coin] backing pre-flight blocked the attempt (coin unaffected):', pf);
+          setMintStatus('backing-failed');
+          setBackingFundsLine(preflightMessage(pf, { action: 'back' }));
+          setBackingNarration(null);
+          return;
+        }
         const backingPromise = backOwnCoin({ walletClient, creatorAddress: embeddedWallet.address, coinAddress, usdAmount: plannedBuyUsd, slippage: 0.15 });
         // Generous bound: the DEFAULT path completes the backing IN-FLOW (the
         // readiness poll + trade fit comfortably on a normal pool). Only a
@@ -967,6 +986,17 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
     setMintStatus('minted'); // back to the in-sheet wheel (coin is live)
     setCeremonySub(null);
     setBackingNarration(`BACKING · $${ctx.usdAmount.toFixed(2)}`);
+    // Same funds gate as the first attempt — a retry without USDC is the same
+    // doomed attempt. After funding, RETRY BACKING passes and proceeds.
+    setBackingFundsLine(null);
+    const pf = await preflightTrade({ wallet: ctx.creatorAddress, requireUsdc: ctx.usdAmount });
+    if (!pf.ok) {
+      console.warn('[coin] backing retry pre-flight blocked (coin unaffected):', pf);
+      setMintStatus('backing-failed');
+      setBackingFundsLine(preflightMessage(pf, { action: 'back' }));
+      setBackingNarration(null);
+      return;
+    }
     try {
       const r = await backOwnCoin({ walletClient: ctx.walletClient, creatorAddress: ctx.creatorAddress, coinAddress: ctx.coinAddress, usdAmount: ctx.usdAmount, slippage: 0.15 });
       setBackingNarration(r.pieces != null ? `[ BACKED · ${r.pieces} PIECES ]` : '[ BACKED ]');
@@ -1458,6 +1488,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
         onSelfBuyChange={setSelfBuyUsd}
         sequencePhase={mintStatus}
         sequenceLine={backingNarration}
+        backingFundsLine={backingFundsLine}
         ceremonySub={ceremonySub}
         codified={codified}
         mediaUrl={pendingMintData?.image ?? null}

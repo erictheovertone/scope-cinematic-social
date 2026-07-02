@@ -18,8 +18,10 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { feedImage } from "@/lib/mediaUrl";
-import { usePrivy } from '@privy-io/react-auth';
+import { usePrivy, useFundWallet } from '@privy-io/react-auth';
+import { base } from 'viem/chains';
 import { useEconomy } from '@/components/EconomyProvider';
+import { preflightTrade, preflightMessage } from '@/lib/economy/preflight';
 import { economyPreviewEnabled } from '@/lib/economy/flag';
 import FirstCutFlourish from '@/components/economy/FirstCutFlourish';
 import GradedVideo from '@/components/finishing/GradedVideo';
@@ -59,6 +61,7 @@ const SELL_PCTS = [25, 50, 100];
 export default function CollectSheetV2({ post, visible, onClose, tradeable = true }: Props) {
   const economy = useEconomy();
   const { user } = usePrivy();
+  const { fundWallet } = useFundWallet();
   const viewerWallet = user?.wallet?.address ?? null;
   // Moment 1 (First Cut flourish) — set only when the in-flow check verifies
   // THIS buy newly earned First Cut. Additive over the buy's success state.
@@ -258,6 +261,17 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
     if (!isFinite(v) || v <= 0) return;
     setBusy(true); setTradeError(null);
     try {
+      // FUNDS PRE-FLIGHT — answer "can this wallet afford it" BEFORE the trade,
+      // so a shortfall reads "you need ~$X.XX more USDC" + FUND WALLET instead
+      // of a doomed attempt's opaque route error. Fail-open; never fakes success.
+      if (viewerWallet) {
+        const pf = await preflightTrade(
+          buyCurrency === 'USDC'
+            ? { wallet: viewerWallet, requireUsdc: buyQuote?.usdAmount ?? v }
+            : { wallet: viewerWallet, requireEth: buyQuote?.ethAmount ?? 0 },
+        );
+        if (!pf.ok) { setTradeError(preflightMessage(pf, { action: 'buy' })); return; }
+      }
       const r = await economy.buy(post.id, v, buyCurrency);
       if (r.ok) {
         // r.pieces is RECEIPT-derived (the chain's word) — never a quote
@@ -283,6 +297,12 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
     if (sellEndsFirstCut && !confirmEndFirstCut) { setConfirmEndFirstCut(true); return; }
     setBusy(true); setTradeError(null);
     try {
+      // SELL pre-flight: the required balance is the COIN (pieces already read
+      // into `held`) + gas — not USDC. Same inline-message contract as the buy.
+      if (viewerWallet) {
+        const pf = await preflightTrade({ wallet: viewerWallet, coin: { have: held, need: sellPieces } });
+        if (!pf.ok) { setTradeError(preflightMessage(pf, { action: 'sell', ticker: post.ticker })); return; }
+      }
       const r = await economy.sell(post.id, sellPieces, sellCurrency);
       if (r.ok) {
         // Receipt-true pieces AND proceeds. Quieter than the collect ceremony —
@@ -575,7 +595,7 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
                   </button>
                 )}
                 <button
-                  onClick={() => { /* Coinbase Onramp wired later */ }}
+                  onClick={() => { if (viewerWallet) fundWallet(viewerWallet, { chain: base, asset: 'USDC' }); }}
                   style={{ width: '100%', background: 'transparent', border: '1px solid rgba(255,255,255,0.15)', cursor: 'pointer', padding: '11px 0' }}
                 >
                   <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>FUND WALLET</span>

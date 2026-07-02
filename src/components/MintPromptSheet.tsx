@@ -4,6 +4,7 @@ import { useWallets, useFundWallet, usePrivy } from "@privy-io/react-auth";
 import { createPublicClient, http, formatEther } from "viem";
 import { base } from "viem/chains";
 import { isValidTicker, tickerError } from "@/lib/economy/ticker";
+import { GAS_FLOOR_ETH } from "@/lib/economy/preflight";
 import FrameLoader from "@/components/FrameLoader";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
@@ -25,6 +26,9 @@ interface MintPromptSheetProps {
       transforms in place into its live narration (the wheel). */
   sequencePhase: 'idle' | 'minting' | 'minted' | 'mint-failed' | 'coin-failed' | 'backing-failed';
   sequenceLine: string | null;
+  /** Backing-failed ONLY, funds cause: the pre-flight's specific "you need
+      ~$X.XX more USDC" line. Null = genuine route/market failure → generic copy. */
+  backingFundsLine?: string | null;
   /** Honest sub-line when a slow leg hands off ("BACKING SETTLING…"). */
   ceremonySub?: string | null;
   /** The codification ceremony: brackets snap onto the media in the flow. */
@@ -37,7 +41,7 @@ interface MintPromptSheetProps {
   onContinue: () => void;
 }
 
-export default function MintPromptSheet({ visible, onMint, onSkip, onCoinSkipped, ticker, onTickerChange, selfBuyUsd, onSelfBuyChange, sequencePhase, sequenceLine, ceremonySub, codified, mediaUrl, mediaAr, onRetry, onContinue }: MintPromptSheetProps) {
+export default function MintPromptSheet({ visible, onMint, onSkip, onCoinSkipped, ticker, onTickerChange, selfBuyUsd, onSelfBuyChange, sequencePhase, sequenceLine, backingFundsLine, ceremonySub, codified, mediaUrl, mediaAr, onRetry, onContinue }: MintPromptSheetProps) {
   const [expanded, setExpanded] = useState(false);
   const [insufficientFunds, setInsufficientFunds] = useState(false);
   const [checkingBalance, setCheckingBalance] = useState(false);
@@ -60,10 +64,8 @@ export default function MintPromptSheet({ visible, onMint, onSkip, onCoinSkipped
   // Soft pre-check, not enforcement: it exists to catch obviously-empty wallets
   // before a doomed tx. If it's wrong in either direction the coin step itself
   // is the real gate (a createCoin failure lands LOUD in coin-failed + retry).
-  // Gas allowance: createCoin on Base ≈ a few M gas at sub-0.05 gwei → well
-  // under 0.0002 ETH (cents). The old 0.0005 constant false-gated funded
-  // wallets (observed: 0.000493 ETH balance refused — $0.02 short).
-  const GAS_ALLOWANCE_ETH = 0.0002;
+  // Gas allowance: the ONE shared floor (preflight.ts — rationale lives there).
+  const GAS_ALLOWANCE_ETH = GAS_FLOOR_ETH;
 
   const checkBalanceAndMint = async () => {
     // LOADING is not "no funds": if the wallet isn't connected yet, do nothing —
@@ -311,10 +313,23 @@ export default function MintPromptSheet({ visible, onMint, onSkip, onCoinSkipped
                   </p>
                   <p style={{ ...SKR, fontSize: 'var(--fs-10)', color: 'rgba(255,255,255,0.65)', lineHeight: 1.45, margin: 0 }}>
                     {sequencePhase === 'backing-failed'
-                      ? 'Your coin is live and your post is safe — only the backing buy didn’t go through. Retry it now, or back it later from your post.'
+                      ? (backingFundsLine
+                          ? `Your coin is live and your post is safe. ${backingFundsLine}`
+                          : 'Your coin is live and your post is safe — only the backing buy didn’t go through. Retry it now, or back it later from your post.')
                       : (sequenceLine ?? 'Something failed on the way to the chain. Your post is safe.')}
                   </p>
                 </div>
+                {/* FUNDS cause → the fix is money, not retrying: lead with the
+                    USDC onramp; RETRY BACKING re-runs the (pre-flighted) buy
+                    after funding. */}
+                {sequencePhase === 'backing-failed' && backingFundsLine && (
+                  <button
+                    onClick={() => { if (embeddedWallet) fundWallet(embeddedWallet.address, { chain: base, asset: 'USDC' }); }}
+                    style={{ width: '100%', background: 'transparent', border: '1px solid #FF0000', cursor: 'pointer', padding: '13px 0', marginBottom: 8 }}
+                  >
+                    <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: '#FF0000', textTransform: 'uppercase', letterSpacing: '0.1em' }}>FUND WALLET · USDC</span>
+                  </button>
+                )}
                 <button onClick={onRetry} style={{ width: '100%', background: '#FF0000', border: 'none', cursor: 'pointer', padding: '13px 0', marginBottom: 8 }}>
                   <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: 'white', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{sequencePhase === 'backing-failed' ? 'RETRY BACKING' : 'RETRY'}</span>
                 </button>
