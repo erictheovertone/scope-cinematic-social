@@ -299,6 +299,62 @@ export const likePost = async (postId: string, userId: string, username: string)
   return data;
 };
 
+// ── Market notification writer (the MARKET tab's first writers) ───────────────
+// The notifications MARKET tab reads any type outside the social set — these
+// 'collect' / 'sell' rows are what populate it. Called AFTER a receipt-true
+// confirmed trade only (tx mined + pieces verified) — never on optimistic state.
+// FIRE-AND-FORGET: the trade already succeeded; a failed insert logs and moves
+// on, it must never disturb the trade UX. `pieces` arrives already converted to
+// fragments by the receipt path (the one 100k-tokens-per-piece source).
+export const notifyMarketTrade = (
+  postId: string,
+  kind: 'collect' | 'sell',
+  actorPrivyId: string,
+  pieces: number,
+  usdAmount?: number,
+): void => {
+  ;(async () => {
+    try {
+      if (!actorPrivyId || !(pieces > 0)) return
+      const { data: post } = await supabase
+        .from('posts').select('user_id, ticker, media_urls, poster_url, thumbnail_url, media_type').eq('id', postId).single()
+      if (!post) return
+      // Same uuid → DID translation as likePost: recipient_id MUST be the
+      // creator's Privy DID (the bell reads by DID; a raw uuid never shows).
+      const { data: ownerUser } = await supabase
+        .from('users').select('privy_id').eq('id', post.user_id).single()
+      const recipientDid = ownerUser?.privy_id
+      if (!recipientDid || recipientDid === actorPrivyId) return // skip self-trades (e.g. mint-flow backing)
+      const { data: actorUser } = await supabase
+        .from('users').select('id').eq('privy_id', actorPrivyId).single()
+      const { data: actorProfile } = actorUser
+        ? await supabase.from('profiles').select('username, profile_image_url').eq('user_id', actorUser.id).single()
+        : { data: null }
+      const username = actorProfile?.username ?? 'someone'
+      const amount = post.ticker
+        ? `${pieces} [ ${post.ticker} ]`
+        : `${pieces} ${pieces === 1 ? 'fragment' : 'fragments'}`
+      const value = kind === 'collect' && usdAmount != null && usdAmount > 0 ? ` · ~$${usdAmount.toFixed(2)}` : ''
+      const { error: notifError } = await supabase
+        .from('notifications')
+        .insert({
+          recipient_id: recipientDid,
+          sender_id: actorPrivyId,
+          sender_username: username,
+          sender_avatar: actorProfile?.profile_image_url ?? null,
+          type: kind,
+          post_id: postId,
+          post_image_url: notifThumb(post),
+          message: `@${username} ${kind === 'collect' ? 'collected' : 'sold'} ${amount}${value}`,
+          is_read: false,
+        })
+      if (notifError) console.error('[market-notif] insert error (trade unaffected):', notifError)
+    } catch (e) {
+      console.error('[market-notif] exception (trade unaffected):', e)
+    }
+  })()
+}
+
 export const unlikePost = async (postId: string, userId: string): Promise<void> => {
   const { error } = await supabase
     .from('likes')

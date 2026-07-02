@@ -31,6 +31,7 @@ import TickerMark from '@/components/economy/TickerMark';
 import FrameLoader from '@/components/FrameLoader';
 import { getAspectRatio } from '@/lib/aspectRatio';
 import { notifyTradeSettled } from '@/lib/economy/tradeEvents';
+import { notifyMarketTrade } from '@/lib/postsService';
 import { TOKENS_PER_PIECE } from '@/lib/economy/tokenomics';
 import { notifyFirstCutEarned } from '@/lib/firstCutLedger';
 import { openPostLightbox } from '@/lib/postLightbox';
@@ -285,6 +286,9 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
         // below the spend while the market-price read catches up to the trade.
         ceremonyResolve(post.id, n, undefined, v);
         checkFirstCut(post.id, r.ref, v); // Moment 1 — additive, non-blocking ($ floor)
+        // Creator's MARKET notification — receipt-true trade only (r.ok above),
+        // fire-and-forget (a failed insert never touches this ceremony).
+        if (user?.id) notifyMarketTrade(post.id, 'collect', user.id, n, v);
       }
     } catch (e) {
       console.error('[collect] buy failed:', e);
@@ -317,6 +321,8 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
           r.proceedsUsd != null ? { usd: r.proceedsUsd, currency: sellCurrency } : undefined,
         );
         expireCheckFirstCut(post.id, r.ref); // lifecycle — expire the slot if this sell drops below the keep-floor
+        // Creator's MARKET notification — same receipt-true, fire-and-forget contract.
+        if (user?.id) notifyMarketTrade(post.id, 'sell', user.id, r.pieces ?? sellPieces);
       }
     } catch (e) {
       console.error('[collect] sell failed:', e);
