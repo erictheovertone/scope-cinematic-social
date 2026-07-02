@@ -15,7 +15,7 @@ const SCREENS = [
   {
     label: '02 / 04',
     title: 'YOU HAVE\nA WALLET',
-    body: "When you joined, Scope set up a wallet in your name on Base — no seed phrase, no setup, nothing to manage. It's how your work becomes ownable: every post can become a token real fans collect. As you build, your standing shows — early members, verified artists, and featured work carry badges that mark who you are.",
+    body: "When you joined, Scope set up a digital wallet in your name — nothing to set up, nothing to manage. It's how your work becomes ownable: every post can be collected by real fans, and you make real money when they do. As you build, your standing shows — early members, verified artists, and featured work carry badges that mark who you are.",
     cta: 'NEXT',
   },
   {
