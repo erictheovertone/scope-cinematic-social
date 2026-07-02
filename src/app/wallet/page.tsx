@@ -61,8 +61,9 @@ export default function WalletPage() {
   const [sentLabel, setSentLabel] = useState("");
   const GAS_RESERVE_ETH = 0.0002; // ETH MAX leaves this for gas
 
-  // Pull-to-refresh
+  // Pull-to-refresh — armed only when the gesture starts at scrollTop 0
   const touchStartY = useRef(0);
+  const touchStartAtTop = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const showToast = (msg: string) => {
@@ -115,6 +116,34 @@ export default function WalletPage() {
     window.setTimeout(() => holdingFloor.current.delete(postId), 90_000); // safety: never persist
   };
 
+  // Mirrors holdings for non-render readers (fetchBalances gates its holdings
+  // re-pull on "already loaded" without a stale closure).
+  const holdingsRef = useRef<Holding[] | null>(null);
+  holdingsRef.current = holdings;
+
+  // THE one in-place holdings refresh (KEEP-LAST-GOOD merge — see the 60s
+  // staleness block below for the rule). Both the interval and pull-to-refresh
+  // land here: the list is never blanked, so it never unmounts and scroll
+  // position survives every refresh.
+  const mergeHoldingsInPlace = useCallback((next: Holding[]) => {
+    setHoldings((prev) => {
+      if (!prev) return applyHoldingFloors(next);
+      const prevByPost = new Map(prev.map((h) => [h.postId, h]));
+      const merged = next
+        .map((h) => {
+          if (h.priceUsd != null && h.valueUsd > 0) return h; // resolved — use it
+          const old = prevByPost.get(h.postId);
+          if (old && old.priceUsd != null && old.valueUsd > 0) {
+            // unresolved this tick but previously priced → keep last good
+            return { ...h, priceUsd: old.priceUsd, valueUsd: old.priceUsd * h.pieces };
+          }
+          return h; // genuinely unpriced (untraded) → stays $0
+        });
+      return applyHoldingFloors(merged).sort((a, b) => b.valueUsd - a.valueUsd);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const fetchBalances = async () => {
     if (!walletAddress) return;
     setLoading(true);
@@ -128,7 +157,14 @@ export default function WalletPage() {
       applyReadBalances(eth, usdc);
       setTxHistory(txs);
       setEthUsdRate(rate);
-      setHoldings(null); // re-pull holdings on next tab view (pull-to-refresh)
+      // Holdings refresh IN PLACE — never setHoldings(null): blanking swapped the
+      // list for LOADING… mid-scroll (unmount → scroll destroyed). First load is
+      // owned by the holdings===null effect; a refresh merges over the live list.
+      if (holdingsRef.current !== null) {
+        economy.getHoldings()
+          .then((next) => { if (mountedRef.current) mergeHoldingsInPlace(next); })
+          .catch(() => {});
+      }
     } catch (e) {
       console.error("fetchBalances error:", e);
     } finally {
@@ -200,8 +236,8 @@ export default function WalletPage() {
   }, [fundPulse]);
 
   // Holdings — the ownership ledger. Loaded eagerly: the headline TOTAL is
-  // AVAILABLE + HOLDINGS, so both numbers exist from the start. Refreshed on
-  // pull-to-refresh via fetchBalances → holdings reset.
+  // AVAILABLE + HOLDINGS, so both numbers exist from the start. This effect owns
+  // the FIRST load only; every refresh merges in place (mergeHoldingsInPlace).
   useEffect(() => {
     if (holdings !== null || !walletAddress) return;
     let cancelled = false;
@@ -300,24 +336,7 @@ export default function WalletPage() {
     if (!walletAddress) return;
     const id = setInterval(() => {
       economy.getHoldings()
-        .then((next) => {
-          if (!mountedRef.current) return;
-          setHoldings((prev) => {
-            if (!prev) return applyHoldingFloors(next);
-            const prevByPost = new Map(prev.map((h) => [h.postId, h]));
-            const merged = next
-              .map((h) => {
-                if (h.priceUsd != null && h.valueUsd > 0) return h; // resolved — use it
-                const old = prevByPost.get(h.postId);
-                if (old && old.priceUsd != null && old.valueUsd > 0) {
-                  // unresolved this tick but previously priced → keep last good
-                  return { ...h, priceUsd: old.priceUsd, valueUsd: old.priceUsd * h.pieces };
-                }
-                return h; // genuinely unpriced (untraded) → stays $0
-              });
-            return applyHoldingFloors(merged).sort((a, b) => b.valueUsd - a.valueUsd);
-          });
-        })
+        .then((next) => { if (mountedRef.current) mergeHoldingsInPlace(next); })
         .catch(() => {});
     }, 60_000);
     return () => clearInterval(id);
@@ -369,8 +388,12 @@ export default function WalletPage() {
 
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartY.current = e.touches[0].clientY;
+    // Pull-to-refresh is only armed when the gesture STARTS at the top of the
+    // scroller — scrolling back up through the list must never read as a pull.
+    touchStartAtTop.current = (containerRef.current?.scrollTop ?? 0) <= 0;
   };
   const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!touchStartAtTop.current) return;
     const delta = e.changedTouches[0].clientY - touchStartY.current;
     if (delta > 60 && !loading) fetchBalances();
   };
