@@ -35,6 +35,45 @@ const BALANCE_OF_ABI = [
   },
 ] as const;
 
+// ── BATCHED balance reads (CU economics) ──────────────────────────────────────
+// ONE alchemy_getTokenBalances call for the whole coin set instead of N
+// per-coin balanceOf reads (the per-token path was the wallet's biggest CU
+// spender and fed the 429s that shed getAssetTransfers). Falls back to the old
+// per-token readContract path if the batch endpoint errors (e.g. a non-Alchemy
+// RPC) — correctness over economy, holdings never break on the optimization.
+const RPC_URL = process.env.NEXT_PUBLIC_ALCHEMY_BASE_URL || "https://mainnet.base.org";
+async function balancesFor(owner: string, contracts: string[]): Promise<Map<string, bigint>> {
+  const out = new Map<string, bigint>();
+  const unique = [...new Set(contracts.map((c) => c.toLowerCase()))];
+  if (!unique.length) return out;
+  try {
+    const res = await fetch(RPC_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "alchemy_getTokenBalances", params: [owner, unique] }),
+    }).then((r) => r.json());
+    const list = res?.result?.tokenBalances;
+    if (Array.isArray(list) && list.length) {
+      for (const tb of list) {
+        const hex = tb?.tokenBalance;
+        if (typeof hex === "string" && hex.startsWith("0x") && hex.length > 2) {
+          try { out.set(String(tb.contractAddress).toLowerCase(), BigInt(hex)); } catch { /* skip bad entry */ }
+        }
+      }
+      if (out.size) return out;
+    }
+  } catch { /* fall through to per-token */ }
+  await Promise.all(unique.map(async (c) => {
+    try {
+      const bal = (await publicClient.readContract({
+        address: getAddress(c), abi: BALANCE_OF_ABI, functionName: "balanceOf", args: [owner as `0x${string}`],
+      })) as bigint;
+      out.set(c, bal);
+    } catch { /* skip — this coin reads as 0 this tick */ }
+  }));
+  return out;
+}
+
 // postId → coin_address lookup (null = not a coin post). Tiny cache so feed
 // scrolling doesn't re-query the same posts.
 const coinAddrCache = new Map<string, string | null>();
@@ -335,15 +374,12 @@ export function createRealEconomy(
         .neq("user_id", userId); // external curation only — never own posts
       if (!coinPosts?.length) return [];
 
+      // ONE batched balance read for the whole set (fallback inside).
+      const balances = await balancesFor(wallet, coinPosts.map((p) => p.coin_address as string));
       const rows = await Promise.all(
         coinPosts.map(async (p): Promise<Holding | null> => {
           try {
-            const bal = (await publicClient.readContract({
-              address: p.coin_address as `0x${string}`,
-              abi: BALANCE_OF_ABI,
-              functionName: "balanceOf",
-              args: [wallet as `0x${string}`],
-            })) as bigint;
+            const bal = balances.get((p.coin_address as string).toLowerCase()) ?? BigInt(0);
             const pieces = Math.floor(parseFloat(formatEther(bal)) / TOKENS_PER_PIECE);
             if (pieces <= 0) return null;
             let priceUsd: number | null = null;
@@ -381,15 +417,12 @@ export function createRealEconomy(
         .eq("token_standard", "coin");
       if (!coinPosts?.length) return [];
 
+      // ONE batched balance read for the whole set (fallback inside).
+      const balances = await balancesFor(viewerAddress, coinPosts.map((p) => p.coin_address as string));
       const rows = await Promise.all(
         coinPosts.map(async (p): Promise<Holding | null> => {
           try {
-            const bal = (await publicClient.readContract({
-              address: p.coin_address as `0x${string}`,
-              abi: BALANCE_OF_ABI,
-              functionName: "balanceOf",
-              args: [viewerAddress as `0x${string}`],
-            })) as bigint;
+            const bal = balances.get((p.coin_address as string).toLowerCase()) ?? BigInt(0);
             const pieces = Math.floor(parseFloat(formatEther(bal)) / TOKENS_PER_PIECE);
             if (pieces <= 0) return null;
 

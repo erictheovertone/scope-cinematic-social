@@ -5,7 +5,7 @@ import { usePrivy, useFundWallet, useWallets } from "@privy-io/react-auth";
 import { base } from "viem/chains";
 import { createWalletClient, custom, getAddress, parseEther, encodeFunctionData } from "viem";
 import { publicClient, errInfo } from "@/lib/zoraCoins";
-import { getEthBalance, getUsdcBalance, getTransactionHistory } from "@/lib/wallet";
+import { getEthBalance, getUsdcBalance, getTransactionHistoryCached, invalidateTxHistory } from "@/lib/wallet";
 import { useEconomy } from "@/components/EconomyProvider";
 import TickerMark from "@/components/economy/TickerMark";
 import FrameLoader from "@/components/FrameLoader";
@@ -48,6 +48,10 @@ export default function WalletPage() {
   const [ethBalance, setEthBalance] = useState<string | null>(null);
   const [usdcBalance, setUsdcBalance] = useState<string | null>(null);
   const [txHistory, setTxHistory] = useState<any[]>([]);
+  // ACTIVITY fetch state — failed is a REAL state now (429s used to read as
+  // an empty history); the tab renders a retry instead of a false empty.
+  const [txLoading, setTxLoading] = useState(false);
+  const [txFailed, setTxFailed] = useState(false);
   // coin_address(lowercase) → ticker, from posts — the app's ticker source of truth,
   // so activity resolves real tickers (never a bare numeric on-chain symbol).
   const [coinTickers, setCoinTickers] = useState<Map<string, string>>(new Map());
@@ -182,14 +186,14 @@ export default function WalletPage() {
     if (!walletAddress) return;
     setLoading(true);
     try {
-      const [eth, usdc, txs, rate] = await Promise.all([
+      // Transfers are NOT here anymore — they're the CU-expensive call, owned by
+      // loadActivity (session-cached, refreshed on stale tab-open / retry).
+      const [eth, usdc, rate] = await Promise.all([
         getEthBalance(walletAddress),
         getUsdcBalance(walletAddress),
-        getTransactionHistory(walletAddress),
         economy.getEthUsdRate(),
       ]);
       applyReadBalances(eth, usdc);
-      setTxHistory(txs);
       setEthUsdRate(rate);
       // Holdings refresh IN PLACE — never setHoldings(null): blanking swapped the
       // list for LOADING… mid-scroll (unmount → scroll destroyed). First load is
@@ -225,6 +229,29 @@ export default function WalletPage() {
   useEffect(() => {
     fetchBalances();
   }, [walletAddress]);
+
+  // ACTIVITY loader — session-cached transfers; force bypasses the cache.
+  // Honest failure: a rate-limited read renders the retry state, never a
+  // false "no transactions".
+  const loadActivity = useCallback(async (force = false) => {
+    if (!walletAddress) return;
+    setTxLoading(true); setTxFailed(false);
+    try {
+      const txs = await getTransactionHistoryCached(walletAddress, { force });
+      if (mountedRef.current) setTxHistory(txs);
+    } catch (e) {
+      console.error("[wallet] activity load failed:", e);
+      if (mountedRef.current) setTxFailed(true);
+    } finally {
+      if (mountedRef.current) setTxLoading(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [walletAddress]);
+
+  // Fetch on wallet open; re-check when the ACTIVITY tab opens (the cache
+  // answers instantly unless stale >2.5 min).
+  useEffect(() => { loadActivity(); }, [loadActivity]);
+  useEffect(() => { if (activeTab === "activity") loadActivity(); }, [activeTab, loadActivity]);
 
   // Autodetect incoming funds — poll the wallet while this page is visible.
   // One path serves both external deposits AND in-app proceeds: anything that
@@ -355,8 +382,10 @@ export default function WalletPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }), [walletAddress, reconcileHoldings]);
 
-  // 60s BACKGROUND staleness (Change 4): even absent an action, holdings are
-  // never older than ~60s. Light — one batched getHoldings/min (reuses the
+  // 120s BACKGROUND staleness (Change 4, slowed from 60s for CU economics —
+  // nothing depended on the 60s cadence; post-trade freshness comes from the
+  // reconcile path, not this timer): holdings never older than ~2 min. Light —
+  // one batched getHoldings per tick (reuses the
   // /api/market batch+cache, so no per-tile API storm / 429 regression).
   //
   // KEEP-LAST-GOOD (the established rule): a background tick must NEVER overwrite
@@ -372,7 +401,7 @@ export default function WalletPage() {
       economy.getHoldings()
         .then((next) => { if (mountedRef.current) mergeHoldingsInPlace(next); })
         .catch(() => {});
-    }, 60_000);
+    }, 120_000);
     return () => clearInterval(id);
   }, [walletAddress, economy]);
 
@@ -551,7 +580,8 @@ export default function WalletPage() {
       if (receipt.status !== "success") throw new Error("The transfer reverted on-chain — nothing was sent.");
       setSentLabel(`[ SENT · $${sendUsdNum.toFixed(2)} ]`);
       setSendStep("sent");
-      fetchBalances(); // AVAILABLE updates; ACTIVITY picks the tx up
+      fetchBalances(); // AVAILABLE updates
+      invalidateTxHistory(); loadActivity(true); // ACTIVITY picks the send up (fresh, not cached)
       setTimeout(() => {
         setShowSend(false);
         setSendStep("input"); setSendTo(""); setSendAmount(""); setSentLabel("");
@@ -980,8 +1010,18 @@ export default function WalletPage() {
             shown in FRAGMENTS via the single-source tokenomics conversion). */}
         {activeTab === "activity" && (
           <div>
-            {loading && activityRows.length === 0 ? (
+            {txLoading && activityRows.length === 0 ? (
               <p style={{ ...SKB, fontSize: 'var(--fs-10)', color: "white", opacity: 0.4, textAlign: "center", marginTop: 40, textTransform: "uppercase" }}>Loading…</p>
+            ) : txFailed && activityRows.length === 0 ? (
+              /* HONEST FAILURE — a rate-limited read is not an empty history. */
+              <button
+                onClick={() => loadActivity(true)}
+                style={{ display: "block", width: "100%", background: "transparent", border: "1px solid rgba(255,0,0,0.55)", cursor: "pointer", padding: "13px 0", marginTop: 40 }}
+              >
+                <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: "#FF0000", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                  Couldn&rsquo;t load activity — tap to retry
+                </span>
+              </button>
             ) : activityRows.length === 0 ? (
               <p style={{ ...SKB, fontSize: 'var(--fs-10)', color: "white", opacity: 0.4, textAlign: "center", marginTop: 40, textTransform: "uppercase" }}>No transactions yet</p>
             ) : (
