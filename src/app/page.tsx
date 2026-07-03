@@ -402,9 +402,9 @@ export default function Home() {
             </div>
             <h1 style={{
               fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700,
-              fontSize: 'clamp(44px, 14.5vw, 60px)', lineHeight: 0.95,
+              fontSize: 'clamp(31px, 10.15vw, 42px)', lineHeight: 0.95,
               letterSpacing: '-0.06em', color: '#FFFFFF', textTransform: 'uppercase',
-              margin: '2px 12px 0',
+              margin: '2px 12px 0 6px',
             }}>
               Discover
             </h1>
