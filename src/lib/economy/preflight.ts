@@ -71,10 +71,14 @@ export async function preflightTrade(args: {
     funds". Inline copy for the sheets' existing red error slots. */
 export function preflightMessage(
   r: Preflight,
-  ctx?: { action?: "back" | "buy" | "sell"; ticker?: string | null },
+  ctx?: { action?: "back" | "buy" | "sell" | "swap"; ticker?: string | null },
 ): string | null {
   if (r.ok) return null;
-  const doing = ctx?.action === "back" ? "to back this" : ctx?.action === "sell" ? "for this sale" : "for this buy";
+  const doing =
+    ctx?.action === "back" ? "to back this"
+    : ctx?.action === "sell" ? "for this sale"
+    : ctx?.action === "swap" ? "for this swap"
+    : "for this buy";
   switch (r.reason) {
     case "insufficient_usdc":
       return `You need ~$${Math.max(0.01, r.shortfallUsd).toFixed(2)} more USDC ${doing} — fund your wallet.`;

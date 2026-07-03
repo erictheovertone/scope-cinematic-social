@@ -616,3 +616,110 @@ export async function executeQuotedTrade({
   console.log(`[zoraCoins] trade (${label}) LANDED — tx: ${hash} | gas used ${receipt.gasUsed}/${gas}`);
   return { hash, receipt };
 }
+
+// ── ETH ⇄ USDC swap (wallet SWAP sheet) ───────────────────────────────────────
+//
+// SIBLING of buyCoin/sellCoin — the same Zora-router machinery pointed at the
+// plain ETH/USDC pair (verified live both directions; no Zora hook on this pair,
+// so the only cost is the Uniswap pool fee + spread, ~0.1%/leg). USDC→ETH rides
+// the SDK's tradeCoin (Permit2, exactly like USDC collects); ETH→USDC rides
+// createTradeCall + executeQuotedTrade (simulate → 1.5× gas → receipt). Deep
+// 5bp pair → tight default slippage (NOT the backing's 0.15).
+
+export type SwapDirection = "ETH_TO_USDC" | "USDC_TO_ETH";
+const SWAP_SLIPPAGE = 0.02;
+// Uniswap Permit2 — the USDC leg's one-time approval target (allowance pre-read
+// lets the sheet surface "first swap includes an approval" honestly).
+const PERMIT2_ADDRESS = "0x000000000022D473030F116dDEE9F6B43aC78BA3" as const;
+const ERC20_ALLOWANCE = [
+  { name: "allowance", type: "function", stateMutability: "view", inputs: [{ name: "owner", type: "address" }, { name: "spender", type: "address" }], outputs: [{ type: "uint256" }] },
+] as const;
+
+const readEthWei = (addr: `0x${string}`) => publicClient.getBalance({ address: addr });
+const readUsdcUnits = async (addr: `0x${string}`): Promise<bigint> =>
+  (await publicClient.readContract({ address: USDC_BASE, abi: ERC20_BAL, functionName: "balanceOf", args: [addr] })) as bigint;
+
+/** True when this wallet's first USDC swap will include the one-time Permit2 approval tx. */
+export async function usdcSwapNeedsApproval(owner: `0x${string}`): Promise<boolean> {
+  try {
+    const allowance = (await publicClient.readContract({
+      address: USDC_BASE, abi: ERC20_ALLOWANCE, functionName: "allowance", args: [owner, PERMIT2_ADDRESS],
+    })) as bigint;
+    return allowance === BigInt(0);
+  } catch { return false; } // unknown → don't scare the user; tradeCoin handles it either way
+}
+
+const swapParams = (direction: SwapDirection, amountIn: bigint, sender: `0x${string}`, slippage: number) => ({
+  sell: direction === "ETH_TO_USDC" ? ({ type: "eth" } as const) : ({ type: "erc20", address: USDC_BASE } as const),
+  buy: direction === "ETH_TO_USDC" ? ({ type: "erc20", address: USDC_BASE } as const) : ({ type: "eth" } as const),
+  amountIn,
+  slippage,
+  sender,
+  recipient: sender,
+});
+
+/** Display quote for the sheet (execution always re-quotes internally at send). */
+export async function quoteSwapEthUsdc({ direction, amountIn, sender, slippage = SWAP_SLIPPAGE }: {
+  direction: SwapDirection;
+  amountIn: bigint; // wei (ETH pay) or µUSDC (USDC pay)
+  sender: `0x${string}`;
+  slippage?: number;
+}): Promise<{ amountOut: bigint }> {
+  const quote: any = await createTradeCall(swapParams(direction, amountIn, sender, slippage));
+  return { amountOut: BigInt(quote?.quote?.amountOut ?? 0) };
+}
+
+/**
+ * RECEIPT-TRUE swap: snapshot BOTH balances → execute → mined status:success →
+ * re-read both → the ACTUAL deltas are the result (never the quote). Success
+ * requires the receive side to have genuinely increased, else this throws.
+ * `paid`/`received` are floats in display units (ETH / USDC); `paid` on the ETH
+ * side includes gas — the honest number.
+ */
+export async function swapEthUsdc({ walletClient, sender, direction, amountIn, slippage = SWAP_SLIPPAGE }: {
+  walletClient: any;
+  sender: `0x${string}`;
+  direction: SwapDirection;
+  amountIn: bigint; // wei (ETH pay) or µUSDC (USDC pay)
+  slippage?: number;
+}): Promise<{ hash: `0x${string}`; paid: number; received: number }> {
+  const [ethBefore, usdcBefore] = await Promise.all([readEthWei(sender), readUsdcUnits(sender)]);
+
+  let hash: `0x${string}`;
+  if (direction === "USDC_TO_ETH") {
+    // Permit2 leg — the SDK orchestrates approval (first time) + signature + send.
+    const { tradeCoin } = await import("@zoralabs/coins-sdk");
+    const res: any = await tradeCoin({
+      tradeParameters: swapParams(direction, amountIn, sender, slippage),
+      walletClient, publicClient: publicClient as any, account: sender, validateTransaction: true,
+    });
+    hash = (res?.transactionHash ?? res?.hash) as `0x${string}`;
+    if (!hash) throw new Error("Swap didn't broadcast — no transaction hash. Nothing was swapped.");
+    const mined = await publicClient.waitForTransactionReceipt({ hash });
+    if (mined.status !== "success") throw new Error(`Swap reverted on-chain (tx ${hash}) — nothing was swapped.`);
+  } else {
+    const quote = await createTradeCall(swapParams(direction, amountIn, sender, slippage));
+    const exec = await executeQuotedTrade({ walletClient, sender, quote, label: `swap ETH→USDC` });
+    hash = exec.hash; // executeQuotedTrade already enforced mined status:success
+  }
+
+  // Receive-side delta must be REAL — retries absorb RPC index lag on a
+  // just-mined tx (the buyCoin discipline); a mis-routed swap never reflects → throw.
+  let ethAfter = ethBefore, usdcAfter = usdcBefore;
+  for (let i = 0; i < 4; i++) {
+    [ethAfter, usdcAfter] = await Promise.all([readEthWei(sender), readUsdcUnits(sender)]);
+    const gained = direction === "ETH_TO_USDC" ? usdcAfter > usdcBefore : ethAfter > ethBefore;
+    if (gained) break;
+    if (i < 3) await new Promise((r) => setTimeout(r, 1500));
+  }
+
+  const ethDelta = parseFloat(formatEther(ethAfter - ethBefore)); // formatEther handles signed bigints
+  const usdcDelta = Number(usdcAfter - usdcBefore) / 1e6;
+  const received = direction === "ETH_TO_USDC" ? usdcDelta : ethDelta;
+  const paid = direction === "ETH_TO_USDC" ? -ethDelta : -usdcDelta;
+  if (!(received > 0)) {
+    throw new Error(`Swap didn't deliver to your wallet (tx ${hash}) — check the transaction before retrying.`);
+  }
+  console.log(`[zoraCoins] swap ${direction} COMPLETE — tx: ${hash} | paid ${paid} | received ${received} (receipt-true deltas)`);
+  return { hash, paid, received };
+}

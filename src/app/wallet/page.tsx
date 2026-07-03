@@ -18,6 +18,7 @@ import { supabase } from "@/lib/supabase/client";
 import { getUserByPrivyId } from "@/lib/userService";
 import { getEarnings, sumAll, type EarningsData } from "@/lib/economy/earnings";
 import EarningsSheet from "@/components/economy/EarningsSheet";
+import SwapSheet from "@/components/SwapSheet";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -62,6 +63,7 @@ export default function WalletPage() {
   // transfers: gifting pieces collides with First Cut HOLD-ALL provenance —
   // deferred as its own design question.
   const [showSend, setShowSend] = useState(false);
+  const [showSwap, setShowSwap] = useState(false);
   const [sendToken, setSendToken] = useState<"ETH" | "USDC">("ETH");
   const [sendTo, setSendTo] = useState("");
   const [sendAmount, setSendAmount] = useState(""); // DOLLARS
@@ -611,6 +613,14 @@ export default function WalletPage() {
           <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "white", textTransform: "uppercase", letterSpacing: "0.06em" }}>DEPOSIT</span>
         </button>
         <button
+          onClick={() => setShowSwap(true)}
+          style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "rgba(255,255,255,0.06)", border: "none", cursor: "pointer", padding: "14px 28px" }}
+        >
+          <span style={{ fontSize: 'var(--fs-24)', color: "#FF0000", lineHeight: 1 }}>⇄</span>
+          <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "white", textTransform: "uppercase", letterSpacing: "0.06em" }}>SWAP</span>
+          <span style={{ ...SKB, fontSize: 'var(--fs-7)', color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.08em" }}>USDC ⇄ ETH</span>
+        </button>
+        <button
           onClick={() => setShowSend(true)}
           style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "rgba(255,255,255,0.06)", border: "none", cursor: "pointer", padding: "14px 28px" }}
         >
@@ -746,6 +756,16 @@ export default function WalletPage() {
         {earnOpen && earnings && (
           <EarningsSheet data={earnings} onClose={() => setEarnOpen(false)} />
         )}
+
+        {/* SWAP — ETH ⇄ USDC (receipt-true engine; wallet re-reads balances
+            through refreshAvailable's floor discipline after a landed swap). */}
+        <SwapSheet
+          visible={showSwap}
+          onClose={() => setShowSwap(false)}
+          ethBalance={ethBalance != null ? parseFloat(ethBalance) : 0}
+          usdcBalance={usdcBalance != null ? parseFloat(usdcBalance) : 0}
+          onSwapped={() => { refreshAvailable(); }}
+        />
 
         {/* Tap-through: the holding opens its post's collect sheet. */}
         {openHolding && (
