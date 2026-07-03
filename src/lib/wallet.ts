@@ -35,6 +35,20 @@ export async function getUsdcBalance(address: string): Promise<string> {
   return formatUnits(balance, 6)
 }
 
+// ZORA — the token every creator-fee stream pays out in (the coins' paired
+// currency). Surfaced in the wallet as CREATOR EARNINGS.
+const ZORA_ADDRESS = '0x1111111111166b7FE7bd91427724B487980aFc69'
+
+export async function getZoraBalance(address: string): Promise<string> {
+  const balance = await client.readContract({
+    address: ZORA_ADDRESS,
+    abi: USDC_ABI, // plain balanceOf — same minimal ABI
+    functionName: 'balanceOf',
+    args: [address as `0x${string}`],
+  })
+  return formatUnits(balance, 18)
+}
+
 export async function getTransactionHistory(address: string) {
   // Alchemy ANDs fromAddress + toAddress when both are in ONE call — that returns only
   // self-transfers (≈always empty). Activity needs BOTH directions, so we make two calls

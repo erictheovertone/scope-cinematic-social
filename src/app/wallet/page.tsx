@@ -4,8 +4,8 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { usePrivy, useFundWallet, useWallets } from "@privy-io/react-auth";
 import { base } from "viem/chains";
 import { createWalletClient, custom, getAddress, parseEther, encodeFunctionData } from "viem";
-import { publicClient, errInfo } from "@/lib/zoraCoins";
-import { getEthBalance, getUsdcBalance, getTransactionHistoryCached, invalidateTxHistory } from "@/lib/wallet";
+import { publicClient, errInfo, quoteSwap } from "@/lib/zoraCoins";
+import { getEthBalance, getUsdcBalance, getZoraBalance, getTransactionHistoryCached, invalidateTxHistory } from "@/lib/wallet";
 import { useEconomy } from "@/components/EconomyProvider";
 import TickerMark from "@/components/economy/TickerMark";
 import FrameLoader from "@/components/FrameLoader";
@@ -18,7 +18,7 @@ import { supabase } from "@/lib/supabase/client";
 import { getUserByPrivyId } from "@/lib/userService";
 import { getEarnings, sumAll, type EarningsData } from "@/lib/economy/earnings";
 import EarningsSheet from "@/components/economy/EarningsSheet";
-import SwapSheet from "@/components/SwapSheet";
+import SwapSheet, { type SwapInitial } from "@/components/SwapSheet";
 import ImportAssetSheet from "@/components/ImportAssetSheet";
 import { getUserAssets, readAssetBalance, type UserAsset } from "@/lib/userAssets";
 import { useRouter } from "next/navigation";
@@ -82,6 +82,12 @@ export default function WalletPage() {
   // deferred as its own design question.
   const [showSend, setShowSend] = useState(false);
   const [showSwap, setShowSwap] = useState(false);
+  const [swapInitial, setSwapInitial] = useState<SwapInitial | null>(null);
+  // ZORA = the token every creator-fee stream pays in → the CREATOR EARNINGS
+  // row. USD hero = a real full-balance ZORA→USDC quote (what a cash-out would
+  // actually deliver), not a spot-price estimate.
+  const [zoraBalance, setZoraBalance] = useState<string | null>(null);
+  const [zoraUsd, setZoraUsd] = useState<number | null>(null);
   // PIXEL-QA overlay (?skin=1) — DEV ONLY, never ships: the exported Figma skin
   // at 50% over the live page for alignment work. NODE_ENV gate keeps it out of
   // production builds even if the query param is passed.
@@ -188,12 +194,14 @@ export default function WalletPage() {
     try {
       // Transfers are NOT here anymore — they're the CU-expensive call, owned by
       // loadActivity (session-cached, refreshed on stale tab-open / retry).
-      const [eth, usdc, rate] = await Promise.all([
+      const [eth, usdc, zora, rate] = await Promise.all([
         getEthBalance(walletAddress),
         getUsdcBalance(walletAddress),
+        getZoraBalance(walletAddress).catch(() => null),
         economy.getEthUsdRate(),
       ]);
       applyReadBalances(eth, usdc);
+      if (zora != null) setZoraBalance(zora);
       setEthUsdRate(rate);
       // Holdings refresh IN PLACE — never setHoldings(null): blanking swapped the
       // list for LOADING… mid-scroll (unmount → scroll destroyed). First load is
@@ -216,11 +224,13 @@ export default function WalletPage() {
   const refreshAvailable = async () => {
     if (!walletAddress) return;
     try {
-      const [eth, usdc] = await Promise.all([
+      const [eth, usdc, zora] = await Promise.all([
         getEthBalance(walletAddress),
         getUsdcBalance(walletAddress),
+        getZoraBalance(walletAddress).catch(() => null),
       ]);
       applyReadBalances(eth, usdc);
+      if (zora != null) setZoraBalance(zora);
     } catch (e) {
       console.error("refreshAvailable error:", e);
     }
@@ -455,6 +465,18 @@ export default function WalletPage() {
     })();
     return () => { alive = false; };
   }, [user?.id, walletAddress]);
+
+  // CREATOR EARNINGS hero $ — a REAL full-balance ZORA→USDC quote (what a
+  // cash-out delivers, price impact included), refreshed when the balance moves.
+  useEffect(() => {
+    const z = zoraBalance != null ? parseFloat(zoraBalance) : 0;
+    if (!walletAddress || !(z > 0)) { setZoraUsd(null); return; }
+    let alive = true;
+    quoteSwap({ sell: "ZORA", buy: "USDC", amountIn: BigInt(Math.round(z * 1e6)) * BigInt(1e12), sender: walletAddress as `0x${string}` })
+      .then(({ amountOut }) => { if (alive) setZoraUsd(Number(amountOut) / 1e6); })
+      .catch(() => { if (alive) setZoraUsd(null); }); // quote down → "$—", never a fake number
+    return () => { alive = false; };
+  }, [walletAddress, zoraBalance]);
 
   // Dollar figures only when the live rate exists — "$—" beats a wrong number.
   const ethUsd = ethBalance != null && ethUsdRate != null
@@ -881,6 +903,30 @@ export default function WalletPage() {
               <span style={{ fontFamily: "Batang, serif", fontSize: 14.5, color: "white", opacity: 0.75, marginLeft: 10 }}>›</span>
             </div>
 
+            {/* CREATOR EARNINGS — the ZORA balance, earnings-language framing:
+                USD hero (real full-balance cash-out quote), "N ZORA" honest sub.
+                One tap → prefilled ZORA→USDC CASH OUT. Hidden until earned. */}
+            {zoraBalance != null && parseFloat(zoraBalance) > 0 && (
+              <div
+                onClick={() => { setSwapInitial({ sell: "ZORA", buy: "USDC", amount: parseFloat(zoraBalance).toFixed(4), cashOut: true }); setShowSwap(true); }}
+                style={{ position: "relative", display: "flex", alignItems: "center", height: 50, borderBottom: "1px solid rgba(255,255,255,0.08)", cursor: "pointer" }}
+              >
+                <span style={{ position: "relative", width: 30, height: 30, flexShrink: 0, marginRight: 11, borderRadius: "50%", background: "#141414", border: "0.5px solid rgba(255,0,0,0.45)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <span style={{ ...SKB, fontSize: 13.5, color: "#FF0000" }}>Z</span>
+                </span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ ...SKR, fontSize: 13.5, color: "white", margin: 0, textTransform: "uppercase", letterSpacing: "0.02em" }}>Creator Earnings</p>
+                  <p style={{ ...SKR, fontSize: 10.5, color: "white", opacity: 0.37, margin: "1px 0 0" }}>
+                    {parseFloat(zoraBalance) >= 1000 ? Math.round(parseFloat(zoraBalance)).toLocaleString() : parseFloat(zoraBalance).toFixed(2)} ZORA
+                  </p>
+                </div>
+                <p style={{ ...SKR, fontSize: 13.5, color: "white", margin: 0, fontVariantNumeric: "tabular-nums" }}>
+                  {zoraUsd != null ? `$${zoraUsd.toFixed(2)}` : "$—"}
+                </p>
+                <span style={{ fontFamily: "Batang, serif", fontSize: 14.5, color: "white", opacity: 0.75, marginLeft: 10 }}>›</span>
+              </div>
+            )}
+
             {/* Imported ERC-20 rows — same shape as ETH/USDC; balance-only when
                 no price source resolves (USD deliberately out of scope). */}
             {importedAssets.map((a) => (
@@ -991,9 +1037,11 @@ export default function WalletPage() {
             through refreshAvailable's floor discipline after a landed swap). */}
         <SwapSheet
           visible={showSwap}
-          onClose={() => setShowSwap(false)}
+          onClose={() => { setShowSwap(false); setSwapInitial(null); }}
           ethBalance={ethBalance != null ? parseFloat(ethBalance) : 0}
           usdcBalance={usdcBalance != null ? parseFloat(usdcBalance) : 0}
+          zoraBalance={zoraBalance != null ? parseFloat(zoraBalance) : 0}
+          initial={swapInitial}
           onSwapped={() => { refreshAvailable(); }}
         />
 
