@@ -9,6 +9,8 @@ import PostItem from "@/components/PostItem";
 import PostModal from "@/components/PostModal";
 import MirageView from "@/components/MirageView";
 import TheatreMode from "@/components/TheatreMode";
+import ViewingModesMenu from "@/components/ViewingModesMenu";
+import { AnimatePresence } from "framer-motion";
 
 type FeedState = "normal" | "exiting" | "entering";
 
@@ -20,8 +22,7 @@ export default function Home() {
   const [mirageActive, setMirageActive] = useState(false);
   const [theatreActive, setTheatreActive] = useState(false); // Theatre Mode over the feed
   const [menuOpen, setMenuOpen] = useState(false);
-  const [menuClosing, setMenuClosing] = useState(false); // playing the close fade
-  const [reduceMotion, setReduceMotion] = useState(false);
+  const [triggerPressed, setTriggerPressed] = useState(false); // logomark press-pop
   const [showFrame, setShowFrame] = useState(true);
   const [feedState, setFeedState] = useState<FeedState>("normal");
   // Inline comments are one-at-a-time: only one feed post's section is open.
@@ -208,24 +209,10 @@ export default function Home() {
     return () => io.disconnect();
   }, [loadMore, hasMore, posts.length]);
 
-  // Respect prefers-reduced-motion (JS, not a CSS !important — so it can't fight
-  // the close fade): reduced → doors fade in place, no stagger/rise.
-  useEffect(() => {
-    const m = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const sync = () => setReduceMotion(m.matches);
-    sync();
-    m.addEventListener?.('change', sync);
-    return () => m.removeEventListener?.('change', sync);
-  }, []);
-
-  // Close the overlay with a quick fade-out, then unmount.
-  const closeMenu = () => {
-    if (menuClosing) return;
-    setMenuClosing(true);
-    setTimeout(() => { setMenuOpen(false); setMenuClosing(false); }, 250);
-  };
-  // Door selection navigates immediately (the overlay leaves with the view).
-  const selectDoor = (go: () => void) => { setMenuOpen(false); setMenuClosing(false); go(); };
+  // Close: AnimatePresence plays the menu's exit variants on unmount.
+  const closeMenu = () => setMenuOpen(false);
+  // Mode selection navigates immediately (the overlay leaves with the view).
+  const selectDoor = (go: () => void) => { setMenuOpen(false); go(); };
 
   const enterMirage = () => {
     if (transitioningRef.current) return;
@@ -274,15 +261,6 @@ export default function Home() {
           from { transform: scale(0.85) translateY(12px); opacity: 0; }
           to   { transform: scale(1)    translateY(0);    opacity: 1; }
         }
-        @keyframes menu-splay-in {
-          from { opacity: 0; transform: translateY(-10px) scale(0.88); }
-          to   { opacity: 1; transform: translateY(0) scale(1); }
-        }
-        /* Home-feed menu overlay — "Fade + Staggered Rise" (GPU: opacity/transform). */
-        @keyframes menuBackingIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes menuDoorRise  { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes menuChromeIn  { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes menuFadeOut   { from { opacity: 1; } to { opacity: 0; } }
       `}</style>
 
       {/* Frame icon — top-right, opens the home menu. PORTALED to document.body +
@@ -292,7 +270,10 @@ export default function Home() {
       {typeof document !== 'undefined' && createPortal(
         <button
           onClick={() => setMenuOpen(v => !v)}
-          aria-label="Open menu"
+          onPointerDown={() => setTriggerPressed(true)}
+          onPointerUp={() => setTriggerPressed(false)}
+          onPointerLeave={() => setTriggerPressed(false)}
+          aria-label="Open viewing modes"
           style={{
             position: 'fixed',
             // Clear the status bar under viewport-fit=cover (env=0 on non-notch).
@@ -301,123 +282,38 @@ export default function Home() {
             background: 'transparent',
             border: 'none',
             cursor: 'pointer',
-            padding: 4,
+            padding: '9px 6px', // ≈44px tap target around the 41×26 mark
             lineHeight: 0,
-            opacity: menuOpen || !showFrame ? 0 : 1,
-            transform: menuOpen || !showFrame ? 'translateY(-12px)' : 'translateY(0)',
+            opacity: menuOpen || !showFrame ? 0 : triggerPressed ? 0.75 : 1,
+            transform: `${menuOpen || !showFrame ? 'translateY(-12px)' : 'translateY(0)'}${triggerPressed ? ' scale(0.92)' : ''}`,
             transition: 'opacity 0.25s cubic-bezier(0.16,0.84,0.3,1), transform 0.25s cubic-bezier(0.16,0.84,0.3,1)',
             pointerEvents: menuOpen || !showFrame ? 'none' : 'auto',
             filter: 'drop-shadow(0 0 8px rgba(0,0,0,0.9)) drop-shadow(0 2px 12px rgba(0,0,0,0.75))',
             zIndex: 50, // above feed (z20), below the menu overlay (z60)
           }}
         >
-          {/* Aperture corner-brackets — bolder + larger so it reads clearly on black. */}
-          <svg width="35.5" height="22.5" viewBox="0 0 34 21" fill="none">
-            <line x1="1.3" y1="1.3" x2="1.3" y2="9"  stroke="#FF0000" strokeWidth="2.3"/>
-            <line x1="1.3" y1="1.3" x2="9"  y2="1.3" stroke="#FF0000" strokeWidth="2.3"/>
-            <line x1="32.7" y1="1.3" x2="32.7" y2="9"  stroke="#FF0000" strokeWidth="2.3"/>
-            <line x1="32.7" y1="1.3" x2="25" y2="1.3" stroke="#FF0000" strokeWidth="2.3"/>
-            <line x1="1.3" y1="19.7" x2="1.3" y2="12" stroke="#FF0000" strokeWidth="2.3"/>
-            <line x1="1.3" y1="19.7" x2="9"  y2="19.7" stroke="#FF0000" strokeWidth="2.3"/>
-            <line x1="32.7" y1="19.7" x2="32.7" y2="12" stroke="#FF0000" strokeWidth="2.3"/>
-            <line x1="32.7" y1="19.7" x2="25" y2="19.7" stroke="#FF0000" strokeWidth="2.3"/>
-          </svg>
+          {/* The logomark IS the menu trigger (replaces the corner-bracket frame). */}
+          <img src="/logomark-plain-white.png" alt="" style={{ width: 41, height: 26, objectFit: 'contain', display: 'block' }} />
         </button>,
         document.body,
       )}
 
-      {/* Home-feed menu — bold full-screen overlay: two typographic "doors". */}
-      {menuOpen && (
-        <div
-          onClick={closeMenu}
-          data-swipe-exclude
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 60,
-            // ~90% black backing with a FEATHERED bottom edge — fades to fully
-            // transparent so it melts into the live feed below (no hard line).
-            background: 'linear-gradient(to bottom, rgba(0,0,0,0.93) 0%, rgba(0,0,0,0.93) 48%, rgba(0,0,0,0.72) 70%, rgba(0,0,0,0.3) 86%, rgba(0,0,0,0) 100%)',
-            animation: menuClosing ? 'menuFadeOut 0.25s ease both' : 'menuBackingIn 0.4s cubic-bezier(0.16,0.84,0.3,1) both',
-          }}
-        >
-          {/* X close — top-left per the design. Chrome fades in last. */}
-          <button
-            onClick={e => { e.stopPropagation(); closeMenu(); }}
-            aria-label="Close menu"
-            style={{
-              position: 'absolute', top: 'calc(14px + env(safe-area-inset-top, 0px))', left: 14,
-              background: 'transparent', border: 'none', cursor: 'pointer',
-              color: '#FFFFFF', fontSize: 'var(--fs-24)', lineHeight: 1, padding: 8,
-              fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700,
-              animation: menuClosing ? 'menuFadeOut 0.2s ease both' : 'menuChromeIn 0.3s ease 0.38s both',
+      {/* VIEWING MODES — the full-page menu (Figma 943:406). Selection routes
+          through the SAME mode-switch logic the old doors used (selectDoor). */}
+      <AnimatePresence>
+        {menuOpen && (
+          <ViewingModesMenu
+            currentMode={theatreActive ? 'theatre' : mirageActive ? 'mirage' : 'feed'}
+            onClose={closeMenu}
+            onSelect={(mode) => {
+              if (mode === 'theatre') selectDoor(() => setTheatreActive(true));
+              else if (mode === 'screening') selectDoor(() => router.push('/screening-room'));
+              else if (mode === 'mirage') selectDoor(() => enterMirage());
+              else closeMenu(); // feed = the mode we're already hosting
             }}
-          >
-            ✕
-          </button>
-
-          {/* Three doors — stacked, oversized, dominant. Top→bottom: THEATRE MODE
-              · SCREENING ROOM · MIRAGE VIEW, staggered rise (0.08 / 0.18 / 0.28). */}
-          <div style={{ position: 'absolute', top: '22vh', left: 0, right: 0, padding: '0 26px', display: 'flex', flexDirection: 'column', gap: 36 }}>
-            {/* Door 1 — THEATRE MODE (rises ~0.08s in) → Theatre Mode over the feed. */}
-            <button
-              onClick={e => { e.stopPropagation(); selectDoor(() => setTheatreActive(true)); }}
-              style={{
-                background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, width: '100%',
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14, textAlign: 'left',
-                animation: menuClosing
-                  ? 'menuFadeOut 0.22s ease both'
-                  : reduceMotion
-                    ? 'menuBackingIn 0.3s ease both'
-                    : 'menuDoorRise 0.55s cubic-bezier(0.16,0.84,0.3,1) 0.08s both',
-              }}
-            >
-              <span style={{ flex: '1 1 auto', minWidth: 0, fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'clamp(36px, 13vw, 56px)', lineHeight: 0.92, letterSpacing: '-0.03em', color: '#FFFFFF', textTransform: 'uppercase' }}>
-                Theatre Mode
-              </span>
-              <img src="/theatre-mode-logo-new-red-lg.png" alt="" style={{ width: 50, height: 'auto', objectFit: 'contain', flexShrink: 0 }} />
-            </button>
-
-            {/* Door 2 — SCREENING ROOM (rises ~0.18s in). */}
-            <button
-              onClick={e => { e.stopPropagation(); selectDoor(() => router.push('/screening-room')); }}
-              style={{
-                background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, width: '100%',
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14, textAlign: 'left',
-                animation: menuClosing
-                  ? 'menuFadeOut 0.22s ease both'
-                  : reduceMotion
-                    ? 'menuBackingIn 0.3s ease both'
-                    : 'menuDoorRise 0.55s cubic-bezier(0.16,0.84,0.3,1) 0.18s both',
-              }}
-            >
-              <span style={{ flex: '1 1 auto', minWidth: 0, fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'clamp(36px, 13vw, 56px)', lineHeight: 0.92, letterSpacing: '-0.03em', color: '#FFFFFF', textTransform: 'uppercase' }}>
-                Screening Room
-              </span>
-              <img src="/screening-room-logo-temp-01.png" alt="" style={{ width: 56, height: 'auto', objectFit: 'contain', flexShrink: 0 }} />
-            </button>
-
-            {/* Door 3 — MIRAGE VIEW (rises ~0.28s in). */}
-            <button
-              onClick={e => { e.stopPropagation(); selectDoor(() => enterMirage()); }}
-              style={{
-                background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, width: '100%',
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14, textAlign: 'left',
-                animation: menuClosing
-                  ? 'menuFadeOut 0.22s ease both'
-                  : reduceMotion
-                    ? 'menuBackingIn 0.3s ease both'
-                    : 'menuDoorRise 0.55s cubic-bezier(0.16,0.84,0.3,1) 0.28s both',
-              }}
-            >
-              <span style={{ flex: '1 1 auto', minWidth: 0, fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'clamp(36px, 13vw, 56px)', lineHeight: 0.92, letterSpacing: '-0.03em', color: '#FFFFFF', textTransform: 'uppercase' }}>
-                Mirage View
-              </span>
-              <img src="/mirage-logo-thick-red-new.png" alt="" style={{ width: 48, height: 'auto', objectFit: 'contain', flexShrink: 0 }} />
-            </button>
-          </div>
-        </div>
-      )}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Top blur feather (IG pattern) — keeps the status bar + floating bracket legible
           over bright edge-to-edge content. backdrop-blur that FEATHERS OUT via a mask
