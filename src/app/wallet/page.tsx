@@ -22,6 +22,7 @@ import SwapSheet from "@/components/SwapSheet";
 import ImportAssetSheet from "@/components/ImportAssetSheet";
 import { getUserAssets, readAssetBalance, type UserAsset } from "@/lib/userAssets";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -67,6 +68,7 @@ export default function WalletPage() {
   const [importedAssets, setImportedAssets] = useState<(UserAsset & { balance: string | null })[]>([]);
   const [showImport, setShowImport] = useState(false);
   const [addPressed, setAddPressed] = useState(false);
+  const [logoPressed, setLogoPressed] = useState(false);
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState("");
   // Incoming-funds acknowledgment: { id } restarts the [ +$X ] pulse animation.
@@ -595,8 +597,25 @@ export default function WalletPage() {
       {/* Header — the plain white logomark, straight into the balance card
           (no divider, per the Figma hero). Bell top-right above the card:
           red dot = unread MARKET notifications; tap → MARKET tab deep-link. */}
-      <div style={{ position: "relative", padding: "15px 16px 12px" }}>
-        <img src="/logomark-plain-white.png" alt="Scope" style={{ width: 41, height: 26, objectFit: "contain", display: "block", margin: "0 auto" }} />
+      {/* padding keeps total header height ~53 with the 44px tap target, so the
+          balance card stays seated at y79 */}
+      <div style={{ position: "relative", padding: "5px 16px 4px" }}>
+        {/* Logomark → home feed (the footer's Link pattern); ~44px tap target. */}
+        <Link
+          href="/"
+          aria-label="Home"
+          onPointerDown={() => setLogoPressed(true)}
+          onPointerUp={() => setLogoPressed(false)}
+          onPointerLeave={() => setLogoPressed(false)}
+          style={{
+            display: "flex", alignItems: "center", justifyContent: "center",
+            width: 64, height: 44, margin: "0 auto", textDecoration: "none", outline: "none",
+            transform: logoPressed ? "scale(0.92)" : "scale(1)", opacity: logoPressed ? 0.75 : 1,
+            transition: "transform 120ms ease, opacity 120ms ease",
+          }}
+        >
+          <img src="/logomark-plain-white.png" alt="Scope" style={{ width: 41, height: 26, objectFit: "contain", display: "block" }} />
+        </Link>
         <button
           onClick={() => router.push("/profile/notifications?tab=market")}
           style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-38%)", background: "transparent", border: "none", cursor: "pointer", padding: 6 }}
