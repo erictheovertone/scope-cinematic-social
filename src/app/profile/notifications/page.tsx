@@ -34,6 +34,13 @@ export default function NotificationsPage() {
   // Two classes: SOCIAL (engagement) vs ECONOMIC (money/economy events). Default SOCIAL.
   const [tab, setTab] = useState<'social' | 'economic'>('social');
 
+  // Deep-link: ?tab=market opens with the MARKET tab active (the wallet bell's
+  // entry point). Read once on mount; no other routing changes.
+  useEffect(() => {
+    const t = new URLSearchParams(window.location.search).get('tab');
+    if (t === 'market' || t === 'economic') setTab('economic');
+  }, []);
+
   useEffect(() => {
     if (!user) {
       setLoading(false);

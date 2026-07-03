@@ -19,6 +19,9 @@ import { getUserByPrivyId } from "@/lib/userService";
 import { getEarnings, sumAll, type EarningsData } from "@/lib/economy/earnings";
 import EarningsSheet from "@/components/economy/EarningsSheet";
 import SwapSheet from "@/components/SwapSheet";
+import ImportAssetSheet from "@/components/ImportAssetSheet";
+import { getUserAssets, readAssetBalance, type UserAsset } from "@/lib/userAssets";
+import { useRouter } from "next/navigation";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -35,6 +38,7 @@ export default function WalletPage() {
   const { fundWallet } = useFundWallet();
   const { wallets } = useWallets();
   const economy = useEconomy();
+  const router = useRouter();
   const walletAddress = user?.wallet?.address ?? "";
 
   const [activeTab, setActiveTab] = useState<"balances" | "holdings" | "activity">("balances");
@@ -55,6 +59,14 @@ export default function WalletPage() {
   const [earnings, setEarnings] = useState<EarningsData | null>(null);
   const [earnTarget, setEarnTarget] = useState<number | null>(null);
   const [earnOpen, setEarnOpen] = useState(false);
+  // Bell: unread MARKET (non-social) notifications → red dot; tap deep-links
+  // the notifications page onto the MARKET tab (?tab=market).
+  const [marketUnread, setMarketUnread] = useState(false);
+  // Imported ERC-20 assets (user_assets + localStorage fallback) + balances.
+  const [userUuid, setUserUuid] = useState<string | null>(null);
+  const [importedAssets, setImportedAssets] = useState<(UserAsset & { balance: string | null })[]>([]);
+  const [showImport, setShowImport] = useState(false);
+  const [addPressed, setAddPressed] = useState(false);
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState("");
   // Incoming-funds acknowledgment: { id } restarts the [ +$X ] pulse animation.
@@ -379,6 +391,40 @@ export default function WalletPage() {
     return () => { alive = false; };
   }, [user?.id]);
 
+  // Bell dot — any unread NON-social (market) notification. One head-count read.
+  useEffect(() => {
+    if (!user?.id) return;
+    let alive = true;
+    supabase
+      .from("notifications")
+      .select("id", { count: "exact", head: true })
+      .eq("recipient_id", user.id)
+      .eq("is_read", false)
+      .not("type", "in", "(like,comment,follow,mention,reply)")
+      .then(({ count }) => { if (alive) setMarketUnread((count ?? 0) > 0); });
+    return () => { alive = false; };
+  }, [user?.id]);
+
+  // Imported assets: resolve uuid once, load the list, then read balances via
+  // the existing readContract pattern (balance-only rows; USD out of scope).
+  useEffect(() => {
+    if (!user?.id || !walletAddress) return;
+    let alive = true;
+    (async () => {
+      const u = await getUserByPrivyId(user.id);
+      if (!alive || !u) return;
+      setUserUuid(u.id);
+      const assets = await getUserAssets(u.id);
+      if (!alive || assets.length === 0) return;
+      setImportedAssets(assets.map((a) => ({ ...a, balance: null })));
+      const withBalances = await Promise.all(
+        assets.map(async (a) => ({ ...a, balance: await readAssetBalance(a, walletAddress as `0x${string}`) })),
+      );
+      if (alive) setImportedAssets(withBalances);
+    })();
+    return () => { alive = false; };
+  }, [user?.id, walletAddress]);
+
   // Dollar figures only when the live rate exists — "$—" beats a wrong number.
   const ethUsd = ethBalance != null && ethUsdRate != null
     ? (parseFloat(ethBalance) * ethUsdRate).toFixed(2)
@@ -546,20 +592,36 @@ export default function WalletPage() {
         </div>
       )}
 
-      {/* Header */}
-      <div style={{ padding: "14px 16px 10px" }}>
-        <img src="/scope-logo-new.png" alt="Scope" style={{ height: 28, display: "block", margin: "0 auto" }} />
+      {/* Header — the plain white logomark, straight into the balance card
+          (no divider, per the Figma hero). Bell top-right above the card:
+          red dot = unread MARKET notifications; tap → MARKET tab deep-link. */}
+      <div style={{ position: "relative", padding: "15px 16px 12px" }}>
+        <img src="/logomark-plain-white.png" alt="Scope" style={{ width: 41, height: 26, objectFit: "contain", display: "block", margin: "0 auto" }} />
+        <button
+          onClick={() => router.push("/profile/notifications?tab=market")}
+          style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-38%)", background: "transparent", border: "none", cursor: "pointer", padding: 6 }}
+        >
+          <span style={{ position: "relative", display: "block", width: 18, height: 18 }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M10 5a2 2 0 1 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3h-16a4 4 0 0 0 2 -3v-3a7 7 0 0 1 4 -6" />
+              <path d="M9 17v1a3 3 0 0 0 6 0v-1" />
+            </svg>
+            {marketUnread && (
+              <span style={{ position: "absolute", top: -1, right: -1, width: 6, height: 6, borderRadius: "50%", background: "#FF0000" }} />
+            )}
+          </span>
+        </button>
       </div>
-
-      <div style={{ height: 1, background: "rgba(255,255,255,0.1)" }} />
 
       {/* ══ WALLET REDUX chrome (Figma 962:886 + 957:565) — chrome only ══ */}
 
       {/* TOTAL BALANCE card — 353×188 @ (12,79) at the 375 reference. AVAILABLE
           is what a purchase can draw on; HOLDINGS is position value; SCOPE
           EARNINGS is historical cumulative and NEVER part of TOTAL. */}
-      <div style={{ margin: "26px 10px 0 12px", background: "#030303", border: "0.25px solid rgba(251,0,0,0.4)", borderRadius: 3, textAlign: "center", padding: "13px 0 26px" }}>
-        <p style={{ ...SKB, fontSize: 10, color: "white", opacity: 0.54, margin: "0 0 6px", textTransform: "uppercase", letterSpacing: "1px" }}>
+      <div style={{ position: "relative", margin: "26px 10px 0 12px", borderRadius: 3, textAlign: "center", padding: "13px 0 26px" }}>
+        {/* Baked card chrome — Eric's tuned gradient fill + stroke (no CSS border) */}
+        <img src="/wallet-redux/balance-card-chrome.png" alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }} />
+        <p style={{ ...SKB, position: "relative", fontSize: 10, color: "white", opacity: 0.54, margin: "0 0 6px", textTransform: "uppercase", letterSpacing: "1px" }}>
           TOTAL BALANCE
         </p>
         <div style={{ position: "relative" }}>
@@ -580,10 +642,10 @@ export default function WalletPage() {
             {loading && animatedTotal == null ? "..." : animatedTotal != null ? `$${animatedTotal.toFixed(2)}` : "$—"}
           </p>
         </div>
-        {/* Red hairline under the total — ~119w, centered (skin y172) */}
-        <div style={{ width: 119, height: 1, background: "#FF0000", margin: "10px auto 28px" }} />
+        {/* Red FLASH under the total — a light streak dissipating at both ends */}
+        <div style={{ position: "relative", width: 119, height: 1, background: "linear-gradient(90deg, transparent 0%, #FF0000 50%, transparent 100%)", margin: "10px auto 28px" }} />
         {/* Stat row — 34px vertical hairline dividers between the three stats */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
           <div onClick={() => setActiveTab("balances")} style={{ cursor: "pointer", flex: 1 }}>
             <p style={{ ...SKB, fontSize: 10, color: "rgba(255,255,255,0.65)", textTransform: "uppercase", letterSpacing: "-0.1px", margin: "0 0 5px" }}>
               AVAILABLE
@@ -622,33 +684,36 @@ export default function WalletPage() {
       {/* ACTION CARDS — 111×83 @ y280 (x 13/133/254): DEPOSIT / SWAP / SEND.
           Same actions as before, re-skinned only. */}
       <div style={{ display: "flex", gap: 10, margin: "13px 10px 0 13px" }}>
+        {/* Arrow assets are drawn pointing RIGHT — rotations give each card its
+            direction: DEPOSIT ↓ (into wallet), SEND ↗ (out), SWAP = opposing pair. */}
         {([
-          { label: "DEPOSIT", sub: "Add funds to your wallet", arrows: ["/wallet-redux/arrow-deposit.svg"], onClick: () => walletAddress && fundWallet(walletAddress, { chain: base }) },
-          { label: "SWAP", sub: "USDC ⇄ ETH", arrows: ["/wallet-redux/arrow-swap-a.svg", "/wallet-redux/arrow-swap-b.svg"], onClick: () => setShowSwap(true) },
-          { label: "SEND", sub: "Send to any address", arrows: ["/wallet-redux/arrow-send.svg"], onClick: () => setShowSend(true) },
+          { label: "DEPOSIT", sub: "Add funds to your wallet", arrows: [{ src: "/wallet-redux/arrow-deposit.svg", rot: "rotate(90deg)" }], onClick: () => walletAddress && fundWallet(walletAddress, { chain: base }) },
+          { label: "SWAP", sub: "USDC ⇄ ETH", arrows: [{ src: "/wallet-redux/arrow-swap-a.svg", rot: "none" }, { src: "/wallet-redux/arrow-swap-b.svg", rot: "rotate(180deg)" }], onClick: () => setShowSwap(true) },
+          { label: "SEND", sub: "Send to any address", arrows: [{ src: "/wallet-redux/arrow-send.svg", rot: "rotate(-45deg)" }], onClick: () => setShowSend(true) },
         ] as const).map((card) => (
           <button
             key={card.label}
             onClick={card.onClick}
             style={{
-              flex: 1, height: 83, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 5,
-              background: "linear-gradient(46.78deg, #030303 17.56%, rgba(105,105,105,0.12) 282.61%)",
-              border: "0.25px solid rgba(251,0,0,0.31)", borderRadius: 3, cursor: "pointer", padding: 0,
+              position: "relative", flex: 1, height: 83, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 5,
+              background: "transparent", border: "none", borderRadius: 3, cursor: "pointer", padding: 0,
             }}
           >
+            {/* Baked card chrome (fill + stroke in the PNG) */}
+            <img src="/wallet-redux/action-card-chrome.png" alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }} />
             {/* icon: 26px red-glow circle + the arrow overlay (swap = the pair) */}
             <span style={{ position: "relative", width: 26, height: 26, display: "block" }}>
               <img src="/wallet-redux/icon-glow-circle.svg" alt="" style={{ position: "absolute", inset: 0, width: 26, height: 26 }} />
               {card.arrows.length === 1 ? (
-                <img src={card.arrows[0]} alt="" style={{ position: "absolute", left: "50%", top: "50%", transform: "translate(-50%,-50%)", width: 15.2, height: 8.8 }} />
+                <img src={card.arrows[0].src} alt="" style={{ position: "absolute", left: "50%", top: "50%", width: 14, height: 8.2, transform: `translate(-50%,-50%) ${card.arrows[0].rot}` }} />
               ) : (
                 <>
-                  <img src={card.arrows[0]} alt="" style={{ position: "absolute", left: "50%", top: 7, transform: "translateX(-50%)", width: 13, height: 7.5 }} />
-                  <img src={card.arrows[1]} alt="" style={{ position: "absolute", left: "50%", bottom: 7, transform: "translateX(-50%)", width: 13, height: 7.5 }} />
+                  <img src={card.arrows[0].src} alt="" style={{ position: "absolute", left: "50%", top: 6.5, transform: "translateX(-50%)", width: 13, height: 7.5 }} />
+                  <img src={card.arrows[1].src} alt="" style={{ position: "absolute", left: "50%", bottom: 6.5, transform: "translateX(-50%) rotate(180deg)", width: 13, height: 7.5 }} />
                 </>
               )}
             </span>
-            <span style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <span style={{ position: "relative", display: "flex", flexDirection: "column", gap: 2 }}>
               <span style={{ ...SKB, fontSize: 10, color: "white", textTransform: "uppercase", letterSpacing: "0.02em" }}>{card.label}</span>
               <span style={{ ...SKR, fontSize: 8.2, color: "rgba(255,255,255,0.68)", letterSpacing: "-0.082px" }}>{card.sub}</span>
             </span>
@@ -661,23 +726,25 @@ export default function WalletPage() {
       {walletAddress && (
         <div
           onClick={() => navigator.clipboard.writeText(walletAddress).then(() => showToast("Address copied"))}
-          style={{
-            margin: "13px 10px 0 13px", height: 40, display: "flex", alignItems: "center", gap: 7, padding: "0 9px 0 11px",
-            background: "linear-gradient(9.19deg, #030303 17.56%, rgba(105,105,105,0.12) 282.61%)",
-            border: "0.25px solid rgba(251,0,0,0.31)", borderRadius: 3, cursor: "pointer",
-          }}
+          style={{ position: "relative", margin: "13px 10px 0 13px", height: 40, borderRadius: 3, cursor: "pointer" }}
         >
-          <img src="/wallet-redux/scan-wallet-address-icon.png" alt="" style={{ width: 22, height: "auto", flexShrink: 0 }} />
-          <span style={{ ...SKB, fontSize: 9, color: "white", opacity: 0.37, textTransform: "uppercase", letterSpacing: "0.02em", flexShrink: 0 }}>DIRECT DEPOSIT</span>
-          <span style={{ ...SKR, fontSize: 9, color: "white", opacity: 0.65, flex: 1, minWidth: 0, overflow: "hidden", whiteSpace: "nowrap", textAlign: "center" }}>
-            {walletAddress}
-          </span>
-          {/* copy glyph — two 7px squares, 0.25px borders, 3px offset */}
-          <span style={{ position: "relative", width: 11, height: 11, flexShrink: 0, display: "block" }}>
-            <span style={{ position: "absolute", top: 0, left: 0, width: 7, height: 7, border: "0.25px solid rgba(255,255,255,0.54)" }} />
-            <span style={{ position: "absolute", top: 3, left: 3, width: 7, height: 7, border: "0.25px solid rgba(255,255,255,0.54)" }} />
-          </span>
-          <img src="/wallet-redux/ellipse92.svg" alt="" style={{ width: 23, height: 23, flexShrink: 0 }} />
+          {/* Baked bar chrome */}
+          <img src="/wallet-redux/direct-deposit-chrome.png" alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }} />
+          <div style={{ position: "relative", display: "flex", alignItems: "center", gap: 8, height: "100%", padding: "0 11px" }}>
+            <img src="/wallet-redux/scan-wallet-address-icon.png" alt="" style={{ width: 22, height: "auto", flexShrink: 0 }} />
+            {/* Two lines: label over the FULL live address (never truncated) */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ ...SKB, fontSize: 9, color: "white", opacity: 0.37, textTransform: "uppercase", letterSpacing: "0.02em", margin: 0, lineHeight: 1.2 }}>DIRECT DEPOSIT</p>
+              <p style={{ ...SKR, fontSize: 9, color: "white", opacity: 0.65, margin: "1px 0 0", lineHeight: 1.2, whiteSpace: "nowrap" }}>
+                {walletAddress}
+              </p>
+            </div>
+            {/* copy glyph — two 7px squares, 0.25px borders, 3px offset */}
+            <span style={{ position: "relative", width: 11, height: 11, flexShrink: 0, display: "block" }}>
+              <span style={{ position: "absolute", top: 0, left: 0, width: 7, height: 7, border: "0.25px solid rgba(255,255,255,0.54)" }} />
+              <span style={{ position: "absolute", top: 3, left: 3, width: 7, height: 7, border: "0.25px solid rgba(255,255,255,0.54)" }} />
+            </span>
+          </div>
         </div>
       )}
 
@@ -700,9 +767,9 @@ export default function WalletPage() {
               }}
             >
               {tab.toUpperCase()}
-              {/* active = the short 45px hairline, anchored to the tab's left edge */}
+              {/* active = the short 45px shine, anchored to the tab's left edge */}
               {active && (
-                <span style={{ position: "absolute", bottom: -1, left: 0, width: 45, height: 1, background: "white" }} />
+                <span style={{ position: "absolute", bottom: -1, left: 0, width: 45, height: 1, background: "linear-gradient(90deg, #FF0000 0%, #FFFFFF 55%, #FF0000 100%)" }} />
               )}
             </button>
           );
@@ -717,9 +784,11 @@ export default function WalletPage() {
             slots below USDC; ADD/IMPORT rides BELOW the panel. */}
         {activeTab === "balances" && (
           <>
-          <div style={{ background: "#030303", border: "0.25px solid rgba(141,141,141,0.31)", borderRadius: 3, padding: "0 14px" }}>
+          <div style={{ position: "relative", borderRadius: 3, padding: "0 14px" }}>
+            {/* Baked panel chrome (grey stroke — not red) */}
+            <img src="/wallet-redux/token-panel-chrome.png" alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }} />
             {/* ETH row */}
-            <div style={{ display: "flex", alignItems: "center", height: 45, borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+            <div style={{ position: "relative", display: "flex", alignItems: "center", height: 45, borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
               <span style={{ position: "relative", width: 30, height: 30, flexShrink: 0, marginRight: 11 }}>
                 <img src="/wallet-redux/eth-token-circle.svg" alt="" style={{ position: "absolute", inset: 0, width: 30, height: 30 }} />
                 <img src="/wallet-redux/eth-logo.png" alt="" style={{ position: "absolute", left: "50%", top: "50%", transform: "translate(-50%,-50%)", width: 13, height: "auto" }} />
@@ -737,7 +806,7 @@ export default function WalletPage() {
             </div>
 
             {/* USDC row */}
-            <div style={{ display: "flex", alignItems: "center", height: 50, borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+            <div style={{ position: "relative", display: "flex", alignItems: "center", height: 50, borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
               <span style={{ position: "relative", width: 30, height: 30, flexShrink: 0, marginRight: 11 }}>
                 <img src="/wallet-redux/usdc-token-circle.svg" alt="" style={{ position: "absolute", inset: 0, width: 30, height: 30 }} />
                 <span style={{ ...SKB, position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, color: "white" }}>$</span>
@@ -754,13 +823,42 @@ export default function WalletPage() {
               <span style={{ fontFamily: "Batang, serif", fontSize: 13, color: "white", opacity: 0.75, marginLeft: 10 }}>›</span>
             </div>
 
+            {/* Imported ERC-20 rows — same shape as ETH/USDC; balance-only when
+                no price source resolves (USD deliberately out of scope). */}
+            {importedAssets.map((a) => (
+              <div key={a.address} style={{ position: "relative", display: "flex", alignItems: "center", height: 50, borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+                <span style={{ position: "relative", width: 30, height: 30, flexShrink: 0, marginRight: 11, borderRadius: "50%", background: "#141414", border: "0.5px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <span style={{ ...SKB, fontSize: 12, color: "white", opacity: 0.8 }}>{a.symbol.slice(0, 1)}</span>
+                </span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ ...SKR, fontSize: 12, color: "white", margin: 0 }}>{a.symbol}</p>
+                  <p style={{ ...SKR, fontSize: 9, color: "white", opacity: 0.37, margin: "1px 0 0" }}>
+                    {a.balance != null ? `${a.balance} ${a.symbol}` : "…"}
+                  </p>
+                </div>
+                <p style={{ ...SKR, fontSize: 12, color: "rgba(255,255,255,0.37)", margin: 0 }}>$—</p>
+                <span style={{ fontFamily: "Batang, serif", fontSize: 13, color: "white", opacity: 0.75, marginLeft: 10 }}>›</span>
+              </div>
+            ))}
             {/* Empty asset slots (the frame's reserved rows) */}
-            <div style={{ height: 50, borderBottom: "1px solid rgba(255,255,255,0.08)" }} />
-            <div style={{ height: 44 }} />
+            {importedAssets.length === 0 && <div style={{ height: 50, borderBottom: "1px solid rgba(255,255,255,0.08)" }} />}
+            {importedAssets.length <= 1 && <div style={{ height: 44 }} />}
           </div>
-          <p style={{ ...SKR, fontSize: 9, color: "white", opacity: 0.4, textAlign: "center", margin: "18px 0 0", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+          {/* + ADD / IMPORT — real action: press-pop → the import sheet */}
+          <button
+            onClick={() => setShowImport(true)}
+            onPointerDown={() => setAddPressed(true)}
+            onPointerUp={() => setAddPressed(false)}
+            onPointerLeave={() => setAddPressed(false)}
+            style={{
+              ...SKR, display: "block", width: "100%", background: "transparent", border: "none", padding: 0,
+              fontSize: 9, color: "white", opacity: addPressed ? 0.75 : 0.4, textAlign: "center",
+              margin: "18px 0 0", textTransform: "uppercase", letterSpacing: "0.04em", cursor: "pointer",
+              transform: addPressed ? "scale(0.95)" : "scale(1)", transition: "transform 120ms ease, opacity 120ms ease",
+            }}
+          >
             + ADD / IMPORT ASSET
-          </p>
+          </button>
           </>
         )}
 
@@ -814,6 +912,22 @@ export default function WalletPage() {
         {earnOpen && earnings && (
           <EarningsSheet data={earnings} onClose={() => setEarnOpen(false)} />
         )}
+
+        {/* IMPORT ASSET — address-paste ERC-20 → balances list */}
+        <ImportAssetSheet
+          visible={showImport}
+          onClose={() => setShowImport(false)}
+          userUuid={userUuid}
+          onAdded={(a) => {
+            setImportedAssets((prev) => [...prev, { ...a, balance: null }]);
+            if (walletAddress) {
+              readAssetBalance(a, walletAddress as `0x${string}`).then((b) =>
+                setImportedAssets((prev) => prev.map((x) => (x.address === a.address ? { ...x, balance: b } : x))),
+              );
+            }
+            showToast(`${a.symbol} added`);
+          }}
+        />
 
         {/* SWAP — ETH ⇄ USDC (receipt-true engine; wallet re-reads balances
             through refreshAvailable's floor discipline after a landed swap). */}
