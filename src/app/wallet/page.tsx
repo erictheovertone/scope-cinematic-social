@@ -911,8 +911,10 @@ export default function WalletPage() {
                 onClick={() => { setSwapInitial({ sell: "ZORA", buy: "USDC", amount: parseFloat(zoraBalance).toFixed(4), cashOut: true }); setShowSwap(true); }}
                 style={{ position: "relative", display: "flex", alignItems: "center", height: 50, borderBottom: "1px solid rgba(255,255,255,0.08)", cursor: "pointer" }}
               >
-                <span style={{ position: "relative", width: 30, height: 30, flexShrink: 0, marginRight: 11, borderRadius: "50%", background: "#141414", border: "0.5px solid rgba(255,0,0,0.45)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <span style={{ ...SKB, fontSize: 13.5, color: "#FF0000" }}>Z</span>
+                {/* The earnings badge — same 30px slot as the ETH/USDC circles.
+                    (Presentation only: the asset stays ZORA in send/activity.) */}
+                <span style={{ position: "relative", width: 30, height: 30, flexShrink: 0, marginRight: 11, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <img src="/scope-earnings-icon.png" alt="" style={{ width: 30, height: "auto", display: "block" }} />
                 </span>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ ...SKR, fontSize: 13.5, color: "white", margin: 0, textTransform: "uppercase", letterSpacing: "0.02em" }}>Creator Earnings</p>

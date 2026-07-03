@@ -18,12 +18,12 @@ const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fon
 
 const BEATS: { lead: string; body: string }[] = [
   {
-    lead: 'You earn on every trade.',
-    body: 'Whenever someone collects or trades your work, a creator fee comes back to you automatically — 0.5% of every buy.',
+    lead: 'You earn from every trade of your work.',
+    body: 'Every time someone buys or sells your work, a creator fee comes back to you — automatically, instantly, on every single trade. Forever.',
   },
   {
-    lead: 'Paid in ZORA.',
-    body: 'Earnings arrive as ZORA, the currency your coins trade in. The dollar figures here show what they’re worth right now.',
+    lead: 'It’s built in.',
+    body: 'Your share is baked into how your work exists on Scope. Nobody can change it, pause it, or take it away.',
   },
   {
     lead: 'Cash out anytime.',
