@@ -15,6 +15,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, useReducedMotion } from 'framer-motion';
 import { sumAll, sumSince, cumulativeSeries, type EarningsData } from '@/lib/economy/earnings';
+import EarningsExplainerSheet from '@/components/economy/EarningsExplainerSheet';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -120,6 +121,8 @@ export default function EarningsSheet({ data, onClose }: Props) {
   const reduced = !!useReducedMotion();
   const e = useCountProgress(reduced);
   const [range, setRange] = useState<string>('ALL');
+  const [showHow, setShowHow] = useState(false);   // HOW EARNINGS WORK pull-up (stacks above)
+  const [howPressed, setHowPressed] = useState(false);
   const [entered, setEntered] = useState(false); // first draw = full 750ms; chip redraws = 250ms
   useEffect(() => {
     const id = window.setTimeout(() => setEntered(true), 900);
@@ -253,6 +256,25 @@ export default function EarningsSheet({ data, onClose }: Props) {
         <p style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.28)', lineHeight: 1.6, margin: '16px 0 0', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
           creator fees from every collect &amp; trade of your work, since your account was created · not included in total balance
         </p>
+
+        {/* HOW IT WORKS ? — second-level pull-up trigger */}
+        <button
+          onClick={() => setShowHow(true)}
+          onPointerDown={() => setHowPressed(true)}
+          onPointerUp={() => setHowPressed(false)}
+          onPointerLeave={() => setHowPressed(false)}
+          style={{
+            ...SKB, display: 'block', background: 'transparent', border: 'none', padding: '10px 0 0', cursor: 'pointer',
+            fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.65)', textTransform: 'uppercase', letterSpacing: '0.16em',
+            opacity: howPressed ? 0.7 : 1, transform: howPressed ? 'scale(0.96)' : 'scale(1)',
+            transition: 'transform 120ms ease, opacity 120ms ease',
+          }}
+        >
+          HOW IT WORKS <span style={{ letterSpacing: 0 }}>?</span>
+        </button>
+
+        {/* Stacks ABOVE this sheet; closing returns here, not the wallet. */}
+        {showHow && <EarningsExplainerSheet onClose={() => setShowHow(false)} />}
       </motion.div>
     </div>,
     document.body,
