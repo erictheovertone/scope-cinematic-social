@@ -59,6 +59,11 @@ export default function MediaRenderer({
   const [near, setNear] = useState(false);
   const video = isVideo(url, mediaType);
 
+  // The observer ONLY gates visibility. It must never call play(): when it
+  // fires, `near` is still false so the <video> has NO src yet — the same-tick
+  // play() rejected on "no supported sources" and nothing ever retried after
+  // the src mounted (iOS doesn't honor the autoPlay attribute for a late-set
+  // src). Playback lives in the effect below, one render AFTER the src exists.
   useEffect(() => {
     if (!video || !videoRef.current) return;
     const el = videoRef.current;
@@ -66,16 +71,22 @@ export default function MediaRenderer({
       ([entry]) => {
         const on = entry.isIntersecting;
         setNear(on);                       // load bytes only when at/near the viewport
-        if (autoplay) {
-          if (on) { el.play().catch(() => {}); setIsPlaying(true); }
-          else { el.pause(); setIsPlaying(false); }
-        } else if (!on) { el.pause(); setIsPlaying(false); }
+        if (!on) { el.pause(); setIsPlaying(false); } // scroll-away teardown (src drops via `near`)
       },
       { rootMargin: '250px 0px', threshold: 0 },   // start loading just before visible
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, [video, autoplay]);
+  }, [video]);
+
+  // Play AFTER the src has mounted (near=true → this render carries the src).
+  // play() on an already-playing element resolves as a no-op, so the
+  // onLoadedMetadata retry below can't double-start anything.
+  useEffect(() => {
+    if (near && autoplay && videoRef.current) {
+      videoRef.current.play().then(() => setIsPlaying(true)).catch(() => {});
+    }
+  }, [near, autoplay]);
 
   if (!video) {
     return (
@@ -112,6 +123,13 @@ export default function MediaRenderer({
         className={className}
         style={{ width: '100%', height: '100%', display: 'block', ...getCropStyle(cropX, cropY, cropWidth, cropHeight), ...style }}
         onClick={(e) => { e.stopPropagation(); handleActivate(); }}
+        onLoadedMetadata={() => {
+          // Belt-and-braces (iOS, slow loads): a src that arrives late still
+          // fires playback. No-op if the play effect already started it.
+          if (near && autoplay && videoRef.current) {
+            videoRef.current.play().then(() => setIsPlaying(true)).catch(() => {});
+          }
+        }}
       />
       {showSoundToggle && (
         <button
