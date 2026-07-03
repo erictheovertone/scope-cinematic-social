@@ -254,7 +254,7 @@ export default function EarningsSheet({ data, onClose }: Props) {
 
         {/* Footnote */}
         <p style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.28)', lineHeight: 1.6, margin: '16px 0 0', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-          creator fees from every collect &amp; trade of your work, since your account was created · not included in total balance
+          creator fees from every collect &amp; trade of your work · not included in total balance
         </p>
 
         {/* HOW IT WORKS ? — second-level pull-up trigger */}

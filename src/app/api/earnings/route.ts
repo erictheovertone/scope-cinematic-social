@@ -1,50 +1,53 @@
-// ── /api/earnings — ALL-TIME creator earnings (server-only, READ-ONLY) ────────
+// ── /api/earnings — ALL-TIME creator earnings from ACTUAL rewards (server) ────
 //
-// The recap engine's math over the FULL history: per owned coin we page
-// getCoinSwaps (newest-first) back to the coin's beginning (no last_seen cutoff),
-// keep every BUY by OTHERS as an earning event { t, usd × CREATOR_FEE_RATE }.
-// Sibling of /api/recap rather than a mode on it: different cutoff semantics
-// (all-time vs since-last-seen) and a different payload (event array for the
-// chart, not a breakdown). Same single sources: swapUsd + CREATOR_FEE_RATE.
-// getCoinSwaps needs the Zora API key → must stay server-side.
+// v2 (rewards-indexed): earnings are no longer estimated (volumeUsd ×
+// CREATOR_FEE_RATE, buys only) — they are DECODED from the actual ZORA reward
+// transfers the distributor pays the creator inside every swap tx, BOTH
+// directions, self-trades included (real ZORA arriving is real earnings).
+// Ground truth: the fee-test decode ($0.2500 buy + $0.1334 sell) reproduces
+// exactly. Per coin: page getCoinSwaps (full history) → one receipt per swap →
+// decodeCreatorReward. USD is valued at RECEIPT TIME (swapUsd ÷ the tx's ZORA
+// leg); fallback: last derived price in this request, then a spot quote.
+// LIVE-READ v1: right at current scale (a dozen cheap calls, session-cached
+// client-side). The heavy/truncated flags are the cron-table tripwire.
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { getCoinSwaps, setApiKey } from '@zoralabs/coins-sdk';
+import { getCoinSwaps, setApiKey, createTradeCall } from '@zoralabs/coins-sdk';
 import { swapUsd } from '@/lib/economy/firstCut';
-import { CREATOR_FEE_RATE } from '@/lib/economy/recap';
+import { decodeCreatorReward, mapPoolRewards } from '@/lib/economy/rewardsIndex';
+import { getScopePlatformReferrer } from '@/lib/zoraCoins';
 import type { EarningEvent, EarningsData } from '@/lib/economy/earnings';
 
 export const dynamic = 'force-dynamic';
 
 const BASE_CHAIN = 8453;
 const SWAP_PAGE = 100;
-// Full-history bound: 10 pages = 1,000 swaps per coin. HEAVY_PAGES is the
-// cron-precompute signal — any coin needing >4 pages flags the response so the
-// client can log it (prioritize the queued precompute, don't build it now).
-const EARNINGS_MAX_PAGES = 10;
-const HEAVY_PAGES = 4;
-const COIN_CONCURRENCY = 8;
-
-const lc = (s?: string | null) => (s ?? '').toLowerCase();
-
-// Bounded-concurrency map (the /api/recap pattern): at most `limit` in flight.
-async function mapPool<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
-  const results: R[] = new Array(items.length);
-  let next = 0;
-  const worker = async () => {
-    while (next < items.length) {
-      const i = next++;
-      results[i] = await fn(items[i]);
-    }
-  };
-  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
-  return results;
-}
+const EARNINGS_MAX_PAGES = 10;   // per-coin swap pagination bound
+const HEAVY_PAGES = 4;           // cron-precompute signal
+const RECEIPT_CAP = 300;         // per-request receipt bound (cap → truncated)
+const COIN_CONCURRENCY = 6;
+const RPC_URL = process.env.NEXT_PUBLIC_ALCHEMY_BASE_URL || 'https://mainnet.base.org';
 
 let _keyed = false;
 function ensureKey() {
   if (!_keyed && process.env.ZORA_API_KEY) { setApiKey(process.env.ZORA_API_KEY); _keyed = true; }
+}
+
+// Spot ZORA/USD (fallback pricing only) — one quote per request, best-effort.
+async function spotZoraUsd(sender: string): Promise<number | null> {
+  try {
+    const q: any = await createTradeCall({
+      sell: { type: 'erc20', address: '0x1111111111166b7FE7bd91427724B487980aFc69' },
+      buy: { type: 'erc20', address: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913' },
+      amountIn: BigInt('1000000000000000000000'), // 1,000 ZORA
+      slippage: 0.05,
+      sender: sender as `0x${string}`,
+      recipient: sender as `0x${string}`,
+    });
+    const out = Number(BigInt(q?.quote?.amountOut ?? 0)) / 1e6;
+    return out > 0 ? out / 1000 : null;
+  } catch { return null; }
 }
 
 export async function GET(req: NextRequest) {
@@ -56,7 +59,6 @@ export async function GET(req: NextRequest) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
   );
 
-  // Account creation anchors the chart's x-axis start.
   const { data: userRow } = await supabase
     .from('users').select('created_at').eq('id', userId).maybeSingle();
   const accountCreatedAt: string = userRow?.created_at ?? new Date().toISOString();
@@ -69,15 +71,19 @@ export async function GET(req: NextRequest) {
     .not('coin_address', 'is', null);
 
   ensureKey();
+  const referrer = getScopePlatformReferrer();
 
   let heavy = false;
   let truncated = false;
+  let receiptsUsed = 0;
+  let lastPrice: number | null = null; // request-scoped fallback (near-time at our scale)
 
-  // Per coin: full-history swap walk. One coin's failure never sinks the total
-  // (returns its events so far). Newest-first pages, no cutoff.
+  // Per coin: full swap history → decode each swap's ACTUAL creator reward.
   const processCoin = async (p: { id: string; coin_address: string | null; creator_address: string | null }): Promise<EarningEvent[]> => {
-    const creator = lc(p.creator_address);
-    const events: EarningEvent[] = [];
+    const creator = p.creator_address;
+    if (!creator) return [];
+    // 1. Collect the coin's swaps (tx hash + timestamp + USD notional).
+    const swaps: { t: number; tx: string; usd: number }[] = [];
     let after: string | undefined;
     let page = 0;
     for (; page < EARNINGS_MAX_PAGES; page++) {
@@ -88,22 +94,43 @@ export async function GET(req: NextRequest) {
       const sa = res?.data?.zora20Token?.swapActivities;
       const edges = sa?.edges ?? [];
       for (const e of edges) {
-        const n = e?.node as { blockTimestamp?: string; activityType?: string; senderAddress?: string } | undefined;
-        if (!n || n.activityType !== 'BUY') continue;
-        if (lc(n.senderAddress) === creator) continue; // earned from OTHERS only (recap rule)
+        const n = e?.node as { blockTimestamp?: string; transactionHash?: string; txHash?: string } | undefined;
+        if (!n) continue;
         const t = Date.parse(n.blockTimestamp ?? '');
-        if (!Number.isFinite(t)) continue;
-        events.push({ t, usd: swapUsd(n) * CREATOR_FEE_RATE });
+        const tx = (n.transactionHash ?? n.txHash) as string | undefined;
+        if (!Number.isFinite(t) || !tx) continue;
+        swaps.push({ t, tx, usd: swapUsd(n) });
       }
       if (!(sa?.pageInfo?.hasNextPage && sa?.pageInfo?.endCursor)) { page++; break; }
       after = sa.pageInfo.endCursor;
     }
     if (page > HEAVY_PAGES) heavy = true;
     if (page >= EARNINGS_MAX_PAGES) truncated = true;
+
+    // 2. Decode each swap's receipt → the exact reward legs.
+    const bounded = swaps.filter(() => {
+      if (receiptsUsed >= RECEIPT_CAP) { truncated = true; return false; }
+      receiptsUsed++;
+      return true;
+    });
+    const decoded = await mapPoolRewards(bounded, 6, async (s) => {
+      const d = await decodeCreatorReward({ rpcUrl: RPC_URL, txHash: s.tx, creatorAddress: creator, referrerAddress: referrer, swapUsd: s.usd });
+      return { s, d };
+    });
+
+    const events: EarningEvent[] = [];
+    for (const { s, d } of decoded) {
+      if (!d || !(d.rewardZora > 0)) continue;
+      let price = d.priceUsdPerZora;
+      if (price != null) lastPrice = price;
+      if (price == null) price = lastPrice; // near-time neighbor fallback
+      if (price == null) price = await spotZoraUsd(referrer); // final fallback
+      events.push({ t: s.t, usd: d.rewardZora * (price ?? 0) });
+    }
     return events;
   };
 
-  const perCoin = await mapPool(posts ?? [], COIN_CONCURRENCY, processCoin);
+  const perCoin = await mapPoolRewards(posts ?? [], COIN_CONCURRENCY, processCoin);
   const events = perCoin.flat().sort((a, b) => a.t - b.t);
 
   if (heavy) console.warn(`[earnings] heavy history for user ${userId} (>${HEAVY_PAGES} pages on a coin) — cron-precompute signal`);

@@ -10,7 +10,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { getCoinSwaps, setApiKey } from '@zoralabs/coins-sdk';
 import { swapUsd } from '@/lib/economy/firstCut';
-import { CREATOR_FEE_RATE, type Recap, type RecapBreakdownRow } from '@/lib/economy/recap';
+import { type Recap, type RecapBreakdownRow } from '@/lib/economy/recap';
+import { decodeCreatorReward, mapPoolRewards } from '@/lib/economy/rewardsIndex';
+import { getScopePlatformReferrer } from '@/lib/zoraCoins';
 
 export const dynamic = 'force-dynamic';
 
@@ -86,17 +88,20 @@ export async function GET(req: NextRequest) {
 
   ensureKey();
 
-  // Per coin: page getCoinSwaps newest-first, stop once we cross last_seen, tally BUYs by
-  // OTHERS. One coin's failure must not sink the recap (returns a zero row).
+  // Per coin: page getCoinSwaps newest-first back to last_seen, then decode each
+  // swap's receipt for the ACTUAL creator reward (rewards-indexed v2 — both
+  // directions, no rate estimate; the fee-test decode is the ground truth).
+  // One coin's failure must not sink the recap (returns a zero row).
+  const referrer = getScopePlatformReferrer();
+  const RPC_URL = process.env.NEXT_PUBLIC_ALCHEMY_BASE_URL || 'https://mainnet.base.org';
   const processCoin = async (p: {
     id: string; coin_address: string | null; creator_address: string | null; ticker: string | null;
     media_type?: string | null; poster_url?: string | null; thumbnail_url?: string | null; media_urls?: string[] | null;
   }): Promise<RecapBreakdownRow> => {
-    const creator = lc(p.creator_address);
+    const creator = p.creator_address;
     let after: string | undefined;
-    let collectCount = 0;
-    let volumeUsd = 0;
     let pastCutoff = false;
+    const swaps: { tx: string; usd: number }[] = [];
 
     for (let page = 0; page < RECAP_MAX_PAGES && !pastCutoff; page++) {
       let res: { data?: { zora20Token?: { swapActivities?: { edges?: { node?: Record<string, unknown> }[]; pageInfo?: { hasNextPage?: boolean; endCursor?: string } } } } };
@@ -106,17 +111,33 @@ export async function GET(req: NextRequest) {
       const sa = res?.data?.zora20Token?.swapActivities;
       const edges = sa?.edges ?? [];
       for (const e of edges) {
-        const n = e?.node as { blockTimestamp?: string; activityType?: string; senderAddress?: string } | undefined;
+        const n = e?.node as { blockTimestamp?: string; transactionHash?: string; txHash?: string } | undefined;
         if (!n) continue;
         // Newest-first feed → once we cross the cutoff, everything after is older too.
         if (Date.parse(n.blockTimestamp ?? '') <= cutoffMs) { pastCutoff = true; continue; }
-        if (n.activityType !== 'BUY') continue;
-        if (lc(n.senderAddress) === creator) continue; // exclude creator self-buys (earned from OTHERS)
-        collectCount += 1;
-        volumeUsd += swapUsd(n);
+        const tx = (n.transactionHash ?? n.txHash) as string | undefined;
+        if (tx) swaps.push({ tx, usd: swapUsd(n) });
       }
       if (pastCutoff || !(sa?.pageInfo?.hasNextPage && sa?.pageInfo?.endCursor)) break;
       after = sa.pageInfo.endCursor;
+    }
+
+    let collectCount = 0;
+    let volumeUsd = 0;
+    let proceeds = 0;
+    if (creator && swaps.length) {
+      const decoded = await mapPoolRewards(swaps, 6, (s) =>
+        decodeCreatorReward({ rpcUrl: RPC_URL, txHash: s.tx, creatorAddress: creator, referrerAddress: referrer, swapUsd: s.usd }),
+      );
+      let lastPrice: number | null = null;
+      decoded.forEach((d, i) => {
+        if (!d || !(d.rewardZora > 0)) return;
+        collectCount += 1;
+        volumeUsd += swaps[i].usd;
+        const price = d.priceUsdPerZora ?? lastPrice;
+        if (d.priceUsdPerZora != null) lastPrice = d.priceUsdPerZora;
+        proceeds += d.rewardZora * (price ?? 0);
+      });
     }
 
     return {
@@ -125,7 +146,7 @@ export async function GET(req: NextRequest) {
       thumbnailUrl: thumbOf(p),
       collectCount,
       volumeUsd,
-      proceeds: volumeUsd * CREATOR_FEE_RATE,
+      proceeds,
     };
   };
 
