@@ -64,6 +64,14 @@ export default function WalletPage() {
   // deferred as its own design question.
   const [showSend, setShowSend] = useState(false);
   const [showSwap, setShowSwap] = useState(false);
+  // PIXEL-QA overlay (?skin=1) — DEV ONLY, never ships: the exported Figma skin
+  // at 50% over the live page for alignment work. NODE_ENV gate keeps it out of
+  // production builds even if the query param is passed.
+  const [skinOverlay, setSkinOverlay] = useState(false);
+  useEffect(() => {
+    if (process.env.NODE_ENV === "production") return;
+    setSkinOverlay(new URLSearchParams(window.location.search).get("skin") === "1");
+  }, []);
   const [sendToken, setSendToken] = useState<"ETH" | "USDC">("ETH");
   const [sendTo, setSendTo] = useState("");
   const [sendAmount, setSendAmount] = useState(""); // DOLLARS
@@ -512,10 +520,21 @@ export default function WalletPage() {
     <div
       ref={containerRef}
       className="bg-black"
-      style={{ position: "fixed", inset: 0, overflowY: "auto", color: "white" }}
+      style={{ position: "fixed", inset: 0, overflowY: "auto", color: "white", ...(skinOverlay ? { width: 375, right: "auto" } : {}) }}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
+      {/* PIXEL-QA skin overlay — dev-only (?skin=1), 375 reference, 50%.
+          Left-anchored (with the root pinned to 375 in skin mode) so alignment
+          holds regardless of the actual viewport width. */}
+      {skinOverlay && (
+        <img
+          src="/wallet-redux/wallet-redux-skin-ui.png"
+          alt=""
+          style={{ position: "fixed", top: 0, left: 0, width: 375, height: 812, opacity: 0.5, pointerEvents: "none", zIndex: 9999 }}
+        />
+      )}
+
       {/* Toast */}
       {toast && (
         <div style={{
@@ -534,12 +553,14 @@ export default function WalletPage() {
 
       <div style={{ height: 1, background: "rgba(255,255,255,0.1)" }} />
 
-      {/* TOTAL (headline) — then the split that matters: AVAILABLE is what a
-          purchase can actually draw on; HOLDINGS is position value. Never show
-          a balance a buy can't spend. */}
-      <div style={{ textAlign: "center", padding: "28px 16px 20px" }}>
-        <p style={{ ...SKB, fontSize: 'var(--fs-10)', color: "white", opacity: 0.5, margin: "0 0 8px", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-          Total
+      {/* ══ WALLET REDUX chrome (Figma 962:886 + 957:565) — chrome only ══ */}
+
+      {/* TOTAL BALANCE card — 353×188 @ (12,79) at the 375 reference. AVAILABLE
+          is what a purchase can draw on; HOLDINGS is position value; SCOPE
+          EARNINGS is historical cumulative and NEVER part of TOTAL. */}
+      <div style={{ margin: "26px 10px 0 12px", background: "#030303", border: "0.25px solid rgba(251,0,0,0.4)", borderRadius: 3, textAlign: "center", padding: "13px 0 26px" }}>
+        <p style={{ ...SKB, fontSize: 10, color: "white", opacity: 0.54, margin: "0 0 6px", textTransform: "uppercase", letterSpacing: "1px" }}>
+          TOTAL BALANCE
         </p>
         <div style={{ position: "relative" }}>
           {/* Incoming-funds mark — lands above TOTAL, then lifts away */}
@@ -555,155 +576,192 @@ export default function WalletPage() {
               [ +${fundPulse.usd.toFixed(2)} ]
             </span>
           )}
-          <p style={{ ...SKB, fontSize: 'var(--fs-32)', color: "white", margin: "0 0 8px", lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>
+          <p style={{ ...SKB, fontSize: 40, color: "white", margin: 0, lineHeight: 1.39, letterSpacing: "-1.2px", fontVariantNumeric: "tabular-nums" }}>
             {loading && animatedTotal == null ? "..." : animatedTotal != null ? `$${animatedTotal.toFixed(2)}` : "$—"}
           </p>
         </div>
-        {/* THE CANONICAL MONEY-PAIR: two-column stat row (label/value, profile-
-            stat pattern). White = spendable cash, red = invested/at-market.
-            Columns index the tabs beneath them. Reuse this layout wherever the
-            AVAILABLE/HOLDINGS pair appears (earnings summary etc.). */}
-        <div style={{ display: "flex", justifyContent: "center", gap: 32, margin: "14px 0 10px" }}>
-          <div onClick={() => setActiveTab("balances")} style={{ cursor: "pointer" }}>
-            <p style={{ ...SKB, fontSize: 'var(--fs-8)', color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.14em", margin: "0 0 5px" }}>
+        {/* Red hairline under the total — ~119w, centered (skin y172) */}
+        <div style={{ width: 119, height: 1, background: "#FF0000", margin: "10px auto 28px" }} />
+        {/* Stat row — 34px vertical hairline dividers between the three stats */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div onClick={() => setActiveTab("balances")} style={{ cursor: "pointer", flex: 1 }}>
+            <p style={{ ...SKB, fontSize: 10, color: "rgba(255,255,255,0.65)", textTransform: "uppercase", letterSpacing: "-0.1px", margin: "0 0 5px" }}>
               AVAILABLE
             </p>
-            <p style={{ ...SKB, fontSize: 'var(--fs-16)', color: "#FFFFFF", margin: 0, fontVariantNumeric: "tabular-nums" }}>
+            <p style={{ ...SKB, fontSize: 12, color: "#FFFFFF", margin: 0, fontVariantNumeric: "tabular-nums" }}>
               {animatedAvailable != null ? `$${animatedAvailable.toFixed(2)}` : "$—"}
             </p>
           </div>
-          <div onClick={() => setActiveTab("holdings")} style={{ cursor: "pointer" }}>
-            <p style={{ ...SKB, fontSize: 'var(--fs-8)', color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.14em", margin: "0 0 5px" }}>
+          <div style={{ width: 1, height: 34, background: "rgba(255,255,255,0.14)" }} />
+          <div onClick={() => setActiveTab("holdings")} style={{ cursor: "pointer", flex: 1 }}>
+            <p style={{ ...SKB, fontSize: 10, color: "rgba(255,255,255,0.65)", textTransform: "uppercase", letterSpacing: "-0.1px", margin: "0 0 5px" }}>
               HOLDINGS
             </p>
-            <p style={{ ...SKB, fontSize: 'var(--fs-16)', color: "#FF0000", margin: 0, fontVariantNumeric: "tabular-nums" }}>
+            <p style={{ ...SKB, fontSize: 12, color: "#FF0000", margin: 0, fontVariantNumeric: "tabular-nums" }}>
               {holdingsUsd != null ? `$${holdingsUsd.toFixed(2)}` : "…"}
             </p>
           </div>
-          {/* SCOPE EARNINGS — historical cumulative, NOT part of TOTAL (double-
-              count). The whole stat is one tap target → the detail sheet. */}
-          <div onClick={() => { if (earnings) setEarnOpen(true); }} style={{ cursor: "pointer" }}>
-            <p style={{ ...SKB, fontSize: 'var(--fs-8)', color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.14em", margin: "0 0 5px" }}>
-              SCOPE EARNINGS <span style={{ letterSpacing: 0, opacity: 0.8 }}>ⓘ</span>
+          <div style={{ width: 1, height: 34, background: "rgba(255,255,255,0.14)" }} />
+          {/* SCOPE EARNINGS — value WHITE per 957:565 (sheet greens unchanged);
+              the whole stat is one tap target → the detail sheet. */}
+          <div onClick={() => { if (earnings) setEarnOpen(true); }} style={{ cursor: "pointer", flex: 1.08 }}>
+            <p style={{ ...SKB, fontSize: 10, color: "rgba(255,255,255,0.65)", textTransform: "uppercase", letterSpacing: "-0.1px", margin: "0 0 5px" }}>
+              SCOPE EARNINGS
             </p>
-            <p style={{ ...SKB, fontSize: 'var(--fs-16)', color: "#4ade80", margin: 0, fontVariantNumeric: "tabular-nums" }}>
+            {/* value WHITE per 957:565; ⓘ (13px circle + i) rides the value line */}
+            <p style={{ ...SKB, fontSize: 12, color: "#FFFFFF", margin: 0, fontVariantNumeric: "tabular-nums", display: "flex", alignItems: "center", justifyContent: "center", gap: 5 }}>
               {animatedEarned != null ? `$${animatedEarned.toFixed(2)}` : "$—"}
+              <span style={{ position: "relative", width: 13, height: 13, display: "inline-block", backgroundImage: "url(/wallet-redux/info-circle.svg)", backgroundSize: "13px 13px" }}>
+                <span style={{ ...SKB, position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 8.2, color: "white", opacity: 0.52, textTransform: "none", letterSpacing: 0 }}>i</span>
+              </span>
             </p>
           </div>
         </div>
-        {walletAddress && (
-          <p
-            onClick={() => {
-              navigator.clipboard.writeText(walletAddress).then(() => showToast("Address copied"));
-            }}
-            style={{ ...SKR, fontSize: 'var(--fs-9)', color: "white", opacity: 0.4, margin: 0, cursor: "pointer" }}
-          >
-            {shortAddr(walletAddress)}
-          </p>
-        )}
       </div>
 
-      {/* Action buttons */}
-      <div style={{ display: "flex", justifyContent: "center", gap: 12, padding: "0 16px 12px" }}>
-        <button
-          onClick={() => walletAddress && fundWallet(walletAddress, { chain: base })}
-          style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "rgba(255,255,255,0.06)", border: "none", cursor: "pointer", padding: "14px 28px" }}
-        >
-          <span style={{ fontSize: 'var(--fs-24)', color: "white", lineHeight: 1 }}>+</span>
-          <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "white", textTransform: "uppercase", letterSpacing: "0.06em" }}>DEPOSIT</span>
-        </button>
-        <button
-          onClick={() => setShowSwap(true)}
-          style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "rgba(255,255,255,0.06)", border: "none", cursor: "pointer", padding: "14px 28px" }}
-        >
-          <span style={{ fontSize: 'var(--fs-24)', color: "#FF0000", lineHeight: 1 }}>⇄</span>
-          <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "white", textTransform: "uppercase", letterSpacing: "0.06em" }}>SWAP</span>
-          <span style={{ ...SKB, fontSize: 'var(--fs-7)', color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.08em" }}>USDC ⇄ ETH</span>
-        </button>
-        <button
-          onClick={() => setShowSend(true)}
-          style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "rgba(255,255,255,0.06)", border: "none", cursor: "pointer", padding: "14px 28px" }}
-        >
-          <span style={{ fontSize: 'var(--fs-24)', color: "white", lineHeight: 1 }}>↗</span>
-          <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "white", textTransform: "uppercase", letterSpacing: "0.06em" }}>SEND</span>
-        </button>
-      </div>
-
-      {/* Or deposit directly */}
-      {walletAddress && (
-        <div style={{ textAlign: "center", padding: "0 16px 20px" }}>
-          <p style={{ ...SKB, fontSize: 'var(--fs-8)', color: "white", opacity: 0.3, margin: "0 0 4px", textTransform: "uppercase", letterSpacing: "0.06em" }}>or deposit directly</p>
-          <p
-            onClick={() => navigator.clipboard.writeText(walletAddress).then(() => showToast("Address copied"))}
-            style={{ ...SKR, fontSize: 'var(--fs-9)', color: "white", opacity: 0.5, margin: 0, cursor: "pointer", wordBreak: "break-all" }}
-          >
-            {walletAddress}
-          </p>
-        </div>
-      )}
-
-      {/* Tabs */}
-      <div style={{ display: "flex", borderBottom: "1px solid rgba(255,255,255,0.1)", padding: "0 16px" }}>
-        {(["balances", "holdings", "activity"] as const).map(tab => (
+      {/* ACTION CARDS — 111×83 @ y280 (x 13/133/254): DEPOSIT / SWAP / SEND.
+          Same actions as before, re-skinned only. */}
+      <div style={{ display: "flex", gap: 10, margin: "13px 10px 0 13px" }}>
+        {([
+          { label: "DEPOSIT", sub: "Add funds to your wallet", arrows: ["/wallet-redux/arrow-deposit.svg"], onClick: () => walletAddress && fundWallet(walletAddress, { chain: base }) },
+          { label: "SWAP", sub: "USDC ⇄ ETH", arrows: ["/wallet-redux/arrow-swap-a.svg", "/wallet-redux/arrow-swap-b.svg"], onClick: () => setShowSwap(true) },
+          { label: "SEND", sub: "Send to any address", arrows: ["/wallet-redux/arrow-send.svg"], onClick: () => setShowSend(true) },
+        ] as const).map((card) => (
           <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
+            key={card.label}
+            onClick={card.onClick}
             style={{
-              ...SKB, fontSize: 'var(--fs-10)', background: "none", border: "none",
-              cursor: "pointer", padding: "8px 0", marginRight: 20,
-              color: "white", textTransform: "uppercase", letterSpacing: "0.06em",
-              opacity: activeTab === tab ? 1 : 0.4,
-              borderBottom: activeTab === tab ? "1px solid white" : "1px solid transparent",
-              marginBottom: -1,
+              flex: 1, height: 83, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 5,
+              background: "linear-gradient(46.78deg, #030303 17.56%, rgba(105,105,105,0.12) 282.61%)",
+              border: "0.25px solid rgba(251,0,0,0.31)", borderRadius: 3, cursor: "pointer", padding: 0,
             }}
           >
-            {tab.toUpperCase()}
+            {/* icon: 26px red-glow circle + the arrow overlay (swap = the pair) */}
+            <span style={{ position: "relative", width: 26, height: 26, display: "block" }}>
+              <img src="/wallet-redux/icon-glow-circle.svg" alt="" style={{ position: "absolute", inset: 0, width: 26, height: 26 }} />
+              {card.arrows.length === 1 ? (
+                <img src={card.arrows[0]} alt="" style={{ position: "absolute", left: "50%", top: "50%", transform: "translate(-50%,-50%)", width: 15.2, height: 8.8 }} />
+              ) : (
+                <>
+                  <img src={card.arrows[0]} alt="" style={{ position: "absolute", left: "50%", top: 7, transform: "translateX(-50%)", width: 13, height: 7.5 }} />
+                  <img src={card.arrows[1]} alt="" style={{ position: "absolute", left: "50%", bottom: 7, transform: "translateX(-50%)", width: 13, height: 7.5 }} />
+                </>
+              )}
+            </span>
+            <span style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <span style={{ ...SKB, fontSize: 10, color: "white", textTransform: "uppercase", letterSpacing: "0.02em" }}>{card.label}</span>
+              <span style={{ ...SKR, fontSize: 8.2, color: "rgba(255,255,255,0.68)", letterSpacing: "-0.082px" }}>{card.sub}</span>
+            </span>
           </button>
         ))}
       </div>
 
-      {/* Tab content */}
-      <div style={{ padding: "16px" }}>
+      {/* DIRECT DEPOSIT bar — 352×40 @ (13,376): scan glyph, label, FULL live
+          address, copy glyph (two squares), 23px circle. Tap = copy (existing). */}
+      {walletAddress && (
+        <div
+          onClick={() => navigator.clipboard.writeText(walletAddress).then(() => showToast("Address copied"))}
+          style={{
+            margin: "13px 10px 0 13px", height: 40, display: "flex", alignItems: "center", gap: 7, padding: "0 9px 0 11px",
+            background: "linear-gradient(9.19deg, #030303 17.56%, rgba(105,105,105,0.12) 282.61%)",
+            border: "0.25px solid rgba(251,0,0,0.31)", borderRadius: 3, cursor: "pointer",
+          }}
+        >
+          <img src="/wallet-redux/scan-wallet-address-icon.png" alt="" style={{ width: 22, height: "auto", flexShrink: 0 }} />
+          <span style={{ ...SKB, fontSize: 9, color: "white", opacity: 0.37, textTransform: "uppercase", letterSpacing: "0.02em", flexShrink: 0 }}>DIRECT DEPOSIT</span>
+          <span style={{ ...SKR, fontSize: 9, color: "white", opacity: 0.65, flex: 1, minWidth: 0, overflow: "hidden", whiteSpace: "nowrap", textAlign: "center" }}>
+            {walletAddress}
+          </span>
+          {/* copy glyph — two 7px squares, 0.25px borders, 3px offset */}
+          <span style={{ position: "relative", width: 11, height: 11, flexShrink: 0, display: "block" }}>
+            <span style={{ position: "absolute", top: 0, left: 0, width: 7, height: 7, border: "0.25px solid rgba(255,255,255,0.54)" }} />
+            <span style={{ position: "absolute", top: 3, left: 3, width: 7, height: 7, border: "0.25px solid rgba(255,255,255,0.54)" }} />
+          </span>
+          <img src="/wallet-redux/ellipse92.svg" alt="" style={{ width: 23, height: 23, flexShrink: 0 }} />
+        </div>
+      )}
 
-        {/* BALANCES */}
+      {/* TABS — BALANCES / HOLDINGS / EARNINGS / ACTIVITY. EARNINGS opens the
+          earnings sheet (the existing feature — no new tab pane); the other
+          three switch panes as before. Active = the short 45px hairline over
+          the full-width hairline. */}
+      <div style={{ display: "flex", justifyContent: "space-between", margin: "24px 13px 0", borderBottom: "1px solid rgba(255,255,255,0.12)" }}>
+        {(["balances", "holdings", "earnings", "activity"] as const).map(tab => {
+          const active = tab !== "earnings" && activeTab === tab;
+          return (
+            <button
+              key={tab}
+              onClick={() => { if (tab === "earnings") { if (earnings) setEarnOpen(true); } else setActiveTab(tab); }}
+              style={{
+                ...SKR, fontSize: 9, background: "none", border: "none",
+                cursor: "pointer", padding: "6px 0 5px", position: "relative",
+                color: "white", textTransform: "uppercase", letterSpacing: "-0.09px",
+                opacity: active ? 1 : 0.65,
+              }}
+            >
+              {tab.toUpperCase()}
+              {/* active = the short 45px hairline, anchored to the tab's left edge */}
+              {active && (
+                <span style={{ position: "absolute", bottom: -1, left: 0, width: 45, height: 1, background: "white" }} />
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Tab content */}
+      <div style={{ padding: "13px 10px 16px 13px" }}>
+
+        {/* BALANCES — the TOKEN PANEL: 352×190, GREY border (not red). Row
+            hairlines at 45/95/145 inside (skin y521/571/621); two empty asset
+            slots below USDC; ADD/IMPORT rides BELOW the panel. */}
         {activeTab === "balances" && (
-          <div>
+          <>
+          <div style={{ background: "#030303", border: "0.25px solid rgba(141,141,141,0.31)", borderRadius: 3, padding: "0 14px" }}>
             {/* ETH row */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 0", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#627EEA", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  <span style={{ fontSize: 'var(--fs-16)', color: "white" }}>Ξ</span>
-                </div>
-                <div>
-                  <p style={{ ...SKB, fontSize: 'var(--fs-11)', color: "white", margin: 0, textTransform: "uppercase" }}>ETH</p>
-                  <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: "white", opacity: 0.5, margin: "2px 0 0" }}>
-                    {loading && ethBalance == null ? "..." : `${parseFloat(ethBalance ?? "0").toFixed(4)} ETH`}
-                  </p>
-                </div>
+            <div style={{ display: "flex", alignItems: "center", height: 45, borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+              <span style={{ position: "relative", width: 30, height: 30, flexShrink: 0, marginRight: 11 }}>
+                <img src="/wallet-redux/eth-token-circle.svg" alt="" style={{ position: "absolute", inset: 0, width: 30, height: 30 }} />
+                <img src="/wallet-redux/eth-logo.png" alt="" style={{ position: "absolute", left: "50%", top: "50%", transform: "translate(-50%,-50%)", width: 13, height: "auto" }} />
+              </span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ ...SKR, fontSize: 12, color: "white", margin: 0 }}>ETH</p>
+                <p style={{ ...SKR, fontSize: 9, color: "white", opacity: 0.37, margin: "1px 0 0" }}>
+                  {loading && ethBalance == null ? "..." : `${parseFloat(ethBalance ?? "0").toFixed(4)} ETH`}
+                </p>
               </div>
-              <p style={{ ...SKB, fontSize: 'var(--fs-11)', color: "white", margin: 0 }}>
+              <p style={{ ...SKR, fontSize: 12, color: "white", margin: 0, fontVariantNumeric: "tabular-nums" }}>
                 {loading && ethUsd == null ? "..." : ethUsd != null ? `$${ethUsd}` : "$—"}
               </p>
+              <span style={{ fontFamily: "Batang, serif", fontSize: 13, color: "white", opacity: 0.75, marginLeft: 10 }}>›</span>
             </div>
 
             {/* USDC row */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 0" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#2775CA", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  <span style={{ fontSize: 'var(--fs-13)', color: "white", fontWeight: "bold" }}>$</span>
-                </div>
-                <div>
-                  <p style={{ ...SKB, fontSize: 'var(--fs-11)', color: "white", margin: 0, textTransform: "uppercase" }}>USDC</p>
-                  <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: "white", opacity: 0.5, margin: "2px 0 0" }}>
-                    {loading && usdcBalance == null ? "..." : `${parseFloat(usdcBalance ?? "0").toFixed(2)} USDC`}
-                  </p>
-                </div>
+            <div style={{ display: "flex", alignItems: "center", height: 50, borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+              <span style={{ position: "relative", width: 30, height: 30, flexShrink: 0, marginRight: 11 }}>
+                <img src="/wallet-redux/usdc-token-circle.svg" alt="" style={{ position: "absolute", inset: 0, width: 30, height: 30 }} />
+                <span style={{ ...SKB, position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, color: "white" }}>$</span>
+              </span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ ...SKR, fontSize: 12, color: "white", margin: 0 }}>USDC</p>
+                <p style={{ ...SKR, fontSize: 9, color: "white", opacity: 0.37, margin: "1px 0 0" }}>
+                  {loading && usdcBalance == null ? "..." : `${parseFloat(usdcBalance ?? "0").toFixed(2)} USDC`}
+                </p>
               </div>
-              <p style={{ ...SKB, fontSize: 'var(--fs-11)', color: "white", margin: 0 }}>
+              <p style={{ ...SKR, fontSize: 12, color: "white", margin: 0, fontVariantNumeric: "tabular-nums" }}>
                 {loading && usdcUsd == null ? "..." : `$${usdcUsd ?? "0.00"}`}
               </p>
+              <span style={{ fontFamily: "Batang, serif", fontSize: 13, color: "white", opacity: 0.75, marginLeft: 10 }}>›</span>
             </div>
+
+            {/* Empty asset slots (the frame's reserved rows) */}
+            <div style={{ height: 50, borderBottom: "1px solid rgba(255,255,255,0.08)" }} />
+            <div style={{ height: 44 }} />
           </div>
+          <p style={{ ...SKR, fontSize: 9, color: "white", opacity: 0.4, textAlign: "center", margin: "18px 0 0", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+            + ADD / IMPORT ASSET
+          </p>
+          </>
         )}
 
         {/* HOLDINGS — the ownership ledger: every Scope coin held, OWN posts
