@@ -14,6 +14,10 @@ import { AnimatePresence } from "framer-motion";
 
 type FeedState = "normal" | "exiting" | "entering";
 
+// Landing block breathing room (title → first post), px. THE tunable — Eric
+// eyeballs this on device.
+const LANDING_BREATHING_PX = 40;
+
 export default function Home() {
   const { authenticated, ready } = usePrivy();
   const router = useRouter();
@@ -23,6 +27,9 @@ export default function Home() {
   const [theatreActive, setTheatreActive] = useState(false); // Theatre Mode over the feed
   const [menuOpen, setMenuOpen] = useState(false);
   const [triggerPressed, setTriggerPressed] = useState(false); // logomark press-pop
+  // TRUE once the landing block has been pushed out — gates the floating
+  // trigger so exactly ONE logomark exists at rest (the in-flow one).
+  const [pastLanding, setPastLanding] = useState(false);
   const [showFrame, setShowFrame] = useState(true);
   const [feedState, setFeedState] = useState<FeedState>("normal");
   // Inline comments are one-at-a-time: only one feed post's section is open.
@@ -94,6 +101,10 @@ export default function Home() {
       const cur = el && typeof el.scrollTop === 'number' ? el.scrollTop : window.scrollY;
       const dy = cur - last;
       last = cur;
+      // Landing gate — piggybacks this existing listener (no new listeners):
+      // the floating trigger exists only once the in-flow landing block (which
+      // carries its own logomark) has been pushed out.
+      setPastLanding(cur > 140);
       if (dy < -THRESHOLD) setShowFrame(true);       // up → reveal
       else if (dy > THRESHOLD) setShowFrame(false);  // down → hide
     };
@@ -284,10 +295,10 @@ export default function Home() {
             cursor: 'pointer',
             padding: '9px 6px', // ≈44px tap target around the 41×26 mark
             lineHeight: 0,
-            opacity: menuOpen || !showFrame ? 0 : triggerPressed ? 0.75 : 1,
-            transform: `${menuOpen || !showFrame ? 'translateY(-12px)' : 'translateY(0)'}${triggerPressed ? ' scale(0.92)' : ''}`,
+            opacity: menuOpen || !showFrame || !pastLanding ? 0 : triggerPressed ? 0.75 : 1,
+            transform: `${menuOpen || !showFrame || !pastLanding ? 'translateY(-12px)' : 'translateY(0)'}${triggerPressed ? ' scale(0.92)' : ''}`,
             transition: 'opacity 0.25s cubic-bezier(0.16,0.84,0.3,1), transform 0.25s cubic-bezier(0.16,0.84,0.3,1)',
-            pointerEvents: menuOpen || !showFrame ? 'none' : 'auto',
+            pointerEvents: menuOpen || !showFrame || !pastLanding ? 'none' : 'auto',
             filter: 'drop-shadow(0 0 8px rgba(0,0,0,0.9)) drop-shadow(0 2px 12px rgba(0,0,0,0.75))',
             zIndex: 50, // above feed (z20), below the menu overlay (z60)
           }}
@@ -364,14 +375,42 @@ export default function Home() {
           zIndex: 1,
         }}
       >
-        {/* First post sits below the floating bracket (status-bar inset + ~34px chrome
-            clearance) at rest, but scrolls up UNDER the status bar (edge-to-edge). */}
         {/* paddingBottom is footer-clearance ONLY — NOT + inset-bottom. The footer floats
             with its OWN bottom-inset padding, so adding the inset here double-counts it and
             leaves a body-black gap in the home-indicator zone (invisible in Safari behind
             its chrome, but a black bar in the standalone PWA). Content now runs edge-to-edge
             to the true bottom under the floating footer. */}
-        <div style={{ paddingTop: 'calc(34px + env(safe-area-inset-top, 0px))', paddingBottom: 72 }}>
+        <div style={{ paddingBottom: 72 }}>
+          {/* ── LANDING BLOCK — IN the scroll flow (the profile-view push):
+              scrolling physically pushes mark + DISCOVER + breathing space out
+              1:1; back-to-top restores it the same way. It carries the top
+              safe-area inset the posts wrapper used to, so once pushed out the
+              feed owns the viewport edge-to-edge exactly as before. The
+              floating trigger (portaled) is gated OFF until this block is gone
+              → exactly ONE logomark at rest. */}
+          <div style={{ paddingTop: 'calc(6px + env(safe-area-inset-top, 0px))' }}>
+            {/* The logomark — same visual position/size as the floating trigger,
+                same action (opens VIEWING MODES). */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setMenuOpen(v => !v)}
+                aria-label="Open viewing modes"
+                style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '9px 10px', lineHeight: 0, filter: 'drop-shadow(0 0 8px rgba(0,0,0,0.9))' }}
+              >
+                <img src="/logomark-plain-white.png" alt="" style={{ width: 41, height: 26, objectFit: 'contain', display: 'block' }} />
+              </button>
+            </div>
+            <h1 style={{
+              fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700,
+              fontSize: 'clamp(44px, 14.5vw, 60px)', lineHeight: 0.95,
+              letterSpacing: '-0.06em', color: '#FFFFFF', textTransform: 'uppercase',
+              margin: '2px 12px 0',
+            }}>
+              Discover
+            </h1>
+            {/* BREATHING SPACE — the one tunable (Eric eyeballs on device). */}
+            <div style={{ height: LANDING_BREATHING_PX }} />
+          </div>
           {posts.map((post, index) => (
             <div key={post.id} data-post-id={post.id} style={getPostAnimStyle(index)}>
               <PostItem
