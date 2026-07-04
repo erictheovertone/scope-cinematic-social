@@ -597,6 +597,39 @@ export const deleteComment = async (commentId: string, userId: string): Promise<
   }
 };
 
+// ── MINTED-POST RETENTION POLICY ──────────────────────────────────────────────
+// A minted post row (coin_address set) is the app's ONLY index to an on-chain
+// asset: holdings, earnings, activity tickers, and the screening room all
+// resolve coins through it. Hard-deleting one strands real tokens invisibly.
+// POLICY: soft-delete (is_deleted = true) is the only allowed removal — restore
+// is flipping the flag back. hardDeletePost below is the ONE sanctioned
+// hard-delete path and REFUSES minted posts; never call supabase.delete() on
+// `posts` directly.
+export async function hardDeletePost(postId: string, userId: string): Promise<{ ok: boolean; error?: string }> {
+  const { data: post, error: readErr } = await supabase
+    .from('posts')
+    .select('id, coin_address')
+    .eq('id', postId)
+    .eq('user_id', userId)
+    .maybeSingle();
+  if (readErr || !post) return { ok: false, error: 'Post not found (or not yours).' };
+  if (post.coin_address) {
+    console.error('[hardDeletePost] REFUSED — minted post (on-chain index):', postId, post.coin_address);
+    return { ok: false, error: 'Minted posts can’t be permanently deleted — they index an on-chain asset. Hide it instead.' };
+  }
+  const { error } = await supabase
+    .from('posts')
+    .delete()
+    .eq('id', postId)
+    .eq('user_id', userId)
+    .is('coin_address', null); // re-checked at the query layer — belt and braces
+  if (error) {
+    console.error('[hardDeletePost] error:', error);
+    return { ok: false, error: 'Delete failed — try again.' };
+  }
+  return { ok: true };
+}
+
 export async function softDeletePost(postId: string, userId: string): Promise<boolean> {
   const { data, error } = await supabase
     .from('posts')
