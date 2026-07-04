@@ -26,6 +26,8 @@ type Source = HTMLImageElement | HTMLVideoElement | null;
 interface LooksLibraryProps {
   source: Source;
   isPro: boolean;
+  /** Post-purchase dust lift (see FinishingShell): ghost locks 'hold' then 'play'. */
+  lockDust?: 'hold' | 'play' | null;
   onUpsell: () => void;
   activeLookId: string | null;
   intensity: number;                 // params.lutIntensity (stop 0..12)
@@ -58,7 +60,7 @@ function imageDataToUrl(img: ImageData): string {
 }
 
 export default function LooksLibrary({
-  source, isPro, onUpsell, activeLookId, intensity, onApply, onClear, onIntensity,
+  source, isPro, lockDust = null, onUpsell, activeLookId, intensity, onApply, onClear, onIntensity,
 }: LooksLibraryProps) {
   const [snapUrl, setSnapUrl] = useState<string | null>(null);
   const [thumbs, setThumbs] = useState<Record<string, string>>({});
@@ -93,6 +95,12 @@ export default function LooksLibrary({
 
   return (
     <div style={{ maxHeight: 230, overflowY: 'auto', padding: '10px 14px 14px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+      {/* Dust-lift keyframes — safe duplicate of the shell's (this surface can
+          be mounted while the Tier3 style block isn't). */}
+      <style>{`
+        @keyframes pro-dust { to { opacity: 0; transform: translateY(-10px) scale(1.08); filter: blur(5px); } }
+        .pro-dust-play { animation: pro-dust 450ms ease-out forwards; }
+      `}</style>
       {activeLookId && (
         <ToolSlider type="add" value={intensity} onChange={onIntensity} label="INTENSITY" />
       )}
@@ -106,13 +114,15 @@ export default function LooksLibrary({
               {bi === 0 && (
                 <LookTile name="ORIGINAL" url={snapUrl} selected={!activeLookId} locked={false} onTap={onClear} />
               )}
-              {looks.map((look) => (
+              {looks.map((look, li) => (
                 <LookTile
                   key={look.id}
                   name={look.name}
                   url={thumbs[look.id] ?? snapUrl}
                   selected={look.id === activeLookId}
                   locked={!isPro}
+                  dust={lockDust}
+                  dustDelay={300 + li * 60} /* cascades AFTER the tool row's wave */
                   onTap={() => tapLook(look)}
                 />
               ))}
@@ -124,13 +134,13 @@ export default function LooksLibrary({
   );
 }
 
-function LookTile({ name, url, selected, locked, onTap }: { name: string; url: string | null; selected: boolean; locked: boolean; onTap: () => void }) {
+function LookTile({ name, url, selected, locked, onTap, dust = null, dustDelay = 0 }: { name: string; url: string | null; selected: boolean; locked: boolean; onTap: () => void; dust?: 'hold' | 'play' | null; dustDelay?: number }) {
   return (
     <button onClick={onTap} style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>
       <div style={{ position: 'relative', width: 60, height: 60, overflow: 'hidden', border: `1px solid ${selected ? RED : 'rgba(255,255,255,0.18)'}`, background: '#111' }}>
         {url && <img src={url} alt={name} draggable={false} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
-        {locked && (
-          <span style={{ position: 'absolute', top: 3, right: 3, lineHeight: 0 }}>
+        {(locked || dust) && (
+          <span className={dust === 'play' ? 'pro-dust-play' : undefined} style={{ position: 'absolute', top: 3, right: 3, lineHeight: 0, animationDelay: dust === 'play' ? `${dustDelay}ms` : undefined }}>
             <svg width="10.5" height="10.5" viewBox="0 0 24 24" fill="none" stroke={RED} strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="11" width="14" height="9" /><path d="M8 11V8a4 4 0 0 1 8 0v3" /></svg>
           </span>
         )}

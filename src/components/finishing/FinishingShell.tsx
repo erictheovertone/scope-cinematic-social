@@ -402,6 +402,33 @@ export default function FinishingShell({
   // GENERIC pro-lock — any pro:true tool flows through this; future Pro tools
   // get the lock + upsell for free just by setting pro:true (no per-tool code).
   const toolLocked = (t: EditTool) => t.enabled && !!t.pro && !isPro;
+
+  // ── THE DUST LIFT — post-purchase unlock choreography ───────────────────────
+  // While the Pro celebration covers the screen the state is ALREADY refreshed
+  // (toolLocked → false, everything tappable); the lock VISUALS are held as
+  // ghosts ('armed') so nothing flashes open early. On the celebration-done cue
+  // they dissolve upward like dust ('playing', CSS below), then unmount
+  // ('done'). Plays ONCE, only when this mount actually showed locks.
+  const [dustPhase, setDustPhase] = useState<'idle' | 'armed' | 'playing' | 'done'>('idle');
+  const everLockedRef = useRef(false);
+  if (!isPro) everLockedRef.current = true;
+  useEffect(() => {
+    if (isPro && everLockedRef.current && dustPhase === 'idle') setDustPhase('armed');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isPro]);
+  useEffect(() => {
+    if (dustPhase !== 'armed') return;
+    const play = () => {
+      const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+      if (reduced) { setDustPhase('done'); return; } // no motion: locks simply disappear
+      setDustPhase('playing');
+      window.setTimeout(() => setDustPhase('done'), 1600);
+    };
+    window.addEventListener('scope:pro-celebration-done', play);
+    const safety = window.setTimeout(play, 12_000); // ghosts must never persist
+    return () => { window.removeEventListener('scope:pro-celebration-done', play); window.clearTimeout(safety); };
+  }, [dustPhase]);
+  const lockDust = dustPhase === 'armed' ? 'hold' as const : dustPhase === 'playing' ? 'play' as const : null;
   const onOpenTool = (t: EditTool) => {
     if (!toolEnabled(t)) return;
     if (toolLocked(t)) { showUpsell('edit'); return; } // free user → upsell, tool stays closed
@@ -540,7 +567,7 @@ export default function FinishingShell({
         </div>
       </div>
     ) : activeMode === 'looks' ? (
-      <LooksLibrary source={source} isPro={isPro} onUpsell={() => showUpsell('edit')} activeLookId={params.lutId} intensity={params.lutIntensity} onApply={applyBuiltinLook} onClear={clearLook} onIntensity={setLutIntensity} />
+      <LooksLibrary lockDust={lockDust} source={source} isPro={isPro} onUpsell={() => showUpsell('edit')} activeLookId={params.lutId} intensity={params.lutIntensity} onApply={applyBuiltinLook} onClear={clearLook} onIntensity={setLutIntensity} />
     ) : activeMode === 'palette' ? (
       <div style={{ padding: '12px 16px 14px', display: 'flex', flexDirection: 'column', gap: 12 }}>
         <AddToPalette isPro={isPro} onUpsell={() => showUpsell('edit')} onSave={saveLook} />
@@ -555,7 +582,14 @@ export default function FinishingShell({
         )}
       </div>
     ) : (
-      <Tier3Items mode={activeMode} editItems={editItems} toolTouched={toolTouched} toolEnabled={toolEnabled} toolLocked={toolLocked} onOpenTool={onOpenTool} lean={lean} />
+      <>
+        {/* Dust-lift keyframes — used by the ghost locks here and in LooksLibrary. */}
+        <style>{`
+          @keyframes pro-dust { to { opacity: 0; transform: translateY(-10px) scale(1.08); filter: blur(5px); } }
+          .pro-dust-play { animation: pro-dust 450ms ease-out forwards; }
+        `}</style>
+        <Tier3Items mode={activeMode} editItems={editItems} toolTouched={toolTouched} toolEnabled={toolEnabled} toolLocked={toolLocked} onOpenTool={onOpenTool} lean={lean} lockDust={lockDust} />
+      </>
     )
   );
 

@@ -52,7 +52,12 @@ export function UpsellProvider({ children }: { children: ReactNode }) {
         <VideoCelebration
           videoSrc="/badges/welcome-scope-pro-animation.mp4"
           badgeSrc="/badges/scope-pro-badge-min-design-01.png"
-          onDone={() => setCelebrate(false)}
+          onDone={() => {
+            setCelebrate(false);
+            // The dust-lift cue: the suite behind is already unlocked (state
+            // refreshed during the celebration) — now it plays the reveal.
+            window.dispatchEvent(new CustomEvent('scope:pro-celebration-done'));
+          }}
           renderFallback={(d) => <ProCelebration onDone={d} />}
         />
       )}

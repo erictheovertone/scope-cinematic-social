@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { usePrivy, useWallets } from "@privy-io/react-auth";
+import { invalidateMembership } from "@/lib/userService";
 import { createPublicClient, http, parseUnits } from "viem";
 import { base } from "viem/chains";
 
@@ -170,6 +171,7 @@ export default function MembershipSheet({ visible, onClose, onSuccess, isPaidMem
         checkoutRef.current = null;
         setEmbeddedOpen(false);
         setWorking(false);
+        void invalidateMembership(user!.id); // stale-cache fix — the refetch must miss the cache
         onSuccess(selectedPlan); // provider → celebration (runs ~7s) + an early isPro refresh
 
         // Verify SERVER-SIDE in parallel (onComplete is client-side only). The
@@ -184,6 +186,7 @@ export default function MembershipSheet({ visible, onClose, onSuccess, isPaidMem
               body: JSON.stringify({ sessionId }),
             });
             if (!r.ok) throw new Error(`confirm-stripe ${r.status}`);
+            await invalidateMembership(user!.id); // DB now flipped — drop the stale profile BEFORE the refetch event
             if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent("scope:pro-activated"));
           } catch (e) {
             console.error("[membership] embedded server confirm failed:", e);
@@ -222,6 +225,7 @@ export default function MembershipSheet({ visible, onClose, onSuccess, isPaidMem
       // Crypto already resolves in-app — NO redirect. The provider decides:
       // in-suite → in-app celebration + isPro refresh (editor mounted);
       // elsewhere → it routes to the success/profile glow.
+      await invalidateMembership(user!.id); // stale-cache fix (see userService)
       setTxStatus("success");
       onSuccess(selectedPlan, hash as string);
     } catch (e: any) {

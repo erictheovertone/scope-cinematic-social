@@ -19,6 +19,18 @@ export const invalidateProfileCache = (userId: string): void => {
   profileCache.delete(userId); profileInflight.delete(userId);
 };
 /** Bust a cached user (call after a write to the users row). */
+// THE PRO-UNLOCK FIX: purchases flip is_paid_member in the DB, but getProfile
+// serves this module cache with no TTL — the post-purchase refetch was reading
+// (and re-caching) the STALE pre-Pro profile, so gates never lifted without a
+// reload. Every purchase-resolution path must call this BEFORE dispatching
+// 'scope:pro-activated'.
+export const invalidateMembership = async (privyId: string): Promise<void> => {
+  try {
+    const u = await getUserByPrivyId(privyId); // users row is static — cached read fine
+    if (u?.id) invalidateProfileCache(u.id);
+  } catch { /* refetch will still hit the cache-miss path next eviction */ }
+};
+
 export const invalidateUserCache = (privyId: string): void => {
   userCache.delete(privyId); userInflight.delete(privyId);
 };

@@ -28,6 +28,9 @@ interface Tier3ItemsProps {
   toolEnabled: (t: EditTool) => boolean;
   /** generic pro-lock decision (pro tool + not a Pro user) — drives the lock glyph */
   toolLocked: (t: EditTool) => boolean;
+  /** Post-purchase dust lift: 'hold' = keep ghost locks on pro tools while the
+      celebration is up; 'play' = dissolve them upward (staggered). */
+  lockDust?: 'hold' | 'play' | null;
   onOpenTool: (t: EditTool) => void;
   /** Theatre-only lean variant: borderless icon+label, no FREE/PRO line, smaller icons. */
   lean?: boolean;
@@ -45,7 +48,7 @@ function LockGlyph() {
   );
 }
 
-export default function Tier3Items({ mode, editItems, toolTouched, toolEnabled, toolLocked, onOpenTool, lean = false }: Tier3ItemsProps) {
+export default function Tier3Items({ mode, editItems, toolTouched, toolEnabled, toolLocked, onOpenTool, lean = false, lockDust = null }: Tier3ItemsProps) {
   if (mode === 'edit') {
     if (editItems.length === 0) {
       return <div style={{ ...(lean ? LEAN_ROW : ROW), justifyContent: 'center' }}><EmptyNote /></div>;
@@ -73,7 +76,9 @@ export default function Tier3Items({ mode, editItems, toolTouched, toolEnabled, 
                   minWidth: 54, color: touched ? RED : 'white',
                 }}
               >
-                {locked ? <LockGlyph /> : t.pro && <span style={{ position: 'absolute', top: 0, right: 2, width: 5, height: 5, background: RED }} />}
+                {(locked || (t.pro && lockDust)) ? (
+                  <span className={lockDust === 'play' ? 'pro-dust-play' : undefined} style={{ display: 'inline-flex', animationDelay: lockDust === 'play' ? `${editItems.indexOf(t) * 60}ms` : undefined }}><LockGlyph /></span>
+                ) : t.pro && <span style={{ position: 'absolute', top: 0, right: 2, width: 5, height: 5, background: RED }} />}
                 <ToolIcon toolKey={t.key} size={19.5} />
                 <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: touched ? RED : 'white', textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>{t.label}</span>
               </button>
@@ -95,7 +100,9 @@ export default function Tier3Items({ mode, editItems, toolTouched, toolEnabled, 
               }}
             >
               {/* Pro marker — lock glyph when locked (free user), else a small red dot */}
-              {locked ? <LockGlyph /> : t.pro && <span style={{ position: 'absolute', top: 5, right: 5, width: 5, height: 5, background: RED }} />}
+              {(locked || (t.pro && lockDust)) ? (
+                <span className={lockDust === 'play' ? 'pro-dust-play' : undefined} style={{ display: 'inline-flex', animationDelay: lockDust === 'play' ? `${editItems.indexOf(t) * 60}ms` : undefined }}><LockGlyph /></span>
+              ) : t.pro && <span style={{ position: 'absolute', top: 5, right: 5, width: 5, height: 5, background: RED }} />}
               <ToolIcon toolKey={t.key} size={23.5} />
               <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: touched ? RED : 'white', textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>{t.label}</span>
               <span style={{
