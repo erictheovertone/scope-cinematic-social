@@ -393,7 +393,7 @@ const userLayoutId = stableLayoutId;
           holo={holoBanner && isFoundingMember}
           badges={resolveBadges({ isFoundingMember, isTopCollector, isScreeningRoomHolder, isPaidMember, isInHouseCreator, firstCutCount })
             .filter((b) => b.bannerSrc)
-            .map((b) => ({ key: b.key, src: b.bannerSrc as string, title: b.title }))}
+            .map((b) => ({ key: b.key, src: (b.framedSrc ?? b.bannerSrc) as string, title: b.title }))}
           pullKey={firstCutPull}
           arriveKeys={arriveKeys}
           onPress={() => setShowBadgeSheet(true)}

@@ -147,6 +147,15 @@ export async function recomputeScreeningRoom(supabase: SupabaseClient): Promise<
   if (eligible.length) await supabase.from('profiles').update({ is_screening_room_holder: true }).in('user_id', eligible);
   if (toClear.length) await supabase.from('profiles').update({ is_screening_room_holder: false }).in('user_id', toClear);
 
+  // srh_count — how many of the user's posts are in the room (the bio sheet's
+  // count pill). Best-effort: tolerate the column not existing yet.
+  try {
+    const counts = new Map<string, number>();
+    for (const c of ranked) if (c.user_id) counts.set(c.user_id, (counts.get(c.user_id) ?? 0) + 1);
+    for (const [uid, n] of counts) await supabase.from('profiles').update({ srh_count: n }).eq('user_id', uid);
+    for (const uid of toClear) await supabase.from('profiles').update({ srh_count: 0 }).eq('user_id', uid);
+  } catch (e) { console.warn('[screening-room] srh_count write skipped:', (e as Error)?.message); }
+
   const result: RecomputeResult = {
     ok: true,
     ms: Date.now() - t0,

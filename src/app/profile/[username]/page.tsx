@@ -230,7 +230,7 @@ export default function PublicProfilePage() {
             holo={!!(profile as any)?.holo_banner && isFoundingMember}
             badges={resolveBadges({ isFoundingMember, isTopCollector, isScreeningRoomHolder, isPaidMember, isInHouseCreator, firstCutCount })
               .filter((b) => b.bannerSrc)
-              .map((b) => ({ key: b.key, src: b.bannerSrc as string, title: b.title }))}
+              .map((b) => ({ key: b.key, src: (b.framedSrc ?? b.bannerSrc) as string, title: b.title }))}
             onPress={() => setShowBadgeSheet(true)}
           />
         </div>

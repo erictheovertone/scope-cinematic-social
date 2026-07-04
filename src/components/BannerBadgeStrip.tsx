@@ -149,6 +149,10 @@ export default function BannerBadgeStrip({
           // SRH sits 1px smaller than the rest on the banner — it was visually
           // overpowering the other badges; this rebalances it. SRH-only override
           // of the otherwise-fixed icon size.
+          const framed = b.src.includes('-framed');
+          // Framed design-refresh cards render 19×14 (the ratified banner size);
+          // square fallbacks (pro — no framed asset yet) keep the classic sizing
+          // incl. the SRH −1px rebalance.
           const sz = b.key === 'srh' ? iconSize - 1 : iconSize;
           const arriving = !!arriveKeys?.includes(b.key);
           return (
@@ -159,7 +163,7 @@ export default function BannerBadgeStrip({
               alt={b.title ?? b.key}
               className={arriving ? 'badge-arrive' : pull ? 'focus-pull' : undefined}
               style={{
-                position: 'relative', zIndex: 1, width: sz, height: sz, objectFit: 'contain', display: 'block',
+                position: 'relative', zIndex: 1, width: framed ? 19 : sz, height: framed ? 14 : sz, objectFit: 'contain', display: 'block',
                 ...(pull && !arriving ? { animation: 'focusPull 2s cubic-bezier(0.16,0.84,0.3,1) both' } : null),
               }}
             />

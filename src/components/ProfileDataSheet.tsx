@@ -233,10 +233,32 @@ export default function ProfileDataSheet({
                     onClick={(e) => { e.stopPropagation(); setActiveBlurb(b.key); }}
                     style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, cursor: 'pointer', width: 52 }}
                   >
-                    {/* Flat min-design icon (public/badges), ~34px — no glow/3D,
-                        per the redesign + the no-shadows rule. Generic: any badge
-                        with a strip icon renders; falls back to its coin art. */}
-                    <img src={b.bannerSrc ?? b.src} alt={b.title} style={{ width: 34, height: 34, objectFit: 'contain', display: 'block' }} />
+                    {/* FRAMED design-refresh card, ~50px, ratio-locked (the frames
+                        aren't square — width leads, height follows the asset).
+                        Falls back to the flat min-design icon (pro has no framed
+                        asset yet). COUNT PILL (FC/SRH): a rounded tag half-on the
+                        frame's bottom edge — dark fill, muted brand-red border,
+                        shows the count whenever the badge shows (including 1). */}
+                    {(() => {
+                      const count = b.key === 'firstCut' ? Math.max(1, firstCutCount)
+                        : b.key === 'srh' ? Math.max(1, Number((profile as Record<string, unknown> | null)?.srh_count ?? 0) || 1)
+                        : null;
+                      return (
+                        <span style={{ position: 'relative', display: 'inline-block' }}>
+                          <img src={b.framedSrc ?? b.bannerSrc ?? b.src} alt={b.title} style={{ width: 50, height: 'auto', objectFit: 'contain', display: 'block' }} />
+                          {count != null && (
+                            <span style={{
+                              position: 'absolute', bottom: -7, left: '50%', transform: 'translateX(-50%)',
+                              background: '#0b0b0b', border: '1px solid #7a2e2e', borderRadius: 5,
+                              padding: '1px 7px', lineHeight: 1.35,
+                              ...SKB, fontSize: 10, color: '#FFFFFF', fontVariantNumeric: 'tabular-nums',
+                            }}>
+                              {count}
+                            </span>
+                          )}
+                        </span>
+                      );
+                    })()}
                     <span style={{ ...SKB, fontSize: 'var(--fs-8)', letterSpacing: '0.04em', color: '#FFFFFF', textTransform: 'uppercase', lineHeight: 1.1, textAlign: 'center' }}>
                       {b.title}
                     </span>

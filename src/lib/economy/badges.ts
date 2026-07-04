@@ -19,6 +19,9 @@ export type BadgeKey =
   | 'free';
 
 export interface BadgeMeta {
+  /** Framed design-refresh card (public/badges/framed-badges) — bio sheet ~50px
+      + banner 19×14. Absent (pro/free: no framed asset shipped) → bannerSrc. */
+  framedSrc?: string;
   key: BadgeKey;
   src: string;
   /** Title shown beneath the coin in the BADGES section. */
@@ -37,12 +40,12 @@ export interface BadgeMeta {
 // srh art also live in /badges and render generically once their earning logic
 // + keys land (BannerBadgeStrip takes any {src} list — nothing hardcoded).
 export const BADGES: Record<BadgeKey, BadgeMeta> = {
-  augmented: { key: 'augmented', src: '/augmented-member-founding-500-aperture.png', title: 'AUGMENTED', color: '#ff0080',            bannerSrc: '/badges/augmented-badge-min-design-01.png' },
-  firstCut:  { key: 'firstCut',  src: '/first-cut-badge-green.png',                  title: 'FIRST CUT', color: '#00E08A',            bannerSrc: '/badges/first-cut-badge-min-design-01.png' },
-  top1k:     { key: 'top1k',     src: '/top-1k-collector-aperture-gold.png',         title: 'TOP 1K',    color: '#C9A84C',            bannerSrc: '/badges/collector-badge-min-design-01.png' },
-  srh:       { key: 'srh',       src: '/badges/srh-badge-min-design-01.png',         title: 'SRH',       color: '#C9A84C',            bannerSrc: '/badges/srh-badge-min-design-01.png' },
+  augmented: { key: 'augmented', src: '/augmented-member-founding-500-aperture.png', title: 'AUGMENTED', color: '#ff0080',            bannerSrc: '/badges/augmented-badge-min-design-01.png', framedSrc: '/badges/framed-badges/augmented-badge-min-design-01-framed.png' },
+  firstCut:  { key: 'firstCut',  src: '/first-cut-badge-green.png',                  title: 'FIRST CUT', color: '#00E08A',            bannerSrc: '/badges/first-cut-badge-min-design-01.png', framedSrc: '/badges/framed-badges/first-cut-badge-min-design-01-framed.png' },
+  top1k:     { key: 'top1k',     src: '/top-1k-collector-aperture-gold.png',         title: 'TOP 1K',    color: '#C9A84C',            bannerSrc: '/badges/collector-badge-min-design-01.png', framedSrc: '/badges/framed-badges/collector-badge-min-design-01-framed.png' },
+  srh:       { key: 'srh',       src: '/badges/srh-badge-min-design-01.png',         title: 'SRH',       color: '#C9A84C',            bannerSrc: '/badges/srh-badge-min-design-01.png', framedSrc: '/badges/framed-badges/srh-badge-min-design-01-framed.png' },
   pro:       { key: 'pro',       src: '/scope-pro-icon-aperture.png',                title: 'SCOPE PRO', color: '#FF0000',            bannerSrc: '/badges/scope-pro-badge-min-design-01.png' },
-  inHouse:   { key: 'inHouse',   src: '/in-house-creator-logo-grey.png',             title: 'IN-HOUSE',  color: 'rgba(255,255,255,0.6)', bannerSrc: '/badges/in-house-badge-min-design-01.png' },
+  inHouse:   { key: 'inHouse',   src: '/in-house-creator-logo-grey.png',             title: 'IN-HOUSE',  color: 'rgba(255,255,255,0.6)', bannerSrc: '/badges/in-house-badge-min-design-01.png', framedSrc: '/badges/framed-badges/in-house-badge-min-design-01-framed.png' },
   free:      { key: 'free',      src: '/free-tier-aperture-logo-red.png',            title: 'FREE TIER', color: '#FF0000' },
 };
 
