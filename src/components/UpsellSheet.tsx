@@ -58,7 +58,7 @@ export default function UpsellSheet({
 
         <div className="su-eyebrow">
           <span className="su-badge">
-            <img src="/scope-pro-icon-aperture.png" alt="Scope Pro" className="su-badge-flip" />
+            <img src="/badges/scope-pro-badge-min-design-01.png" alt="Scope Pro" className="su-badge-flip" />
           </span>
           <span className="su-label">SCOPE PRO</span>
         </div>
@@ -99,9 +99,14 @@ export default function UpsellSheet({
         .su-br{bottom:-1px;right:-1px}.su-br::before{bottom:0;right:0}.su-br::after{bottom:0;right:0}
         @keyframes su-focus{from{opacity:0;transform:scale(1.6)}to{opacity:1;transform:scale(1)}}
         .su-eyebrow{display:flex;align-items:center;gap:10px;margin-bottom:18px;animation:su-rise .3s ease both;animation-delay:.10s}
-        .su-badge{position:relative;width:34px;height:34px;flex-shrink:0;display:inline-flex;perspective:140px}
-        .su-badge-flip{width:100%;height:100%;object-fit:contain;animation:su-flip 7s linear infinite}
-        @keyframes su-flip{0%{transform:rotateY(0);filter:brightness(1)}25%{filter:brightness(.5)}50%{transform:rotateY(180deg);filter:brightness(1)}75%{filter:brightness(.5)}100%{transform:rotateY(360deg);filter:brightness(1)}}
+        .su-badge{position:relative;width:34px;height:34px;flex-shrink:0;display:inline-flex;perspective:600px}
+        .su-badge-flip{width:100%;height:100%;object-fit:contain;transform-style:preserve-3d;animation:pro-spin 7s linear infinite,pro-glow 3.6s ease-in-out -0.9s infinite}
+        /* Option C — 3D spin + STRONG glow breath. Glow runs 3.6s (not 3.5): a
+           non-integer ratio to the 7s spin so the combined loop never visibly
+           repeats; negative delay offsets the phases from t=0. GPU only. */
+        @keyframes pro-spin{from{transform:rotateY(0)}to{transform:rotateY(360deg)}}
+        @keyframes pro-glow{0%,100%{filter:drop-shadow(0 0 3px rgba(242,237,228,.25))}50%{filter:drop-shadow(0 0 16px rgba(242,237,228,.75))}}
+        @media (prefers-reduced-motion: reduce){.su-badge-flip{animation:none;filter:drop-shadow(0 0 3px rgba(242,237,228,.25))}}
         .su-label{color:#fff;font-weight:700;font-size:10px;letter-spacing:.18em;text-transform:uppercase}
         .su-headline{color:#fff;font-weight:700;font-size:25px;line-height:1.05;letter-spacing:-.02em;text-transform:uppercase;margin:0 0 18px;animation:su-rise .3s ease both;animation-delay:.15s}
         .su-meter{margin-bottom:16px;animation:su-rise .3s ease both;animation-delay:.20s}

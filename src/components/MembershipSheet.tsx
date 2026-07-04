@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { usePrivy, useWallets } from "@privy-io/react-auth";
 import { createPublicClient, http, parseUnits } from "viem";
 import { base } from "viem/chains";
@@ -250,20 +251,25 @@ export default function MembershipSheet({ visible, onClose, onSuccess, isPaidMem
           does NOT scroll (overflow:hidden) and the header is a normal flex
           child; a dedicated NON-fixed flex child does the scrolling. The
           iframe auto-sizes to content and fills the centred column cleanly. */}
-      {embeddedOpen && (
-        <div data-swipe-exclude style={{ position: "fixed", inset: 0, zIndex: 600, backgroundColor: "#000", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+      {embeddedOpen && typeof document !== "undefined" && createPortal(
+        <div data-swipe-exclude style={{ position: "fixed", inset: 0, width: "100dvw", height: "100dvh", zIndex: 600, backgroundColor: "#000", display: "flex", flexDirection: "column", overflow: "hidden", paddingTop: "env(safe-area-inset-top, 0px)" }}>
           <div style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 18px", borderBottom: "1px solid rgba(255,255,255,0.08)", background: "#000" }}>
             <span style={{ ...BOLD, fontSize: 'var(--fs-12)', color: "white", textTransform: "uppercase", letterSpacing: "0.06em" }}>SCOPE PRO</span>
             <button onClick={closeEmbedded} aria-label="Cancel" style={{ background: "transparent", border: "none", cursor: "pointer", padding: 6, lineHeight: 0 }}>
               <svg width="17.5" height="17.5" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="white" strokeWidth="1.5" strokeLinecap="round" /></svg>
             </button>
           </div>
+          {/* FULL-PAGE checkout: the mount column is full-bleed (no 480px card
+              box) and stretches to the scroller's full height, so Stripe's UI
+              reads like the hosted page. The fixed outer still does NOT scroll
+              (the WebKit iframe hit-target rule); this inner div scrolls. */}
           <div style={{ flex: 1, minHeight: 0, overflowY: "auto", WebkitOverflowScrolling: "touch" }}>
-            <div style={{ width: "100%", maxWidth: 480, margin: "0 auto", padding: "16px 16px 32px" }}>
-              <div ref={embeddedRef} style={{ width: "100%" }} />
+            <div style={{ width: "100%", minHeight: "100%", display: "flex", flexDirection: "column", padding: "0 0 calc(24px + env(safe-area-inset-bottom, 0px))" }}>
+              <div ref={embeddedRef} style={{ width: "100%", flex: 1, minHeight: "75dvh" }} />
             </div>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
 
       {/* Overlay */}
@@ -292,55 +298,22 @@ export default function MembershipSheet({ visible, onClose, onSuccess, isPaidMem
         pointerEvents: visible ? 'auto' : 'none',
       }}>
         <div style={{
-          perspective: 400,
+          perspective: 600,
           perspectiveOrigin: "center center",
           width: 80,
           height: 80,
           position: "relative",
         }}>
-          <div style={{
-            position: "absolute",
-            inset: -12,
-            borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(255,0,0,0.35) 0%, transparent 70%)",
-            animation: "glowPulse 2.5s ease-in-out infinite",
-            pointerEvents: "none",
-          }} />
-          <div style={{
-            width: "100%",
-            height: "100%",
-            position: "relative",
-            transformStyle: "preserve-3d",
-            animation: "coinFlip 5s ease-in-out infinite",
-          }}>
-            <img
-              src="/scope-pro-icon-aperture.png"
-              alt="Scope Pro"
-              style={{
-                width: "100%",
-                height: "100%",
-                display: "block",
-                position: "absolute",
-                backfaceVisibility: "hidden",
-                filter: "drop-shadow(0 0 12px rgba(255,0,0,0.8))",
-                borderRadius: "50%",
-              }}
-            />
-            <img
-              src="/scope-pro-icon-aperture.png"
-              alt=""
-              style={{
-                width: "100%",
-                height: "100%",
-                display: "block",
-                position: "absolute",
-                backfaceVisibility: "hidden",
-                transform: "rotateY(180deg)",
-                filter: "drop-shadow(0 0 12px rgba(255,0,0,0.8))",
-                borderRadius: "50%",
-              }}
-            />
-          </div>
+          {/* Option C — the Pro badge in a 7s 3D spin with a STRONG glow
+              breath (3.6s, offset phase — non-integer ratio to the spin so the
+              loop never visibly repeats). GPU only; reduced-motion → static. */}
+          <style>{`
+            @keyframes pro-spin{from{transform:rotateY(0)}to{transform:rotateY(360deg)}}
+            @keyframes pro-glow{0%,100%{filter:drop-shadow(0 0 3px rgba(242,237,228,.25))}50%{filter:drop-shadow(0 0 16px rgba(242,237,228,.75))}}
+            .ms-pro-badge{width:100%;height:100%;display:block;object-fit:contain;transform-style:preserve-3d;animation:pro-spin 7s linear infinite,pro-glow 3.6s ease-in-out -0.9s infinite}
+            @media (prefers-reduced-motion: reduce){.ms-pro-badge{animation:none;filter:drop-shadow(0 0 3px rgba(242,237,228,.25))}}
+          `}</style>
+          <img src="/badges/scope-pro-badge-min-design-01.png" alt="Scope Pro" className="ms-pro-badge" />
         </div>
       </div>
 
