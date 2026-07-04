@@ -335,6 +335,15 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
     return () => { cancelled = true; };
   }, [user?.id, userLayoutId, proTick]);
 
+  // SUITE STANDDOWN: while this flow is mounted, page-swipe navigation is OFF
+  // globally (SwipeNav reads this attribute) — an editing session must be
+  // un-swipe-away-able from anywhere. Removed on exit (publish/back/cancel all
+  // unmount the flow), so swipe-nav resumes.
+  useEffect(() => {
+    document.documentElement.dataset.suiteOpen = '1';
+    return () => { delete document.documentElement.dataset.suiteOpen; };
+  }, []);
+
   // Re-read Pro status in place after an in-app purchase (no remount/reload).
   useEffect(() => {
     const onProActivated = () => setProTick((t) => t + 1);

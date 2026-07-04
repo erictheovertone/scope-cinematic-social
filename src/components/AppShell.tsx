@@ -24,6 +24,8 @@ const HIDDEN = [
   '/profile/terms',
   '/profile/delete-account',
   '/finishing-dev', // dev editing-suite bench — owns the full viewport, no app chrome
+  '/create',        // the create/finishing suite owns the full viewport — the footer
+                    // was overlapping the bottom tool rows; it returns on exit
 ];
 
 export default function AppShell() {

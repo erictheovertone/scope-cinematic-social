@@ -29,6 +29,12 @@ export default function SwipeNav() {
 
     const onStart = (e: TouchEvent) => {
       if (e.touches.length !== 1) { active = false; lock = 'excluded'; return; }
+      // SUITE STANDDOWN (global): while an editing session is open
+      // (CreatePostFlow sets data-suite-open on <html>), page-swipes are OFF
+      // EVERYWHERE — an edit must be un-swipe-away-able from any gesture.
+      // Deliberately a document-level gate, not per-element data-swipe-exclude:
+      // the membership sheets taught us sprinkled exclusions get missed.
+      if (document.documentElement.dataset.suiteOpen) { active = false; lock = 'excluded'; return; }
       const target = e.target as Element | null;
       // CAROUSEL / overlay ALWAYS WINS — a touch starting inside an excluded
       // container never becomes a page-swipe.
