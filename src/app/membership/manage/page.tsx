@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
+import { supabase } from "@/lib/supabase/client";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -14,6 +15,42 @@ export default function ManageMembershipPage() {
   const [cancelling, setCancelling] = useState(false);
   const [cancelled, setCancelled] = useState(false);
   const [cancelError, setCancelError] = useState<string | null>(null);
+  // CANCELLATION TRUTH — the persisted scheduled-cancel date (survives leaving
+  // the page): active-but-cancelled renders "cancels <date>" + a RESUME control.
+  const [cancelsAt, setCancelsAt] = useState<string | null>(null);
+  const [resuming, setResuming] = useState(false);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    let alive = true;
+    (async () => {
+      const { data: u } = await supabase.from('users').select('id').eq('privy_id', user.id).maybeSingle();
+      if (!alive || !u?.id) return;
+      const { data: p } = await supabase.from('profiles').select('membership_cancels_at').eq('user_id', u.id).maybeSingle();
+      if (alive) setCancelsAt((p as { membership_cancels_at?: string | null } | null)?.membership_cancels_at ?? null);
+    })();
+    return () => { alive = false; };
+  }, [user?.id]);
+
+  const fmtDate = (iso: string) => new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+  const handleResume = async () => {
+    setResuming(true);
+    setCancelError(null);
+    try {
+      const res = await fetch('/api/stripe/cancel-subscription', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user?.id, action: 'resume' }),
+      });
+      if (res.ok) { setCancelsAt(null); setCancelled(false); return; }
+      setCancelError("Couldn't resume right now — please try again.");
+    } catch {
+      setCancelError("Couldn't resume right now — please try again.");
+    } finally {
+      setResuming(false);
+    }
+  };
 
   const handleCancel = async () => {
     setCancelling(true);
@@ -24,7 +61,12 @@ export default function ManageMembershipPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: user?.id }),
       });
-      if (res.ok) { setCancelled(true); return; }
+      if (res.ok) {
+        const j = await res.json().catch(() => ({}));
+        if (j?.cancelsAt) setCancelsAt(j.cancelsAt);
+        setCancelled(true);
+        return;
+      }
       // Don't fail silently — surface it so "Cancel anytime" is honest.
       const j = await res.json().catch(() => ({}));
       setCancelError(j?.error === 'No subscription found' || j?.error === 'No active subscription'
@@ -75,8 +117,8 @@ export default function ManageMembershipPage() {
         </div>
         <div style={{ display: 'flex', gap: 24 }}>
           {[
-            { label: 'STATUS', value: 'ACTIVE' },
-            { label: 'BILLING', value: '$5 / MONTH' },
+            { label: 'STATUS', value: cancelsAt ? `PRO · CANCELS ${fmtDate(cancelsAt).toUpperCase()}` : 'ACTIVE' },
+            { label: 'BILLING', value: cancelsAt ? 'ENDS — NO RENEWAL' : '$5 / MONTH' },
           ].map(({ label, value }) => (
             <div key={label}>
               <p style={{ ...SKB, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 4px' }}>{label}</p>
@@ -103,9 +145,28 @@ export default function ManageMembershipPage() {
         ))}
       </div>
 
-      {/* Cancel section */}
+      {/* Cancel section — reflects the persisted state: scheduled cancel →
+          RESUME (Stripe supports un-scheduling any time before the period ends). */}
       <div style={{ padding: '24px 16px' }}>
-        {!showCancelConfirm ? (
+        {cancelsAt ? (
+          <div>
+            <p style={{ ...SKR, fontSize: 'var(--fs-12)', color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, margin: '0 0 14px' }}>
+              Your membership is set to cancel on {fmtDate(cancelsAt)}. Pro stays active until then.
+            </p>
+            <button
+              onClick={handleResume}
+              disabled={resuming}
+              style={{ background: '#FF0000', border: 'none', cursor: resuming ? 'default' : 'pointer', padding: '12px 24px', width: '100%' }}
+            >
+              <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'white', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                {resuming ? 'RESUMING…' : 'RESUME MEMBERSHIP'}
+              </span>
+            </button>
+            {cancelError && (
+              <p style={{ ...SKR, fontSize: 'var(--fs-11)', color: '#FF0000', lineHeight: 1.5, margin: '14px 0 0' }}>{cancelError}</p>
+            )}
+          </div>
+        ) : !showCancelConfirm ? (
           <button
             onClick={() => setShowCancelConfirm(true)}
             style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.15)', cursor: 'pointer', padding: '12px 24px', width: '100%' }}

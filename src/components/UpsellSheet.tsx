@@ -51,7 +51,7 @@ export default function UpsellSheet({
   const c = COPY[limit];
 
   return (
-    <div className="su-scrim" onClick={onClose} role="dialog" aria-modal="true">
+    <div className="su-scrim" data-swipe-exclude onClick={onClose} role="dialog" aria-modal="true">
       <div className="su-panel" onClick={(e) => e.stopPropagation()}>
         <span className="su-bracket su-tl" /><span className="su-bracket su-tr" />
         <span className="su-bracket su-bl" /><span className="su-bracket su-br" />

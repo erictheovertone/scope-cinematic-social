@@ -251,7 +251,7 @@ export default function MembershipSheet({ visible, onClose, onSuccess, isPaidMem
           child; a dedicated NON-fixed flex child does the scrolling. The
           iframe auto-sizes to content and fills the centred column cleanly. */}
       {embeddedOpen && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 600, backgroundColor: "#000", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+        <div data-swipe-exclude style={{ position: "fixed", inset: 0, zIndex: 600, backgroundColor: "#000", display: "flex", flexDirection: "column", overflow: "hidden" }}>
           <div style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 18px", borderBottom: "1px solid rgba(255,255,255,0.08)", background: "#000" }}>
             <span style={{ ...BOLD, fontSize: 'var(--fs-12)', color: "white", textTransform: "uppercase", letterSpacing: "0.06em" }}>SCOPE PRO</span>
             <button onClick={closeEmbedded} aria-label="Cancel" style={{ background: "transparent", border: "none", cursor: "pointer", padding: 6, lineHeight: 0 }}>
@@ -268,6 +268,7 @@ export default function MembershipSheet({ visible, onClose, onSuccess, isPaidMem
 
       {/* Overlay */}
       <div
+        data-swipe-exclude
         onClick={resetAndClose}
         style={{
           position: "fixed", inset: 0,
@@ -280,7 +281,7 @@ export default function MembershipSheet({ visible, onClose, onSuccess, isPaidMem
       />
 
       {/* Floating badge above sheet */}
-      <div style={{
+      <div data-swipe-exclude style={{
         position: 'fixed',
         bottom: 'calc(90vh - 48px)',
         left: '50%',
@@ -344,7 +345,7 @@ export default function MembershipSheet({ visible, onClose, onSuccess, isPaidMem
       </div>
 
       {/* Sheet */}
-      <div style={{
+      <div data-swipe-exclude style={{
         position: "fixed", bottom: 0, left: 0, right: 0,
         backgroundColor: "#080808",
         borderTop: "1px solid rgba(255,255,255,0.08)",
