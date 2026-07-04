@@ -22,7 +22,7 @@ const INPUT: React.CSSProperties = {
   display: 'block', width: '100%', background: 'transparent',
   border: '1px solid rgba(255,255,255,0.2)', color: 'white',
   fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400,
-  fontSize: 'var(--fs-12)', padding: '10px 12px', outline: 'none',
+  fontSize: 'max(16px, var(--fs-12))', /* iOS zoom floor */ padding: '10px 12px', outline: 'none',
   boxSizing: 'border-box',
 };
 

@@ -415,7 +415,7 @@ export default function TheaterCarousel({
                     border: "none",
                     outline: "none",
                     ...SKR,
-                    fontSize: 'var(--fs-8)',
+                    fontSize: 'max(16px, var(--fs-8))',
                     color: "white",
                     letterSpacing: "-0.1px",
                   }}

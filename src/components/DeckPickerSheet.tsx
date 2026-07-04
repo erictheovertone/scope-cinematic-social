@@ -190,7 +190,7 @@ export default function DeckPickerSheet({ postId, onClose, onAdded }: Props) {
                   style={{
                     width: "100%", background: "transparent",
                     border: "none", borderBottom: "1px solid rgba(255,255,255,0.2)",
-                    outline: "none", ...SKR, fontSize: 'var(--fs-10)', color: "white",
+                    outline: "none", ...SKR, fontSize: 'max(16px, var(--fs-10))', color: "white",
                     padding: "4px 0", boxSizing: "border-box",
                   }}
                 />

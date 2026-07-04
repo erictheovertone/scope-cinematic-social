@@ -13,7 +13,7 @@ const INPUT: React.CSSProperties = {
   color: '#fff',
   fontFamily: "'SK-Modernist', sans-serif",
   fontWeight: 700,
-  fontSize: 'var(--fs-13)',
+  fontSize: 'max(16px, var(--fs-13))', // iOS zoom floor
   padding: '10px 12px',
   outline: 'none',
   boxSizing: 'border-box',

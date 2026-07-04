@@ -230,7 +230,7 @@ export default function DecksPage() {
                 display: "block", width: "100%", background: "transparent",
                 border: "none", borderBottom: "1px solid rgba(255,255,255,0.12)",
                 outline: "none",
-                ...SKR, fontSize: 'var(--fs-14)', color: "white",
+                ...SKR, fontSize: 'max(16px, var(--fs-14))', color: "white",
                 padding: "4px 0", marginBottom: 24, boxSizing: "border-box",
               }}
             />

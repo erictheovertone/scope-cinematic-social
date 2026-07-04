@@ -374,7 +374,7 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments }: PostIt
                   onChange={(e) => setNewComment(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleAddComment()}
                   placeholder="add a comment..."
-                  style={{ flex: 1, background: "transparent", border: "none", borderBottom: "1px solid rgba(255,255,255,0.15)", outline: "none", ...SKR, fontSize: 'var(--fs-8)', color: "white", padding: "2px 0" }}
+                  style={{ flex: 1, background: "transparent", border: "none", borderBottom: "1px solid rgba(255,255,255,0.15)", outline: "none", ...SKR, fontSize: 'max(16px, var(--fs-8))', color: "white", padding: "2px 0" }}
                 />
                 <button
                   onClick={handleAddComment}

@@ -918,7 +918,7 @@ export default function DeckDetailPage() {
                 style={{
                   display: "block", width: "100%", background: "#1A1A1A",
                   border: "1px solid rgba(255,255,255,0.12)", outline: "none",
-                  ...SKB, fontSize: 'var(--fs-14)', color: "white", textTransform: "uppercase",
+                  ...SKB, fontSize: 'max(16px, var(--fs-14))', color: "white", textTransform: "uppercase",
                   padding: "10px 12px", marginBottom: 16, boxSizing: "border-box",
                 }}
               />
@@ -935,7 +935,7 @@ export default function DeckDetailPage() {
                 style={{
                   display: "block", width: "100%", background: "#1A1A1A",
                   border: "1px solid rgba(255,255,255,0.12)", outline: "none",
-                  ...SKR, fontSize: 'var(--fs-13)', color: "white", lineHeight: 1.5,
+                  ...SKR, fontSize: 'max(16px, var(--fs-13))', color: "white", lineHeight: 1.5,
                   padding: "10px 12px", marginBottom: 16, boxSizing: "border-box", resize: "none",
                 }}
               />
@@ -953,7 +953,7 @@ export default function DeckDetailPage() {
                 style={{
                   display: "block", width: "100%", background: "#1A1A1A",
                   border: "1px solid rgba(255,255,255,0.12)", outline: "none",
-                  ...SKR, fontSize: 'var(--fs-13)', color: "white",
+                  ...SKR, fontSize: 'max(16px, var(--fs-13))', color: "white",
                   padding: "10px 12px", marginBottom: 16, boxSizing: "border-box",
                 }}
               />
@@ -971,7 +971,7 @@ export default function DeckDetailPage() {
                 style={{
                   display: "block", width: "100%", background: "#1A1A1A",
                   border: "1px solid rgba(255,255,255,0.12)", outline: "none",
-                  ...SKR, fontSize: 'var(--fs-13)', color: "white",
+                  ...SKR, fontSize: 'max(16px, var(--fs-13))', color: "white",
                   padding: "10px 12px", marginBottom: 16, boxSizing: "border-box",
                 }}
               />
@@ -988,7 +988,7 @@ export default function DeckDetailPage() {
                 style={{
                   display: "block", width: "100%", background: "#1A1A1A",
                   border: "1px solid rgba(255,255,255,0.12)", outline: "none",
-                  ...SKR, fontSize: 'var(--fs-13)', color: "white", lineHeight: 1.5,
+                  ...SKR, fontSize: 'max(16px, var(--fs-13))', color: "white", lineHeight: 1.5,
                   padding: "10px 12px", marginBottom: 16, boxSizing: "border-box", resize: "none",
                 }}
               />

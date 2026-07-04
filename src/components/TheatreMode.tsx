@@ -494,7 +494,7 @@ export default function TheatreMode({
                     onChange={(e) => setNewComment(e.target.value)}
                     onKeyDown={(e) => { if (e.key === 'Enter') handleAddComment(); }}
                     placeholder="Add a comment…"
-                    style={{ ...SKR, flex: 1, fontSize: 'var(--fs-11)', color: '#FFF', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.18)', outline: 'none', padding: '6px 0' }}
+                    style={{ ...SKR, flex: 1, fontSize: 'max(16px, var(--fs-11))', color: '#FFF', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.18)', outline: 'none', padding: '6px 0' }}
                   />
                   <button onClick={(e) => { stop(e); handleAddComment(); }} disabled={!newComment.trim()} style={{ ...SKB, fontSize: 'var(--fs-9)', letterSpacing: '0.1em', color: newComment.trim() ? '#FF0000' : 'rgba(255,255,255,0.3)', textTransform: 'uppercase', background: 'transparent', border: 'none', cursor: newComment.trim() ? 'pointer' : 'default', flexShrink: 0 }}>Post</button>
                 </div>

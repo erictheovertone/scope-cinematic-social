@@ -1358,7 +1358,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
                     style={{
                       display: 'block', width: '100%', background: 'transparent',
                       border: 'none', borderBottom: '1px solid rgba(255,255,255,0.2)',
-                      outline: 'none', ...MONO_S, fontSize: 'var(--fs-10)', color: 'white',
+                      outline: 'none', ...MONO_S, fontSize: 'max(16px, var(--fs-10))', color: 'white',
                       padding: '4px 0', marginBottom: 12, boxSizing: 'border-box',
                     }}
                   />

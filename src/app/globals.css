@@ -554,3 +554,15 @@ button:active,
     scroll-behavior: auto !important;
   }
 }
+
+/* ── iOS ZOOM FLOOR (guardrail) ───────────────────────────────────────────────
+   iOS Safari force-zooms any focused text-entry element with font-size < 16px
+   and doesn't restore. This floors every input/textarea/select that doesn't set
+   its own size (inherited sizes lose to this rule; class/inline sizes still
+   win — so INLINE fontSize on inputs must stay ≥16px, e.g.
+   'max(16px, var(--fs-N))'. Escape hatch if a design truly needs smaller
+   VISUAL input text: 16px input + transform:scale() — not built, by policy).
+   No user-scalable=no anywhere: it's the anti-pattern and iOS ignores it. */
+input, textarea, select {
+  font-size: max(16px, 1em);
+}

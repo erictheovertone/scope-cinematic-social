@@ -802,14 +802,14 @@ const userLayoutId = stableLayoutId;
                 placeholder="Deck title"
                 value={newDeckTitle}
                 onChange={e => setNewDeckTitle(e.target.value)}
-                style={{ display: 'block', width: '100%', background: 'transparent', border: '1px solid white', color: 'white', ...SKR, fontSize: 'var(--fs-10)', padding: '8px', marginBottom: 8, outline: 'none', boxSizing: 'border-box' }}
+                style={{ display: 'block', width: '100%', background: 'transparent', border: '1px solid white', color: 'white', ...SKR, fontSize: 'max(16px, var(--fs-10))', padding: '8px', marginBottom: 8, outline: 'none', boxSizing: 'border-box' }}
               />
               <input
                 type="text"
                 placeholder="Description (optional)"
                 value={newDeckDesc}
                 onChange={e => setNewDeckDesc(e.target.value)}
-                style={{ display: 'block', width: '100%', background: 'transparent', border: '1px solid white', color: 'white', ...SKR, fontSize: 'var(--fs-10)', padding: '8px', marginBottom: 8, outline: 'none', boxSizing: 'border-box' }}
+                style={{ display: 'block', width: '100%', background: 'transparent', border: '1px solid white', color: 'white', ...SKR, fontSize: 'max(16px, var(--fs-10))', padding: '8px', marginBottom: 8, outline: 'none', boxSizing: 'border-box' }}
               />
               <div style={{ display: 'flex', gap: 8 }}>
                 <button

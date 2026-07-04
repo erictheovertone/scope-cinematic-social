@@ -203,7 +203,7 @@ export default function ProfileSetup() {
           value={username}
           onChange={(e) => setUsername(e.target.value.toUpperCase())}
           placeholder="USERNAME"
-          style={{ flex: 1, height: '100%', background: 'transparent', border: 'none', outline: 'none', ...SKB, fontSize: 'var(--fs-9)', color: 'white', letterSpacing: '-0.18px', paddingLeft: 3, paddingRight: 6 }}
+          style={{ flex: 1, height: '100%', background: 'transparent', border: 'none', outline: 'none', ...SKB, fontSize: 'max(16px, var(--fs-9))', color: 'white', letterSpacing: '-0.18px', paddingLeft: 3, paddingRight: 6 }}
         />
       </div>
       {usernameError && (
@@ -219,7 +219,7 @@ export default function ProfileSetup() {
           value={displayName}
           onChange={(e) => setDisplayName(e.target.value.toUpperCase())}
           placeholder="DISPLAY NAME"
-          style={{ width: '100%', height: '100%', background: 'transparent', border: 'none', outline: 'none', ...SKB, fontSize: 'var(--fs-9)', color: 'white', letterSpacing: '-0.18px', paddingLeft: 6, paddingRight: 6 }}
+          style={{ width: '100%', height: '100%', background: 'transparent', border: 'none', outline: 'none', ...SKB, fontSize: 'max(16px, var(--fs-9))', color: 'white', letterSpacing: '-0.18px', paddingLeft: 6, paddingRight: 6 }}
         />
       </div>
 
@@ -230,7 +230,7 @@ export default function ProfileSetup() {
           onChange={(e) => setBio(e.target.value)}
           maxLength={160}
           placeholder="BIO [ 160 CHARACTER MAX ]"
-          style={{ width: '100%', height: '100%', background: 'transparent', border: 'none', outline: 'none', resize: 'none', ...SKB, fontSize: 'var(--fs-9)', color: 'white', letterSpacing: '-0.18px', padding: '6px 6px', boxSizing: 'border-box' }}
+          style={{ width: '100%', height: '100%', background: 'transparent', border: 'none', outline: 'none', resize: 'none', ...SKB, fontSize: 'max(16px, var(--fs-9))', color: 'white', letterSpacing: '-0.18px', padding: '6px 6px', boxSizing: 'border-box' }}
         />
       </div>
 

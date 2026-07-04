@@ -227,7 +227,7 @@ export default function LinkManager() {
                     onChange={e => markDirty(prev => prev.map((l, j) => j === i ? { ...l, title: e.target.value } : l))}
                     onClick={e => e.stopPropagation()}
                     placeholder="Title"
-                    style={{ ...SKR, fontSize: 'var(--fs-10)', color: "white", background: "transparent", border: "none", borderBottom: "1px solid rgba(255,255,255,0.15)", outline: "none", width: "100%", padding: "2px 0", marginBottom: 2 }}
+                    style={{ ...SKR, fontSize: 'max(16px, var(--fs-10))', color: "white", background: "transparent", border: "none", borderBottom: "1px solid rgba(255,255,255,0.15)", outline: "none", width: "100%", padding: "2px 0", marginBottom: 2 }}
                   />
                   <p style={{ ...SKR, fontSize: 'var(--fs-8)', color: "white", opacity: 0.4, margin: 0, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>
                     {link.url}
@@ -263,7 +263,7 @@ export default function LinkManager() {
                       }}
                       placeholder="Short description (optional)"
                       rows={2}
-                      style={{ ...SKR, fontSize: 'var(--fs-9)', color: "white", background: "transparent", border: "1px solid rgba(255,255,255,0.15)", outline: "none", width: "100%", padding: "6px 8px", resize: "none", boxSizing: "border-box", lineHeight: 1.4 }}
+                      style={{ ...SKR, fontSize: 'max(16px, var(--fs-9))', color: "white", background: "transparent", border: "1px solid rgba(255,255,255,0.15)", outline: "none", width: "100%", padding: "6px 8px", resize: "none", boxSizing: "border-box", lineHeight: 1.4 }}
                     />
                     <p style={{ ...SKR, fontSize: 'var(--fs-8)', color: "white", opacity: 0.3, margin: "2px 0 0", textAlign: "right" }}>
                       {(link.description || "").length}/120
@@ -333,7 +333,7 @@ export default function LinkManager() {
               onBlur={() => { if (newLinkUrl.trim()) fetchPreview(newLinkUrl.trim()); }}
               onKeyDown={e => { if (e.key === "Enter" && newLinkUrl.trim()) fetchPreview(newLinkUrl.trim()); }}
               placeholder="Paste any URL…"
-              style={{ ...SKR, fontSize: 'var(--fs-10)', color: "white", background: "transparent", border: "none", borderBottom: "1px solid rgba(255,255,255,0.2)", outline: "none", width: "100%", padding: "4px 0", marginBottom: 10, boxSizing: "border-box" }}
+              style={{ ...SKR, fontSize: 'max(16px, var(--fs-10))', color: "white", background: "transparent", border: "none", borderBottom: "1px solid rgba(255,255,255,0.2)", outline: "none", width: "100%", padding: "4px 0", marginBottom: 10, boxSizing: "border-box" }}
             />
             {fetchingPreview && (
               <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: "rgba(255,255,255,0.4)", margin: "0 0 8px" }}>Fetching preview…</p>
@@ -350,7 +350,7 @@ export default function LinkManager() {
                     value={pendingLink.title || ""}
                     onChange={e => setPendingLink(p => p ? { ...p, title: e.target.value } : p)}
                     placeholder="Title"
-                    style={{ ...SKR, fontSize: 'var(--fs-10)', color: "white", background: "transparent", border: "none", borderBottom: "1px solid rgba(255,255,255,0.2)", outline: "none", width: "100%", padding: "2px 0" }}
+                    style={{ ...SKR, fontSize: 'max(16px, var(--fs-10))', color: "white", background: "transparent", border: "none", borderBottom: "1px solid rgba(255,255,255,0.2)", outline: "none", width: "100%", padding: "2px 0" }}
                   />
                   {pendingLink.is_video && (
                     <p style={{ ...SKB, fontSize: 'var(--fs-8)', color: "#FF0000", opacity: 0.8, margin: "3px 0 0" }}>VIDEO</p>

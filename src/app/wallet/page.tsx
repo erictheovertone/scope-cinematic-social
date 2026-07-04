@@ -1249,7 +1249,7 @@ export default function WalletPage() {
                   onChange={e => { setSendTo(e.target.value); setSendError(null); }}
                   placeholder="0x… wallet address (Base)"
                   style={{
-                    ...SKR, fontSize: 'var(--fs-11)', color: "white", background: "transparent",
+                    ...SKR, fontSize: 'max(16px, var(--fs-11))', color: "white", background: "transparent",
                     border: "none", borderBottom: "1px solid rgba(255,255,255,0.3)",
                     outline: "none", width: "100%", padding: "4px 0", marginBottom: 20,
                     boxSizing: "border-box",
@@ -1265,7 +1265,7 @@ export default function WalletPage() {
                     onChange={e => { setSendAmount(e.target.value.replace(/[^0-9.]/g, "")); setSendError(null); }}
                     placeholder="0.00"
                     style={{
-                      ...SKB, fontSize: 'var(--fs-14)', color: "white", background: "transparent",
+                      ...SKB, fontSize: 'max(16px, var(--fs-14))', color: "white", background: "transparent",
                       border: "none", borderBottom: "1px solid rgba(255,255,255,0.3)",
                       outline: "none", flex: 1, padding: "4px 0", fontVariantNumeric: "tabular-nums",
                     }}
