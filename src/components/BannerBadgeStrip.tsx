@@ -1,4 +1,5 @@
 'use client';
+import { useLayoutEffect, useRef } from 'react';
 // ── BannerBadgeStrip — PIECE 1 of the badge redesign ─────────────────────────
 //
 // The badge BACKDROP strip on the profile header: a vertical rectangle to the
@@ -50,6 +51,12 @@ export default function BannerBadgeStrip({
       badge is in the VISIBLE set — i.e. there's an open banner slot; an
       overflowed badge is still earned/shown elsewhere, just not animated here. */
   pullKey,
+  /** BADGE ARRIVAL (reusable primitive — Pro now, Top 1K/First-Cut-counts later):
+      keys newly AWARDED this visit. Neighbors FLIP-slide to their new positions
+      (~250ms) first, then each arriving badge lands: scale 0.4→1.08→1 spring +
+      one glow bloom — the badge being AWARDED. Plays once (caller gates via the
+      seen-badges diff). Reduced-motion: simply present. */
+  arriveKeys,
   onPress,
 }: {
   badges: StripBadge[];
@@ -59,14 +66,49 @@ export default function BannerBadgeStrip({
   dividerColor?: string;
   holo?: boolean;
   pullKey?: string | null;
+  arriveKeys?: string[] | null;
   onPress?: () => void;
 }) {
+  // FLIP refs: existing icons slide from their pre-insertion rects → new
+  // positions BEFORE the newcomer lands (no jump-cut reflow).
+  const iconRefs = useRef(new Map<string, HTMLImageElement>());
+  const prevRects = useRef(new Map<string, DOMRect>());
+  useLayoutEffect(() => {
+    const arriving = new Set(arriveKeys ?? []);
+    const reduced = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    if (arriving.size && !reduced) {
+      iconRefs.current.forEach((el, key) => {
+        if (arriving.has(key)) return;
+        const prev = prevRects.current.get(key);
+        if (!prev) return;
+        const now = el.getBoundingClientRect();
+        const dy = prev.top - now.top;
+        if (Math.abs(dy) > 0.5) {
+          el.style.transition = 'none';
+          el.style.transform = `translateY(${dy}px)`;
+          requestAnimationFrame(() => {
+            el.style.transition = 'transform 250ms ease';
+            el.style.transform = 'translateY(0)';
+          });
+        }
+      });
+    }
+    iconRefs.current.forEach((el, key) => prevRects.current.set(key, el.getBoundingClientRect()));
+  });
   const overflow = badges.length > MAX_VISIBLE;
   const visible = overflow ? badges.slice(0, MAX_VISIBLE - 1) : badges;
   const extra = overflow ? badges.length - visible.length : 0;
 
   return (
     <div style={{ position: 'relative', width, height, flexShrink: 0 }}>
+      {/* Arrival keyframes — GPU only. Delay 250ms lets the FLIP slide finish
+          first; the glow bloom fires as it lands (the upsell badge-glow language). */}
+      <style>{`
+        @keyframes badgeArrive { 0% { opacity: 0; transform: scale(0.4); } 60% { opacity: 1; transform: scale(1.08); } 100% { opacity: 1; transform: scale(1); } }
+        @keyframes badgeArriveGlow { 0% { filter: drop-shadow(0 0 0 rgba(242,237,228,0)); } 35% { filter: drop-shadow(0 0 14px rgba(242,237,228,0.9)); } 100% { filter: drop-shadow(0 0 0 rgba(242,237,228,0)); } }
+        .badge-arrive { animation: badgeArrive 500ms cubic-bezier(0.34,1.56,0.64,1) 250ms both, badgeArriveGlow 600ms ease-out 520ms both; }
+        @media (prefers-reduced-motion: reduce) { .badge-arrive { animation: none; } }
+      `}</style>
       {/* Backdrop — standard art, OR (Augmented + holo on) the iridescent fill.
           Icons sit on it, fixed size, symmetric for any count. */}
       <div
@@ -108,15 +150,17 @@ export default function BannerBadgeStrip({
           // overpowering the other badges; this rebalances it. SRH-only override
           // of the otherwise-fixed icon size.
           const sz = b.key === 'srh' ? iconSize - 1 : iconSize;
+          const arriving = !!arriveKeys?.includes(b.key);
           return (
             <img
               key={b.key}
+              ref={(el) => { if (el) iconRefs.current.set(b.key, el); else iconRefs.current.delete(b.key); }}
               src={b.src}
               alt={b.title ?? b.key}
-              className={pull ? 'focus-pull' : undefined}
+              className={arriving ? 'badge-arrive' : pull ? 'focus-pull' : undefined}
               style={{
                 position: 'relative', zIndex: 1, width: sz, height: sz, objectFit: 'contain', display: 'block',
-                ...(pull ? { animation: 'focusPull 2s cubic-bezier(0.16,0.84,0.3,1) both' } : null),
+                ...(pull && !arriving ? { animation: 'focusPull 2s cubic-bezier(0.16,0.84,0.3,1) both' } : null),
               }}
             />
           );

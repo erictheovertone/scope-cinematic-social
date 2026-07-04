@@ -123,6 +123,7 @@ const userLayoutId = stableLayoutId;
   const [firstCutCount, setFirstCutCount] = useState(0);
   const [badgesLoaded, setBadgesLoaded] = useState(false); // firstCutCount has resolved
   const [firstCutPull, setFirstCutPull] = useState<string | null>(null); // Moment 2 focus-pull
+  const [arriveKeys, setArriveKeys] = useState<string[] | null>(null);     // badge-arrival entrance (pro etc.)
   const [dividerLine, setDividerLine] = useState<string | null>(null); // chosen banner divider (Piece 2)
   const [holoBanner, setHoloBanner] = useState(false); // Augmented holo backdrop (Piece 3)
   useEffect(() => {
@@ -153,9 +154,20 @@ const userLayoutId = stableLayoutId;
     const storeKey = `scope:seenBadges:${supabaseUserId}`;
     let seen: string[] | null = null;
     try { const raw = localStorage.getItem(storeKey); seen = raw ? JSON.parse(raw) : null; } catch {}
-    if (Array.isArray(seen) && keys.includes('firstCut') && !seen.includes('firstCut')) {
+    // GENERALIZED ARRIVALS: any key newly present vs the seen set gets an
+    // entrance. firstCut keeps its ratified focus-pull; every other newcomer
+    // (pro today; top1k / future counts tomorrow) plays the badge-arrival
+    // primitive in the strip. Cold start (no stored set) still seeds silently —
+    // pre-existing badges never animate.
+    const newKeys = Array.isArray(seen) ? keys.filter((k) => !seen!.includes(k)) : [];
+    if (newKeys.includes('firstCut')) {
       setFirstCutPull('firstCut');
       setTimeout(() => setFirstCutPull(null), 2200);
+    }
+    const arrivals = newKeys.filter((k) => k !== 'firstCut');
+    if (arrivals.length > 0) {
+      setArriveKeys(arrivals);
+      setTimeout(() => setArriveKeys(null), 2600); // class removed after the play
     }
     try { localStorage.setItem(storeKey, JSON.stringify(keys)); } catch {}
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -383,6 +395,7 @@ const userLayoutId = stableLayoutId;
             .filter((b) => b.bannerSrc)
             .map((b) => ({ key: b.key, src: b.bannerSrc as string, title: b.title }))}
           pullKey={firstCutPull}
+          arriveKeys={arriveKeys}
           onPress={() => setShowBadgeSheet(true)}
         />
       </div>
