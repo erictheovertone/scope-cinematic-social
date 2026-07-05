@@ -356,7 +356,7 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
                       className="focus-pull"
                       src={b.framedSrc ?? b.bannerSrc ?? b.src}
                       alt={b.title}
-                      style={{ width: 34, height: b.framedSrc ? 'auto' : 34, objectFit: 'contain', display: 'block', animation: 'focusPull 2s cubic-bezier(0.16,0.84,0.3,1) both', animationDelay: `${i * 100}ms` }}
+                      style={{ width: 42.5, height: b.framedSrc ? 'auto' : 42.5, objectFit: 'contain', display: 'block', animation: 'focusPull 2s cubic-bezier(0.16,0.84,0.3,1) both', animationDelay: `${i * 100}ms` }} /* 34 × 1.25 — Eric's +25% */
                     />
                     <span style={{ ...BOLD, fontSize: 'var(--fs-8)', letterSpacing: '0.04em', color: '#FFF', textTransform: 'uppercase', lineHeight: 1.1, textAlign: 'center' }}>{b.title}</span>
                   </div>

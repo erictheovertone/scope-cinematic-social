@@ -44,7 +44,7 @@ export const BADGES: Record<BadgeKey, BadgeMeta> = {
   firstCut:  { key: 'firstCut',  src: '/first-cut-badge-green.png',                  title: 'FIRST CUT', color: '#00E08A',            bannerSrc: '/badges/first-cut-badge-min-design-01.png', framedSrc: '/badges/framed-badges/first-cut-badge-min-design-01-framed.png' },
   top1k:     { key: 'top1k',     src: '/top-1k-collector-aperture-gold.png',         title: 'TOP 1K',    color: '#C9A84C',            bannerSrc: '/badges/collector-badge-min-design-01.png', framedSrc: '/badges/framed-badges/collector-badge-min-design-01-framed.png' },
   srh:       { key: 'srh',       src: '/badges/srh-badge-min-design-01.png',         title: 'SRH',       color: '#C9A84C',            bannerSrc: '/badges/srh-badge-min-design-01.png', framedSrc: '/badges/framed-badges/srh-badge-min-design-01-framed.png' },
-  pro:       { key: 'pro',       src: '/scope-pro-icon-aperture.png',                title: 'SCOPE PRO', color: '#FF0000',            bannerSrc: '/badges/scope-pro-badge-min-design-01.png' },
+  pro:       { key: 'pro',       src: '/scope-pro-icon-aperture.png',                title: 'SCOPE PRO', color: '#FF0000',            bannerSrc: '/badges/scope-pro-badge-min-design-01.png', framedSrc: '/badges/framed-badges/scope-pro-badge-min-design-01-framed.png' },
   inHouse:   { key: 'inHouse',   src: '/in-house-creator-logo-grey.png',             title: 'IN-HOUSE',  color: 'rgba(255,255,255,0.6)', bannerSrc: '/badges/in-house-badge-min-design-01.png', framedSrc: '/badges/framed-badges/in-house-badge-min-design-01-framed.png' },
   free:      { key: 'free',      src: '/free-tier-aperture-logo-red.png',            title: 'FREE TIER', color: '#FF0000' },
 };
