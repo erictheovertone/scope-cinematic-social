@@ -231,7 +231,7 @@ export default function ProfileDataSheet({
                   <div
                     key={b.key}
                     onClick={(e) => { e.stopPropagation(); setActiveBlurb(b.key); }}
-                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, cursor: 'pointer', width: 52 }}
+                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, cursor: 'pointer', width: 52 }} /* gap clears the pill's 7px protrusion + breathing room — uniform across the row */
                   >
                     {/* FRAMED design-refresh card, ~50px, ratio-locked (the frames
                         aren't square — width leads, height follows the asset).
@@ -249,8 +249,11 @@ export default function ProfileDataSheet({
                           {count != null && (
                             <span style={{
                               position: 'absolute', bottom: -7, left: '50%', transform: 'translateX(-50%)',
-                              background: '#0b0b0b', border: '1px solid #7a2e2e', borderRadius: 5,
-                              padding: '1px 7px', lineHeight: 1.35,
+                              background: '#0b0b0b', border: '1px solid #7a2e2e', borderRadius: 4.5,
+                              /* WIDE tag (~2.5:1 for one digit at the 50px scale): min-width
+                                 22 + 8px side padding, compact ~14px height. */
+                              minWidth: 22, boxSizing: 'border-box', textAlign: 'center',
+                              padding: '1px 8px', lineHeight: 1.2,
                               ...SKB, fontSize: 10, color: '#FFFFFF', fontVariantNumeric: 'tabular-nums',
                             }}>
                               {count}
