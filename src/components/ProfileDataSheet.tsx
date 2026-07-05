@@ -250,10 +250,11 @@ export default function ProfileDataSheet({
                             <span style={{
                               position: 'absolute', bottom: -7, left: '50%', transform: 'translateX(-50%)',
                               background: '#0b0b0b', border: '1px solid #7a2e2e', borderRadius: 4.5,
-                              /* Compact tag: smaller box around the digit (Eric's nudge) —
-                                 min-width 16 + 5px side padding, ~13px height. */
-                              minWidth: 16, boxSizing: 'border-box', textAlign: 'center',
-                              padding: '0.5px 5px', lineHeight: 1.2,
+                              /* WIDE tag (ratified spec): min-width 22 + 8px side padding —
+                                 a single digit reads ~2.5:1 wide; height stays compact
+                                 (~13-14px). Scale proportionally at other badge sizes. */
+                              minWidth: 22, boxSizing: 'border-box', textAlign: 'center',
+                              padding: '0 8px', lineHeight: 1.25,
                               ...SKB, fontSize: 10, color: '#FFFFFF', fontVariantNumeric: 'tabular-nums',
                             }}>
                               {count}
