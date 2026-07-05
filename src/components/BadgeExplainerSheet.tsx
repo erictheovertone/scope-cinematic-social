@@ -348,12 +348,15 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
                   <div key={b.key} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, width: 52 }}>
                     {/* Staggered focus-pull on sheet open — racks into focus one
                         after another (100ms apart). reduced-motion → fade. */}
+                    {/* Framed design-refresh card (ratio-locked — the frames
+                        aren't square) at the section's established 34px width;
+                        pro falls back to min-design (no framed asset yet). */}
                     <img
                       key={`${b.key}-${visible ? 'open' : 'shut'}`}
                       className="focus-pull"
-                      src={b.bannerSrc ?? b.src}
+                      src={b.framedSrc ?? b.bannerSrc ?? b.src}
                       alt={b.title}
-                      style={{ width: 34, height: 34, objectFit: 'contain', display: 'block', animation: 'focusPull 2s cubic-bezier(0.16,0.84,0.3,1) both', animationDelay: `${i * 100}ms` }}
+                      style={{ width: 34, height: b.framedSrc ? 'auto' : 34, objectFit: 'contain', display: 'block', animation: 'focusPull 2s cubic-bezier(0.16,0.84,0.3,1) both', animationDelay: `${i * 100}ms` }}
                     />
                     <span style={{ ...BOLD, fontSize: 'var(--fs-8)', letterSpacing: '0.04em', color: '#FFF', textTransform: 'uppercase', lineHeight: 1.1, textAlign: 'center' }}>{b.title}</span>
                   </div>
