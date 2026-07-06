@@ -63,7 +63,7 @@ export default function PostCell({ post, layoutId, index, onClick, showSoundTogg
           src="/badges/first-cut-insignia-collected-view.png"
           alt=""
           onError={(e) => { e.currentTarget.style.display = 'none'; }}
-          style={{ position: 'absolute', top: 3, right: 3, width: '3%', minWidth: 6, height: 'auto', zIndex: 6, pointerEvents: 'none' }} /* 18% ÷ 6 per Eric; minWidth keeps it legible on small cells */
+          style={{ position: 'absolute', top: 3, right: 3, width: '6%', minWidth: 12, height: 'auto', zIndex: 6, pointerEvents: 'none' }} /* ratified size: 6% of cell width, 12px floor */
         />
       )}
       <div style={{ position: 'absolute', inset: 0 }}>
