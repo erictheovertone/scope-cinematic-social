@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { AR_CHIPS, type ArChip } from "@/lib/aspectRatio";
+import { rotateCoverScale } from "@/lib/editGeometry";
 import { neutralGeometry, type EditGeometry } from "@/lib/editGeometry";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
@@ -174,14 +175,13 @@ export default function CropTool({
     onConfirm(geom, ar);
   };
 
-  // ── Preview transform on the media (rotate + straighten, cover-scaled) ─
-  const straightenCover = (() => {
-    if (straighten === 0) return 1;
-    const r = Math.abs((straighten * Math.PI) / 180);
-    const a = orientedAr || 1;
-    return Math.max(Math.cos(r) + Math.sin(r) / a, Math.cos(r) + Math.sin(r) * a);
-  })();
+  // ── Preview transform — the CANONICAL contract (editGeometry/bake): cover
+  // scale computed for the CROP WINDOW, applied about the CROP CENTRE. The old
+  // full-media cover about the media centre showed a different window through
+  // the overlay than the bake/suite/feed produce (the measured mismatch).
+  const straightenCover = straighten !== 0 ? rotateCoverScale(straighten, crop.w, crop.h) : 1;
   const mediaTransform = `rotate(${rotate + straighten}deg) scale(${straightenCover})`;
+  const mediaOrigin = `${(crop.x + crop.w / 2) * 100}% ${(crop.y + crop.h / 2) * 100}%`;
 
   // Crop rect in % for overlay.
   const cl = crop.x * 100, ct = crop.y * 100, cwp = crop.w * 100, chp = crop.h * 100;
@@ -213,13 +213,13 @@ export default function CropTool({
             <video
               src={mediaUrl} autoPlay muted loop playsInline
               onLoadedMetadata={(e) => { const v = e.currentTarget; setNaturalAr(v.videoWidth / v.videoHeight); }}
-              style={{ display: "block", maxWidth: "100%", maxHeight: "62vh", transform: mediaTransform, transition: "transform 0.05s linear" }}
+              style={{ display: "block", maxWidth: "100%", maxHeight: "62vh", transform: mediaTransform, transformOrigin: mediaOrigin, transition: "transform 0.05s linear" }}
             />
           ) : (
             <img
               src={mediaUrl} alt="Crop preview"
               onLoad={(e) => { const i = e.currentTarget; setNaturalAr(i.naturalWidth / i.naturalHeight); }}
-              style={{ display: "block", maxWidth: "100%", maxHeight: "62vh", transform: mediaTransform, transition: "transform 0.05s linear" }}
+              style={{ display: "block", maxWidth: "100%", maxHeight: "62vh", transform: mediaTransform, transformOrigin: mediaOrigin, transition: "transform 0.05s linear" }}
             />
           )}
 

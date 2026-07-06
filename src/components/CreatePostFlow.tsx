@@ -859,7 +859,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
     setMintStatus('minting');
     setCeremonySub(null);
     // In-sheet signing box: clean copy — no reverse brackets, no "…" (Note 1).
-    setBackingNarration(hasBacking ? '1 OF 2 — CREATING YOUR COIN' : 'CREATING YOUR COIN');
+    setBackingNarration(hasBacking ? '1 OF 2 — FRAGMENTING POST…' : 'FRAGMENTING POST…');
 
     try {
       const embeddedWallet = wallets.find(w => w.walletClientType === 'privy');
@@ -940,7 +940,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
         ]);
         if (raced.kind === 'landed') {
           // Receipt-true backing count (the mint-flow path matches collect).
-          setBackingNarration(raced.r.pieces != null ? `[ BACKED · ${raced.r.pieces} PIECES ]` : '[ BACKED ]');
+          setBackingNarration(raced.r.pieces != null ? `[ BACKED · ${raced.r.pieces} FRAGMENTS ]` : '[ BACKED ]');
           notifyTradeSettled(postId); // backing pieces → wallet holdings refresh
           await beat(1200);
         } else if (raced.kind === 'failed') {
@@ -957,7 +957,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
           setCeremonySub('BACKING SETTLING — FINISHING IN BACKGROUND');
           narrator.narrate({ phase: 'working', label: `] BACKING YOUR POST · $${plannedBuyUsd.toFixed(2)} [`, postId });
           backingPromise
-            .then((r) => { narrator.done(r.pieces != null ? `[ BACKED · ${r.pieces} PIECES ]` : '[ BACKED ]', postId); notifyTradeSettled(postId); })
+            .then((r) => { narrator.done(r.pieces != null ? `[ BACKED · ${r.pieces} FRAGMENTS ]` : '[ BACKED ]', postId); notifyTradeSettled(postId); })
             .catch((e) => {
               console.warn('[coin] handed-off backing failed (coin unaffected):', errInfo(e));
               // Honest, dismissible — tap clears + goes to the post, where the
@@ -968,7 +968,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
       }
 
       // TERMINAL BEAT — then, and only then, the epilogue: navigation.
-      setBackingNarration(`[ COINED · ${sym} ]`);
+      setBackingNarration(`[ FRAGMENTS CREATED · ${sym} ]`);
       notifyTradeSettled(postId); // the ONE post-trade refresh path
       await beat(2000);
       completeFlow();
@@ -1008,10 +1008,10 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
     }
     try {
       const r = await backOwnCoin({ walletClient: ctx.walletClient, creatorAddress: ctx.creatorAddress, coinAddress: ctx.coinAddress, usdAmount: ctx.usdAmount, slippage: 0.15 });
-      setBackingNarration(r.pieces != null ? `[ BACKED · ${r.pieces} PIECES ]` : '[ BACKED ]');
+      setBackingNarration(r.pieces != null ? `[ BACKED · ${r.pieces} FRAGMENTS ]` : '[ BACKED ]');
       notifyTradeSettled(ctx.postId);
       await beat(1200);
-      setBackingNarration(`[ COINED · ${ctx.sym} ]`);
+      setBackingNarration(`[ FRAGMENTS CREATED · ${ctx.sym} ]`);
       await beat(1500);
       completeFlow();
     } catch (e) {

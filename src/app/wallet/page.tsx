@@ -908,7 +908,8 @@ export default function WalletPage() {
                 One tap → prefilled ZORA→USDC CASH OUT. Hidden until earned. */}
             {zoraBalance != null && parseFloat(zoraBalance) > 0 && (
               <div
-                onClick={() => { setSwapInitial({ sell: "ZORA", buy: "USDC", amount: parseFloat(zoraBalance).toFixed(4), cashOut: true }); setShowSwap(true); }}
+                // floor to 0.01 — toFixed(4) ROUNDED (up) past the balance → overMax blocked the swap
+                onClick={() => { setSwapInitial({ sell: "ZORA", buy: "USDC", amount: (Math.floor(parseFloat(zoraBalance) * 100) / 100).toFixed(2), cashOut: true }); setShowSwap(true); }}
                 style={{ position: "relative", display: "flex", alignItems: "center", height: 50, borderBottom: "1px solid rgba(255,255,255,0.08)", cursor: "pointer" }}
               >
                 {/* The earnings badge — same 30px slot as the ETH/USDC circles.

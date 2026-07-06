@@ -268,13 +268,15 @@ export default function SwapSheet({ visible, onClose, ethBalance, usdcBalance, z
                   inputMode="decimal"
                   value={payAmount}
                   disabled={phase === 'swapping'}
-                  onChange={(e) => setPayAmount(e.target.value.replace(/[^0-9.]/g, ''))}
+                  // ZORA/USDC typed input clamps to 2 decimals (ETH keeps precision)
+                  onChange={(e) => { const v = e.target.value.replace(/[^0-9.]/g, ''); setPayAmount(sellToken === 'ETH' ? v : v.replace(/^(\d*\.\d{2})\d+$/, '$1')); }}
                   placeholder="0"
                   style={{ ...SKB, fontSize: 24, color: '#FFF', background: 'transparent', border: 'none', outline: 'none', width: '100%', padding: 0 }}
                 />
                 <span style={{ ...SKB, fontSize: 'var(--fs-12)', color: 'rgba(255,255,255,0.7)' }}>{sellToken}</span>
                 <button
-                  onClick={() => setPayAmount(sellToken === 'ETH' ? maxPay.toFixed(6) : sellToken === 'USDC' ? maxPay.toFixed(2) : maxPay.toFixed(4))}
+                  // MAX floors at each token's display precision — never rounds UP past balance
+                  onClick={() => setPayAmount(sellToken === 'ETH' ? (Math.floor(maxPay * 1e6) / 1e6).toFixed(6) : (Math.floor(maxPay * 100) / 100).toFixed(2))}
                   style={{ ...SKB, fontSize: 'var(--fs-9)', color: '#FF0000', background: 'transparent', border: 'none', cursor: 'pointer', letterSpacing: '0.08em', padding: 0 }}
                 >
                   MAX
