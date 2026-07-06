@@ -33,6 +33,15 @@ export default function AppShell() {
   const { user } = usePrivy();
   const [unreadCount, setUnreadCount] = useState(0);
   const [mounted, setMounted] = useState(false);
+  // Takeover surfaces (theatre mode, any entry) hide the footer for their whole
+  // session — same standdown attribute the finishing suite uses, synced by event.
+  const [takeover, setTakeover] = useState(false);
+  useEffect(() => {
+    const sync = () => setTakeover(!!document.documentElement.dataset.suiteOpen);
+    sync();
+    window.addEventListener('scope:takeover-change', sync);
+    return () => window.removeEventListener('scope:takeover-change', sync);
+  }, []);
 
   useEffect(() => setMounted(true), []);
 
@@ -69,7 +78,7 @@ export default function AppShell() {
   // Before mount: always render 3 icons (home, create, wallet) — no pathname logic
   if (!mounted) return null;
 
-  if (HIDDEN.some(p => pathname === p)) return null;
+  if (takeover || HIDDEN.some(p => pathname === p)) return null;
 
   const page: 'home' | 'profile' | 'public-profile' | 'wallet' =
     pathname === '/wallet'

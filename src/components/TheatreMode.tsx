@@ -116,7 +116,11 @@ export default function TheatreMode({
   // swipe navigation is off wholesale (the finishing-suite gate).
   useEffect(() => {
     document.documentElement.dataset.suiteOpen = '1';
-    return () => { delete document.documentElement.dataset.suiteOpen; };
+    window.dispatchEvent(new CustomEvent('scope:takeover-change')); // AppShell hides the footer
+    return () => {
+      delete document.documentElement.dataset.suiteOpen;
+      window.dispatchEvent(new CustomEvent('scope:takeover-change'));
+    };
   }, []);
 
   // ── Enter / exit animation (signature easing; reduced-motion = plain fade) ──
@@ -297,7 +301,7 @@ export default function TheatreMode({
   const availH = stageH * (showData ? 0.74 : 0.86); // compact panel → media stays largely visible
   let boxW = availW, boxH = availW / arNum;
   if (boxH > availH) { boxH = availH; boxW = availH * arNum; }
-  const sideMargin = (stageW - boxW) / 2;          // ≥ MIN_SIDE, so arrows clear the media
+  const sideMargin = (stageW - availW) / 2;        // CONSTANT (fixed stage) — arrows never drift per-post
 
   // Fit helper for ANY post (the drag strip sizes neighbor peeks by their own AR).
   const fitBox = (p: AnyPost) => {
@@ -378,8 +382,18 @@ export default function TheatreMode({
               EXPLICIT ONLY (BACK / the eye / Escape). */}
           <div
             onClick={(e) => { stop(e); if (showData) setShowData(false); }}
-            style={{ width: boxW, height: boxH, background: '#000', overflow: 'hidden', flexShrink: 0, transform: `translateX(${dragX}px)`, transition: dragAnim ? `transform 250ms ${EASE}` : `height 300ms ${EASE}, width 300ms ${EASE}` }}
+            style={{
+              // FIXED STAGE: constant media area — posts letterbox inside it, so
+              // swiping between different aspect ratios never resizes anything
+              // (the resize morph WAS the jerk). Only the panel toggle animates
+              // the area's height.
+              width: availW, height: availH, background: 'transparent', overflow: 'visible', flexShrink: 0,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              transform: `translateX(${dragX}px)`,
+              transition: dragAnim ? `transform 250ms ${EASE}` : `height 300ms ${EASE}`,
+            }}
           >
+          <div style={{ width: boxW, height: boxH, background: '#000', overflow: 'hidden', flexShrink: 0 }}>
             {/* Reuse the feed's SHARED graded-media components so the grade is
                 inherited automatically — never a forked raw element. Video grade is
                 render-time (GradedVideo applies edit_params via the gl-react
@@ -414,6 +428,7 @@ export default function TheatreMode({
               />
             )}
           </div>
+          </div>
         </div>
 
         {/* ── Prev (<) / Next (>) arrows — ALWAYS in the side black margins,
@@ -447,14 +462,6 @@ export default function TheatreMode({
           <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: '#FFF', letterSpacing: '0.02em', textTransform: 'uppercase' }}>Back</span>
         </button>
 
-        {/* ── Creator @handle — FEED only (many creators); beneath BACK, updates per
-            post. The profile view is one creator, so it shows no handle. ── */}
-        {isFeed && f(post, 'username') && (
-          <span style={{ position: 'absolute', left: 18, top: 36, ...SKB, fontSize: 'var(--fs-10)', color: 'rgba(255,255,255,0.85)', letterSpacing: '0.02em', textTransform: 'uppercase', pointerEvents: 'none' }}>
-            @{f(post, 'username')}
-          </span>
-        )}
-
         {/* ── Framed-eye close (top-right) ── */}
         <button
           onClick={(e) => { stop(e); handleClose(); }}
@@ -469,27 +476,36 @@ export default function TheatreMode({
             opens the panel's ripple-up) · First Cut X/10. Profile view shows just
             the "+" (stats are expand-only there). Hidden while the panel is up. ── */}
         {!showData && (
-          <div style={{ position: 'absolute', bottom: 10, left: 16, display: 'flex', alignItems: 'center', gap: 14, zIndex: 3 }}>
+          <div style={{ position: 'absolute', bottom: 'calc(6px + env(safe-area-inset-bottom, 0px))', left: 12, display: 'flex', alignItems: 'center', gap: 6, zIndex: 3 }}>
+            {/* "+" — ≥44px tap target (the 12 couldn't hit the old padding-0 glyph),
+                inset-relative bottom. Handle sits immediately to its right —
+                everything lives BELOW the media in the black band. */}
             <button
               onClick={(e) => { stop(e); setShowData(true); }}
               aria-label="Show data"
-              style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, lineHeight: 0 }}
+              style={{ background: 'transparent', border: 'none', cursor: 'pointer', minWidth: 44, minHeight: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: 0, lineHeight: 0 }}
             >
               <span style={{ ...SKL, fontSize: 'var(--fs-30)', lineHeight: 1, color: '#FFF', display: 'block' }}>+</span>
             </button>
+            {isFeed && f(post, 'username') && (
+              <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'rgba(255,255,255,0.85)', letterSpacing: '0.02em', textTransform: 'uppercase', pointerEvents: 'none', marginRight: 6 }}>
+                @{f(post, 'username')}
+              </span>
+            )}
             {isFeed && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <button onClick={(e) => { stop(e); handleLike(); }} aria-label="Like" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>
-                  <svg width="12.5" height="12.5" viewBox="0 0 24 24" fill={isLiked ? '#FF0000' : 'none'} stroke={isLiked ? '#FF0000' : 'rgba(255,255,255,0.85)'} strokeWidth="2" strokeLinejoin="round"><path d="M12 21s-7-4.5-9.5-9C1 9 2.5 5.5 6 5.5c2 0 3.2 1.2 4 2.3.8-1.1 2-2.3 4-2.3 3.5 0 5 3.5 3.5 6.5C19 16.5 12 21 12 21z"/></svg>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                {/* +6px icons, ≥44px targets — visual size up, still in the band. */}
+                <button onClick={(e) => { stop(e); handleLike(); }} aria-label="Like" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4, background: 'transparent', border: 'none', cursor: 'pointer', minWidth: 44, minHeight: 44, padding: 0 }}>
+                  <svg width="18.5" height="18.5" viewBox="0 0 24 24" fill={isLiked ? '#FF0000' : 'none'} stroke={isLiked ? '#FF0000' : 'rgba(255,255,255,0.85)'} strokeWidth="2" strokeLinejoin="round"><path d="M12 21s-7-4.5-9.5-9C1 9 2.5 5.5 6 5.5c2 0 3.2 1.2 4 2.3.8-1.1 2-2.3 4-2.3 3.5 0 5 3.5 3.5 6.5C19 16.5 12 21 12 21z"/></svg>
                   <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: '#FFF', fontVariantNumeric: 'tabular-nums' }}>{likes.length}</span>
                 </button>
-                <button onClick={(e) => { stop(e); setShowData(true); setShowComments(true); }} aria-label="Comments" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>
-                  <svg width="12.5" height="12.5" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2" strokeLinejoin="round"><path d="M21 11.5a8.5 8.5 0 0 1-12.5 7.5L3 21l2-5.5A8.5 8.5 0 1 1 21 11.5z"/></svg>
+                <button onClick={(e) => { stop(e); setShowData(true); setShowComments(true); }} aria-label="Comments" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4, background: 'transparent', border: 'none', cursor: 'pointer', minWidth: 44, minHeight: 44, padding: 0 }}>
+                  <svg width="18.5" height="18.5" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2" strokeLinejoin="round"><path d="M21 11.5a8.5 8.5 0 0 1-12.5 7.5L3 21l2-5.5A8.5 8.5 0 1 1 21 11.5z"/></svg>
                   <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: '#FFF', fontVariantNumeric: 'tabular-nums' }}>{comments.length}</span>
                 </button>
                 {coinAddr && (
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                    <img src={FC_MARK} alt="First Cut" style={{ width: 12, height: 12, objectFit: 'contain', display: 'block' }} />
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, minHeight: 44 }}>
+                    <img src={FC_MARK} alt="First Cut" style={{ width: 18, height: 18, objectFit: 'contain', display: 'block' }} />
                     <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: fcCount > 0 ? '#FF0000' : '#FFF', fontVariantNumeric: 'tabular-nums' }}>{fcCount}/{FIRST_CUT_SLOTS}</span>
                   </span>
                 )}
