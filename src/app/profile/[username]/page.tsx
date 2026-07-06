@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { feedImage } from "@/lib/mediaUrl";
 import { useParams, useRouter } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
@@ -57,6 +58,14 @@ export default function PublicProfilePage() {
   const [followerCount, setFollowerCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
   const [followLoading, setFollowLoading] = useState(false);
+  // FOLLOW feedback: instant red confirm (justFollowed holds the button through
+  // the beat before the existing followed-state removes it) + a flyer that arcs
+  // to the ⓘ, which pulses on landing. Cosmetic only — never blocks/reports.
+  const [justFollowed, setJustFollowed] = useState(false);
+  const [flyer, setFlyer] = useState<{ x: number; y: number; dx: number; dy: number } | null>(null);
+  const [iPulse, setIPulse] = useState(false);
+  const followBtnRef = useRef<HTMLButtonElement>(null);
+  const infoBtnRef = useRef<HTMLButtonElement>(null);
   const [showFollowersModal, setShowFollowersModal] = useState(false);
   const [showFollowingModal, setShowFollowingModal] = useState(false);
 
@@ -166,9 +175,29 @@ export default function PublicProfilePage() {
         setFollowingUser(false);
         setFollowerCount(c => c - 1);
       } else {
-        await followUser(user.id, targetPrivyId);
+        // OPTIMISTIC red confirm + the fly-to-ⓘ (reverts on failure below).
         setFollowingUser(true);
-        setFollowerCount(c => c + 1);
+        setFollowerCount((c) => c + 1);
+        setJustFollowed(true);
+        window.setTimeout(() => setJustFollowed(false), 950);
+        const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+        const from = followBtnRef.current?.getBoundingClientRect();
+        const to = infoBtnRef.current?.getBoundingClientRect();
+        if (!reduced && from && to) {
+          setFlyer({ x: from.left + from.width / 2, y: from.top + from.height / 2,
+                     dx: (to.left + to.width / 2) - (from.left + from.width / 2),
+                     dy: (to.top + to.height / 2) - (from.top + from.height / 2) });
+          window.setTimeout(() => { setFlyer(null); setIPulse(true); window.setTimeout(() => setIPulse(false), 320); }, 560);
+        }
+        try {
+          await followUser(user.id, targetPrivyId);
+        } catch (err) {
+          // Revert the optimistic state — the animation was cosmetic.
+          setFollowingUser(false);
+          setFollowerCount((c) => Math.max(0, c - 1));
+          setJustFollowed(false);
+          throw err;
+        }
       }
     } catch (e) { console.error("Follow error:", e); }
     finally { setFollowLoading(false); }
@@ -260,10 +289,12 @@ export default function PublicProfilePage() {
 
         {/* Info sheet trigger — hidden while BIO sheet is open so it doesn't bleed over the sheet */}
         <button
+          ref={infoBtnRef}
           onClick={() => setProfileDataOpen(true)}
           style={{
             position: 'absolute', top: 0, right: 0,
             background: 'transparent', border: 'none', cursor: 'pointer', padding: 7,
+            animation: iPulse ? 'i-land-pulse 300ms ease-out' : 'none',
             display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end',
             opacity: profileDataOpen ? 0 : 1,
             pointerEvents: profileDataOpen ? 'none' : 'auto',
@@ -293,13 +324,35 @@ export default function PublicProfilePage() {
         {/* FOLLOW button — shown ONLY when not yet following. Once following, the
             main page shows no button here; UNFOLLOW lives in the BIO sheet instead.
             Hidden while the BIO sheet is open so it doesn't bleed over the sheet. */}
-        {user && !isOwnProfile && targetPrivyId && !followingUser && (
-          <button onClick={handleFollow} disabled={followLoading} style={{ position: 'absolute', ...SKB, fontSize: 'var(--fs-8)', color: 'white', letterSpacing: '-0.18px', background: 'transparent', border: '1px solid white', padding: '3px 8px', right: 4, top: 60, cursor: followLoading ? 'default' : 'pointer', textTransform: 'uppercase', opacity: profileDataOpen ? 0 : 1, pointerEvents: profileDataOpen ? 'none' : 'auto', transition: 'opacity 200ms ease' }}>
-            FOLLOW
+        {user && !isOwnProfile && targetPrivyId && (!followingUser || justFollowed) && (
+          // justFollowed holds the button through the red confirm beat, then the
+          // standing followed state (no button; UNFOLLOW in the BIO sheet) takes over.
+          <button ref={followBtnRef} onClick={justFollowed ? undefined : handleFollow} disabled={followLoading} style={{ position: 'absolute', ...SKB, fontSize: 'var(--fs-8)', color: 'white', letterSpacing: '-0.18px', background: justFollowed ? '#FF0000' : 'transparent', border: justFollowed ? '1px solid #FF0000' : '1px solid white', padding: '3px 8px', right: 4, top: 60, cursor: followLoading || justFollowed ? 'default' : 'pointer', textTransform: 'uppercase', opacity: profileDataOpen ? 0 : 1, pointerEvents: profileDataOpen ? 'none' : 'auto', transition: 'opacity 200ms ease, background 120ms ease, border-color 120ms ease', animation: justFollowed ? 'follow-pop 180ms ease-out' : 'none' }}>
+            {justFollowed ? 'FOLLOWING' : 'FOLLOW'}
           </button>
         )}
 
       </div>{/* end header */}
+
+      {/* FOLLOW flyer — a red pill arcing from the button to the ⓘ. The arc:
+          X and Y animate with DIFFERENT easings (X ease-out, Y ease-in) on
+          nested elements — a curved path from two GPU translates, no layout. */}
+      {flyer && createPortal(
+        <div style={{ position: 'fixed', left: flyer.x, top: flyer.y, zIndex: 1300, pointerEvents: 'none' }}>
+          <div style={{ animation: 'follow-fly-x 560ms cubic-bezier(0.2,0.7,0.3,1) both', ['--fx' as string]: `${flyer.dx}px` }}>
+            <div style={{ animation: 'follow-fly-y 560ms cubic-bezier(0.55,0,0.85,0.55) both', ['--fy' as string]: `${flyer.dy}px` }}>
+              <div style={{ width: 11, height: 11, borderRadius: '50%', background: '#FF0000', boxShadow: '0 0 8px rgba(255,0,0,0.7)', transform: 'translate(-50%, -50%)' }} />
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+      <style>{`
+        @keyframes follow-fly-x { from { transform: translateX(0); } to { transform: translateX(var(--fx)); } }
+        @keyframes follow-fly-y { from { transform: translateY(0) scale(1); opacity: 1; } to { transform: translateY(var(--fy)) scale(0.4); opacity: 0.15; } }
+        @keyframes follow-pop { 0% { transform: scale(1); } 40% { transform: scale(1.08); } 100% { transform: scale(1); } }
+        @keyframes i-land-pulse { 0% { transform: scale(1); filter: none; } 40% { transform: scale(1.25); filter: drop-shadow(0 0 6px rgba(255,0,0,0.9)); } 100% { transform: scale(1); filter: none; } }
+      `}</style>
 
       {/* Frame icon — appears when header is hidden, tapping snaps header back */}
       {!headerSnapped && gridScrollY > 20 && (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import {useEffect, useState, useRef} from 'react';
 import { useRouter } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
 import { getUserByPrivyId, getProfile, isProMember } from "@/lib/userService";
@@ -145,6 +145,11 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
   // description WITHOUT leaving the sheet; Back from the detail returns to the list
   // (not the profile). Sheet close (onClose) returns to the profile.
   const [detailKey, setDetailKey] = useState<string | null>(null);
+  // The SAME scroller renders the list AND the detail (detailKey swaps content
+  // in place) — its scrollTop persisted across the swap, so details opened
+  // half-scrolled. Reset on every switch, both directions, every tier.
+  const scrollerRef = useRef<HTMLDivElement>(null);
+  useEffect(() => { scrollerRef.current?.scrollTo(0, 0); }, [detailKey]);
   useEffect(() => {
     if (visible) document.body.style.overflow = 'hidden';
     else { document.body.style.overflow = ''; setDetailKey(null); } // reset the stack on close
@@ -238,7 +243,7 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
           transition: 'opacity 0.3s ease',
         }}
       />
-      <div style={{
+      <div ref={scrollerRef} style={{
         position: 'fixed', bottom: 0, left: 0, right: 0,
         // Full-page when a tier description is open (it fills the entire screen);
         // bottom-sheet (85vh) for the list.
