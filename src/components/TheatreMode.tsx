@@ -496,7 +496,10 @@ export default function TheatreMode({
               aria-label="Show data"
               style={{ background: 'transparent', border: 'none', cursor: 'pointer', minWidth: 44, minHeight: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: 0, lineHeight: 0 }}
             >
-              <span style={{ ...SKL, fontSize: 'var(--fs-30)', lineHeight: 1, color: '#FFF', display: 'block' }}>+</span>
+              {/* −3px optical trim: the '+' glyph draws low in its em box (math-
+                  axis baseline), which read as sitting below the handle/icons even
+                  though the flex row centers every box. One row, no offsets. */}
+              <span style={{ ...SKL, fontSize: 'var(--fs-30)', lineHeight: 1, color: '#FFF', display: 'block', transform: 'translateY(-3px)' }}>+</span>
             </button>
             {isFeed && f(post, 'username') && (
               <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'rgba(255,255,255,0.85)', letterSpacing: '0.02em', textTransform: 'uppercase', pointerEvents: 'none', marginRight: 6 }}>
