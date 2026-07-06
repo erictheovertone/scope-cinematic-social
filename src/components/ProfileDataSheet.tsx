@@ -231,7 +231,7 @@ export default function ProfileDataSheet({
                   <div
                     key={b.key}
                     onClick={(e) => { e.stopPropagation(); setActiveBlurb(b.key); }}
-                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 15, cursor: 'pointer', width: 52 }} /* gap clears the pill's 10px protrusion + breathing room — uniform across the row */
+                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 17, cursor: 'pointer', width: 52 }} /* pill protrudes 12px + 5px breathing — uniform on ALL badges so titles never stagger */
                   >
                     {/* FRAMED design-refresh card, ~50px, ratio-locked (the frames
                         aren't square — width leads, height follows the asset).
@@ -248,8 +248,11 @@ export default function ProfileDataSheet({
                           <img src={b.framedSrc ?? b.bannerSrc ?? b.src} alt={b.title} style={{ width: 50, height: 'auto', objectFit: 'contain', display: 'block' }} />
                           {count != null && (
                             <span style={{
-                              position: 'absolute', bottom: -10, left: '50%', transform: 'translateX(-50%)', /* lower — covers less frame */
-                              background: '#0b0b0b', border: '1px solid #7a2e2e', borderRadius: 4.5,
+                              position: 'absolute', bottom: -12, left: '50%', transform: 'translateX(-50%)', /* covers only 2px of the frame */
+                              /* Gradient stroke (subtle, #7a2e2e family) — padding-box/border-box
+                                 double background keeps the rounded corners. */
+                              background: 'linear-gradient(#0b0b0b, #0b0b0b) padding-box, linear-gradient(180deg, #8f3a3a, #5d2020) border-box',
+                              border: '1px solid transparent', borderRadius: 4.5,
                               /* WIDE tag (ratified spec): min-width 22 + 8px side padding —
                                  a single digit reads ~2.5:1 wide; height stays compact
                                  (~13-14px). Scale proportionally at other badge sizes. */
