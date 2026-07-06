@@ -339,10 +339,17 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
   // globally (SwipeNav reads this attribute) — an editing session must be
   // un-swipe-away-able from anywhere. Removed on exit (publish/back/cancel all
   // unmount the flow), so swipe-nav resumes.
+  // Keyed on isOpen, NOT mount: the profile page keeps this component MOUNTED
+  // with isOpen=false (it early-returns null), so a mount-keyed effect set the
+  // takeover attribute with no suite presented — hiding the footer on the
+  // normal profile view (runtime-proven by the [footer] bench) and silently
+  // disabling SwipeNav there too. Set only while actually presenting; the
+  // cleanup covers close AND unmount.
   useEffect(() => {
+    if (!isOpen) return;
     document.documentElement.dataset.suiteOpen = '1';
     return () => { delete document.documentElement.dataset.suiteOpen; };
-  }, []);
+  }, [isOpen]);
 
   // Re-read Pro status in place after an in-app purchase (no remount/reload).
   useEffect(() => {
