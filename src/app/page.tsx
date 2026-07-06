@@ -25,6 +25,7 @@ export default function Home() {
   const [lightboxPost, setLightboxPost] = useState<any>(null);
   const [mirageActive, setMirageActive] = useState(false);
   const [theatreActive, setTheatreActive] = useState(false); // Theatre Mode over the feed
+  const [theatreStart, setTheatreStart] = useState(0);        // entry post (lightbox eye)
   const [menuOpen, setMenuOpen] = useState(false);
   const [triggerPressed, setTriggerPressed] = useState(false); // logomark press-pop
   // TRUE once the landing block has been pushed out — gates the floating
@@ -436,6 +437,13 @@ export default function Home() {
         <PostModal
           post={lightboxPost}
           onClose={() => setLightboxPost(null)}
+          onTheaterMode={() => {
+            // Enter theatre AT this post; exit returns here (feed untouched).
+            const i = posts.findIndex((p) => p.id === (lightboxPost as { id?: string }).id);
+            setTheatreStart(Math.max(0, i));
+            setLightboxPost(null);
+            setTheatreActive(true);
+          }}
         />
       )}
 
@@ -444,7 +452,7 @@ export default function Home() {
 
       {/* Theatre Mode over the FEED's posts (feed order). Same component as the
           profile eye-icon entry — just sourced from the feed. */}
-      {theatreActive && <TheatreMode posts={posts} source="feed" onClose={() => setTheatreActive(false)} />}
+      {theatreActive && <TheatreMode posts={posts} source="feed" startIndex={theatreStart} onClose={() => { setTheatreActive(false); setTheatreStart(0); }} />}
     </div>
   );
 }

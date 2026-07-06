@@ -335,6 +335,18 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
             </svg>
             <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "white", letterSpacing: "-0.1px" }}>BACK</span>
           </button>
+          {/* THEATRE entry — the eye, alone in the bar's right slot (BACK owns the
+              left; nothing else lives up here, so no crowding). Enters theatre AT
+              this post; replaces the old THEATER text button in the action row. */}
+          {onTheaterMode && (
+            <button
+              onClick={() => onTheaterMode()}
+              aria-label="Theatre mode"
+              style={{ marginLeft: "auto", background: "transparent", border: "none", cursor: "pointer", padding: 4 }}
+            >
+              <img src="/theatre-mode-eye-framed-v2.png" alt="" style={{ height: 22, width: "auto", display: "block", opacity: 0.92 }} />
+            </button>
+          )}
         </div>
 
         {/* ── Scrollable body ── */}
@@ -459,16 +471,6 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
                 >
                   <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: "rgba(255,255,255,0.6)", letterSpacing: "-0.1px" }}>
                     ADD TO DECK
-                  </span>
-                </button>
-              )}
-              {onTheaterMode && (
-                <button
-                  onClick={() => onTheaterMode()}
-                  style={{ background: "transparent", border: "none", cursor: "pointer", padding: 0 }}
-                >
-                  <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: "rgba(255,255,255,0.6)", letterSpacing: "-0.1px" }}>
-                    THEATER
                   </span>
                 </button>
               )}

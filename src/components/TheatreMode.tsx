@@ -112,6 +112,13 @@ export default function TheatreMode({
   const fcHolders = useFirstCutLedger(coinAddr);
   const fcCount = fcHolders?.length ?? 0;
 
+  // TAKEOVER STANDDOWN: theatre owns all gestures while open — global page-
+  // swipe navigation is off wholesale (the finishing-suite gate).
+  useEffect(() => {
+    document.documentElement.dataset.suiteOpen = '1';
+    return () => { delete document.documentElement.dataset.suiteOpen; };
+  }, []);
+
   // ── Enter / exit animation (signature easing; reduced-motion = plain fade) ──
   useEffect(() => {
     const r = requestAnimationFrame(() => requestAnimationFrame(() => setShown(true)));
@@ -143,20 +150,64 @@ export default function TheatreMode({
     return () => window.removeEventListener('keydown', onKey);
   }, [go, handleClose]);
 
-  // Swipe. In forced-landscape (rotated 90°) the visual-horizontal axis is the
-  // device's VERTICAL axis, so we read dy there; otherwise dx. (Flip the sign in
-  // one place if it ever feels inverted on device.)
-  const touch = useRef<{ x: number; y: number } | null>(null);
-  const onTouchStart = (e: React.TouchEvent) => { const t = e.touches[0]; touch.current = { x: t.clientX, y: t.clientY }; };
-  const onTouchEnd = (e: React.TouchEvent) => {
-    if (!touch.current) return;
-    const t = e.changedTouches[0];
-    const dx = t.clientX - touch.current.x;
-    const dy = t.clientY - touch.current.y;
-    touch.current = null;
-    const TH = 44;
-    if (portrait) { if (dy > TH) go(1); else if (dy < -TH) go(-1); }   // rotated: down = next
-    else { if (dx < -TH) go(1); else if (dx > TH) go(-1); }            // normal: left = next
+  // ── FINGER-TRACKING swipe — the media physically follows the drag (the
+  // PfpCropModal touch-drag pattern: raw touch handlers + rAF-free state,
+  // transforms only). In forced-landscape (rotated 90°) the VISUAL horizontal
+  // axis is the device's vertical, so drags map dy there, dx otherwise.
+  // Horizontal-intent lock; 32%-width or velocity commit; 0.3× rubber-band at
+  // the ends; neighbors peek from their edges (posters — cheap, no decoders).
+  const [dragX, setDragX] = useState(0);        // visual-x offset (stage px)
+  const [dragAnim, setDragAnim] = useState(false); // release animation in flight
+  const drag = useRef<{ x: number; y: number; axis: 'h' | 'v' | null; lastX: number; lastT: number; vx: number } | null>(null);
+  const commitRef = useRef<1 | -1 | 0>(0);
+
+  const visualDelta = (t: React.Touch) => {
+    if (!drag.current) return { h: 0, v: 0 };
+    const dx = t.clientX - drag.current.x;
+    const dy = t.clientY - drag.current.y;
+    // rotated stage: visual-h = device dy (down = next → negative visual-x)
+    return portrait ? { h: dy, v: dx } : { h: dx, v: dy };
+  };
+  const onTouchStart = (e: React.TouchEvent) => {
+    if (dragAnim) return;
+    const t = e.touches[0];
+    drag.current = { x: t.clientX, y: t.clientY, axis: null, lastX: portrait ? t.clientY : t.clientX, lastT: e.timeStamp, vx: 0 };
+  };
+  const onTouchMove = (e: React.TouchEvent) => {
+    if (!drag.current || dragAnim) return;
+    const t = e.touches[0];
+    const { h, v } = visualDelta(t);
+    if (!drag.current.axis) {
+      if (Math.abs(h) < 8 && Math.abs(v) < 8) return;
+      drag.current.axis = Math.abs(h) > Math.abs(v) ? 'h' : 'v'; // intent lock
+    }
+    if (drag.current.axis !== 'h') return;
+    const cur = portrait ? t.clientY : t.clientX;
+    const dt = Math.max(1, e.timeStamp - drag.current.lastT);
+    drag.current.vx = (cur - drag.current.lastX) / dt;
+    drag.current.lastX = cur; drag.current.lastT = e.timeStamp;
+    // rubber-band past the ends (no neighbor that side)
+    const atStart = index === 0 && h > 0;
+    const atEnd = index === posts.length - 1 && h < 0;
+    setDragX(atStart || atEnd ? h * 0.3 : h);
+  };
+  const onTouchEnd = () => {
+    const d = drag.current;
+    drag.current = null;
+    if (!d || d.axis !== 'h') { setDragX(0); return; }
+    const canNext = index < posts.length - 1;
+    const canPrev = index > 0;
+    const commit = Math.abs(dragX) > stageW * 0.32 || Math.abs(d.vx) > 0.5;
+    const dir: 1 | -1 | 0 = commit ? (dragX < 0 ? (canNext ? 1 : 0) : (canPrev ? -1 : 0)) : 0;
+    commitRef.current = dir;
+    setDragAnim(true);
+    setDragX(dir === 0 ? 0 : dir === 1 ? -stageW : stageW);
+    window.setTimeout(() => {
+      if (commitRef.current !== 0) go(commitRef.current);
+      commitRef.current = 0;
+      setDragAnim(false);
+      setDragX(0); // the new current renders centered, transition disabled below
+    }, dir === 0 ? 200 : 250);
   };
 
   // ── Current-post data (real / hardened sources) for the "+" panel ──
@@ -222,7 +273,7 @@ export default function TheatreMode({
   if (!post || posts.length === 0) {
     // Nothing to show — exit straight back to the profile.
     return (
-      <div onClick={handleClose} style={{ position: 'fixed', inset: 0, zIndex: 900, background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div onClick={() => handleClose()} style={{ position: 'fixed', inset: 0, zIndex: 900, background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <span style={{ ...SKR, fontSize: 'var(--fs-11)', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>No posts</span>
       </div>
     );
@@ -237,7 +288,8 @@ export default function TheatreMode({
   // remains for the arrows — they never overlap the media, for any AR.
   const ARROW_AR = 72 / 140;                       // asset w/h (a tall chevron)
   const ARROW_PAD = 6;                             // tap padding around the glyph
-  const arrowH = Math.min(46, stageH * 0.13);      // moderate, restrained
+  const isDesktopVp = vp.w >= 1024;                // desktop seam: arrows stay primary
+  const arrowH = isDesktopVp ? Math.min(46, stageH * 0.13) : Math.min(30, stageH * 0.09); // mobile ~65%
   const arrowW = arrowH * ARROW_AR;
   const MIN_SIDE = arrowW + ARROW_PAD * 2 + 12;    // margin reserved each side
 
@@ -246,6 +298,30 @@ export default function TheatreMode({
   let boxW = availW, boxH = availW / arNum;
   if (boxH > availH) { boxH = availH; boxW = availH * arNum; }
   const sideMargin = (stageW - boxW) / 2;          // ≥ MIN_SIDE, so arrows clear the media
+
+  // Fit helper for ANY post (the drag strip sizes neighbor peeks by their own AR).
+  const fitBox = (p: AnyPost) => {
+    const a = String(getAspectRatio(f(p, 'layout_id') ?? '')).split('/').map((x) => parseFloat(x));
+    const ar = isFinite(a[0]) && isFinite(a[1]) && a[1] > 0 ? a[0] / a[1] : 2.39;
+    let w = availW, h = availW / ar;
+    if (h > availH) { h = availH; w = availH * ar; }
+    return { w, h };
+  };
+  const neighborEl = (p: AnyPost | undefined, side: -1 | 1) => {
+    if (!p) return null;
+    const { w, h } = fitBox(p);
+    const src = f(p, 'poster_url') || f(p, 'thumbnail_url') || (p['media_urls'] as string[] | undefined)?.[0];
+    return (
+      <div style={{
+        position: 'absolute', left: '50%', top: '50%',
+        transform: `translate(calc(-50% + ${side * stageW + dragX}px), -50%)`,
+        transition: dragAnim ? `transform ${250}ms ${EASE}` : 'none',
+        width: w, height: h, background: '#000', overflow: 'hidden', pointerEvents: 'none',
+      }}>
+        {src && <img src={src} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
+      </div>
+    );
+  };
 
   const isVideo = f(post, 'media_type') === 'video';
   const mediaUrl = (post['media_urls'] as string[] | undefined)?.[0];
@@ -269,8 +345,12 @@ export default function TheatreMode({
           on a rotated phone the field is solid so the portrait profile behind
           never shows through the rotation. */}
       <div
-        onClick={() => { if (showData) setShowData(false); else handleClose(); }}
+        // STRAY-TAP FIX (runtime-proven culprit): the field tap used to exit.
+        // Exits are EXPLICIT ONLY — BACK, the eye, Escape. A stray tap now just
+        // dismisses the data panel if open, else does nothing.
+        onClick={() => { if (showData) setShowData(false); }}
         onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
         style={{
           position: 'absolute', inset: 0, background: portrait ? '#000' : 'rgba(0,0,0,0.92)',
@@ -288,12 +368,17 @@ export default function TheatreMode({
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}
         >
+          {/* Neighbor peeks — poster-only panels sliding with the drag (no
+              extra decoders); the release animation carries them through. */}
+          {neighborEl(posts[index - 1], -1)}
+          {neighborEl(posts[index + 1], 1)}
+
           {/* Hero media — true AR box, objectFit cover (same crop as the feed).
-              Tapping the media: closes the data panel if open; otherwise does
-              nothing (the empty black field is what exits). */}
+              Tapping the media dismisses the data panel if open; exits are
+              EXPLICIT ONLY (BACK / the eye / Escape). */}
           <div
             onClick={(e) => { stop(e); if (showData) setShowData(false); }}
-            style={{ width: boxW, height: boxH, background: '#000', overflow: 'hidden', flexShrink: 0, transition: `height 300ms ${EASE}, width 300ms ${EASE}` }}
+            style={{ width: boxW, height: boxH, background: '#000', overflow: 'hidden', flexShrink: 0, transform: `translateX(${dragX}px)`, transition: dragAnim ? `transform 250ms ${EASE}` : `height 300ms ${EASE}, width 300ms ${EASE}` }}
           >
             {/* Reuse the feed's SHARED graded-media components so the grade is
                 inherited automatically — never a forked raw element. Video grade is
@@ -376,7 +461,7 @@ export default function TheatreMode({
           aria-label="Close theatre"
           style={{ position: 'absolute', right: 14, top: 12, background: 'transparent', border: 'none', cursor: 'pointer', padding: 6 }}
         >
-          <img src="/theatre-mode-eye-framed.png" alt="" style={{ height: 22, width: 'auto', display: 'block', opacity: 0.92 }} />
+          <img src="/theatre-mode-eye-framed-v2.png" alt="" style={{ height: 26, width: 'auto', display: 'block', opacity: 0.92 }} />
         </button>
 
         {/* ── Bottom-LEFT cluster — the "+" (reveals the full panel), plus (FEED
