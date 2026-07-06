@@ -210,15 +210,16 @@ function PostViewerItem({
         ) : (
           <div style={{ width: "100%", height: "100%", background: "#111" }} />
         );
-        const overlayEls = (
-          <>
+        // Metadata ROW — lifted OFF the media onto the black above it (matches
+        // the feed's treatment): handle left, ticker+MC right; media stays clean.
+        const metadataRow = (
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8, padding: "0 2px" }}>
             <div
-              className="absolute"
               onClick={(e) => { e.stopPropagation(); onNavigateToProfile(); }}
-              style={{ top: 6, left: 6, display: "flex", alignItems: "center", gap: 4, cursor: "pointer", zIndex: 10, opacity: 0.85 }}
+              style={{ display: "flex", alignItems: "center", gap: 4, cursor: "pointer", opacity: 0.85 }}
             >
               <img src={ownerAvatarUrl || undefined} style={{ width: 14, height: 14, borderRadius: "50%", objectFit: "cover", flexShrink: 0, background: "#333" }} />
-              <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: "white", textShadow: "0 1px 2px rgba(0,0,0,1)", lineHeight: 1, textTransform: "uppercase" }}>
+              <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: "white", lineHeight: 1, textTransform: "uppercase" }}>
                 @{ownerUsername}
               </span>
             </div>
@@ -226,27 +227,30 @@ function PostViewerItem({
                 matching the feed. Legacy/non-coin posts show none. */}
             {isCoinPost(post as { coin_address?: string | null; token_standard?: string | null }) && (post as { coin_address?: string | null }).coin_address && (
               <span
-                className="absolute"
-                style={{ top: 6, right: 6, display: "flex", alignItems: "baseline", gap: 5, fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: 'var(--fs-8)', color: "white", textShadow: "0 1px 2px rgba(0,0,0,1)", lineHeight: 1, opacity: 0.85, zIndex: 10, textTransform: "uppercase" }}
+                style={{ display: "flex", alignItems: "baseline", gap: 5, fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: 'var(--fs-8)', color: "white", lineHeight: 1, opacity: 0.85, textTransform: "uppercase" }}
               >
                 {(post as { ticker?: string | null }).ticker && <TickerMark ticker={(post as { ticker?: string }).ticker as string} size={9.5} />}
                 <span>MC: {mc ?? "…"}</span>
               </span>
             )}
-          </>
-        );
-        return is43 ? (
-          <PillarboxFrame onClick={(e) => { e.stopPropagation(); onOpenPost(post); }} cursor="pointer" overlays={overlayEls}>
-            {mediaEl}
-          </PillarboxFrame>
-        ) : (
-          <div
-            style={{ position: "relative", width: "100%", aspectRatio: getAspectRatio(post.layout_id ?? ''), overflow: "hidden", background: "#0a0a0a", cursor: "pointer" }}
-            onClick={(e) => { e.stopPropagation(); onOpenPost(post); }}
-          >
-            {mediaEl}
-            {overlayEls}
           </div>
+        );
+        return (
+          <>
+            {metadataRow}
+            {is43 ? (
+              <PillarboxFrame onClick={(e) => { e.stopPropagation(); onOpenPost(post); }} cursor="pointer">
+                {mediaEl}
+              </PillarboxFrame>
+            ) : (
+              <div
+                style={{ position: "relative", width: "100%", aspectRatio: getAspectRatio(post.layout_id ?? ''), overflow: "hidden", background: "#0a0a0a", cursor: "pointer" }}
+                onClick={(e) => { e.stopPropagation(); onOpenPost(post); }}
+              >
+                {mediaEl}
+              </div>
+            )}
+          </>
         );
       })()}
 
@@ -400,7 +404,7 @@ function PostViewerItem({
       )}
 
       {/* ── CAPTION — marginTop: 3, marginBottom: 16 (separator) ── */}
-      <div style={{ padding: "0 4px", marginTop: 2, marginBottom: 31 }}>
+      <div style={{ padding: "0 4px", marginTop: 2, marginBottom: 51 /* 31 + 20 air — tune with FEED_POST_GAP_PX */ }}>
         {post.caption ? (
           <p style={{ ...SKR, fontSize: 'var(--fs-10)', color: "white", margin: 0, lineHeight: 1.4 }}>
             {post.caption}

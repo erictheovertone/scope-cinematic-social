@@ -18,6 +18,9 @@ import { getUserByPrivyId, getProfile } from "@/lib/userService";
 import CollectSheetGate from "@/components/economy/CollectSheetGate";
 import { useEconomy } from "@/components/EconomyProvider";
 import TickerMark from "@/components/economy/TickerMark";
+
+// Post-to-post breathing room (was 32) — THE tunable; Eric eyeballs on device.
+const FEED_POST_GAP_PX = 52;
 import MediaRenderer from "@/components/MediaRenderer";
 import GradedVideo from "@/components/finishing/GradedVideo";
 import { getAspectRatio, ratioPadding } from "@/lib/aspectRatio";
@@ -197,27 +200,29 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments }: PostIt
   const is43 = (post.layout_id ?? '') === 'legacy';
   const paddingPercent = ratioPadding(getAspectRatio(post.layout_id ?? ''));
 
-  const mediaOverlays = (
-    <>
-      <div style={{ position: 'absolute', top: '6px', left: '6px', display: 'flex', alignItems: 'center', gap: '4px', zIndex: 10 }}>
+  // Metadata ROW — lifted OFF the media onto the black above it (layout nudge):
+  // handle left, ticker+MC right, same type styles; the media stays clean.
+  const metadataRow = (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, padding: '0 2px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
         {post.profile_image_url && (
           <img src={feedImage(post.profile_image_url, 96)} style={{ width: '14px', height: '14px', borderRadius: '50%', objectFit: 'cover' }} />
         )}
         <span
           onClick={(e) => { e.stopPropagation(); router.push('/profile/' + post.username); }}
-          style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-8)', color: 'white', cursor: 'pointer', textShadow: '0 1px 2px rgba(0,0,0,1)', textTransform: 'uppercase' }}
+          style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-8)', color: 'white', cursor: 'pointer', textTransform: 'uppercase' }}
         >
           @{post.username}
         </span>
       </div>
       {/* Market chrome — coin posts only; legacy 1155 tiles show none. */}
       {post.token_standard === 'coin' && post.coin_address && (
-        <span style={{ position: 'absolute', top: '6px', right: '6px', display: 'flex', alignItems: 'baseline', gap: 5, fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: 'var(--fs-8)', color: 'white', textShadow: '0 1px 2px rgba(0,0,0,1)', zIndex: 10, opacity: 0.85 }}>
+        <span style={{ display: 'flex', alignItems: 'baseline', gap: 5, fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: 'var(--fs-8)', color: 'white', opacity: 0.85 }}>
           {post.ticker && <TickerMark ticker={post.ticker} size={9.5} />}
           <span>MC: {mc ?? '…'}</span>
         </span>
       )}
-    </>
+    </div>
   );
 
   const mediaContent = post.media_type === 'video' ? (
@@ -256,14 +261,14 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments }: PostIt
   );
 
   return (
-    <div className="feed-card" style={{ marginBottom: 32 }}>
+    <div className="feed-card" style={{ marginBottom: FEED_POST_GAP_PX }}>
 
-      {/* ── Image with overlaid avatar + username ── */}
+      {/* ── Metadata above the frame; the media below is clean ── */}
+      {metadataRow}
       {is43 ? (
         <PillarboxFrame
           onClick={openLightbox}
           cursor={onImageClick ? 'pointer' : 'default'}
-          overlays={mediaOverlays}
         >
           {mediaContent}
         </PillarboxFrame>
@@ -282,7 +287,6 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments }: PostIt
           <div style={{ position: 'absolute', inset: 0 }}>
             {mediaContent}
           </div>
-          {mediaOverlays}
         </div>
       )}
 
