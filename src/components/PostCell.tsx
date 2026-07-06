@@ -60,7 +60,7 @@ export default function PostCell({ post, layoutId, index, onClick, showSoundTogg
           asset ships. */}
       {fcMark && (
         <img
-          src="/first-cut-insignia-collected-view.png"
+          src="/badges/first-cut-insignia-collected-view.png"
           alt=""
           onError={(e) => { e.currentTarget.style.display = 'none'; }}
           style={{ position: 'absolute', top: 3, right: 3, width: '18%', height: 'auto', zIndex: 6, pointerEvents: 'none' }}
