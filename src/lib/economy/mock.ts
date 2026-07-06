@@ -162,6 +162,8 @@ export const mockEconomy: EconomyApi = {
     };
   },
 
+  async getFirstCutCoins(): Promise<string[]> { return []; },
+
   async getBadges(userId: string): Promise<Badges> {
     const r = rng(hash('badges:' + userId));
     const badges: Badges = {};

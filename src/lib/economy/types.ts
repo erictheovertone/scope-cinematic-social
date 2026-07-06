@@ -135,6 +135,10 @@ export interface EconomyApi {
   getFirstCuts(userId: string): Promise<FirstCuts>;
   getEarnings(userId: string): Promise<Earnings>;
   getBadges(userId: string): Promise<Badges>;
+  /** Coin addresses (lowercase) of the user's ACTIVE First Cut awards
+      (expired_at IS NULL) — the COLLECTED-tab insignia set. Same source as the
+      badge count, so the mark and the count can never disagree. */
+  getFirstCutCoins(userId: string): Promise<string[]>;
   /** Phase 1 stub — mocks success, performs NO real transaction. */
   collect(postId: string, pieces?: number): Promise<CollectResult>;
   /**

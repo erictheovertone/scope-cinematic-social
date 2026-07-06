@@ -303,6 +303,23 @@ export function createRealEconomy(
       return { ...base, firstCutCount: firstCutCount > 0 ? firstCutCount : undefined };
     },
 
+    // ONE batched read for the COLLECTED-tab First Cut insignia — the same
+    // active-gating (expired_at IS NULL) as the badge count above; released/
+    // expired slots carry no mark by construction. Same tolerant fallback.
+    async getFirstCutCoins(userId: string): Promise<string[]> {
+      let res = await supabase
+        .from("first_cut_awards")
+        .select("coin_address")
+        .eq("user_id", userId)
+        .is("expired_at", null);
+      if (res.error) {
+        res = await supabase.from("first_cut_awards").select("coin_address").eq("user_id", userId);
+      }
+      return (res.data ?? [])
+        .map((row: { coin_address?: string | null }) => (row.coin_address ?? '').toLowerCase())
+        .filter(Boolean);
+    },
+
     // ── Stage B: real quotes + trades for coin posts (mock otherwise) ────────
     async quoteBuy(postId: string, usdAmount: number): Promise<BuyQuote> {
       const coinAddress = await coinAddressFor(postId);

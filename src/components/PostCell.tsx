@@ -25,6 +25,8 @@ interface Post {
 }
 
 interface PostCellProps {
+  /** Profile owner holds an ACTIVE First Cut on this post → red insignia, top-right. */
+  fcMark?: boolean;
   post: Post;
   layoutId: string;
   index: number;
@@ -32,7 +34,7 @@ interface PostCellProps {
   showSoundToggle?: boolean;
 }
 
-export default function PostCell({ post, layoutId, index, onClick, showSoundToggle = false }: PostCellProps) {
+export default function PostCell({ post, layoutId, index, onClick, showSoundToggle = false, fcMark = false }: PostCellProps) {
   const ratio = getAspectRatio(layoutId, index);
   const padding = ratioPadding(ratio);
   // The minting tile narrates: while this post's coin is being created the
@@ -52,6 +54,18 @@ export default function PostCell({ post, layoutId, index, onClick, showSoundTogg
       }}
       onClick={onClick}
     >
+      {/* First Cut insignia — deliberate corner overlay (Eric's design), ~18% of
+          cell width, ratio-locked; absolutely positioned so tap targets, layout
+          and the paddingTop AR container are untouched. onError hides until the
+          asset ships. */}
+      {fcMark && (
+        <img
+          src="/first-cut-insignia-collected-view.png"
+          alt=""
+          onError={(e) => { e.currentTarget.style.display = 'none'; }}
+          style={{ position: 'absolute', top: 3, right: 3, width: '18%', height: 'auto', zIndex: 6, pointerEvents: 'none' }}
+        />
+      )}
       <div style={{ position: 'absolute', inset: 0 }}>
         {post.media_urls?.[0] && (
           // Video → GradedVideo. gridMode = ALIVE grid: every in-view autoplay tile

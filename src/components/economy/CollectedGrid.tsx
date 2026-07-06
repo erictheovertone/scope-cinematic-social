@@ -31,6 +31,9 @@ export default function CollectedGrid({
 }) {
   const economy = useEconomy();
   const [rows, setRows] = useState<Holding[] | null>(null);
+  // ONE batched read of the OWNER's active First Cut coins per tab load — no
+  // per-item queries. Marks h.post.coin_address membership.
+  const [fcCoins, setFcCoins] = useState<Set<string>>(new Set());
   const [openPost, setOpenPost] = useState<Record<string, unknown> | null>(null);
 
   useEffect(() => {
@@ -39,6 +42,9 @@ export default function CollectedGrid({
     economy.getCollected(userId)
       .then((h) => { if (!cancelled) setRows(h); })
       .catch((e) => { console.error('[collected] load error:', e); if (!cancelled) setRows([]); });
+    economy.getFirstCutCoins(userId)
+      .then((coins) => { if (!cancelled) setFcCoins(new Set(coins)); })
+      .catch(() => { /* no marks on failure — never blocks the grid */ });
     return () => { cancelled = true; };
   }, [userId, economy]);
 
@@ -72,6 +78,7 @@ export default function CollectedGrid({
             layoutId={(h.post as { layout_id?: string }).layout_id || '2x-scope'}
             index={i}
             onClick={() => setOpenPost(h.post)}
+            fcMark={fcCoins.has(String((h.post as { coin_address?: string | null }).coin_address ?? '').toLowerCase())}
           />
         ))}
       </div>
