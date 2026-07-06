@@ -33,6 +33,7 @@ import { BADGES } from '@/lib/economy/badges';
 import CollectSheetGate from '@/components/economy/CollectSheetGate';
 import FirstCutLedger from '@/components/economy/FirstCutLedger';
 import GradedVideo from '@/components/finishing/GradedVideo';
+import { feedImage } from '@/lib/mediaUrl';
 import MediaRenderer from '@/components/MediaRenderer';
 import type { PostMarket } from '@/lib/economy/types';
 
@@ -298,7 +299,9 @@ export default function TheatreMode({
   const MIN_SIDE = arrowW + ARROW_PAD * 2 + 12;    // margin reserved each side
 
   const availW = Math.min(stageW * 0.92, stageW - MIN_SIDE * 2);
-  const availH = stageH * (showData ? 0.74 : 0.86); // compact panel → media stays largely visible
+  // Height cap ALSO reserves the controls band below the media (mobile row
+  // needs ~46px) — the row can never touch the media at any aspect ratio.
+  const availH = Math.min(stageH * (showData ? 0.74 : 0.86), stageH - 76);
   let boxW = availW, boxH = availW / arNum;
   if (boxH > availH) { boxH = availH; boxW = availH * arNum; }
   const sideMargin = (stageW - availW) / 2;        // CONSTANT (fixed stage) — arrows never drift per-post
@@ -311,25 +314,58 @@ export default function TheatreMode({
     if (h > availH) { h = availH; w = availH * ar; }
     return { w, h };
   };
-  const neighborEl = (p: AnyPost | undefined, side: -1 | 1) => {
+  // ── THE 3-POST WINDOW (the flash fix) — prev/current/next stay MOUNTED and
+  // PRELOADED, keyed by post id so a commit re-orders slots WITHOUT remounting
+  // anything: the incoming surface is already rendered/decoded and simply
+  // slides to center. Images render as plain <img> (same feedImage URL in
+  // every slot → cached, decoded offscreen); videos mount GradedVideo in all
+  // three slots with forcePlay ONLY at center — neighbors sit at their poster
+  // (zero decoders) and the prop flip on commit starts playback in place. */
+  const slotEl = (i: number) => {
+    const p = posts[i] as AnyPost | undefined;
     if (!p) return null;
     const { w, h } = fitBox(p);
-    const src = f(p, 'poster_url') || f(p, 'thumbnail_url') || (p['media_urls'] as string[] | undefined)?.[0];
+    const center = i === index;
+    const vid = f(p, 'media_type') === 'video';
+    const url = (p['media_urls'] as string[] | undefined)?.[0];
+    const pstr = f(p, 'poster_url') || f(p, 'thumbnail_url') || undefined;
     return (
-      <div style={{
-        position: 'absolute', left: '50%', top: '50%',
-        transform: `translate(calc(-50% + ${side * stageW + dragX}px), -50%)`,
-        transition: dragAnim ? `transform ${250}ms ${EASE}` : 'none',
-        width: w, height: h, background: '#000', overflow: 'hidden', pointerEvents: 'none',
-      }}>
-        {src && <img src={src} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
+      <div
+        key={(f(p, 'id') as string) ?? String(i)}
+        style={{
+          position: 'absolute', left: '50%', top: '50%',
+          width: availW, height: availH,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          transform: `translate(calc(-50% + ${(i - index) * stageW + dragX}px), -50%)`,
+          transition: dragAnim ? `transform 250ms ${EASE}` : 'none',
+          pointerEvents: center ? 'auto' : 'none',
+        }}
+      >
+        <div
+          onClick={center ? (e) => { e.stopPropagation(); if (showData) setShowData(false); } : undefined}
+          style={{ width: w, height: h, background: '#000', overflow: 'hidden', flexShrink: 0 }}
+        >
+          {vid ? (
+            <GradedVideo
+              url={url ?? ''}
+              posterUrl={pstr ?? null}
+              clipUrl={f(p, 'autoplay_clip_url') ?? null}
+              editParams={p['edit_params']}
+              cropX={(p['crop_x'] as number | undefined) ?? 0}
+              cropY={(p['crop_y'] as number | undefined) ?? 0}
+              cropWidth={(p['crop_width'] as number | undefined) ?? 1}
+              cropHeight={(p['crop_height'] as number | undefined) ?? 1}
+              forcePlay={center}
+              showSoundToggle={center}
+              style={{ width: '100%', height: '100%' }}
+            />
+          ) : (
+            url && <img src={feedImage(url, 1280)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+          )}
+        </div>
       </div>
     );
   };
-
-  const isVideo = f(post, 'media_type') === 'video';
-  const mediaUrl = (post['media_urls'] as string[] | undefined)?.[0];
-  const poster = f(post, 'poster_url') || f(post, 'thumbnail_url') || undefined;
 
   // Stage transform: rotate to landscape on a portrait phone; direct otherwise.
   const stageStyle: React.CSSProperties = portrait
@@ -372,63 +408,9 @@ export default function TheatreMode({
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}
         >
-          {/* Neighbor peeks — poster-only panels sliding with the drag (no
-              extra decoders); the release animation carries them through. */}
-          {neighborEl(posts[index - 1], -1)}
-          {neighborEl(posts[index + 1], 1)}
-
-          {/* Hero media — true AR box, objectFit cover (same crop as the feed).
-              Tapping the media dismisses the data panel if open; exits are
-              EXPLICIT ONLY (BACK / the eye / Escape). */}
-          <div
-            onClick={(e) => { stop(e); if (showData) setShowData(false); }}
-            style={{
-              // FIXED STAGE: constant media area — posts letterbox inside it, so
-              // swiping between different aspect ratios never resizes anything
-              // (the resize morph WAS the jerk). Only the panel toggle animates
-              // the area's height.
-              width: availW, height: availH, background: 'transparent', overflow: 'visible', flexShrink: 0,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              transform: `translateX(${dragX}px)`,
-              transition: dragAnim ? `transform 250ms ${EASE}` : `height 300ms ${EASE}`,
-            }}
-          >
-          <div style={{ width: boxW, height: boxH, background: '#000', overflow: 'hidden', flexShrink: 0 }}>
-            {/* Reuse the feed's SHARED graded-media components so the grade is
-                inherited automatically — never a forked raw element. Video grade is
-                render-time (GradedVideo applies edit_params via the gl-react
-                pipeline + the baked graded poster/clip); image grade is baked into
-                media_urls[0] (MediaRenderer just loads it, no runtime crop — matches
-                the feed image path exactly). forcePlay = always-graded playback. */}
-            {isVideo ? (
-              <GradedVideo
-                key={f(post, 'id')}
-                url={mediaUrl ?? ''}
-                posterUrl={poster ?? null}
-                clipUrl={f(post, 'autoplay_clip_url') ?? null}
-                editParams={post['edit_params']}
-                cropX={(post['crop_x'] as number | undefined) ?? 0}
-                cropY={(post['crop_y'] as number | undefined) ?? 0}
-                cropWidth={(post['crop_width'] as number | undefined) ?? 1}
-                cropHeight={(post['crop_height'] as number | undefined) ?? 1}
-                forcePlay
-                showSoundToggle
-                style={{ width: '100%', height: '100%' }}
-                onClick={() => { if (showData) setShowData(false); }}
-              />
-            ) : (
-              <MediaRenderer
-                url={mediaUrl ?? ''}
-                width={1280}
-                mediaType={f(post, 'media_type')}
-                thumbnailUrl={poster ?? null}
-                autoplay
-                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                onClick={() => { if (showData) setShowData(false); }}
-              />
-            )}
-          </div>
-          </div>
+          {/* The 3-post window — keyed slots slide together; nothing mounts
+              or resizes mid-gesture (the flash + jerk fixes hold together). */}
+          {[index - 1, index, index + 1].map((i) => slotEl(i))}
         </div>
 
         {/* ── Prev (<) / Next (>) arrows — ALWAYS in the side black margins,
@@ -475,8 +457,12 @@ export default function TheatreMode({
             only) an always-on stats row: likes (tap to like) · comments (tap →
             opens the panel's ripple-up) · First Cut X/10. Profile view shows just
             the "+" (stats are expand-only there). Hidden while the panel is up. ── */}
+        {/* Centered in the letterbox band BELOW the media (stage coordinates —
+            on a rotated phone the stage's "below" is the visual below). The
+            availH cap guarantees the band ≥ ~38px at every ratio; the row's
+            visual height (~34px) centers inside it. */}
         {!showData && (
-          <div style={{ position: 'absolute', bottom: 'calc(6px + env(safe-area-inset-bottom, 0px))', left: 12, display: 'flex', alignItems: 'center', gap: 6, zIndex: 3 }}>
+          <div style={{ position: 'absolute', top: stageH / 2 + boxH / 2 + Math.max(2, (stageH / 2 - boxH / 2 - 34) / 2), left: 0, right: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, zIndex: 3, height: 34 }}>
             {/* "+" — ≥44px tap target (the 12 couldn't hit the old padding-0 glyph),
                 inset-relative bottom. Handle sits immediately to its right —
                 everything lives BELOW the media in the black band. */}

@@ -10,7 +10,6 @@ import PressPop from "@/components/PressPop";
 import { getUserPosts } from '@/lib/postsService';
 import CreatePostFlow from "@/components/CreatePostFlow";
 import FollowListModal from "@/components/FollowListModal";
-import TheaterCarousel from "@/components/TheaterCarousel";
 import ProfilePostViewer from "@/components/ProfilePostViewer";
 import BadgeExplainerSheet from "@/components/BadgeExplainerSheet";
 import MembershipSheet from "@/components/MembershipSheet";
@@ -71,7 +70,6 @@ export default function Profile() {
   const [rawProfile, setRawProfile] = useState<any>(null);
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [spinning, setSpinning] = useState(false);
-  const [showTheater, setShowTheater] = useState(false);
   const [showViewer, setShowViewer] = useState(false);
   const [viewerIndex, setViewerIndex] = useState(0);
   const [showLightbox, setShowLightbox] = useState(false);
@@ -687,15 +685,6 @@ const userLayoutId = stableLayoutId;
           onTheaterMode={() => { setShowLightbox(false); setLightboxPost(null); setActiveTab('theatre'); }}
           onDeleted={(deletedPostId) => setUserPosts(prev => prev.filter(p => p.id !== deletedPostId))}
           layoutId={userLayoutId}
-        />
-      )}
-
-      {showTheater && (
-        <TheaterCarousel
-          posts={userPosts}
-          onClose={() => setShowTheater(false)}
-          supabaseUserId={supabaseUserId}
-          viewerUsername={userProfile.username}
         />
       )}
 
