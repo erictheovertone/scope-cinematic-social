@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import PressPop from "@/components/PressPop";
 
@@ -84,6 +85,20 @@ function HamburgerIcon() {
 // Pure render component — no hooks, no state, no async.
 // All routing logic lives in AppShell; this component only displays.
 export default function BottomToolbar({ page, unreadCount = 0, onNotificationsClick, onHamburgerPress }: Props) {
+  // TAKEOVER STANDDOWN (root fix): theatre mode (any entry) sets
+  // data-suite-open on <html> and dispatches scope:takeover-change. The check
+  // lives HERE — in the footer component itself — because footers mount from
+  // multiple scopes (AppShell on most routes, the profile pages render their
+  // own instances): every instance reacts, no entry point can escape.
+  const [takeover, setTakeover] = useState(false);
+  useEffect(() => {
+    const sync = () => setTakeover(!!document.documentElement.dataset.suiteOpen);
+    sync();
+    window.addEventListener('scope:takeover-change', sync);
+    return () => window.removeEventListener('scope:takeover-change', sync);
+  }, []);
+  if (takeover) return null;
+
   const isHome = page === 'home';
 
   return (
