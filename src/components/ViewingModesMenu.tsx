@@ -3,7 +3,8 @@
 // ── VIEWING MODES — the full-page mode menu (Figma 943:406) ───────────────────
 //
 // Portaled takeover on black. The four cards are Eric's BAKED two-state PNGs
-// (@4x, 1344×452 — chrome/text/icons/preview art in the image): both states
+// (@4x, 1464×492 = 366×123 per the frame — chrome/text/icons/preview art in
+// the image): both states
 // stacked, the CURRENT mode's -active variant revealed by opacity crossfade.
 // Entrance choreography: takeover spring → header stagger → card cascade (all
 // DEFAULT) → the IGNITION beat: ~120ms after the last card lands, the current
@@ -87,17 +88,19 @@ export default function ViewingModesMenu({ currentMode, onClose, onSelect }: Pro
         transition={reduced ? { duration: 0 } : { type: 'spring', duration: 0.3, bounce: 0.12 }}
         style={{
           position: 'absolute', inset: 0, overflowY: 'auto', background: '#000',
-          padding: 'calc(14px + env(safe-area-inset-top, 0px)) 20px calc(24px + env(safe-area-inset-bottom, 0px))',
+          // near-full-bleed: the 366-wide cards leave ~4px sides at the 375 frame;
+          // header elements re-indent themselves to the frame's positions.
+          padding: 'calc(14px + env(safe-area-inset-top, 0px)) 4px calc(24px + env(safe-area-inset-bottom, 0px))',
         }}
       >
-        {/* Top hairline */}
-        <div style={{ height: 1, background: 'rgba(255,255,255,0.14)', margin: '0 0 18px' }} />
+        {/* Top hairline — frame width ~234, left-anchored at the title indent */}
+        <div style={{ height: 1, width: 234, background: 'rgba(255,255,255,0.14)', margin: '0 0 18px 19px' }} />
 
         {/* Header row: title two lines + close × */}
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '0 8px 0 19px' }}>
           <motion.h1
             {...headerIn(120)}
-            style={{ ...SKB, fontSize: 38, lineHeight: 0.96, letterSpacing: '-0.03em', color: '#FFF', textTransform: 'uppercase', margin: 0, whiteSpace: 'pre-line' }}
+            style={{ ...SKB, fontSize: 40, lineHeight: 0.94, letterSpacing: '-1.2px', color: '#FFF', textTransform: 'uppercase', margin: 0, whiteSpace: 'pre-line' }}
           >
             {'VIEWING\nMODES'}
           </motion.h1>
@@ -112,24 +115,25 @@ export default function ViewingModesMenu({ currentMode, onClose, onSelect }: Pro
         </div>
 
         {/* Tagline — red + glyph, right-aligned */}
-        <motion.div {...headerIn(180)} style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 7, margin: '14px 0 0' }}>
+        <motion.div {...headerIn(180)} style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 7, margin: '14px 8px 0 0' }}>
           <span style={{ ...SKB, fontSize: 14, color: '#FF0000', lineHeight: 1 }}>+</span>
-          <span style={{ ...SKR, fontSize: 8.5, color: 'rgba(255,255,255,0.55)', letterSpacing: '0.14em', textTransform: 'uppercase' }}>
+          <span style={{ ...SKR, fontSize: 8.6, color: 'rgba(255,255,255,0.6)', letterSpacing: '2.5px', textTransform: 'uppercase' }}>
             DEFINE YOUR PERSPECTIVE. CONTROL YOUR EXPERIENCE.
           </span>
         </motion.div>
 
         {/* SELECT A FORMAT over a hairline */}
-        <motion.div {...headerIn(240)} style={{ margin: '22px 0 0' }}>
-          <p style={{ ...SKB, fontSize: 10, color: 'rgba(255,255,255,0.6)', letterSpacing: '0.22em', textTransform: 'uppercase', margin: '0 0 8px' }}>
+        <motion.div {...headerIn(240)} style={{ margin: '22px 0 0', paddingLeft: 19 }}>
+          <p style={{ ...SKB, fontSize: 14, color: 'rgba(255,255,255,0.6)', letterSpacing: '2.52px', textTransform: 'uppercase', margin: '0 0 8px' }}>
             SELECT A FORMAT
           </p>
-          <div style={{ height: 1, background: 'rgba(255,255,255,0.14)' }} />
+          <div style={{ height: 1, width: 268, background: 'rgba(255,255,255,0.14)' }} />
         </motion.div>
 
         {/* The four cards — baked two-state PNGs, ratio-locked, cascading in
             DEFAULT state; the ignition beat lights the current mode after. */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14, margin: '18px 0 0' }}>
+        {/* 18px uniform rhythm (frame shows 17/19 — uniform reads cleaner). */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 18, margin: '18px 0 0' }}>
           {CARDS.map((card, i) => (
             <motion.button
               key={card.mode}
@@ -143,21 +147,21 @@ export default function ViewingModesMenu({ currentMode, onClose, onSelect }: Pro
               onPointerLeave={() => setPressed(null)}
               aria-label={card.aria}
               style={{
-                position: 'relative', width: '100%', aspectRatio: '1344 / 452',
+                position: 'relative', width: '100%', aspectRatio: '366 / 123', borderRadius: 2, overflow: 'hidden',
                 background: 'transparent', border: 'none', padding: 0, cursor: 'pointer',
                 transform: pressed === card.mode ? 'scale(0.97)' : 'scale(1)',
                 transition: 'transform 120ms ease',
               }}
             >
               <img
-                src={`/viewing-modes/${card.mode}-default.png`}
+                src={`/viewing-modes/${card.mode}-default.png?v=2`}
                 alt=""
                 style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
               />
               {/* -active stacked above; the crossfade IS the illumination:
                   ignition 300ms, tap-switch 250ms — same mechanism. */}
               <img
-                src={`/viewing-modes/${card.mode}-active.png`}
+                src={`/viewing-modes/${card.mode}-active.png?v=2`}
                 alt=""
                 style={{
                   position: 'absolute', inset: 0, width: '100%', height: '100%',
