@@ -43,6 +43,11 @@ const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fon
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
 const SKL: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 300 };
 const EASE = 'cubic-bezier(0.16,0.84,0.3,1)';
+// THEATRE media tier — the largest presentation surface (fullscreen rotated ≈
+// up to ~2500 physical px long-edge on a 15). 1600 WebP @78 is sharp there at a
+// fraction of original bytes; bump to 2000 only if device softness shows. The
+// editor's full-res no-width default is untouched — this is an explicit tier.
+const THEATRE_IMG_WIDTH = 1600;
 const usd = (n: number) => (n >= 1000 ? `$${Math.round(n).toLocaleString()}` : `$${n.toFixed(2)}`);
 
 type AnyPost = Record<string, unknown>;
@@ -134,6 +139,25 @@ export default function TheatreMode({
     const t = setTimeout(onClose, reduceMotion.current ? 120 : 360);
     return () => clearTimeout(t);
   }, [onClose]);
+
+  // PRELOAD (fetch AND decode) both neighbors' theatre-tier images the moment
+  // the index settles — img.decode() finishes the pixel work off-gesture, so a
+  // swipe lands on an already-decoded surface (videos preload via their slot's
+  // poster; the media file itself streams on demand).
+  useEffect(() => {
+    [index - 1, index + 1].forEach((i) => {
+      const p = posts[i] as AnyPost | undefined;
+      if (!p) return;
+      const vid = f(p, 'media_type') === 'video';
+      const raw = vid
+        ? (f(p, 'poster_url') || f(p, 'thumbnail_url'))
+        : (p['media_urls'] as string[] | undefined)?.[0];
+      if (!raw) return;
+      const im = new window.Image();
+      im.src = feedImage(raw, THEATRE_IMG_WIDTH);
+      im.decode?.().catch(() => { /* decode-on-paint fallback */ });
+    });
+  }, [index, posts]);
 
   // ── Navigation ──
   const go = useCallback((dir: 1 | -1) => {
@@ -349,6 +373,7 @@ export default function TheatreMode({
             <GradedVideo
               url={url ?? ''}
               posterUrl={pstr ?? null}
+              posterWidth={THEATRE_IMG_WIDTH}
               clipUrl={f(p, 'autoplay_clip_url') ?? null}
               editParams={p['edit_params']}
               cropX={(p['crop_x'] as number | undefined) ?? 0}
@@ -360,7 +385,7 @@ export default function TheatreMode({
               style={{ width: '100%', height: '100%' }}
             />
           ) : (
-            url && <img src={feedImage(url, 1280)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+            url && <img src={feedImage(url, THEATRE_IMG_WIDTH)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
           )}
         </div>
       </div>
