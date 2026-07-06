@@ -94,8 +94,17 @@ export default function BottomToolbar({ page, unreadCount = 0, onNotificationsCl
   useEffect(() => {
     const sync = () => setTakeover(!!document.documentElement.dataset.suiteOpen);
     sync();
+    // REGRESSION FIX: a MutationObserver on the attribute itself — source-
+    // agnostic. The event-only sync missed CreatePostFlow (sets/clears the
+    // attribute without dispatching): during a create→profile route transition
+    // the incoming toolbar mounted while the flow was still up (attr set), the
+    // flow then unmounted SILENTLY → the toolbar never re-synced → footer gone
+    // on the normal profile view. The observer catches every setter, present
+    // and future, no event contract required.
+    const mo = new MutationObserver(sync);
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-suite-open'] });
     window.addEventListener('scope:takeover-change', sync);
-    return () => window.removeEventListener('scope:takeover-change', sync);
+    return () => { mo.disconnect(); window.removeEventListener('scope:takeover-change', sync); };
   }, []);
   if (takeover) return null;
 
