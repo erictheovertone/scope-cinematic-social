@@ -21,6 +21,7 @@ import PostCell from '@/components/PostCell';
 import PostModal from '@/components/PostModal';
 import type { Holding } from '@/lib/economy/types';
 import { feedImage } from '@/lib/mediaUrl';
+import { getAspectRatio } from '@/lib/aspectRatio';
 import {
   getStacks, createStack, addStackItems, removeStackItem, renameStack, deleteStack,
   setStackHero, bakeHeroBanner, uploadHeroBanner, STACK_TITLE_MAX, BANNER_RATIO,
@@ -86,10 +87,24 @@ export default function CollectedGrid({
   const [sortMode, setSortMode] = useState<SortMode>('recent');
   const [sortOpen, setSortOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
-  const [detailId, setDetailId] = useState<string | null>(null);
+
 
   // Collage state
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  // IN-PLACE PROGRAM FILTER: tapping a banner filters the grid on the page —
+  // no navigation. activeStackId=null → all items. The swap animates: outgoing
+  // fade/scale (~150ms) → incoming stagger (~200ms, 25ms). Reduced-motion =
+  // instant swap.
+  const [activeStackId, setActiveStackId] = useState<string | null>(null);
+  const [swapPhase, setSwapPhase] = useState<'in' | 'out'>('in');
+  const [editStackId, setEditStackId] = useState<string | null>(null);
+  const reducedMotion = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  const switchTo = (id: string | null) => {
+    const next = id === activeStackId ? null : id;
+    if (reducedMotion) { setActiveStackId(next); setVisible(20); return; }
+    setSwapPhase('out');
+    window.setTimeout(() => { setActiveStackId(next); setVisible(20); setSwapPhase('in'); }, 150);
+  };
   const [filter, setFilter] = useState<Filter>('all');
   const [visible, setVisible] = useState(20);
   const seed = useMemo(() => sessionSeed(), []);
@@ -129,12 +144,32 @@ export default function CollectedGrid({
   }, [stacks, sortMode]);
 
   // Collage list: filter → session-stable shuffle (RECENT keeps natural order).
+  const activeStack = activeStackId ? (stacks ?? []).find((x) => x.id === activeStackId) ?? null : null;
   const collage = useMemo(() => {
     let list = rows ?? [];
+    if (activeStack) list = list.filter((h) => activeStack.itemPostIds.includes(h.postId)); // program filter (held-only by construction)
     if (filter === 'firstcut') list = list.filter((h) => fcCoins.has(String((h.post as { coin_address?: string | null }).coin_address ?? '').toLowerCase()));
     if (filter === 'recent') return list; // getCollected order = newest first
     return seededShuffle(list, seed);
-  }, [rows, filter, fcCoins, seed]);
+  }, [rows, filter, fcCoins, seed, activeStack]);
+
+  // TRUE-RATIO MASONRY (2 cols): greedy shortest-column packing — each cell
+  // keeps its post's OWN canonical ratio (no imposed cycle, no forced crop);
+  // the collage feel comes from the natural variety of the five ratios.
+  const ratioOf = (h: Holding): number => {
+    const ar = String(getAspectRatio((h.post as { layout_id?: string }).layout_id || '2x-scope')).split('/').map((x) => parseFloat(x));
+    return isFinite(ar[0]) && isFinite(ar[1]) && ar[1] > 0 ? ar[0] / ar[1] : 2.39;
+  };
+  const columns = useMemo(() => {
+    const cols: [Holding[], Holding[]] = [[], []];
+    const heights = [0, 0];
+    for (const h of collage.slice(0, visible)) {
+      const c = heights[0] <= heights[1] ? 0 : 1;
+      cols[c].push(h);
+      heights[c] += 1 / ratioOf(h); // height units at unit width
+    }
+    return cols;
+  }, [collage, visible]);
 
   const refreshStacks = () => { getStacks(userId).then(setStacks).catch(() => {}); };
 
@@ -161,7 +196,7 @@ export default function CollectedGrid({
   // Programs visible on this surface: owner sees all (empty ones carry the
   // curate prompt); public sees only programs with held items.
   const visibleStacks = sortedStacks.filter((s) => isOwn || heldItems(s).length > 0);
-  const detailStack = detailId ? (stacks ?? []).find((s) => s.id === detailId) ?? null : null;
+  const detailStack = editStackId ? (stacks ?? []).find((s) => s.id === editStackId) ?? null : null;
 
   return (
     <>
@@ -208,8 +243,8 @@ export default function CollectedGrid({
             return (
               <button
                 key={s.id}
-                onClick={() => setDetailId(s.id)}
-                style={{ position: 'relative', display: 'block', width: '100%', aspectRatio: `${BANNER_RATIO} / 1`, overflow: 'hidden', background: '#0d0d0d', border: 'none', cursor: 'pointer', padding: 0, marginBottom: 2 }}
+                onClick={() => switchTo(s.id)}
+                style={{ position: 'relative', display: 'block', width: '100%', aspectRatio: `${BANNER_RATIO} / 1`, overflow: 'hidden', background: '#0d0d0d', border: activeStackId === s.id ? '1px solid #FF0000' : '1px solid transparent', cursor: 'pointer', padding: 0, marginBottom: 2, boxSizing: 'border-box' }}
               >
                 {bannerSrc && (
                   <img src={bannerSrc} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
@@ -218,7 +253,7 @@ export default function CollectedGrid({
                 <span style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.35) 42%, rgba(0,0,0,0) 75%)' }} />
                 <span style={{ position: 'absolute', left: 12, bottom: 8, display: 'flex', alignItems: 'baseline', gap: 10 }}>
                   <span style={{ ...SKB, fontSize: 'var(--fs-12)', color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{s.title}</span>
-                  <span style={{ ...SKR, fontSize: 'var(--fs-7)', color: 'rgba(255,255,255,0.65)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{items.length} TITLES</span>
+                  <span style={{ ...SKR, fontSize: 'var(--fs-7)', color: 'rgba(255,255,255,0.65)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{items.length} ITEMS</span>
                 </span>
                 <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', gap: 8 }}>
                   <span style={{ ...SKB, fontSize: 'var(--fs-7)', color: 'rgba(255,255,255,0.7)', border: '1px solid rgba(255,255,255,0.3)', padding: '2px 6px', fontVariantNumeric: 'tabular-nums' }}>{items.length}</span>
@@ -234,7 +269,18 @@ export default function CollectedGrid({
       {rows.length > 0 && (
         <div>
           <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', padding: '6px 10px 10px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-            <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'rgba(255,255,255,0.85)', textTransform: 'uppercase', letterSpacing: '0.16em' }}>COLLECTED ITEMS</span>
+            {activeStack ? (
+              <span style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
+                <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.16em' }}>{activeStack.title}</span>
+                <span style={{ ...SKR, fontSize: 'var(--fs-7)', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{collage.length} ITEMS</span>
+                {isOwn && (
+                  <button onClick={() => setEditStackId(activeStack.id)} style={{ ...SKB, fontSize: 'var(--fs-7)', color: '#FF0000', background: 'transparent', border: 'none', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.08em', padding: 0 }}>EDIT</button>
+                )}
+                <button onClick={() => switchTo(null)} style={{ ...SKR, fontSize: 'var(--fs-7)', color: 'rgba(255,255,255,0.55)', background: 'transparent', border: 'none', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.08em', padding: 0 }}>× ALL ITEMS</button>
+              </span>
+            ) : (
+              <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'rgba(255,255,255,0.85)', textTransform: 'uppercase', letterSpacing: '0.16em' }}>COLLECTED ITEMS</span>
+            )}
             <span style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
               {(['all', 'firstcut', 'recent'] as Filter[]).map((f) => (
                 <button key={f} onClick={() => { setFilter(f); setVisible(20); }} style={{ ...SKR, fontSize: 'var(--fs-7)', color: filter === f ? '#FFF' : 'rgba(255,255,255,0.45)', background: 'transparent', border: 'none', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.08em', padding: 0 }}>
@@ -248,20 +294,27 @@ export default function CollectedGrid({
           </div>
 
           {viewMode === 'grid' ? (
-            <div className="grid grid-cols-2 gap-x-[1px] gap-y-[2px]">
-              {collage.slice(0, visible).map((h, i) => (
-                <PostCell
-                  key={h.postId}
-                  post={h.post as any}
-                  layoutId="collage"
-                  index={i}
-                  onClick={() => setOpenPost(h.post)}
-                  fcMark={fcCoins.has(String((h.post as { coin_address?: string | null }).coin_address ?? '').toLowerCase())}
-                />
+            /* TRUE-RATIO masonry: two shortest-column-packed flex columns; each
+               cell renders its post's OWN canonical ratio (PostCell paddingTop). */
+            <div className={swapPhase === 'out' ? 'collage-swap-out' : ''} style={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
+              {columns.map((col, ci) => (
+                <div key={ci} style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
+                  {col.map((h, i) => (
+                    <div key={h.postId} className={swapPhase === 'in' && !reducedMotion ? 'collage-cell-in' : ''} style={{ animationDelay: swapPhase === 'in' && !reducedMotion ? `${(ci + i * 2) * 25}ms` : undefined }}>
+                      <PostCell
+                        post={h.post as any}
+                        layoutId={(h.post as { layout_id?: string }).layout_id || '2x-scope'}
+                        index={0}
+                        onClick={() => setOpenPost(h.post)}
+                        fcMark={fcCoins.has(String((h.post as { coin_address?: string | null }).coin_address ?? '').toLowerCase())}
+                      />
+                    </div>
+                  ))}
+                </div>
               ))}
             </div>
           ) : (
-            <div>
+            <div className={swapPhase === 'out' ? 'collage-swap-out' : ''}>
               {collage.slice(0, visible).map((h) => (
                 <button key={h.postId} onClick={() => setOpenPost(h.post)} style={{ display: 'flex', width: '100%', alignItems: 'center', gap: 10, background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.06)', cursor: 'pointer', padding: '8px 10px', textAlign: 'left' }}>
                   <img src={feedImage(thumbOf(h) ?? '', 96)} alt="" style={{ width: 56, height: 34, objectFit: 'cover', display: 'block', background: '#111', flexShrink: 0 }} />
@@ -279,6 +332,12 @@ export default function CollectedGrid({
           )}
         </div>
       )}
+
+      <style>{`
+        .collage-swap-out { opacity: 0; transform: scale(0.97); transition: opacity 150ms ease, transform 150ms ease; }
+        .collage-cell-in { animation: collageCellIn 200ms ease both; }
+        @keyframes collageCellIn { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
+      `}</style>
 
       {openPost && (
         <PostModal post={openPost as any} onClose={() => setOpenPost(null)} />
@@ -303,7 +362,7 @@ export default function CollectedGrid({
           fcCoins={fcCoins}
           onChanged={refreshStacks}
           onOpenPost={(p) => setOpenPost(p)}
-          onClose={() => setDetailId(null)}
+          onClose={() => setEditStackId(null)}
         />
       )}
     </>
@@ -468,7 +527,7 @@ function ProgramDetail({
           ) : (
             <span style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
               <span style={{ ...SKB, fontSize: 'var(--fs-13)', color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{stack.title}</span>
-              <span style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase' }}>{items.length} TITLES</span>
+              <span style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase' }}>{items.length} ITEMS</span>
             </span>
           )}
           <button onClick={onClose} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 6 }}>
@@ -492,7 +551,7 @@ function ProgramDetail({
         )}
         {items.length === 0 && (
           <p style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '8px 0 12px' }}>
-            0 TITLES — {isOwn ? 'EVERYTHING HERE WAS SOLD. ADD HELD WORKS TO REVIVE IT.' : 'NOTHING HELD.'}
+            0 ITEMS — {isOwn ? 'EVERYTHING HERE WAS SOLD. ADD HELD WORKS TO REVIVE IT.' : 'NOTHING HELD.'}
           </p>
         )}
 
