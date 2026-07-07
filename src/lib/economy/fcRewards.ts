@@ -91,7 +91,9 @@ export async function accrueFcTrade(
       weight,
     };
   });
-  const { error } = await supabase.from('fc_rewards').upsert(rows, { onConflict: 'trade_tx,holder_user_id', ignoreDuplicates: true });
+  // .select() so `accrued` counts ACTUAL inserts — a re-seen trade (idempotent
+  // ignore) reports 0, keeping sweep/run reports truthful.
+  const { data, error } = await supabase.from('fc_rewards').upsert(rows, { onConflict: 'trade_tx,holder_user_id', ignoreDuplicates: true }).select('id');
   if (error) throw new Error(error.message);
-  return { accrued: rows.length, poolUsd: pool };
+  return { accrued: data?.length ?? 0, poolUsd: pool };
 }

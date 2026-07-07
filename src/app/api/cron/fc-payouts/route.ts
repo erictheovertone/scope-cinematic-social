@@ -46,6 +46,21 @@ const SWEEP_PAGES = 3;           // recent swaps per coin per run
 const SWEEP_WINDOW_MS = 26 * 3_600_000;
 const CHUNK = 500;               // ledger read page size (holder growth never breaks a run)
 
+/** Persist the run report — log retention (Vercel Hobby) never matters again;
+ *  run history lives in the DB. Tolerant: a missing table logs and moves on. */
+async function persistRun(supabase: import('@supabase/supabase-js').SupabaseClient, summary: Record<string, unknown>) {
+  const { error } = await supabase.from('fc_payout_runs').insert({
+    holders_paid: (summary.holdersPaid as number) ?? 0,
+    total_usd: (summary.paidUsd as number) ?? 0,
+    total_gas: (summary.gasEth as number) ?? 0,
+    zora_float: (summary.zora_float_remaining as number | null) ?? null,
+    eth_float: (summary.eth_gas_remaining as number | null) ?? null,
+    skipped_reason: (summary.skipped as string) ?? (summary.payouts as string) ?? (summary.note as string) ?? null,
+    swept_trades: (summary.sweptTrades as number) ?? 0,
+  });
+  if (error) console.warn('[fc-payout] run-row write failed (migration pending?):', error.message);
+}
+
 export async function GET(req: NextRequest) {
   const secret = process.env.CRON_SECRET;
   if (secret && req.headers.get('authorization') !== `Bearer ${secret}`) {
@@ -102,12 +117,15 @@ export async function GET(req: NextRequest) {
     try { if (process.env.FC_PAYOUT_PRIVATE_KEY) payoutAddress = privateKeyToAccount(process.env.FC_PAYOUT_PRIVATE_KEY as `0x${string}`).address; } catch { /* bad key format — leave null */ }
     const summary = { ok: true, ms: Date.now() - t0, sweptTrades, sweptRows, payouts: 'DISABLED (FC_PAYOUTS_ENABLED)', payoutAddress };
     console.log('[fc-payout] run (payouts off)', JSON.stringify(summary));
+    await persistRun(supabase, summary);
     return NextResponse.json(summary);
   }
   const pk = process.env.FC_PAYOUT_PRIVATE_KEY;
   if (!pk) {
     console.warn('[fc-payout] FC_PAYOUT_PRIVATE_KEY unset — accruals continue, payouts skipped');
-    return NextResponse.json({ ok: true, ms: Date.now() - t0, sweptTrades, sweptRows, payouts: 'NO KEY' });
+    const summary = { ok: true, ms: Date.now() - t0, sweptTrades, sweptRows, payouts: 'NO KEY' };
+    await persistRun(supabase, summary);
+    return NextResponse.json(summary);
   }
   // Address derived ONCE here so every response (incl. nothing-due) prints the
   // funding target. Address only — the key never leaves the env.
@@ -143,6 +161,7 @@ export async function GET(req: NextRequest) {
   if (!due.length) {
     const summary = { ok: true, ms: Date.now() - t0, sweptTrades, sweptRows, holdersPaid: 0, note: `nothing ≥ $${PAYOUT_MIN_USD}` , payoutAddress: account.address, zora_float_remaining: null as number | null, eth_gas_remaining: null as number | null };
     console.log('[fc-payout] run', JSON.stringify(summary));
+    await persistRun(supabase, summary);
     return NextResponse.json(summary);
   }
 
@@ -158,7 +177,9 @@ export async function GET(req: NextRequest) {
   const estGasUsd = gasPrice ? Number(gasPrice) * 60_000 * due.length / 1e18 * ETH_USD_CONSERVATIVE : 0;
   if (estGasUsd > batchUsd * GAS_GUARD_FRACTION) {
     console.warn(`[fc-payout] GAS HIGH — est $${estGasUsd.toFixed(4)} > 2% of batch $${batchUsd.toFixed(2)} — accruals roll`);
-    return NextResponse.json({ ok: true, ms: Date.now() - t0, sweptTrades, sweptRows, holdersPaid: 0, skipped: 'GAS HIGH', estGasUsd, batchUsd });
+    const summary = { ok: true, ms: Date.now() - t0, sweptTrades, sweptRows, holdersPaid: 0, skipped: 'GAS HIGH', estGasUsd, batchUsd };
+    await persistRun(supabase, summary);
+    return NextResponse.json(summary);
   }
   // DUAL-ASSET FLOAT: the wallet holds the ZORA payload AND the ETH gas —
   // an ERC-20 transfer can't pay its own gas. Check BOTH before transferring.
@@ -178,7 +199,9 @@ export async function GET(req: NextRequest) {
         type: 'market', message: `FC PAYOUT FLOAT LOW — ETH gas: ${ethGas.toFixed(5)} held, ${gasNeedEth.toFixed(5)} needed. Top up the payout wallet.`,
       }).then(({ error }) => { if (error) console.warn('[fc-payout] admin notify failed:', error.message); });
     }
-    return NextResponse.json({ ok: true, ms: Date.now() - t0, sweptTrades, sweptRows, holdersPaid: 0, skipped: 'FLOAT LOW (ETH gas)', ethGasRemaining: ethGas, zoraFloatRemaining: floatZora, payoutAddress: account.address });
+    const summary = { ok: true, ms: Date.now() - t0, sweptTrades, sweptRows, holdersPaid: 0, skipped: 'FLOAT LOW (ETH gas)', eth_gas_remaining: ethGas, zora_float_remaining: floatZora, payoutAddress: account.address };
+    await persistRun(supabase, summary);
+    return NextResponse.json(summary);
   }
   const totalZoraDue = due.reduce((s, [, e]) => s + e.zora, 0);
   let payList = due;
@@ -237,5 +260,6 @@ export async function GET(req: NextRequest) {
     payoutAddress: account.address, // address ONLY — the funding target
   };
   console.log('[fc-payout] RUN REPORT', JSON.stringify(summary));
+  await persistRun(supabase, summary);
   return NextResponse.json(summary);
 }
