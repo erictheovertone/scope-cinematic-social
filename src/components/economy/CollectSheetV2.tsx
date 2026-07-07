@@ -248,6 +248,17 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
   // remaining holding below the $4.50 keep-floor. Server-authoritative + on-chain
   // confirmed; never expires on a flaky read. Fire-and-forget; the badge
   // re-resolves on the next profile load.
+  // FIRST CUT REWARDS accrual — hangs beside the market-notification writer,
+  // AFTER receipt-true confirmation; a ledger failure never touches the trade.
+  const accrueFcRewards = (postId: string, txHash: string | undefined, volumeUsd: number | undefined) => {
+    if (!txHash || !Number.isFinite(volumeUsd) || (volumeUsd as number) <= 0) return;
+    fetch('/api/fc-rewards/accrue', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ postId, txHash, volumeUsd }),
+    }).catch(() => { /* fire-and-forget */ });
+  };
+
   const expireCheckFirstCut = (postId: string, txHash: string) => {
     if (!viewerWallet || !txHash) return;
     fetch('/api/first-cut/expire', {
@@ -293,6 +304,7 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
         // below the spend while the market-price read catches up to the trade.
         ceremonyResolve(post.id, n, undefined, v);
         checkFirstCut(post.id, r.ref, v); // Moment 1 — additive, non-blocking ($ floor)
+        accrueFcRewards(post.id, r.ref, v); // FC rewards — 0.18% of volume to active holders
         // Creator's MARKET notification — receipt-true trade only (r.ok above),
         // fire-and-forget (a failed insert never touches this ceremony).
         if (user?.id) notifyMarketTrade(post.id, 'collect', user.id, n, v);
@@ -328,6 +340,7 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
           r.proceedsUsd != null ? { usd: r.proceedsUsd, currency: sellCurrency } : undefined,
         );
         expireCheckFirstCut(post.id, r.ref); // lifecycle — expire the slot if this sell drops below the keep-floor
+        accrueFcRewards(post.id, r.ref, r.proceedsUsd ?? undefined); // FC rewards — sells are volume too
         // Creator's MARKET notification — same receipt-true, fire-and-forget contract.
         if (user?.id) notifyMarketTrade(post.id, 'sell', user.id, r.pieces ?? sellPieces);
       }

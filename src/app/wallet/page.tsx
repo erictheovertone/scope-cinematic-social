@@ -17,6 +17,7 @@ import { groupActivity, shortAddr as shortAddr0x, type ActivityRow } from "@/lib
 import { supabase } from "@/lib/supabase/client";
 import { getUserByPrivyId } from "@/lib/userService";
 import { getEarnings, sumAll, type EarningsData } from "@/lib/economy/earnings";
+import { feedImage } from "@/lib/mediaUrl";
 import EarningsSheet from "@/components/economy/EarningsSheet";
 import SwapSheet, { type SwapInitial } from "@/components/SwapSheet";
 import ImportAssetSheet from "@/components/ImportAssetSheet";
@@ -42,7 +43,7 @@ export default function WalletPage() {
   const router = useRouter();
   const walletAddress = user?.wallet?.address ?? "";
 
-  const [activeTab, setActiveTab] = useState<"balances" | "holdings" | "activity">("balances");
+  const [activeTab, setActiveTab] = useState<"balances" | "holdings" | "earnings" | "activity">("balances");
   // ETH/USD via the boundary's single source; null = rate unavailable → "$—".
   const [ethUsdRate, setEthUsdRate] = useState<number | null>(null);
   const [ethBalance, setEthBalance] = useState<string | null>(null);
@@ -62,6 +63,11 @@ export default function WalletPage() {
   // already held or spent). earnTarget goes 0 → allTime so the stat counts up
   // on wallet open (useCountUp lands the first value instantly by design).
   const [earnings, setEarnings] = useState<EarningsData | null>(null);
+  // FIRST CUT REWARDS accruals (the COLLECTED category) — fetched when the
+  // EARNINGS pane opens; per-post rows from the append-only fc_rewards ledger.
+  type FcRewardPost = { postId: string; coinAddress: string; accruedUsd: number; unpaidUsd: number; ticker: string | null; thumb: string | null; layoutId: string | null };
+  const [fcRewards, setFcRewards] = useState<{ posts: FcRewardPost[]; totalUsd: number; unpaidUsd: number } | null>(null);
+  const [openCat, setOpenCat] = useState<'portfolio' | 'collected' | null>(null);
   const [earnTarget, setEarnTarget] = useState<number | null>(null);
   const [earnOpen, setEarnOpen] = useState(false);
   // Bell: unread MARKET (non-social) notifications → red dot; tap deep-links
@@ -446,6 +452,23 @@ export default function WalletPage() {
     return () => { alive = false; };
   }, [user?.id]);
 
+  // COLLECTED accruals load — on first EARNINGS-pane open (uuid via the same
+  // verified path the earnings load uses).
+  useEffect(() => {
+    if (activeTab !== "earnings" || fcRewards !== null || !user?.id) return;
+    let alive = true;
+    (async () => {
+      try {
+        const u = await getUserByPrivyId(user.id);
+        if (!u || !alive) return;
+        const r = await fetch(`/api/fc-rewards?user=${u.id}`);
+        const j = await r.json();
+        if (alive) setFcRewards({ posts: j.posts ?? [], totalUsd: j.totalUsd ?? 0, unpaidUsd: j.unpaidUsd ?? 0 });
+      } catch { if (alive) setFcRewards({ posts: [], totalUsd: 0, unpaidUsd: 0 }); }
+    })();
+    return () => { alive = false; };
+  }, [activeTab, fcRewards, user?.id]);
+
   // Imported assets: resolve uuid once, load the list, then read balances via
   // the existing readContract pattern (balance-only rows; USD out of scope).
   useEffect(() => {
@@ -821,17 +844,17 @@ export default function WalletPage() {
         </div>
       )}
 
-      {/* TABS — BALANCES / HOLDINGS / EARNINGS / ACTIVITY. EARNINGS opens the
-          earnings sheet (the existing feature — no new tab pane); the other
-          three switch panes as before. Active = the short 45px hairline over
-          the full-width hairline. */}
+      {/* TABS — BALANCES / HOLDINGS / EARNINGS / ACTIVITY. EARNINGS is now a
+          REAL pane (PORTFOLIO + COLLECTED detail); the ⓘ header stat keeps
+          opening the summary sheet. Active = the short 45px hairline over the
+          full-width hairline. */}
       <div style={{ display: "flex", justifyContent: "space-between", margin: "24px 13px 0", borderBottom: "1px solid rgba(255,255,255,0.12)" }}>
         {(["balances", "holdings", "earnings", "activity"] as const).map(tab => {
-          const active = tab !== "earnings" && activeTab === tab;
+          const active = activeTab === tab;
           return (
             <button
               key={tab}
-              onClick={() => { if (tab === "earnings") { if (earnings) setEarnOpen(true); } else setActiveTab(tab); }}
+              onClick={() => setActiveTab(tab)}
               style={{
                 ...SKR, fontSize: 10.5, background: "none", border: "none",
                 cursor: "pointer", padding: "6px 0 5px", position: "relative",
@@ -1059,6 +1082,89 @@ export default function WalletPage() {
 
         {/* ACTIVITY — one readable row per trade (legs grouped by tx hash; amounts
             shown in FRAGMENTS via the single-source tokenomics conversion). */}
+        {/* EARNINGS — the detail view (the ⓘ sheet stays the summary+chart).
+            Two categories: PORTFOLIO (creator fees per post — the SAME decoded
+            events as SCOPE EARNINGS, so totals match to the cent) and COLLECTED
+            (First Cut reward accruals per FC-held post + position value).
+            Brand: earnings-sheet language — hairlines, SK-Modernist, money-
+            green for received, muted for accrued-unpaid. */}
+        {activeTab === "earnings" && (() => {
+          const green = '#00E08A';
+          const portfolioTotal = earnings ? sumAll(earnings.events) : null;
+          const byPost = earnings?.byPost ?? [];
+          const held = new Map((holdings ?? []).map((h) => [h.postId, h]));
+          const catHeader = (label: string, total: string, open: boolean, onTap: () => void, sub?: string) => (
+            <button onClick={onTap} style={{ display: 'flex', width: '100%', alignItems: 'baseline', justifyContent: 'space-between', background: 'transparent', border: 'none', cursor: 'pointer', padding: '14px 2px 12px' }}>
+              <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</span>
+              <span style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                {sub && <span style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{sub}</span>}
+                <span style={{ ...SKB, fontSize: 'var(--fs-13)', color: green, fontVariantNumeric: 'tabular-nums' }}>{total}</span>
+                <span style={{ ...SKR, fontSize: 'var(--fs-10)', color: 'rgba(255,255,255,0.4)' }}>{open ? '−' : '+'}</span>
+              </span>
+            </button>
+          );
+          const rowStyle: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 10, padding: '8px 2px' };
+          const thumbStyle: React.CSSProperties = { width: 44, height: 28, objectFit: 'cover', display: 'block', background: '#111', flexShrink: 0 };
+          return (
+            <div>
+              {/* ── PORTFOLIO — creator fees, per post ── */}
+              {catHeader('PORTFOLIO', portfolioTotal != null ? `$${portfolioTotal.toFixed(2)}` : '…', openCat === 'portfolio', () => setOpenCat(openCat === 'portfolio' ? null : 'portfolio'), 'CREATOR FEES')}
+              <div style={{ height: 1, background: 'rgba(255,255,255,0.12)' }} />
+              {openCat === 'portfolio' && (
+                byPost.length === 0 ? (
+                  <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.06em', padding: '12px 2px' }}>
+                    {earnings ? 'NO CREATOR FEES YET — FEES ACCRUE ON EVERY COLLECT & TRADE OF YOUR WORK' : 'LOADING…'}
+                  </p>
+                ) : byPost.map((p) => (
+                  <div key={p.postId} style={rowStyle}>
+                    {p.thumb ? <img src={feedImage(p.thumb, 96)} alt="" style={thumbStyle} /> : <div style={thumbStyle} />}
+                    <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: '#FFF', textTransform: 'uppercase', flex: 1 }}>{p.ticker ? `[ ${p.ticker} ]` : '—'}</span>
+                    <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: green, fontVariantNumeric: 'tabular-nums' }}>${p.usd.toFixed(2)}</span>
+                  </div>
+                ))
+              )}
+
+              {/* ── COLLECTED — First Cut rewards, per FC-held post ── */}
+              {catHeader('COLLECTED', fcRewards ? `$${fcRewards.totalUsd.toFixed(2)}` : '…', openCat === 'collected', () => setOpenCat(openCat === 'collected' ? null : 'collected'), 'FIRST CUT REWARDS')}
+              <div style={{ height: 1, background: 'rgba(255,255,255,0.12)' }} />
+              {openCat === 'collected' && (
+                !fcRewards || fcRewards.posts.length === 0 ? (
+                  <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.06em', padding: '12px 2px' }}>
+                    {fcRewards ? 'NO FIRST CUT REWARDS YET — HOLD A FIRST CUT AND EARN FROM EVERY TRADE' : 'LOADING…'}
+                  </p>
+                ) : (
+                  <>
+                    {fcRewards.unpaidUsd > 0.005 && (
+                      /* copy DRAFT — Eric approves before ship */
+                      <p style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.06em', padding: '10px 2px 0' }}>
+                        ${fcRewards.unpaidUsd.toFixed(2)} ACCRUED · PAYS OUT DAILY
+                      </p>
+                    )}
+                    {fcRewards.posts.map((p) => {
+                      const pos = held.get(p.postId);
+                      return (
+                        <div key={p.postId} style={rowStyle}>
+                          {p.thumb ? <img src={feedImage(p.thumb, 96)} alt="" style={thumbStyle} /> : <div style={thumbStyle} />}
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: '#FFF', textTransform: 'uppercase', display: 'block' }}>{p.ticker ? `[ ${p.ticker} ]` : '—'}</span>
+                            <span style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                              {pos ? `POSITION $${pos.valueUsd.toFixed(2)}` : 'POSITION EXITED'}
+                            </span>
+                          </div>
+                          <div style={{ textAlign: 'right' }}>
+                            <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: p.unpaidUsd > 0.005 ? 'rgba(255,255,255,0.75)' : green, fontVariantNumeric: 'tabular-nums', display: 'block' }}>${p.accruedUsd.toFixed(2)}</span>
+                            {p.unpaidUsd > 0.005 && <span style={{ ...SKR, fontSize: 'var(--fs-7)', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase' }}>ACCRUED</span>}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </>
+                )
+              )}
+            </div>
+          );
+        })()}
+
         {activeTab === "activity" && (
           <div>
             {txLoading && activityRows.length === 0 ? (

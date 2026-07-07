@@ -65,7 +65,7 @@ export async function GET(req: NextRequest) {
 
   const { data: posts } = await supabase
     .from('posts')
-    .select('id, coin_address, creator_address')
+    .select('id, coin_address, creator_address, ticker, poster_url, thumbnail_url, media_urls, layout_id')
     .eq('user_id', userId)
     .eq('token_standard', 'coin')
     .not('coin_address', 'is', null);
@@ -133,8 +133,20 @@ export async function GET(req: NextRequest) {
   const perCoin = await mapPoolRewards(posts ?? [], COIN_CONCURRENCY, processCoin);
   const events = perCoin.flat().sort((a, b) => a.t - b.t);
 
+  // Per-post rollup for the wallet's PORTFOLIO detail — same decoded events,
+  // grouped: the tab's total is sumAll(events) by construction (zero drift vs
+  // the SCOPE EARNINGS stat).
+  const byPost = (posts ?? []).map((p: Record<string, unknown>, i: number) => ({
+    postId: p.id as string,
+    coinAddress: (p.coin_address as string | null) ?? null,
+    usd: (perCoin[i] ?? []).reduce((s, ev) => s + ev.usd, 0),
+    ticker: (p.ticker as string | null) ?? null,
+    thumb: (p.poster_url as string | null) || (p.thumbnail_url as string | null) || ((p.media_urls as string[] | null)?.[0] ?? null),
+    layoutId: (p.layout_id as string | null) ?? null,
+  })).filter((x) => x.usd > 0).sort((a, b) => b.usd - a.usd);
+
   if (heavy) console.warn(`[earnings] heavy history for user ${userId} (>${HEAVY_PAGES} pages on a coin) — cron-precompute signal`);
 
-  const payload: EarningsData = { accountCreatedAt, events, heavy, truncated };
+  const payload: EarningsData = { accountCreatedAt, events, heavy, truncated, byPost };
   return NextResponse.json(payload);
 }

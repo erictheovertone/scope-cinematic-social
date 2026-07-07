@@ -18,3 +18,18 @@ export function tokenUnitsToFragments(tokenUnits: number): number {
   if (!Number.isFinite(tokenUnits) || tokenUnits <= 0) return 0;
   return Math.round(tokenUnits / TOKENS_PER_PIECE);
 }
+
+// ── FIRST CUT REWARDS (Scope-funded, from the platform's 0.2% referral stream) ─
+// FC holders earn FC_REWARD_RATE of every trade's volume on coins they hold an
+// ACTIVE First Cut in, split by rank weight. Env-tunable (server-side dial —
+// accrual + payouts read it; no redeploy to retune). CREATOR_FEE_RATE lives in
+// recap.ts; this is the FC analogue, kept here with the other tokenomics truths.
+export const FC_REWARD_RATE = Number(process.env.FC_REWARD_RATE ?? '0.0018');
+
+/** Linear-descending rank weight: weight(rank r of n active slots) =
+ *  (n − r + 1) / Σ(1..n). For 10 slots: #1 = 18.18% … #10 = 1.82%.
+ *  Weights over the ELIGIBLE set always sum to 1 — the pool fully distributes. */
+export function fcRankWeight(rank: number, n: number): number {
+  if (!Number.isInteger(rank) || !Number.isInteger(n) || n <= 0 || rank < 1 || rank > n) return 0;
+  return (n - rank + 1) / ((n * (n + 1)) / 2);
+}

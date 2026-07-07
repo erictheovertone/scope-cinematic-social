@@ -20,6 +20,12 @@ export interface EarningsData {
   heavy: boolean;
   /** A coin hit the pagination cap — figures are a floor, not exact. */
   truncated: boolean;
+  /** Per-post rollup of the same events (the wallet PORTFOLIO detail).
+      Optional: older session-cached payloads may lack it. */
+  byPost?: {
+    postId: string; coinAddress: string | null; usd: number;
+    ticker: string | null; thumb: string | null; layoutId: string | null;
+  }[];
 }
 
 const DAY_MS = 86_400_000;
