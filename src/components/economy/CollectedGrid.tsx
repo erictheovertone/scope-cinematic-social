@@ -22,6 +22,7 @@ import PostModal from '@/components/PostModal';
 import type { Holding } from '@/lib/economy/types';
 import { feedImage } from '@/lib/mediaUrl';
 import { getAspectRatio } from '@/lib/aspectRatio';
+import { PIECE_SUPPLY } from '@/lib/economy/mock';
 import {
   getStacks, createStack, addStackItems, removeStackItem, renameStack, deleteStack,
   setStackHero, bakeHeroBanner, uploadHeroBanner, STACK_TITLE_MAX, BANNER_RATIO,
@@ -60,13 +61,17 @@ function seededShuffle<T>(list: T[], seed: number): T[] {
   return out;
 }
 
+const mcOf = (h: Holding): string => {
+  if (h.priceUsd == null) return 'MC: —';
+  const mc = h.priceUsd * PIECE_SUPPLY; // the boundary's own MC math (one source)
+  return mc >= 1000 ? `MC: $${Math.round(mc).toLocaleString()}` : `MC: $${mc.toFixed(2)}`;
+};
+
 const thumbOf = (h: Holding): string | null => {
   const p = h.post as { poster_url?: string; thumbnail_url?: string; media_urls?: string[] };
   return p.poster_url || p.thumbnail_url || p.media_urls?.[0] || h.thumbUrl || null;
 };
 
-type SortMode = 'recent' | 'oldest' | 'custom';
-type Filter = 'all' | 'firstcut' | 'recent';
 
 export default function CollectedGrid({
   userId,
@@ -84,8 +89,6 @@ export default function CollectedGrid({
 
   // REPERTORY state
   const [stacks, setStacks] = useState<CollectedStack[] | null>(null);
-  const [sortMode, setSortMode] = useState<SortMode>('recent');
-  const [sortOpen, setSortOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
 
 
@@ -105,7 +108,6 @@ export default function CollectedGrid({
     setSwapPhase('out');
     window.setTimeout(() => { setActiveStackId(next); setVisible(20); setSwapPhase('in'); }, 150);
   };
-  const [filter, setFilter] = useState<Filter>('all');
   const [visible, setVisible] = useState(20);
   const seed = useMemo(() => sessionSeed(), []);
 
@@ -135,23 +137,20 @@ export default function CollectedGrid({
   const heldItems = (s: CollectedStack): Holding[] =>
     s.itemPostIds.map((id) => held.get(id)).filter(Boolean) as Holding[];
 
+  // No sort control (killed in the polish pass) — position, then recent.
   const sortedStacks = useMemo(() => {
     const list = [...(stacks ?? [])];
-    if (sortMode === 'recent') list.sort((a, b) => b.created_at.localeCompare(a.created_at));
-    else if (sortMode === 'oldest') list.sort((a, b) => a.created_at.localeCompare(b.created_at));
-    else list.sort((a, b) => a.position - b.position || b.created_at.localeCompare(a.created_at));
+    list.sort((a, b) => a.position - b.position || b.created_at.localeCompare(a.created_at));
     return list;
-  }, [stacks, sortMode]);
+  }, [stacks]);
 
   // Collage list: filter → session-stable shuffle (RECENT keeps natural order).
   const activeStack = activeStackId ? (stacks ?? []).find((x) => x.id === activeStackId) ?? null : null;
   const collage = useMemo(() => {
     let list = rows ?? [];
     if (activeStack) list = list.filter((h) => activeStack.itemPostIds.includes(h.postId)); // program filter (held-only by construction)
-    if (filter === 'firstcut') list = list.filter((h) => fcCoins.has(String((h.post as { coin_address?: string | null }).coin_address ?? '').toLowerCase()));
-    if (filter === 'recent') return list; // getCollected order = newest first
     return seededShuffle(list, seed);
-  }, [rows, filter, fcCoins, seed, activeStack]);
+  }, [rows, seed, activeStack]);
 
   // TRUE-RATIO MASONRY (2 cols): greedy shortest-column packing — each cell
   // keeps its post's OWN canonical ratio (no imposed cycle, no forced crop);
@@ -206,20 +205,6 @@ export default function CollectedGrid({
           <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', padding: '4px 10px 10px' }}>
             <span style={{ ...SKB, fontSize: 'var(--fs-13)', color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.18em' }}>REPERTORY</span>
             <span style={{ display: 'flex', alignItems: 'baseline', gap: 14 }}>
-              <span style={{ position: 'relative' }}>
-                <button onClick={() => setSortOpen((o) => !o)} style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.55)', background: 'transparent', border: 'none', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.08em', padding: 0 }}>
-                  SORT BY {sortMode === 'recent' ? 'RECENT' : sortMode === 'oldest' ? 'OLDEST' : 'CUSTOM'} ▾
-                </button>
-                {sortOpen && (
-                  <span style={{ position: 'absolute', top: '130%', right: 0, background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.14)', zIndex: 20, display: 'flex', flexDirection: 'column', minWidth: 96 }}>
-                    {(['recent', 'oldest', 'custom'] as SortMode[]).map((m) => (
-                      <button key={m} onClick={() => { setSortMode(m); setSortOpen(false); }} style={{ ...SKR, fontSize: 'var(--fs-8)', color: m === sortMode ? '#FFF' : 'rgba(255,255,255,0.55)', background: 'transparent', border: 'none', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '7px 10px', textAlign: 'right' }}>
-                        {m.toUpperCase()}
-                      </button>
-                    ))}
-                  </span>
-                )}
-              </span>
               {isOwn && (
                 <button onClick={() => setCreateOpen(true)} style={{ ...SKB, fontSize: 'var(--fs-8)', color: '#FFF', background: 'transparent', border: 'none', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.06em', padding: 0 }}>
                   + NEW PROGRAM
@@ -244,11 +229,23 @@ export default function CollectedGrid({
               <button
                 key={s.id}
                 onClick={() => switchTo(s.id)}
-                style={{ position: 'relative', display: 'block', width: '100%', aspectRatio: `${BANNER_RATIO} / 1`, overflow: 'hidden', background: '#0d0d0d', border: activeStackId === s.id ? '1px solid #FF0000' : '1px solid transparent', cursor: 'pointer', padding: 0, marginBottom: 2, boxSizing: 'border-box' }}
+                style={{
+                  position: 'relative', display: 'block', width: '100%', aspectRatio: `${BANNER_RATIO} / 1`, overflow: 'hidden', cursor: 'pointer', padding: 0, marginBottom: 2, boxSizing: 'border-box',
+                  // ACTIVE = a quiet 0.5px gradient stroke (red fading diagonally to
+                  // near-nothing) via the padding-box/border-box double background —
+                  // a glow of selection, not an alert.
+                  border: '0.5px solid transparent',
+                  background: activeStackId === s.id
+                    ? 'linear-gradient(#0d0d0d, #0d0d0d) padding-box, linear-gradient(135deg, rgba(255,0,0,0.55), rgba(255,0,0,0.08)) border-box'
+                    : '#0d0d0d',
+                }}
               >
                 {bannerSrc && (
                   <img src={bannerSrc} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                 )}
+                {/* side vignettes — soft black feathering in from BOTH edges so the
+                    title (left) and chip/› (right) pop; the hero stays readable. */}
+                <span style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0) 18%, rgba(0,0,0,0) 82%, rgba(0,0,0,0.45) 100%)' }} />
                 {/* left→right scrim for legibility */}
                 <span style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.35) 42%, rgba(0,0,0,0) 75%)' }} />
                 <span style={{ position: 'absolute', left: 12, bottom: 8, display: 'flex', alignItems: 'baseline', gap: 10 }}>
@@ -268,27 +265,25 @@ export default function CollectedGrid({
       {/* ═══ COLLECTED ITEMS — the randomized collage ═══ */}
       {rows.length > 0 && (
         <div>
-          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', padding: '6px 10px 10px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 10px 10px', borderTop: '1px solid rgba(255,255,255,0.08)', whiteSpace: 'nowrap' }}>
             {activeStack ? (
-              <span style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
-                <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.16em' }}>{activeStack.title}</span>
-                <span style={{ ...SKR, fontSize: 'var(--fs-7)', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{collage.length} ITEMS</span>
-                {isOwn && (
-                  <button onClick={() => setEditStackId(activeStack.id)} style={{ ...SKB, fontSize: 'var(--fs-7)', color: '#FF0000', background: 'transparent', border: 'none', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.08em', padding: 0 }}>EDIT</button>
-                )}
-                <button onClick={() => switchTo(null)} style={{ ...SKR, fontSize: 'var(--fs-7)', color: 'rgba(255,255,255,0.55)', background: 'transparent', border: 'none', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.08em', padding: 0 }}>× ALL ITEMS</button>
-              </span>
+              <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.16em', overflow: 'hidden', textOverflow: 'ellipsis' }}>{activeStack.title}</span>
             ) : (
               <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'rgba(255,255,255,0.85)', textTransform: 'uppercase', letterSpacing: '0.16em' }}>COLLECTED ITEMS</span>
             )}
-            <span style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
-              {(['all', 'firstcut', 'recent'] as Filter[]).map((f) => (
-                <button key={f} onClick={() => { setFilter(f); setVisible(20); }} style={{ ...SKR, fontSize: 'var(--fs-7)', color: filter === f ? '#FFF' : 'rgba(255,255,255,0.45)', background: 'transparent', border: 'none', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.08em', padding: 0 }}>
-                  {f === 'firstcut' ? 'FIRST CUT' : f.toUpperCase()}
-                </button>
-              ))}
-              <button onClick={() => setViewMode((m) => (m === 'grid' ? 'list' : 'grid'))} aria-label="Toggle view" style={{ ...SKR, fontSize: 'var(--fs-7)', color: 'rgba(255,255,255,0.55)', background: 'transparent', border: 'none', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.08em', padding: 0 }}>
-                {viewMode === 'grid' ? 'LIST' : 'GRID'}
+            <span style={{ display: 'flex', alignItems: 'center', gap: 14, flexShrink: 0 }}>
+              {activeStack && isOwn && (
+                <button onClick={() => setEditStackId(activeStack.id)} style={{ ...SKB, fontSize: 'var(--fs-7)', color: '#FF0000', background: 'transparent', border: 'none', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.08em', padding: 0 }}>EDIT</button>
+              )}
+              {activeStack && (
+                <button onClick={() => switchTo(null)} aria-label="Show all items" style={{ ...SKR, fontSize: 'var(--fs-12)', color: 'rgba(255,255,255,0.6)', background: 'transparent', border: 'none', cursor: 'pointer', lineHeight: 1, padding: 0 }}>×</button>
+              )}
+              {/* grid / list toggle — icons only */}
+              <button onClick={() => setViewMode('grid')} aria-label="Grid view" style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, lineHeight: 0, opacity: viewMode === 'grid' ? 1 : 0.4 }}>
+                <svg width="13" height="13" viewBox="0 0 13 13"><rect x="0" y="0" width="5.5" height="5.5" fill="#FFF"/><rect x="7.5" y="0" width="5.5" height="5.5" fill="#FFF"/><rect x="0" y="7.5" width="5.5" height="5.5" fill="#FFF"/><rect x="7.5" y="7.5" width="5.5" height="5.5" fill="#FFF"/></svg>
+              </button>
+              <button onClick={() => setViewMode('list')} aria-label="List view" style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, lineHeight: 0, opacity: viewMode === 'list' ? 1 : 0.4 }}>
+                <svg width="13" height="13" viewBox="0 0 13 13"><rect x="0" y="1" width="13" height="2" fill="#FFF"/><rect x="0" y="5.5" width="13" height="2" fill="#FFF"/><rect x="0" y="10" width="13" height="2" fill="#FFF"/></svg>
               </button>
             </span>
           </div>
@@ -319,7 +314,10 @@ export default function CollectedGrid({
                 <button key={h.postId} onClick={() => setOpenPost(h.post)} style={{ display: 'flex', width: '100%', alignItems: 'center', gap: 10, background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.06)', cursor: 'pointer', padding: '8px 10px', textAlign: 'left' }}>
                   <img src={feedImage(thumbOf(h) ?? '', 96)} alt="" style={{ width: 56, height: 34, objectFit: 'cover', display: 'block', background: '#111', flexShrink: 0 }} />
                   <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: '#FFF', textTransform: 'uppercase', flex: 1 }}>{h.ticker ? `[ ${h.ticker} ]` : '—'}</span>
-                  <span style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.55)', fontVariantNumeric: 'tabular-nums' }}>${h.valueUsd.toFixed(2)}</span>
+                  {/* PUBLIC data only — the post's MCAP (the feed's MC language).
+                      NEVER holdings/position values here (owner economics live in
+                      the wallet's PORTFOLIO/COLLECTED, not on a public surface). */}
+                  <span style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.55)', fontVariantNumeric: 'tabular-nums' }}>{mcOf(h)}</span>
                 </button>
               ))}
             </div>
