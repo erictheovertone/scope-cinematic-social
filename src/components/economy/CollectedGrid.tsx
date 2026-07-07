@@ -1,24 +1,71 @@
 'use client';
-// ── COLLECTED — the page (ownership as identity, the curator résumé) ─────────
+// ── COLLECTED — REPERTORY (curated programs) + the collage of everything held ─
 //
-// A grid of posts where the PROFILE USER holds >0 pieces, EXCLUDING their own
-// posts (ratified: self-positions live on the post and in the wallet). Public
-// by nature — the data is on-chain; anyone can view anyone's collected grid.
-// Tiles are the graded media in the established grid language (PostCell, which
-// already carries the [ TICKER ]/MC chrome for coin posts); pieces/value
-// detail lives one tap in: tile → the unified lightbox → collect sheet.
+// Two layers, per Eric's reference:
+//  1. REPERTORY — curated PROGRAMS of collected work: ultrawide banner rows
+//     (baked hero + scrim + title + held count) → detail sheet (grid + owner
+//     tools). HOLD-ONLY SEMANTICS: membership rows persist, every render
+//     FILTERS by current holdings — selling drops an item everywhere, re-
+//     collecting restores it (the row never died). Counts = held items only.
+//  2. COLLECTED ITEMS — ALL held items in a randomized collage (mixed cells via
+//     the canonical collage aspect cycle), session-stable shuffle, grid/list
+//     toggle, ALL/FIRST CUT/RECENT filter, LOAD MORE. Cells open the lightbox
+//     ONLY (no theatre icon — ratified).
 //
-// DEFERRED by design: grouping/organization (post-launch); the ] • [ First Cut
-// insignia on tiles (needs the indexer — the tile's top-right slot stays
-// reserved for it).
+// One component serves BOTH profiles (own + public); editing is owner-only.
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useEconomy } from '@/components/EconomyProvider';
 import PostCell from '@/components/PostCell';
 import PostModal from '@/components/PostModal';
 import type { Holding } from '@/lib/economy/types';
+import { feedImage } from '@/lib/mediaUrl';
+import {
+  getStacks, createStack, addStackItems, removeStackItem, renameStack, deleteStack,
+  setStackHero, bakeHeroBanner, uploadHeroBanner, STACK_TITLE_MAX, BANNER_RATIO,
+  type CollectedStack,
+} from '@/lib/collectedStacks';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
+const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
+
+// Session-stable shuffle: fresh per visit, stable within the session.
+function mulberry32(seed: number) {
+  let a = seed;
+  return () => {
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function sessionSeed(): number {
+  if (typeof window === 'undefined') return 1;
+  const k = 'scope:collageSeed';
+  const cur = sessionStorage.getItem(k);
+  if (cur) return parseInt(cur, 10);
+  const s = Math.floor(Math.random() * 2 ** 31);
+  sessionStorage.setItem(k, String(s));
+  return s;
+}
+function seededShuffle<T>(list: T[], seed: number): T[] {
+  const rand = mulberry32(seed);
+  const out = [...list];
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+
+const thumbOf = (h: Holding): string | null => {
+  const p = h.post as { poster_url?: string; thumbnail_url?: string; media_urls?: string[] };
+  return p.poster_url || p.thumbnail_url || p.media_urls?.[0] || h.thumbUrl || null;
+};
+
+type SortMode = 'recent' | 'oldest' | 'custom';
+type Filter = 'all' | 'firstcut' | 'recent';
 
 export default function CollectedGrid({
   userId,
@@ -26,15 +73,26 @@ export default function CollectedGrid({
 }: {
   /** The PROFILE user (Supabase id) whose collected positions to show. */
   userId: string;
-  /** Own profile gets the on-grammar empty line; public shows an empty grid. */
+  /** Own profile gets edit tools + empty-state prompts; public is read-only. */
   isOwn?: boolean;
 }) {
   const economy = useEconomy();
   const [rows, setRows] = useState<Holding[] | null>(null);
-  // ONE batched read of the OWNER's active First Cut coins per tab load — no
-  // per-item queries. Marks h.post.coin_address membership.
   const [fcCoins, setFcCoins] = useState<Set<string>>(new Set());
   const [openPost, setOpenPost] = useState<Record<string, unknown> | null>(null);
+
+  // REPERTORY state
+  const [stacks, setStacks] = useState<CollectedStack[] | null>(null);
+  const [sortMode, setSortMode] = useState<SortMode>('recent');
+  const [sortOpen, setSortOpen] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [detailId, setDetailId] = useState<string | null>(null);
+
+  // Collage state
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [filter, setFilter] = useState<Filter>('all');
+  const [visible, setVisible] = useState(20);
+  const seed = useMemo(() => sessionSeed(), []);
 
   useEffect(() => {
     let cancelled = false;
@@ -45,6 +103,9 @@ export default function CollectedGrid({
     economy.getFirstCutCoins(userId)
       .then((coins) => { if (!cancelled) setFcCoins(new Set(coins)); })
       .catch(() => { /* no marks on failure — never blocks the grid */ });
+    getStacks(userId)
+      .then((s) => { if (!cancelled) setStacks(s); })
+      .catch(() => { if (!cancelled) setStacks([]); });
     const onBadges = () => {
       economy.getFirstCutCoins(userId)
         .then((coins) => { if (!cancelled) setFcCoins(new Set(coins)); })
@@ -54,6 +115,29 @@ export default function CollectedGrid({
     return () => { cancelled = true; window.removeEventListener('scope:badges-changed', onBadges); };
   }, [userId, economy]);
 
+  // HOLD-ONLY truth: postId → Holding for everything currently held.
+  const held = useMemo(() => new Map((rows ?? []).map((h) => [h.postId, h])), [rows]);
+  const heldItems = (s: CollectedStack): Holding[] =>
+    s.itemPostIds.map((id) => held.get(id)).filter(Boolean) as Holding[];
+
+  const sortedStacks = useMemo(() => {
+    const list = [...(stacks ?? [])];
+    if (sortMode === 'recent') list.sort((a, b) => b.created_at.localeCompare(a.created_at));
+    else if (sortMode === 'oldest') list.sort((a, b) => a.created_at.localeCompare(b.created_at));
+    else list.sort((a, b) => a.position - b.position || b.created_at.localeCompare(a.created_at));
+    return list;
+  }, [stacks, sortMode]);
+
+  // Collage list: filter → session-stable shuffle (RECENT keeps natural order).
+  const collage = useMemo(() => {
+    let list = rows ?? [];
+    if (filter === 'firstcut') list = list.filter((h) => fcCoins.has(String((h.post as { coin_address?: string | null }).coin_address ?? '').toLowerCase()));
+    if (filter === 'recent') return list; // getCollected order = newest first
+    return seededShuffle(list, seed);
+  }, [rows, filter, fcCoins, seed]);
+
+  const refreshStacks = () => { getStacks(userId).then(setStacks).catch(() => {}); };
+
   if (rows === null) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '30vh' }}>
@@ -62,7 +146,7 @@ export default function CollectedGrid({
     );
   }
 
-  if (rows.length === 0) {
+  if (rows.length === 0 && !(stacks ?? []).length) {
     return isOwn ? (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '30vh', padding: '0 32px' }}>
         <p style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', textAlign: 'center', letterSpacing: '0.08em', lineHeight: 1.8 }}>
@@ -74,23 +158,381 @@ export default function CollectedGrid({
     );
   }
 
+  // Programs visible on this surface: owner sees all (empty ones carry the
+  // curate prompt); public sees only programs with held items.
+  const visibleStacks = sortedStacks.filter((s) => isOwn || heldItems(s).length > 0);
+  const detailStack = detailId ? (stacks ?? []).find((s) => s.id === detailId) ?? null : null;
+
   return (
     <>
-      <div className="grid grid-cols-2 gap-x-[1px] gap-y-[2px]">
-        {rows.map((h, i) => (
-          <PostCell
-            key={h.postId}
-            post={h.post as any}
-            layoutId={(h.post as { layout_id?: string }).layout_id || '2x-scope'}
-            index={i}
-            onClick={() => setOpenPost(h.post)}
-            fcMark={fcCoins.has(String((h.post as { coin_address?: string | null }).coin_address ?? '').toLowerCase())}
-          />
-        ))}
-      </div>
+      {/* ═══ REPERTORY ═══ */}
+      {(visibleStacks.length > 0 || isOwn) && (
+        <div style={{ padding: '2px 0 18px' }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', padding: '4px 10px 10px' }}>
+            <span style={{ ...SKB, fontSize: 'var(--fs-13)', color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.18em' }}>REPERTORY</span>
+            <span style={{ display: 'flex', alignItems: 'baseline', gap: 14 }}>
+              <span style={{ position: 'relative' }}>
+                <button onClick={() => setSortOpen((o) => !o)} style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.55)', background: 'transparent', border: 'none', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.08em', padding: 0 }}>
+                  SORT BY {sortMode === 'recent' ? 'RECENT' : sortMode === 'oldest' ? 'OLDEST' : 'CUSTOM'} ▾
+                </button>
+                {sortOpen && (
+                  <span style={{ position: 'absolute', top: '130%', right: 0, background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.14)', zIndex: 20, display: 'flex', flexDirection: 'column', minWidth: 96 }}>
+                    {(['recent', 'oldest', 'custom'] as SortMode[]).map((m) => (
+                      <button key={m} onClick={() => { setSortMode(m); setSortOpen(false); }} style={{ ...SKR, fontSize: 'var(--fs-8)', color: m === sortMode ? '#FFF' : 'rgba(255,255,255,0.55)', background: 'transparent', border: 'none', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '7px 10px', textAlign: 'right' }}>
+                        {m.toUpperCase()}
+                      </button>
+                    ))}
+                  </span>
+                )}
+              </span>
+              {isOwn && (
+                <button onClick={() => setCreateOpen(true)} style={{ ...SKB, fontSize: 'var(--fs-8)', color: '#FFF', background: 'transparent', border: 'none', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.06em', padding: 0 }}>
+                  + NEW PROGRAM
+                </button>
+              )}
+            </span>
+          </div>
+
+          {visibleStacks.length === 0 && isOwn && (
+            <button onClick={() => setCreateOpen(true)} style={{ display: 'block', width: '100%', background: 'transparent', border: '1px dashed rgba(255,255,255,0.18)', cursor: 'pointer', padding: '18px 0', margin: '0 0 2px' }}>
+              <span style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>CURATE YOUR FIRST PROGRAM</span>
+            </button>
+          )}
+
+          {visibleStacks.map((s) => {
+            const items = heldItems(s);
+            const heroHeld = !!s.hero_post_id && held.has(s.hero_post_id);
+            const bannerSrc = heroHeld && s.hero_banner_url
+              ? s.hero_banner_url
+              : items[0] ? feedImage(thumbOf(items[0]) ?? '', 1280) : null;
+            return (
+              <button
+                key={s.id}
+                onClick={() => setDetailId(s.id)}
+                style={{ position: 'relative', display: 'block', width: '100%', aspectRatio: `${BANNER_RATIO} / 1`, overflow: 'hidden', background: '#0d0d0d', border: 'none', cursor: 'pointer', padding: 0, marginBottom: 2 }}
+              >
+                {bannerSrc && (
+                  <img src={bannerSrc} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                )}
+                {/* left→right scrim for legibility */}
+                <span style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.35) 42%, rgba(0,0,0,0) 75%)' }} />
+                <span style={{ position: 'absolute', left: 12, bottom: 8, display: 'flex', alignItems: 'baseline', gap: 10 }}>
+                  <span style={{ ...SKB, fontSize: 'var(--fs-12)', color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{s.title}</span>
+                  <span style={{ ...SKR, fontSize: 'var(--fs-7)', color: 'rgba(255,255,255,0.65)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{items.length} TITLES</span>
+                </span>
+                <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ ...SKB, fontSize: 'var(--fs-7)', color: 'rgba(255,255,255,0.7)', border: '1px solid rgba(255,255,255,0.3)', padding: '2px 6px', fontVariantNumeric: 'tabular-nums' }}>{items.length}</span>
+                  <span style={{ ...SKR, fontSize: 'var(--fs-12)', color: 'rgba(255,255,255,0.7)' }}>›</span>
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* ═══ COLLECTED ITEMS — the randomized collage ═══ */}
+      {rows.length > 0 && (
+        <div>
+          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', padding: '6px 10px 10px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+            <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'rgba(255,255,255,0.85)', textTransform: 'uppercase', letterSpacing: '0.16em' }}>COLLECTED ITEMS</span>
+            <span style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
+              {(['all', 'firstcut', 'recent'] as Filter[]).map((f) => (
+                <button key={f} onClick={() => { setFilter(f); setVisible(20); }} style={{ ...SKR, fontSize: 'var(--fs-7)', color: filter === f ? '#FFF' : 'rgba(255,255,255,0.45)', background: 'transparent', border: 'none', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.08em', padding: 0 }}>
+                  {f === 'firstcut' ? 'FIRST CUT' : f.toUpperCase()}
+                </button>
+              ))}
+              <button onClick={() => setViewMode((m) => (m === 'grid' ? 'list' : 'grid'))} aria-label="Toggle view" style={{ ...SKR, fontSize: 'var(--fs-7)', color: 'rgba(255,255,255,0.55)', background: 'transparent', border: 'none', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.08em', padding: 0 }}>
+                {viewMode === 'grid' ? 'LIST' : 'GRID'}
+              </button>
+            </span>
+          </div>
+
+          {viewMode === 'grid' ? (
+            <div className="grid grid-cols-2 gap-x-[1px] gap-y-[2px]">
+              {collage.slice(0, visible).map((h, i) => (
+                <PostCell
+                  key={h.postId}
+                  post={h.post as any}
+                  layoutId="collage"
+                  index={i}
+                  onClick={() => setOpenPost(h.post)}
+                  fcMark={fcCoins.has(String((h.post as { coin_address?: string | null }).coin_address ?? '').toLowerCase())}
+                />
+              ))}
+            </div>
+          ) : (
+            <div>
+              {collage.slice(0, visible).map((h) => (
+                <button key={h.postId} onClick={() => setOpenPost(h.post)} style={{ display: 'flex', width: '100%', alignItems: 'center', gap: 10, background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.06)', cursor: 'pointer', padding: '8px 10px', textAlign: 'left' }}>
+                  <img src={feedImage(thumbOf(h) ?? '', 96)} alt="" style={{ width: 56, height: 34, objectFit: 'cover', display: 'block', background: '#111', flexShrink: 0 }} />
+                  <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: '#FFF', textTransform: 'uppercase', flex: 1 }}>{h.ticker ? `[ ${h.ticker} ]` : '—'}</span>
+                  <span style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.55)', fontVariantNumeric: 'tabular-nums' }}>${h.valueUsd.toFixed(2)}</span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {collage.length > visible && (
+            <button onClick={() => setVisible((v) => v + 20)} style={{ display: 'block', width: '100%', background: 'transparent', border: 'none', cursor: 'pointer', padding: '14px 0 18px' }}>
+              <span style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>LOAD MORE</span>
+            </button>
+          )}
+        </div>
+      )}
+
       {openPost && (
         <PostModal post={openPost as any} onClose={() => setOpenPost(null)} />
       )}
+
+      {createOpen && (
+        <ProgramSheet
+          mode="create"
+          userId={userId}
+          held={rows}
+          onDone={() => { setCreateOpen(false); refreshStacks(); }}
+          onClose={() => setCreateOpen(false)}
+        />
+      )}
+      {detailStack && (
+        <ProgramDetail
+          stack={detailStack}
+          items={heldItems(detailStack)}
+          heldAll={rows}
+          isOwn={isOwn}
+          userId={userId}
+          fcCoins={fcCoins}
+          onChanged={refreshStacks}
+          onOpenPost={(p) => setOpenPost(p)}
+          onClose={() => setDetailId(null)}
+        />
+      )}
     </>
+  );
+}
+
+// ── CREATE sheet — one flow: name → select items → pick hero → bake → done ────
+function ProgramSheet({
+  userId, held, onDone, onClose,
+}: {
+  mode: 'create';
+  userId: string;
+  held: Holding[];
+  onDone: () => void;
+  onClose: () => void;
+}) {
+  const [title, setTitle] = useState('');
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [hero, setHero] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const canCreate = title.trim().length > 0 && selected.size > 0 && !busy;
+
+  const toggle = (postId: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(postId)) { next.delete(postId); if (hero === postId) setHero(null); }
+      else next.add(postId);
+      return next;
+    });
+  };
+
+  const create = async () => {
+    if (!canCreate) return;
+    setBusy(true);
+    const ids = [...selected];
+    const heroId = hero ?? ids[0];
+    const stack = await createStack(userId, title, ids, heroId);
+    if (stack) {
+      // Hero bake — center-crop the held item's image to the banner ratio.
+      const h = held.find((x) => x.postId === heroId);
+      const src = h ? thumbOf(h) : null;
+      if (src) {
+        const blob = await bakeHeroBanner(feedImage(src, 1600));
+        if (blob) {
+          const url = await uploadHeroBanner(userId, stack.id, blob);
+          if (url) await setStackHero(stack.id, heroId, url);
+        }
+      }
+    }
+    setBusy(false);
+    onDone();
+  };
+
+  if (typeof document === 'undefined') return null;
+  return createPortal(
+    <div data-swipe-exclude style={{ position: 'fixed', inset: 0, zIndex: 520 }}>
+      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.85)' }} />
+      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, maxHeight: '86dvh', overflowY: 'auto', background: '#080808', borderTop: '1px solid rgba(255,255,255,0.1)', padding: '18px 14px calc(22px + env(safe-area-inset-bottom, 0px))' }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 14 }}>
+          <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.12em' }}>NEW PROGRAM</span>
+          <button onClick={onClose} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 6 }}>
+            <span style={{ ...SKR, fontSize: 'var(--fs-16)', color: 'rgba(255,255,255,0.5)', lineHeight: 1 }}>×</span>
+          </button>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 4 }}>
+          <input
+            value={title}
+            onChange={(e) => setTitle(e.target.value.slice(0, STACK_TITLE_MAX))}
+            maxLength={STACK_TITLE_MAX}
+            placeholder="PROGRAM NAME"
+            style={{ ...SKB, flex: 1, fontSize: 'max(16px, var(--fs-12))', color: '#FFF', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.25)', outline: 'none', textTransform: 'uppercase', letterSpacing: '0.06em', padding: '6px 0' }}
+          />
+          <span style={{ ...SKR, fontSize: 'var(--fs-7)', color: 'rgba(255,255,255,0.4)', fontVariantNumeric: 'tabular-nums' }}>{title.length}/{STACK_TITLE_MAX}</span>
+        </div>
+        <p style={{ ...SKR, fontSize: 'var(--fs-7)', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '10px 0 8px' }}>
+          SELECT WORKS · TAP AGAIN TO SET THE HERO {hero ? '· HERO SET' : ''}
+        </p>
+        <div className="grid grid-cols-3 gap-[2px]">
+          {held.map((h) => {
+            const sel = selected.has(h.postId);
+            const isHero = hero === h.postId;
+            return (
+              <button
+                key={h.postId}
+                onClick={() => { if (sel) { if (isHero) toggle(h.postId); else setHero(h.postId); } else toggle(h.postId); }}
+                style={{ position: 'relative', aspectRatio: '16 / 10', overflow: 'hidden', background: '#111', border: isHero ? '1px solid #FF0000' : sel ? '1px solid rgba(255,255,255,0.8)' : '1px solid transparent', cursor: 'pointer', padding: 0 }}
+              >
+                <img src={feedImage(thumbOf(h) ?? '', 300)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', opacity: sel ? 1 : 0.55 }} />
+                {isHero && <span style={{ position: 'absolute', left: 4, bottom: 3, ...SKB, fontSize: 9, color: '#FF0000', textTransform: 'uppercase' }}>HERO</span>}
+              </button>
+            );
+          })}
+        </div>
+
+        <button
+          onClick={create}
+          disabled={!canCreate}
+          style={{ display: 'block', width: '100%', marginTop: 16, background: canCreate ? '#FF0000' : 'rgba(255,255,255,0.08)', border: 'none', cursor: canCreate ? 'pointer' : 'default', padding: '13px 0' }}
+        >
+          <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: canCreate ? '#FFF' : 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+            {busy ? 'CREATING…' : 'CREATE PROGRAM'}
+          </span>
+        </button>
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
+// ── DETAIL sheet — the program's held items + v1-simple owner tools ───────────
+function ProgramDetail({
+  stack, items, heldAll, isOwn, userId, fcCoins, onChanged, onOpenPost, onClose,
+}: {
+  stack: CollectedStack;
+  items: Holding[];
+  heldAll: Holding[];
+  isOwn: boolean;
+  userId: string;
+  fcCoins: Set<string>;
+  onChanged: () => void;
+  onOpenPost: (p: Record<string, unknown>) => void;
+  onClose: () => void;
+}) {
+  const [adding, setAdding] = useState(false);
+  const [renaming, setRenaming] = useState(false);
+  const [name, setName] = useState(stack.title);
+  const [busyHero, setBusyHero] = useState<string | null>(null);
+  const heroSold = !!stack.hero_post_id && !items.some((h) => h.postId === stack.hero_post_id);
+  const addable = heldAll.filter((h) => !stack.itemPostIds.includes(h.postId));
+
+  const doSetHero = async (h: Holding) => {
+    setBusyHero(h.postId);
+    const src = thumbOf(h);
+    let url: string | null = null;
+    if (src) {
+      const blob = await bakeHeroBanner(feedImage(src, 1600));
+      if (blob) url = await uploadHeroBanner(userId, stack.id, blob);
+    }
+    await setStackHero(stack.id, h.postId, url);
+    setBusyHero(null);
+    onChanged();
+  };
+
+  if (typeof document === 'undefined') return null;
+  return createPortal(
+    <div data-swipe-exclude style={{ position: 'fixed', inset: 0, zIndex: 510 }}>
+      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.88)' }} />
+      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, maxHeight: '88dvh', overflowY: 'auto', background: '#080808', borderTop: '1px solid rgba(255,255,255,0.1)', padding: '18px 14px calc(22px + env(safe-area-inset-bottom, 0px))' }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 4 }}>
+          {renaming ? (
+            <span style={{ display: 'flex', alignItems: 'baseline', gap: 8, flex: 1 }}>
+              <input
+                value={name}
+                onChange={(e) => setName(e.target.value.slice(0, STACK_TITLE_MAX))}
+                maxLength={STACK_TITLE_MAX}
+                autoFocus
+                style={{ ...SKB, fontSize: 'max(16px, var(--fs-12))', color: '#FFF', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.3)', outline: 'none', textTransform: 'uppercase', letterSpacing: '0.06em', width: '55%' }}
+              />
+              <button onClick={async () => { if (await renameStack(stack.id, name)) { setRenaming(false); onChanged(); } }} style={{ ...SKB, fontSize: 'var(--fs-8)', color: '#FF0000', background: 'transparent', border: 'none', cursor: 'pointer', textTransform: 'uppercase' }}>SAVE</button>
+            </span>
+          ) : (
+            <span style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
+              <span style={{ ...SKB, fontSize: 'var(--fs-13)', color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{stack.title}</span>
+              <span style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase' }}>{items.length} TITLES</span>
+            </span>
+          )}
+          <button onClick={onClose} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 6 }}>
+            <span style={{ ...SKR, fontSize: 'var(--fs-16)', color: 'rgba(255,255,255,0.5)', lineHeight: 1 }}>×</span>
+          </button>
+        </div>
+
+        {isOwn && (
+          <div style={{ display: 'flex', gap: 16, margin: '6px 0 12px' }}>
+            <button onClick={() => setAdding((a) => !a)} style={{ ...SKR, fontSize: 'var(--fs-8)', color: adding ? '#FFF' : 'rgba(255,255,255,0.55)', background: 'transparent', border: 'none', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.06em', padding: 0 }}>+ ADD ITEMS</button>
+            <button onClick={() => setRenaming((r) => !r)} style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.55)', background: 'transparent', border: 'none', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.06em', padding: 0 }}>RENAME</button>
+            <button onClick={async () => { if (await deleteStack(stack.id)) { onChanged(); onClose(); } }} style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(255,0,0,0.7)', background: 'transparent', border: 'none', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.06em', padding: 0 }}>DELETE</button>
+          </div>
+        )}
+
+        {isOwn && heroSold && items.length > 0 && (
+          /* HERO SOLD — the banner already falls back; this is the owner nudge. */
+          <p style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 10px' }}>
+            HERO NO LONGER HELD · <span style={{ color: '#FF0000' }}>SET NEW HERO</span> — tap SET HERO on any item
+          </p>
+        )}
+        {items.length === 0 && (
+          <p style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '8px 0 12px' }}>
+            0 TITLES — {isOwn ? 'EVERYTHING HERE WAS SOLD. ADD HELD WORKS TO REVIVE IT.' : 'NOTHING HELD.'}
+          </p>
+        )}
+
+        {adding && (
+          <div style={{ marginBottom: 14 }}>
+            <p style={{ ...SKR, fontSize: 'var(--fs-7)', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 6px' }}>TAP TO ADD</p>
+            <div className="grid grid-cols-4 gap-[2px]">
+              {addable.map((h) => (
+                <button key={h.postId} onClick={async () => { if (await addStackItems(stack.id, [h.postId], stack.itemPostIds.length)) onChanged(); }} style={{ aspectRatio: '16 / 10', overflow: 'hidden', background: '#111', border: '1px solid rgba(255,255,255,0.15)', cursor: 'pointer', padding: 0 }}>
+                  <img src={feedImage(thumbOf(h) ?? '', 300)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                </button>
+              ))}
+              {addable.length === 0 && <p style={{ ...SKR, fontSize: 'var(--fs-7)', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', gridColumn: 'span 4', padding: '8px 0' }}>EVERYTHING HELD IS ALREADY IN THIS PROGRAM.</p>}
+            </div>
+          </div>
+        )}
+
+        <div className="grid grid-cols-2 gap-x-[1px] gap-y-[2px]">
+          {items.map((h, i) => (
+            <div key={h.postId} style={{ position: 'relative' }}>
+              <PostCell
+                post={h.post as any}
+                layoutId={(h.post as { layout_id?: string }).layout_id || '2x-scope'}
+                index={i}
+                onClick={() => onOpenPost(h.post)}
+                fcMark={fcCoins.has(String((h.post as { coin_address?: string | null }).coin_address ?? '').toLowerCase())}
+              />
+              {isOwn && (
+                <span style={{ position: 'absolute', left: 4, bottom: 4, display: 'flex', gap: 6, zIndex: 7 }}>
+                  <button onClick={() => doSetHero(h)} disabled={busyHero !== null} style={{ ...SKB, fontSize: 8.5, color: stack.hero_post_id === h.postId ? '#FF0000' : 'rgba(255,255,255,0.8)', background: 'rgba(0,0,0,0.72)', border: '1px solid rgba(255,255,255,0.25)', cursor: 'pointer', padding: '2px 5px', textTransform: 'uppercase' }}>
+                    {busyHero === h.postId ? 'BAKING…' : stack.hero_post_id === h.postId ? 'HERO' : 'SET HERO'}
+                  </button>
+                  <button onClick={async () => { if (await removeStackItem(stack.id, h.postId)) onChanged(); }} style={{ ...SKB, fontSize: 8.5, color: 'rgba(255,255,255,0.8)', background: 'rgba(0,0,0,0.72)', border: '1px solid rgba(255,255,255,0.25)', cursor: 'pointer', padding: '2px 5px' }}>✕</button>
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>,
+    document.body,
   );
 }
