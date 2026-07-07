@@ -532,11 +532,15 @@ export default function WalletPage() {
     return () => { alive = false; };
   }, []);
   // WALLET STRUCTURE (decided): holdings never blend into available.
-  // AVAILABLE = spendable USDC+ETH — the ONLY balance buy flows draw on.
+  // AVAILABLE = spendable ETH + USDC + held ZORA at CURRENT spot (zoraUsd —
+  // the same real full-balance quote the CREATOR EARNINGS row shows; one
+  // source). DISTINCTION: this is the current value of held TOKENS joining
+  // the spendable sum — NOT the SCOPE EARNINGS stat (historical cumulative),
+  // which stays separate and never sums into TOTAL.
   // HOLDINGS = positions value (price × pieces). TOTAL = the headline.
   const availableUsd =
     ethBalance != null && usdcBalance != null && ethUsdRate != null
-      ? parseFloat(ethBalance) * ethUsdRate + parseFloat(usdcBalance)
+      ? parseFloat(ethBalance) * ethUsdRate + parseFloat(usdcBalance) + (zoraUsd ?? 0)
       : null;
   // Rule 1: zero-trade coins are $0 by definition — valueUsd is always a number.
   const holdingsUsd = holdings != null ? holdings.reduce((s, h) => s + h.valueUsd, 0) : null;
