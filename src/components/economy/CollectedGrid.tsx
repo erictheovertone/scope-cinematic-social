@@ -19,6 +19,7 @@ import { createPortal } from 'react-dom';
 import { useEconomy } from '@/components/EconomyProvider';
 import PostCell from '@/components/PostCell';
 import PostModal from '@/components/PostModal';
+import TheatreMode from '@/components/TheatreMode';
 import type { Holding } from '@/lib/economy/types';
 import { feedImage } from '@/lib/mediaUrl';
 import { getAspectRatio } from '@/lib/aspectRatio';
@@ -101,6 +102,11 @@ export default function CollectedGrid({
   const [activeStackId, setActiveStackId] = useState<string | null>(null);
   const [swapPhase, setSwapPhase] = useState<'in' | 'out'>('in');
   const [editStackId, setEditStackId] = useState<string | null>(null);
+  // FULL-SCREEN PROGRAM VIEW — a portaled takeover (name + grid only, black,
+  // edge-to-edge). The page underneath is untouched, so grid scroll survives
+  // expand/collapse by construction. 'closing' plays the reverse animation.
+  const [fullscreen, setFullscreen] = useState<'open' | 'closing' | null>(null);
+  const [fsTheatre, setFsTheatre] = useState(false);
   const reducedMotion = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   const switchTo = (id: string | null) => {
     const next = id === activeStackId ? null : id;
@@ -131,6 +137,22 @@ export default function CollectedGrid({
     window.addEventListener('scope:badges-changed', onBadges);
     return () => { cancelled = true; window.removeEventListener('scope:badges-changed', onBadges); };
   }, [userId, economy]);
+
+  // Takeover standdown while the full-screen program view is up.
+  useEffect(() => {
+    if (!fullscreen || fullscreen === 'closing') return;
+    document.documentElement.dataset.suiteOpen = '1';
+    window.dispatchEvent(new CustomEvent('scope:takeover-change'));
+    return () => {
+      delete document.documentElement.dataset.suiteOpen;
+      window.dispatchEvent(new CustomEvent('scope:takeover-change'));
+    };
+  }, [fullscreen]);
+  const closeFullscreen = () => {
+    if (reducedMotion) { setFullscreen(null); return; }
+    setFullscreen('closing');
+    window.setTimeout(() => setFullscreen(null), 220);
+  };
 
   // HOLD-ONLY truth: postId → Holding for everything currently held.
   const held = useMemo(() => new Map((rows ?? []).map((h) => [h.postId, h])), [rows]);
@@ -245,12 +267,11 @@ export default function CollectedGrid({
                 )}
                 {/* side vignettes — soft black feathering in from BOTH edges so the
                     title (left) and chip/› (right) pop; the hero stays readable. */}
-                <span style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0) 18%, rgba(0,0,0,0) 82%, rgba(0,0,0,0.45) 100%)' }} />
+                <span style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, rgba(0,0,0,0.52) 0%, rgba(0,0,0,0) 20%, rgba(0,0,0,0) 80%, rgba(0,0,0,0.52) 100%)' }} />
                 {/* left→right scrim for legibility */}
                 <span style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.35) 42%, rgba(0,0,0,0) 75%)' }} />
-                <span style={{ position: 'absolute', left: 12, bottom: 8, display: 'flex', alignItems: 'baseline', gap: 10 }}>
+                <span style={{ position: 'absolute', left: 12, bottom: 8 }}>
                   <span style={{ ...SKB, fontSize: 'var(--fs-12)', color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{s.title}</span>
-                  <span style={{ ...SKR, fontSize: 'var(--fs-7)', color: 'rgba(255,255,255,0.65)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{items.length} ITEMS</span>
                 </span>
                 <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', gap: 8 }}>
                   <span style={{ ...SKB, fontSize: 'var(--fs-7)', color: 'rgba(255,255,255,0.7)', border: '1px solid rgba(255,255,255,0.3)', padding: '2px 6px', fontVariantNumeric: 'tabular-nums' }}>{items.length}</span>
@@ -274,6 +295,9 @@ export default function CollectedGrid({
             <span style={{ display: 'flex', alignItems: 'center', gap: 14, flexShrink: 0 }}>
               {activeStack && isOwn && (
                 <button onClick={() => setEditStackId(activeStack.id)} style={{ ...SKB, fontSize: 'var(--fs-7)', color: '#FF0000', background: 'transparent', border: 'none', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.08em', padding: 0 }}>EDIT</button>
+              )}
+              {activeStack && (
+                <button onClick={() => setFullscreen('open')} aria-label="Full-screen program" style={{ ...SKR, fontSize: 'var(--fs-11)', color: 'rgba(255,255,255,0.6)', background: 'transparent', border: 'none', cursor: 'pointer', lineHeight: 1, padding: 0 }}>⤢</button>
               )}
               {activeStack && (
                 <button onClick={() => switchTo(null)} aria-label="Show all items" style={{ ...SKR, fontSize: 'var(--fs-12)', color: 'rgba(255,255,255,0.6)', background: 'transparent', border: 'none', cursor: 'pointer', lineHeight: 1, padding: 0 }}>×</button>
@@ -331,7 +355,58 @@ export default function CollectedGrid({
         </div>
       )}
 
+      {/* ═══ FULL-SCREEN PROGRAM VIEW — name + grid only, edge-to-edge black.
+          Purely for viewing: no EDIT here (it stays in the filtered header).
+          The eye enters theatre SCOPED to this program's held posts (the
+          consolidated TheatreMode takes any posts[] — we pass exactly them);
+          exiting theatre returns HERE. Collapse returns to the filtered page
+          (activeStack persists), scroll intact (the page never moved). */}
+      {fullscreen && activeStack && createPortal(
+        <div
+          data-swipe-exclude
+          style={{
+            position: 'fixed', inset: 0, zIndex: 540, background: '#000',
+            display: 'flex', flexDirection: 'column',
+            animation: reducedMotion ? 'none' : fullscreen === 'closing' ? 'fsProgramOut 220ms ease both' : 'fsProgramIn 250ms ease both',
+          }}
+        >
+          <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 'calc(12px + env(safe-area-inset-top, 0px)) 14px 10px' }}>
+            <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.16em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{activeStack.title}</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 16, flexShrink: 0 }}>
+              <button onClick={() => setFsTheatre(true)} aria-label="Theatre mode" style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 2, lineHeight: 0 }}>
+                <img src="/theatre-mode-eye-framed-v2.png" alt="" style={{ height: 22, width: 'auto', display: 'block', opacity: 0.92 }} />
+              </button>
+              <button onClick={closeFullscreen} aria-label="Collapse" style={{ ...SKR, fontSize: 'var(--fs-12)', color: 'rgba(255,255,255,0.7)', background: 'transparent', border: 'none', cursor: 'pointer', lineHeight: 1, padding: 0 }}>⤡</button>
+            </span>
+          </div>
+          <div style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
+            <div style={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
+              {columns.map((col, ci) => (
+                <div key={ci} style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
+                  {col.map((h) => (
+                    <PostCell
+                      key={h.postId}
+                      post={h.post as any}
+                      layoutId={(h.post as { layout_id?: string }).layout_id || '2x-scope'}
+                      index={0}
+                      onClick={() => setOpenPost(h.post)}
+                      fcMark={fcCoins.has(String((h.post as { coin_address?: string | null }).coin_address ?? '').toLowerCase())}
+                    />
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+          {fsTheatre && (
+            <TheatreMode posts={collage.map((h) => h.post as Record<string, unknown>)} source="feed" onClose={() => setFsTheatre(false)} />
+          )}
+        </div>,
+        document.body,
+      )}
+
       <style>{`
+        @keyframes fsProgramIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fsProgramOut { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(10px); } }
         .collage-swap-out { opacity: 0; transform: scale(0.97); transition: opacity 150ms ease, transform 150ms ease; }
         .collage-cell-in { animation: collageCellIn 200ms ease both; }
         @keyframes collageCellIn { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
