@@ -24,12 +24,16 @@ import { privateKeyToAccount } from 'viem/accounts';
 import { base } from 'viem/chains';
 import { accrueFcTrade, zoraSpotUsd, erc20BalanceOf, ZORA_BASE } from '@/lib/economy/fcRewards';
 import { swapUsd } from '@/lib/economy/firstCut';
+import { GAS_FLOOR_ETH } from '@/lib/economy/preflight';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
 
 const ERC20_ABI = parseAbi(['function transfer(address to, uint256 amount) returns (bool)']);
-const PAYOUT_MIN_USD = 1;       // the transfer threshold — rolls sub-$1 forward
+// The transfer threshold — rolls sub-threshold accruals forward. Env-tunable
+// (FC_PAYOUT_MIN_USD) so a live ≥$1 verification can run one lowered pass
+// without a code change.
+const PAYOUT_MIN_USD = Number(process.env.FC_PAYOUT_MIN_USD ?? '1');
 const GAS_GUARD_FRACTION = 0.02; // skip the run if est. gas > 2% of batch value
 const SWEEP_PAGES = 3;           // recent swaps per coin per run
 // The sweep exists to catch trades BETWEEN runs (third-party). It is NOT the
@@ -89,7 +93,11 @@ export async function GET(req: NextRequest) {
 
   // ── 2. KILL-SWITCH ──────────────────────────────────────────────────────────
   if (process.env.FC_PAYOUTS_ENABLED !== 'true') {
-    const summary = { ok: true, ms: Date.now() - t0, sweptTrades, sweptRows, payouts: 'DISABLED (FC_PAYOUTS_ENABLED)' };
+    // Print the funding address even while paused (key present, payouts off) —
+    // Eric funds BEFORE flipping the flag. Address only, never the key.
+    let payoutAddress: string | null = null;
+    try { if (process.env.FC_PAYOUT_PRIVATE_KEY) payoutAddress = privateKeyToAccount(process.env.FC_PAYOUT_PRIVATE_KEY as `0x${string}`).address; } catch { /* bad key format — leave null */ }
+    const summary = { ok: true, ms: Date.now() - t0, sweptTrades, sweptRows, payouts: 'DISABLED (FC_PAYOUTS_ENABLED)', payoutAddress };
     console.log('[fc-payout] run (payouts off)', JSON.stringify(summary));
     return NextResponse.json(summary);
   }
@@ -98,6 +106,9 @@ export async function GET(req: NextRequest) {
     console.warn('[fc-payout] FC_PAYOUT_PRIVATE_KEY unset — accruals continue, payouts skipped');
     return NextResponse.json({ ok: true, ms: Date.now() - t0, sweptTrades, sweptRows, payouts: 'NO KEY' });
   }
+  // Address derived ONCE here so every response (incl. nothing-due) prints the
+  // funding target. Address only — the key never leaves the env.
+  const account = privateKeyToAccount(pk as `0x${string}`);
 
   // ── 3. AGGREGATE unpaid per holder (chunked; oldest-first within holder) ───
   type Row = { id: string; holder_user_id: string; holder_wallet: string; reward_usd: number; reward_zora: number | null; accrued_at: string };
@@ -127,13 +138,12 @@ export async function GET(req: NextRequest) {
   const due = [...byHolder.entries()].filter(([, e]) => e.usd >= PAYOUT_MIN_USD && e.zora > 0)
     .sort((a, b) => a[1].oldest.localeCompare(b[1].oldest));
   if (!due.length) {
-    const summary = { ok: true, ms: Date.now() - t0, sweptTrades, sweptRows, holdersPaid: 0, note: 'nothing ≥ $1' };
+    const summary = { ok: true, ms: Date.now() - t0, sweptTrades, sweptRows, holdersPaid: 0, note: `nothing ≥ $${PAYOUT_MIN_USD}` , payoutAddress: account.address, zora_float_remaining: null as number | null, eth_gas_remaining: null as number | null };
     console.log('[fc-payout] run', JSON.stringify(summary));
     return NextResponse.json(summary);
   }
 
   // ── 4. GUARDS: gas + float ──────────────────────────────────────────────────
-  const account = privateKeyToAccount(pk as `0x${string}`);
   const publicClient = createPublicClient({ chain: base, transport: http('https://mainnet.base.org') });
   const walletClient = createWalletClient({ account, chain: base, transport: http('https://mainnet.base.org') });
 
@@ -147,12 +157,30 @@ export async function GET(req: NextRequest) {
     console.warn(`[fc-payout] GAS HIGH — est $${estGasUsd.toFixed(4)} > 2% of batch $${batchUsd.toFixed(2)} — accruals roll`);
     return NextResponse.json({ ok: true, ms: Date.now() - t0, sweptTrades, sweptRows, holdersPaid: 0, skipped: 'GAS HIGH', estGasUsd, batchUsd });
   }
+  // DUAL-ASSET FLOAT: the wallet holds the ZORA payload AND the ETH gas —
+  // an ERC-20 transfer can't pay its own gas. Check BOTH before transferring.
   const floatRaw = await erc20BalanceOf(ZORA_BASE, account.address);
   const floatZora = floatRaw != null ? Number(floatRaw) / 1e18 : null;
+  const ethRaw = await publicClient.getBalance({ address: account.address }).catch(() => null);
+  const ethGas = ethRaw != null ? Number(ethRaw) / 1e18 : null;
+  // Gas need: the shared floor (imported, never inlined) or the batch estimate,
+  // whichever is larger for the planned transfer count.
+  const gasNeedEth = Math.max(GAS_FLOOR_ETH, gasPrice ? Number(gasPrice) * 60_000 * due.length / 1e18 : 0);
+  if (ethGas != null && ethGas < gasNeedEth) {
+    console.warn(`[fc-payout] FLOAT LOW — ETH (gas): wallet ${ethGas.toFixed(6)} ETH < needed ${gasNeedEth.toFixed(6)} — skipping payouts, accruals roll`);
+    const admin = process.env.SCOPE_ADMIN_USER_ID;
+    if (admin) {
+      await supabase.from('notifications').insert({
+        recipient_id: admin, sender_id: admin, sender_username: 'SCOPE',
+        type: 'market', message: `FC PAYOUT FLOAT LOW — ETH gas: ${ethGas.toFixed(5)} held, ${gasNeedEth.toFixed(5)} needed. Top up the payout wallet.`,
+      }).then(({ error }) => { if (error) console.warn('[fc-payout] admin notify failed:', error.message); });
+    }
+    return NextResponse.json({ ok: true, ms: Date.now() - t0, sweptTrades, sweptRows, holdersPaid: 0, skipped: 'FLOAT LOW (ETH gas)', ethGasRemaining: ethGas, zoraFloatRemaining: floatZora, payoutAddress: account.address });
+  }
   const totalZoraDue = due.reduce((s, [, e]) => s + e.zora, 0);
   let payList = due;
   if (floatZora != null && floatZora < totalZoraDue) {
-    console.warn(`[fc-payout] FLOAT LOW — wallet ${floatZora.toFixed(2)} ZORA < due ${totalZoraDue.toFixed(2)} — paying oldest first, notifying admin`);
+    console.warn(`[fc-payout] FLOAT LOW — ZORA (payload): wallet ${floatZora.toFixed(2)} ZORA < due ${totalZoraDue.toFixed(2)} — paying oldest first, notifying admin`);
     // fit oldest-first within the float
     let budget = floatZora;
     payList = due.filter(([, e]) => { if (e.zora <= budget) { budget -= e.zora; return true; } return false; });
@@ -160,7 +188,7 @@ export async function GET(req: NextRequest) {
     if (admin) {
       await supabase.from('notifications').insert({
         recipient_id: admin, sender_id: admin, sender_username: 'SCOPE',
-        type: 'market', message: `FC PAYOUT FLOAT LOW — ${floatZora.toFixed(0)} ZORA held, ${totalZoraDue.toFixed(0)} due. Top up the payout wallet.`,
+        type: 'market', message: `FC PAYOUT FLOAT LOW — ZORA payload: ${floatZora.toFixed(0)} held, ${totalZoraDue.toFixed(0)} due. Top up the payout wallet.`,
       }).then(({ error }) => { if (error) console.warn('[fc-payout] admin notify failed:', error.message); });
     }
   }
@@ -196,11 +224,14 @@ export async function GET(req: NextRequest) {
   }
 
   const floatAfterRaw = await erc20BalanceOf(ZORA_BASE, account.address);
+  const ethAfterRaw = await publicClient.getBalance({ address: account.address }).catch(() => null);
   const summary = {
     ok: true, ms: Date.now() - t0, sweptTrades, sweptRows,
     holdersDue: due.length, holdersPaid, paidUsd: +paidUsd.toFixed(2),
     gasEth: +gasEthTotal.toFixed(6),
-    floatZoraRemaining: floatAfterRaw != null ? +(Number(floatAfterRaw) / 1e18).toFixed(2) : null,
+    zora_float_remaining: floatAfterRaw != null ? +(Number(floatAfterRaw) / 1e18).toFixed(2) : null,
+    eth_gas_remaining: ethAfterRaw != null ? +(Number(ethAfterRaw) / 1e18).toFixed(6) : null,
+    payoutAddress: account.address, // address ONLY — the funding target
   };
   console.log('[fc-payout] RUN REPORT', JSON.stringify(summary));
   return NextResponse.json(summary);
