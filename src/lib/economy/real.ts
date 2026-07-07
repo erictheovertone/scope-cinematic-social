@@ -270,6 +270,41 @@ export function createRealEconomy(
   /** Provider-injected: builds a signing wallet client at trade time. */
   getWalletClient?: () => Promise<any>
 ): EconomyApi {
+  // First Cut ACTIVE coins = unreleased bookkeeping rows JOINED against the
+  // live on-chain balance — the balance is the truth, expired_at is the
+  // bookkeeping (which the sell hook + daily cron keep converging). Threshold:
+  // ≥1 whole fragment — in-app "sell all" leaves sub-fragment DUST, so a
+  // strict >0 join would have kept the stale badge this fix removes.
+  // FAIL-OPEN per read: an unresolved balance counts the row (a flaky RPC
+  // must never falsely hide a badge — the false-revocation discipline).
+  const firstCutActiveCoins = async (userId: string): Promise<string[]> => {
+      let res = await supabase
+        .from("first_cut_awards")
+        .select("coin_address")
+        .eq("user_id", userId)
+        .is("expired_at", null);
+      if (res.error) {
+        res = await supabase.from("first_cut_awards").select("coin_address").eq("user_id", userId);
+      }
+      const coins = (res.data ?? [])
+        .map((row: { coin_address?: string | null }) => (row.coin_address ?? "").toLowerCase())
+        .filter(Boolean);
+      if (coins.length === 0) return [];
+      const { data: u } = await supabase.from("users").select("wallet_address").eq("id", userId).maybeSingle();
+      const wallet = u?.wallet_address;
+      if (!wallet) return coins; // no wallet resolvable → bookkeeping stands (fail-open)
+      const MIN_HOLD = BigInt(TOKENS_PER_PIECE) * BigInt('1000000000000000000'); // 1 whole fragment, raw units
+      const checks = await Promise.all(coins.map(async (c) => {
+        try {
+          const bal = (await publicClient.readContract({
+            address: getAddress(c), abi: BALANCE_OF_ABI, functionName: "balanceOf", args: [getAddress(wallet)],
+          })) as bigint;
+          return bal >= MIN_HOLD;
+        } catch { return true; } // unresolved read → keep (never falsely hide)
+      }));
+      return coins.filter((_, i) => checks[i]);
+  };
+
   return {
     ...mockEconomy,
     async getPostMarket(postId: string): Promise<PostMarket> {
@@ -283,41 +318,19 @@ export function createRealEconomy(
     // founder), NOT the mock. >0 → the First Cut badge lights up. Other badge
     // flags still read from their own columns on the profile pages; this only
     // makes the First Cut signal real.
+
     async getBadges(userId: string): Promise<Badges> {
       const base = await mockEconomy.getBadges(userId).catch(() => ({} as Badges));
-      // HOLDING-GATED: the badge lights iff the user has ≥1 ACTIVE slot
-      // (expired_at IS NULL). Expired slots (holder sold below the $4.50 keep-
-      // floor) persist as the permanent record but no longer light the badge.
-      let res = await supabase
-        .from("first_cut_awards")
-        .select("id", { count: "exact", head: true })
-        .eq("user_id", userId)
-        .is("expired_at", null);
-      // Graceful fallback if the expired_at migration hasn't been applied yet —
-      // count all rows so the badge still resolves (active-gating kicks in once
-      // the column exists). Avoids a hard dependency on migration ordering.
-      if (res.error) {
-        res = await supabase.from("first_cut_awards").select("id", { count: "exact", head: true }).eq("user_id", userId);
-      }
-      const firstCutCount = res.count ?? 0;
+      // HOLDING-GATED by the balance join above — count = coins actually held.
+      const active = await firstCutActiveCoins(userId).catch(() => [] as string[]);
+      const firstCutCount = active.length;
       return { ...base, firstCutCount: firstCutCount > 0 ? firstCutCount : undefined };
     },
 
-    // ONE batched read for the COLLECTED-tab First Cut insignia — the same
-    // active-gating (expired_at IS NULL) as the badge count above; released/
-    // expired slots carry no mark by construction. Same tolerant fallback.
+    // COLLECTED-tab insignia — the SAME balance-joined read as the badge count
+    // (one source: mark and count cannot disagree).
     async getFirstCutCoins(userId: string): Promise<string[]> {
-      let res = await supabase
-        .from("first_cut_awards")
-        .select("coin_address")
-        .eq("user_id", userId)
-        .is("expired_at", null);
-      if (res.error) {
-        res = await supabase.from("first_cut_awards").select("coin_address").eq("user_id", userId);
-      }
-      return (res.data ?? [])
-        .map((row: { coin_address?: string | null }) => (row.coin_address ?? '').toLowerCase())
-        .filter(Boolean);
+      return firstCutActiveCoins(userId);
     },
 
     // ── Stage B: real quotes + trades for coin posts (mock otherwise) ────────

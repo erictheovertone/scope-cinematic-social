@@ -119,6 +119,14 @@ const userLayoutId = stableLayoutId;
   // founding positions that aren't real yet. Off-flag it stays 0 (coin absent).
   const economy = useEconomy();
   const [firstCutCount, setFirstCutCount] = useState(0);
+  // Bumped by scope:badges-changed (a sell just released a First Cut slot) —
+  // re-runs the badge fetch so banner + pill update without a reload.
+  const [badgeTick, setBadgeTick] = useState(0);
+  useEffect(() => {
+    const bump = () => setBadgeTick((t) => t + 1);
+    window.addEventListener('scope:badges-changed', bump);
+    return () => window.removeEventListener('scope:badges-changed', bump);
+  }, []);
   const [badgesLoaded, setBadgesLoaded] = useState(false); // firstCutCount has resolved
   const [firstCutPull, setFirstCutPull] = useState<string | null>(null); // Moment 2 focus-pull
   const [arriveKeys, setArriveKeys] = useState<string[] | null>(null);     // badge-arrival entrance (pro etc.)
@@ -135,7 +143,7 @@ const userLayoutId = stableLayoutId;
       .then((b) => { if (!cancelled) { setFirstCutCount(b.firstCutCount ?? 0); setBadgesLoaded(true); } })
       .catch(() => { if (!cancelled) setBadgesLoaded(true); });
     return () => { cancelled = true; };
-  }, [economy, supabaseUserId]);
+  }, [economy, supabaseUserId, badgeTick]);
 
   // ── Moment 2 (Step 3) — profile focus-pull via client-diff ──────────────────
   // The first time the user sees their OWN profile after newly earning First

@@ -45,7 +45,13 @@ export default function CollectedGrid({
     economy.getFirstCutCoins(userId)
       .then((coins) => { if (!cancelled) setFcCoins(new Set(coins)); })
       .catch(() => { /* no marks on failure — never blocks the grid */ });
-    return () => { cancelled = true; };
+    const onBadges = () => {
+      economy.getFirstCutCoins(userId)
+        .then((coins) => { if (!cancelled) setFcCoins(new Set(coins)); })
+        .catch(() => {});
+    };
+    window.addEventListener('scope:badges-changed', onBadges);
+    return () => { cancelled = true; window.removeEventListener('scope:badges-changed', onBadges); };
   }, [userId, economy]);
 
   if (rows === null) {

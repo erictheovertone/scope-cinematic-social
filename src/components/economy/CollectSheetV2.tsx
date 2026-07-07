@@ -254,7 +254,14 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ postId, txHash, seller: viewerWallet }),
-    }).catch(() => { /* never disturbs the sell */ });
+    })
+      .then((r) => r.json())
+      .then((j) => {
+        // Badge state changed → every badge surface refetches WITHOUT a reload
+        // (banner strip, bio-sheet pill, collected insignia all listen).
+        if (j?.expired) window.dispatchEvent(new CustomEvent('scope:badges-changed'));
+      })
+      .catch(() => { /* never disturbs the sell */ });
   };
 
   const doBuy = async () => {
