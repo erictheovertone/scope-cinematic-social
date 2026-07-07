@@ -14,7 +14,7 @@
     },
     {
       "path": "/api/cron/fc-payouts",
-      "schedule": "15 0 * * *"
+      "schedule": "15 0 * * 1"
     }
   ]
 }

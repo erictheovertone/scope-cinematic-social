@@ -1125,7 +1125,7 @@ export default function WalletPage() {
               )}
 
               {/* ── COLLECTED — First Cut rewards, per FC-held post ── */}
-              {catHeader('COLLECTED', fcRewards ? `$${fcRewards.totalUsd.toFixed(2)}` : '…', openCat === 'collected', () => setOpenCat(openCat === 'collected' ? null : 'collected'), 'FIRST CUT REWARDS')}
+              {catHeader('COLLECTED', fcRewards ? `$${fcRewards.totalUsd.toFixed(2)}` : '…', openCat === 'collected', () => setOpenCat(openCat === 'collected' ? null : 'collected'), fcRewards && fcRewards.unpaidUsd > 0.005 ? `$${fcRewards.unpaidUsd.toFixed(2)} PENDING` : 'FIRST CUT REWARDS')}
               <div style={{ height: 1, background: 'rgba(255,255,255,0.12)' }} />
               {openCat === 'collected' && (
                 !fcRewards || fcRewards.posts.length === 0 ? (
@@ -1137,7 +1137,7 @@ export default function WalletPage() {
                     {fcRewards.unpaidUsd > 0.005 && (
                       /* copy DRAFT — Eric approves before ship */
                       <p style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.06em', padding: '10px 2px 0' }}>
-                        ${fcRewards.unpaidUsd.toFixed(2)} ACCRUED · PAYS OUT DAILY
+                        ${fcRewards.unpaidUsd.toFixed(2)} ACCRUED · PAYS OUT WEEKLY
                       </p>
                     )}
                     {fcRewards.posts.map((p) => {
@@ -1152,8 +1152,10 @@ export default function WalletPage() {
                             </span>
                           </div>
                           <div style={{ textAlign: 'right' }}>
-                            <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: p.unpaidUsd > 0.005 ? 'rgba(255,255,255,0.75)' : green, fontVariantNumeric: 'tabular-nums', display: 'block' }}>${p.accruedUsd.toFixed(2)}</span>
-                            {p.unpaidUsd > 0.005 && <span style={{ ...SKR, fontSize: 'var(--fs-7)', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase' }}>ACCRUED</span>}
+                            {/* PAID portion in money-green; a muted pending sub-line
+                                when unpaid accruals exist on this post. */}
+                            <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: p.accruedUsd - p.unpaidUsd > 0.005 ? green : 'rgba(255,255,255,0.75)', fontVariantNumeric: 'tabular-nums', display: 'block' }}>${p.accruedUsd.toFixed(2)}</span>
+                            {p.unpaidUsd > 0.005 && <span style={{ ...SKR, fontSize: 'var(--fs-7)', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', fontVariantNumeric: 'tabular-nums' }}>· ${p.unpaidUsd.toFixed(2)} PENDING</span>}
                           </div>
                         </div>
                       );

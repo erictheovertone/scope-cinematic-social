@@ -1,4 +1,7 @@
-// ── Cron · FIRST CUT REWARDS — daily sweep + payout ───────────────────────────
+// ── Cron · FIRST CUT REWARDS — WEEKLY payout (Mondays 00:15 UTC) ─────────────
+//
+// Accruals are REAL-TIME (in-app hook per trade; the sweep below catches
+// third-party trades) — the cadence governs SETTLEMENT only.
 //
 // Per run: (1) SWEEP — third-party trades on FC coins accrue into the ledger
 // (the in-app hook catches in-app trades; idempotency makes overlap harmless);
