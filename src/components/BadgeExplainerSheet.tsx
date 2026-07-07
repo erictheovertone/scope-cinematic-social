@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
 import { getUserByPrivyId, getProfile, isProMember } from "@/lib/userService";
 import { resolveBadges } from "@/lib/economy/badges";
+import { useEconomy } from '@/components/EconomyProvider';
 import { supabase } from "@/lib/supabase/client";
 import { TIER_DETAILS } from "@/app/badge/[tier]/page";
 
@@ -160,6 +161,7 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
   // tiers via the verified path (did → users.id → profiles), regardless of whose
   // badge was tapped. On a public profile the props carry the VIEWED user's
   // tiers, so self-resolving here overrides them with the viewer's real status.
+  const economy = useEconomy();
   const [viewer, setViewer] = useState<{
     tiers: BadgeExplainerSheetProps['userTiers'];
     isPaid: boolean;
@@ -176,16 +178,11 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
         if (!sbUser || cancelled) return;
         const p = await getProfile(sbUser.id) as any;
         if (!p || cancelled) return;
-        // Active First Cut slots for the viewer (same active-gated rule as getBadges).
-        let fcRes = await supabase
-          .from('first_cut_awards')
-          .select('id', { count: 'exact', head: true })
-          .eq('user_id', sbUser.id)
-          .is('expired_at', null);
-        if (fcRes.error) { // expired_at migration not applied yet → count all
-          fcRes = await supabase.from('first_cut_awards').select('id', { count: 'exact', head: true }).eq('user_id', sbUser.id);
-        }
-        const fcCount = fcRes.count;
+        // First Cut via the ONE engine (balance-joined active holdings) — this
+        // sheet used to run its own raw first_cut_awards count, which kept
+        // showing released (dust) positions after banner/bio cleared.
+        const badges = await economy.getBadges(sbUser.id).catch(() => ({ firstCutCount: 0 } as { firstCutCount?: number }));
+        const fcCount = badges.firstCutCount ?? 0;
         if (cancelled) return;
         const isPaid = isProMember(p);
         const isTop = !!p.is_top_collector;
