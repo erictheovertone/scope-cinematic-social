@@ -105,8 +105,12 @@ export default function DesktopPostView({
     try { await addComment(postId, user.id, viewer.name, text); } catch { /* keep optimistic */ }
   };
 
-  // Stage geometry — fixed letterbox (974:354 of the frame ≈ 2.75), post at its
-  // canonical ratio inside; the stage NEVER resizes between posts.
+  // Stage geometry — MEASURED binder (3C): media is HEIGHT-constrained (a
+  // 1.85 post rendered 645w inside the 960w container; the arrows hugged the
+  // CONTAINER, 159px off the media). Stage aspect 2.75 → 2.39 grows the
+  // binding height (402 at 960w); arrows anchor to the MEDIA's edges via the
+  // per-post width fraction. Ratios ≥2.39 fill the width (vertical bands);
+  // narrower ratios pillar inside — with the arrows hugging THEIR edges.
   const arStr = String(getAspectRatio((post?.layout_id as string) ?? ''));
   const [aw, ah] = arStr.split('/').map((x) => parseFloat(x));
   const ar = isFinite(aw) && isFinite(ah) && ah > 0 ? aw / ah : 2.39;
@@ -114,6 +118,10 @@ export default function DesktopPostView({
   const poster = (post?.poster_url as string) || (post?.thumbnail_url as string) || null;
   const isVideo = post?.media_type === 'video';
   const fcCount = fcHolders?.length ?? 0;
+  // rendered media width as a fraction of the stage (height-bound below 2.39)
+  const STAGE_AR = 2.39;
+  const mediaFrac = Math.min(ar / STAGE_AR, 1); // 1 = fills the width
+  const arrowInset = `calc(${(1 - mediaFrac) * 50}% - 30px)`; // media edge − pocket − glyph
 
   return (
     <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', paddingBottom: 80, marginTop: 0 }}> {/* frame seat ~y299 (measured 319 at mt12 — the last 20 trimmed here + the 3-box row) */}
@@ -125,19 +133,19 @@ export default function DesktopPostView({
         <div style={{ position: 'relative' }}>
           {/* prev / next — Batang > glyphs, mid-media */}
           {index > 0 && (
-            <button onClick={() => onStep(-1)} aria-label="Previous" style={{ position: 'absolute', left: -22, top: '50%', transform: 'translate(0, -50%)', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'Batang, serif', fontSize: 24, color: 'rgba(255,255,255,0.75)', padding: 3, lineHeight: 1 }}>
+            <button onClick={() => onStep(-1)} aria-label="Previous" style={{ position: 'absolute', left: arrowInset, top: '50%', transform: 'translate(0, -50%)', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'Batang, serif', fontSize: 24, color: 'rgba(255,255,255,0.75)', padding: 3, lineHeight: 1 }}>
               {'<'}
             </button>
           )}
           {index < posts.length - 1 && (
-            <button onClick={() => onStep(1)} aria-label="Next" style={{ position: 'absolute', right: -22, top: '50%', transform: 'translate(0, -50%)', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'Batang, serif', fontSize: 24, color: 'rgba(255,255,255,0.75)', padding: 3, lineHeight: 1 }}>
+            <button onClick={() => onStep(1)} aria-label="Next" style={{ position: 'absolute', right: arrowInset, top: '50%', transform: 'translate(0, -50%)', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'Batang, serif', fontSize: 24, color: 'rgba(255,255,255,0.75)', padding: 3, lineHeight: 1 }}>
               {'>'}
             </button>
           )}
 
           {/* THE STAGE — fixed 2.75:1 letterbox; the shared-element morph target */}
-          <motion.div layoutId={`dpost-${postId}`} transition={{ layout: { duration: 0.18, ease: 'easeOut' } }} style={{ width: '100%', aspectRatio: '974 / 354', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-            <div style={{ ...(ar >= 974 / 354 ? { width: '100%' } : { height: '100%' }), aspectRatio: `${ar}`, overflow: 'hidden', background: '#0a0a0a' }}>
+          <motion.div layoutId={`dpost-${postId}`} transition={{ layout: { duration: 0.18, ease: 'easeOut' } }} style={{ width: '100%', aspectRatio: '2.39 / 1', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+            <div style={{ ...(ar >= 2.39 ? { width: '100%' } : { height: '100%' }), aspectRatio: `${ar}`, overflow: 'hidden', background: '#0a0a0a' }}>
               {isVideo ? (
                 <GradedVideo
                   key={postId}
@@ -199,7 +207,7 @@ export default function DesktopPostView({
       </div>
 
       {/* ═══ RIGHT PANEL (309×573, #030303) ═══ */}
-      <div style={{ width: 309, flexShrink: 0, height: 573, background: '#030303', border: '0.25px solid rgba(255,255,255,0.27)', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ width: 309, flexShrink: 0, height: 573, marginTop: -25, background: '#030303', border: '0.25px solid rgba(255,255,255,0.27)', display: 'flex', flexDirection: 'column' }}>
         {/* header strip: ticker · MC · collectors */}
         {/* three zones distributed across the panel width, hairlines between */}
         <div style={{ display: 'flex', alignItems: 'center', padding: '12px 0' }}>
