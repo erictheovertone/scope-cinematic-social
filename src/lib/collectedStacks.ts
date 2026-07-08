@@ -144,13 +144,20 @@ export async function bakeHeroBanner(imageUrl: string): Promise<Blob | null> {
 }
 
 export async function uploadHeroBanner(userId: string, stackId: string, blob: Blob): Promise<string | null> {
-  // Truthful mime + extension: Safari bakes JPEG, Chrome WebP — declare what
-  // the blob actually is (the bucket whitelist rejects mislabeled uploads).
-  const isJpeg = blob.type === 'image/jpeg';
-  const path = `stacks/${userId}/${stackId}-hero.${isJpeg ? 'jpg' : 'webp'}`;
-  const { error } = await supabase.storage.from('post-media').upload(path, blob, { upsert: true, cacheControl: '31536000', contentType: blob.type || 'image/webp' });
-  if (error) { console.warn('[stacks] hero upload failed:', error.message); return null; }
-  const { data } = supabase.storage.from('post-media').getPublicUrl(path);
-  // Bust the CDN on re-bake (same path, upsert) — the same-URL swap discipline.
-  return data?.publicUrl ? `${data.publicUrl}?v=${stackId.slice(0, 8)}-${Math.floor(Math.random() * 1e6)}` : null;
+  // SERVER-SIDE route (round-2 fix): the bucket's anon policy allows INSERT
+  // but not UPDATE — re-bakes (same path, upsert) were RLS-rejected. The API
+  // route uploads with the service key (ownership-guarded) — guaranteed.
+  try {
+    const res = await fetch(`/api/stacks/hero-upload?stackId=${encodeURIComponent(stackId)}&userId=${encodeURIComponent(userId)}`, {
+      method: 'POST',
+      headers: { 'Content-Type': blob.type || 'image/webp' },
+      body: blob,
+    });
+    const j = await res.json().catch(() => ({}));
+    if (!res.ok || !j?.url) { console.warn('[stacks] hero upload failed:', j?.error ?? res.status); return null; }
+    return j.url as string;
+  } catch (e) {
+    console.warn('[stacks] hero upload failed:', (e as Error).message);
+    return null;
+  }
 }
