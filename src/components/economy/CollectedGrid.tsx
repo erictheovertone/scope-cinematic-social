@@ -223,17 +223,27 @@ export default function CollectedGrid({
     <>
       {/* ═══ REPERTORY ═══ */}
       {(visibleStacks.length > 0 || isOwn) && (
-        <div style={{ padding: '2px 0 18px' }}>
-          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', padding: '4px 10px 10px' }}>
-            <span style={{ ...SKB, fontSize: 'var(--fs-13)', color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.18em' }}>REPERTORY</span>
-            <span style={{ display: 'flex', alignItems: 'baseline', gap: 14 }}>
-              {isOwn && (
-                <button onClick={() => setCreateOpen(true)} style={{ ...SKB, fontSize: 'var(--fs-8)', color: '#FFF', background: 'transparent', border: 'none', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.06em', padding: 0 }}>
-                  + NEW PROGRAM
-                </button>
-              )}
-            </span>
+        <div style={{ padding: '2px 0 38px' }}>
+          {/* Title block — its own air (Figma): 33px title over a red-centered
+              radial hairline; + NEW PROGRAM small/regular in the understated
+              gradient-stroke box. */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '26px 10px 14px' }}>
+            <span style={{ ...SKB, fontSize: 33, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.06em', lineHeight: 1 }}>REPERTORY</span>
+            {isOwn && (
+              <button
+                onClick={() => setCreateOpen(true)}
+                style={{
+                  ...SKR, fontSize: 12, color: '#FFF', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.1em',
+                  padding: '7px 12px', border: '0.5px solid transparent',
+                  background: 'linear-gradient(#000, #000) padding-box, linear-gradient(135deg, rgba(255,0,0,0.7), rgba(255,0,0,0.15)) border-box',
+                }}
+              >
+                + NEW PROGRAM
+              </button>
+            )}
           </div>
+          {/* red-centered radial underline, fading out both directions */}
+          <div style={{ height: 1, maxWidth: 460, margin: '0 10px 22px', background: 'radial-gradient(closest-side, rgba(255,0,0,0.8), transparent)' }} />
 
           {visibleStacks.length === 0 && isOwn && (
             <button onClick={() => setCreateOpen(true)} style={{ display: 'block', width: '100%', background: 'transparent', border: '1px dashed rgba(255,255,255,0.18)', cursor: 'pointer', padding: '18px 0', margin: '0 0 2px' }}>
@@ -252,7 +262,7 @@ export default function CollectedGrid({
                 key={s.id}
                 onClick={() => switchTo(s.id)}
                 style={{
-                  position: 'relative', display: 'block', width: '100%', aspectRatio: `${BANNER_RATIO} / 1`, overflow: 'hidden', cursor: 'pointer', padding: 0, marginBottom: 2, boxSizing: 'border-box',
+                  position: 'relative', display: 'block', width: '100%', aspectRatio: `${BANNER_RATIO} / 1`, overflow: 'hidden', cursor: 'pointer', padding: 0, marginBottom: 4, boxSizing: 'border-box',
                   // ACTIVE = a quiet 0.5px gradient stroke (red fading diagonally to
                   // near-nothing) via the padding-box/border-box double background —
                   // a glow of selection, not an alert.
@@ -271,7 +281,7 @@ export default function CollectedGrid({
                 {/* left→right scrim for legibility */}
                 <span style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.35) 42%, rgba(0,0,0,0) 75%)' }} />
                 <span style={{ position: 'absolute', left: 12, bottom: 8 }}>
-                  <span style={{ ...SKB, fontSize: 'var(--fs-12)', color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{s.title}</span>
+                  <span style={{ ...SKR, fontSize: 'var(--fs-10)', color: 'rgba(255,255,255,0.75)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{s.title}</span>
                 </span>
                 <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', gap: 8 }}>
                   <span style={{ ...SKB, fontSize: 'var(--fs-7)', color: 'rgba(255,255,255,0.7)', border: '1px solid rgba(255,255,255,0.3)', padding: '2px 6px', fontVariantNumeric: 'tabular-nums' }}>{items.length}</span>
