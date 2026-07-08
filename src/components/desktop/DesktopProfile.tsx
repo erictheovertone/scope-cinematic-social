@@ -19,6 +19,7 @@ import PostModal from '@/components/PostModal';
 import ProfileDataSheet from '@/components/ProfileDataSheet';
 import BadgeExplainerSheet from '@/components/BadgeExplainerSheet';
 import CollectedGrid from '@/components/economy/CollectedGrid';
+import TheatreMode from '@/components/TheatreMode';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -52,7 +53,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
   const [fcCount, setFcCount] = useState(0);
   const [joined, setJoined] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>('portfolio');
-  const [sortRecent, setSortRecent] = useState(true);
+  const [theatreOpen, setTheatreOpen] = useState(false);
   const [openPost, setOpenPost] = useState<Record<string, unknown> | null>(null);
   const [infoOpen, setInfoOpen] = useState(false);
   const [badgesOpen, setBadgesOpen] = useState(false);
@@ -110,11 +111,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
   }).filter((b) => b.framedSrc ?? b.bannerSrc), [profile, fcCount]);
   const srhCount = Math.max(1, Number(profile?.srh_count ?? 0) || 1);
 
-  const sortedPosts = useMemo(() => {
-    const list = [...posts];
-    if (!sortRecent) list.reverse();
-    return list;
-  }, [posts, sortRecent]);
+  const sortedPosts = posts; // recent order (SORT BY was a temp control — removed)
 
   const stats: [string, string | number][] = [
     ['FOLLOWERS', followers], ['FOLLOWING', following], ['COLLECTORS', collectors],
@@ -147,13 +144,16 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
             ) : <div style={{ width: '100%', height: '100%', background: '#141414' }} />}
           </div>
 
-          <div style={{ marginLeft: 214 }}>
-            <p style={{ ...SKB, fontSize: 26, color: '#FFF', textTransform: 'uppercase', letterSpacing: '-0.02em', margin: 0 }}>{name}</p>
-            <p style={{ ...SKB, fontSize: 14, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', margin: '4px 0 0' }}>{handle ? `@${handle}` : ''}</p>
+          {/* Text block ANCHORED to the PFP: name cap-height starts at the PFP's
+              top line (frame: PFP y25/name y33 — top 27 ≈ cap at 33 after the
+              ascender gap). Frame rhythm: handle tight beneath (~25px pitch). */}
+          <div style={{ position: 'absolute', left: 214, top: 27, right: 0 }}>
+            <p style={{ ...SKB, fontSize: 26, color: '#FFF', textTransform: 'uppercase', letterSpacing: '-0.02em', margin: 0, lineHeight: 1 }}>{name}</p>
+            <p style={{ ...SKB, fontSize: 14, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', margin: '6px 0 0' }}>{handle ? `@${handle}` : ''}</p>
             {bio && <p style={{ ...SKR, fontSize: 13, color: 'rgba(255,255,255,0.5)', lineHeight: 1.5, margin: '10px 0 0', maxWidth: 320 }}>{bio}</p>}
 
-            {/* META ROW — location · primary link · joined */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 22, margin: '18px 0 0' }}>
+            {/* META ROW — location · primary link · joined (frame ~y140) */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 22, margin: '26px 0 0' }}>
               {location && (
                 <span style={{ ...SKB, fontSize: 11, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="1.6"><path d="M12 21s-6.5-5.4-6.5-10.5A6.5 6.5 0 0 1 12 4a6.5 6.5 0 0 1 6.5 6.5C18.5 15.6 12 21 12 21z" /><circle cx="12" cy="10.5" r="2.2" /></svg>
@@ -173,13 +173,13 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
             <div style={{ height: 1, width: 496, maxWidth: '100%', background: HAIR, margin: '14px 0 0' }} />
 
             {/* STATS ROW — values over red labels, 33px hairline dividers */}
-            <div style={{ display: 'flex', alignItems: 'stretch', margin: '12px 0 0' }}>
+            <div style={{ display: 'flex', alignItems: 'stretch', margin: '25px 0 0' }}>
               {stats.map(([label, value], i) => (
                 <div key={label} style={{ display: 'flex', alignItems: 'stretch' }}>
                   {i > 0 && <div style={{ width: 1, height: 33, background: HAIR, margin: '4px 22px 0' }} />}
                   <div>
-                    <p style={{ ...SKB, fontSize: 14, color: '#FFF', margin: 0, fontVariantNumeric: 'tabular-nums' }}>{value}</p>
-                    <p style={{ ...SKB, fontSize: 11, color: 'rgba(242,13,13,0.7)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '4px 0 0' }}>{label}</p>
+                    <p style={{ ...SKB, fontSize: 11.5, color: '#FFF', margin: 0, fontVariantNumeric: 'tabular-nums' }}>{value}</p>
+                    <p style={{ ...SKB, fontSize: 8.5, color: 'rgba(242,13,13,0.7)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '4px 0 0' }}>{label}</p>
                   </div>
                 </div>
               ))}
@@ -255,11 +255,10 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
               </button>
             );
           })}
-          <span style={{ marginLeft: 'auto' }}>
-            <button onClick={() => setSortRecent((r) => !r)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', ...SKB, fontSize: 11, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-              SORT BY <span style={{ color: RED }}>{sortRecent ? 'RECENT' : 'OLDEST'}</span> <span style={{ color: RED }}>˅</span>
-            </button>
-          </span>
+          {/* THEATRE — far right (SORT BY's old seat; sort was temp, removed) */}
+          <button onClick={() => setTheatreOpen(true)} aria-label="Theatre mode" style={{ marginLeft: 'auto', background: 'transparent', border: 'none', cursor: 'pointer', padding: 2, lineHeight: 0 }}>
+            <img src="/theatre-mode-eye-framed-v2.png" alt="" style={{ height: 22, width: 'auto', display: 'block', opacity: 0.92 }} />
+          </button>
           {/* grid-mode icon slot (frame x487) — BRIEF 2 (post-scroll mode); unbuilt */}
         </div>
 
@@ -299,6 +298,9 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
         )}
       </div>
 
+      {theatreOpen && (
+        <TheatreMode posts={sortedPosts as Record<string, unknown>[]} source="profile" onClose={() => setTheatreOpen(false)} />
+      )}
       {/* Desktop lightbox v1: PostModal (portaled) renders as the full overlay —
           acceptable centered presentation for v1. */}
       {openPost && <PostModal post={openPost as any} onClose={() => setOpenPost(null)} />}
