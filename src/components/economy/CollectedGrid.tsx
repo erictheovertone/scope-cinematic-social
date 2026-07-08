@@ -227,8 +227,8 @@ export default function CollectedGrid({
           {/* Title block — its own air (Figma): 33px title over a red-centered
               radial hairline; + NEW PROGRAM small/regular in the understated
               gradient-stroke box. */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '26px 10px 14px' }}>
-            <span style={{ ...SKB, fontSize: 33, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.06em', lineHeight: 1 }}>REPERTORY</span>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '26px 10px 37px' }}>
+            <span style={{ ...SKB, fontSize: 33, color: '#FFF', textTransform: 'uppercase', letterSpacing: '-0.02em', lineHeight: 1 }}>REPERTORY</span>
             {isOwn && (
               <button
                 onClick={() => setCreateOpen(true)}
@@ -242,8 +242,7 @@ export default function CollectedGrid({
               </button>
             )}
           </div>
-          {/* red-centered radial underline, fading out both directions */}
-          <div style={{ height: 1, maxWidth: 460, margin: '0 10px 22px', background: 'radial-gradient(closest-side, rgba(255,0,0,0.8), transparent)' }} />
+
 
           {visibleStacks.length === 0 && isOwn && (
             <button onClick={() => setCreateOpen(true)} style={{ display: 'block', width: '100%', background: 'transparent', border: '1px dashed rgba(255,255,255,0.18)', cursor: 'pointer', padding: '18px 0', margin: '0 0 2px' }}>
