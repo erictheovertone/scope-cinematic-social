@@ -164,7 +164,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
       <div style={scaleWrap}>
 
         {/* ═══ HEADER ZONE ═══ */}
-        <div style={{ position: 'relative', paddingTop: 36, minHeight: 208, boxSizing: 'border-box' }}> {/* 259 × (146/183) — the zone hugs its content; the grid gains the viewport */}
+        <div style={{ position: 'relative', paddingTop: 36, minHeight: 222, boxSizing: 'border-box' }}> {/* the BADGES define the zone's minimum: cards+labels+markers (~205) + ~15px air; still 37px tighter than the original 259 */}
           {/* Pro dividing line — the mobile PFP-side accent, desktop-proportioned
               (Pro only, same conditional). */}
           {/* The frame's x96 hairline TOUCHES the PFP's left edge (183px, exactly
@@ -172,7 +172,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
               6); the frame reads as the Pro treatment — if a base hairline for
               all users is intended, that's a one-line change (flagged). */}
           {profile && isProMember(profile as { is_paid_member?: boolean; paid_member_until?: string | null }) && (
-            <div style={{ position: 'absolute', left: 0, top: 33, width: 1.5, height: 146, zIndex: 2, background: 'linear-gradient(180deg, rgba(242,13,13,0.9), rgba(242,13,13,0.25))' }} />
+            <div style={{ position: 'absolute', left: 0, top: 23, width: 1.5, height: 146, zIndex: 2, background: 'linear-gradient(180deg, rgba(242,13,13,0.9), rgba(242,13,13,0.25))' }} />
           )}
           {/* PFP — hairline-framed. In post-scroll mode it COMPRESSES into the
               43-wide BADGE RAIL (gradient strip, badges stacked small, divider
@@ -180,7 +180,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
           <motion.div
             animate={{ width: postView != null ? 43 : 150 }}
             transition={reducedMotion ? { duration: 0 } : { type: 'spring', stiffness: 500, damping: 42 }}
-            style={{ position: 'absolute', left: 0, top: 33, height: 146, border: `1px solid ${HAIR}`, borderRight: postView != null ? `1px solid rgba(255,255,255,0.3)` : `1px solid ${HAIR}`, overflow: 'hidden', background: postView != null ? 'linear-gradient(180deg, rgba(12,12,12,0.9), rgba(51,48,48,0.9))' : 'transparent' }}
+            style={{ position: 'absolute', left: 0, top: 23, height: 146, border: `1px solid ${HAIR}`, borderRight: postView != null ? `1px solid rgba(255,255,255,0.3)` : `1px solid ${HAIR}`, overflow: 'hidden', background: postView != null ? 'linear-gradient(180deg, rgba(12,12,12,0.9), rgba(51,48,48,0.9))' : 'transparent' }}
           >
             {postView == null ? (
               pfp ? (
@@ -199,9 +199,9 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
               top line (frame: PFP y25/name y33 — top 27 ≈ cap at 33 after the
               ascender gap). Frame rhythm: handle tight beneath (~25px pitch). */}
           <motion.div
-            animate={{ left: postView != null ? 107 : 214 }}
+            animate={{ left: postView != null ? 107 : 177 }}
             transition={reducedMotion ? { duration: 0 } : { type: 'spring', stiffness: 500, damping: 42 }}
-            style={{ position: 'absolute', left: 214, top: 27, right: 0 }}
+            style={{ position: 'absolute', left: 214, top: 17, right: 0 }}
           >
             <p style={{ ...SKB, fontSize: 24, color: '#FFF', textTransform: 'uppercase', letterSpacing: '-0.02em', margin: 0, lineHeight: 1 }}>{name}</p>
             <p style={{ ...SKB, fontSize: 12, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', margin: '3px 0 0' }}>{handle ? `@${handle}` : ''}</p>
