@@ -164,7 +164,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
       <div style={scaleWrap}>
 
         {/* ═══ HEADER ZONE ═══ */}
-        <div style={{ position: 'relative', paddingTop: 36, minHeight: 222, boxSizing: 'border-box' }}> {/* the BADGES define the zone's minimum: cards+labels+markers (~205) + ~15px air; still 37px tighter than the original 259 */}
+        <div style={{ position: 'relative', paddingTop: 36, minHeight: 237, boxSizing: 'border-box' }}> {/* badges (~205) + ~30px air to the divider (Eric: +15) */}
           {/* Pro dividing line — the mobile PFP-side accent, desktop-proportioned
               (Pro only, same conditional). */}
           {/* The frame's x96 hairline TOUCHES the PFP's left edge (183px, exactly
