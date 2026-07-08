@@ -129,7 +129,7 @@ export default function DesktopPostView({
       {/* FRAME GEOMETRY (round 3): narrow ~20px ARROW POCKETS hugging the media
           (frame x86/x1083 vs stage x103/1077); stage right edge ~30px from the
           panel (20px pocket + 12px gap). The media is the star. */}
-      <div style={{ flex: 1, minWidth: 0, padding: '0 20px' }}>
+      <div style={{ flex: 1, minWidth: 0, padding: '0 20px', marginTop: 60 }}> {/* media midline = panel midline (measured +60) */}
         <div style={{ position: 'relative' }}>
           {/* prev / next — Batang > glyphs, mid-media */}
           {index > 0 && (
