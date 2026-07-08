@@ -67,6 +67,7 @@ export default function DesktopWallet() {
   const [swapInitial, setSwapInitial] = useState<SwapInitial | null>(null);
   const [earnOpen, setEarnOpen] = useState(false);
   const [sendOpen, setSendOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const refreshBalances = async () => {
     if (!walletAddress) return;
@@ -154,45 +155,95 @@ export default function DesktopWallet() {
         <div style={{ display: 'flex', gap: 40, marginTop: 28 }}>
           {/* ── LEFT: money ── */}
           <div style={{ width: 420, flexShrink: 0 }}>
+            {/* Cards — MOBILE'S EXACT ANATOMY: glow circle + directional arrows
+                (the same SVG files/rotations) + label + mobile's exact subtext. */}
             <div style={{ display: 'flex', gap: 10 }}>
               {([
-                ['DEPOSIT', () => walletAddress && fundWallet(walletAddress, { chain: base })],
-                ['SWAP', () => { setSwapInitial(null); setShowSwap(true); }],
-                ['SEND', () => setSendOpen(true)],
-              ] as [string, () => void][]).map(([label, action]) => (
-                <button key={label} onClick={action} style={{ position: 'relative', flex: 1, aspectRatio: '111 / 83', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>
-                  <img src="/wallet-redux/action-card-chrome.png" alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', display: 'block' }} />
-                  <span style={{ position: 'relative', ...SKB, fontSize: 12, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{label}</span>
+                { label: 'DEPOSIT', sub: 'Add funds to your wallet', arrows: [{ src: '/wallet-redux/arrow-deposit.svg', rot: 'rotate(90deg)' }], onClick: () => walletAddress && fundWallet(walletAddress, { chain: base }) },
+                { label: 'SWAP', sub: 'USDC ⇄ ETH', arrows: [{ src: '/wallet-redux/arrow-swap-a.svg', rot: 'none' }, { src: '/wallet-redux/arrow-swap-b.svg', rot: 'rotate(180deg)' }], onClick: () => { setSwapInitial(null); setShowSwap(true); } },
+                { label: 'SEND', sub: 'Send to any address', arrows: [{ src: '/wallet-redux/arrow-send.svg', rot: 'rotate(-45deg)' }], onClick: () => setSendOpen(true) },
+              ] as const).map((card) => (
+                <button key={card.label} onClick={card.onClick} style={{ position: 'relative', flex: 1, aspectRatio: '111 / 83', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 5, background: 'transparent', border: 'none', borderRadius: 3, cursor: 'pointer', padding: 0, overflow: 'hidden' }}>
+                  <img src="/wallet-redux/action-card-chrome.png" alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }} />
+                  <span style={{ position: 'relative', width: 26, height: 26, display: 'block' }}>
+                    <img src="/wallet-redux/icon-glow-circle.svg" alt="" style={{ position: 'absolute', inset: 0, width: 26, height: 26 }} />
+                    {card.arrows.length === 1 ? (
+                      <img src={card.arrows[0].src} alt="" style={{ position: 'absolute', left: '50%', top: '50%', width: 14, height: 8.2, transform: `translate(-50%,-50%) ${card.arrows[0].rot}` }} />
+                    ) : (
+                      <>
+                        <img src={card.arrows[0].src} alt="" style={{ position: 'absolute', left: '50%', top: 6.5, transform: 'translateX(-50%)', width: 13, height: 7.5 }} />
+                        <img src={card.arrows[1].src} alt="" style={{ position: 'absolute', left: '50%', bottom: 6.5, transform: 'translateX(-50%) rotate(180deg)', width: 13, height: 7.5 }} />
+                      </>
+                    )}
+                  </span>
+                  <span style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <span style={{ ...SKB, fontSize: 11.5, color: 'white', textTransform: 'uppercase', letterSpacing: '0.02em' }}>{card.label}</span>
+                    <span style={{ ...SKR, fontSize: 9.7, color: 'rgba(255,255,255,0.68)', letterSpacing: '-0.082px' }}>{card.sub}</span>
+                  </span>
                 </button>
               ))}
             </div>
 
-            {/* ASSETS */}
+            {/* ASSETS — mobile's TOKEN PANEL anatomy: the custom token circles
+                (eth-token-circle + eth-logo overlay; usdc-token-circle + $),
+                scope-earnings badge, balance sub-lines @0.37, › disclosures. */}
             <p style={{ ...SKB, fontSize: 10, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.14em', margin: '26px 0 6px' }}>ASSETS</p>
             <div style={{ borderTop: `1px solid ${HAIR}` }}>
-              {[
-                { name: 'ETHEREUM', sub: `${eth?.toFixed(5) ?? '—'} ETH`, value: eth != null && rate != null ? eth * rate : null, icon: '/wallet-redux/eth-logo.png' },
-                { name: 'USDC', sub: `${usdc?.toFixed(2) ?? '—'} USDC`, value: usdc, icon: null },
-                { name: 'CREATOR EARNINGS', sub: `${zora != null ? Math.round(zora).toLocaleString() : '—'} ZORA`, value: zoraUsd, icon: '/scope-earnings-icon.png', cashout: true },
-              ].map((a) => (
+              <div style={{ display: 'flex', alignItems: 'center', height: 50, borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                <span style={{ position: 'relative', width: 30, height: 30, flexShrink: 0, marginRight: 11 }}>
+                  <img src="/wallet-redux/eth-token-circle.svg" alt="" style={{ position: 'absolute', inset: 0, width: 30, height: 30 }} />
+                  <img src="/wallet-redux/eth-logo.png" alt="" style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%,-50%)', width: 13, height: 'auto' }} />
+                </span>
+                <span style={{ flex: 1, minWidth: 0 }}>
+                  <span style={{ ...SKR, fontSize: 13.5, color: '#FFF', display: 'block' }}>ETH</span>
+                  <span style={{ ...SKR, fontSize: 10.5, color: '#FFF', opacity: 0.37, display: 'block', marginTop: 1 }}>{eth != null ? `${eth.toFixed(4)} ETH` : '…'}</span>
+                </span>
+                <span style={{ ...SKR, fontSize: 13.5, color: '#FFF', fontVariantNumeric: 'tabular-nums' }}>{eth != null && rate != null ? `$${(eth * rate).toFixed(2)}` : '$—'}</span>
+                <span style={{ fontFamily: 'Batang, serif', fontSize: 14.5, color: '#FFF', opacity: 0.75, marginLeft: 10 }}>›</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', height: 50, borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                <span style={{ position: 'relative', width: 30, height: 30, flexShrink: 0, marginRight: 11 }}>
+                  <img src="/wallet-redux/usdc-token-circle.svg" alt="" style={{ position: 'absolute', inset: 0, width: 30, height: 30 }} />
+                  <span style={{ ...SKB, position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14.5, color: '#FFF' }}>$</span>
+                </span>
+                <span style={{ flex: 1, minWidth: 0 }}>
+                  <span style={{ ...SKR, fontSize: 13.5, color: '#FFF', display: 'block' }}>USDC</span>
+                  <span style={{ ...SKR, fontSize: 10.5, color: '#FFF', opacity: 0.37, display: 'block', marginTop: 1 }}>{usdc != null ? `${usdc.toFixed(2)} USDC` : '…'}</span>
+                </span>
+                <span style={{ ...SKR, fontSize: 13.5, color: '#FFF', fontVariantNumeric: 'tabular-nums' }}>{usdc != null ? `$${usdc.toFixed(2)}` : '$—'}</span>
+                <span style={{ fontFamily: 'Batang, serif', fontSize: 14.5, color: '#FFF', opacity: 0.75, marginLeft: 10 }}>›</span>
+              </div>
+              {/* CREATOR EARNINGS — hidden until earned (mobile parity); tap → CASH OUT */}
+              {zora != null && zora > 0 && (
                 <button
-                  key={a.name}
-                  onClick={a.cashout && zora && zora > 0.01 ? () => { setSwapInitial({ sell: 'ZORA', buy: 'USDC', amount: (Math.floor((zora ?? 0) * 100) / 100).toFixed(2), cashOut: true }); setShowSwap(true); } : undefined}
-                  style={{ display: 'flex', width: '100%', alignItems: 'center', gap: 12, padding: '13px 4px', borderBottom: `1px solid ${HAIR}`, background: 'transparent', border: 'none', borderBottomStyle: 'solid', cursor: a.cashout ? 'pointer' : 'default', textAlign: 'left' }}
+                  onClick={() => { setSwapInitial({ sell: 'ZORA', buy: 'USDC', amount: (Math.floor(zora * 100) / 100).toFixed(2), cashOut: true }); setShowSwap(true); }}
+                  style={{ display: 'flex', width: '100%', alignItems: 'center', height: 50, borderBottom: '1px solid rgba(255,255,255,0.08)', background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0 }}
                 >
-                  {a.icon ? (
-                    <img src={a.icon} alt="" style={{ width: 30, height: 30, objectFit: 'contain', display: 'block' }} />
-                  ) : (
-                    <span style={{ width: 30, height: 30, borderRadius: '50%', background: '#2775CA', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', ...SKB, fontSize: 12, color: '#FFF' }}>$</span>
-                  )}
-                  <span style={{ flex: 1 }}>
-                    <span style={{ ...SKB, fontSize: 12.5, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block' }}>{a.name}</span>
-                    <span style={{ ...SKR, fontSize: 10.5, color: 'rgba(255,255,255,0.5)', display: 'block', marginTop: 2 }}>{a.sub}</span>
+                  <span style={{ width: 30, height: 30, flexShrink: 0, marginRight: 11, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <img src="/scope-earnings-icon.png" alt="" style={{ width: 30, height: 'auto', display: 'block' }} />
                   </span>
-                  <span style={{ ...SKB, fontSize: 13, color: '#FFF', fontVariantNumeric: 'tabular-nums' }}>{usd(a.value)}</span>
+                  <span style={{ flex: 1, minWidth: 0 }}>
+                    <span style={{ ...SKR, fontSize: 13.5, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.02em', display: 'block' }}>Creator Earnings</span>
+                    <span style={{ ...SKR, fontSize: 10.5, color: '#FFF', opacity: 0.37, display: 'block', marginTop: 1 }}>{zora >= 1000 ? Math.round(zora).toLocaleString() : zora.toFixed(2)} ZORA</span>
+                  </span>
+                  <span style={{ ...SKR, fontSize: 13.5, color: '#FFF', fontVariantNumeric: 'tabular-nums' }}>{zoraUsd != null ? `$${zoraUsd.toFixed(2)}` : '$—'}</span>
+                  <span style={{ fontFamily: 'Batang, serif', fontSize: 14.5, color: '#FFF', opacity: 0.75, marginLeft: 10 }}>›</span>
                 </button>
-              ))}
+              )}
             </div>
+
+            {/* DIRECT DEPOSIT — the full live address + copy (mobile parity) */}
+            {walletAddress && (
+              <button
+                onClick={() => { navigator.clipboard?.writeText(walletAddress); setCopied(true); window.setTimeout(() => setCopied(false), 1800); }}
+                style={{ display: 'flex', width: '100%', alignItems: 'center', gap: 10, marginTop: 16, background: 'rgba(255,255,255,0.03)', border: `1px solid ${HAIR}`, cursor: 'pointer', padding: '10px 12px', textAlign: 'left' }}
+              >
+                <span style={{ ...SKB, fontSize: 9.5, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.1em', flexShrink: 0 }}>DIRECT DEPOSIT</span>
+                <span style={{ ...SKR, fontSize: 10, color: copied ? '#00E08A' : 'rgba(255,255,255,0.65)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, fontVariantNumeric: 'tabular-nums' }}>
+                  {copied ? 'COPIED ✓' : walletAddress}
+                </span>
+              </button>
+            )}
           </div>
 
           {/* ── RIGHT: depth ── */}
