@@ -94,6 +94,7 @@ export default function PublicProfilePage() {
 
   // Scroll animation
   const [gridScrollY, setGridScrollY] = useState(0);
+  useEffect(() => { setGridScrollY(0); }, [activeTab]);
   const [headerSnapped, setHeaderSnapped] = useState(false);
   const [headerUnsnapping, setHeaderUnsnapping] = useState(false);
   const [snapAnimKey, setSnapAnimKey] = useState(0);
@@ -442,7 +443,14 @@ export default function PublicProfilePage() {
         {activeTab === 'collected' ? (
           /* COLLECTED — the curator résumé, public by nature (on-chain data).
              Excludes the profile user's own posts (ratified). */
-          <div style={{ position: 'absolute', top: 140, left: 0, right: 0, bottom: 60, overflowY: 'auto' }}>
+          <div
+            style={{ position: 'absolute', inset: 0, bottom: 60, overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}
+            onScroll={(e) => {
+              const el = e.currentTarget;
+              requestAnimationFrame(() => setGridScrollY(Math.max(0, el.scrollTop)));
+            }}
+          >
+            <div style={{ height: 140 }} />
             {profile?.user_id
               ? <CollectedGrid userId={profile.user_id} isOwn={!!isOwnProfile} />
               : <div style={{ minHeight: '30vh' }} />}

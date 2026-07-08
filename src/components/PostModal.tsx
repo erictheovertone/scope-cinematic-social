@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { feedImage } from "@/lib/mediaUrl";
 import { useRouter } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
@@ -289,7 +290,12 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
     }
   };
 
-  return (
+  // PORTALED to document.body: the lightbox previously rendered in-tree —
+  // inside scrolling/transformed ancestors (the documented globals.css class:
+  // a transform on an ancestor BREAKS a fixed pin), so its chrome could land
+  // off-screen (the missing-dismiss report). At body level the pin is real.
+  if (typeof document === 'undefined') return null;
+  return createPortal(
     <>
       {/* Scoped placeholder colour */}
       <style>{`.pm-input::placeholder { color: rgba(255,255,255,0.35); }`}</style>
@@ -355,15 +361,25 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
           {/* THEATRE entry — the eye, alone in the bar's right slot (BACK owns the
               left; nothing else lives up here, so no crowding). Enters theatre AT
               this post; replaces the old THEATER text button in the action row. */}
-          {onTheaterMode && (
+          <span style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 4 }}>
+            {onTheaterMode && (
+              <button
+                onClick={() => onTheaterMode()}
+                aria-label="Theatre mode"
+                style={{ background: "transparent", border: "none", cursor: "pointer", padding: 4 }}
+              >
+                <img src="/theatre-mode-eye-framed-v2.png" alt="" style={{ height: 22, width: "auto", display: "block", opacity: 0.92 }} />
+              </button>
+            )}
+            {/* × dismiss — explicit, ≥44px target, both lightbox variants */}
             <button
-              onClick={() => onTheaterMode()}
-              aria-label="Theatre mode"
-              style={{ marginLeft: "auto", background: "transparent", border: "none", cursor: "pointer", padding: 4 }}
+              onClick={handleClose}
+              aria-label="Close"
+              style={{ background: "transparent", border: "none", cursor: "pointer", minWidth: 44, minHeight: 44, display: "inline-flex", alignItems: "center", justifyContent: "center", padding: 0, marginRight: -10 }}
             >
-              <img src="/theatre-mode-eye-framed-v2.png" alt="" style={{ height: 22, width: "auto", display: "block", opacity: 0.92 }} />
+              <span style={{ ...SKR, fontSize: 'var(--fs-15)', color: "rgba(255,255,255,0.75)", lineHeight: 1 }}>×</span>
             </button>
-          )}
+          </span>
         </div>
 
         {/* ── Scrollable body ── */}
@@ -882,6 +898,7 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
           }}
         />
       )}
-    </>
+    </>,
+    document.body,
   );
 }

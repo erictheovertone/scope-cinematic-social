@@ -199,6 +199,7 @@ const userLayoutId = stableLayoutId;
     return () => { cancelled = true; };
   }, [economy, supabaseUserId]);
   const [gridScrollY, setGridScrollY] = useState(0);
+  useEffect(() => { setGridScrollY(0); }, [activeTab]);
   const [headerSnapped, setHeaderSnapped] = useState(false);
   const [headerUnsnapping, setHeaderUnsnapping] = useState(false);
   const [snapAnimKey, setSnapAnimKey] = useState(0);
@@ -547,8 +548,25 @@ const userLayoutId = stableLayoutId;
 
       {/* COLLECTED — the real page (ownership as identity): posts this user
           holds pieces of, EXCLUDING their own (ratified). */}
+      {/* COLLECTED — the SAME scroll-push mechanic as the posts grid: the
+          container owns the full viewport, a spacer reserves the header's
+          space IN the scroll content, and scrollTop feeds gridScrollY so the
+          header fades/pushes and the tab row pins compactly — 1:1 with the
+          finger, one continuous flow. */}
       {activeTab === 'collected' && supabaseUserId && (
-        <div style={{ position: 'absolute', top: 'calc(140px + env(safe-area-inset-top, 0px))', left: 0, right: 0, bottom: 60, overflowY: 'auto' }}>
+        <div
+          style={{ position: 'absolute', inset: 0, bottom: 60, overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}
+          onScroll={(e) => {
+            if (rafPendingRef.current) return;
+            rafPendingRef.current = true;
+            const el = e.currentTarget;
+            requestAnimationFrame(() => {
+              setGridScrollY(Math.max(0, el.scrollTop));
+              rafPendingRef.current = false;
+            });
+          }}
+        >
+          <div style={{ height: 'calc(140px + env(safe-area-inset-top, 0px))' }} />
           <CollectedGrid userId={supabaseUserId} isOwn />
         </div>
       )}
