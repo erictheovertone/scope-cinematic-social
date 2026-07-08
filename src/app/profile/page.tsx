@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import DesktopProfile from '@/components/desktop/DesktopProfile';
+import { useIsDesktop } from '@/lib/useIsDesktop';
 import { feedImage } from "@/lib/mediaUrl";
 import { useRouter, useSearchParams } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
@@ -198,6 +200,7 @@ const userLayoutId = stableLayoutId;
       .catch(() => {});
     return () => { cancelled = true; };
   }, [economy, supabaseUserId]);
+  const isDesktop = useIsDesktop();
   const [gridScrollY, setGridScrollY] = useState(0);
   useEffect(() => { setGridScrollY(0); }, [activeTab]);
   const [headerSnapped, setHeaderSnapped] = useState(false);
@@ -341,6 +344,14 @@ const userLayoutId = stableLayoutId;
   useEffect(() => {
     if (headerSnapped && !headerUnsnapping && (gridScrollY > snapScrollYRef.current + 30 || gridScrollY < 20)) setHeaderSnapped(false);
   }, [gridScrollY, headerSnapped, headerUnsnapping]);
+
+  // ── DESKTOP SEAM (Brief 1): ≥1024 renders the desktop profile — its own
+  // component tree, zero responsive CSS threaded into this mobile page. ──
+  if (isDesktop) {
+    return supabaseUserId && user?.id
+      ? <DesktopProfile userId={supabaseUserId} privyId={user.id} isOwn />
+      : <div className="bg-black" style={{ position: 'fixed', inset: 0 }} />;
+  }
 
   return (
     <div className="relative">{/* Non-scrolling viewport root — fixed chrome (footer + snapped frame) is lifted OUT below as SIBLINGS of the scroller, so on iOS standalone it anchors to the VIEWPORT, not the .screen-min scroll container (which floated the footer above the screen bottom). */}

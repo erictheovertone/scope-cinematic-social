@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import DesktopRail from '@/components/desktop/DesktopRail';
+import { useIsDesktop } from '@/lib/useIsDesktop';
 import { usePathname } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
 import { getUnreadNotificationCount } from "@/lib/userService";
@@ -32,6 +34,7 @@ export default function AppShell() {
   const pathname = usePathname();
   const { user } = usePrivy();
   const [unreadCount, setUnreadCount] = useState(0);
+  const isDesktop = useIsDesktop();
   const [mounted, setMounted] = useState(false);
   // Takeover surfaces (theatre mode, any entry) hide the footer for their whole
   // session — same standdown attribute the finishing suite uses, synced by event.
@@ -77,6 +80,11 @@ export default function AppShell() {
 
   // Before mount: always render 3 icons (home, create, wallet) — no pathname logic
   if (!mounted) return null;
+
+  // DESKTOP: the 71px rail is the global chrome on EVERY desktop surface
+  // (it stands itself down during takeovers via the same attribute) — the
+  // mobile footer's HIDDEN list doesn't apply to it.
+  if (isDesktop) return <DesktopRail />;
 
   if (takeover || HIDDEN.some(p => pathname === p)) return null;
 

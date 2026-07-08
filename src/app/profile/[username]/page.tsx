@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import DesktopProfile from '@/components/desktop/DesktopProfile';
+import { useIsDesktop } from '@/lib/useIsDesktop';
 import { createPortal } from "react-dom";
 import { feedImage } from "@/lib/mediaUrl";
 import { useParams, useRouter } from "next/navigation";
@@ -93,6 +95,7 @@ export default function PublicProfilePage() {
   const [paidMemberUntil, setPaidMemberUntil] = useState<Date | null>(null);
 
   // Scroll animation
+  const isDesktop = useIsDesktop();
   const [gridScrollY, setGridScrollY] = useState(0);
   useEffect(() => { setGridScrollY(0); }, [activeTab]);
   const [headerSnapped, setHeaderSnapped] = useState(false);
@@ -232,6 +235,13 @@ export default function PublicProfilePage() {
       <FrameLoader variant="page" />
     </div>
   );
+
+  // ── DESKTOP SEAM (Brief 1) — same component, isOwn gating. ──
+  if (isDesktop) {
+    return profile?.user_id && targetPrivyId
+      ? <DesktopProfile userId={profile.user_id} privyId={targetPrivyId} isOwn={!!isOwnProfile} />
+      : <div className="bg-black" style={{ position: 'fixed', inset: 0 }} />;
+  }
 
   return (
     <div className="bg-black relative w-full app-shell screen-min mx-auto pb-[60px]">

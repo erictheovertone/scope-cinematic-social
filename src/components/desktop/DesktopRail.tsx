@@ -1,0 +1,89 @@
+'use client';
+// ── DESKTOP RAIL — the 71px global left rail (every desktop surface except
+// theatre / full takeovers, which set data-suite-open → the rail stands down
+// like the mobile footer does). Desktop-only chrome; the mobile footer is
+// untouched. Icons are v1 equivalents of the app's nav set (Eric exports
+// finals later): home / create / notifications / wallet / profile.
+
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+
+const RAIL_W = 71;
+const ACTIVE_BAR = '#f20d0d';
+const ACTIVE_GRAD = 'linear-gradient(225deg, rgba(242,13,13,0.12) 18%, rgba(203,195,195,0.12) 105%)';
+
+const st = { stroke: 'rgba(255,255,255,0.85)', strokeWidth: 1.5, fill: 'none' as const, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
+
+const ICONS: { key: string; href: string; label: string; match: (p: string) => boolean; glyph: React.ReactNode }[] = [
+  {
+    key: 'home', href: '/', label: 'Home', match: (p) => p === '/',
+    glyph: <svg width="20" height="20" viewBox="0 0 24 24"><path d="M4 10.5L12 4l8 6.5V20h-5.5v-5h-5v5H4z" {...st} /></svg>,
+  },
+  {
+    key: 'create', href: '/create', label: 'Create', match: (p) => p.startsWith('/create'),
+    glyph: <svg width="20" height="20" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" {...st} /></svg>,
+  },
+  {
+    key: 'notifications', href: '/profile/notifications', label: 'Notifications', match: (p) => p.startsWith('/profile/notifications'),
+    glyph: <svg width="20" height="20" viewBox="0 0 24 24"><path d="M6 16v-5a6 6 0 0 1 12 0v5l1.5 2.5h-15L6 16z" {...st} /><path d="M10 20.5a2 2 0 0 0 4 0" {...st} /></svg>,
+  },
+  {
+    key: 'wallet', href: '/wallet', label: 'Wallet', match: (p) => p.startsWith('/wallet'),
+    glyph: <svg width="20" height="20" viewBox="0 0 24 24"><rect x="3.5" y="6.5" width="17" height="12" rx="1" {...st} /><path d="M15 12.5h3" {...st} /></svg>,
+  },
+  {
+    key: 'profile', href: '/profile', label: 'Profile', match: (p) => p === '/profile' || (p.startsWith('/profile/') && !p.startsWith('/profile/notifications')),
+    glyph: <svg width="20" height="20" viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="3.5" {...st} /><path d="M5 20c1.4-3.4 4-5 7-5s5.6 1.6 7 5" {...st} /></svg>,
+  },
+];
+
+export default function DesktopRail() {
+  const pathname = usePathname() ?? '/';
+  // Takeover standdown — the same attribute mechanism as BottomToolbar.
+  const [takeover, setTakeover] = useState(false);
+  useEffect(() => {
+    const sync = () => setTakeover(!!document.documentElement.dataset.suiteOpen);
+    sync();
+    const mo = new MutationObserver(sync);
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-suite-open'] });
+    window.addEventListener('scope:takeover-change', sync);
+    return () => { mo.disconnect(); window.removeEventListener('scope:takeover-change', sync); };
+  }, []);
+  if (takeover) return null;
+
+  return (
+    <nav
+      aria-label="Primary"
+      style={{
+        position: 'fixed', left: 0, top: 0, bottom: 0, width: RAIL_W, zIndex: 80,
+        background: '#000', borderRight: '0.25px solid rgba(255,255,255,0.35)',
+        display: 'flex', flexDirection: 'column', alignItems: 'center',
+      }}
+    >
+      <Link href="/" aria-label="Home" style={{ display: 'block', padding: '18px 0 26px' }}>
+        <img src="/logomark-plain-white.png" alt="Scope" style={{ width: 41, height: 26, objectFit: 'contain', display: 'block' }} />
+      </Link>
+      <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+        {ICONS.map((ic) => {
+          const active = ic.match(pathname);
+          return (
+            <Link
+              key={ic.key}
+              href={ic.href}
+              aria-label={ic.label}
+              style={{
+                position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                width: '100%', height: 56,
+                background: active ? ACTIVE_GRAD : 'transparent',
+              }}
+            >
+              {active && <span style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, background: ACTIVE_BAR }} />}
+              <span style={{ opacity: active ? 1 : 0.6 }}>{ic.glyph}</span>
+            </Link>
+          );
+        })}
+      </div>
+    </nav>
+  );
+}
