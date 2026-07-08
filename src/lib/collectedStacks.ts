@@ -105,9 +105,17 @@ const BAKE_W = 1500;
 
 export async function bakeHeroBanner(imageUrl: string): Promise<Blob | null> {
   try {
-    const res = await fetch(imageUrl);
+    const res = await fetch(imageUrl, { mode: 'cors' });
+    if (!res.ok) { console.warn('[stacks] hero source fetch', res.status); return null; }
     const src = await res.blob();
-    const bmp = await createImageBitmap(src, { resizeWidth: 2000, resizeQuality: 'high' } as ImageBitmapOptions);
+    // createImageBitmap: resize options throw on older Safari — try with, fall
+    // back to a plain decode (the canvas step downscales anyway).
+    let bmp: ImageBitmap;
+    try {
+      bmp = await createImageBitmap(src, { resizeWidth: 2000, resizeQuality: 'high' } as ImageBitmapOptions);
+    } catch {
+      bmp = await createImageBitmap(src);
+    }
     const outW = Math.min(BAKE_W, bmp.width);
     const outH = Math.round(outW / BANNER_RATIO);
     const canvas = document.createElement('canvas');
@@ -120,17 +128,28 @@ export async function bakeHeroBanner(imageUrl: string): Promise<Blob | null> {
     const sx = (bmp.width - sw) / 2, sy = (bmp.height - sh) / 2;
     ctx.drawImage(bmp, sx, sy, sw, sh, 0, 0, outW, outH);
     bmp.close();
-    return await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/webp', 0.82));
+    // WebP first; Safari doesn't encode WebP (spec-falls-back or nulls) → JPEG.
+    // The blob's ACTUAL type travels with it (upload declares it truthfully —
+    // the bucket enforces a mime whitelist).
+    let blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/webp', 0.82));
+    if (!blob || blob.type !== 'image/webp') {
+      blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.85)) ?? blob;
+    }
+    if (!blob) console.warn('[stacks] hero bake: canvas export returned null');
+    return blob;
   } catch (e) {
-    console.error('[stacks] hero bake failed:', (e as Error).message);
+    console.warn('[stacks] hero bake failed:', (e as Error).message);
     return null;
   }
 }
 
 export async function uploadHeroBanner(userId: string, stackId: string, blob: Blob): Promise<string | null> {
-  const path = `stacks/${userId}/${stackId}-hero.webp`;
-  const { error } = await supabase.storage.from('post-media').upload(path, blob, { upsert: true, cacheControl: '31536000', contentType: 'image/webp' });
-  if (error) { console.error('[stacks] hero upload failed:', error.message); return null; }
+  // Truthful mime + extension: Safari bakes JPEG, Chrome WebP — declare what
+  // the blob actually is (the bucket whitelist rejects mislabeled uploads).
+  const isJpeg = blob.type === 'image/jpeg';
+  const path = `stacks/${userId}/${stackId}-hero.${isJpeg ? 'jpg' : 'webp'}`;
+  const { error } = await supabase.storage.from('post-media').upload(path, blob, { upsert: true, cacheControl: '31536000', contentType: blob.type || 'image/webp' });
+  if (error) { console.warn('[stacks] hero upload failed:', error.message); return null; }
   const { data } = supabase.storage.from('post-media').getPublicUrl(path);
   // Bust the CDN on re-bake (same path, upsert) — the same-URL swap discipline.
   return data?.publicUrl ? `${data.publicUrl}?v=${stackId.slice(0, 8)}-${Math.floor(Math.random() * 1e6)}` : null;

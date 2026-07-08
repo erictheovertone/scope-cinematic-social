@@ -615,13 +615,23 @@ function ProgramDetail({
   const heroSold = !!stack.hero_post_id && !items.some((h) => h.postId === stack.hero_post_id);
   const addable = heldAll.filter((h) => !stack.itemPostIds.includes(h.postId));
 
+  const [heroError, setHeroError] = useState<string | null>(null);
   const doSetHero = async (h: Holding) => {
-    setBusyHero(h.postId);
+    setBusyHero(h.postId); setHeroError(null);
     const src = thumbOf(h);
     let url: string | null = null;
     if (src) {
       const blob = await bakeHeroBanner(feedImage(src, 1600));
       if (blob) url = await uploadHeroBanner(userId, stack.id, blob);
+    }
+    if (!url) {
+      // The old path persisted NULL here — hero_post_id updated, banner_url
+      // wiped → the render fell back to the first item and the tap read as
+      // "nothing happened" (3 of 4 stacks were in this state). Now: persist
+      // NOTHING on failure, tell the owner.
+      setBusyHero(null);
+      setHeroError('HERO BAKE FAILED — TRY AGAIN');
+      return;
     }
     await setStackHero(stack.id, h.postId, url);
     setBusyHero(null);
@@ -664,6 +674,9 @@ function ProgramDetail({
           </div>
         )}
 
+        {heroError && (
+          <p style={{ ...SKR, fontSize: 'var(--fs-8)', color: '#FF0000', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 10px' }}>{heroError}</p>
+        )}
         {isOwn && heroSold && items.length > 0 && (
           /* HERO SOLD — the banner already falls back; this is the owner nudge. */
           <p style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 10px' }}>

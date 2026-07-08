@@ -335,12 +335,6 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
             borderBottom: "1px solid rgba(255,255,255,0.06)",
           }}
         >
-          {nav && (
-            /* program counter — small, tracked, muted, dead-center in the bar */
-            <span style={{ position: "absolute", left: "50%", transform: "translateX(-50%)", ...SKR, fontSize: 'var(--fs-8)', color: "rgba(255,255,255,0.5)", letterSpacing: "0.18em", fontVariantNumeric: "tabular-nums" }}>
-              {nav.index + 1} / {nav.total}
-            </span>
-          )}
           <button
             onClick={handleClose}
             style={{
@@ -372,19 +366,6 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
           )}
         </div>
 
-        {/* ── Program nav arrows — the theatre arrows' language, lightbox-sized;
-            absent at the ends (the rubber-band: nothing to step to). ── */}
-        {nav && nav.index > 0 && (
-          <button onClick={() => nav.onStep(-1)} aria-label="Previous" style={{ position: "absolute", left: 6, top: "50%", transform: "translateY(-50%)", zIndex: 5, background: "rgba(0,0,0,0.35)", border: "none", cursor: "pointer", padding: 8 }}>
-            <img src="/theatre-mode-arrow-01.png" alt="" style={{ height: 22, width: "auto", display: "block", transform: "scaleX(-1)", opacity: 0.85 }} />
-          </button>
-        )}
-        {nav && nav.index < nav.total - 1 && (
-          <button onClick={() => nav.onStep(1)} aria-label="Next" style={{ position: "absolute", right: 6, top: "50%", transform: "translateY(-50%)", zIndex: 5, background: "rgba(0,0,0,0.35)", border: "none", cursor: "pointer", padding: 8 }}>
-            <img src="/theatre-mode-arrow-01.png" alt="" style={{ height: 22, width: "auto", display: "block", opacity: 0.85 }} />
-          </button>
-        )}
-
         {/* ── Scrollable body ── */}
         <div
           onClick={() => { if (ownerMenuOpen) setOwnerMenuOpen(false); }} // tap-out collapses the owner reveal
@@ -399,6 +380,22 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
               (no void: the data block sits directly beneath the media with
               normal spacing, never pinned to the screen bottom). */}
           <div style={{ minHeight: "calc(100vh - 44px)", display: "flex", flexDirection: "column", justifyContent: "center", position: "relative", paddingBottom: onScrollDown ? 72 : 0 }}>
+            {/* ── Program nav — a slim row DIRECTLY ABOVE the media frame, in the
+                black: ‹ left · counter center · › right (one line, never over
+                the media). An arrow vanishes at its end — the rubber-band. ── */}
+            {nav && (
+              <div style={{ width: "92%", margin: "0 auto 6px", display: "flex", alignItems: "center", justifyContent: "space-between", minHeight: 26 }}>
+                <button onClick={() => nav.onStep(-1)} disabled={nav.index === 0} aria-label="Previous" style={{ background: "transparent", border: "none", cursor: nav.index === 0 ? "default" : "pointer", padding: 4, lineHeight: 0, visibility: nav.index === 0 ? "hidden" : "visible" }}>
+                  <img src="/theatre-mode-arrow-01.png" alt="" style={{ height: 16, width: "auto", display: "block", transform: "scaleX(-1)", opacity: 0.85 }} />
+                </button>
+                <span style={{ ...SKR, fontSize: 'var(--fs-8)', color: "rgba(255,255,255,0.5)", letterSpacing: "0.18em", fontVariantNumeric: "tabular-nums" }}>
+                  {nav.index + 1} / {nav.total}
+                </span>
+                <button onClick={() => nav.onStep(1)} disabled={nav.index === nav.total - 1} aria-label="Next" style={{ background: "transparent", border: "none", cursor: nav.index === nav.total - 1 ? "default" : "pointer", padding: 4, lineHeight: 0, visibility: nav.index === nav.total - 1 ? "hidden" : "visible" }}>
+                  <img src="/theatre-mode-arrow-01.png" alt="" style={{ height: 16, width: "auto", display: "block", opacity: 0.85 }} />
+                </button>
+              </div>
+            )}
             <div style={{ width: "92%", margin: "0 auto", aspectRatio: getAspectRatio(post.layout_id ?? ''), overflow: "hidden", background: "#0a0a0a" }}>
               {post.media_urls?.[0] ? (
                 isVideoPost ? (
