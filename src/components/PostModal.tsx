@@ -386,13 +386,13 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
             {nav && (
               <div style={{ width: "92%", margin: "0 auto 6px", display: "flex", alignItems: "center", justifyContent: "space-between", minHeight: 26 }}>
                 <button onClick={() => nav.onStep(-1)} disabled={nav.index === 0} aria-label="Previous" style={{ background: "transparent", border: "none", cursor: nav.index === 0 ? "default" : "pointer", padding: 4, lineHeight: 0, visibility: nav.index === 0 ? "hidden" : "visible" }}>
-                  <img src="/theatre-mode-arrow-01.png" alt="" style={{ height: 16, width: "auto", display: "block", transform: "scaleX(-1)", opacity: 1, filter: "brightness(1.2)" }} />
+                  <img src="/theatre-mode-arrow-01.png" alt="" style={{ height: 17, width: "auto", display: "block", transform: "scaleX(-1)", opacity: 1, filter: "drop-shadow(0 0 2.5px rgba(255,255,255,0.95)) drop-shadow(0 0 1px rgba(255,255,255,1))" }} />
                 </button>
                 <span style={{ ...SKR, fontSize: 'var(--fs-8)', color: "rgba(255,255,255,0.5)", letterSpacing: "0.18em", fontVariantNumeric: "tabular-nums" }}>
                   {nav.index + 1} / {nav.total}
                 </span>
                 <button onClick={() => nav.onStep(1)} disabled={nav.index === nav.total - 1} aria-label="Next" style={{ background: "transparent", border: "none", cursor: nav.index === nav.total - 1 ? "default" : "pointer", padding: 4, lineHeight: 0, visibility: nav.index === nav.total - 1 ? "hidden" : "visible" }}>
-                  <img src="/theatre-mode-arrow-01.png" alt="" style={{ height: 16, width: "auto", display: "block", opacity: 1, filter: "brightness(1.2)" }} />
+                  <img src="/theatre-mode-arrow-01.png" alt="" style={{ height: 17, width: "auto", display: "block", opacity: 1, filter: "drop-shadow(0 0 2.5px rgba(255,255,255,0.95)) drop-shadow(0 0 1px rgba(255,255,255,1))" }} />
                 </button>
               </div>
             )}
