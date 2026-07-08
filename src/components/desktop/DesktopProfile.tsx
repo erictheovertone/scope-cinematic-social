@@ -294,8 +294,8 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
               </button>
             );
           })}
-          {/* THEATRE — far right (SORT BY's old seat; sort was temp, removed) */}
-          <button onClick={() => setTheatreOpen(true)} aria-label="Theatre mode" style={{ marginLeft: 'auto', background: 'transparent', border: 'none', cursor: 'pointer', padding: 2, lineHeight: 0 }}>
+          {/* THEATRE eye — the FOURTH tab-row element (frame ~x487), even spacing */}
+          <button onClick={() => setTheatreOpen(true)} aria-label="Theatre mode" style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 2, lineHeight: 0 }}>
             <img src="/theatre-mode-eye-framed-v2.png" alt="" style={{ height: 22, width: 'auto', display: 'block', opacity: 0.92 }} />
           </button>
           {/* grid-mode icon slot (frame x487) — BRIEF 2 (post-scroll mode); unbuilt */}

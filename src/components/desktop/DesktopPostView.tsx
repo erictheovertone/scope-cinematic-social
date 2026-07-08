@@ -114,21 +114,21 @@ export default function DesktopPostView({
   const fcCount = fcHolders?.length ?? 0;
 
   return (
-    <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', paddingBottom: 80, marginTop: 35 }}> {/* stage seated ~35 below the tab row */}
+    <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', paddingBottom: 80, marginTop: 12 }}> {/* frame seat: content ~y299, ~40px under the divider (panel + stage top-aligned) */}
       {/* ═══ LEFT: the stage + below-media rows ═══ */}
-      {/* GUTTER GEOMETRY: the stage column reserves 44px pads L+R; the
-          arrows center in those pads — left gutter page-side, right gutter
-          between stage and panel. The stage shrank accordingly (reported). */}
-      <div style={{ flex: 1, minWidth: 0, padding: '0 44px' }}>
+      {/* FRAME GEOMETRY (round 3): narrow ~20px ARROW POCKETS hugging the media
+          (frame x86/x1083 vs stage x103/1077); stage right edge ~30px from the
+          panel (20px pocket + 12px gap). The media is the star. */}
+      <div style={{ flex: 1, minWidth: 0, padding: '0 20px' }}>
         <div style={{ position: 'relative' }}>
           {/* prev / next — Batang > glyphs, mid-media */}
           {index > 0 && (
-            <button onClick={() => onStep(-1)} aria-label="Previous" style={{ position: 'absolute', left: -44, top: '50%', transform: 'translate(0, -50%)', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'Batang, serif', fontSize: 24, color: 'rgba(255,255,255,0.75)', padding: 6, lineHeight: 1 }}>
+            <button onClick={() => onStep(-1)} aria-label="Previous" style={{ position: 'absolute', left: -22, top: '50%', transform: 'translate(0, -50%)', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'Batang, serif', fontSize: 24, color: 'rgba(255,255,255,0.75)', padding: 3, lineHeight: 1 }}>
               {'<'}
             </button>
           )}
           {index < posts.length - 1 && (
-            <button onClick={() => onStep(1)} aria-label="Next" style={{ position: 'absolute', right: -44, top: '50%', transform: 'translate(0, -50%)', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'Batang, serif', fontSize: 24, color: 'rgba(255,255,255,0.75)', padding: 6, lineHeight: 1 }}>
+            <button onClick={() => onStep(1)} aria-label="Next" style={{ position: 'absolute', right: -22, top: '50%', transform: 'translate(0, -50%)', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'Batang, serif', fontSize: 24, color: 'rgba(255,255,255,0.75)', padding: 3, lineHeight: 1 }}>
               {'>'}
             </button>
           )}
