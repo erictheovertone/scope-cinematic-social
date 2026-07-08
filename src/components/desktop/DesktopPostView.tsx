@@ -50,7 +50,8 @@ export default function DesktopPostView({
   const [likes, setLikes] = useState<{ user_id?: string }[]>([]);
   const [comments, setComments] = useState<{ id?: string; username?: string; content?: string; created_at?: string }[]>([]);
   const [market, setMarket] = useState<{ mcUsd: number; holders: number | null; live: boolean } | null>(null);
-  const [viewer, setViewer] = useState<{ uuid: string; name: string } | null>(null);
+  const [viewer, setViewer] = useState<{ uuid: string; name: string; avatar: string | null } | null>(null);
+  const [avatars, setAvatars] = useState<Map<string, string>>(new Map());
   const [newComment, setNewComment] = useState('');
   const [collectOpen, setCollectOpen] = useState(false);
   const fcHolders = useFirstCutLedger(coinAddr);
@@ -60,7 +61,7 @@ export default function DesktopPostView({
     let dead = false;
     getUserByPrivyId(user.id)
       .then((su) => (su ? getProfile(su.id).then((p) => ({ su, p })) : null))
-      .then((r) => { if (!dead && r) setViewer({ uuid: r.su.id, name: (r.p as { username?: string })?.username ?? 'user' }); })
+      .then((r) => { if (!dead && r) setViewer({ uuid: r.su.id, name: (r.p as { username?: string })?.username ?? 'user', avatar: (r.p as { profile_image_url?: string })?.profile_image_url ?? null }); })
       .catch(() => {});
     return () => { dead = true; };
   }, [user?.id]);
@@ -70,7 +71,17 @@ export default function DesktopPostView({
     setLikes([]); setComments([]); setMarket(null);
     if (!postId) return;
     getPostLikes(postId).then((l) => { if (!dead) setLikes(l as { user_id?: string }[]); }).catch(() => {});
-    getPostComments(postId).then((c) => { if (!dead) setComments(c as typeof comments); }).catch(() => {});
+    getPostComments(postId).then(async (c) => {
+      if (dead) return;
+      setComments(c as typeof comments);
+      // real commenter avatars — ONE batched profiles read by username
+      const names = [...new Set((c as { username?: string }[]).map((x) => x.username).filter(Boolean))] as string[];
+      if (names.length) {
+        const { supabase } = await import('@/lib/supabase/client');
+        const { data } = await supabase.from('profiles').select('username, profile_image_url').in('username', names);
+        if (!dead) setAvatars(new Map((data ?? []).filter((p) => p.profile_image_url).map((p) => [p.username as string, p.profile_image_url as string])));
+      }
+    }).catch(() => {});
     economy.getPostMarket(postId).then((m) => { if (!dead) setMarket({ mcUsd: m.mcUsd, holders: m.holders, live: m.live }); }).catch(() => {});
     return () => { dead = true; };
   }, [postId, economy]);
@@ -103,24 +114,27 @@ export default function DesktopPostView({
   const fcCount = fcHolders?.length ?? 0;
 
   return (
-    <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start', paddingBottom: 80 }}>
+    <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', paddingBottom: 80, marginTop: 35 }}> {/* stage seated ~35 below the tab row */}
       {/* ═══ LEFT: the stage + below-media rows ═══ */}
-      <div style={{ flex: 1, minWidth: 0 }}>
+      {/* GUTTER GEOMETRY: the stage column reserves 44px pads L+R; the
+          arrows center in those pads — left gutter page-side, right gutter
+          between stage and panel. The stage shrank accordingly (reported). */}
+      <div style={{ flex: 1, minWidth: 0, padding: '0 44px' }}>
         <div style={{ position: 'relative' }}>
           {/* prev / next — Batang > glyphs, mid-media */}
           {index > 0 && (
-            <button onClick={() => onStep(-1)} aria-label="Previous" style={{ position: 'absolute', left: -18, top: '50%', transform: 'translate(-100%, -50%)', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'Batang, serif', fontSize: 24, color: 'rgba(255,255,255,0.75)', padding: 6, lineHeight: 1 }}>
+            <button onClick={() => onStep(-1)} aria-label="Previous" style={{ position: 'absolute', left: -44, top: '50%', transform: 'translate(0, -50%)', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'Batang, serif', fontSize: 24, color: 'rgba(255,255,255,0.75)', padding: 6, lineHeight: 1 }}>
               {'<'}
             </button>
           )}
           {index < posts.length - 1 && (
-            <button onClick={() => onStep(1)} aria-label="Next" style={{ position: 'absolute', right: -18, top: '50%', transform: 'translate(100%, -50%)', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'Batang, serif', fontSize: 24, color: 'rgba(255,255,255,0.75)', padding: 6, lineHeight: 1 }}>
+            <button onClick={() => onStep(1)} aria-label="Next" style={{ position: 'absolute', right: -44, top: '50%', transform: 'translate(0, -50%)', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'Batang, serif', fontSize: 24, color: 'rgba(255,255,255,0.75)', padding: 6, lineHeight: 1 }}>
               {'>'}
             </button>
           )}
 
           {/* THE STAGE — fixed 2.75:1 letterbox; the shared-element morph target */}
-          <motion.div layoutId={`dpost-${postId}`} style={{ width: '100%', aspectRatio: '974 / 354', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+          <motion.div layoutId={`dpost-${postId}`} transition={{ layout: { duration: 0.18, ease: 'easeOut' } }} style={{ width: '100%', aspectRatio: '974 / 354', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
             <div style={{ ...(ar >= 974 / 354 ? { width: '100%' } : { height: '100%' }), aspectRatio: `${ar}`, overflow: 'hidden', background: '#0a0a0a' }}>
               {isVideo ? (
                 <GradedVideo
@@ -183,17 +197,20 @@ export default function DesktopPostView({
       </div>
 
       {/* ═══ RIGHT PANEL (309×573, #030303) ═══ */}
-      <div style={{ width: 309, flexShrink: 0, height: 573, background: '#030303', border: '0.25px solid rgba(255,255,255,0.54)', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ width: 309, flexShrink: 0, height: 573, background: '#030303', border: '0.25px solid rgba(255,255,255,0.27)', display: 'flex', flexDirection: 'column' }}>
         {/* header strip: ticker · MC · collectors */}
-        <div style={{ display: 'flex', alignItems: 'center', padding: '12px 12px' }}>
-          {(post?.ticker as string) && <TickerMark ticker={post.ticker as string} size={11} />}
-          <div style={{ width: 1, height: 28, background: HAIR, margin: '0 12px' }} />
-          <div>
+        {/* three zones distributed across the panel width, hairlines between */}
+        <div style={{ display: 'flex', alignItems: 'center', padding: '12px 0' }}>
+          <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
+            {(post?.ticker as string) ? <TickerMark ticker={post.ticker as string} size={11} /> : <span style={{ ...SKB, fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>—</span>}
+          </div>
+          <div style={{ width: 1, height: 28, background: HAIR }} />
+          <div style={{ flex: 1, textAlign: 'center' }}>
             <p style={{ ...SKB, fontSize: 8, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>MC</p>
             <p style={{ ...SKB, fontSize: 11, color: '#FFF', margin: '2px 0 0', fontVariantNumeric: 'tabular-nums' }}>{market ? usd(market.mcUsd) : '…'}</p>
           </div>
-          <div style={{ width: 1, height: 28, background: HAIR, margin: '0 12px' }} />
-          <div>
+          <div style={{ width: 1, height: 28, background: HAIR }} />
+          <div style={{ flex: 1, textAlign: 'center' }}>
             <p style={{ ...SKB, fontSize: 8, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>COLLECTORS</p>
             <p style={{ ...SKB, fontSize: 11, color: '#FFF', margin: '2px 0 0', fontVariantNumeric: 'tabular-nums' }}>{market?.holders ?? '…'}</p>
           </div>
@@ -234,7 +251,11 @@ export default function DesktopPostView({
             <p style={{ ...SKB, fontSize: 11, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 8px' }}>COMMENTS ( {comments.length} )</p>
             {comments.map((c) => (
               <div key={c.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 7, margin: '0 0 9px' }}>
-                <span style={{ width: 12, height: 12, borderRadius: '50%', background: '#2a2a2a', flexShrink: 0, marginTop: 2 }} />
+                {c.username && avatars.get(c.username) ? (
+                  <img src={feedImage(avatars.get(c.username) as string, 96)} alt="" style={{ width: 12, height: 12, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, marginTop: 2 }} />
+                ) : (
+                  <span style={{ width: 12, height: 12, borderRadius: '50%', background: '#2a2a2a', flexShrink: 0, marginTop: 2 }} />
+                )}
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <span style={{ ...SKB, fontSize: 10, color: 'rgba(255,255,255,0.75)', textTransform: 'uppercase' }}>@{c.username}</span>
                   <span style={{ ...SKR, fontSize: 10, color: 'rgba(255,255,255,0.44)', marginLeft: 7 }}>{c.content}</span>
@@ -247,12 +268,17 @@ export default function DesktopPostView({
 
         {/* ADD A COMMENT */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', borderTop: `1px solid ${HAIR}` }}>
+          {viewer?.avatar ? (
+            <img src={feedImage(viewer.avatar, 96)} alt="" style={{ width: 14, height: 14, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+          ) : (
+            <span style={{ width: 14, height: 14, borderRadius: '50%', background: '#2a2a2a', flexShrink: 0 }} />
+          )}
           <input
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') submitComment(); e.stopPropagation(); }}
             placeholder="ADD A COMMENT"
-            style={{ ...SKR, flex: 1, fontSize: 10, color: '#FFF', background: 'rgba(75,75,75,0.17)', border: 'none', outline: 'none', padding: '7px 9px', textTransform: 'uppercase', letterSpacing: '0.06em' }}
+            style={{ ...SKR, flex: 1, fontSize: 10, color: '#FFF', background: 'rgba(75,75,75,0.17)', border: 'none', outline: 'none', padding: '7px 9px', letterSpacing: '0.02em' }} /* NO text-transform — comments type & render as typed */
           />
           <button onClick={submitComment} aria-label="Send" style={{ background: 'transparent', border: 'none', cursor: 'pointer', ...SKB, fontSize: 11, color: 'rgba(255,255,255,0.7)', padding: 4 }}>↑</button>
         </div>
