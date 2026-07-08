@@ -56,6 +56,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
   const [openPost, setOpenPost] = useState<Record<string, unknown> | null>(null);
   const [infoOpen, setInfoOpen] = useState(false);
   const [badgesOpen, setBadgesOpen] = useState(false);
+  const [msgToast, setMsgToast] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -132,8 +133,12 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
         <div style={{ position: 'relative', paddingTop: 36, minHeight: 259, boxSizing: 'border-box' }}>
           {/* Pro dividing line — the mobile PFP-side accent, desktop-proportioned
               (Pro only, same conditional). */}
+          {/* The frame's x96 hairline TOUCHES the PFP's left edge (183px, exactly
+              the PFP height). SHIPPED: Pro-conditional red accent (round 2 item
+              6); the frame reads as the Pro treatment — if a base hairline for
+              all users is intended, that's a one-line change (flagged). */}
           {profile && isProMember(profile as { is_paid_member?: boolean; paid_member_until?: string | null }) && (
-            <div style={{ position: 'absolute', left: -9, top: 33, width: 1.5, height: 183, background: 'linear-gradient(180deg, rgba(242,13,13,0.9), rgba(242,13,13,0.25))' }} />
+            <div style={{ position: 'absolute', left: 0, top: 33, width: 1.5, height: 183, zIndex: 2, background: 'linear-gradient(180deg, rgba(242,13,13,0.9), rgba(242,13,13,0.25))' }} />
           )}
           {/* PFP — hairline-framed */}
           <div style={{ position: 'absolute', left: 0, top: 33, width: 187, height: 183, border: `1px solid ${HAIR}`, overflow: 'hidden' }}>
@@ -186,30 +191,36 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
               10px gap. Own profile: ⓘ alone (editing lives in Settings). */}
           <div style={{ position: 'absolute', right: 0, top: 36, display: 'flex', alignItems: 'center', gap: 10 }}>
             {!isOwn && SHOW_INERT_MESSAGE_BUTTON && (
-              <button disabled aria-label="Messages coming soon" style={{ ...SKB, fontSize: 11, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.06em', width: 123, height: 33, borderRadius: 4, border: '0.5px solid rgba(255,255,255,0.3)', background: 'transparent', cursor: 'default', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}>
+              /* Public profiles only (own = correctly absent — the round-2 shot
+                 showed it rendering on public; the 45% disabled text read as
+                 missing). Full-white per the frame; tap → COMING SOON toast. */
+              <button onClick={() => { setMsgToast(true); window.setTimeout(() => setMsgToast(false), 1800); }} aria-label="Messages coming soon" style={{ ...SKB, fontSize: 11, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.06em', width: 123, height: 33, borderRadius: 4, border: '0.5px solid rgba(255,255,255,0.3)', background: 'transparent', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}>
                 <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#00E08A', display: 'inline-block' }} />
                 MESSAGE
               </button>
             )}
+            {msgToast && (
+              <span style={{ position: 'absolute', top: 40, right: 0, ...SKB, fontSize: 10, color: 'rgba(255,255,255,0.7)', textTransform: 'uppercase', letterSpacing: '0.1em', background: '#0b0b0b', border: '1px solid rgba(255,255,255,0.18)', padding: '6px 10px', whiteSpace: 'nowrap' }}>
+                MESSAGES · COMING SOON
+              </span>
+            )}
             <button onClick={() => setInfoOpen(true)} aria-label="Profile info" style={{ width: 34, height: 33, borderRadius: 4, border: '0.5px solid rgba(255,255,255,0.3)', background: 'transparent', cursor: 'pointer', ...SKB, fontSize: 13, color: '#FFF' }}>
-              <span style={{ display: 'inline-block', transform: 'rotate(90deg)' }}>i</span>
+              <span>i</span> {/* upright — the frame's rotation was an authoring artifact */}
             </button>
           </div>
 
           {/* ═══ BADGES (right side) ═══ */}
           <div style={{ position: 'absolute', right: 0, top: 92 }}>
-            <p style={{
-              ...SKB, fontSize: 13, textTransform: 'uppercase', letterSpacing: '0.14em', margin: '0 0 10px',
-              background: 'radial-gradient(closest-side at 30% 50%, #f20d0d, #ffffff 90%)',
-              WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',
-            }}>BADGES</p>
+            <p style={{ ...SKB, fontSize: 13, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.14em', margin: '0 0 10px' }}>BADGES</p>
             <div style={{ display: 'flex', gap: 8 }}>
               {badges.slice(0, badges.length > 5 ? 4 : 5).map((b) => {
                 const count = b.key === 'firstCut' ? Math.max(1, fcCount) : b.key === 'srh' ? srhCount : null;
                 return (
                   <div key={b.key} onClick={() => setBadgesOpen(true)} style={{ position: 'relative', width: 78, height: 99, cursor: 'pointer' }}>
                     <img src="/badges/desktop-profile-badge-backdrop-v1.png" alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', display: 'block' }} />
-                    <img src={(b.framedSrc ?? b.bannerSrc) as string} alt={b.title} style={{ position: 'absolute', left: '50%', top: 14, transform: 'translateX(-50%)', width: 46, height: 'auto', objectFit: 'contain' }} />
+                    {/* UNFRAMED (desktop): the min-design no-background set — the backdrop
+                        card IS the frame (frame-in-frame was redundant); mobile keeps framed. */}
+                    <img src={(b.bannerSrc ?? b.src) as string} alt={b.title} style={{ position: 'absolute', left: '50%', top: 12, transform: 'translateX(-50%)', width: 40, height: 40, objectFit: 'contain' }} />
                     {count != null && (
                       <span style={{ position: 'absolute', left: '50%', top: 52, transform: 'translateX(-50%)', background: '#0b0b0b', border: '1px solid transparent', borderRadius: 4.5, minWidth: 20, boxSizing: 'border-box', textAlign: 'center', padding: '0 7px', lineHeight: 1.25, ...SKB, fontSize: 9, color: '#FFF', fontVariantNumeric: 'tabular-nums', backgroundImage: 'linear-gradient(#0b0b0b, #0b0b0b), linear-gradient(180deg, #8f3a3a, #5d2020)', backgroundOrigin: 'border-box', backgroundClip: 'padding-box, border-box' }}>
                         {count}
@@ -234,12 +245,11 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
         <div style={{ height: 1, background: HAIR, margin: '0 -100vw 0 -100vw', paddingLeft: '100vw', paddingRight: '100vw' }} />
 
         {/* ═══ TAB ROW (y285) ═══ */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 26, padding: '18px 0 12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 52, padding: '18px 0 12px' }}>
           {(['portfolio', 'collected', 'decks'] as Tab[]).map((t) => {
             const active = tab === t;
             return (
               <button key={t} onClick={() => setTab(t)} style={{ position: 'relative', background: 'transparent', border: 'none', cursor: 'pointer', padding: '0 0 8px', ...SKB, fontSize: 10.5, letterSpacing: '0.1em', textTransform: 'uppercase', color: active ? '#FFF' : 'rgba(255,255,255,0.5)' }}>
-                {active && <span style={{ color: RED, marginRight: 6 }}>✓</span>}
                 {t.toUpperCase()}
                 {active && <span style={{ position: 'absolute', left: 0, bottom: 0, width: 45, height: 1, background: `linear-gradient(90deg, ${RED} 0%, #FFF 55%, ${RED} 100%)` }} />}
               </button>

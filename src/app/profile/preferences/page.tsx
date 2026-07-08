@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import DesktopSettings from '@/components/desktop/DesktopSettings';
+import { useIsDesktop } from '@/lib/useIsDesktop';
 import { useRouter } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
 import { getUserByPrivyId, getProfile, saveProfile, uploadImage, setShowRecap, isProMember } from "@/lib/userService";
@@ -46,6 +48,7 @@ export default function Preferences() {
   const { showUpsell } = useUpsell();
   const photoInputRef = useRef<HTMLInputElement>(null);
 
+  const isDesktop = useIsDesktop();
   const [mounted, setMounted] = useState(false);
   const [sbUserId, setSbUserId] = useState("");
   const [showA2HS, setShowA2HS] = useState(false);
@@ -116,6 +119,10 @@ export default function Preferences() {
   };
 
   if (!mounted) return <div className="bg-black" style={{ position: 'fixed', inset: 0 }} />;
+
+  // ── DESKTOP SEAM: ≥1024 renders the desktop settings page (same data/logic,
+  // desktop presentation — its own component, zero mobile CSS threading). ──
+  if (isDesktop) return <DesktopSettings />;
 
   const photoLabel = photoUploading ? 'Uploading…' : photoSuccess ? 'Photo updated ✓' : photoError ?? 'Change Profile Photo';
 

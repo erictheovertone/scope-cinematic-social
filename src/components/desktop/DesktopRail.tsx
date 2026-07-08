@@ -89,7 +89,7 @@ export default function DesktopRail() {
               {active && (
                 <motion.span
                   layoutId="rail-active"
-                  transition={reduced ? { duration: 0 } : { type: 'spring', stiffness: 420, damping: 38 }}
+                  transition={reduced ? { duration: 0 } : { type: 'spring', stiffness: 750, damping: 46 }} /* ~180ms snap, quick decel */
                   style={{ position: 'absolute', inset: 0, background: ACTIVE_GRAD, borderLeft: `3px solid ${ACTIVE_BAR}` }}
                 />
               )}
