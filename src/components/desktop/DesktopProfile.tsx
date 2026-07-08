@@ -148,32 +148,32 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
               top line (frame: PFP y25/name y33 — top 27 ≈ cap at 33 after the
               ascender gap). Frame rhythm: handle tight beneath (~25px pitch). */}
           <div style={{ position: 'absolute', left: 214, top: 27, right: 0 }}>
-            <p style={{ ...SKB, fontSize: 26, color: '#FFF', textTransform: 'uppercase', letterSpacing: '-0.02em', margin: 0, lineHeight: 1 }}>{name}</p>
-            <p style={{ ...SKB, fontSize: 14, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', margin: '6px 0 0' }}>{handle ? `@${handle}` : ''}</p>
+            <p style={{ ...SKB, fontSize: 24, color: '#FFF', textTransform: 'uppercase', letterSpacing: '-0.02em', margin: 0, lineHeight: 1 }}>{name}</p>
+            <p style={{ ...SKB, fontSize: 14, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', margin: '3px 0 0' }}>{handle ? `@${handle}` : ''}</p>
             {bio && <p style={{ ...SKR, fontSize: 13, color: 'rgba(255,255,255,0.5)', lineHeight: 1.5, margin: '10px 0 0', maxWidth: 320 }}>{bio}</p>}
 
             {/* META ROW — location · primary link · joined (frame ~y140) */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 22, margin: '26px 0 0' }}>
               {location && (
-                <span style={{ ...SKB, fontSize: 11, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="1.6"><path d="M12 21s-6.5-5.4-6.5-10.5A6.5 6.5 0 0 1 12 4a6.5 6.5 0 0 1 6.5 6.5C18.5 15.6 12 21 12 21z" /><circle cx="12" cy="10.5" r="2.2" /></svg>
+                <span style={{ ...SKB, fontSize: 8.5, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="1.6"><path d="M12 21s-6.5-5.4-6.5-10.5A6.5 6.5 0 0 1 12 4a6.5 6.5 0 0 1 6.5 6.5C18.5 15.6 12 21 12 21z" /><circle cx="12" cy="10.5" r="2.2" /></svg>
                   {location}
                 </span>
               )}
               {primaryLink && (
-                <a href={primaryLink.url} target="_blank" rel="noopener noreferrer" style={{ ...SKB, fontSize: 11, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'inline-flex', alignItems: 'center', gap: 6, textDecoration: 'none' }}>
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="1.6"><path d="M10 14l7-7M13 5h6v6M11 6H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5" /></svg>
+                <a href={primaryLink.url} target="_blank" rel="noopener noreferrer" style={{ ...SKB, fontSize: 8.5, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'inline-flex', alignItems: 'center', gap: 6, textDecoration: 'none' }}>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="1.6"><path d="M10 14l7-7M13 5h6v6M11 6H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5" /></svg>
                   {primaryLink.title || primaryLink.url.replace(/^https?:\/\/(www\.)?/, '').slice(0, 28)}
                 </a>
               )}
               {joined && (
-                <span style={{ ...SKB, fontSize: 11, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>JOINED {joined}</span>
+                <span style={{ ...SKB, fontSize: 8.5, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>JOINED {joined}</span>
               )}
             </div>
-            <div style={{ height: 1, width: 496, maxWidth: '100%', background: HAIR, margin: '14px 0 0' }} />
+            <div style={{ height: 1, width: 496, maxWidth: '100%', background: HAIR, margin: '33px 0 0' }} /> {/* the line belongs to the stats row's top */}
 
             {/* STATS ROW — values over red labels, 33px hairline dividers */}
-            <div style={{ display: 'flex', alignItems: 'stretch', margin: '25px 0 0' }}>
+            <div style={{ display: 'flex', alignItems: 'stretch', margin: '6px 0 0' }}>
               {stats.map(([label, value], i) => (
                 <div key={label} style={{ display: 'flex', alignItems: 'stretch' }}>
                   {i > 0 && <div style={{ width: 1, height: 33, background: HAIR, margin: '4px 22px 0' }} />}
