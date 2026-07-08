@@ -16,18 +16,20 @@ const ACTIVE_GRAD = 'linear-gradient(225deg, rgba(242,13,13,0.12) 18%, rgba(203,
 
 const st = { stroke: 'rgba(255,255,255,0.85)', strokeWidth: 1.5, fill: 'none' as const, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
 
+// BOTTOM-UP order (Eric): HOME bottommost → PROFILE → WALLET → SETTINGS →
+// CREATE → NOTIFICATIONS topmost. Rendered top-to-bottom = reversed.
 const ICONS: { key: string; href: string; label: string; match: (p: string) => boolean; glyph: React.ReactNode }[] = [
   {
-    key: 'home', href: '/', label: 'Home', match: (p) => p === '/',
-    glyph: <svg width="20" height="20" viewBox="0 0 24 24"><path d="M4 10.5L12 4l8 6.5V20h-5.5v-5h-5v5H4z" {...st} /></svg>,
+    key: 'notifications', href: '/profile/notifications', label: 'Notifications', match: (p) => p.startsWith('/profile/notifications'),
+    glyph: <svg width="20" height="20" viewBox="0 0 24 24"><path d="M6 16v-5a6 6 0 0 1 12 0v5l1.5 2.5h-15L6 16z" {...st} /><path d="M10 20.5a2 2 0 0 0 4 0" {...st} /></svg>,
   },
   {
     key: 'create', href: '/create', label: 'Create', match: (p) => p.startsWith('/create'),
     glyph: <svg width="20" height="20" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" {...st} /></svg>,
   },
   {
-    key: 'notifications', href: '/profile/notifications', label: 'Notifications', match: (p) => p.startsWith('/profile/notifications'),
-    glyph: <svg width="20" height="20" viewBox="0 0 24 24"><path d="M6 16v-5a6 6 0 0 1 12 0v5l1.5 2.5h-15L6 16z" {...st} /><path d="M10 20.5a2 2 0 0 0 4 0" {...st} /></svg>,
+    key: 'settings', href: '/profile/preferences', label: 'Settings', match: (p) => p.startsWith('/profile/preferences'),
+    glyph: <svg width="20" height="20" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" {...st} /></svg>,
   },
   {
     key: 'wallet', href: '/wallet', label: 'Wallet', match: (p) => p.startsWith('/wallet'),
@@ -38,8 +40,8 @@ const ICONS: { key: string; href: string; label: string; match: (p: string) => b
     glyph: <svg width="20" height="20" viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="3.5" {...st} /><path d="M5 20c1.4-3.4 4-5 7-5s5.6 1.6 7 5" {...st} /></svg>,
   },
   {
-    key: 'settings', href: '/profile/preferences', label: 'Settings', match: (p) => p.startsWith('/profile/preferences'),
-    glyph: <svg width="20" height="20" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" {...st} /></svg>,
+    key: 'home', href: '/', label: 'Home', match: (p) => p === '/',
+    glyph: <svg width="20" height="20" viewBox="0 0 24 24"><path d="M4 10.5L12 4l8 6.5V20h-5.5v-5h-5v5H4z" {...st} /></svg>,
   },
 ];
 
