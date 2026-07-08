@@ -5,7 +5,7 @@
 // the right panel (ticker/MC/collectors · First Cut leaderboard · comments).
 // Self-fetches per post; stepping re-keys the fetches.
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { usePrivy } from '@privy-io/react-auth';
 import { useEconomy } from '@/components/EconomyProvider';
@@ -54,6 +54,7 @@ export default function DesktopPostView({
   const [avatars, setAvatars] = useState<Map<string, string>>(new Map());
   const [newComment, setNewComment] = useState('');
   const [collectOpen, setCollectOpen] = useState(false);
+  const commentInputRef = useRef<HTMLInputElement>(null);
   const fcHolders = useFirstCutLedger(coinAddr);
 
   useEffect(() => {
@@ -86,11 +87,12 @@ export default function DesktopPostView({
     return () => { dead = true; };
   }, [postId, economy]);
 
-  const isLiked = useMemo(() => !!viewer && likes.some((l) => l.user_id === viewer.uuid), [likes, viewer]);
+  // likes.user_id holds the PRIVY DID (the mobile comparison) — NOT the uuid.
+  const isLiked = useMemo(() => !!user && likes.some((l) => l.user_id === user.id), [likes, user]);
   const toggleLike = async () => {
     if (!user || !viewer) return;
     // optimistic — the PostModal pattern
-    setLikes((prev) => isLiked ? prev.filter((l) => l.user_id !== viewer.uuid) : [...prev, { user_id: viewer.uuid }]);
+    setLikes((prev) => isLiked ? prev.filter((l) => l.user_id !== user.id) : [...prev, { user_id: user.id }]);
     try { isLiked ? await unlikePost(postId, user.id) : await likePost(postId, user.id, viewer.name); } catch { /* refetch below */ }
     getPostLikes(postId).then((l) => setLikes(l as { user_id?: string }[])).catch(() => {});
   };
@@ -114,7 +116,7 @@ export default function DesktopPostView({
   const fcCount = fcHolders?.length ?? 0;
 
   return (
-    <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', paddingBottom: 80, marginTop: 12 }}> {/* frame seat: content ~y299, ~40px under the divider (panel + stage top-aligned) */}
+    <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', paddingBottom: 80, marginTop: 0 }}> {/* frame seat ~y299 (measured 319 at mt12 — the last 20 trimmed here + the 3-box row) */}
       {/* ═══ LEFT: the stage + below-media rows ═══ */}
       {/* FRAME GEOMETRY (round 3): narrow ~20px ARROW POCKETS hugging the media
           (frame x86/x1083 vs stage x103/1077); stage right edge ~30px from the
@@ -165,10 +167,10 @@ export default function DesktopPostView({
             <svg width="18" height="18" viewBox="0 0 24 24" fill={isLiked ? '#FF0000' : 'none'} stroke={isLiked ? '#FF0000' : 'rgba(255,255,255,0.85)'} strokeWidth="2" strokeLinejoin="round"><path d="M12 21s-7-4.5-9.5-9C1 9 2.5 5.5 6 5.5c2 0 3.2 1.2 4 2.3.8-1.1 2-2.3 4-2.3 3.5 0 5 3.5 3.5 6.5C19 16.5 12 21 12 21z"/></svg>
             <span style={{ ...SKB, fontSize: 12, color: '#FFF', fontVariantNumeric: 'tabular-nums' }}>{likes.length}</span>
           </button>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}>
+          <button onClick={() => { commentInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }); commentInputRef.current?.focus(); }} aria-label="Comment" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2" strokeLinejoin="round"><path d="M21 11.5a8.5 8.5 0 0 1-12.5 7.5L3 21l2-5.5A8.5 8.5 0 1 1 21 11.5z"/></svg>
             <span style={{ ...SKB, fontSize: 12, color: '#FFF', fontVariantNumeric: 'tabular-nums' }}>{comments.length}</span>
-          </span>
+          </button>
           {coinAddr && (
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}>
               <span style={{ border: `1px solid ${HAIR}`, borderRadius: 3, padding: '2px 5px', display: 'inline-flex' }}>
@@ -274,6 +276,7 @@ export default function DesktopPostView({
             <span style={{ width: 14, height: 14, borderRadius: '50%', background: '#2a2a2a', flexShrink: 0 }} />
           )}
           <input
+            ref={commentInputRef}
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') submitComment(); e.stopPropagation(); }}

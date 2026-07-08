@@ -304,7 +304,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
         {/* ═══ CONTENT ═══ */}
         {/* 3-red-box return — directly UNDER the PORTFOLIO title (frame y304) */}
         {postView != null && (
-          <div style={{ margin: '-6px 0 10px' }}>
+          <div style={{ margin: '-6px 0 2px' }}>
             <button onClick={closePostView} aria-label="Back to grid" style={{ display: 'inline-flex', gap: 3, background: 'transparent', border: 'none', cursor: 'pointer', padding: 2 }}>
               {[0, 1, 2].map((i) => (
                 <span key={i} style={{ width: 18, height: 12, border: '0.5px solid #f20d0d', display: 'inline-block' }} />
