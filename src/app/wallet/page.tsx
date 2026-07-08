@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import DesktopWallet from '@/components/desktop/DesktopWallet';
+import { useIsDesktop } from '@/lib/useIsDesktop';
 import { usePrivy, useFundWallet, useWallets } from "@privy-io/react-auth";
 import { base } from "viem/chains";
 import { createWalletClient, custom, getAddress, parseEther, encodeFunctionData } from "viem";
@@ -43,6 +45,7 @@ export default function WalletPage() {
   const router = useRouter();
   const walletAddress = user?.wallet?.address ?? "";
 
+  const isDesktop = useIsDesktop();
   const [activeTab, setActiveTab] = useState<"balances" | "holdings" | "earnings" | "activity">("balances");
   // ETH/USD via the boundary's single source; null = rate unavailable → "$—".
   const [ethUsdRate, setEthUsdRate] = useState<number | null>(null);
@@ -642,6 +645,10 @@ export default function WalletPage() {
       setSendStep("review");
     }
   };
+
+  // ── DESKTOP SEAM: ≥1024 renders the desktop wallet (its own component,
+  // same services/session caches; mobile layout untouched below). ──
+  if (isDesktop) return <DesktopWallet />;
 
   return (
     <div
