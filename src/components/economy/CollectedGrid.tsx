@@ -86,7 +86,10 @@ export default function CollectedGrid({
   const economy = useEconomy();
   const [rows, setRows] = useState<Holding[] | null>(null);
   const [fcCoins, setFcCoins] = useState<Set<string>>(new Set());
-  const [openPost, setOpenPost] = useState<Record<string, unknown> | null>(null);
+  // SCOPED LIGHTBOX — one mechanism, two scopes: a program's items when
+  // filtering, everything held otherwise. Index steps in scope order.
+  const [lightbox, setLightbox] = useState<{ index: number } | null>(null);
+  const [lbTheatre, setLbTheatre] = useState(false);
 
   // REPERTORY state
   const [stacks, setStacks] = useState<CollectedStack[] | null>(null);
@@ -115,6 +118,10 @@ export default function CollectedGrid({
     window.setTimeout(() => { setActiveStackId(next); setVisible(20); setSwapPhase('in'); }, 150);
   };
   const [visible, setVisible] = useState(20);
+  // The collage lands as a TASTE: 4 items (two 2-col rows) + VIEW ALL; the
+  // paginated LOAD MORE takes over once expanded. Programs show ALL items
+  // (curated + small — no gate; LOAD MORE still guards a >20 outlier).
+  const [expanded, setExpanded] = useState(false);
   const seed = useMemo(() => sessionSeed(), []);
 
   useEffect(() => {
@@ -181,18 +188,30 @@ export default function CollectedGrid({
     const ar = String(getAspectRatio((h.post as { layout_id?: string }).layout_id || '2x-scope')).split('/').map((x) => parseFloat(x));
     return isFinite(ar[0]) && isFinite(ar[1]) && ar[1] > 0 ? ar[0] / ar[1] : 2.39;
   };
+  const shownCount = activeStack ? collage.length : expanded ? visible : Math.min(4, collage.length);
   const columns = useMemo(() => {
     const cols: [Holding[], Holding[]] = [[], []];
     const heights = [0, 0];
-    for (const h of collage.slice(0, visible)) {
+    for (const h of collage.slice(0, shownCount)) {
       const c = heights[0] <= heights[1] ? 0 : 1;
       cols[c].push(h);
       heights[c] += 1 / ratioOf(h); // height units at unit width
     }
     return cols;
-  }, [collage, visible]);
+  }, [collage, shownCount]);
 
   const refreshStacks = () => { getStacks(userId).then(setStacks).catch(() => {}); };
+  const openLightbox = (postId: string) => {
+    const i = collage.findIndex((h) => h.postId === postId);
+    setLightbox({ index: Math.max(0, i) });
+  };
+  const stepLightbox = (dir: 1 | -1) => {
+    setLightbox((lb) => {
+      if (!lb) return lb;
+      const n = lb.index + dir;
+      return n < 0 || n >= collage.length ? lb : { index: n }; // rubber-band: no wrap
+    });
+  };
 
   if (rows === null) {
     return (
@@ -333,7 +352,7 @@ export default function CollectedGrid({
                         post={h.post as any}
                         layoutId={(h.post as { layout_id?: string }).layout_id || '2x-scope'}
                         index={0}
-                        onClick={() => setOpenPost(h.post)}
+                        onClick={() => openLightbox(h.postId)}
                         fcMark={fcCoins.has(String((h.post as { coin_address?: string | null }).coin_address ?? '').toLowerCase())}
                       />
                     </div>
@@ -343,8 +362,8 @@ export default function CollectedGrid({
             </div>
           ) : (
             <div className={swapPhase === 'out' ? 'collage-swap-out' : ''}>
-              {collage.slice(0, visible).map((h) => (
-                <button key={h.postId} onClick={() => setOpenPost(h.post)} style={{ display: 'flex', width: '100%', alignItems: 'center', gap: 10, background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.06)', cursor: 'pointer', padding: '8px 10px', textAlign: 'left' }}>
+              {collage.slice(0, shownCount).map((h) => (
+                <button key={h.postId} onClick={() => openLightbox(h.postId)} style={{ display: 'flex', width: '100%', alignItems: 'center', gap: 10, background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.06)', cursor: 'pointer', padding: '8px 10px', textAlign: 'left' }}>
                   <img src={feedImage(thumbOf(h) ?? '', 96)} alt="" style={{ width: 56, height: 34, objectFit: 'cover', display: 'block', background: '#111', flexShrink: 0 }} />
                   <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: '#FFF', textTransform: 'uppercase', flex: 1 }}>{h.ticker ? `[ ${h.ticker} ]` : '—'}</span>
                   {/* PUBLIC data only — the post's MCAP (the feed's MC language).
@@ -356,7 +375,12 @@ export default function CollectedGrid({
             </div>
           )}
 
-          {collage.length > visible && (
+          {!activeStack && !expanded && collage.length > 4 && (
+            <button onClick={() => { setExpanded(true); setVisible(20); }} style={{ display: 'block', width: '100%', background: 'transparent', border: 'none', cursor: 'pointer', padding: '14px 0 18px' }}>
+              <span style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.16em' }}>VIEW ALL · {collage.length}</span>
+            </button>
+          )}
+          {(activeStack ? false : expanded) && collage.length > visible && (
             <button onClick={() => setVisible((v) => v + 20)} style={{ display: 'block', width: '100%', background: 'transparent', border: 'none', cursor: 'pointer', padding: '14px 0 18px' }}>
               <span style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>LOAD MORE</span>
             </button>
@@ -398,7 +422,7 @@ export default function CollectedGrid({
                       post={h.post as any}
                       layoutId={(h.post as { layout_id?: string }).layout_id || '2x-scope'}
                       index={0}
-                      onClick={() => setOpenPost(h.post)}
+                      onClick={() => openLightbox(h.postId)}
                       fcMark={fcCoins.has(String((h.post as { coin_address?: string | null }).coin_address ?? '').toLowerCase())}
                     />
                   ))}
@@ -421,8 +445,23 @@ export default function CollectedGrid({
         @keyframes collageCellIn { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
       `}</style>
 
-      {openPost && (
-        <PostModal post={openPost as any} onClose={() => setOpenPost(null)} />
+      {lightbox && collage[lightbox.index] && (
+        <PostModal
+          post={collage[lightbox.index].post as any}
+          onClose={() => setLightbox(null)}
+          zIndex={fullscreen ? 560 : undefined}
+          nav={{ index: lightbox.index, total: collage.length, onStep: stepLightbox }}
+          onTheaterMode={() => setLbTheatre(true)}
+        />
+      )}
+      {lbTheatre && lightbox && (
+        <TheatreMode
+          posts={collage.map((h) => h.post as Record<string, unknown>)}
+          startIndex={lightbox.index}
+          source="feed"
+          zBase={fullscreen ? 580 : 500}
+          onClose={() => setLbTheatre(false)}
+        />
       )}
 
       {createOpen && (
@@ -443,7 +482,7 @@ export default function CollectedGrid({
           userId={userId}
           fcCoins={fcCoins}
           onChanged={refreshStacks}
-          onOpenPost={(p) => setOpenPost(p)}
+          onOpenPost={(p) => openLightbox(String((p as { id?: string }).id ?? ''))}
           onClose={() => setEditStackId(null)}
         />
       )}

@@ -58,10 +58,13 @@ export default function TheatreMode({
   startIndex = 0,
   onClose,
   source = 'profile',
+  zBase = 490,
 }: {
   posts: AnyPost[];
   startIndex?: number;
   onClose: () => void;
+  /** Stage stacking base (default 490); surfaces above that pass higher. */
+  zBase?: number;
   /** 'feed' = home-feed entry (many creators, infinite) → show @handle + always-on
       stats, no counter. 'profile' = one creator → expand-only stats, counter kept. */
   source?: 'feed' | 'profile';
@@ -404,7 +407,7 @@ export default function TheatreMode({
     <>
     {/* Stage z=490: BELOW the collect sheet (500/501), First Cut celebration (600)
         and whip (650), so a collect from theatre layers those above it. */}
-    <div style={{ ...stageStyle, zIndex: 490 }}>
+    <div style={{ ...stageStyle, zIndex: zBase }}>
       {/* Black field — tapping the empty space (not the image / panel) exits. On
           desktop a near-opaque dim lets the profile bleed ~8% (matches the ref);
           on a rotated phone the field is solid so the portrait profile behind

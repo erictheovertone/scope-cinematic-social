@@ -71,13 +71,19 @@ interface PostModalProps {
   /** Profile-grid extras (optional — absent on feed entries). */
   onScrollDown?: () => void;
   onTheaterMode?: () => void;
+  /** Stacking override — surfaces above z100 (the full-screen program view)
+      pass a higher base so the lightbox layers over them. */
+  zIndex?: number;
+  /** Program/collection scope: counter + prev/next stepping (rubber-band at
+      the ends — arrows hide, swipes no-op; no wrap). */
+  nav?: { index: number; total: number; onStep: (dir: 1 | -1) => void };
   layoutId?: string;
 }
 
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 
-export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDeleted, onScrollDown, onTheaterMode, layoutId }: PostModalProps) {
+export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDeleted, onScrollDown, onTheaterMode, layoutId, zIndex = 100, nav }: PostModalProps) {
   const router = useRouter();
   const { user } = usePrivy();
   const economy = useEconomy();
@@ -217,6 +223,8 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
     return () => { cancelled = true; };
   }, [post.id, post.coin_address, post.token_standard, economy, marketRefreshKey]);
 
+  const navTouch = useRef<{ x: number; y: number } | null>(null);
+
   // Animated close
   const handleClose = () => {
     setVisible(false);
@@ -293,10 +301,18 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
       <div
         className="bg-black"
         data-swipe-exclude
+        onTouchStart={(e) => { if (nav) { const t = e.touches[0]; navTouch.current = { x: t.clientX, y: t.clientY }; } }}
+        onTouchEnd={(e) => {
+          const s0 = navTouch.current; navTouch.current = null;
+          if (!nav || !s0) return;
+          const t = e.changedTouches[0];
+          const dx = t.clientX - s0.x, dy = t.clientY - s0.y;
+          if (Math.abs(dx) > 52 && Math.abs(dx) > Math.abs(dy) * 1.5) nav.onStep(dx < 0 ? 1 : -1); // ends no-op inside onStep
+        }}
         style={{
           position: "fixed",
           inset: 0,
-          zIndex: 100,
+          zIndex,
           backgroundColor: "#000000",
           display: "flex",
           flexDirection: "column",
@@ -311,6 +327,7 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
             flexShrink: 0,
             height: "calc(44px + env(safe-area-inset-top, 0px))",
             paddingTop: "env(safe-area-inset-top, 0px)",
+            position: "relative",
             display: "flex",
             alignItems: "center",
             paddingLeft: 14,
@@ -318,6 +335,12 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
             borderBottom: "1px solid rgba(255,255,255,0.06)",
           }}
         >
+          {nav && (
+            /* program counter — small, tracked, muted, dead-center in the bar */
+            <span style={{ position: "absolute", left: "50%", transform: "translateX(-50%)", ...SKR, fontSize: 'var(--fs-8)', color: "rgba(255,255,255,0.5)", letterSpacing: "0.18em", fontVariantNumeric: "tabular-nums" }}>
+              {nav.index + 1} / {nav.total}
+            </span>
+          )}
           <button
             onClick={handleClose}
             style={{
@@ -348,6 +371,19 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
             </button>
           )}
         </div>
+
+        {/* ── Program nav arrows — the theatre arrows' language, lightbox-sized;
+            absent at the ends (the rubber-band: nothing to step to). ── */}
+        {nav && nav.index > 0 && (
+          <button onClick={() => nav.onStep(-1)} aria-label="Previous" style={{ position: "absolute", left: 6, top: "50%", transform: "translateY(-50%)", zIndex: 5, background: "rgba(0,0,0,0.35)", border: "none", cursor: "pointer", padding: 8 }}>
+            <img src="/theatre-mode-arrow-01.png" alt="" style={{ height: 22, width: "auto", display: "block", transform: "scaleX(-1)", opacity: 0.85 }} />
+          </button>
+        )}
+        {nav && nav.index < nav.total - 1 && (
+          <button onClick={() => nav.onStep(1)} aria-label="Next" style={{ position: "absolute", right: 6, top: "50%", transform: "translateY(-50%)", zIndex: 5, background: "rgba(0,0,0,0.35)", border: "none", cursor: "pointer", padding: 8 }}>
+            <img src="/theatre-mode-arrow-01.png" alt="" style={{ height: 22, width: "auto", display: "block", opacity: 0.85 }} />
+          </button>
+        )}
 
         {/* ── Scrollable body ── */}
         <div
