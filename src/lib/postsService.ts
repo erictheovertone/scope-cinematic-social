@@ -306,9 +306,11 @@ export const likePost = async (postId: string, userId: string, username: string)
 // FIRE-AND-FORGET: the trade already succeeded; a failed insert logs and moves
 // on, it must never disturb the trade UX. `pieces` arrives already converted to
 // fragments by the receipt path (the one 100k-tokens-per-piece source).
+// SELLS DON'T NOTIFY (ratified) — the kind narrows to 'collect'; the sell
+// call site was removed. FC ledger/economics don't ride notifications.
 export const notifyMarketTrade = (
   postId: string,
-  kind: 'collect' | 'sell',
+  kind: 'collect',
   actorPrivyId: string,
   pieces: number,
   usdAmount?: number,

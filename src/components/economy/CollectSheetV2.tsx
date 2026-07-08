@@ -342,7 +342,7 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
         expireCheckFirstCut(post.id, r.ref); // lifecycle — expire the slot if this sell drops below the keep-floor
         accrueFcRewards(post.id, r.ref, r.proceedsUsd ?? undefined); // FC rewards — sells are volume too
         // Creator's MARKET notification — same receipt-true, fire-and-forget contract.
-        if (user?.id) notifyMarketTrade(post.id, 'sell', user.id, r.pieces ?? sellPieces);
+        // sells don't notify the creator (ratified — removed with the writer's 'sell' kind)
       }
     } catch (e) {
       console.error('[collect] sell failed:', e);
