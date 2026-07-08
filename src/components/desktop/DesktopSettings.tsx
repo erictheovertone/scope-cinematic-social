@@ -30,6 +30,7 @@ import {
 } from '@/lib/userService';
 import { useUpsell } from '@/components/UpsellProvider';
 import { feedImage } from '@/lib/mediaUrl';
+import PfpCropStage from '@/components/desktop/PfpCropStage';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -69,6 +70,7 @@ export default function DesktopSettings() {
   const [isPaid, setIsPaid] = useState(false);
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [photoState, setPhotoState] = useState<'idle' | 'uploading' | 'done'>('idle');
+  const [cropFile, setCropFile] = useState<File | null>(null);
 
   // Deep-link: ?section= (read once; replaceState on switch — no navigation)
   useEffect(() => {
@@ -122,12 +124,21 @@ export default function DesktopSettings() {
     }
   };
 
-  const handlePhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // CHANGE PHOTO → the CROP STAGE (drag/zoom) → bake → the existing avatar
+  // path (unique filenames = fresh URL every upload; profileCache invalidated
+  // by saveProfile → header/comments/rail reflect immediately).
+  const handlePhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !user || !sbUserId) return;
     e.target.value = '';
+    if (file) setCropFile(file);
+  };
+  const applyCrop = async (blob: Blob) => {
+    if (!user || !sbUserId) return;
+    setCropFile(null);
     setPhotoState('uploading');
     try {
+      const ext = blob.type === 'image/jpeg' ? 'jpg' : 'webp';
+      const file = new File([blob], `pfp-${sbUserId.slice(0, 8)}.${ext}`, { type: blob.type });
       const url = await uploadImage(file, 'profile-images', user.id);
       await saveProfile(sbUserId, { displayName, username, bio, profileImageUrl: url });
       setPfp(url);
@@ -263,10 +274,13 @@ export default function DesktopSettings() {
   };
 
   return (
-    <div className="bg-black" style={{ position: 'fixed', inset: 0, left: 71, overflowY: 'auto' }}>
-      <div style={{ display: 'flex', minHeight: '100%', maxWidth: 1100, margin: '0 auto' }}>
+    // THE SCROLL TRAP (fixed): the root scrolled the WHOLE two-pane (or clipped
+    // it) — the RIGHT panel now owns its own overflow-y scroller at full
+    // height; the LEFT list stays fixed. Momentum scrolling included.
+    <div className="bg-black" style={{ position: 'fixed', inset: 0, left: 71, overflow: 'hidden' }}>
+      <div style={{ display: 'flex', height: '100%', maxWidth: 1100, margin: '0 auto' }}>
         {/* ═══ LEFT — the category list ═══ */}
-        <div style={{ width: 250, flexShrink: 0, borderRight: `1px solid ${HAIR}`, padding: '44px 0 40px', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ width: 250, flexShrink: 0, borderRight: `1px solid ${HAIR}`, padding: '44px 0 40px', display: 'flex', flexDirection: 'column', height: '100%', boxSizing: 'border-box' }}>
           <p style={{ ...SKB, fontSize: 11, color: 'rgba(255,255,255,0.38)', textTransform: 'uppercase', letterSpacing: '0.22em', margin: '0 0 18px', paddingLeft: 18 }}>SETTINGS</p>
           {SECTIONS.map((s) => {
             const active = section === s;
@@ -295,12 +309,13 @@ export default function DesktopSettings() {
         </div>
 
         {/* ═══ RIGHT — the active panel (120ms in-place swap) ═══ */}
-        <div style={{ flex: 1, padding: '44px 36px 80px', opacity: fade ? 0 : 1, transition: 'opacity 120ms ease' }}>
+        <div style={{ flex: 1, padding: '44px 36px 80px', opacity: fade ? 0 : 1, transition: 'opacity 120ms ease', height: '100%', boxSizing: 'border-box', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
           <h2 style={{ ...SKB, fontSize: 16, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 26px' }}>{SECTION_LABELS[section]}</h2>
           {panel()}
         </div>
       </div>
-      <input ref={photoInputRef} type="file" accept="image/*" onChange={handlePhoto} style={{ display: 'none' }} />
+      <input ref={photoInputRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={handlePhoto} style={{ display: 'none' }} />
+      {cropFile && <PfpCropStage file={cropFile} onApply={applyCrop} onCancel={() => setCropFile(null)} />}
     </div>
   );
 }
