@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
 import {
   getUserByPrivyId, getProfile, saveProfile, updateProfileFields, uploadImage, isProMember,
-  getProfileLinks, addProfileLink, deleteProfileLink,
+  getProfileLinks, addProfileLink, deleteProfileLink, setPrimaryLink,
   type ProfileLink,
 } from "@/lib/userService";
 import FrameLoader from "@/components/FrameLoader";
@@ -58,6 +58,7 @@ export default function EditProfilePage() {
   const [displayName, setDisplayName] = useState('');
   const [username, setUsername] = useState('');
   const [bio, setBio] = useState('');
+  const [location, setLocation] = useState('');
   const [profileImageUrl, setProfileImageUrl] = useState('');
   const [savingProfile, setSavingProfile] = useState(false);
   const [profileSaved, setProfileSaved] = useState(false);
@@ -110,6 +111,7 @@ export default function EditProfilePage() {
           setDisplayName(profile.display_name || '');
           setUsername(profile.username || '');
           setBio(profile.bio || '');
+          setLocation((profile as { location?: string | null }).location || '');
           setProfileImageUrl(profile.profile_image_url || '');
           setKitCamera(profile.kit_camera || '');
           setKitLens(profile.kit_lens || '');
@@ -189,7 +191,7 @@ export default function EditProfilePage() {
     try {
       // Guard: never persist a still-uploading blob: URL (undefined → keeps the existing image).
       const savableImage = profileImageUrl && !profileImageUrl.startsWith('blob:') ? profileImageUrl : undefined;
-      await saveProfile(sbUserId, { displayName, username, bio, profileImageUrl: savableImage });
+      await saveProfile(sbUserId, { displayName, username, bio, location, profileImageUrl: savableImage });
       await updateProfileFields(sbUserId, { divider_line: selectedLine === 'default' ? null : selectedLine, holo_banner: holoBanner });
       setProfileSaved(true);
       setTimeout(() => setProfileSaved(false), 2500);
@@ -361,6 +363,18 @@ export default function EditProfilePage() {
           />
         </div>
 
+        {/* LOCATION — profiles.location (desktop meta row + mobile bio sheet) */}
+        <div style={{ marginBottom: 22 }}>
+          <label style={LABEL}>LOCATION</label>
+          <input
+            type="text"
+            value={location}
+            onChange={(e) => setLocation(e.target.value.slice(0, 40))}
+            placeholder="CITY, COUNTRY"
+            style={{ ...INPUT, width: '100%' }}
+          />
+        </div>
+
         {profileError && <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: '#FF0000', margin: '0 0 10px', letterSpacing: '0.06em' }}>{profileError}</p>}
         <button
           onClick={handleSaveProfile}
@@ -470,6 +484,19 @@ export default function EditProfilePage() {
                       {domain}
                     </p>
                   </div>
+                  {/* PRIMARY — one per user (service-enforced): the starred link
+                      feeds the profile meta row + mobile bio sheet. */}
+                  <button
+                    onClick={async () => {
+                      if (!user) return;
+                      if (await setPrimaryLink(user.id, link.id)) {
+                        setLinks((prev) => prev.map((l) => ({ ...l, is_primary: l.id === link.id } as typeof l)));
+                      }
+                    }}
+                    style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '0 0 0 10px', ...SKB, fontSize: 'var(--fs-8)', color: (link as { is_primary?: boolean }).is_primary ? '#FF0000' : 'rgba(255,255,255,0.35)', letterSpacing: '0.06em', flexShrink: 0, textTransform: 'uppercase' }}
+                  >
+                    {(link as { is_primary?: boolean }).is_primary ? 'PRIMARY' : 'SET PRIMARY'}
+                  </button>
                   <button
                     onClick={() => handleDeleteLink(link.id)}
                     style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '0 0 0 14px', ...SKB, fontSize: 'var(--fs-16)', color: 'rgba(255,255,255,0.35)', lineHeight: 1, flexShrink: 0 }}

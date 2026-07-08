@@ -220,6 +220,31 @@ export default function ProfileDataSheet({
 
         {/* ── BADGES ── (Scope_Economy.docx §4b / Figma 3593-440)
             3D-rotating coins, titles directly beneath, tap → blurb pop-up. */}
+        {/* ── META — location + the primary link (quiet rows, the sheet's own
+            language). Renders only when set; JOINED stays desktop-only. ── */}
+        {(() => {
+          const loc = (profile as Record<string, unknown> | null)?.location as string | undefined;
+          const primary = links?.find((l) => (l as { is_primary?: boolean }).is_primary);
+          if (!loc && !primary) return null;
+          return (
+            <>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: '12px 4px', ...sec(180) }}>
+                {loc && (
+                  <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                    ◦ {loc}
+                  </span>
+                )}
+                {primary && (
+                  <a href={primary.url} target="_blank" rel="noopener noreferrer" style={{ ...SKB, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em', textDecoration: 'none' }}>
+                    ↗ {primary.title || primary.url.replace(/^https?:\/\/(www\.)?/, '').slice(0, 34)}
+                  </a>
+                )}
+              </div>
+              <Divider />
+            </>
+          );
+        })()}
+
         {hasBadges && (
           <>
             <div style={{ position: 'relative', display: 'flex', alignItems: 'center', boxSizing: 'border-box', minHeight: 150, paddingTop: 12, paddingBottom: 12, ...sec(200) }}>

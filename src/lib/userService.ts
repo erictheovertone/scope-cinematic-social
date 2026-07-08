@@ -76,6 +76,8 @@ export const saveProfile = async (userId: string, profileData: {
   bio: string
   profileImageUrl?: string
   websiteUrl?: string
+  /** profiles.location (nullable) — tolerant if the migration hasn't run. */
+  location?: string
 }) => {
   // ALL-CAPS IDENTITY (ratified): handles + display names store UPPERCASE — at
   // the app layer here AND a DB trigger (migrations/2026-06-13_uppercase_identity.sql)
@@ -111,6 +113,11 @@ export const saveProfile = async (userId: string, profileData: {
     .single()
 
   if (error) throw error
+  // location — tolerant separate write (column may predate the migration)
+  if (profileData.location !== undefined) {
+    const { error: le } = await supabase.from('profiles').update({ location: profileData.location || null }).eq('user_id', userId)
+    if (le) console.warn('[saveProfile] location write failed (migration pending?):', le.message)
+  }
   invalidateProfileCache(userId)
   return data
 }
@@ -444,6 +451,18 @@ export const isFollowing = async (followerPrivyId: string, followingPrivyId: str
     .maybeSingle()
   if (error) return false
   return !!data
+}
+
+/** Set THE primary link (one per user, service-enforced): clears the flag on
+ *  all the user's links, sets it on one. Tolerant pre-migration. */
+export const setPrimaryLink = async (privyUserId: string, linkId: string): Promise<boolean> => {
+  try {
+    const { error: clearErr } = await supabase.from('profile_links').update({ is_primary: false }).eq('user_id', privyUserId)
+    if (clearErr) { console.warn('[links] primary clear failed (migration pending?):', clearErr.message); return false }
+    const { error } = await supabase.from('profile_links').update({ is_primary: true }).eq('id', linkId).eq('user_id', privyUserId)
+    if (error) { console.warn('[links] primary set failed:', error.message); return false }
+    return true
+  } catch { return false }
 }
 
 export const getFollowerCount = async (privyUserId: string): Promise<number> => {
