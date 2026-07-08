@@ -19,7 +19,12 @@ const SECTIONS: { title: string; body: string }[] = [
 
 export default function PrivacyPage() {
   return (
-    <div style={{ background: "#000", minHeight: "100dvh", padding: "calc(20px + env(safe-area-inset-top, 0px)) 20px 60px", maxWidth: 640, margin: "0 auto" }}>
+    // The app shell fixes the body (PWA rubber-band suppression) — natural
+    // document scroll never happens, so long pages need their own scroller:
+    // the same fixed/inset-0/overflow-y-auto pattern Settings uses. bg-black
+    // class required (the globals rule hides fixed divs without it).
+    <div className="bg-black" style={{ position: "fixed", inset: 0, overflowY: "auto", WebkitOverflowScrolling: "touch" }}>
+      <div style={{ background: "#000", minHeight: "100%", padding: "calc(20px + env(safe-area-inset-top, 0px)) 20px calc(60px + env(safe-area-inset-bottom, 0px))", maxWidth: 640, margin: "0 auto" }}>
       <Link href="/" style={{ ...SKR, fontSize: 12, color: "rgba(255,255,255,0.5)", textDecoration: "none", textTransform: "uppercase", letterSpacing: "0.08em" }}>← SCOPE</Link>
       <h1 style={{ ...SKB, fontSize: 22, color: "#FFF", textTransform: "uppercase", letterSpacing: "0.06em", margin: "22px 0 4px" }}>Privacy Policy</h1>
       <p style={{ ...SKR, fontSize: 11, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 28px" }}>DRAFT · LAST UPDATED JULY 2026</p>
@@ -29,6 +34,7 @@ export default function PrivacyPage() {
           <p style={{ ...SKR, fontSize: 13, color: "rgba(255,255,255,0.7)", lineHeight: 1.6, margin: 0 }}>{s.body}</p>
         </section>
       ))}
+      </div>
     </div>
   );
 }
