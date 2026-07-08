@@ -78,6 +78,8 @@ export const saveProfile = async (userId: string, profileData: {
   websiteUrl?: string
   /** profiles.location (nullable) — tolerant if the migration hasn't run. */
   location?: string
+  /** profiles.short_bio (nullable, ≤80) — the DESKTOP display bio. */
+  shortBio?: string
 }) => {
   // ALL-CAPS IDENTITY (ratified): handles + display names store UPPERCASE — at
   // the app layer here AND a DB trigger (migrations/2026-06-13_uppercase_identity.sql)
@@ -117,6 +119,10 @@ export const saveProfile = async (userId: string, profileData: {
   if (profileData.location !== undefined) {
     const { error: le } = await supabase.from('profiles').update({ location: profileData.location || null }).eq('user_id', userId)
     if (le) console.warn('[saveProfile] location write failed (migration pending?):', le.message)
+  }
+  if (profileData.shortBio !== undefined) {
+    const { error: se } = await supabase.from('profiles').update({ short_bio: profileData.shortBio.slice(0, 80) || null }).eq('user_id', userId)
+    if (se) console.warn('[saveProfile] short_bio write failed (migration pending?):', se.message)
   }
   invalidateProfileCache(userId)
   return data

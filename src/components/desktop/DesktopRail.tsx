@@ -8,6 +8,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { motion, useReducedMotion } from 'framer-motion';
 
 const RAIL_W = 71;
 const ACTIVE_BAR = '#f20d0d';
@@ -33,13 +34,18 @@ const ICONS: { key: string; href: string; label: string; match: (p: string) => b
     glyph: <svg width="20" height="20" viewBox="0 0 24 24"><rect x="3.5" y="6.5" width="17" height="12" rx="1" {...st} /><path d="M15 12.5h3" {...st} /></svg>,
   },
   {
-    key: 'profile', href: '/profile', label: 'Profile', match: (p) => p === '/profile' || (p.startsWith('/profile/') && !p.startsWith('/profile/notifications')),
+    key: 'profile', href: '/profile', label: 'Profile', match: (p) => p === '/profile' || (p.startsWith('/profile/') && !p.startsWith('/profile/notifications') && !p.startsWith('/profile/preferences')),
     glyph: <svg width="20" height="20" viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="3.5" {...st} /><path d="M5 20c1.4-3.4 4-5 7-5s5.6 1.6 7 5" {...st} /></svg>,
+  },
+  {
+    key: 'settings', href: '/profile/preferences', label: 'Settings', match: (p) => p.startsWith('/profile/preferences'),
+    glyph: <svg width="20" height="20" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" {...st} /></svg>,
   },
 ];
 
 export default function DesktopRail() {
   const pathname = usePathname() ?? '/';
+  const reduced = !!useReducedMotion();
   // Takeover standdown — the same attribute mechanism as BottomToolbar.
   const [takeover, setTakeover] = useState(false);
   useEffect(() => {
@@ -64,7 +70,10 @@ export default function DesktopRail() {
       <Link href="/" aria-label="Home" style={{ display: 'block', padding: '18px 0 26px' }}>
         <img src="/logomark-plain-white.png" alt="Scope" style={{ width: 41, height: 26, objectFit: 'contain', display: 'block' }} />
       </Link>
-      <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+      {/* BOTTOM-ANCHORED icon stack (the frame's rhythm); the active marker is
+          ONE shared element that SLIDES between rows (layoutId), icons
+          crossfade as it arrives. Reduced-motion: instant. */}
+      <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', width: '100%', paddingBottom: 'max(18px, env(safe-area-inset-bottom, 0px))' }}>
         {ICONS.map((ic) => {
           const active = ic.match(pathname);
           return (
@@ -75,11 +84,16 @@ export default function DesktopRail() {
               style={{
                 position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center',
                 width: '100%', height: 56,
-                background: active ? ACTIVE_GRAD : 'transparent',
               }}
             >
-              {active && <span style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, background: ACTIVE_BAR }} />}
-              <span style={{ opacity: active ? 1 : 0.6 }}>{ic.glyph}</span>
+              {active && (
+                <motion.span
+                  layoutId="rail-active"
+                  transition={reduced ? { duration: 0 } : { type: 'spring', stiffness: 420, damping: 38 }}
+                  style={{ position: 'absolute', inset: 0, background: ACTIVE_GRAD, borderLeft: `3px solid ${ACTIVE_BAR}` }}
+                />
+              )}
+              <span style={{ position: 'relative', opacity: active ? 1 : 0.6, transition: 'opacity 150ms ease' }}>{ic.glyph}</span>
             </Link>
           );
         })}

@@ -7,7 +7,6 @@
 // transform is BRIEF 2 (the grid-mode icon slot stays unbuilt).
 
 import { useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import {
   getProfile, getFollowerCount, getFollowingCount, getUserDecks, getProfileLinks,
   isProMember, type ProfileLink, type Deck,
@@ -41,7 +40,6 @@ interface Props {
 type Tab = 'portfolio' | 'collected' | 'decks';
 
 export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
-  const router = useRouter();
   const economy = useEconomy();
 
   const [profile, setProfile] = useState<Record<string, unknown> | null>(null);
@@ -94,7 +92,9 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
 
   const name = String(profile?.display_name ?? '');
   const handle = String(profile?.username ?? '');
-  const bio = String(profile?.bio ?? '');
+  // DESKTOP BIO = profiles.short_bio ONLY (minimal by design; the full
+  // mobile bio never renders here — absent when unset).
+  const bio = String(profile?.short_bio ?? '');
   const pfp = profile?.profile_image_url ? String(profile.profile_image_url) : null;
   const location = profile?.location ? String(profile.location) : null;
   const primaryLink = links.find((l) => (l as { is_primary?: boolean }).is_primary) ?? null;
@@ -121,7 +121,8 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
   ];
 
   // 1440 reference — content scales proportionally; the rail is fixed 71.
-  const scaleWrap: React.CSSProperties = { maxWidth: 1369, margin: '0 auto', padding: '0 max(48px, 3.5vw)' };
+  // ONE shared left edge for header + tabs + grid; tightened inset (item 4/7).
+  const scaleWrap: React.CSSProperties = { maxWidth: 1369, margin: '0 auto', padding: '0 24px' };
 
   return (
     <div className="bg-black" style={{ position: 'fixed', inset: 0, left: 71, overflowY: 'auto' }}>
@@ -129,6 +130,11 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
 
         {/* ═══ HEADER ZONE ═══ */}
         <div style={{ position: 'relative', paddingTop: 36, minHeight: 259, boxSizing: 'border-box' }}>
+          {/* Pro dividing line — the mobile PFP-side accent, desktop-proportioned
+              (Pro only, same conditional). */}
+          {profile && isProMember(profile as { is_paid_member?: boolean; paid_member_until?: string | null }) && (
+            <div style={{ position: 'absolute', left: -9, top: 33, width: 1.5, height: 183, background: 'linear-gradient(180deg, rgba(242,13,13,0.9), rgba(242,13,13,0.25))' }} />
+          )}
           {/* PFP — hairline-framed */}
           <div style={{ position: 'absolute', left: 0, top: 33, width: 187, height: 183, border: `1px solid ${HAIR}`, overflow: 'hidden' }}>
             {pfp ? (
@@ -174,26 +180,24 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
               ))}
             </div>
 
-            {/* MESSAGE (public, inert v1) / EDIT PROFILE (own) + the ⓘ box */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '18px 0 0' }}>
-              {isOwn ? (
-                <button onClick={() => router.push('/profile/edit')} style={{ ...SKB, fontSize: 11, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.06em', width: 123, height: 33, borderRadius: 4, border: '0.5px solid rgba(255,255,255,0.3)', background: 'transparent', cursor: 'pointer' }}>
-                  EDIT PROFILE
-                </button>
-              ) : SHOW_INERT_MESSAGE_BUTTON ? (
-                <button disabled aria-label="Messages coming soon" style={{ ...SKB, fontSize: 11, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.06em', width: 123, height: 33, borderRadius: 4, border: '0.5px solid rgba(255,255,255,0.3)', background: 'transparent', cursor: 'default', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}>
-                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#00E08A', display: 'inline-block' }} />
-                  MESSAGE
-                </button>
-              ) : null}
-              <button onClick={() => setInfoOpen(true)} aria-label="Profile info" style={{ width: 34, height: 33, borderRadius: 4, border: '0.5px solid rgba(255,255,255,0.3)', background: 'transparent', cursor: 'pointer', ...SKB, fontSize: 13, color: '#FFF' }}>
-                <span style={{ display: 'inline-block', transform: 'rotate(90deg)' }}>i</span>
+          </div>
+
+          {/* TOP-RIGHT cluster — MESSAGE (public, inert v1) then the ⓘ box,
+              10px gap. Own profile: ⓘ alone (editing lives in Settings). */}
+          <div style={{ position: 'absolute', right: 0, top: 36, display: 'flex', alignItems: 'center', gap: 10 }}>
+            {!isOwn && SHOW_INERT_MESSAGE_BUTTON && (
+              <button disabled aria-label="Messages coming soon" style={{ ...SKB, fontSize: 11, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.06em', width: 123, height: 33, borderRadius: 4, border: '0.5px solid rgba(255,255,255,0.3)', background: 'transparent', cursor: 'default', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#00E08A', display: 'inline-block' }} />
+                MESSAGE
               </button>
-            </div>
+            )}
+            <button onClick={() => setInfoOpen(true)} aria-label="Profile info" style={{ width: 34, height: 33, borderRadius: 4, border: '0.5px solid rgba(255,255,255,0.3)', background: 'transparent', cursor: 'pointer', ...SKB, fontSize: 13, color: '#FFF' }}>
+              <span style={{ display: 'inline-block', transform: 'rotate(90deg)' }}>i</span>
+            </button>
           </div>
 
           {/* ═══ BADGES (right side) ═══ */}
-          <div style={{ position: 'absolute', right: 0, top: 115 }}>
+          <div style={{ position: 'absolute', right: 0, top: 92 }}>
             <p style={{
               ...SKB, fontSize: 13, textTransform: 'uppercase', letterSpacing: '0.14em', margin: '0 0 10px',
               background: 'radial-gradient(closest-side at 30% 50%, #f20d0d, #ffffff 90%)',
@@ -230,11 +234,11 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
         <div style={{ height: 1, background: HAIR, margin: '0 -100vw 0 -100vw', paddingLeft: '100vw', paddingRight: '100vw' }} />
 
         {/* ═══ TAB ROW (y285) ═══ */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 34, padding: '20px 0 14px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 26, padding: '18px 0 12px' }}>
           {(['portfolio', 'collected', 'decks'] as Tab[]).map((t) => {
             const active = tab === t;
             return (
-              <button key={t} onClick={() => setTab(t)} style={{ position: 'relative', background: 'transparent', border: 'none', cursor: 'pointer', padding: '0 0 8px', ...SKB, fontSize: 13, letterSpacing: '0.1em', textTransform: 'uppercase', color: active ? '#FFF' : 'rgba(255,255,255,0.5)' }}>
+              <button key={t} onClick={() => setTab(t)} style={{ position: 'relative', background: 'transparent', border: 'none', cursor: 'pointer', padding: '0 0 8px', ...SKB, fontSize: 10.5, letterSpacing: '0.1em', textTransform: 'uppercase', color: active ? '#FFF' : 'rgba(255,255,255,0.5)' }}>
                 {active && <span style={{ color: RED, marginRight: 6 }}>✓</span>}
                 {t.toUpperCase()}
                 {active && <span style={{ position: 'absolute', left: 0, bottom: 0, width: 45, height: 1, background: `linear-gradient(90deg, ${RED} 0%, #FFF 55%, ${RED} 100%)` }} />}

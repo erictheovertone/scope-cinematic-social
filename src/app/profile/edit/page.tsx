@@ -59,6 +59,7 @@ export default function EditProfilePage() {
   const [username, setUsername] = useState('');
   const [bio, setBio] = useState('');
   const [location, setLocation] = useState('');
+  const [shortBio, setShortBio] = useState('');
   const [profileImageUrl, setProfileImageUrl] = useState('');
   const [savingProfile, setSavingProfile] = useState(false);
   const [profileSaved, setProfileSaved] = useState(false);
@@ -112,6 +113,7 @@ export default function EditProfilePage() {
           setUsername(profile.username || '');
           setBio(profile.bio || '');
           setLocation((profile as { location?: string | null }).location || '');
+          setShortBio((profile as { short_bio?: string | null }).short_bio || '');
           setProfileImageUrl(profile.profile_image_url || '');
           setKitCamera(profile.kit_camera || '');
           setKitLens(profile.kit_lens || '');
@@ -191,7 +193,7 @@ export default function EditProfilePage() {
     try {
       // Guard: never persist a still-uploading blob: URL (undefined → keeps the existing image).
       const savableImage = profileImageUrl && !profileImageUrl.startsWith('blob:') ? profileImageUrl : undefined;
-      await saveProfile(sbUserId, { displayName, username, bio, location, profileImageUrl: savableImage });
+      await saveProfile(sbUserId, { displayName, username, bio, location, shortBio, profileImageUrl: savableImage });
       await updateProfileFields(sbUserId, { divider_line: selectedLine === 'default' ? null : selectedLine, holo_banner: holoBanner });
       setProfileSaved(true);
       setTimeout(() => setProfileSaved(false), 2500);
@@ -361,6 +363,23 @@ export default function EditProfilePage() {
             onChange={e => { setBio(e.target.value); setIsDirty(true); }}
             placeholder="Tell your story"
           />
+        </div>
+
+        {/* DISPLAY BIO — profiles.short_bio: what shows on your DESKTOP profile
+            (minimal by design; the full bio above stays the mobile bio). */}
+        <div style={{ marginBottom: 22 }}>
+          <label style={LABEL}>DISPLAY BIO · SHOWS ON YOUR DESKTOP PROFILE</label>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+            <input
+              type="text"
+              value={shortBio}
+              onChange={(e) => setShortBio(e.target.value.slice(0, 80))}
+              maxLength={80}
+              placeholder="ONE QUIET LINE"
+              style={{ ...INPUT, width: '100%' }}
+            />
+            <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: 'var(--fs-7)', color: 'rgba(255,255,255,0.4)', fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>{shortBio.length}/80</span>
+          </div>
         </div>
 
         {/* LOCATION — profiles.location (desktop meta row + mobile bio sheet) */}
