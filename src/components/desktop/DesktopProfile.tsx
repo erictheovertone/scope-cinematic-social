@@ -20,6 +20,9 @@ import ProfileDataSheet from '@/components/ProfileDataSheet';
 import BadgeExplainerSheet from '@/components/BadgeExplainerSheet';
 import CollectedGrid from '@/components/economy/CollectedGrid';
 import TheatreMode from '@/components/TheatreMode';
+import DesktopPostView from '@/components/desktop/DesktopPostView';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { useRef } from 'react';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -113,6 +116,40 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
 
   const sortedPosts = posts; // recent order (SORT BY was a temp control — removed)
 
+  // ── BRIEF 2: the grid → POST SCROLL transform. In-page state (no route).
+  // postView = index into sortedPosts; return restores scroll + highlights
+  // the viewed cell briefly. reduced-motion: instant swap (layout anim off).
+  const [postView, setPostView] = useState<number | null>(null);
+  const [returnHighlight, setReturnHighlight] = useState<string | null>(null);
+  const scrollerRef = useRef<HTMLDivElement>(null);
+  const savedScroll = useRef(0);
+  const reducedMotion = !!useReducedMotion();
+  const openPostView = (i: number) => {
+    savedScroll.current = scrollerRef.current?.scrollTop ?? 0;
+    setPostView(i);
+  };
+  const closePostView = () => {
+    const viewedId = postView != null ? String(sortedPosts[postView]?.id ?? '') : null;
+    setPostView(null);
+    requestAnimationFrame(() => {
+      if (scrollerRef.current) scrollerRef.current.scrollTop = savedScroll.current;
+      if (viewedId) { setReturnHighlight(viewedId); window.setTimeout(() => setReturnHighlight(null), 900); }
+    });
+  };
+  // keyboard: Esc returns; ←/→ step (post-scroll mode only)
+  useEffect(() => {
+    if (postView == null) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') closePostView();
+      else if (e.key === 'ArrowRight') setPostView((i) => (i != null && i < sortedPosts.length - 1 ? i + 1 : i));
+      else if (e.key === 'ArrowLeft') setPostView((i) => (i != null && i > 0 ? i - 1 : i));
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [postView == null, sortedPosts.length]);
+
+
   const stats: [string, string | number][] = [
     ['FOLLOWERS', followers], ['FOLLOWING', following], ['COLLECTORS', collectors],
     ['POSTS', posts.length], ['DECKS', decks.length],
@@ -123,7 +160,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
   const scaleWrap: React.CSSProperties = { maxWidth: 1369, margin: '0 auto', padding: '0 24px' };
 
   return (
-    <div className="bg-black" style={{ position: 'fixed', inset: 0, left: 71, overflowY: 'auto' }}>
+    <div ref={scrollerRef} className="bg-black" style={{ position: 'fixed', inset: 0, left: 71, overflowY: 'auto' }}>
       <div style={scaleWrap}>
 
         {/* ═══ HEADER ZONE ═══ */}
@@ -135,19 +172,37 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
               6); the frame reads as the Pro treatment — if a base hairline for
               all users is intended, that's a one-line change (flagged). */}
           {profile && isProMember(profile as { is_paid_member?: boolean; paid_member_until?: string | null }) && (
-            <div style={{ position: 'absolute', left: 0, top: 33, width: 1.5, height: 183, zIndex: 2, background: 'linear-gradient(180deg, rgba(242,13,13,0.9), rgba(242,13,13,0.25))' }} />
+            <div style={{ position: 'absolute', left: 0, top: 33, width: 1.5, height: 146, zIndex: 2, background: 'linear-gradient(180deg, rgba(242,13,13,0.9), rgba(242,13,13,0.25))' }} />
           )}
-          {/* PFP — hairline-framed */}
-          <div style={{ position: 'absolute', left: 0, top: 33, width: 187, height: 183, border: `1px solid ${HAIR}`, overflow: 'hidden' }}>
-            {pfp ? (
-              <img src={feedImage(pfp, 400)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-            ) : <div style={{ width: '100%', height: '100%', background: '#141414' }} />}
-          </div>
+          {/* PFP — hairline-framed. In post-scroll mode it COMPRESSES into the
+              43-wide BADGE RAIL (gradient strip, badges stacked small, divider
+              at its right edge) — one motion with the grid morph. */}
+          <motion.div
+            animate={{ width: postView != null ? 43 : 150 }}
+            transition={reducedMotion ? { duration: 0 } : { type: 'spring', stiffness: 500, damping: 42 }}
+            style={{ position: 'absolute', left: 0, top: 33, height: 146, border: `1px solid ${HAIR}`, borderRight: postView != null ? `1px solid rgba(255,255,255,0.3)` : `1px solid ${HAIR}`, overflow: 'hidden', background: postView != null ? 'linear-gradient(180deg, rgba(12,12,12,0.9), rgba(51,48,48,0.9))' : 'transparent' }}
+          >
+            {postView == null ? (
+              pfp ? (
+                <img src={feedImage(pfp, 400)} alt="" style={{ width: 150, height: '100%', objectFit: 'cover', display: 'block' }} />
+              ) : <div style={{ width: 150, height: '100%', background: '#141414' }} />
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, paddingTop: 10 }}>
+                {badges.slice(0, 5).map((b) => (
+                  <img key={b.key} src={(b.bannerSrc ?? b.src) as string} alt={b.title} style={{ width: 20, height: 20, objectFit: 'contain', display: 'block' }} />
+                ))}
+              </div>
+            )}
+          </motion.div>
 
           {/* Text block ANCHORED to the PFP: name cap-height starts at the PFP's
               top line (frame: PFP y25/name y33 — top 27 ≈ cap at 33 after the
               ascender gap). Frame rhythm: handle tight beneath (~25px pitch). */}
-          <div style={{ position: 'absolute', left: 214, top: 27, right: 0 }}>
+          <motion.div
+            animate={{ left: postView != null ? 107 : 214 }}
+            transition={reducedMotion ? { duration: 0 } : { type: 'spring', stiffness: 500, damping: 42 }}
+            style={{ position: 'absolute', left: 214, top: 27, right: 0 }}
+          >
             <p style={{ ...SKB, fontSize: 24, color: '#FFF', textTransform: 'uppercase', letterSpacing: '-0.02em', margin: 0, lineHeight: 1 }}>{name}</p>
             <p style={{ ...SKB, fontSize: 14, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', margin: '3px 0 0' }}>{handle ? `@${handle}` : ''}</p>
             {bio && <p style={{ ...SKR, fontSize: 13, color: 'rgba(255,255,255,0.5)', lineHeight: 1.5, margin: '10px 0 0', maxWidth: 320 }}>{bio}</p>}
@@ -185,7 +240,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
               ))}
             </div>
 
-          </div>
+          </motion.div>
 
           {/* TOP-RIGHT cluster — MESSAGE (public, inert v1) then the ⓘ box,
               10px gap. Own profile: ⓘ alone (editing lives in Settings). */}
@@ -255,6 +310,14 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
               </button>
             );
           })}
+          {postView != null && (
+            /* the 3-red-box return — reverses the morph (grid restored) */
+            <button onClick={closePostView} aria-label="Back to grid" style={{ display: 'inline-flex', gap: 3, background: 'transparent', border: 'none', cursor: 'pointer', padding: 2 }}>
+              {[0, 1, 2].map((i) => (
+                <span key={i} style={{ width: 18, height: 12, border: '0.5px solid #f20d0d', display: 'inline-block' }} />
+              ))}
+            </button>
+          )}
           {/* THEATRE — far right (SORT BY's old seat; sort was temp, removed) */}
           <button onClick={() => setTheatreOpen(true)} aria-label="Theatre mode" style={{ marginLeft: 'auto', background: 'transparent', border: 'none', cursor: 'pointer', padding: 2, lineHeight: 0 }}>
             <img src="/theatre-mode-eye-framed-v2.png" alt="" style={{ height: 22, width: 'auto', display: 'block', opacity: 0.92 }} />
@@ -263,18 +326,39 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
         </div>
 
         {/* ═══ CONTENT ═══ */}
-        {tab === 'portfolio' && (
+        {tab === 'portfolio' && postView == null && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 4, paddingBottom: 80 }}>
-            {sortedPosts.map((p) => {
+            {sortedPosts.map((p, i) => {
               const src = (p.poster_url as string) || (p.thumbnail_url as string) || ((p.media_urls as string[])?.[0] ?? '');
+              const pid = String(p.id);
               return (
-                <button key={String(p.id)} onClick={() => setOpenPost(p)} style={{ position: 'relative', aspectRatio: '2.75 / 1', overflow: 'hidden', background: '#101010', border: 'none', cursor: 'pointer', padding: 0 }}>
+                <motion.button
+                  key={pid}
+                  layoutId={reducedMotion ? undefined : `dpost-${pid}`}
+                  initial={false}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.96, transition: { duration: 0.15 } }}
+                  onClick={() => openPostView(i)}
+                  style={{ position: 'relative', aspectRatio: '2.75 / 1', overflow: 'hidden', background: '#101010', border: 'none', cursor: 'pointer', padding: 0, outline: returnHighlight === pid ? '1px solid rgba(242,13,13,0.65)' : 'none', transition: 'outline-color 400ms ease' }}
+                >
                   {src && <img src={feedImage(src, 600)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
-                </button>
+                </motion.button>
               );
             })}
             {sortedPosts.length === 0 && <p style={{ ...SKR, fontSize: 12, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', gridColumn: 'span 4', padding: '40px 0', textAlign: 'center' }}>NO POSTS YET</p>}
           </div>
+        )}
+        {tab === 'portfolio' && postView != null && sortedPosts[postView] && (
+          <DesktopPostView
+            posts={sortedPosts}
+            index={postView}
+            onStep={(dir) => setPostView((i) => {
+              if (i == null) return i;
+              const n = i + dir;
+              return n < 0 || n >= sortedPosts.length ? i : n; // rubber-band
+            })}
+            location={location}
+          />
         )}
         {tab === 'collected' && (
           <div style={{ paddingBottom: 80 }}>
