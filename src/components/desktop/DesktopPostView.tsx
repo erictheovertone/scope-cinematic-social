@@ -32,6 +32,20 @@ const timeAgo = (iso: string): string => {
 
 const usd = (n: number) => (n >= 1000 ? `$${Math.round(n).toLocaleString()}` : `$${n.toFixed(2)}`);
 
+// Thin OPEN chevron (the nit): ~105° between the legs (a wide V rotated —
+// wider than a text '>'), 1.5px stroke, hairline-adjacent. One component,
+// mirrored for prev. Hover 0.75 → 1.
+function Chevron({ dir }: { dir: 1 | -1 }) {
+  return (
+    <svg
+      width="10" height="22" viewBox="0 0 10 22" fill="none"
+      style={{ display: 'block', transform: dir === -1 ? 'scaleX(-1)' : undefined }}
+    >
+      <path d="M1 1L8.6 11L1 21" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 export default function DesktopPostView({
   posts, index, onStep, location,
 }: {
@@ -133,13 +147,19 @@ export default function DesktopPostView({
         <div style={{ position: 'relative' }}>
           {/* prev / next — Batang > glyphs, mid-media */}
           {index > 0 && (
-            <button onClick={() => onStep(-1)} aria-label="Previous" style={{ position: 'absolute', left: arrowInset, top: '50%', transform: 'translate(0, -50%)', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'Batang, serif', fontSize: 24, color: 'rgba(255,255,255,0.75)', padding: 3, lineHeight: 1 }}>
-              {'<'}
+            <button onClick={() => onStep(-1)} aria-label="Previous"
+              onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.75'; }}
+              style={{ position: 'absolute', left: arrowInset, top: '50%', transform: 'translate(0, -50%)', background: 'transparent', border: 'none', cursor: 'pointer', padding: 6, lineHeight: 0, opacity: 0.75, transition: 'opacity 120ms ease' }}>
+              <Chevron dir={-1} />
             </button>
           )}
           {index < posts.length - 1 && (
-            <button onClick={() => onStep(1)} aria-label="Next" style={{ position: 'absolute', right: arrowInset, top: '50%', transform: 'translate(0, -50%)', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'Batang, serif', fontSize: 24, color: 'rgba(255,255,255,0.75)', padding: 3, lineHeight: 1 }}>
-              {'>'}
+            <button onClick={() => onStep(1)} aria-label="Next"
+              onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.75'; }}
+              style={{ position: 'absolute', right: arrowInset, top: '50%', transform: 'translate(0, -50%)', background: 'transparent', border: 'none', cursor: 'pointer', padding: 6, lineHeight: 0, opacity: 0.75, transition: 'opacity 120ms ease' }}>
+              <Chevron dir={1} />
             </button>
           )}
 
