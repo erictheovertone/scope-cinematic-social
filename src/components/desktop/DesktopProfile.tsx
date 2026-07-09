@@ -7,6 +7,7 @@
 // transform is BRIEF 2 (the grid-mode icon slot stays unbuilt).
 
 import { useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   getProfile, getFollowerCount, getFollowingCount, getUserDecks, getProfileLinks,
   isProMember, type ProfileLink, type Deck,
@@ -17,7 +18,8 @@ import { resolveBadges } from '@/lib/economy/badges';
 import { feedImage } from '@/lib/mediaUrl';
 import PostModal from '@/components/PostModal';
 import ProfileDataSheet from '@/components/ProfileDataSheet';
-import BadgeExplainerSheet from '@/components/BadgeExplainerSheet';
+import DesktopBadgesSheet from '@/components/desktop/DesktopBadgesSheet';
+import type { BadgeKey } from '@/lib/economy/badges';
 import CollectedGrid from '@/components/economy/CollectedGrid';
 import TheatreMode from '@/components/TheatreMode';
 import GradedVideo from '@/components/finishing/GradedVideo';
@@ -28,6 +30,7 @@ import { useRef } from 'react';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
+const SKL: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 300 };
 const HAIR = 'rgba(255,255,255,0.14)';
 const RED = '#f20d0d';
 
@@ -46,6 +49,7 @@ interface Props {
 type Tab = 'portfolio' | 'collected' | 'decks';
 
 export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
+  const router = useRouter();
   const economy = useEconomy();
 
   const [profile, setProfile] = useState<Record<string, unknown> | null>(null);
@@ -116,8 +120,9 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
     isPaidMember: profile ? isProMember(profile as { is_paid_member?: boolean; paid_member_until?: string | null }) : false,
     isInHouseCreator: !!profile?.is_in_house_creator,
     firstCutCount: fcCount,
-  }).filter((b) => b.framedSrc ?? b.bannerSrc), [profile, fcCount]);
+  }).filter((b) => b.framedSrc ?? b.bannerSrc ?? b.src), [profile, fcCount]);
   const srhCount = Math.max(1, Number(profile?.srh_count ?? 0) || 1);
+  const heldKeys = useMemo(() => new Set(badges.filter((b) => b.key !== 'free').map((b) => b.key as BadgeKey)), [badges]);
 
   const sortedPosts = posts; // recent order (SORT BY was a temp control — removed)
 
@@ -254,7 +259,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
 
           {/* ═══ BADGES (right side) ═══ */}
           <div style={{ position: 'absolute', right: 0, top: 92 }}>
-            <p style={{ ...SKB, fontSize: 13, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.14em', margin: '0 0 10px' }}>BADGES</p>
+            <button onClick={() => setBadgesOpen(true)} style={{ ...SKB, fontSize: 13, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.14em', margin: '0 0 10px', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, display: 'block' }}>BADGES</button>
             <div style={{ display: 'flex', gap: 8 }}>
               {badges.slice(0, badges.length > 5 ? 4 : 5).map((b) => {
                 const count = b.key === 'firstCut' ? Math.max(1, fcCount) : b.key === 'srh' ? srhCount : null;
@@ -357,7 +362,16 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
                 </motion.button>
               );
             })}
-            {sortedPosts.length === 0 && <p style={{ ...SKR, fontSize: 12, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', gridColumn: `span ${gridConf.count}`, padding: '40px 0', textAlign: 'center' }}>NO POSTS YET</p>}
+            {sortedPosts.length === 0 && (
+              isOwn ? (
+                <button onClick={() => router.push('/create')} style={{ gridColumn: `span ${gridConf.count}`, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, background: 'transparent', border: `1px dashed rgba(255,255,255,0.18)`, cursor: 'pointer', padding: '70px 0', margin: '20px 0 0' }}>
+                  <span style={{ ...SKL, fontSize: 54, lineHeight: 1, color: 'rgba(255,255,255,0.7)' }}>+</span>
+                  <span style={{ ...SKB, fontSize: 12, color: 'rgba(255,255,255,0.7)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>CREATE YOUR FIRST POST</span>
+                </button>
+              ) : (
+                <p style={{ ...SKR, fontSize: 12, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', gridColumn: `span ${gridConf.count}`, padding: '40px 0', textAlign: 'center' }}>NO POSTS YET</p>
+              )
+            )}
           </div>
         )}
         {tab === 'portfolio' && postView != null && sortedPosts[postView] && (
@@ -412,20 +426,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
         collectors={collectors}
         firstCutCount={fcCount}
       />
-      <BadgeExplainerSheet
-        visible={badgesOpen}
-        onClose={() => setBadgesOpen(false)}
-        onJoinPress={() => setBadgesOpen(false)}
-        userTiers={{
-          isFree: true,
-          isInHouseCreator: !!profile?.is_in_house_creator,
-          isPaidMember: profile ? isProMember(profile as { is_paid_member?: boolean; paid_member_until?: string | null }) : false,
-          isTopCollector: !!profile?.is_top_collector,
-          isScreeningRoomHolder: !!profile?.is_screening_room_holder,
-          isFoundingMember: !!profile?.is_founding_member,
-          foundingMemberNumber: (profile?.founding_member_number as number) ?? null,
-        }}
-      />
+      {badgesOpen && <DesktopBadgesSheet heldKeys={heldKeys} onClose={() => setBadgesOpen(false)} />}
     </div>
   );
 }
