@@ -6,7 +6,7 @@ import MembershipSheet from '@/components/MembershipSheet';
 import ProCelebration from '@/components/ProCelebration';
 import VideoCelebration from '@/components/VideoCelebration';
 
-const Ctx = createContext<{ showUpsell: (l: UpsellLimit) => void }>({ showUpsell: () => {} });
+const Ctx = createContext<{ showUpsell: (l: UpsellLimit) => void; goPro: () => void }>({ showUpsell: () => {}, goPro: () => {} });
 export const useUpsell = () => useContext(Ctx);
 
 export function UpsellProvider({ children }: { children: ReactNode }) {
@@ -39,7 +39,7 @@ export function UpsellProvider({ children }: { children: ReactNode }) {
   }, [fromFinishing, router]);
 
   return (
-    <Ctx.Provider value={{ showUpsell }}>
+    <Ctx.Provider value={{ showUpsell, goPro }}>
       {children}
       <UpsellSheet limit={limit} onClose={() => setLimit(null)} onGoPro={goPro} />
       <MembershipSheet

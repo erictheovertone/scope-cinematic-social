@@ -26,7 +26,7 @@ export default function DesktopBadgesSheet({
   isOwn: boolean;
   onClose: () => void;
 }) {
-  const { showUpsell } = useUpsell();
+  const { goPro } = useUpsell();
   const reduced = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   // ALL DESCRIPTORS ALWAYS OPEN: a locked badge is an invitation, not a wall —
   // this list renders every descriptor unconditionally (no tap gate to swallow).
@@ -69,7 +69,7 @@ export default function DesktopBadgesSheet({
                 <p style={{ ...SKR, fontSize: 12, color: 'rgba(255,255,255,0.55)', lineHeight: 1.5, margin: '6px 0 0' }}>{BADGE_BLURBS[k]}</p>
                 {/* PRO buy CTA — the highest-intent upsell moment (own profile) */}
                 {state === 'buyable' && isOwn && (
-                  <button onClick={(e) => { e.stopPropagation(); onClose(); showUpsell('posts'); }} style={{ ...SKB, fontSize: 11, color: '#f20d0d', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'transparent', border: 'none', cursor: 'pointer', padding: '10px 0 0' }}>
+                  <button onClick={(e) => { e.stopPropagation(); onClose(); goPro(); }} style={{ ...SKB, fontSize: 11, color: '#f20d0d', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'transparent', border: 'none', cursor: 'pointer', padding: '10px 0 0' }}>
                     GET PRO →
                   </button>
                 )}

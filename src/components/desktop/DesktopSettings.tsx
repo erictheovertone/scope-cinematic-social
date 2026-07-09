@@ -55,7 +55,7 @@ const INPUT: React.CSSProperties = { ...SKR, fontSize: 13, color: '#FFF', backgr
 export default function DesktopSettings() {
   const router = useRouter();
   const { logout, user } = usePrivy();
-  const { showUpsell } = useUpsell();
+  const { goPro } = useUpsell();
   const photoInputRef = useRef<HTMLInputElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -333,7 +333,7 @@ export default function DesktopSettings() {
           <div style={{ maxWidth: 520 }}>
             {isPaid
               ? row('Manage Membership', () => router.push('/membership/manage'))
-              : row('Become a Member', () => showUpsell('posts'))}
+              : row('Become a Member', () => goPro())}
           </div>
         );
       case 'experience':
