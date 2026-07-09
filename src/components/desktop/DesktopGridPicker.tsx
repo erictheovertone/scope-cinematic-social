@@ -7,6 +7,7 @@
 
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useRouter } from 'next/navigation';
 import {
   DESKTOP_ASPECTS, DESKTOP_COUNTS, chipFor, saveDesktopLayout,
   type DesktopAspect, type DesktopCount, type DesktopLayout,
@@ -45,6 +46,8 @@ export default function DesktopGridPicker({
   const [aspect, setAspect] = useState<DesktopAspect>(initial.aspect);
   const [count, setCount] = useState<DesktopCount>(initial.count);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState(false);
+  const router = useRouter();
   const reduced = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
   useEffect(() => {
@@ -54,13 +57,25 @@ export default function DesktopGridPicker({
   }, [onClose]);
 
   const chip = chipFor(aspect);
+  // COMMIT CHOREOGRAPHY (mobile's pattern — the grid-layout page's SAVING…
+  // label morph): mutation + cache invalidation → AUTO-RETURN to the profile
+  // (the grid re-reads fresh; instant re-layout — reported, no crossfade v1).
+  // Failure: the picker STAYS with a quiet inline error, CONFIRM retryable —
+  // never a silent no-op (the exact round-2 bug: the missing column made
+  // every save fail with nothing shown).
   const confirm = async () => {
     if (saving) return;
-    setSaving(true);
+    setSaving(true); setSaveError(false);
     const layout: DesktopLayout = { aspect, count };
     const ok = await saveDesktopLayout(userId, layout);
     setSaving(false);
-    if (ok) { onApplied(layout); onClose(); }
+    if (ok) {
+      onApplied(layout);
+      onClose();
+      router.push('/profile'); // one flow — settings AND the future onboarding entry land here
+    } else {
+      setSaveError(true);
+    }
   };
 
   const title = step === 'aspect' ? 'ASPECT' : step === 'count' ? 'COUNT' : 'COMMIT';
@@ -136,12 +151,17 @@ export default function DesktopGridPicker({
             <p style={{ ...SKR, fontSize: 11, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '34px 0 0' }}>
               Your mobile layout stays as it is.
             </p>
+            {saveError && (
+              <p style={{ ...SKR, fontSize: 11, color: RED, textTransform: 'uppercase', letterSpacing: '0.1em', margin: '18px 0 0' }}>
+                COULDN’T SAVE YOUR LAYOUT — TRY AGAIN
+              </p>
+            )}
             <button
               onClick={confirm}
               disabled={saving}
-              style={{ ...SKB, fontSize: 13, color: '#000', textTransform: 'uppercase', letterSpacing: '0.12em', background: '#FFF', border: 'none', cursor: 'pointer', padding: '14px 54px', marginTop: 22 }}
+              style={{ ...SKB, fontSize: 13, color: '#000', textTransform: 'uppercase', letterSpacing: '0.12em', background: '#FFF', border: 'none', cursor: 'pointer', padding: '14px 54px', marginTop: 22, opacity: saving ? 0.6 : 1 }}
             >
-              {saving ? 'SAVING…' : 'CONFIRM'}
+              {saving ? 'SAVING…' : saveError ? 'RETRY' : 'CONFIRM'}
             </button>
           </div>
         )}

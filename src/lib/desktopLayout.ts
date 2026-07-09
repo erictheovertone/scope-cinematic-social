@@ -7,6 +7,7 @@
 // desktop-first choice seeds mobile's aspect ONLY while mobile is unset.
 
 import { supabase } from '@/lib/supabase/client';
+import { invalidateProfileCache } from '@/lib/userService';
 import { AR_CHIPS, chipForLayout, type ArChip } from '@/lib/aspectRatio';
 
 export type DesktopAspect = 'pana-wide' | 'scope' | 'cine-wide' | 'legacy';
@@ -45,6 +46,9 @@ export function deriveDesktopLayout(
 export async function saveDesktopLayout(userId: string, layout: DesktopLayout): Promise<boolean> {
   const { error } = await supabase.from('profiles').update({ desktop_layout: layout }).eq('user_id', userId);
   if (error) { console.warn('[desktop-layout] save failed (migration pending?):', error.message); return false; }
+  // the profileCache lesson: without this, the profile re-reads STALE and the
+  // new grid never shows even on a successful write.
+  invalidateProfileCache(userId);
   const { data: p } = await supabase.from('profiles').select('grid_layout').eq('user_id', userId).maybeSingle();
   if (p && !p.grid_layout) {
     // desktop-first: seed the mobile default aspect (the 2-col variant)
