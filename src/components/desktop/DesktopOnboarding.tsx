@@ -55,17 +55,19 @@ export default function DesktopOnboarding() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, authenticated, user?.id]);
 
-  const finish = async () => {
-    if (userId) await markDesktopExplainerSeen(userId);
+  // The explainer has been SEEN the moment it's dismissed — persist immediately
+  // on BOTH completion and skip, for EVERY downstream path. (Previously a new
+  // user's flag was deferred to the grid picker's CONFIRM, so Esc-ing the picker
+  // left it unwritten → the explainer re-fired next login.)
+  const markSeen = async () => { if (userId) await markDesktopExplainerSeen(userId); };
+
+  // After the explainer: new users → setup; existing → app. Seen-flag set first.
+  const afterExplainer = async () => {
+    await markSeen();
+    if (needsSetup) { setPhase('setup'); return; }
     router.replace('/'); // mobile-onboarded path lands here; new-user path lands via the picker's own push('/profile')
   };
-
-  // After the explainer: new users → setup; existing → done (seen-flag + app).
-  const afterExplainer = async () => {
-    if (needsSetup) { setPhase('setup'); return; }
-    await finish();
-  };
-  const skip = async () => { await finish(); };
+  const skip = async () => { await markSeen(); router.replace('/'); };
 
   if (phase === 'resolving') {
     return <div className="bg-black" style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><FrameLoader variant="page" /></div>;

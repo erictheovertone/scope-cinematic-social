@@ -10,7 +10,10 @@ import { supabase } from '@/lib/supabase/client';
 const LS_KEY = (userId: string) => `scope:desktopOnboarded:${userId}`;
 
 export async function hasSeenDesktopExplainer(userId: string): Promise<boolean> {
-  if (typeof window !== 'undefined' && localStorage.getItem(LS_KEY(userId)) === '1') return true;
+  // localStorage is a best-effort fast-path only. It must never throw (Safari
+  // private mode throws on access) — and it's NOT the source of truth: it
+  // doesn't survive across devices/browsers/incognito. The profiles column is.
+  try { if (typeof window !== 'undefined' && localStorage.getItem(LS_KEY(userId)) === '1') return true; } catch { /* storage blocked → fall through to the column */ }
   try {
     const { data, error } = await supabase.from('profiles').select('desktop_onboarded').eq('user_id', userId).maybeSingle();
     if (error) return false; // column missing pre-migration → treat as unseen (localStorage still gates repeats in-session)
@@ -19,9 +22,12 @@ export async function hasSeenDesktopExplainer(userId: string): Promise<boolean> 
 }
 
 export async function markDesktopExplainerSeen(userId: string): Promise<void> {
-  if (typeof window !== 'undefined') localStorage.setItem(LS_KEY(userId), '1');
+  // Durable store = the profiles column (survives across devices). localStorage
+  // is a best-effort mirror; guard it so a throwing/disabled store can never
+  // block the column write that follows.
+  try { if (typeof window !== 'undefined') localStorage.setItem(LS_KEY(userId), '1'); } catch { /* private mode / disabled — the column carries it */ }
   try {
     const { error } = await supabase.from('profiles').update({ desktop_onboarded: true }).eq('user_id', userId);
     if (error) console.warn('[desktop-onboarding] flag write failed (migration pending?):', error.message);
-  } catch { /* localStorage carries it */ }
+  } catch { /* localStorage carries it in-session */ }
 }
