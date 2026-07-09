@@ -8,7 +8,7 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { BADGES, RARITY_ORDER, type BadgeKey } from '@/lib/economy/badges';
-import { badgeState, BADGE_EARN_PATH, BADGE_NATURE, type BadgeFlags } from '@/lib/economy/badgeModel';
+import { badgeState, type BadgeFlags } from '@/lib/economy/badgeModel';
 import { BADGE_BLURBS } from '@/lib/economy/badges';
 import { useUpsell } from '@/components/UpsellProvider';
 import RedBrackets from '@/components/desktop/RedBrackets';
@@ -27,6 +27,7 @@ export default function DesktopBadgesSheet({
   onClose: () => void;
 }) {
   const { showUpsell } = useUpsell();
+  const reduced = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   // ALL DESCRIPTORS ALWAYS OPEN: a locked badge is an invitation, not a wall —
   // this list renders every descriptor unconditionally (no tap gate to swallow).
   useEffect(() => {
@@ -44,20 +45,20 @@ export default function DesktopBadgesSheet({
       <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.88)' }} />
       <div style={{ position: 'relative', width: 720, maxHeight: '82vh', overflowY: 'auto', background: '#000', border: '1px solid #1a1a1a', boxSizing: 'border-box', padding: '40px 44px 44px' }}>
         <RedBrackets inset={0} />
-        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 24 }}>
-          <h2 style={{ ...SKB, fontSize: 22, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>BADGES ON SCOPE</h2>
-          <button onClick={onClose} aria-label="Close" style={{ background: 'transparent', border: 'none', cursor: 'pointer', ...SKR, fontSize: 20, color: 'rgba(255,255,255,0.5)', lineHeight: 1, padding: 4 }}>×</button>
-        </div>
+        <button onClick={onClose} aria-label="Close" style={{ position: 'absolute', top: 34, right: 40, background: 'transparent', border: 'none', cursor: 'pointer', ...SKR, fontSize: 20, color: 'rgba(255,255,255,0.5)', lineHeight: 1, padding: 4, zIndex: 2 }}>×</button>
+        {/* header logo — the bracketed SCOPE wordmark (1196×620) */}
+        <img src="/badges-on-scope-logo.png" alt="Badges on Scope" style={{ height: 54, width: 'auto', objectFit: 'contain', display: 'block', margin: '4px auto 26px' }} />
 
-        {order.map((k) => {
+        {order.map((k, ri) => {
           const b = BADGES[k];
           const state = badgeState(k, flags); // 'held' | 'buyable' | 'locked'
           const src = b.bannerSrc ?? b.src;
           const chip = state === 'held' ? { t: 'HELD', c: '#00E08A' } : state === 'buyable' ? { t: 'AVAILABLE', c: '#f20d0d' } : { t: 'LOCKED', c: 'rgba(255,255,255,0.4)' };
           return (
-            <div key={k} style={{ display: 'flex', alignItems: 'flex-start', gap: 16, padding: '16px 0', borderBottom: `1px solid ${HAIR}`, opacity: state === 'held' ? 1 : 0.72 }}>
+            <div key={k} style={{ display: 'flex', alignItems: 'flex-start', gap: 16, padding: '16px 0', borderBottom: `1px solid ${HAIR}`, opacity: state === 'held' ? 1 : 0.72, animation: reduced ? 'none' : `badgeRippleIn 300ms ease-out ${ri * 45}ms both` }}>
               <span style={{ position: 'relative', width: 48, height: 48, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <img src={src} alt={b.title} style={{ width: 44, height: 44, objectFit: 'contain', display: 'block', filter: state === 'held' ? 'none' : 'grayscale(1)', opacity: state === 'held' ? 1 : 0.85 }} />
+                {/* glow chases the ripple's leading edge (row delay + ~150ms) */}
+                <img src={src} alt={b.title} style={{ width: 44, height: 44, objectFit: 'contain', display: 'block', filter: state === 'held' ? 'none' : 'grayscale(1)', opacity: state === 'held' ? 1 : 0.85, animation: reduced ? 'none' : `badgeGlowPulse 400ms ease-out ${ri * 45 + 150}ms both` }} />
               </span>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
@@ -66,10 +67,6 @@ export default function DesktopBadgesSheet({
                 </div>
                 {/* descriptor — ALWAYS readable */}
                 <p style={{ ...SKR, fontSize: 12, color: 'rgba(255,255,255,0.55)', lineHeight: 1.5, margin: '6px 0 0' }}>{BADGE_BLURBS[k]}</p>
-                {/* earn path for LOCKED earned badges (an invitation, per badge) */}
-                {state === 'locked' && (
-                  <p style={{ ...SKB, fontSize: 11, color: 'rgba(255,255,255,0.7)', lineHeight: 1.45, margin: '8px 0 0' }}>{BADGE_EARN_PATH[k]}</p>
-                )}
                 {/* PRO buy CTA — the highest-intent upsell moment (own profile) */}
                 {state === 'buyable' && isOwn && (
                   <button onClick={() => { onClose(); showUpsell('posts'); }} style={{ ...SKB, fontSize: 11, color: '#f20d0d', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'transparent', border: 'none', cursor: 'pointer', padding: '10px 0 0' }}>

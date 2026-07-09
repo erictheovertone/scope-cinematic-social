@@ -606,3 +606,14 @@ input, textarea, select {
   45%  { transform: scale(0.95); } /* rail delta 0.05 (Eric) */
   100% { transform: scale(1); }
 }
+
+/* ── BADGES SHEET entrance (both platforms) — ripple-down + glow chase ──────── */
+@keyframes badgeRippleIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes badgeGlowPulse {
+  0%   { filter: none; }
+  40%  { filter: drop-shadow(0 0 7px rgba(255,255,255,0.85)) drop-shadow(0 0 3px rgba(242,13,13,0.6)); }
+  100% { filter: none; }
+}
