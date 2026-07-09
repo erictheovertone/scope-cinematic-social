@@ -22,6 +22,7 @@ import CollectedGrid from '@/components/economy/CollectedGrid';
 import TheatreMode from '@/components/TheatreMode';
 import GradedVideo from '@/components/finishing/GradedVideo';
 import DesktopPostView from '@/components/desktop/DesktopPostView';
+import { deriveDesktopLayout, chipFor, type DesktopLayout } from '@/lib/desktopLayout';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useRef } from 'react';
 
@@ -61,6 +62,8 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
   const [openPost, setOpenPost] = useState<Record<string, unknown> | null>(null);
   const [infoOpen, setInfoOpen] = useState(false);
   const [badgesOpen, setBadgesOpen] = useState(false);
+  // aspect × count — explicit desktop_layout or the derive (mobile aspect @4)
+  const [gridConf, setGridConf] = useState<DesktopLayout>({ aspect: 'scope', count: 4 });
   const [msgToast, setMsgToast] = useState(false);
 
   useEffect(() => {
@@ -78,6 +81,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
         ]);
         if (!alive) return;
         setProfile(p as Record<string, unknown> | null);
+        setGridConf(deriveDesktopLayout((p as { desktop_layout?: unknown } | null)?.desktop_layout, (p as { grid_layout?: string | null } | null)?.grid_layout));
         setFollowers(fw); setFollowing(fg);
         setPosts((ps as unknown as Record<string, unknown>[]) ?? []);
         setDecks(dk); setLinks(ln);
@@ -314,7 +318,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
         )}
 
         {tab === 'portfolio' && postView == null && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 4, paddingBottom: 80 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${gridConf.count}, 1fr)`, gap: 4, paddingBottom: 80 }}>
             {sortedPosts.map((p, i) => {
               const src = (p.poster_url as string) || (p.thumbnail_url as string) || ((p.media_urls as string[])?.[0] ?? '');
               const pid = String(p.id);
@@ -328,7 +332,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.96, transition: { duration: 0.12 } }}
                   onClick={() => openPostView(i)}
-                  style={{ position: 'relative', aspectRatio: '2.75 / 1', overflow: 'hidden', background: '#101010', border: 'none', cursor: 'pointer', padding: 0, outline: returnHighlight === pid ? '1px solid rgba(242,13,13,0.65)' : 'none', transition: 'outline-color 400ms ease' }}
+                  style={{ position: 'relative', aspectRatio: `${chipFor(gridConf.aspect).ratio}`, overflow: 'hidden', background: '#101010', border: 'none', cursor: 'pointer', padding: 0, outline: returnHighlight === pid ? '1px solid rgba(242,13,13,0.65)' : 'none', transition: 'outline-color 400ms ease' }}
                 >
                   {p.media_type === 'video' ? (
                     /* living tile — the established treatment (was a static poster:
@@ -353,7 +357,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
                 </motion.button>
               );
             })}
-            {sortedPosts.length === 0 && <p style={{ ...SKR, fontSize: 12, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', gridColumn: 'span 4', padding: '40px 0', textAlign: 'center' }}>NO POSTS YET</p>}
+            {sortedPosts.length === 0 && <p style={{ ...SKR, fontSize: 12, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', gridColumn: `span ${gridConf.count}`, padding: '40px 0', textAlign: 'center' }}>NO POSTS YET</p>}
           </div>
         )}
         {tab === 'portfolio' && postView != null && sortedPosts[postView] && (
@@ -376,16 +380,16 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
           </div>
         )}
         {tab === 'decks' && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 4, paddingBottom: 80 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${gridConf.count}, 1fr)`, gap: 4, paddingBottom: 80 }}>
             {decks.map((d) => (
-              <div key={d.id} style={{ position: 'relative', aspectRatio: '2.75 / 1', overflow: 'hidden', background: '#101010' }}>
+              <div key={d.id} style={{ position: 'relative', aspectRatio: `${chipFor(gridConf.aspect).ratio}`, overflow: 'hidden', background: '#101010' }}>
                 {(d.cover_image_url || d.thumbnail_urls?.[0]) && (
                   <img src={feedImage((d.cover_image_url || d.thumbnail_urls[0]) as string, 600)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', opacity: 0.85 }} />
                 )}
                 <span style={{ position: 'absolute', left: 10, bottom: 8, ...SKB, fontSize: 11, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{d.title}</span>
               </div>
             ))}
-            {decks.length === 0 && <p style={{ ...SKR, fontSize: 12, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', gridColumn: 'span 4', padding: '40px 0', textAlign: 'center' }}>NO DECKS YET</p>}
+            {decks.length === 0 && <p style={{ ...SKR, fontSize: 12, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', gridColumn: `span ${gridConf.count}`, padding: '40px 0', textAlign: 'center' }}>NO DECKS YET</p>}
           </div>
         )}
       </div>

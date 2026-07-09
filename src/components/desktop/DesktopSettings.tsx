@@ -31,6 +31,8 @@ import {
 import { useUpsell } from '@/components/UpsellProvider';
 import { feedImage } from '@/lib/mediaUrl';
 import PfpCropStage from '@/components/desktop/PfpCropStage';
+import DesktopGridPicker from '@/components/desktop/DesktopGridPicker';
+import { deriveDesktopLayout, type DesktopLayout } from '@/lib/desktopLayout';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -71,6 +73,8 @@ export default function DesktopSettings() {
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [photoState, setPhotoState] = useState<'idle' | 'uploading' | 'done'>('idle');
   const [cropFile, setCropFile] = useState<File | null>(null);
+  const [gridPickerOpen, setGridPickerOpen] = useState(false);
+  const [gridInitial, setGridInitial] = useState<DesktopLayout>({ aspect: 'scope', count: 4 });
 
   // Deep-link: ?section= (read once; replaceState on switch — no navigation)
   useEffect(() => {
@@ -104,6 +108,7 @@ export default function DesktopSettings() {
           setPfp(profile.profile_image_url || null);
           setShowRecapState(profile.show_recap !== false);
           setIsPaid(isProMember(profile as { is_paid_member?: boolean; paid_member_until?: string | null }));
+          setGridInitial(deriveDesktopLayout((profile as { desktop_layout?: unknown }).desktop_layout, profile.grid_layout));
         }
         const ln = await getProfileLinks(user.id).catch(() => []);
         setLinks(ln);
@@ -242,7 +247,8 @@ export default function DesktopSettings() {
       case 'experience':
         return (
           <div style={{ maxWidth: 520 }}>
-            {row('Change Grid Layout', () => router.push('/profile/grid-layout'))}
+            {/* the 3-step desktop picker (replaces the mobile route on desktop) */}
+            {row('Grid Layout', () => setGridPickerOpen(true))}
             {row(`While You Were Away · ${showRecap ? 'ON' : 'OFF'}`, () => { const next = !showRecap; setShowRecapState(next); if (sbUserId) void setShowRecap(sbUserId, next); }, 'wywa')}
             {row('Notifications', () => router.push('/profile/notifications'))}
             {row('Add to Home Screen', () => router.push('/profile/preferences'))}
@@ -316,6 +322,14 @@ export default function DesktopSettings() {
       </div>
       <input ref={photoInputRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={handlePhoto} style={{ display: 'none' }} />
       {cropFile && <PfpCropStage file={cropFile} onApply={applyCrop} onCancel={() => setCropFile(null)} />}
+      {gridPickerOpen && sbUserId && (
+        <DesktopGridPicker
+          initial={gridInitial}
+          userId={sbUserId}
+          onApplied={(l) => setGridInitial(l)}
+          onClose={() => setGridPickerOpen(false)}
+        />
+      )}
     </div>
   );
 }
