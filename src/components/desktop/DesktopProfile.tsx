@@ -19,7 +19,6 @@ import { feedImage } from '@/lib/mediaUrl';
 import PostModal from '@/components/PostModal';
 import ProfileDataSheet from '@/components/ProfileDataSheet';
 import DesktopBadgesSheet from '@/components/desktop/DesktopBadgesSheet';
-import type { BadgeKey } from '@/lib/economy/badges';
 import CollectedGrid from '@/components/economy/CollectedGrid';
 import TheatreMode from '@/components/TheatreMode';
 import GradedVideo from '@/components/finishing/GradedVideo';
@@ -122,7 +121,6 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
     firstCutCount: fcCount,
   }).filter((b) => b.framedSrc ?? b.bannerSrc ?? b.src), [profile, fcCount]);
   const srhCount = Math.max(1, Number(profile?.srh_count ?? 0) || 1);
-  const heldKeys = useMemo(() => new Set(badges.filter((b) => b.key !== 'free').map((b) => b.key as BadgeKey)), [badges]);
 
   const sortedPosts = posts; // recent order (SORT BY was a temp control — removed)
 
@@ -429,7 +427,20 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
         collectors={collectors}
         firstCutCount={fcCount}
       />
-      {badgesOpen && <DesktopBadgesSheet heldKeys={heldKeys} onClose={() => setBadgesOpen(false)} />}
+      {badgesOpen && (
+        <DesktopBadgesSheet
+          flags={{
+            isPaidMember: profile ? isProMember(profile as { is_paid_member?: boolean; paid_member_until?: string | null }) : false,
+            isFoundingMember: !!profile?.is_founding_member,
+            isTopCollector: !!profile?.is_top_collector,
+            isScreeningRoomHolder: !!profile?.is_screening_room_holder,
+            isInHouseCreator: !!profile?.is_in_house_creator,
+            firstCutCount: fcCount,
+          }}
+          isOwn={isOwn}
+          onClose={() => setBadgesOpen(false)}
+        />
+      )}
     </div>
   );
 }

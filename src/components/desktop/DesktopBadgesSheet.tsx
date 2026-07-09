@@ -5,9 +5,12 @@
 // All badge types, HELD vs LOCKED via the badgeHoldings truth, the app's
 // modal language + red brackets.
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { BADGES, RARITY_ORDER, BADGE_BLURBS, type BadgeKey } from '@/lib/economy/badges';
+import { BADGES, RARITY_ORDER, type BadgeKey } from '@/lib/economy/badges';
+import { badgeState, BADGE_EARN_PATH, BADGE_NATURE, type BadgeFlags } from '@/lib/economy/badgeModel';
+import { BADGE_BLURBS } from '@/lib/economy/badges';
+import { useUpsell } from '@/components/UpsellProvider';
 import RedBrackets from '@/components/desktop/RedBrackets';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
@@ -15,12 +18,17 @@ const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fon
 const HAIR = 'rgba(255,255,255,0.12)';
 
 export default function DesktopBadgesSheet({
-  heldKeys, onClose,
+  flags, isOwn, onClose,
 }: {
-  /** Keys the viewed profile currently HOLDS (the badgeHoldings truth). */
-  heldKeys: Set<BadgeKey>;
+  /** The viewed profile's tier flags — the shared model resolves state. */
+  flags: BadgeFlags;
+  /** Own profile → the PRO buy CTA links to the upsell (self-serve). */
+  isOwn: boolean;
   onClose: () => void;
 }) {
+  const { showUpsell } = useUpsell();
+  // ALL DESCRIPTORS ALWAYS OPEN: a locked badge is an invitation, not a wall —
+  // this list renders every descriptor unconditionally (no tap gate to swallow).
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', onKey);
@@ -43,19 +51,31 @@ export default function DesktopBadgesSheet({
 
         {order.map((k) => {
           const b = BADGES[k];
-          const held = k === 'free' ? true : heldKeys.has(k); // every account holds FREE TIER (base membership)
+          const state = badgeState(k, flags); // 'held' | 'buyable' | 'locked'
           const src = b.bannerSrc ?? b.src;
+          const chip = state === 'held' ? { t: 'HELD', c: '#00E08A' } : state === 'buyable' ? { t: 'AVAILABLE', c: '#f20d0d' } : { t: 'LOCKED', c: 'rgba(255,255,255,0.4)' };
           return (
-            <div key={k} style={{ display: 'flex', alignItems: 'flex-start', gap: 16, padding: '16px 0', borderBottom: `1px solid ${HAIR}`, opacity: held ? 1 : 0.5 }}>
+            <div key={k} style={{ display: 'flex', alignItems: 'flex-start', gap: 16, padding: '16px 0', borderBottom: `1px solid ${HAIR}`, opacity: state === 'held' ? 1 : 0.72 }}>
               <span style={{ position: 'relative', width: 48, height: 48, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <img src={src} alt={b.title} style={{ width: 44, height: 44, objectFit: 'contain', display: 'block', filter: held ? 'none' : 'grayscale(1)' }} />
+                <img src={src} alt={b.title} style={{ width: 44, height: 44, objectFit: 'contain', display: 'block', filter: state === 'held' ? 'none' : 'grayscale(1)', opacity: state === 'held' ? 1 : 0.85 }} />
               </span>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
                   <span style={{ ...SKB, fontSize: 13, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{k === 'top1k' ? 'COLLECTOR' : b.title}</span>
-                  <span style={{ ...SKB, fontSize: 9, color: held ? '#00E08A' : 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{held ? 'HELD' : 'LOCKED'}</span>
+                  <span style={{ ...SKB, fontSize: 9, color: chip.c, textTransform: 'uppercase', letterSpacing: '0.1em' }}>{chip.t}</span>
                 </div>
+                {/* descriptor — ALWAYS readable */}
                 <p style={{ ...SKR, fontSize: 12, color: 'rgba(255,255,255,0.55)', lineHeight: 1.5, margin: '6px 0 0' }}>{BADGE_BLURBS[k]}</p>
+                {/* earn path for LOCKED earned badges (an invitation, per badge) */}
+                {state === 'locked' && (
+                  <p style={{ ...SKB, fontSize: 11, color: 'rgba(255,255,255,0.7)', lineHeight: 1.45, margin: '8px 0 0' }}>{BADGE_EARN_PATH[k]}</p>
+                )}
+                {/* PRO buy CTA — the highest-intent upsell moment (own profile) */}
+                {state === 'buyable' && isOwn && (
+                  <button onClick={() => { onClose(); showUpsell('posts'); }} style={{ ...SKB, fontSize: 11, color: '#f20d0d', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'transparent', border: 'none', cursor: 'pointer', padding: '10px 0 0' }}>
+                    GET PRO →
+                  </button>
+                )}
               </div>
             </div>
           );

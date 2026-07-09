@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
 import { getUserByPrivyId, getProfile, isProMember } from "@/lib/userService";
 import { resolveBadges } from "@/lib/economy/badges";
+import { BADGE_EARN_PATH } from "@/lib/economy/badgeModel";
+import type { BadgeKey } from "@/lib/economy/badges";
 import { useEconomy } from '@/components/EconomyProvider';
 import { supabase } from "@/lib/supabase/client";
 import { TIER_DETAILS } from "@/app/badge/[tier]/page";
@@ -33,6 +35,8 @@ interface BadgeExplainerSheetProps {
 // Icons are the NEW min-design set (public/badges) — same assets as the BADGES
 // EARNED grid above, so the whole sheet is consistent. (Free has no min-design
 // art, so it keeps its existing mark.)
+const TIER_TO_BADGE: Record<string, BadgeKey> = { free: 'free', creator: 'inHouse', pro: 'pro', top1k: 'top1k', founding: 'augmented', firstCut: 'firstCut', srh: 'srh' };
+
 const tiers = [
   {
     key: 'free',
@@ -401,6 +405,15 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
                 <p style={{ ...REG, fontSize: 'var(--fs-11)', color: 'rgba(255,255,255,0.65)', lineHeight: 1.3, margin: '0 0 6px' }}>
                   {tier.description}
                 </p>
+                {!tierEarned(tier.key, vTiers, vIsPaid) && tier.key !== 'free' && (
+                  tier.key === 'pro' ? (
+                    <button onClick={onJoinPress} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '0 0 6px', display: 'block' }}>
+                      <span style={{ ...BOLD, fontSize: 'var(--fs-9)', color: '#FF0000', textTransform: 'uppercase', letterSpacing: '0.1em' }}>GET PRO →</span>
+                    </button>
+                  ) : (
+                    <p style={{ ...BOLD, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.7)', lineHeight: 1.35, margin: '0 0 6px' }}>{BADGE_EARN_PATH[TIER_TO_BADGE[tier.key] ?? 'free']}</p>
+                  )
+                )}
                 <button
                   onClick={() => setDetailKey(tier.key)}
                   style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px 0 0', display: 'inline-block' }}
