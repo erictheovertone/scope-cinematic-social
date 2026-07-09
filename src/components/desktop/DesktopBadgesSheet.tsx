@@ -47,7 +47,7 @@ export default function DesktopBadgesSheet({
         <RedBrackets inset={0} />
         <button onClick={onClose} aria-label="Close" style={{ position: 'absolute', top: 34, right: 40, background: 'transparent', border: 'none', cursor: 'pointer', ...SKR, fontSize: 20, color: 'rgba(255,255,255,0.5)', lineHeight: 1, padding: 4, zIndex: 2 }}>×</button>
         {/* header logo — the bracketed SCOPE wordmark (1196×620) */}
-        <img src="/badges-on-scope-logo.png" alt="Badges on Scope" style={{ height: 54, width: 'auto', objectFit: 'contain', display: 'block', margin: '4px auto 26px' }} />
+        <img src="/badges-on-scope-logo.png" alt="Badges on Scope" style={{ height: 162, width: 'auto', objectFit: 'contain', display: 'block', margin: '4px 0 26px' }} />
 
         {order.map((k, ri) => {
           const b = BADGES[k];
