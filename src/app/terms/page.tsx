@@ -1,6 +1,8 @@
-// ── /legal/terms — public, no auth (linked from Settings → LEGAL) ─────────────
-// DRAFT copy — swap strings when Eric's final .md lands. DMCA lives here as
-// the #dmca section (one page beats a third route for a contact block).
+// ── /terms — canonical public Terms of Service (no auth, logged-out reachable) ─
+// The Privy login modal links here (scopeapp.world/terms). DRAFT copy — swap
+// strings when Eric's final .md lands. DMCA lives here as the #dmca section
+// (one page beats a third route for a contact block). /legal/terms and
+// /profile/terms redirect here (next.config).
 
 import Link from "next/link";
 
@@ -39,7 +41,7 @@ export default function TermsPage() {
         <h2 style={{ ...SKB, fontSize: 12, color: "rgba(255,255,255,0.85)", textTransform: "uppercase", letterSpacing: "0.14em", margin: "0 0 8px" }}>COPYRIGHT / DMCA</h2>
         <p style={{ ...SKR, fontSize: 13, color: "rgba(255,255,255,0.7)", lineHeight: 1.6, margin: 0 }}>
           To report content that infringes your copyright, send a takedown notice identifying the work, the infringing URL, and your contact details to{" "}
-          <a href="mailto:legal@scope.film" style={{ color: "#FFF" }}>legal@scope.film</a>. We remove infringing content and terminate repeat infringers.
+          <a href="mailto:dmca@scopeapp.world" style={{ color: "#FFF" }}>dmca@scopeapp.world</a>. We remove infringing content and terminate repeat infringers.
         </p>
       </section>
       </div>

@@ -28,7 +28,8 @@ const HIDDEN = [
   '/profile/invite',
   '/profile/hidden',
   '/profile/contact',
-  '/profile/terms',
+  '/terms',
+  '/privacy',
   '/profile/delete-account',
   '/finishing-dev', // dev editing-suite bench — owns the full viewport, no app chrome
   '/create',        // the create/finishing suite owns the full viewport — the footer

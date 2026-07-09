@@ -1,5 +1,7 @@
-// ── /legal/privacy — public, no auth (linked from Settings → LEGAL) ───────────
-// DRAFT copy — swap strings when Eric's final .md lands.
+// ── /privacy — canonical public Privacy Policy (no auth, logged-out reachable) ─
+// The Privy login modal links here (scopeapp.world/privacy). DRAFT copy — swap
+// strings when Eric's final .md lands. /legal/privacy redirects here
+// (next.config).
 
 import Link from "next/link";
 
@@ -14,7 +16,7 @@ const SECTIONS: { title: string; body: string }[] = [
   { title: "3. WHAT WE DON'T DO", body: "We don't sell your personal data. We don't hold custody of your keys — wallets are embedded via Privy under your control." },
   { title: "4. PROCESSORS", body: "We rely on Privy (auth/wallets), Supabase (data), Stripe (card payments), and Vercel (hosting). Each processes data under its own terms." },
   { title: "5. DELETION", body: "Delete your account from Settings; we remove your profile and off-chain data. On-chain records are permanent by nature." },
-  { title: "6. CONTACT", body: "Privacy questions: legal@scope.film." },
+  { title: "6. CONTACT", body: "Privacy questions: legal@scopeapp.world." },
 ];
 
 export default function PrivacyPage() {

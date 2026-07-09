@@ -148,7 +148,7 @@ export default function ContactUs() {
               </p>
               <div className="space-y-2">
                 <p className="font-['IBM_Plex_Mono'] font-normal text-[#888888] text-[var(--fs-11)]">
-                  📧 support@scope.app
+                  📧 support@scopeapp.world
                 </p>
                 <p className="font-['IBM_Plex_Mono'] font-normal text-[#888888] text-[var(--fs-11)]">
                   🐦 @ScopeSupport

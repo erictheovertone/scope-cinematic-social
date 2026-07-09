@@ -82,7 +82,7 @@ export default function ProfileMenu({ isOpen, onClose }: ProfileMenuProps) {
     },
     {
       label: 'Terms of Service',
-      href: '/profile/terms',
+      href: '/terms',
       icon: (
         <svg width="17.5" height="17.5" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.5">
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>

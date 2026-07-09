@@ -357,9 +357,9 @@ export default function DesktopSettings() {
         return (
           <div style={{ maxWidth: 520 }}>
             {/* new tab — keeps the settings context (reported choice) */}
-            {row('Terms of Service', () => window.open('/legal/terms', '_blank'))}
-            {row('Privacy Policy', () => window.open('/legal/privacy', '_blank'))}
-            {row('Copyright / DMCA', () => window.open('/legal/terms#dmca', '_blank'))}
+            {row('Terms of Service', () => window.open('/terms', '_blank'))}
+            {row('Privacy Policy', () => window.open('/privacy', '_blank'))}
+            {row('Copyright / DMCA', () => window.open('/terms#dmca', '_blank'))}
           </div>
         );
       case 'support':

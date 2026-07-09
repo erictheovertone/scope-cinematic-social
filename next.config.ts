@@ -14,6 +14,16 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "brevfwazpoibobuqglxk.supabase.co", pathname: "/storage/v1/object/public/**" },
     ],
   },
+  // Legal routes consolidated to top-level /terms + /privacy (Privy modal links
+  // there; must be logged-out reachable). The old locations 308 → canonical so
+  // existing links/bookmarks and the #dmca anchor keep working.
+  async redirects() {
+    return [
+      { source: "/legal/terms", destination: "/terms", permanent: true },
+      { source: "/legal/privacy", destination: "/privacy", permanent: true },
+      { source: "/profile/terms", destination: "/terms", permanent: true },
+    ];
+  },
 };
 
 export default nextConfig;

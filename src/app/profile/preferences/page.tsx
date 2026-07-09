@@ -173,9 +173,9 @@ export default function Preferences() {
     {
       title: 'LEGAL',
       rows: [
-        { label: 'Terms of Service', action: () => router.push('/legal/terms') },
-        { label: 'Privacy Policy', action: () => router.push('/legal/privacy') },
-        { label: 'Copyright / DMCA', action: () => router.push('/legal/terms#dmca') },
+        { label: 'Terms of Service', action: () => router.push('/terms') },
+        { label: 'Privacy Policy', action: () => router.push('/privacy') },
+        { label: 'Copyright / DMCA', action: () => router.push('/terms#dmca') },
       ],
     },
     {
