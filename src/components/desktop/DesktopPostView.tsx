@@ -132,10 +132,10 @@ export default function DesktopPostView({
   const poster = (post?.poster_url as string) || (post?.thumbnail_url as string) || null;
   const isVideo = post?.media_type === 'video';
   const fcCount = fcHolders?.length ?? 0;
-  // rendered media width as a fraction of the stage (height-bound below 2.39)
   const STAGE_AR = 2.39;
-  const mediaFrac = Math.min(ar / STAGE_AR, 1); // 1 = fills the width
-  const arrowInset = `calc(${(1 - mediaFrac) * 50}% - 30px)`; // media edge − pocket − glyph
+  // ROUND-2 REVERSAL (hit-target stability): the arrows' seats derive from the
+  // STAGE frame — constant pockets at its edges — NOT the media's rendered
+  // width (3C's media-anchoring moved them between ratios, under the cursor).
 
   return (
     <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', paddingBottom: 80, marginTop: 0 }}> {/* frame seat ~y299 (measured 319 at mt12 — the last 20 trimmed here + the 3-box row) */}
@@ -146,20 +146,19 @@ export default function DesktopPostView({
       <div style={{ flex: 1, minWidth: 0, padding: '0 20px', marginTop: 60 }}> {/* media midline = panel midline (measured +60) */}
         <div style={{ position: 'relative' }}>
           {/* prev / next — Batang > glyphs, mid-media */}
+          {/* HIT TARGET NEVER MOVES: 44px outer buttons, stage-anchored seats,
+              data-no-pop (no press scale); feedback = brightness on the inner
+              glyph only (filters don't move geometry). */}
           {index > 0 && (
-            <button onClick={() => onStep(-1)} aria-label="Previous"
-              onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.75'; }}
-              style={{ position: 'absolute', left: arrowInset, top: '50%', transform: 'translate(0, -50%)', background: 'transparent', border: 'none', cursor: 'pointer', padding: 6, lineHeight: 0, opacity: 0.75, transition: 'opacity 120ms ease' }}>
-              <Chevron dir={-1} />
+            <button onClick={() => onStep(-1)} aria-label="Previous" data-no-pop
+              style={{ position: 'absolute', left: -46, top: '50%', transform: 'translateY(-50%)', width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>
+              <span className="dk-arrow-glyph" style={{ display: 'block', opacity: 0.75, transition: 'opacity 120ms ease, filter 120ms ease' }}><Chevron dir={-1} /></span>
             </button>
           )}
           {index < posts.length - 1 && (
-            <button onClick={() => onStep(1)} aria-label="Next"
-              onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.75'; }}
-              style={{ position: 'absolute', right: arrowInset, top: '50%', transform: 'translate(0, -50%)', background: 'transparent', border: 'none', cursor: 'pointer', padding: 6, lineHeight: 0, opacity: 0.75, transition: 'opacity 120ms ease' }}>
-              <Chevron dir={1} />
+            <button onClick={() => onStep(1)} aria-label="Next" data-no-pop
+              style={{ position: 'absolute', right: -46, top: '50%', transform: 'translateY(-50%)', width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>
+              <span className="dk-arrow-glyph" style={{ display: 'block', opacity: 0.75, transition: 'opacity 120ms ease, filter 120ms ease' }}><Chevron dir={1} /></span>
             </button>
           )}
 
@@ -315,6 +314,7 @@ export default function DesktopPostView({
         </div>
       </div>
 
+      <style>{`button:hover > .dk-arrow-glyph { opacity: 1 !important; }`}</style>
       <CollectSheetGate post={post as any} visible={collectOpen} onClose={() => setCollectOpen(false)} />
     </div>
   );

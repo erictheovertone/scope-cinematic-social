@@ -20,9 +20,12 @@ export default function DesktopPressLayer() {
       if (!t) return;
       const el = t.closest('button, a, [role="button"]') as HTMLElement | null;
       if (!el || el.closest(SKIP)) return;
-      // mobile's retrigger discipline: drop, reflow, re-add (rapid-tap safe)
-      el.classList.add('press-pop', 'pop-punchy');
-      el.classList.remove('pop-active');
+      // CALIBRATION (round 2): icons take the −40% variant, words/buttons the
+      // −60% — classified by content (glyph-only vs text). Cards (img + label)
+      // read as icons per the brief. Same retrigger discipline.
+      const iconish = !!el.querySelector('svg, img') || (el.textContent ?? '').trim().length <= 2;
+      el.classList.remove('pop-punchy', 'pop-dk-icon', 'pop-dk-text', 'pop-active');
+      el.classList.add('press-pop', iconish ? 'pop-dk-icon' : 'pop-dk-text');
       void el.offsetWidth;
       el.classList.add('pop-active');
     };
