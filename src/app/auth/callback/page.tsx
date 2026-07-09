@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
 import { syncUserWithSupabase, getUserByPrivyId, getProfile } from "@/lib/userService";
+import { hasSeenDesktopExplainer } from "@/lib/desktopOnboarding";
 import FrameLoader from "@/components/FrameLoader";
 
 export default function AuthCallback() {
@@ -30,6 +31,18 @@ export default function AuthCallback() {
         }
 
         const profile = await getProfile(supabaseUser.id);
+        const isDesktop = typeof window !== "undefined" && window.matchMedia("(min-width: 1024px)").matches;
+
+        // DESKTOP: the continuous /onboarding flow (explainer → setup → picker).
+        // New users AND mobile-onboarded users who haven't seen the desktop
+        // explainer route there; it self-resolves which steps to run.
+        if (isDesktop) {
+          const seen = await hasSeenDesktopExplainer(supabaseUser.id);
+          if (!profile?.username || !seen) { router.replace("/onboarding"); return; }
+          router.replace("/");
+          return;
+        }
+
         if (profile && profile.username) {
           // Setup complete (has a username) → land on the HOME FEED.
           router.replace("/");

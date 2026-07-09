@@ -2,6 +2,8 @@
 
 // import Link from "next/link";
 import { useState, useEffect } from "react";
+import DesktopLanding from '@/components/desktop/DesktopLanding';
+import { useIsDesktop } from '@/lib/useIsDesktop';
 import { useRouter } from "next/navigation";
 import { useLogin } from '@privy-io/react-auth';
 import FrameLoader from "@/components/FrameLoader";
@@ -11,6 +13,7 @@ import FrameLoader from "@/components/FrameLoader";
 export default function Welcome() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
+  const isDesktop = useIsDesktop();
 
   const { login } = useLogin({
     onComplete: () => {
@@ -29,6 +32,9 @@ export default function Welcome() {
 
     return () => clearTimeout(timer);
   }, []);
+
+  // DESKTOP SEAM: the logged-out desktop landing (mobile welcome untouched).
+  if (isDesktop) return <DesktopLanding />;
 
   if (isLoading) {
     return (

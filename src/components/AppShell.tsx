@@ -10,6 +10,10 @@ import { getUnreadNotificationCount } from "@/lib/userService";
 import BottomToolbar from "@/components/BottomToolbar";
 import { isStandalone, setInstalled } from "@/lib/pwaUtils";
 
+// Desktop rail stands down on pre-app / takeover surfaces (NOT the general
+// HIDDEN list — that's the mobile footer's, and /profile etc. DO show the rail).
+const RAIL_HIDDEN = ['/welcome', '/auth/callback', '/onboarding', '/transition'];
+
 const HIDDEN = [
   '/welcome',
   '/auth/callback',
@@ -85,7 +89,10 @@ export default function AppShell() {
   // DESKTOP: the 71px rail is the global chrome on EVERY desktop surface
   // (it stands itself down during takeovers via the same attribute) — the
   // mobile footer's HIDDEN list doesn't apply to it.
-  if (isDesktop) return <><DesktopRail /><DesktopPressLayer /></>;
+  if (isDesktop) {
+    if (RAIL_HIDDEN.some((p) => pathname === p || pathname.startsWith(p + '/'))) return null;
+    return <><DesktopRail /><DesktopPressLayer /></>;
+  }
 
   if (takeover || HIDDEN.some(p => pathname === p)) return null;
 
