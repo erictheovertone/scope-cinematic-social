@@ -237,7 +237,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
 
           {/* TOP-RIGHT cluster — MESSAGE (public, inert v1) then the ⓘ box,
               10px gap. Own profile: ⓘ alone (editing lives in Settings). */}
-          <div style={{ position: 'absolute', right: 0, top: 36, display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ position: 'absolute', right: 0, top: 17, display: 'flex', alignItems: 'center', gap: 10 }}> {/* tops level with the name */}
             {!isOwn && SHOW_INERT_MESSAGE_BUTTON && (
               /* Public profiles only (own = correctly absent — the round-2 shot
                  showed it rendering on public; the 45% disabled text read as
@@ -364,9 +364,12 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
             })}
             {sortedPosts.length === 0 && (
               isOwn ? (
-                <button onClick={() => router.push('/create')} style={{ gridColumn: `span ${gridConf.count}`, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, background: 'transparent', border: `1px dashed rgba(255,255,255,0.18)`, cursor: 'pointer', padding: '70px 0', margin: '20px 0 0' }}>
-                  <span style={{ ...SKL, fontSize: 54, lineHeight: 1, color: 'rgba(255,255,255,0.7)' }}>+</span>
-                  <span style={{ ...SKB, fontSize: 12, color: 'rgba(255,255,255,0.7)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>CREATE YOUR FIRST POST</span>
+                <button onClick={() => router.push('/create')} style={{ gridColumn: `span ${gridConf.count}`, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 24, background: 'transparent', border: 'none', cursor: 'pointer', padding: '90px 0 100px' }}>
+                  {/* large, delicate crosshair plus — 1px stroke, viewfinder-thin */}
+                  <svg width="88" height="88" viewBox="0 0 88 88" fill="none" style={{ display: 'block' }}>
+                    <path d="M44 6V82M6 44H82" stroke="rgba(255,255,255,0.8)" strokeWidth="1" />
+                  </svg>
+                  <span style={{ ...SKB, fontSize: 12, color: 'rgba(255,255,255,0.7)', textTransform: 'uppercase', letterSpacing: '0.16em' }}>CREATE YOUR FIRST POST</span>
                 </button>
               ) : (
                 <p style={{ ...SKR, fontSize: 12, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', gridColumn: `span ${gridConf.count}`, padding: '40px 0', textAlign: 'center' }}>NO POSTS YET</p>
