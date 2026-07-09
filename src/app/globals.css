@@ -603,6 +603,6 @@ input, textarea, select {
 
 @keyframes dkPopRail {
   0%   { transform: scale(1); }
-  45%  { transform: scale(0.964); } /* rail delta 0.028 × 1.30 ≈ 0.036 (Eric: +30% more) */
+  45%  { transform: scale(0.95); } /* rail delta 0.05 (Eric) */
   100% { transform: scale(1); }
 }
