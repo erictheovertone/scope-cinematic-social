@@ -404,7 +404,7 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
                 {/* PRO (not paid) keeps the inline buy CTA; earned-badge earn
                     paths are conveyed by the single descriptor (round 2 prune). */}
                 {tier.key === 'pro' && !vIsPaid && (
-                  <button onClick={onJoinPress} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '0 0 6px', display: 'block' }}>
+                  <button onClick={(e) => { e.stopPropagation(); onJoinPress(); }} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '0 0 6px', display: 'block' }}>
                     <span style={{ ...BOLD, fontSize: 'var(--fs-9)', color: '#FF0000', textTransform: 'uppercase', letterSpacing: '0.1em' }}>GET PRO →</span>
                   </button>
                 )}

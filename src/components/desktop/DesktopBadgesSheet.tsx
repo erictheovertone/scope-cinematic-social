@@ -69,7 +69,7 @@ export default function DesktopBadgesSheet({
                 <p style={{ ...SKR, fontSize: 12, color: 'rgba(255,255,255,0.55)', lineHeight: 1.5, margin: '6px 0 0' }}>{BADGE_BLURBS[k]}</p>
                 {/* PRO buy CTA — the highest-intent upsell moment (own profile) */}
                 {state === 'buyable' && isOwn && (
-                  <button onClick={() => { onClose(); showUpsell('posts'); }} style={{ ...SKB, fontSize: 11, color: '#f20d0d', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'transparent', border: 'none', cursor: 'pointer', padding: '10px 0 0' }}>
+                  <button onClick={(e) => { e.stopPropagation(); onClose(); showUpsell('posts'); }} style={{ ...SKB, fontSize: 11, color: '#f20d0d', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'transparent', border: 'none', cursor: 'pointer', padding: '10px 0 0' }}>
                     GET PRO →
                   </button>
                 )}
