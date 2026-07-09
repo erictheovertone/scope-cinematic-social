@@ -375,8 +375,12 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
           style={{ height: 96, display: 'block', margin: '0 auto 55px' }}
         />
 
-        {/* Tier list */}
-        {tiers.map((tier, i) => (
+        {/* Tier list — ORDER: FREE → SCOPE PRO (membership tiers together) →
+            earned honors below. Sorted by the ratified order. */}
+        {[...tiers].sort((a, b) => {
+          const O = ['free', 'pro', 'founding', 'firstCut', 'top1k', 'srh', 'creator', 'composer'];
+          return O.indexOf(a.key) - O.indexOf(b.key);
+        }).map((tier, i) => (
           <div key={tier.key} id={`badge-tier-${tier.key}`}>
             <div onClick={() => setDetailKey(tier.key)} style={{ display: 'flex', gap: 16, marginBottom: 24, alignItems: 'flex-start', cursor: 'pointer', animation: visible ? `badgeRippleIn 300ms ease-out ${i * 45}ms both` : undefined }}>
               <div style={{ flexShrink: 0, marginTop: 2, position: 'relative', width: tier.size, height: tier.size }}>
@@ -413,7 +417,7 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
                   style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px 0 0', display: 'inline-block' }}
                 >
                   <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-8)', color: 'white', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-                    MORE →
+                    LEARN MORE →
                   </span>
                 </button>
                 <p style={{ ...BOLD, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>
