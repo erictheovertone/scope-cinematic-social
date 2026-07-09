@@ -580,6 +580,7 @@ input, textarea, select {
   /* desktop pop calibration (round 2): icons −40% of mobile's delta, text −60%.
      Same mechanism — DesktopPressLayer picks the variant class. */
   .press-pop.pop-active.pop-dk-icon { animation: dkPopIcon 180ms ease-out; }
+  .press-pop.pop-active.pop-dk-rail { animation: dkPopRail 180ms ease-out; } /* rail icons: +18% pop per Eric */
   .press-pop.pop-active.pop-dk-text { animation: dkPopText 160ms ease-out; }
   /* media cells: the image IS the content — hover lifts, no press scale */
   [data-no-pop]:hover { filter: brightness(1.1); }
@@ -597,5 +598,11 @@ input, textarea, select {
 @keyframes dkPopText {
   0%   { transform: scale(1); }
   45%  { transform: scale(0.984); }
+  100% { transform: scale(1); }
+}
+
+@keyframes dkPopRail {
+  0%   { transform: scale(1); }
+  45%  { transform: scale(0.972); } /* icon delta 0.024 × 1.18 ≈ 0.028 */
   100% { transform: scale(1); }
 }

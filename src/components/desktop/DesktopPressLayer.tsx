@@ -24,8 +24,9 @@ export default function DesktopPressLayer() {
       // −60% — classified by content (glyph-only vs text). Cards (img + label)
       // read as icons per the brief. Same retrigger discipline.
       const iconish = !!el.querySelector('svg, img') || (el.textContent ?? '').trim().length <= 2;
-      el.classList.remove('pop-punchy', 'pop-dk-icon', 'pop-dk-text', 'pop-active');
-      el.classList.add('press-pop', iconish ? 'pop-dk-icon' : 'pop-dk-text');
+      const rail = !!el.closest('nav[aria-label="Primary"]'); // side toolbar: +18% pop
+      el.classList.remove('pop-punchy', 'pop-dk-icon', 'pop-dk-text', 'pop-dk-rail', 'pop-active');
+      el.classList.add('press-pop', rail ? 'pop-dk-rail' : iconish ? 'pop-dk-icon' : 'pop-dk-text');
       void el.offsetWidth;
       el.classList.add('pop-active');
     };
