@@ -410,8 +410,12 @@ export function createRealEconomy(
         coinPosts.map(async (p): Promise<Holding | null> => {
           try {
             const bal = balances.get((p.coin_address as string).toLowerCase()) ?? BigInt(0);
+            // HOLD-ONLY = any positive on-chain balance. Curated collected items
+            // are often sub-fragment positions (< 1 whole PIECE); flooring pieces
+            // and gating on `pieces > 0` rejected every such holding, blanking the
+            // collage + zeroing program counts. Gate on the raw balance instead.
+            if (bal <= BigInt(0)) return null;
             const pieces = Math.floor(parseFloat(formatEther(bal)) / TOKENS_PER_PIECE);
-            if (pieces <= 0) return null;
             let priceUsd: number | null = null;
             try {
               const t = await marketFor(p.coin_address);
