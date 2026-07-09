@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
     const { plan, privyUserId } = await req.json();
 
     const isAnnual = plan === "annual_stripe";
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://scope-cinematic-social.vercel.app";
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://scopeapp.world";
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],

@@ -26,7 +26,7 @@ export const privyConfig = {
   
   // Legal configuration
   legal: {
-    termsAndConditionsUrl: 'https://scope.app/terms',
-    privacyPolicyUrl: 'https://scope.app/privacy',
+    termsAndConditionsUrl: 'https://scopeapp.world/terms',
+    privacyPolicyUrl: 'https://scopeapp.world/privacy',
   },
 };
