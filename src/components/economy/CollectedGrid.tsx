@@ -221,7 +221,18 @@ export default function CollectedGrid({
     );
   }
 
-  if (rows.length === 0 && !(stacks ?? []).length) {
+  // Programs visible on this surface: owner sees all (empty ones carry the
+  // curate prompt); public sees only programs with held items.
+  const visibleStacks = sortedStacks.filter((s) => isOwn || heldItems(s).length > 0);
+
+  // EMPTY-STATE GUARD (bug fix): the tab BLANKED when rows was empty but the
+  // old guard only fired if stacks were ALSO empty — so a public profile
+  // holding nothing (or whose programs hold no items) rendered NOTHING:
+  // REPERTORY hidden (no visible programs, not own) + COLLECTED ITEMS hidden
+  // (rows 0). Now: nothing-to-render → a visible empty state, never blank.
+  // Own always renders (REPERTORY's isOwn create-prompt), so this only catches
+  // the public/empty case + the truly-empty own profile.
+  if (rows.length === 0 && visibleStacks.length === 0) {
     return isOwn ? (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '30vh', padding: '0 32px' }}>
         <p style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', textAlign: 'center', letterSpacing: '0.08em', lineHeight: 1.8 }}>
@@ -229,13 +240,13 @@ export default function CollectedGrid({
         </p>
       </div>
     ) : (
-      <div style={{ minHeight: '30vh' }} />
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '30vh', padding: '0 32px' }}>
+        <p style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', textAlign: 'center', letterSpacing: '0.08em' }}>
+          NOTHING COLLECTED YET
+        </p>
+      </div>
     );
   }
-
-  // Programs visible on this surface: owner sees all (empty ones carry the
-  // curate prompt); public sees only programs with held items.
-  const visibleStacks = sortedStacks.filter((s) => isOwn || heldItems(s).length > 0);
   const detailStack = editStackId ? (stacks ?? []).find((s) => s.id === editStackId) ?? null : null;
 
   return (
