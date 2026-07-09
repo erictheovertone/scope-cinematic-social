@@ -12,12 +12,13 @@ import RedBrackets from '@/components/desktop/RedBrackets';
 const INTER_B: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const RED = '#f20d0d';
 
-// PLACEHOLDER slides — structure from the mock; Eric supplies final copy + count.
+// COPY = the MOBILE welcome slides VERBATIM (source of truth:
+// OnboardingModal.tsx SCREENS) — same order, same count (4).
 export const EXPLAINER_SLIDES: { title: string; subtitle: string }[] = [
-  { title: 'CINEMA\nFOR THE\nINTERNET', subtitle: 'Your work, in true cinematic aspect ratios — not squeezed into someone else’s grid.' },
-  { title: 'YOUR GRID,\nYOUR RULES', subtitle: 'Choose how your work is framed and how many across — the layout is yours to compose.' },
-  { title: 'COLLECT\nWHAT MOVES\nYOU', subtitle: 'Every post is collectible on Base. Back the work you believe in, early.' },
-  { title: 'BUILT FOR\nTHE BIG\nSCREEN', subtitle: 'Desktop gives your work room to breathe. Let’s set up your profile.' },
+  { title: 'CINEMA\nFOR THE\nINTERNET', subtitle: 'A home for cinematic work — for filmmakers, photographers, and visual artists who care how their images are seen. Present it in a space built for it: customizable grids, a theatrical viewing mode, and decks that sequence work like a reel. Craft first.' },
+  { title: 'YOU HAVE\nA WALLET', subtitle: "When you joined, Scope set up a digital wallet in your name — nothing to set up, nothing to manage. It's how your work becomes ownable: every post can be collected by real fans, and you make real money when they do. As you build, your standing shows — early members, verified artists, and featured work carry badges that mark who you are." },
+  { title: 'POST.\nMINT.\nEARN.', subtitle: "Share your work and let it travel. Every time it's collected or traded, a fee comes back to you — the creator earns from all of it, every time. No follower counts to chase, no algorithm to game. Just your work, your collectors, and a reason to keep creating." },
+  { title: "THIS ISN'T\nANOTHER FEED", subtitle: 'A platform where your work earns, your portfolio lives, and you present it your way — on desktop and mobile. Different for a reason: built for the people who use it.' },
 ];
 
 export default function WelcomeExplainer({ onDone, onSkip }: { onDone: () => void; onSkip: () => void }) {
