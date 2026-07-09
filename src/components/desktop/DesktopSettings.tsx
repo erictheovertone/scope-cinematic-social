@@ -29,6 +29,9 @@ import {
   getProfileLinks, addProfileLink, deleteProfileLink, setPrimaryLink, type ProfileLink,
 } from '@/lib/userService';
 import { useUpsell } from '@/components/UpsellProvider';
+import { updateProfileFields } from '@/lib/userService';
+import { DIVIDER_LINES, DIVIDER_ORDER, TIER_UNLOCK_LABEL, dividerTier, isDividerUnlocked, type DividerLineKey } from '@/lib/economy/dividerLines';
+import { useEconomy } from '@/components/EconomyProvider';
 import { feedImage } from '@/lib/mediaUrl';
 import PfpCropStage from '@/components/desktop/PfpCropStage';
 import DesktopGridPicker from '@/components/desktop/DesktopGridPicker';
@@ -54,6 +57,7 @@ export default function DesktopSettings() {
   const { logout, user } = usePrivy();
   const { showUpsell } = useUpsell();
   const photoInputRef = useRef<HTMLInputElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   const [section, setSection] = useState<Section>('edit-profile');
   const [fade, setFade] = useState(false);
@@ -75,6 +79,16 @@ export default function DesktopSettings() {
   const [cropFile, setCropFile] = useState<File | null>(null);
   const [gridPickerOpen, setGridPickerOpen] = useState(false);
   const [gridInitial, setGridInitial] = useState<DesktopLayout>({ aspect: 'scope', count: 4 });
+  // parity round 2: the mobile-only fields join the desktop form
+  const economy = useEconomy();
+  const [kitCamera, setKitCamera] = useState('');
+  const [kitLens, setKitLens] = useState('');
+  const [kitTool, setKitTool] = useState('');
+  const [contactEmail, setContactEmail] = useState('');
+  const [contactPublic, setContactPublic] = useState(false);
+  const [dividerLine, setDividerLine] = useState<DividerLineKey>('default');
+  const [holoBanner, setHoloBanner] = useState(false);
+  const [tierFlags, setTierFlags] = useState({ isPaidMember: false, isFoundingMember: false, isTopCollector: false, isInHouseCreator: false, isScreeningRoomHolder: false, firstCutCount: 0 });
 
   // Deep-link: ?section= (read once; replaceState on switch — no navigation)
   useEffect(() => {
@@ -109,6 +123,23 @@ export default function DesktopSettings() {
           setShowRecapState(profile.show_recap !== false);
           setIsPaid(isProMember(profile as { is_paid_member?: boolean; paid_member_until?: string | null }));
           setGridInitial(deriveDesktopLayout((profile as { desktop_layout?: unknown }).desktop_layout, profile.grid_layout));
+          const px = profile as unknown as Record<string, unknown>;
+          setKitCamera((px.kit_camera as string) || '');
+          setKitLens((px.kit_lens as string) || '');
+          setKitTool((px.kit_favorite_tool as string) || '');
+          setContactEmail((px.contact_email as string) || '');
+          setContactPublic(!!px.contact_email_public);
+          setDividerLine((px.divider_line as DividerLineKey) || 'default');
+          setHoloBanner(!!px.holo_banner);
+          const badges = await economy.getBadges(sbUser.id).catch(() => ({} as { firstCutCount?: number }));
+          setTierFlags({
+            isPaidMember: isProMember(profile as { is_paid_member?: boolean; paid_member_until?: string | null }),
+            isFoundingMember: !!px.is_founding_member,
+            isTopCollector: !!px.is_top_collector,
+            isInHouseCreator: !!px.is_in_house_creator,
+            isScreeningRoomHolder: !!px.is_screening_room_holder,
+            firstCutCount: badges.firstCutCount ?? 0,
+          });
         }
         const ln = await getProfileLinks(user.id).catch(() => []);
         setLinks(ln);
@@ -121,6 +152,16 @@ export default function DesktopSettings() {
     setSaveState('saving');
     try {
       await saveProfile(sbUserId, { displayName, username, bio, shortBio, location, profileImageUrl: pfp ?? undefined });
+      // the same field-update mutation mobile uses (one path, both surfaces)
+      await updateProfileFields(sbUserId, {
+        kit_camera: kitCamera.trim() || undefined,
+        kit_lens: kitLens.trim() || undefined,
+        kit_favorite_tool: kitTool.trim() || undefined,
+        contact_email: contactEmail.trim() || undefined,
+        contact_email_public: contactPublic,
+        divider_line: dividerLine === 'default' ? null : dividerLine,
+        holo_banner: holoBanner,
+      });
       setSaveState('saved');
       window.setTimeout(() => setSaveState('idle'), 2500);
     } catch (e) {
@@ -205,6 +246,57 @@ export default function DesktopSettings() {
             <div style={{ marginBottom: 20 }}><label style={LABEL}>LOCATION</label>
               <input value={location} onChange={(e) => setLocation(e.target.value.slice(0, 40))} placeholder="CITY, COUNTRY" style={INPUT} /></div>
 
+            {/* DIVIDING LINE — Piece 2 (tier-gated swatches, same rules as mobile) */}
+            <div style={{ marginBottom: 22 }}>
+              <label style={LABEL}>DIVIDING LINE</label>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {DIVIDER_ORDER.map((k) => {
+                  const line = DIVIDER_LINES[k];
+                  const tier = dividerTier(tierFlags);
+                  const unlocked = isDividerUnlocked(k, tier);
+                  const active = dividerLine === k;
+                  return (
+                    <button
+                      key={k}
+                      onClick={() => unlocked && setDividerLine(k)}
+                      disabled={!unlocked}
+                      title={unlocked ? line.name : TIER_UNLOCK_LABEL[line.tier as 1 | 2 | 3]}
+                      style={{ width: 56, background: 'transparent', border: 'none', cursor: unlocked ? 'pointer' : 'default', padding: 0, opacity: unlocked ? 1 : 0.3 }}
+                    >
+                      <span style={{ display: 'block', width: 8, height: 44, margin: '0 auto', background: line.gradient, border: active ? '1px solid #FFF' : '1px solid rgba(255,255,255,0.15)' }} />
+                      <span style={{ ...SKB, fontSize: 8, color: active ? '#FFF' : 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginTop: 5 }}>{line.name}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              {tierFlags.isFoundingMember && (
+                <button onClick={() => setHoloBanner((h) => !h)} style={{ ...SKB, fontSize: 10, color: holoBanner ? '#FFF' : 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em', background: 'transparent', border: `1px solid ${HAIR}`, cursor: 'pointer', padding: '6px 12px', marginTop: 10 }}>
+                  HOLO BANNER · {holoBanner ? 'ON' : 'OFF'}
+                </button>
+              )}
+            </div>
+
+            {/* KIT — camera / lens / favorite tool (profiles.kit_*) */}
+            <div style={{ marginBottom: 22 }}>
+              <label style={LABEL}>KIT</label>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <input value={kitCamera} onChange={(e) => setKitCamera(e.target.value)} placeholder="CAMERA" style={INPUT} />
+                <input value={kitLens} onChange={(e) => setKitLens(e.target.value)} placeholder="LENS" style={INPUT} />
+                <input value={kitTool} onChange={(e) => setKitTool(e.target.value)} placeholder="FAVORITE TOOL" style={INPUT} />
+              </div>
+            </div>
+
+            {/* CONTACT — email + public toggle (profiles.contact_email*) */}
+            <div style={{ marginBottom: 22 }}>
+              <label style={LABEL}>CONTACT</label>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <input value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} placeholder="EMAIL" style={{ ...INPUT, flex: 1 }} />
+                <button onClick={() => setContactPublic((p) => !p)} style={{ ...SKB, fontSize: 10, color: contactPublic ? '#FFF' : 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.06em', background: 'transparent', border: `1px solid ${HAIR}`, cursor: 'pointer', padding: '0 12px', flexShrink: 0 }}>
+                  {contactPublic ? 'PUBLIC' : 'PRIVATE'}
+                </button>
+              </div>
+            </div>
+
             {/* LINKS — the link manager incl. the primary selector */}
             <div style={{ marginBottom: 26 }}>
               <label style={LABEL}>LINKS</label>
@@ -283,7 +375,20 @@ export default function DesktopSettings() {
     // THE SCROLL TRAP (fixed): the root scrolled the WHOLE two-pane (or clipped
     // it) — the RIGHT panel now owns its own overflow-y scroller at full
     // height; the LEFT list stays fixed. Momentum scrolling included.
-    <div className="bg-black" style={{ position: 'fixed', inset: 0, left: 71, overflow: 'hidden' }}>
+    <div
+      className="bg-black"
+      style={{ position: 'fixed', inset: 0, left: 71, overflow: 'hidden' }}
+      // WHEEL FORWARDING (round-2 evidence): the pane scrolls correctly when
+      // content overflows, but the root is overflow:hidden — wheeling over the
+      // LEFT list or the margins was a dead zone. Forward every wheel to the
+      // right panel so scroll works from anywhere on the page.
+      onWheel={(e) => {
+        const panel = panelRef.current;
+        if (!panel) return;
+        if ((e.target as Element).closest('[data-own-scroll]')) return;
+        if (!panel.contains(e.target as Node)) panel.scrollTop += e.deltaY;
+      }}
+    >
       <div style={{ display: 'flex', height: '100%', maxWidth: 1100, margin: '0 auto' }}>
         {/* ═══ LEFT — the category list ═══ */}
         <div style={{ width: 250, flexShrink: 0, borderRight: `1px solid ${HAIR}`, padding: '44px 0 40px', display: 'flex', flexDirection: 'column', height: '100%', boxSizing: 'border-box' }}>
@@ -315,7 +420,7 @@ export default function DesktopSettings() {
         </div>
 
         {/* ═══ RIGHT — the active panel (120ms in-place swap) ═══ */}
-        <div style={{ flex: 1, padding: '44px 36px 80px', opacity: fade ? 0 : 1, transition: 'opacity 120ms ease', height: '100%', boxSizing: 'border-box', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
+        <div ref={panelRef} style={{ flex: 1, padding: '44px 36px 80px', opacity: fade ? 0 : 1, transition: 'opacity 120ms ease', height: '100%', boxSizing: 'border-box', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
           <h2 style={{ ...SKB, fontSize: 16, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 26px' }}>{SECTION_LABELS[section]}</h2>
           {panel()}
         </div>
