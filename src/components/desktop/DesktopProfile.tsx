@@ -321,6 +321,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
               return (
                 <motion.button
                   key={pid}
+                  data-no-pop
                   layoutId={reducedMotion ? undefined : `dpost-${pid}`}
                   transition={{ layout: { duration: 0.18, ease: 'easeOut' } }}
                   initial={false}

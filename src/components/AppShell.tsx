@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import DesktopRail from '@/components/desktop/DesktopRail';
+import DesktopPressLayer from '@/components/desktop/DesktopPressLayer';
 import { useIsDesktop } from '@/lib/useIsDesktop';
 import { usePathname } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
@@ -84,7 +85,7 @@ export default function AppShell() {
   // DESKTOP: the 71px rail is the global chrome on EVERY desktop surface
   // (it stands itself down during takeovers via the same attribute) — the
   // mobile footer's HIDDEN list doesn't apply to it.
-  if (isDesktop) return <DesktopRail />;
+  if (isDesktop) return <><DesktopRail /><DesktopPressLayer /></>;
 
   if (takeover || HIDDEN.some(p => pathname === p)) return null;
 

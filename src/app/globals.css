@@ -566,3 +566,21 @@ button:active,
 input, textarea, select {
   font-size: max(16px, 1em);
 }
+
+/* ── DESKTOP INTERACTION LANGUAGE (≥1024) ─────────────────────────────────────
+   HOVER = ONE language: brightness lift (chosen over scale-1.02 — it composes
+   with the press keyframe with zero double-animation and never shimmers
+   layout on mixed-size elements). Text links just brighten via the same rule.
+   PRESS = mobile's press-pop keyframes, applied by DesktopPressLayer with the
+   SAME classes — identical feel. focus-visible keeps the accessibility ring. */
+@media (min-width: 1024px) {
+  button:hover, a:hover, [role="button"]:hover {
+    filter: brightness(1.18);
+  }
+  /* media cells: the image IS the content — hover lifts, no press scale */
+  [data-no-pop]:hover { filter: brightness(1.1); }
+  button:focus-visible, a:focus-visible, [role="button"]:focus-visible {
+    outline: 1px solid rgba(255,255,255,0.6);
+    outline-offset: 2px;
+  }
+}
