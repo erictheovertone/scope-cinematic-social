@@ -150,7 +150,7 @@ export default function DesktopPostView({
       {/* FRAME GEOMETRY (round 3): narrow ~20px ARROW POCKETS hugging the media
           (frame x86/x1083 vs stage x103/1077); stage right edge ~30px from the
           panel (20px pocket + 12px gap). The media is the star. */}
-      <div style={{ flex: 1, minWidth: 0, padding: '0 20px', marginTop: lightbox ? 0 : 60, ...(lightbox ? { display: 'flex', flexDirection: 'column', minHeight: 573 } : {}) }}> {/* profile: media midline = panel midline (+60). lightbox: stage TOP = panel top, column runs full panel height so MORE FROM bottom-aligns. */}
+      <div style={{ flex: 1, minWidth: 0, padding: lightbox ? '0 14px' : '0 20px', marginTop: lightbox ? 0 : 60, ...(lightbox ? { display: 'flex', flexDirection: 'column', minHeight: 600 } : {}) }}> {/* profile: media midline = panel midline (+60). lightbox: tighter pockets (wider stage), stage TOP = panel top, column runs the full panel height (600) so MORE FROM bottom-aligns lower. */}
         <div style={{ position: 'relative' }}>
           {/* prev / next — Batang > glyphs, mid-media */}
           {/* HIT TARGET NEVER MOVES: 44px outer buttons, stage-anchored seats,
@@ -158,21 +158,23 @@ export default function DesktopPostView({
               glyph only (filters don't move geometry). */}
           {index > 0 && (
             <button onClick={() => onStep(-1)} aria-label="Previous" data-no-pop
-              style={{ position: 'absolute', left: -46, top: '50%', transform: 'translateY(-50%)', width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>
+              style={{ position: 'absolute', left: lightbox ? -30 : -46, top: '50%', transform: 'translateY(-50%)', width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>
               <span className="dk-arrow-glyph" style={{ display: 'block', opacity: 0.75, transition: 'opacity 120ms ease, filter 120ms ease' }}><Chevron dir={-1} /></span>
             </button>
           )}
           {index < posts.length - 1 && (
             <button onClick={() => onStep(1)} aria-label="Next" data-no-pop
-              style={{ position: 'absolute', right: -46, top: '50%', transform: 'translateY(-50%)', width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>
+              style={{ position: 'absolute', right: lightbox ? -30 : -46, top: '50%', transform: 'translateY(-50%)', width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>
               <span className="dk-arrow-glyph" style={{ display: 'block', opacity: 0.75, transition: 'opacity 120ms ease, filter 120ms ease' }}><Chevron dir={1} /></span>
             </button>
           )}
 
-          {/* THE STAGE — fixed letterbox (profile 2.39, lightbox 2.75 per the frame);
-              the shared-element morph target. Each post sits at its own ratio within. */}
-          <motion.div layoutId={`dpost-${postId}`} transition={{ layout: { duration: 0.18, ease: 'easeOut' } }} style={{ width: '100%', aspectRatio: lightbox ? '2.75 / 1' : '2.39 / 1', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-            <div style={{ ...(ar >= (lightbox ? 2.75 : 2.39) ? { width: '100%' } : { height: '100%' }), aspectRatio: `${ar}`, overflow: 'hidden', background: '#0a0a0a' }}>
+          {/* THE STAGE — fixed 2.39 letterbox (both surfaces); the shared-element
+              morph target. Each post sits at its own ratio within. 2.39 lets the
+              common scope/pana posts FILL the width so the media hugs the arrows
+              (the #8 binding-dimension fix — a 2.75 box pillarboxed them small). */}
+          <motion.div layoutId={`dpost-${postId}`} transition={{ layout: { duration: 0.18, ease: 'easeOut' } }} style={{ width: '100%', aspectRatio: '2.39 / 1', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+            <div style={{ ...(ar >= 2.39 ? { width: '100%' } : { height: '100%' }), aspectRatio: `${ar}`, overflow: 'hidden', background: '#0a0a0a' }}>
               {isVideo ? (
                 <GradedVideo
                   key={postId}
@@ -235,22 +237,23 @@ export default function DesktopPostView({
       </div>
 
       {/* ═══ RIGHT PANEL (309×573, #030303) ═══ */}
-      <div style={{ width: 309, flexShrink: 0, height: 573, marginTop: lightbox ? 0 : -25, background: '#030303', border: '0.25px solid rgba(255,255,255,0.27)', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ width: 309, flexShrink: 0, height: lightbox ? 600 : 573, marginTop: lightbox ? 0 : -25, background: '#030303', border: '0.25px solid rgba(255,255,255,0.27)', display: 'flex', flexDirection: 'column' }}>
         {/* header strip: ticker · MC · collectors */}
         {/* three zones distributed across the panel width, hairlines between */}
         <div style={{ display: 'flex', alignItems: 'center', padding: '12px 0' }}>
+          {/* Unminted posts (no coin) carry NO market — quiet dash, never $0.00/0. */}
           <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
-            {(post?.ticker as string) ? <TickerMark ticker={post.ticker as string} size={11} /> : <span style={{ ...SKB, fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>—</span>}
+            {coinAddr && (post?.ticker as string) ? <TickerMark ticker={post.ticker as string} size={11} /> : <span style={{ ...SKB, fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>—</span>}
           </div>
           <div style={{ width: 1, height: 28, background: HAIR }} />
           <div style={{ flex: 1, textAlign: 'center' }}>
             <p style={{ ...SKB, fontSize: 8, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>MC</p>
-            <p style={{ ...SKB, fontSize: 11, color: '#FFF', margin: '2px 0 0', fontVariantNumeric: 'tabular-nums' }}>{market ? usd(market.mcUsd) : '…'}</p>
+            <p style={{ ...SKB, fontSize: 11, color: '#FFF', margin: '2px 0 0', fontVariantNumeric: 'tabular-nums' }}>{coinAddr ? (market ? usd(market.mcUsd) : '…') : '—'}</p>
           </div>
           <div style={{ width: 1, height: 28, background: HAIR }} />
           <div style={{ flex: 1, textAlign: 'center' }}>
             <p style={{ ...SKB, fontSize: 8, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>COLLECTORS</p>
-            <p style={{ ...SKB, fontSize: 11, color: '#FFF', margin: '2px 0 0', fontVariantNumeric: 'tabular-nums' }}>{market?.holders ?? '…'}</p>
+            <p style={{ ...SKB, fontSize: 11, color: '#FFF', margin: '2px 0 0', fontVariantNumeric: 'tabular-nums' }}>{coinAddr ? (market?.holders ?? '…') : '—'}</p>
           </div>
         </div>
         <div style={{ height: 1, background: HAIR }} />
@@ -295,8 +298,8 @@ export default function DesktopPostView({
                   <span style={{ width: 12, height: 12, borderRadius: '50%', background: '#2a2a2a', flexShrink: 0, marginTop: 2 }} />
                 )}
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <span style={{ ...SKB, fontSize: 10, color: 'rgba(255,255,255,0.75)', textTransform: 'uppercase' }}>@{c.username}</span>
-                  <span style={{ ...SKR, fontSize: 10, color: 'rgba(255,255,255,0.44)', marginLeft: 7 }}>{c.content}</span>
+                  <span style={{ ...SKB, fontSize: lightbox ? 11.5 : 10, color: 'rgba(255,255,255,0.75)', textTransform: 'uppercase' }}>@{c.username}</span>
+                  <span style={{ ...SKR, fontSize: lightbox ? 11.5 : 10, color: 'rgba(255,255,255,0.44)', marginLeft: 7 }}>{c.content}</span>
                 </div>
                 {c.created_at && <span style={{ ...SKR, fontSize: 9, color: 'rgba(255,255,255,0.3)', flexShrink: 0 }}>{timeAgo(c.created_at)}</span>}
               </div>

@@ -99,6 +99,7 @@ export default function DesktopHomeLightbox({
     let dead = false;
     (async () => {
       const entries = await Promise.all(moreFrom.map(async (p) => {
+        if (!p.coin_address) return [String(p.id), '—'] as const; // unminted → no market read
         try { const m = await economy.getPostMarket(String(p.id)); return [String(p.id), m.mcUsd > 0 ? usd(m.mcUsd) : '—'] as const; }
         catch { return [String(p.id), '—'] as const; }
       }));
@@ -133,10 +134,11 @@ export default function DesktopHomeLightbox({
               {thumbOf(p) && <img src={feedImage(thumbOf(p), 480)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
             </div>
             <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8, margin: '7px 0 0' }}>
+              {/* Unminted (no coin) → quiet dashes, never a fake ticker/MC. */}
               <span style={{ minWidth: 0, overflow: 'hidden' }}>
-                {(p.ticker as string) ? <TickerMark ticker={p.ticker as string} size={10} /> : <span style={{ ...SKB, fontSize: 10, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase' }}>@{String(p.username ?? '')}</span>}
+                {p.coin_address && (p.ticker as string) ? <TickerMark ticker={p.ticker as string} size={10} /> : <span style={{ ...SKB, fontSize: 10, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase' }}>—</span>}
               </span>
-              <span style={{ ...SKB, fontSize: 9.5, color: 'rgba(255,255,255,0.55)', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' }}>MC {mfMc.get(String(p.id)) ?? '…'}</span>
+              <span style={{ ...SKB, fontSize: 9.5, color: 'rgba(255,255,255,0.55)', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' }}>{p.coin_address ? `MC ${mfMc.get(String(p.id)) ?? '…'}` : '—'}</span>
             </div>
           </button>
         ))}
@@ -148,21 +150,20 @@ export default function DesktopHomeLightbox({
     // left:RAIL_W keeps the global rail (z80) VISIBLE beneath this z140 overlay.
     // overflow:hidden → everything fits one screen, no scroll (frame 775:4).
     <div data-swipe-exclude style={{ position: 'fixed', top: 0, right: 0, bottom: 0, left: RAIL_W, zIndex: 140, background: '#000', overflow: 'hidden' }}>
-      <button onClick={onClose} aria-label="Close" style={{ position: 'absolute', top: 16, right: 24, zIndex: 3, background: 'transparent', border: 'none', cursor: 'pointer', ...SKR, fontSize: 20, color: 'rgba(255,255,255,0.55)', lineHeight: 1, padding: 4 }}>✕</button>
+      <div style={{ maxWidth: 1369, margin: '0 auto', padding: '18px 24px 0', height: '100%', boxSizing: 'border-box' }}>
 
-      <div style={{ maxWidth: 1330, margin: '0 auto', padding: '18px 24px 0', height: '100%', boxSizing: 'border-box' }}>
-
-        {/* ── FEED / FOR YOU / FOLLOWING tabs (frame ~y38) ── */}
+        {/* ── FEED heading (page-title, 40px) + FOR YOU / FOLLOWING tabs (frame ~y38) ── */}
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 20, marginBottom: 12 }}>
-          <span style={{ ...SKB, fontSize: 13, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.06em', marginRight: 4 }}>FEED</span>
+          <span style={{ ...SKB, fontSize: 40, lineHeight: 1, color: '#FFF', textTransform: 'uppercase', letterSpacing: '-0.02em', marginRight: 10 }}>FEED</span>
           {tabBtn('FOR YOU', 'foryou')}
           {tabBtn('FOLLOWING', 'following')}
+          {/* search chrome + the ONE control: × close takes the old "?" position. */}
           <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
             <div style={{ width: 123, height: 30, border: '0.5px solid rgba(255,255,255,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 10px' }}>
               <span style={{ ...SKB, fontSize: 10, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>SEARCH</span>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3" strokeLinecap="round"/></svg>
             </div>
-            <button aria-label="Help" style={{ width: 31, height: 30, border: '0.5px solid rgba(255,255,255,0.3)', background: 'transparent', cursor: 'pointer', ...SKB, fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>?</button>
+            <button onClick={onClose} aria-label="Close" style={{ width: 31, height: 30, border: '0.5px solid rgba(255,255,255,0.3)', background: 'transparent', cursor: 'pointer', ...SKR, fontSize: 15, color: 'rgba(255,255,255,0.6)', lineHeight: 1 }}>✕</button>
           </div>
         </div>
 
@@ -178,14 +179,17 @@ export default function DesktopHomeLightbox({
                 <div style={{ width: '100%', aspectRatio: '2.39 / 1', overflow: 'hidden', background: '#0d0d0d', outline: isActive ? '1px solid rgba(242,13,13,0.7)' : 'none' }}>
                   {thumbOf(p) && <img src={feedImage(thumbOf(p), 340)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
                 </div>
-                <p style={{ ...SKB, fontSize: 9, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '4px 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>@{String(p.username ?? '')}</p>
+                <p style={{ ...SKB, fontSize: 9, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '4px 0 0', textAlign: 'left', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>@{String(p.username ?? '')}</p>
               </button>
             );
           })}
         </div>
 
-        {/* ── STAGE + RIGHT PANEL + (below-left) MORE FROM — reused, lightbox framing ── */}
-        <DesktopPostView posts={nav} index={pos} onStep={step} location={null} framing="lightbox" belowLeft={moreFromRow} />
+        {/* ── STAGE + RIGHT PANEL + (below-left) MORE FROM — reused, lightbox framing.
+              marginTop = extra air above the stage / panel top (frame rhythm, #4). ── */}
+        <div style={{ marginTop: 24 }}>
+          <DesktopPostView posts={nav} index={pos} onStep={step} location={null} framing="lightbox" belowLeft={moreFromRow} />
+        </div>
       </div>
     </div>,
     document.body,
