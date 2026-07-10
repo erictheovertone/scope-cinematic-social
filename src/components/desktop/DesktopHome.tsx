@@ -38,6 +38,7 @@ export default function DesktopHome() {
   const [modesOpen, setModesOpen] = useState(false);
   const [view, setView] = useState<number | null>(null); // interim lightbox (Part 2 replaces)
   const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const scrollRef = useRef<HTMLDivElement | null>(null); // the feed's own scroller (body is overflow:hidden)
 
   useEffect(() => {
     let alive = true;
@@ -93,7 +94,9 @@ export default function DesktopHome() {
   useEffect(() => {
     const el = sentinelRef.current;
     if (!el || !hasMore || view != null) return;
-    const io = new IntersectionObserver((es) => { if (es[0]?.isIntersecting) loadMore(); }, { rootMargin: '600px' });
+    // root = the feed's own scroller (document scroll is disabled by the shell),
+    // so the sentinel fires against the right container as it nears the end.
+    const io = new IntersectionObserver((es) => { if (es[0]?.isIntersecting) loadMore(); }, { root: scrollRef.current, rootMargin: '600px' });
     io.observe(el);
     return () => io.disconnect();
   }, [loadMore, hasMore, view, posts?.length]);
@@ -105,9 +108,14 @@ export default function DesktopHome() {
   };
 
   return (
-    <div style={{ minHeight: '100dvh', background: '#000', paddingLeft: RAIL_W }}>
-      {/* ── THE GRID: real 3-across, full feed cards, generous gutters ── */}
+    // The shell fixes html/body (overflow:hidden) — so the feed needs its OWN
+    // full-height scroller, the same fixed/inset-0/overflow-y:auto pattern the
+    // desktop profile page uses (cleared past the 71px rail).
+    <div ref={scrollRef} className="bg-black" style={{ position: 'fixed', inset: 0, left: RAIL_W, background: '#000', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
       <div style={{ maxWidth: 1440, margin: '0 auto', padding: '40px 48px 96px' }}>
+        {/* DISCOVER — the page title, top-left of the content column (mobile home's
+            title, now on desktop). SK-Modernist Bold, −0.06em, 40px page-title scale. */}
+        <h1 style={{ ...SKB, fontSize: 40, lineHeight: 0.95, letterSpacing: '-0.06em', color: '#FFF', textTransform: 'uppercase', margin: '0 0 30px' }}>Discover</h1>
         {posts == null ? (
           <div style={{ minHeight: '40vh' }} />
         ) : posts.length === 0 ? (
