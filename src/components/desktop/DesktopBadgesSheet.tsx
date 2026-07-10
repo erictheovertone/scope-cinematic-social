@@ -7,10 +7,14 @@
 
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useRouter } from 'next/navigation';
+import { usePrivy } from '@privy-io/react-auth';
 import { BADGES, RARITY_ORDER, type BadgeKey } from '@/lib/economy/badges';
 import { badgeState, type BadgeFlags } from '@/lib/economy/badgeModel';
 import { BADGE_BLURBS } from '@/lib/economy/badges';
 import { useUpsell } from '@/components/UpsellProvider';
+import { getUserByPrivyId, getProfile } from '@/lib/userService';
+import { resolveMembership, membershipBarLabel, type MembershipState } from '@/lib/membership';
 import RedBrackets from '@/components/desktop/RedBrackets';
 import { TIER_DETAILS } from '@/app/badge/[tier]/page';
 
@@ -28,7 +32,24 @@ export default function DesktopBadgesSheet({
   onClose: () => void;
 }) {
   const { goPro } = useUpsell();
+  const router = useRouter();
+  const { user } = usePrivy();
   const reduced = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  // MY MEMBERSHIP bar — parity with the mobile BadgeExplainerSheet. Resolve the
+  // VIEWER's OWN membership (not the viewed profile — a public profile would
+  // otherwise leak the owner's renewal date), through the shared model.
+  const [membership, setMembership] = useState<MembershipState | null>(null);
+  useEffect(() => {
+    if (!user?.id) return;
+    let alive = true;
+    (async () => {
+      const sb = await getUserByPrivyId(user.id);
+      if (!sb || !alive) return;
+      const m = resolveMembership(await getProfile(sb.id) as Parameters<typeof resolveMembership>[0]);
+      if (alive) setMembership(m);
+    })();
+    return () => { alive = false; };
+  }, [user?.id]);
   // Full-descriptor detail (LEARN MORE →): a second level in the modal.
   const [detailKey, setDetailKey] = useState<BadgeKey | null>(null);
   useEffect(() => {
@@ -80,6 +101,23 @@ export default function DesktopBadgesSheet({
         {!detailKey && (<>
         {/* header logo — the bracketed SCOPE wordmark (1196×620) */}
         <img src="/badges-on-scope-logo.png" alt="Badges on Scope" style={{ height: 162, width: 'auto', objectFit: 'contain', display: 'block', margin: '4px 0 26px' }} />
+
+        {/* MY MEMBERSHIP bar — same read + label as the mobile sheet. Shown once
+            the viewer's own membership resolves; RENEWS / CANCELS <date> inline. */}
+        {membership && (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '14px 0 18px', borderBottom: `1px solid ${HAIR}`, marginBottom: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
+              <img src={membership.isPaid ? '/badges/scope-pro-badge-min-design-01.png' : '/free-tier-aperture-logo-red.png'} alt="" style={{ width: 22, height: 22, objectFit: 'contain', flexShrink: 0 }} />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 3, minWidth: 0 }}>
+                <span style={{ ...SKB, fontSize: 9, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.15em' }}>MY MEMBERSHIP</span>
+                <span style={{ ...SKB, fontSize: 13, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{membershipBarLabel(membership)}</span>
+              </div>
+            </div>
+            <button onClick={() => { onClose(); membership.isPaid ? router.push('/membership/manage') : goPro(); }} style={{ ...SKB, fontSize: 11, color: membership.isPaid ? 'rgba(255,255,255,0.5)' : '#f20d0d', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, flexShrink: 0 }}>
+              {membership.isPaid ? 'MANAGE →' : 'GET PRO →'}
+            </button>
+          </div>
+        )}
 
         {order.map((k, ri) => {
           const b = BADGES[k];
