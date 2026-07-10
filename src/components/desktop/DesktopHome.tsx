@@ -118,7 +118,7 @@ export default function DesktopHome() {
                 the POST's own canonical aspect (mixed heights, like mobile's
                 feed) — NOT a uniform crop. (The profile grid does force a uniform
                 aspect; that's its design, unchanged.) */}
-            <div style={{ display: 'grid', gridTemplateColumns: `repeat(${layout.count}, minmax(0, 1fr))`, columnGap: 34, alignItems: 'start' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: `repeat(3, minmax(0, 1fr))`, columnGap: 34, alignItems: 'start' }}>
               {posts.map((p, i) => (
                 <PostItem
                   key={String(p.id)}
