@@ -24,7 +24,7 @@ import AddToHomeScreenSheet from "@/components/AddToHomeScreenSheet";
 import { shouldShowA2HS } from "@/lib/pwaUtils";
 import PostCell from "@/components/PostCell";
 import { getColCount } from "@/lib/aspectRatio";
-import { resolveLayout } from "@/lib/layoutModel";
+import { resolveLayout, legacyLayoutId } from "@/lib/layoutModel";
 import { getScopeLimitType } from "@/lib/limits";
 import { useUpsell } from "@/components/UpsellProvider";
 import FrameLoader from "@/components/FrameLoader";
@@ -317,11 +317,7 @@ const userLayoutId = stableLayoutId;
   useEffect(() => {
     if (!rawProfile) return;
     const R = resolveLayout(rawProfile as Parameters<typeof resolveLayout>[0]);
-    const short = R.aspect === 'pana-wide' ? 'pana' : R.aspect === 'cine-wide' ? 'cine' : R.aspect; // scope | legacy
-    const id = R.aspect === 'collage' ? 'collage'
-      : R.aspect === 'legacy' ? 'legacy'
-      : `${R.mobileCount}x-${short}`;
-    setStableLayoutId(id);
+    setStableLayoutId(legacyLayoutId(R.aspect, R.mobileCount));
   }, [rawProfile]);
 
   useEffect(() => {

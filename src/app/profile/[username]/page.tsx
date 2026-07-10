@@ -22,6 +22,7 @@ import BottomToolbar from "@/components/BottomToolbar";
 import MediaRenderer from "@/components/MediaRenderer";
 import PostCell from "@/components/PostCell";
 import { getColCount } from "@/lib/aspectRatio";
+import { resolveLayout, legacyLayoutId } from "@/lib/layoutModel";
 import FrameLoader from "@/components/FrameLoader";
 import BannerBadgeStrip from "@/components/BannerBadgeStrip";
 import { resolveBadges } from "@/lib/economy/badges";
@@ -208,7 +209,11 @@ export default function PublicProfilePage() {
   };
 
   const isOwnProfile = user && targetPrivyId && user.id === targetPrivyId;
-  const layoutId = profile?.grid_layout || "1x-scope";
+  // SHARED model: the grid AR is the resolved shared aspect × mobile count (the
+  // one resolver), so an AR set on EITHER surface shows here — not the stale
+  // legacy grid_layout string alone.
+  const _rl = resolveLayout(profile as Parameters<typeof resolveLayout>[0]);
+  const layoutId = profile ? legacyLayoutId(_rl.aspect, _rl.mobileCount) : "1x-scope";
   const getDeckAspect = (gl?: string | null) => {
     if (!gl) return '2.39 / 1';
     switch (gl) {

@@ -8,7 +8,8 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
-import { setSharedAspect, setDesktopCount, type AspectId } from '@/lib/layoutModel';
+import { setSharedAspect, setDesktopCount, resolveLayout, legacyLayoutId, type AspectId } from '@/lib/layoutModel';
+import { getProfile, updateProfileFields } from '@/lib/userService';
 import {
   DESKTOP_ASPECTS, DESKTOP_COUNTS, chipFor,
   type DesktopAspect, type DesktopCount, type DesktopLayout,
@@ -73,6 +74,15 @@ export default function DesktopGridPicker({
     // invalidates the cache + broadcasts 'scope:layout-changed' so grids re-read.
     const okA = await setSharedAspect(userId, aspect as AspectId);
     const okC = await setDesktopCount(userId, count);
+    // LEGACY MIRROR (fixes desktop→mobile): also write grid_layout so the many
+    // mobile readers still on it (public profile, PostItem, create) reflect the
+    // shared AR. Use the resolved MOBILE count (explicit ?? matrix) so the mobile
+    // grid's columns stay correct — mirroring both pickers' write shape.
+    try {
+      const prof = await getProfile(userId);
+      const R = resolveLayout({ ...(prof as object), aspect_ratio: aspect, desktop_count: count } as Parameters<typeof resolveLayout>[0]);
+      await updateProfileFields(userId, { grid_layout: legacyLayoutId(aspect as AspectId, R.mobileCount) });
+    } catch (e) { console.warn('[layout] legacy mirror write:', (e as Error)?.message); }
     setSaving(false);
     if (okA && okC) {
       onApplied(layout);

@@ -886,6 +886,7 @@ export const updateProfileFields = async (
     aspect_ratio: string; // SHARED layout AR (see layoutModel)
     mobile_count: number; // mobile grid columns (1|2)
     desktop_count: number; // desktop grid columns (3|4|5)
+    grid_layout: string; // legacy mirror (kept in sync so un-migrated readers reflect AR)
   }>
 ): Promise<void> => {
   // Identity is ALWAYS uppercase — enforce here so no write path bypasses it

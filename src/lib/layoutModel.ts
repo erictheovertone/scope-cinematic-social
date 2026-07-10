@@ -42,6 +42,16 @@ const numOr = (v: unknown): number | null => (typeof v === 'number' && isFinite(
 export const desktopFromMobile = (m: number): number => (m === 1 ? 3 : 4);
 export const mobileFromDesktop = (d: number): number => (d === 3 ? 1 : 2);
 
+/** Canonical legacy grid_layout id for a shared aspect × mobile count — the
+ *  bridge for the many mobile readers still on grid_layout (public profile,
+ *  PostItem, create). Both pickers write this as the "legacy mirror". */
+export function legacyLayoutId(aspect: AspectId, mobileCount: number): string {
+  if (aspect === 'collage') return 'collage';
+  if (aspect === 'legacy') return 'legacy';
+  const short = aspect === 'pana-wide' ? 'pana' : aspect === 'cine-wide' ? 'cine' : aspect;
+  return `${mobileCount}x-${short}`;
+}
+
 /** Numeric W/H ratio for the SHARED aspect — used by the uniform profile grids.
  *  collage has no single ratio (mixed) → falls back to scope for uniform tiles. */
 export function ratioForAspect(a: AspectId): number {
