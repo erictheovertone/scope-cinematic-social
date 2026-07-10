@@ -15,7 +15,7 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { getAllPosts, FEED_PAGE_SIZE } from '@/lib/postsService';
 import PostItem from '@/components/PostItem';
-import DesktopPostView from '@/components/desktop/DesktopPostView';
+import DesktopHomeLightbox from '@/components/desktop/DesktopHomeLightbox';
 import DesktopViewingModes, { type ViewingMode } from '@/components/desktop/DesktopViewingModes';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
@@ -72,18 +72,6 @@ export default function DesktopHome() {
     return () => io.disconnect();
   }, [loadMore, hasMore, view, posts?.length]);
 
-  // Interim viewer keyboard: Esc → back to grid, arrows → step.
-  useEffect(() => {
-    if (view == null) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setView(null);
-      else if (e.key === 'ArrowRight') setView((i) => (i != null && i < (posts?.length ?? 0) - 1 ? i + 1 : i));
-      else if (e.key === 'ArrowLeft') setView((i) => (i != null && i > 0 ? i - 1 : i));
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [view, posts?.length]);
-
   const onSelectMode = (mode: ViewingMode) => {
     setModesOpen(false);
     if (mode === 'screening') router.push('/screening-room');
@@ -92,41 +80,31 @@ export default function DesktopHome() {
 
   return (
     <div style={{ minHeight: '100dvh', background: '#000', paddingLeft: RAIL_W }}>
-      {view == null ? (
-        // ── THE GRID: real 3-across, full feed cards, generous gutters ──
-        <div style={{ maxWidth: 1440, margin: '0 auto', padding: '40px 48px 96px' }}>
-          {posts == null ? (
-            <div style={{ minHeight: '40vh' }} />
-          ) : posts.length === 0 ? (
-            <p style={{ ...SKB, textAlign: 'center', fontSize: 12, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.14em', padding: '80px 0' }}>NOTHING SCREENING YET</p>
-          ) : (
-            <>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', columnGap: 34, alignItems: 'start' }}>
-                {posts.map((p, i) => (
-                  <PostItem
-                    key={String(p.id)}
-                    post={p as unknown as React.ComponentProps<typeof PostItem>['post']}
-                    onImageClick={() => setView(i)}
-                  />
-                ))}
-              </div>
-              {hasMore && <div ref={sentinelRef} style={{ height: 1 }} />}
-            </>
-          )}
-        </div>
-      ) : (
-        // ── INTERIM VIEWER (Part 2 = the real home lightbox) ──
-        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '28px 40px 0' }}>
-          <button onClick={() => setView(null)} style={{ ...SKB, fontSize: 11, color: 'rgba(255,255,255,0.55)', textTransform: 'uppercase', letterSpacing: '0.12em', background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px 0 12px' }}>← BACK</button>
-          {posts && posts[view] && (
-            <DesktopPostView
-              posts={posts}
-              index={view}
-              onStep={(dir) => setView((i) => { if (i == null) return i; const n = i + dir; return n < 0 || n >= (posts?.length ?? 0) ? i : n; })}
-              location={null}
-            />
-          )}
-        </div>
+      {/* ── THE GRID: real 3-across, full feed cards, generous gutters ── */}
+      <div style={{ maxWidth: 1440, margin: '0 auto', padding: '40px 48px 96px' }}>
+        {posts == null ? (
+          <div style={{ minHeight: '40vh' }} />
+        ) : posts.length === 0 ? (
+          <p style={{ ...SKB, textAlign: 'center', fontSize: 12, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.14em', padding: '80px 0' }}>NOTHING SCREENING YET</p>
+        ) : (
+          <>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', columnGap: 34, alignItems: 'start' }}>
+              {posts.map((p, i) => (
+                <PostItem
+                  key={String(p.id)}
+                  post={p as unknown as React.ComponentProps<typeof PostItem>['post']}
+                  onImageClick={() => setView(i)}
+                />
+              ))}
+            </div>
+            {hasMore && <div ref={sentinelRef} style={{ height: 1 }} />}
+          </>
+        )}
+      </div>
+
+      {/* ── HOME FEED LIGHTBOX (overlay) ── */}
+      {view != null && posts && posts[view] && (
+        <DesktopHomeLightbox posts={posts} index={view} onClose={() => setView(null)} />
       )}
 
       {modesOpen && (

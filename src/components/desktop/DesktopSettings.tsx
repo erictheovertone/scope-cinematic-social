@@ -30,6 +30,8 @@ import {
 } from '@/lib/userService';
 import { useUpsell } from '@/components/UpsellProvider';
 import { updateProfileFields, invalidateMembership } from '@/lib/userService';
+import { getUserPosts } from '@/lib/postsService';
+import { createPortal } from 'react-dom';
 import { resolveMembership, membershipBarLabel, type MembershipState } from '@/lib/membership';
 import { DIVIDER_LINES, DIVIDER_ORDER, TIER_UNLOCK_LABEL, dividerTier, isDividerUnlocked, type DividerLineKey } from '@/lib/economy/dividerLines';
 import { useEconomy } from '@/components/EconomyProvider';
@@ -85,6 +87,12 @@ export default function DesktopSettings() {
   const [photoState, setPhotoState] = useState<'idle' | 'uploading' | 'done'>('idle');
   const [cropFile, setCropFile] = useState<File | null>(null);
   const [gridPickerOpen, setGridPickerOpen] = useState(false);
+  // MORE FROM configurator — the creator multi-selects up to 6 of their OWN
+  // posts to feature in their desktop lightbox's MORE FROM shelf.
+  const [moreFrom, setMoreFrom] = useState<string[]>([]);
+  const [moreFromOpen, setMoreFromOpen] = useState(false);
+  const [myPosts, setMyPosts] = useState<Record<string, unknown>[]>([]);
+  const MORE_FROM_CAP = 6;
   const [gridInitial, setGridInitial] = useState<DesktopLayout>({ aspect: 'scope', count: 4 });
   // parity round 2: the mobile-only fields join the desktop form
   const economy = useEconomy();
@@ -130,6 +138,7 @@ export default function DesktopSettings() {
           setShowRecapState(profile.show_recap !== false);
           setIsPaid(isProMember(profile as { is_paid_member?: boolean; paid_member_until?: string | null }));
           setMembership(resolveMembership(profile as Parameters<typeof resolveMembership>[0]));
+          setMoreFrom(Array.isArray((profile as { more_from?: string[] }).more_from) ? (profile as { more_from?: string[] }).more_from! : []);
           setGridInitial(deriveDesktopLayout((profile as { desktop_layout?: unknown }).desktop_layout, profile.grid_layout));
           const px = profile as unknown as Record<string, unknown>;
           setKitCamera((px.kit_camera as string) || '');
@@ -248,6 +257,23 @@ export default function DesktopSettings() {
       const created = await addProfileLink(user.id, { url: url.startsWith('http') ? url : `https://${url}`, position: links.length });
       setLinks((prev) => [...prev, created]);
     } catch (e) { console.error('[desktop-settings] add link failed:', e); }
+  };
+
+  // MORE FROM: open the picker (lazy-load the creator's own posts to choose from),
+  // toggle within the cap, and persist to profiles.more_from.
+  const openMoreFrom = async () => {
+    setMoreFromOpen(true);
+    if (!myPosts.length && sbUserId) {
+      const mine = await getUserPosts(sbUserId).catch(() => []);
+      setMyPosts(mine as unknown as Record<string, unknown>[]);
+    }
+  };
+  const toggleMoreFrom = (id: string) => {
+    setMoreFrom((cur) => cur.includes(id) ? cur.filter((x) => x !== id) : (cur.length >= MORE_FROM_CAP ? cur : [...cur, id]));
+  };
+  const saveMoreFrom = async () => {
+    if (sbUserId) await updateProfileFields(sbUserId, { more_from: moreFrom }).catch((e) => console.warn('[more-from] save failed (migration pending?):', e?.message));
+    setMoreFromOpen(false);
   };
 
   const row = (label: string, action: () => void, key?: string) => (
@@ -435,6 +461,7 @@ export default function DesktopSettings() {
           <div style={{ maxWidth: 520 }}>
             {/* the 3-step desktop picker (replaces the mobile route on desktop) */}
             {row('Grid Layout', () => setGridPickerOpen(true))}
+            {row(`More From · ${moreFrom.length}/${MORE_FROM_CAP} featured`, () => { void openMoreFrom(); }, 'morefrom')}
             {row(`While You Were Away · ${showRecap ? 'ON' : 'OFF'}`, () => { const next = !showRecap; setShowRecapState(next); if (sbUserId) void setShowRecap(sbUserId, next); }, 'wywa')}
             {row('Notifications', () => router.push('/profile/notifications'))}
             {row('Add to Home Screen', () => router.push('/profile/preferences'))}
@@ -528,6 +555,42 @@ export default function DesktopSettings() {
           onApplied={(l) => setGridInitial(l)}
           onClose={() => setGridPickerOpen(false)}
         />
+      )}
+
+      {/* ── MORE FROM picker — multi-select up to 6 own posts for the lightbox shelf ── */}
+      {moreFromOpen && createPortal(
+        <div data-swipe-exclude style={{ position: 'fixed', inset: 0, zIndex: 680, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div onClick={() => setMoreFromOpen(false)} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.9)' }} />
+          <div style={{ position: 'relative', width: 760, maxHeight: '82vh', display: 'flex', flexDirection: 'column', background: '#000', border: '1px solid #1a1a1a', padding: '32px 34px' }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 6 }}>
+              <h2 style={{ ...SKB, fontSize: 16, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>MORE FROM</h2>
+              <span style={{ ...SKB, fontSize: 11, color: moreFrom.length >= MORE_FROM_CAP ? RED : 'rgba(255,255,255,0.5)', letterSpacing: '0.08em' }}>{moreFrom.length}/{MORE_FROM_CAP}</span>
+            </div>
+            <p style={{ ...SKR, fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, margin: '0 0 20px' }}>
+              Choose up to {MORE_FROM_CAP} of your posts to feature beneath your work in the desktop lightbox. Tap to select.
+            </p>
+            <div style={{ flex: 1, overflowY: 'auto', display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 12 }}>
+              {myPosts.length === 0 ? (
+                <p style={{ ...SKR, gridColumn: 'span 4', fontSize: 12, color: 'rgba(255,255,255,0.4)', textAlign: 'center', padding: '40px 0' }}>NO POSTS YET</p>
+              ) : myPosts.map((p) => {
+                const id = String(p.id);
+                const sel = moreFrom.indexOf(id);
+                const src = (p.poster_url as string) || (p.thumbnail_url as string) || ((p.media_urls as string[])?.[0] ?? '');
+                return (
+                  <button key={id} onClick={() => toggleMoreFrom(id)} style={{ position: 'relative', aspectRatio: '2.39 / 1', overflow: 'hidden', background: '#0d0d0d', border: sel >= 0 ? `2px solid ${RED}` : `1px solid ${HAIR}`, cursor: 'pointer', padding: 0 }}>
+                    {src && <img src={feedImage(src, 320)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', opacity: sel >= 0 ? 1 : 0.7 }} />}
+                    {sel >= 0 && <span style={{ position: 'absolute', top: 5, right: 6, ...SKB, fontSize: 10, color: '#FFF', background: RED, width: 17, height: 17, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}>{sel + 1}</span>}
+                  </button>
+                );
+              })}
+            </div>
+            <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
+              <button onClick={() => setMoreFromOpen(false)} style={{ ...SKB, flex: 1, fontSize: 11, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.08em', background: 'transparent', border: `1px solid ${HAIR}`, cursor: 'pointer', padding: '12px 0' }}>CANCEL</button>
+              <button onClick={() => { void saveMoreFrom(); }} style={{ ...SKB, flex: 1, fontSize: 11, color: '#000', textTransform: 'uppercase', letterSpacing: '0.08em', background: '#FFF', border: 'none', cursor: 'pointer', padding: '12px 0' }}>SAVE</button>
+            </div>
+          </div>
+        </div>,
+        document.body,
       )}
     </div>
   );

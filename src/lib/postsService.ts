@@ -178,6 +178,21 @@ export const getUserPosts = async (userId: string): Promise<Post[]> => {
   return data || [];
 };
 
+// ── Fetch specific posts by id, returned IN the requested order (the caller's
+//    curation order — e.g. the MORE FROM shelf's settings-selected sequence).
+//    Deleted posts are dropped so a stale selection self-heals. ──
+export const getPostsByIds = async (ids: string[]): Promise<Post[]> => {
+  if (!ids.length) return [];
+  const { data, error } = await supabase
+    .from('posts')
+    .select('*')
+    .in('id', ids)
+    .eq('is_deleted', false);
+  if (error) { console.error('Error fetching posts by ids:', error); return []; }
+  const byId = new Map((data ?? []).map((p) => [String(p.id), p]));
+  return ids.map((id) => byId.get(String(id))).filter(Boolean) as Post[];
+};
+
 // ── Pin to the top of the profile grid (getUserPosts already sorts is_pinned desc,
 //    then recency). Max 2 pins per user — enforced HERE (service layer) so the UI
 //    can't bypass it. Pinned order among the two = recency (created_at desc). ──

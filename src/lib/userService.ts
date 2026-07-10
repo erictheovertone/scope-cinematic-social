@@ -882,6 +882,7 @@ export const updateProfileFields = async (
     contact_email_public: boolean;
     divider_line: string | null;
     holo_banner: boolean;
+    more_from: string[]; // post_ids featured in the desktop lightbox MORE FROM shelf
   }>
 ): Promise<void> => {
   // Identity is ALWAYS uppercase — enforce here so no write path bypasses it
