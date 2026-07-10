@@ -101,12 +101,16 @@ export default function DesktopHome() {
                 Each cell keeps the POST's OWN authored aspect (mixed heights) —
                 that's how a creator's AR intent reaches the feed. No viewer's or
                 creator's setting changes the feed's column structure. */}
-            <div style={{ display: 'grid', gridTemplateColumns: `repeat(3, minmax(0, 1fr))`, columnGap: 34, alignItems: 'start' }}>
+            {/* Cards on black: each post in a #030303/#2B2B2B card. With borders
+                visible the gutters tighten to 20px (was 34) for an organized grid. */}
+            <div style={{ display: 'grid', gridTemplateColumns: `repeat(3, minmax(0, 1fr))`, gap: 20, alignItems: 'start' }}>
               {posts.map((p, i) => (
                 <PostItem
                   key={String(p.id)}
                   post={p as unknown as React.ComponentProps<typeof PostItem>['post']}
                   onImageClick={() => setView(i)}
+                  card
+                  clampCaption
                 />
               ))}
             </div>

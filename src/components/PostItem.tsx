@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, memo } from "react";
+import { useState, useEffect, useRef, memo } from "react";
 import { feedImage } from "@/lib/mediaUrl";
 import { useRouter } from "next/navigation";
 import FirstCutChip from "@/components/economy/FirstCutChip";
@@ -65,12 +65,19 @@ interface PostItemProps {
   commentsOpen?: boolean;
   /** Receives the post id so the feed can pass a STABLE handler (memo holds). */
   onToggleComments?: (postId: string) => void;
+  /** DESKTOP ONLY — wrap the card in the #030303/#2B2B2B backdrop. Mobile never
+   *  passes it → its floating-post feed is unchanged. */
+  card?: boolean;
+  /** DESKTOP ONLY — clamp the caption to 2 lines + a "… more" that opens the
+   *  lightbox (onImageClick). Display-only; the stored caption is never cut.
+   *  Mobile never passes it → mobile still shows the full caption. */
+  clampCaption?: boolean;
 }
 
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 
-function PostItem({ post, onImageClick, commentsOpen, onToggleComments }: PostItemProps) {
+function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, clampCaption }: PostItemProps) {
   const router = useRouter();
   const { user } = usePrivy();
   const [likes, setLikes] = useState<any[]>([]);
@@ -88,6 +95,15 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments }: PostIt
   const [showCollectSheet, setShowCollectSheet] = useState(false);
   const [mc, setMc] = useState<string | null>(null);
   const economy = useEconomy();
+  // Caption clamp (desktop cards only): detect whether 2 lines truncated it →
+  // show the "… more" affordance. Display-only; the stored caption is untouched.
+  const captionRef = useRef<HTMLParagraphElement>(null);
+  const [captionClamped, setCaptionClamped] = useState(false);
+  useEffect(() => {
+    if (!clampCaption) return;
+    const el = captionRef.current;
+    if (el) setCaptionClamped(el.scrollHeight > el.clientHeight + 1);
+  }, [clampCaption, post.caption]);
 
   useEffect(() => {
     if (!user) return;
@@ -261,7 +277,7 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments }: PostIt
   );
 
   return (
-    <div className="feed-card" style={{ marginBottom: FEED_POST_GAP_PX }}>
+    <div className="feed-card" style={{ marginBottom: card ? 0 : FEED_POST_GAP_PX, ...(card ? { background: '#030303', border: '1px solid #2B2B2B', borderRadius: 3, padding: '10px 10px 12px', boxSizing: 'border-box' } : {}) }}>
 
       {/* ── Metadata above the frame; the media below is clean ── */}
       {metadataRow}
@@ -344,9 +360,21 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments }: PostIt
       </div>
 
       {post.caption && (
-        <p style={{ ...SKR, fontSize: 'var(--fs-11)', color: "white", letterSpacing: "-0.1px", lineHeight: 1.5, margin: "5px 2px 0" }}>
-          {post.caption}
-        </p>
+        <div style={{ margin: "5px 2px 0" }}>
+          <p
+            ref={captionRef}
+            style={{ ...SKR, fontSize: 'var(--fs-11)', color: "white", letterSpacing: "-0.1px", lineHeight: 1.5, margin: 0,
+              ...(clampCaption ? ({ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' } as React.CSSProperties) : {}) }}
+          >
+            {post.caption}
+          </p>
+          {/* display-only "more" → opens the full caption in the lightbox */}
+          {clampCaption && captionClamped && openLightbox && (
+            <button onClick={(e) => { e.stopPropagation(); openLightbox(); }} style={{ ...SKR, fontSize: 'var(--fs-10)', color: "rgba(255,255,255,0.45)", background: "transparent", border: "none", cursor: "pointer", padding: "2px 0 0" }}>
+              … more
+            </button>
+          )}
+        </div>
       )}
 
       <CollectSheetGate
@@ -423,5 +451,5 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments }: PostIt
 // a comment toggle re-renders only the two affected cards.
 export default memo(
   PostItem,
-  (prev, next) => prev.post === next.post && prev.commentsOpen === next.commentsOpen,
+  (prev, next) => prev.post === next.post && prev.commentsOpen === next.commentsOpen && prev.card === next.card && prev.clampCaption === next.clampCaption,
 );

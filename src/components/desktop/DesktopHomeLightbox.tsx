@@ -8,13 +8,13 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { useRouter } from 'next/navigation';
 import { usePrivy } from '@privy-io/react-auth';
 import { getProfile, getFollowing } from '@/lib/userService';
 import { getPostsByIds } from '@/lib/postsService';
 import { feedImage } from '@/lib/mediaUrl';
 import { useEconomy } from '@/components/EconomyProvider';
 import DesktopPostView from '@/components/desktop/DesktopPostView';
-import TickerMark from '@/components/economy/TickerMark';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -33,7 +33,9 @@ export default function DesktopHomeLightbox({
   onClose: () => void;
 }) {
   const { user } = usePrivy();
+  const router = useRouter();
   const economy = useEconomy();
+  const [creatorAvatar, setCreatorAvatar] = useState<string | null>(null);
   const [nav, setNav] = useState<P[]>(posts);
   const [pos, setPos] = useState(index);
   const active = nav[pos];
@@ -84,7 +86,8 @@ export default function DesktopHomeLightbox({
     let dead = false;
     (async () => {
       try {
-        const prof = await getProfile(creatorId) as { more_from?: string[] | null } | null;
+        const prof = await getProfile(creatorId) as { more_from?: string[] | null; profile_image_url?: string | null } | null;
+        if (!dead) setCreatorAvatar(prof?.profile_image_url ?? null);
         const ids = Array.isArray(prof?.more_from) ? prof!.more_from! : [];
         if (!ids.length) { if (!dead) setMoreFrom([]); return; }
         const ps = await getPostsByIds(ids);
@@ -116,31 +119,38 @@ export default function DesktopHomeLightbox({
     <button onClick={() => setTab(key)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '0 0 4px', ...SKB, fontSize: 13, textTransform: 'uppercase', letterSpacing: '0.06em', color: tab === key ? '#FFF' : 'rgba(255,255,255,0.4)', borderBottom: tab === key ? '2px solid #f20d0d' : '2px solid transparent' }}>{label}</button>
   );
 
-  // ── MORE FROM row (bounded; arrow scans horizontally; ticker + MC caption) ──
+  // ── MORE FROM row (bounded; each caption = creator avatar + @handle LINK + MC).
+  //    The scan-arrow only appears when the row actually overflows (>4 cards fit;
+  //    the cap is 6 → it can overflow), and is wired to scroll the row. ──
+  const goProfile = (e: React.MouseEvent) => { e.stopPropagation(); router.push(`/profile/${creatorHandle}`); };
   const moreFromRow = moreFrom.length > 0 ? (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '0 0 10px' }}>
         <p style={{ ...SKB, fontSize: 10, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>
           MORE FROM <span style={{ color: 'rgba(255,255,255,0.55)' }}>@{creatorHandle}</span>
         </p>
-        <button onClick={() => mfScroll.current?.scrollBy({ left: 240, behavior: 'smooth' })} aria-label="Scan more" style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4, lineHeight: 0 }}>
-          <svg width="9" height="16" viewBox="0 0 10 22" fill="none"><path d="M1 1L8.6 11L1 21" stroke="rgba(255,255,255,0.6)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
-        </button>
+        {moreFrom.length > 4 && (
+          <button onClick={() => mfScroll.current?.scrollBy({ left: 240, behavior: 'smooth' })} aria-label="Scan more" style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4, lineHeight: 0 }}>
+            <svg width="9" height="16" viewBox="0 0 10 22" fill="none"><path d="M1 1L8.6 11L1 21" stroke="rgba(255,255,255,0.6)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+          </button>
+        )}
       </div>
       <div ref={mfScroll} style={{ display: 'flex', gap: 12, overflowX: 'auto', scrollbarWidth: 'none' }}>
         {moreFrom.map((p) => (
-          <button key={String(p.id)} onClick={() => jumpTo(p)} aria-label="Open" style={{ flexShrink: 0, width: 208, background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, display: 'block' }}>
+          <div key={String(p.id)} onClick={() => jumpTo(p)} style={{ flexShrink: 0, width: 208, cursor: 'pointer' }}>
             <div style={{ width: '100%', aspectRatio: '2.75 / 1', overflow: 'hidden', background: '#0d0d0d' }}>
               {thumbOf(p) && <img src={feedImage(thumbOf(p), 480)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
             </div>
-            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8, margin: '7px 0 0' }}>
-              {/* Unminted (no coin) → quiet dashes, never a fake ticker/MC. */}
-              <span style={{ minWidth: 0, overflow: 'hidden' }}>
-                {p.coin_address && (p.ticker as string) ? <TickerMark ticker={p.ticker as string} size={10} /> : <span style={{ ...SKB, fontSize: 10, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase' }}>—</span>}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, margin: '7px 0 0' }}>
+              {/* creator avatar + @handle — LINKS to the profile (global button:hover brightens) */}
+              <span role="link" onClick={goProfile} style={{ display: 'flex', alignItems: 'center', gap: 5, minWidth: 0, cursor: 'pointer' }}>
+                {creatorAvatar ? <img src={feedImage(creatorAvatar, 96)} alt="" style={{ width: 14, height: 14, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} /> : <span style={{ width: 14, height: 14, borderRadius: '50%', background: '#2a2a2a', flexShrink: 0 }} />}
+                <span style={{ ...SKB, fontSize: 10, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>@{creatorHandle}</span>
               </span>
-              <span style={{ ...SKB, fontSize: 9.5, color: 'rgba(255,255,255,0.55)', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' }}>{p.coin_address ? `MC ${mfMc.get(String(p.id)) ?? '…'}` : '—'}</span>
+              {/* Unminted (no coin) → quiet dash, never a fake MC. */}
+              <span style={{ ...SKB, fontSize: 9.5, color: 'rgba(255,255,255,0.55)', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>{p.coin_address ? `MC ${mfMc.get(String(p.id)) ?? '…'}` : '—'}</span>
             </div>
-          </button>
+          </div>
         ))}
       </div>
     </div>
@@ -179,7 +189,8 @@ export default function DesktopHomeLightbox({
                 <div style={{ width: '100%', aspectRatio: '2.39 / 1', overflow: 'hidden', background: '#0d0d0d', outline: isActive ? '1px solid rgba(242,13,13,0.7)' : 'none' }}>
                   {thumbOf(p) && <img src={feedImage(thumbOf(p), 340)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
                 </div>
-                <p style={{ ...SKB, fontSize: 9, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '4px 0 0', textAlign: 'left', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>@{String(p.username ?? '')}</p>
+                {/* +30px air under the strip images: handles (and all content below) drop 30px */}
+                <p style={{ ...SKB, fontSize: 9, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '34px 0 0', textAlign: 'left', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>@{String(p.username ?? '')}</p>
               </button>
             );
           })}
