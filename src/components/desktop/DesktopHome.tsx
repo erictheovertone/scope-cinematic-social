@@ -13,7 +13,10 @@
 
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { usePrivy } from '@privy-io/react-auth';
 import { getAllPosts, FEED_PAGE_SIZE } from '@/lib/postsService';
+import { getUserByPrivyId, getProfile } from '@/lib/userService';
+import { deriveDesktopLayout, chipFor, type DesktopLayout } from '@/lib/desktopLayout';
 import PostItem from '@/components/PostItem';
 import DesktopHomeLightbox from '@/components/desktop/DesktopHomeLightbox';
 import DesktopViewingModes, { type ViewingMode } from '@/components/desktop/DesktopViewingModes';
@@ -23,6 +26,11 @@ const RAIL_W = 71; // clear the global left rail
 
 export default function DesktopHome() {
   const router = useRouter();
+  const { user } = usePrivy();
+  // The VIEWER's grid-layout choice drives the feed density — the SAME resolver
+  // (deriveDesktopLayout) the desktop profile grid uses. desktop_layout wins;
+  // else derive from the mobile layout; else scope/4.
+  const [layout, setLayout] = useState<DesktopLayout>({ aspect: 'scope', count: 3 });
   const [posts, setPosts] = useState<Record<string, unknown>[] | null>(null);
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
@@ -50,6 +58,24 @@ export default function DesktopHome() {
     window.addEventListener('scope:open-viewing-modes', open);
     return () => window.removeEventListener('scope:open-viewing-modes', open);
   }, []);
+
+  // Resolve the viewer's desktop grid layout (count + aspect) — same resolver as
+  // the profile grid. Re-reads on a layout change dispatched by the picker.
+  useEffect(() => {
+    if (!user?.id) return;
+    let alive = true;
+    const load = async () => {
+      const sb = await getUserByPrivyId(user.id).catch(() => null);
+      if (!sb || !alive) return;
+      const p = await getProfile(sb.id).catch(() => null);
+      if (!alive) return;
+      setLayout(deriveDesktopLayout((p as { desktop_layout?: unknown } | null)?.desktop_layout, (p as { grid_layout?: string | null } | null)?.grid_layout));
+    };
+    void load();
+    const onChange = () => { void load(); };
+    window.addEventListener('scope:desktop-layout-changed', onChange);
+    return () => { alive = false; window.removeEventListener('scope:desktop-layout-changed', onChange); };
+  }, [user?.id]);
 
   const loadMore = useCallback(async () => {
     if (loadingMore || !hasMore) return;
@@ -88,12 +114,13 @@ export default function DesktopHome() {
           <p style={{ ...SKB, textAlign: 'center', fontSize: 12, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.14em', padding: '80px 0' }}>NOTHING SCREENING YET</p>
         ) : (
           <>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', columnGap: 34, alignItems: 'start' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: `repeat(${layout.count}, minmax(0, 1fr))`, columnGap: 34, alignItems: 'start' }}>
               {posts.map((p, i) => (
                 <PostItem
                   key={String(p.id)}
                   post={p as unknown as React.ComponentProps<typeof PostItem>['post']}
                   onImageClick={() => setView(i)}
+                  forceAspectRatio={chipFor(layout.aspect).ratio}
                 />
               ))}
             </div>

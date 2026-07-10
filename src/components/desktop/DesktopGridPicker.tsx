@@ -71,6 +71,9 @@ export default function DesktopGridPicker({
     setSaving(false);
     if (ok) {
       onApplied(layout);
+      // Broadcast so any mounted desktop grid (home feed) re-reads the new layout
+      // live — the profile grid re-reads on its own remount via the invalidated cache.
+      if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('scope:desktop-layout-changed'));
       onClose();
       router.push('/profile'); // one flow — settings AND the future onboarding entry land here
     } else {
