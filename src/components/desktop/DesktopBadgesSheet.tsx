@@ -113,7 +113,7 @@ export default function DesktopBadgesSheet({
                 <span style={{ ...SKB, fontSize: 13, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{membershipBarLabel(membership)}</span>
               </div>
             </div>
-            <button onClick={() => { onClose(); membership.isPaid ? router.push('/membership/manage') : goPro(); }} style={{ ...SKB, fontSize: 11, color: membership.isPaid ? 'rgba(255,255,255,0.5)' : '#f20d0d', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, flexShrink: 0 }}>
+            <button onClick={() => { onClose(); membership.isPaid ? router.push('/profile/preferences?section=membership') : goPro(); }} style={{ ...SKB, fontSize: 11, color: membership.isPaid ? 'rgba(255,255,255,0.5)' : '#f20d0d', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, flexShrink: 0 }}>
               {membership.isPaid ? 'MANAGE →' : 'GET PRO →'}
             </button>
           </div>
