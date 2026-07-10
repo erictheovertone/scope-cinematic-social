@@ -16,7 +16,7 @@ import { useRouter } from 'next/navigation';
 import { usePrivy } from '@privy-io/react-auth';
 import { getAllPosts, FEED_PAGE_SIZE } from '@/lib/postsService';
 import { getUserByPrivyId, getProfile } from '@/lib/userService';
-import { deriveDesktopLayout, type DesktopLayout } from '@/lib/desktopLayout';
+import { resolveLayout, type ResolvedLayout } from '@/lib/layoutModel';
 import PostItem from '@/components/PostItem';
 import DesktopHomeLightbox from '@/components/desktop/DesktopHomeLightbox';
 import DesktopViewingModes, { type ViewingMode } from '@/components/desktop/DesktopViewingModes';
@@ -30,7 +30,7 @@ export default function DesktopHome() {
   // The VIEWER's grid-layout choice drives the feed density — the SAME resolver
   // (deriveDesktopLayout) the desktop profile grid uses. desktop_layout wins;
   // else derive from the mobile layout; else scope/4.
-  const [layout, setLayout] = useState<DesktopLayout>({ aspect: 'scope', count: 3 });
+  const [layout, setLayout] = useState<ResolvedLayout>({ aspect: 'scope', mobileCount: 1, desktopCount: 3 });
   const [posts, setPosts] = useState<Record<string, unknown>[] | null>(null);
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
@@ -69,12 +69,12 @@ export default function DesktopHome() {
       if (!sb || !alive) return;
       const p = await getProfile(sb.id).catch(() => null);
       if (!alive) return;
-      setLayout(deriveDesktopLayout((p as { desktop_layout?: unknown } | null)?.desktop_layout, (p as { grid_layout?: string | null } | null)?.grid_layout));
+      setLayout(resolveLayout(p as Parameters<typeof resolveLayout>[0]));
     };
     void load();
     const onChange = () => { void load(); };
-    window.addEventListener('scope:desktop-layout-changed', onChange);
-    return () => { alive = false; window.removeEventListener('scope:desktop-layout-changed', onChange); };
+    window.addEventListener('scope:layout-changed', onChange);
+    return () => { alive = false; window.removeEventListener('scope:layout-changed', onChange); };
   }, [user?.id]);
 
   const loadMore = useCallback(async () => {
@@ -118,7 +118,7 @@ export default function DesktopHome() {
                 the POST's own canonical aspect (mixed heights, like mobile's
                 feed) — NOT a uniform crop. (The profile grid does force a uniform
                 aspect; that's its design, unchanged.) */}
-            <div style={{ display: 'grid', gridTemplateColumns: `repeat(3, minmax(0, 1fr))`, columnGap: 34, alignItems: 'start' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: `repeat(${layout.desktopCount}, minmax(0, 1fr))`, columnGap: 34, alignItems: 'start' }}>
               {posts.map((p, i) => (
                 <PostItem
                   key={String(p.id)}

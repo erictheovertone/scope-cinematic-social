@@ -23,7 +23,7 @@ import CollectedGrid from '@/components/economy/CollectedGrid';
 import TheatreMode from '@/components/TheatreMode';
 import GradedVideo from '@/components/finishing/GradedVideo';
 import DesktopPostView from '@/components/desktop/DesktopPostView';
-import { deriveDesktopLayout, chipFor, type DesktopLayout } from '@/lib/desktopLayout';
+import { resolveLayout, ratioForAspect, type AspectId } from '@/lib/layoutModel';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useRef } from 'react';
 
@@ -65,8 +65,8 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
   const [openPost, setOpenPost] = useState<Record<string, unknown> | null>(null);
   const [infoOpen, setInfoOpen] = useState(false);
   const [badgesOpen, setBadgesOpen] = useState(false);
-  // aspect × count — explicit desktop_layout or the derive (mobile aspect @4)
-  const [gridConf, setGridConf] = useState<DesktopLayout>({ aspect: 'scope', count: 4 });
+  // Profile grid = the SHARED aspect × the DESKTOP count (resolveLayout).
+  const [gridConf, setGridConf] = useState<{ aspect: AspectId; count: number }>({ aspect: 'scope', count: 4 });
   const [msgToast, setMsgToast] = useState(false);
 
   useEffect(() => {
@@ -84,7 +84,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
         ]);
         if (!alive) return;
         setProfile(p as Record<string, unknown> | null);
-        setGridConf(deriveDesktopLayout((p as { desktop_layout?: unknown } | null)?.desktop_layout, (p as { grid_layout?: string | null } | null)?.grid_layout));
+        { const R = resolveLayout(p as Parameters<typeof resolveLayout>[0]); setGridConf({ aspect: R.aspect, count: R.desktopCount }); }
         setFollowers(fw); setFollowing(fg);
         setPosts((ps as unknown as Record<string, unknown>[]) ?? []);
         setDecks(dk); setLinks(ln);
@@ -335,7 +335,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.96, transition: { duration: 0.12 } }}
                   onClick={() => openPostView(i)}
-                  style={{ position: 'relative', aspectRatio: `${chipFor(gridConf.aspect).ratio}`, overflow: 'hidden', background: '#101010', border: 'none', cursor: 'pointer', padding: 0, outline: returnHighlight === pid ? '1px solid rgba(242,13,13,0.65)' : 'none', transition: 'outline-color 400ms ease' }}
+                  style={{ position: 'relative', aspectRatio: `${ratioForAspect(gridConf.aspect)}`, overflow: 'hidden', background: '#101010', border: 'none', cursor: 'pointer', padding: 0, outline: returnHighlight === pid ? '1px solid rgba(242,13,13,0.65)' : 'none', transition: 'outline-color 400ms ease' }}
                 >
                   {p.media_type === 'video' ? (
                     /* living tile — the established treatment (was a static poster:
@@ -397,7 +397,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
         {tab === 'decks' && (
           <div style={{ display: 'grid', gridTemplateColumns: `repeat(${gridConf.count}, 1fr)`, gap: 4, paddingBottom: 80 }}>
             {decks.map((d) => (
-              <div key={d.id} style={{ position: 'relative', aspectRatio: `${chipFor(gridConf.aspect).ratio}`, overflow: 'hidden', background: '#101010' }}>
+              <div key={d.id} style={{ position: 'relative', aspectRatio: `${ratioForAspect(gridConf.aspect)}`, overflow: 'hidden', background: '#101010' }}>
                 {(d.cover_image_url || d.thumbnail_urls?.[0]) && (
                   <img src={feedImage((d.cover_image_url || d.thumbnail_urls[0]) as string, 600)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', opacity: 0.85 }} />
                 )}

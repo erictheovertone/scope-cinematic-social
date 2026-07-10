@@ -38,7 +38,8 @@ import { useEconomy } from '@/components/EconomyProvider';
 import { feedImage } from '@/lib/mediaUrl';
 import PfpCropStage from '@/components/desktop/PfpCropStage';
 import DesktopGridPicker from '@/components/desktop/DesktopGridPicker';
-import { deriveDesktopLayout, type DesktopLayout } from '@/lib/desktopLayout';
+import { type DesktopLayout, type DesktopAspect, type DesktopCount } from '@/lib/desktopLayout';
+import { resolveLayout } from '@/lib/layoutModel';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -139,7 +140,7 @@ export default function DesktopSettings() {
           setIsPaid(isProMember(profile as { is_paid_member?: boolean; paid_member_until?: string | null }));
           setMembership(resolveMembership(profile as Parameters<typeof resolveMembership>[0]));
           setMoreFrom(Array.isArray((profile as { more_from?: string[] }).more_from) ? (profile as { more_from?: string[] }).more_from! : []);
-          setGridInitial(deriveDesktopLayout((profile as { desktop_layout?: unknown }).desktop_layout, profile.grid_layout));
+          { const R = resolveLayout(profile as Parameters<typeof resolveLayout>[0]); setGridInitial({ aspect: (R.aspect === 'collage' ? 'scope' : R.aspect) as DesktopAspect, count: R.desktopCount as DesktopCount }); }
           const px = profile as unknown as Record<string, unknown>;
           setKitCamera((px.kit_camera as string) || '');
           setKitLens((px.kit_lens as string) || '');

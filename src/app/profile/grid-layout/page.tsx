@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
 import { setUserGridLayout, getUserGridLayout } from "@/lib/gridLayoutService";
 import { getUserByPrivyId, getProfile } from "@/lib/userService";
+import { setSharedAspect, setMobileCount, type AspectId } from "@/lib/layoutModel";
 import WelcomeTransition from "@/components/WelcomeTransition";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
@@ -354,6 +355,20 @@ export default function GridLayoutPage() {
     setSaving(true);
     try {
       await setUserGridLayout(user.id, selectedLayout, names[selectedLayout], ratios[selectedLayout]);
+      // NEW MODEL (dual-write): the AR selection writes the SHARED aspect; the
+      // count writes the MOBILE count (explicit → no longer derives). Legacy
+      // grid_layout stays for the mobile readers not yet migrated (PostItem,
+      // decks, create). This is what mirrors the AR choice to desktop.
+      const dbUser = await getUserByPrivyId(user.id);
+      if (dbUser) {
+        const aspect: AspectId = selectedLayout === 'collage' ? 'collage'
+          : selectedLayout.startsWith('pana') ? 'pana-wide'
+          : selectedLayout.startsWith('cine') ? 'cine-wide'
+          : selectedLayout.startsWith('legacy') ? 'legacy' : 'scope';
+        const cols = LAYOUTS.find((l) => l.id === selectedLayout)?.cols ?? 1;
+        await setSharedAspect(dbUser.id, aspect);
+        await setMobileCount(dbUser.id, selectedLayout === 'collage' ? 2 : cols);
+      }
       setShowTransition(true);
     } finally {
       setSaving(false);

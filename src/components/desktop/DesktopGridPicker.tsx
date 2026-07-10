@@ -8,8 +8,9 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
+import { setSharedAspect, setDesktopCount, type AspectId } from '@/lib/layoutModel';
 import {
-  DESKTOP_ASPECTS, DESKTOP_COUNTS, chipFor, saveDesktopLayout,
+  DESKTOP_ASPECTS, DESKTOP_COUNTS, chipFor,
   type DesktopAspect, type DesktopCount, type DesktopLayout,
 } from '@/lib/desktopLayout';
 
@@ -67,13 +68,14 @@ export default function DesktopGridPicker({
     if (saving) return;
     setSaving(true); setSaveError(false);
     const layout: DesktopLayout = { aspect, count };
-    const ok = await saveDesktopLayout(userId, layout);
+    // NEW MODEL: the AR step writes the SHARED aspect; the COUNT step writes the
+    // DESKTOP count (an explicit choice → it no longer derives). Each writer
+    // invalidates the cache + broadcasts 'scope:layout-changed' so grids re-read.
+    const okA = await setSharedAspect(userId, aspect as AspectId);
+    const okC = await setDesktopCount(userId, count);
     setSaving(false);
-    if (ok) {
+    if (okA && okC) {
       onApplied(layout);
-      // Broadcast so any mounted desktop grid (home feed) re-reads the new layout
-      // live — the profile grid re-reads on its own remount via the invalidated cache.
-      if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('scope:desktop-layout-changed'));
       onClose();
       router.push('/profile'); // one flow — settings AND the future onboarding entry land here
     } else {

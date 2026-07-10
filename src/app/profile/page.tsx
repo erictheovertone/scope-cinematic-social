@@ -24,6 +24,7 @@ import AddToHomeScreenSheet from "@/components/AddToHomeScreenSheet";
 import { shouldShowA2HS } from "@/lib/pwaUtils";
 import PostCell from "@/components/PostCell";
 import { getColCount } from "@/lib/aspectRatio";
+import { resolveLayout } from "@/lib/layoutModel";
 import { getScopeLimitType } from "@/lib/limits";
 import { useUpsell } from "@/components/UpsellProvider";
 import FrameLoader from "@/components/FrameLoader";
@@ -309,11 +310,19 @@ const userLayoutId = stableLayoutId;
     return () => window.removeEventListener('scope:market-moved', onMoved);
   }, [showCreatePost, supabaseUserId]);
 
+  // Mobile profile grid = the SHARED aspect × the MOBILE count (resolveLayout —
+  // the one resolver both platforms use). Rebuild a canonical layout id from the
+  // resolved values so the existing getColCount/getAspectClass rendering (incl.
+  // collage) is reused unchanged. Reflects a shared AR set on EITHER surface.
   useEffect(() => {
-  if (rawProfile?.grid_layout) {
-    setStableLayoutId(rawProfile.grid_layout); 
-  }
-  }, [rawProfile?.grid_layout]);
+    if (!rawProfile) return;
+    const R = resolveLayout(rawProfile as Parameters<typeof resolveLayout>[0]);
+    const short = R.aspect === 'pana-wide' ? 'pana' : R.aspect === 'cine-wide' ? 'cine' : R.aspect; // scope | legacy
+    const id = R.aspect === 'collage' ? 'collage'
+      : R.aspect === 'legacy' ? 'legacy'
+      : `${R.mobileCount}x-${short}`;
+    setStableLayoutId(id);
+  }, [rawProfile]);
 
   useEffect(() => {
     if (!showDecks || !user) return;

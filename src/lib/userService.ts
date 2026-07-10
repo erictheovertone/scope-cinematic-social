@@ -883,6 +883,9 @@ export const updateProfileFields = async (
     divider_line: string | null;
     holo_banner: boolean;
     more_from: string[]; // post_ids featured in the desktop lightbox MORE FROM shelf
+    aspect_ratio: string; // SHARED layout AR (see layoutModel)
+    mobile_count: number; // mobile grid columns (1|2)
+    desktop_count: number; // desktop grid columns (3|4|5)
   }>
 ): Promise<void> => {
   // Identity is ALWAYS uppercase — enforce here so no write path bypasses it
