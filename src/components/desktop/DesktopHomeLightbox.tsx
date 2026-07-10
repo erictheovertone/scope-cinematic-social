@@ -1,26 +1,29 @@
 'use client';
-// ── DESKTOP HOME FEED LIGHTBOX (Figma 775:4, 1440) ───────────────────────────
-// Opens from a home-grid cell tap. REUSES the desktop post-scroll's stage +
-// right panel verbatim (DesktopPostView — arrows/keyboard step the FEED order,
-// MC/collectors, First Cut leaderboard, comments, collect). Adds the two NEW
-// shelves: the TOP STRIP (lateral feed navigation) and MORE FROM @handle (the
-// creator's settings-selected works). Desktop-only; mobile lightbox untouched.
+// ── DESKTOP HOME FEED LIGHTBOX (Figma 775:4, 1440×900) ───────────────────────
+// Opens from a home-grid cell tap. REUSES DesktopPostView (framing='lightbox':
+// stage TOP = panel top, MORE FROM bottom-aligns to the panel). Fits ONE screen,
+// no scroll. Global 71px rail stays visible (this is NOT theatre). Adds the
+// FEED / FOR YOU / FOLLOWING tabs above the top strip, and the bounded MORE FROM
+// row (ticker + MC, arrow to scan). Desktop-only; mobile lightbox untouched.
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { getProfile } from '@/lib/userService';
+import { usePrivy } from '@privy-io/react-auth';
+import { getProfile, getFollowing } from '@/lib/userService';
 import { getPostsByIds } from '@/lib/postsService';
 import { feedImage } from '@/lib/mediaUrl';
+import { useEconomy } from '@/components/EconomyProvider';
 import DesktopPostView from '@/components/desktop/DesktopPostView';
+import TickerMark from '@/components/economy/TickerMark';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
-const HAIR = 'rgba(255,255,255,0.14)';
 const RAIL_W = 71;
 
 type P = Record<string, unknown>;
 const thumbOf = (p: P): string =>
   (p.poster_url as string) || (p.thumbnail_url as string) || ((p.media_urls as string[])?.[0] ?? '');
+const usd = (n: number) => (n >= 1000 ? `$${Math.round(n).toLocaleString()}` : `$${n.toFixed(2)}`);
 
 export default function DesktopHomeLightbox({
   posts, index, onClose,
@@ -29,21 +32,23 @@ export default function DesktopHomeLightbox({
   index: number;
   onClose: () => void;
 }) {
-  // Navigable list = the feed, plus any MORE FROM post jumped-to that wasn't in
-  // the feed page (appended so arrows/keyboard keep working).
+  const { user } = usePrivy();
+  const economy = useEconomy();
   const [nav, setNav] = useState<P[]>(posts);
   const [pos, setPos] = useState(index);
   const active = nav[pos];
   const creatorId = String(active?.user_id ?? '');
   const creatorHandle = String(active?.username ?? '');
 
+  const [tab, setTab] = useState<'foryou' | 'following'>('foryou');
+  const [followedIds, setFollowedIds] = useState<Set<string>>(new Set());
   const [moreFrom, setMoreFrom] = useState<P[]>([]);
+  const [mfMc, setMfMc] = useState<Map<string, string>>(new Map());
+  const mfScroll = useRef<HTMLDivElement | null>(null);
 
   const step = useCallback((dir: 1 | -1) => {
-    setPos((i) => { const n = i + dir; return n < 0 || n >= nav.length ? i : n; }); // rubber-band at ends
+    setPos((i) => { const n = i + dir; return n < 0 || n >= nav.length ? i : n; });
   }, [nav.length]);
-
-  // jump-to: strip (feed post, already in nav) or MORE FROM (append if absent)
   const jumpTo = useCallback((p: P) => {
     setNav((cur) => {
       const at = cur.findIndex((x) => String(x.id) === String(p.id));
@@ -62,8 +67,18 @@ export default function DesktopHomeLightbox({
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose, step]);
 
-  // MORE FROM = the ACTIVE post's creator's settings selection (profiles.more_from).
-  // Re-reads when the creator changes (stepping to another author). Hidden if none.
+  // FOLLOWING = accounts the viewer follows → filter the strip to their posts.
+  useEffect(() => {
+    if (!user?.id) return;
+    let dead = false;
+    getFollowing(user.id).then((profs) => {
+      if (dead) return;
+      setFollowedIds(new Set((profs ?? []).map((p) => String((p as { user_id?: string }).user_id ?? '')).filter(Boolean)));
+    }).catch(() => {});
+    return () => { dead = true; };
+  }, [user?.id]);
+
+  // MORE FROM = the ACTIVE creator's settings selection; hidden if none.
   useEffect(() => {
     if (!creatorId) { setMoreFrom([]); return; }
     let dead = false;
@@ -79,71 +94,98 @@ export default function DesktopHomeLightbox({
     return () => { dead = true; };
   }, [creatorId]);
 
+  // MC per MORE FROM card — the SAME boundary source the panel/tiles use.
+  useEffect(() => {
+    let dead = false;
+    (async () => {
+      const entries = await Promise.all(moreFrom.map(async (p) => {
+        try { const m = await economy.getPostMarket(String(p.id)); return [String(p.id), m.mcUsd > 0 ? usd(m.mcUsd) : '—'] as const; }
+        catch { return [String(p.id), '—'] as const; }
+      }));
+      if (!dead) setMfMc(new Map(entries));
+    })();
+    return () => { dead = true; };
+  }, [moreFrom, economy]);
+
   if (typeof document === 'undefined') return null;
 
-  return createPortal(
-    <div data-swipe-exclude style={{ position: 'fixed', inset: 0, zIndex: 140, background: '#000', overflowY: 'auto', paddingLeft: RAIL_W }}>
-      {/* close (top-left, clear of the rail) */}
-      <button onClick={onClose} aria-label="Close" style={{ position: 'fixed', top: 16, left: RAIL_W + 18, zIndex: 3, background: 'transparent', border: 'none', cursor: 'pointer', ...SKR, fontSize: 20, color: 'rgba(255,255,255,0.55)', lineHeight: 1, padding: 4 }}>✕</button>
+  const strip = tab === 'following' ? posts.filter((p) => followedIds.has(String(p.user_id))) : posts;
 
-      <div style={{ maxWidth: 1369, margin: '0 auto', padding: '4px 16px 60px' }}>
+  const tabBtn = (label: string, key: 'foryou' | 'following') => (
+    <button onClick={() => setTab(key)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '0 0 4px', ...SKB, fontSize: 13, textTransform: 'uppercase', letterSpacing: '0.06em', color: tab === key ? '#FFF' : 'rgba(255,255,255,0.4)', borderBottom: tab === key ? '2px solid #f20d0d' : '2px solid transparent' }}>{label}</button>
+  );
 
-        {/* ═══ TOP BAND: the lateral-nav STRIP (left) + search chrome (right) ═══ */}
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 20, padding: '8px 0 0', minHeight: 153 }}>
-          {/* TOP STRIP — feed's other posts, horizontally scrollable, quiet handles.
-              Static thumbnails (no autoplay); tap → jump the stage to that post. */}
-          <div style={{ flex: 1, minWidth: 0, display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 8 }}>
-            {posts.map((p, i) => {
-              const isActive = String(p.id) === String(active?.id);
-              return (
-                <button key={String(p.id)} onClick={() => jumpTo(p)} aria-label={`Post by @${String(p.username ?? '')}`}
-                  style={{ flexShrink: 0, width: 176, background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, opacity: isActive ? 1 : 0.62, transition: 'opacity 160ms ease' }}>
-                  <div style={{ width: '100%', aspectRatio: '2.39 / 1', overflow: 'hidden', background: '#0d0d0d', outline: isActive ? '1px solid rgba(242,13,13,0.7)' : 'none' }}>
-                    {thumbOf(p) && <img src={feedImage(thumbOf(p), 360)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
-                  </div>
-                  <p style={{ ...SKB, fontSize: 9, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '5px 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>@{String(p.username ?? '')}</p>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* TOP-RIGHT CHROME — SEARCH box + a square button. The app has no search
-              surface yet, so this is a clean visual stub (reported). */}
-          <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 8, paddingTop: 10 }}>
-            <div style={{ width: 123, height: 33, border: '0.5px solid rgba(255,255,255,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 10px' }}>
-              <span style={{ ...SKB, fontSize: 10, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>SEARCH</span>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3" strokeLinecap="round"/></svg>
+  // ── MORE FROM row (bounded; arrow scans horizontally; ticker + MC caption) ──
+  const moreFromRow = moreFrom.length > 0 ? (
+    <div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '0 0 10px' }}>
+        <p style={{ ...SKB, fontSize: 10, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>
+          MORE FROM <span style={{ color: 'rgba(255,255,255,0.55)' }}>@{creatorHandle}</span>
+        </p>
+        <button onClick={() => mfScroll.current?.scrollBy({ left: 240, behavior: 'smooth' })} aria-label="Scan more" style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4, lineHeight: 0 }}>
+          <svg width="9" height="16" viewBox="0 0 10 22" fill="none"><path d="M1 1L8.6 11L1 21" stroke="rgba(255,255,255,0.6)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+        </button>
+      </div>
+      <div ref={mfScroll} style={{ display: 'flex', gap: 12, overflowX: 'auto', scrollbarWidth: 'none' }}>
+        {moreFrom.map((p) => (
+          <button key={String(p.id)} onClick={() => jumpTo(p)} aria-label="Open" style={{ flexShrink: 0, width: 208, background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, display: 'block' }}>
+            <div style={{ width: '100%', aspectRatio: '2.75 / 1', overflow: 'hidden', background: '#0d0d0d' }}>
+              {thumbOf(p) && <img src={feedImage(thumbOf(p), 480)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
             </div>
-            <button aria-label="Help" style={{ width: 34, height: 33, border: '0.5px solid rgba(255,255,255,0.3)', background: 'transparent', cursor: 'pointer', ...SKB, fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>?</button>
+            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8, margin: '7px 0 0' }}>
+              <span style={{ minWidth: 0, overflow: 'hidden' }}>
+                {(p.ticker as string) ? <TickerMark ticker={p.ticker as string} size={10} /> : <span style={{ ...SKB, fontSize: 10, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase' }}>@{String(p.username ?? '')}</span>}
+              </span>
+              <span style={{ ...SKB, fontSize: 9.5, color: 'rgba(255,255,255,0.55)', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' }}>MC {mfMc.get(String(p.id)) ?? '…'}</span>
+            </div>
+          </button>
+        ))}
+      </div>
+    </div>
+  ) : undefined;
+
+  return createPortal(
+    // left:RAIL_W keeps the global rail (z80) VISIBLE beneath this z140 overlay.
+    // overflow:hidden → everything fits one screen, no scroll (frame 775:4).
+    <div data-swipe-exclude style={{ position: 'fixed', top: 0, right: 0, bottom: 0, left: RAIL_W, zIndex: 140, background: '#000', overflow: 'hidden' }}>
+      <button onClick={onClose} aria-label="Close" style={{ position: 'absolute', top: 16, right: 24, zIndex: 3, background: 'transparent', border: 'none', cursor: 'pointer', ...SKR, fontSize: 20, color: 'rgba(255,255,255,0.55)', lineHeight: 1, padding: 4 }}>✕</button>
+
+      <div style={{ maxWidth: 1330, margin: '0 auto', padding: '18px 24px 0', height: '100%', boxSizing: 'border-box' }}>
+
+        {/* ── FEED / FOR YOU / FOLLOWING tabs (frame ~y38) ── */}
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 20, marginBottom: 12 }}>
+          <span style={{ ...SKB, fontSize: 13, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.06em', marginRight: 4 }}>FEED</span>
+          {tabBtn('FOR YOU', 'foryou')}
+          {tabBtn('FOLLOWING', 'following')}
+          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ width: 123, height: 30, border: '0.5px solid rgba(255,255,255,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 10px' }}>
+              <span style={{ ...SKB, fontSize: 10, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>SEARCH</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3" strokeLinecap="round"/></svg>
+            </div>
+            <button aria-label="Help" style={{ width: 31, height: 30, border: '0.5px solid rgba(255,255,255,0.3)', background: 'transparent', cursor: 'pointer', ...SKB, fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>?</button>
           </div>
         </div>
 
-        {/* ═══ THE STAGE + RIGHT PANEL — reused verbatim from the post-scroll ═══ */}
-        <DesktopPostView posts={nav} index={pos} onStep={step} location={null} />
+        {/* ── TOP STRIP — the tab's posts, horizontal scroll, quiet handles ── */}
+        <div style={{ display: 'flex', gap: 9, overflowX: 'auto', paddingBottom: 8, marginBottom: 6, scrollbarWidth: 'none' }}>
+          {strip.length === 0 ? (
+            <p style={{ ...SKR, fontSize: 11, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.1em', padding: '40px 0' }}>{tab === 'following' ? 'NO POSTS FROM ACCOUNTS YOU FOLLOW' : 'NOTHING HERE YET'}</p>
+          ) : strip.map((p) => {
+            const isActive = String(p.id) === String(active?.id);
+            return (
+              <button key={String(p.id)} onClick={() => jumpTo(p)} aria-label={`Post by @${String(p.username ?? '')}`}
+                style={{ flexShrink: 0, width: 164, background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, opacity: isActive ? 1 : 0.6, transition: 'opacity 160ms ease' }}>
+                <div style={{ width: '100%', aspectRatio: '2.39 / 1', overflow: 'hidden', background: '#0d0d0d', outline: isActive ? '1px solid rgba(242,13,13,0.7)' : 'none' }}>
+                  {thumbOf(p) && <img src={feedImage(thumbOf(p), 340)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
+                </div>
+                <p style={{ ...SKB, fontSize: 9, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '4px 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>@{String(p.username ?? '')}</p>
+              </button>
+            );
+          })}
+        </div>
 
-        {/* separating hairline (frame y717) */}
-        <div style={{ height: 1, background: HAIR, margin: '8px 0 0' }} />
-
-        {/* ═══ SHELF 1: MORE FROM @handle — the creator's settings selection ═══ */}
-        {/* Hidden entirely when the creator selected none (reported behaviour). */}
-        {moreFrom.length > 0 && (
-          <div style={{ padding: '24px 0 0' }}>
-            <p style={{ ...SKB, fontSize: 10, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 14px' }}>
-              MORE FROM <span style={{ color: 'rgba(255,255,255,0.55)' }}>@{creatorHandle}</span>
-            </p>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 22 }}>
-              {moreFrom.slice(0, 4).map((p) => (
-                <button key={String(p.id)} onClick={() => jumpTo(p)} aria-label={`More from @${creatorHandle}`}
-                  style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, display: 'block' }}>
-                  <div style={{ width: '100%', aspectRatio: '2.75 / 1', overflow: 'hidden', background: '#0d0d0d' }}>
-                    {thumbOf(p) && <img src={feedImage(thumbOf(p), 700)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
-                  </div>
-                  <p style={{ ...SKB, fontSize: 10, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '7px 0 0' }}>@{creatorHandle}</p>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
+        {/* ── STAGE + RIGHT PANEL + (below-left) MORE FROM — reused, lightbox framing ── */}
+        <DesktopPostView posts={nav} index={pos} onStep={step} location={null} framing="lightbox" belowLeft={moreFromRow} />
       </div>
     </div>,
     document.body,

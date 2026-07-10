@@ -47,14 +47,21 @@ function Chevron({ dir }: { dir: 1 | -1 }) {
 }
 
 export default function DesktopPostView({
-  posts, index, onStep, location,
+  posts, index, onStep, location, framing = 'profile', belowLeft,
 }: {
   posts: Record<string, unknown>[];
   index: number;
   onStep: (dir: 1 | -1) => void;
   /** The profile owner's location (the frame's location row under the caption). */
   location: string | null;
+  /** 'lightbox' (home feed) raises the stage so its TOP aligns with the panel top
+   *  (frame 775:4), tightens the bottom, and widens the letterbox; 'profile'
+   *  (default) keeps the centered post-scroll seat — unchanged. */
+  framing?: 'profile' | 'lightbox';
+  /** Extra content in the LEFT column below the caption (the MORE FROM row). */
+  belowLeft?: React.ReactNode;
 }) {
+  const lightbox = framing === 'lightbox';
   const { user } = usePrivy();
   const economy = useEconomy();
   const post = posts[index];
@@ -138,12 +145,12 @@ export default function DesktopPostView({
   // width (3C's media-anchoring moved them between ratios, under the cursor).
 
   return (
-    <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', paddingBottom: 80, marginTop: 0 }}> {/* frame seat ~y299 (measured 319 at mt12 — the last 20 trimmed here + the 3-box row) */}
+    <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', paddingBottom: lightbox ? 0 : 80, marginTop: 0 }}> {/* frame seat ~y299 (measured 319 at mt12 — the last 20 trimmed here + the 3-box row) */}
       {/* ═══ LEFT: the stage + below-media rows ═══ */}
       {/* FRAME GEOMETRY (round 3): narrow ~20px ARROW POCKETS hugging the media
           (frame x86/x1083 vs stage x103/1077); stage right edge ~30px from the
           panel (20px pocket + 12px gap). The media is the star. */}
-      <div style={{ flex: 1, minWidth: 0, padding: '0 20px', marginTop: 60 }}> {/* media midline = panel midline (measured +60) */}
+      <div style={{ flex: 1, minWidth: 0, padding: '0 20px', marginTop: lightbox ? 0 : 60, ...(lightbox ? { display: 'flex', flexDirection: 'column', minHeight: 573 } : {}) }}> {/* profile: media midline = panel midline (+60). lightbox: stage TOP = panel top, column runs full panel height so MORE FROM bottom-aligns. */}
         <div style={{ position: 'relative' }}>
           {/* prev / next — Batang > glyphs, mid-media */}
           {/* HIT TARGET NEVER MOVES: 44px outer buttons, stage-anchored seats,
@@ -162,9 +169,10 @@ export default function DesktopPostView({
             </button>
           )}
 
-          {/* THE STAGE — fixed 2.75:1 letterbox; the shared-element morph target */}
-          <motion.div layoutId={`dpost-${postId}`} transition={{ layout: { duration: 0.18, ease: 'easeOut' } }} style={{ width: '100%', aspectRatio: '2.39 / 1', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-            <div style={{ ...(ar >= 2.39 ? { width: '100%' } : { height: '100%' }), aspectRatio: `${ar}`, overflow: 'hidden', background: '#0a0a0a' }}>
+          {/* THE STAGE — fixed letterbox (profile 2.39, lightbox 2.75 per the frame);
+              the shared-element morph target. Each post sits at its own ratio within. */}
+          <motion.div layoutId={`dpost-${postId}`} transition={{ layout: { duration: 0.18, ease: 'easeOut' } }} style={{ width: '100%', aspectRatio: lightbox ? '2.75 / 1' : '2.39 / 1', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+            <div style={{ ...(ar >= (lightbox ? 2.75 : 2.39) ? { width: '100%' } : { height: '100%' }), aspectRatio: `${ar}`, overflow: 'hidden', background: '#0a0a0a' }}>
               {isVideo ? (
                 <GradedVideo
                   key={postId}
@@ -223,10 +231,11 @@ export default function DesktopPostView({
             {location}
           </p>
         )}
+        {belowLeft && <div style={{ marginTop: lightbox ? 'auto' : undefined, paddingTop: 14 }}>{belowLeft}</div>}
       </div>
 
       {/* ═══ RIGHT PANEL (309×573, #030303) ═══ */}
-      <div style={{ width: 309, flexShrink: 0, height: 573, marginTop: -25, background: '#030303', border: '0.25px solid rgba(255,255,255,0.27)', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ width: 309, flexShrink: 0, height: 573, marginTop: lightbox ? 0 : -25, background: '#030303', border: '0.25px solid rgba(255,255,255,0.27)', display: 'flex', flexDirection: 'column' }}>
         {/* header strip: ticker · MC · collectors */}
         {/* three zones distributed across the panel width, hairlines between */}
         <div style={{ display: 'flex', alignItems: 'center', padding: '12px 0' }}>
