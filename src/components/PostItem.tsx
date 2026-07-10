@@ -65,16 +65,12 @@ interface PostItemProps {
   commentsOpen?: boolean;
   /** Receives the post id so the feed can pass a STABLE handler (memo holds). */
   onToggleComments?: (postId: string) => void;
-  /** DESKTOP ONLY — force the media cell to a uniform aspect (the viewer's grid
-   *  layout choice, W/H). Mobile never passes it → its native per-post aspect is
-   *  preserved unchanged. */
-  forceAspectRatio?: number;
 }
 
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 
-function PostItem({ post, onImageClick, commentsOpen, onToggleComments, forceAspectRatio }: PostItemProps) {
+function PostItem({ post, onImageClick, commentsOpen, onToggleComments }: PostItemProps) {
   const router = useRouter();
   const { user } = usePrivy();
   const [likes, setLikes] = useState<any[]>([]);
@@ -201,10 +197,8 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, forceAsp
     }
   };
 
-  // Desktop grid-layout override: a uniform aspect for every cell. Mobile passes
-  // nothing → native per-post aspect (incl. the legacy pillarbox) is unchanged.
-  const is43 = (post.layout_id ?? '') === 'legacy' && !forceAspectRatio;
-  const paddingPercent = forceAspectRatio ? (100 / forceAspectRatio) : ratioPadding(getAspectRatio(post.layout_id ?? ''));
+  const is43 = (post.layout_id ?? '') === 'legacy';
+  const paddingPercent = ratioPadding(getAspectRatio(post.layout_id ?? ''));
 
   // Metadata ROW — lifted OFF the media onto the black above it (layout nudge):
   // handle left, ticker+MC right, same type styles; the media stays clean.
@@ -429,5 +423,5 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, forceAsp
 // a comment toggle re-renders only the two affected cards.
 export default memo(
   PostItem,
-  (prev, next) => prev.post === next.post && prev.commentsOpen === next.commentsOpen && prev.forceAspectRatio === next.forceAspectRatio,
+  (prev, next) => prev.post === next.post && prev.commentsOpen === next.commentsOpen,
 );

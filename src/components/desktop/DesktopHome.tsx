@@ -16,7 +16,7 @@ import { useRouter } from 'next/navigation';
 import { usePrivy } from '@privy-io/react-auth';
 import { getAllPosts, FEED_PAGE_SIZE } from '@/lib/postsService';
 import { getUserByPrivyId, getProfile } from '@/lib/userService';
-import { deriveDesktopLayout, chipFor, type DesktopLayout } from '@/lib/desktopLayout';
+import { deriveDesktopLayout, type DesktopLayout } from '@/lib/desktopLayout';
 import PostItem from '@/components/PostItem';
 import DesktopHomeLightbox from '@/components/desktop/DesktopHomeLightbox';
 import DesktopViewingModes, { type ViewingMode } from '@/components/desktop/DesktopViewingModes';
@@ -114,13 +114,16 @@ export default function DesktopHome() {
           <p style={{ ...SKB, textAlign: 'center', fontSize: 12, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.14em', padding: '80px 0' }}>NOTHING SCREENING YET</p>
         ) : (
           <>
+            {/* HOME FEED: layout controls the COLUMN COUNT only. Each cell keeps
+                the POST's own canonical aspect (mixed heights, like mobile's
+                feed) — NOT a uniform crop. (The profile grid does force a uniform
+                aspect; that's its design, unchanged.) */}
             <div style={{ display: 'grid', gridTemplateColumns: `repeat(${layout.count}, minmax(0, 1fr))`, columnGap: 34, alignItems: 'start' }}>
               {posts.map((p, i) => (
                 <PostItem
                   key={String(p.id)}
                   post={p as unknown as React.ComponentProps<typeof PostItem>['post']}
                   onImageClick={() => setView(i)}
-                  forceAspectRatio={chipFor(layout.aspect).ratio}
                 />
               ))}
             </div>
