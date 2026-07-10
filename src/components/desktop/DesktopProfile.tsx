@@ -195,7 +195,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
               ascender gap). Frame rhythm: handle tight beneath (~25px pitch). */}
           <div style={{ position: 'absolute', left: 177, top: 17, right: 0 }}>
             <p style={{ ...SKB, fontSize: 24, color: '#FFF', textTransform: 'uppercase', letterSpacing: '-0.02em', margin: 0, lineHeight: 1 }}>{name}</p>
-            <p style={{ ...SKB, fontSize: 12, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', margin: '3px 0 0' }}>{handle ? `@${handle}` : ''}</p>
+            <p style={{ ...SKB, fontSize: 12, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', margin: '4.6px 0 0' }}>{handle ? `@${handle}` : ''}</p>
             {bio && <p style={{ ...SKR, fontSize: 13, color: 'rgba(255,255,255,0.5)', lineHeight: 1.5, margin: '10px 0 0', maxWidth: 320 }}>{bio}</p>}
 
             {/* META ROW — location · primary link · joined (frame ~y140) */}
