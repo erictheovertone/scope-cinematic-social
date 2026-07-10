@@ -4,6 +4,7 @@ import {useEffect, useState, useRef} from 'react';
 import { useRouter } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
 import { getUserByPrivyId, getProfile, isProMember } from "@/lib/userService";
+import { membershipBarLabel } from "@/lib/membership";
 import { resolveBadges } from "@/lib/economy/badges";
 import { useEconomy } from '@/components/EconomyProvider';
 import { supabase } from "@/lib/supabase/client";
@@ -166,6 +167,7 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
     tiers: BadgeExplainerSheetProps['userTiers'];
     isPaid: boolean;
     paidUntil: Date | null;
+    cancelsAt: Date | null; // scheduled cancel → the bar reads CANCELS, not RENEWS
     firstCutCount: number; // active First Cut slots (expired_at IS NULL)
   } | null>(null);
 
@@ -201,6 +203,7 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
           },
           isPaid,
           paidUntil: p.paid_member_until ? new Date(p.paid_member_until) : null,
+          cancelsAt: p.membership_cancels_at ? new Date(p.membership_cancels_at) : null,
           firstCutCount: fcCount ?? 0,
         });
       } catch (e) {
@@ -216,6 +219,7 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
   const vFirstCutCount = viewer?.firstCutCount ?? 0; // active First Cut slots → lights First Cut in the earned grid
   const vIsPaid = viewer?.isPaid ?? !!isPaidMember;
   const vPaidUntil = viewer?.paidUntil ?? paidMemberUntil ?? null;
+  const vCancelsAt = viewer?.cancelsAt ?? null;
 
   const currentTier = vTiers.isFoundingMember ? 'founding'
     : vTiers.isTopCollector ? 'top1k'
@@ -312,9 +316,7 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
             <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               <span style={{ ...BOLD, fontSize: 'var(--fs-7)', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.15em' }}>MY MEMBERSHIP</span>
               <span style={{ ...BOLD, fontSize: 'var(--fs-9)', color: '#FFFFFF', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                {vIsPaid
-                  ? `SCOPE PRO · RENEWS ${vPaidUntil ? vPaidUntil.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase() : ''}`
-                  : 'FREE'}
+                {membershipBarLabel({ isPaid: vIsPaid, paidUntil: vPaidUntil, cancelsAt: vCancelsAt })}
               </span>
             </div>
           </div>

@@ -29,7 +29,8 @@ import {
   getProfileLinks, addProfileLink, deleteProfileLink, setPrimaryLink, type ProfileLink,
 } from '@/lib/userService';
 import { useUpsell } from '@/components/UpsellProvider';
-import { updateProfileFields } from '@/lib/userService';
+import { updateProfileFields, invalidateMembership } from '@/lib/userService';
+import { resolveMembership, membershipBarLabel, type MembershipState } from '@/lib/membership';
 import { DIVIDER_LINES, DIVIDER_ORDER, TIER_UNLOCK_LABEL, dividerTier, isDividerUnlocked, type DividerLineKey } from '@/lib/economy/dividerLines';
 import { useEconomy } from '@/components/EconomyProvider';
 import { feedImage } from '@/lib/mediaUrl';
@@ -74,6 +75,12 @@ export default function DesktopSettings() {
   const [newLinkUrl, setNewLinkUrl] = useState('');
   const [showRecap, setShowRecapState] = useState(true);
   const [isPaid, setIsPaid] = useState(false);
+  // Membership bar state (same read/label as the mobile bar). Cancel/resume run
+  // inline here — desktop settings is where membership management lives.
+  const [membership, setMembership] = useState<MembershipState>({ isPaid: false, paidUntil: null, cancelsAt: null });
+  const [memConfirmCancel, setMemConfirmCancel] = useState(false);
+  const [memBusy, setMemBusy] = useState<false | 'cancel' | 'resume'>(false);
+  const [memError, setMemError] = useState<string | null>(null);
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [photoState, setPhotoState] = useState<'idle' | 'uploading' | 'done'>('idle');
   const [cropFile, setCropFile] = useState<File | null>(null);
@@ -122,6 +129,7 @@ export default function DesktopSettings() {
           setPfp(profile.profile_image_url || null);
           setShowRecapState(profile.show_recap !== false);
           setIsPaid(isProMember(profile as { is_paid_member?: boolean; paid_member_until?: string | null }));
+          setMembership(resolveMembership(profile as Parameters<typeof resolveMembership>[0]));
           setGridInitial(deriveDesktopLayout((profile as { desktop_layout?: unknown }).desktop_layout, profile.grid_layout));
           const px = profile as unknown as Record<string, unknown>;
           setKitCamera((px.kit_camera as string) || '');
@@ -146,6 +154,45 @@ export default function DesktopSettings() {
       } catch (e) { console.error('[desktop-settings] load error:', e); }
     })();
   }, [user?.id]);
+
+  // Re-read membership after a cancel/resume (or an in-app Pro purchase) — the
+  // SAME invalidate + fresh getProfile the mobile bar relies on. No divergent
+  // logic; both surfaces read through resolveMembership.
+  const reloadMembership = async () => {
+    if (!user?.id) return;
+    await invalidateMembership(user.id);
+    const sb = await getUserByPrivyId(user.id);
+    if (!sb) return;
+    const m = resolveMembership(await getProfile(sb.id) as Parameters<typeof resolveMembership>[0]);
+    setMembership(m); setIsPaid(m.isPaid);
+  };
+  useEffect(() => {
+    const h = () => { void reloadMembership(); };
+    window.addEventListener('scope:membership-changed', h);
+    window.addEventListener('scope:pro-activated', h);
+    return () => { window.removeEventListener('scope:membership-changed', h); window.removeEventListener('scope:pro-activated', h); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
+
+  const memCancel = async () => {
+    setMemBusy('cancel'); setMemError(null);
+    try {
+      const res = await fetch('/api/stripe/cancel-subscription', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: user?.id }) });
+      if (res.ok) { setMemConfirmCancel(false); await reloadMembership(); return; }
+      const j = await res.json().catch(() => ({}));
+      setMemError(j?.error === 'No subscription found' || j?.error === 'No active subscription' ? 'No active subscription to cancel.' : "Couldn't cancel right now — try again.");
+    } catch { setMemError("Couldn't cancel right now — try again."); }
+    finally { setMemBusy(false); }
+  };
+  const memResume = async () => {
+    setMemBusy('resume'); setMemError(null);
+    try {
+      const res = await fetch('/api/stripe/cancel-subscription', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: user?.id, action: 'resume' }) });
+      if (res.ok) { await reloadMembership(); return; }
+      setMemError("Couldn't resume right now — try again.");
+    } catch { setMemError("Couldn't resume right now — try again."); }
+    finally { setMemBusy(false); }
+  };
 
   const save = async () => {
     if (!sbUserId || saveState === 'saving') return;
@@ -331,9 +378,56 @@ export default function DesktopSettings() {
       case 'membership':
         return (
           <div style={{ maxWidth: 520 }}>
-            {isPaid
-              ? row('Manage Membership', () => router.push('/membership/manage'))
-              : row('Become a Member', () => goPro())}
+            {/* STATUS BAR — same read + label as the mobile bar (membershipBarLabel).
+                Reflects RENEWS / CANCELS <date> inline; GET PRO for non-members. */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '16px 18px', border: `1px solid ${HAIR}`, marginBottom: membership.isPaid ? 18 : 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
+                <img src={membership.isPaid ? '/badges/scope-pro-badge-min-design-01.png' : '/free-tier-aperture-logo-red.png'} alt="" style={{ width: 22, height: 22, objectFit: 'contain', flexShrink: 0 }} />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 3, minWidth: 0 }}>
+                  <span style={{ ...SKB, fontSize: 9, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.15em' }}>MY MEMBERSHIP</span>
+                  <span style={{ ...SKB, fontSize: 13, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {membershipBarLabel(membership)}
+                  </span>
+                </div>
+              </div>
+              {!membership.isPaid && (
+                <button onClick={() => goPro()} style={{ ...SKB, fontSize: 11, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.08em', background: RED, border: 'none', cursor: 'pointer', padding: '10px 20px', flexShrink: 0 }}>GET PRO →</button>
+              )}
+            </div>
+
+            {/* MANAGE CONTROLS — cancel / resume inline (same endpoint as mobile) */}
+            {membership.isPaid && (
+              <div>
+                {membership.cancelsAt ? (
+                  <div>
+                    <p style={{ ...SKR, fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, margin: '0 0 12px' }}>
+                      Your membership is set to cancel — Pro stays active until then.
+                    </p>
+                    <button onClick={memResume} disabled={memBusy === 'resume'} style={{ ...SKB, fontSize: 11, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.08em', background: RED, border: 'none', cursor: memBusy ? 'default' : 'pointer', padding: '12px 24px', width: '100%' }}>
+                      {memBusy === 'resume' ? 'RESUMING…' : 'RESUME MEMBERSHIP'}
+                    </button>
+                  </div>
+                ) : !memConfirmCancel ? (
+                  <button onClick={() => setMemConfirmCancel(true)} style={{ ...SKB, fontSize: 11, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.08em', background: 'transparent', border: `1px solid ${HAIR}`, cursor: 'pointer', padding: '12px 24px', width: '100%' }}>
+                    CANCEL MEMBERSHIP
+                  </button>
+                ) : (
+                  <div style={{ border: '1px solid rgba(242,13,13,0.3)', padding: 20 }}>
+                    <p style={{ ...SKB, fontSize: 13, color: '#FFF', textTransform: 'uppercase', margin: '0 0 8px' }}>ARE YOU SURE?</p>
+                    <p style={{ ...SKR, fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, margin: '0 0 18px' }}>
+                      You&apos;ll keep Pro until the end of your billing period, then revert to free.
+                    </p>
+                    <div style={{ display: 'flex', gap: 10 }}>
+                      <button onClick={() => setMemConfirmCancel(false)} style={{ ...SKB, flex: 1, fontSize: 10, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', background: 'transparent', border: `1px solid ${HAIR}`, cursor: 'pointer', padding: '11px 0' }}>KEEP PRO</button>
+                      <button onClick={memCancel} disabled={memBusy === 'cancel'} style={{ ...SKB, flex: 1, fontSize: 10, color: RED, textTransform: 'uppercase', background: 'rgba(242,13,13,0.15)', border: '1px solid rgba(242,13,13,0.4)', cursor: memBusy ? 'default' : 'pointer', padding: '11px 0' }}>
+                        {memBusy === 'cancel' ? 'CANCELLING…' : 'YES, CANCEL'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+                {memError && <p style={{ ...SKR, fontSize: 11, color: RED, lineHeight: 1.5, margin: '14px 0 0' }}>{memError}</p>}
+              </div>
+            )}
           </div>
         );
       case 'experience':

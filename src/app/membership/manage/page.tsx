@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
 import { supabase } from "@/lib/supabase/client";
+import { invalidateMembership } from "@/lib/userService";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -43,7 +44,14 @@ export default function ManageMembershipPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: user?.id, action: 'resume' }),
       });
-      if (res.ok) { setCancelsAt(null); setCancelled(false); return; }
+      if (res.ok) {
+        setCancelsAt(null); setCancelled(false);
+        // Invalidate the shared profile cache so the membership BAR (badges
+        // sheet / desktop panel) re-reads fresh state instead of stale RENEWS.
+        if (user?.id) await invalidateMembership(user.id);
+        window.dispatchEvent(new CustomEvent('scope:membership-changed'));
+        return;
+      }
       setCancelError("Couldn't resume right now — please try again.");
     } catch {
       setCancelError("Couldn't resume right now — please try again.");
@@ -65,6 +73,10 @@ export default function ManageMembershipPage() {
         const j = await res.json().catch(() => ({}));
         if (j?.cancelsAt) setCancelsAt(j.cancelsAt);
         setCancelled(true);
+        // Invalidate the shared profile cache so the membership BAR (badges
+        // sheet / desktop panel) reflects CANCELS immediately, not stale RENEWS.
+        if (user?.id) await invalidateMembership(user.id);
+        window.dispatchEvent(new CustomEvent('scope:membership-changed'));
         return;
       }
       // Don't fail silently — surface it so "Cancel anytime" is honest.
