@@ -7,7 +7,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { motion, useReducedMotion } from 'framer-motion';
 
 const RAIL_W = 71;
@@ -47,6 +47,7 @@ const ICONS: { key: string; href: string; label: string; match: (p: string) => b
 
 export default function DesktopRail() {
   const pathname = usePathname() ?? '/';
+  const router = useRouter();
   const reduced = !!useReducedMotion();
   // Takeover standdown — the same attribute mechanism as BottomToolbar.
   const [takeover, setTakeover] = useState(false);
@@ -69,9 +70,16 @@ export default function DesktopRail() {
         display: 'flex', flexDirection: 'column', alignItems: 'center',
       }}
     >
-      <Link href="/" aria-label="Home" style={{ display: 'block', padding: '18px 0 26px' }}>
+      {/* The ONE Scope logomark. On the home feed it opens VIEWING MODES (the
+          feed listens for this event); elsewhere it navigates Home (the bottom
+          rail also has a Home glyph). */}
+      <button
+        onClick={() => { if (pathname === '/') window.dispatchEvent(new CustomEvent('scope:open-viewing-modes')); else router.push('/'); }}
+        aria-label={pathname === '/' ? 'Viewing modes' : 'Home'}
+        style={{ display: 'block', padding: '18px 0 26px', background: 'transparent', border: 'none', cursor: 'pointer' }}
+      >
         <img src="/logomark-plain-white.png" alt="Scope" style={{ width: 41, height: 26, objectFit: 'contain', display: 'block' }} />
-      </Link>
+      </button>
       {/* BOTTOM-ANCHORED icon stack (the frame's rhythm); the active marker is
           ONE shared element that SLIDES between rows (layoutId), icons
           crossfade as it arrives. Reduced-motion: instant. */}

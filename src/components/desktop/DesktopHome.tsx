@@ -1,24 +1,25 @@
 'use client';
-// ── DESKTOP HOME — the clean 3-across cinematic grid ─────────────────────────
-// Desktop-only (mounted via the useIsDesktop seam in app/page.tsx; mobile feed
-// untouched). Three posts across at the canonical SCOPE ratio (2.39:1), generous
-// gutters, scrollable. The grid's only job is to INVITE the lightbox — so it's
-// quiet, not busy. The Scope logomark opens VIEWING MODES ("choose your
-// perspective"). Cell tap → the home lightbox (Part 2); Part 1 uses the existing
-// desktop post viewer as an interim view-swap (← BACK returns to the grid).
+// ── DESKTOP HOME — the 3-across cinematic FEED ───────────────────────────────
+// Desktop-only (mounted via the useIsDesktop seam in app/page.tsx; the mobile
+// feed is untouched). Real 3-column grid of FULL feed cards — each cell is
+// mobile's PostItem (media + @handle + [TICKER] MC + like/comment/collect + the
+// First Cut insignia), reused verbatim so NO metadata is dropped and every
+// action works inline exactly like mobile. Same getAllPosts service + fields as
+// mobile. Media autoplays (living tiles) — this is the FEED, motion belongs.
+// Cells at the canonical SCOPE ratio (each post renders its own aspect, as on
+// mobile; scope 2.39 is the platform default). Tap media → the home lightbox
+// (Part 2; interim = the existing desktop post viewer). ONE logomark total: it
+// lives in the rail and opens VIEWING MODES (dispatched here as an event).
 
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { getAllPosts, FEED_PAGE_SIZE } from '@/lib/postsService';
-import { feedImage } from '@/lib/mediaUrl';
-import { chipFor } from '@/lib/desktopLayout';
-import GradedVideo from '@/components/finishing/GradedVideo';
+import PostItem from '@/components/PostItem';
 import DesktopPostView from '@/components/desktop/DesktopPostView';
 import DesktopViewingModes, { type ViewingMode } from '@/components/desktop/DesktopViewingModes';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
-const RAIL_W = 71;                 // clear the global left rail
-const SCOPE_RATIO = chipFor('scope').ratio; // 2.39 — canonical cinematic ratio
+const RAIL_W = 71; // clear the global left rail
 
 export default function DesktopHome() {
   const router = useRouter();
@@ -41,6 +42,13 @@ export default function DesktopHome() {
       } catch (e) { console.error('[desktop-home] load error:', e); if (alive) setPosts([]); }
     })();
     return () => { alive = false; };
+  }, []);
+
+  // The ONE logomark (in the rail) opens viewing modes — the rail dispatches this.
+  useEffect(() => {
+    const open = () => setModesOpen(true);
+    window.addEventListener('scope:open-viewing-modes', open);
+    return () => window.removeEventListener('scope:open-viewing-modes', open);
   }, []);
 
   const loadMore = useCallback(async () => {
@@ -84,52 +92,23 @@ export default function DesktopHome() {
 
   return (
     <div style={{ minHeight: '100dvh', background: '#000', paddingLeft: RAIL_W }}>
-      {/* ── HEADER: the logomark IS the VIEWING MODES trigger ── */}
-      <div style={{ position: 'sticky', top: 0, zIndex: 10, display: 'flex', justifyContent: 'center', padding: '22px 0 18px', background: 'linear-gradient(#000 72%, rgba(0,0,0,0))' }}>
-        <button onClick={() => setModesOpen(true)} aria-label="Viewing modes — choose your perspective" style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 6, lineHeight: 0 }}>
-          <img src="/logomark-plain-white.png" alt="Scope — viewing modes" style={{ width: 46, height: 29, objectFit: 'contain', display: 'block' }} />
-        </button>
-      </div>
-
       {view == null ? (
-        // ── THE GRID: 3-across, SCOPE 2.39, generous gutters, quiet ──
-        <div style={{ maxWidth: 1360, margin: '0 auto', padding: '10px 48px 96px' }}>
+        // ── THE GRID: real 3-across, full feed cards, generous gutters ──
+        <div style={{ maxWidth: 1440, margin: '0 auto', padding: '40px 48px 96px' }}>
           {posts == null ? (
             <div style={{ minHeight: '40vh' }} />
           ) : posts.length === 0 ? (
             <p style={{ ...SKB, textAlign: 'center', fontSize: 12, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.14em', padding: '80px 0' }}>NOTHING SCREENING YET</p>
           ) : (
             <>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 26 }}>
-                {posts.map((p, i) => {
-                  const src = (p.poster_url as string) || (p.thumbnail_url as string) || ((p.media_urls as string[])?.[0] ?? '');
-                  return (
-                    <button
-                      key={String(p.id)}
-                      onClick={() => setView(i)}
-                      aria-label="Open"
-                      style={{ position: 'relative', aspectRatio: `${SCOPE_RATIO}`, overflow: 'hidden', background: '#0d0d0d', border: 'none', cursor: 'pointer', padding: 0, display: 'block' }}
-                    >
-                      {p.media_type === 'video' ? (
-                        <GradedVideo
-                          url={(p.media_urls as string[])?.[0] ?? ''}
-                          posterUrl={src || null}
-                          clipUrl={(p.autoplay_clip_url as string) ?? null}
-                          editParams={p.edit_params}
-                          autoplayFlag={p.autoplay !== false}
-                          gridMode
-                          cropX={(p.crop_x as number) ?? 0}
-                          cropY={(p.crop_y as number) ?? 0}
-                          cropWidth={(p.crop_width as number) ?? 1}
-                          cropHeight={(p.crop_height as number) ?? 1}
-                          style={{ width: '100%', height: '100%' }}
-                        />
-                      ) : (
-                        src && <img src={feedImage(src, 700)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                      )}
-                    </button>
-                  );
-                })}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', columnGap: 34, alignItems: 'start' }}>
+                {posts.map((p, i) => (
+                  <PostItem
+                    key={String(p.id)}
+                    post={p as unknown as React.ComponentProps<typeof PostItem>['post']}
+                    onImageClick={() => setView(i)}
+                  />
+                ))}
               </div>
               {hasMore && <div ref={sentinelRef} style={{ height: 1 }} />}
             </>
@@ -137,7 +116,7 @@ export default function DesktopHome() {
         </div>
       ) : (
         // ── INTERIM VIEWER (Part 2 = the real home lightbox) ──
-        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 40px' }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '28px 40px 0' }}>
           <button onClick={() => setView(null)} style={{ ...SKB, fontSize: 11, color: 'rgba(255,255,255,0.55)', textTransform: 'uppercase', letterSpacing: '0.12em', background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px 0 12px' }}>← BACK</button>
           {posts && posts[view] && (
             <DesktopPostView
