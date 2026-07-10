@@ -10,6 +10,8 @@ import PostModal from "@/components/PostModal";
 import MirageView from "@/components/MirageView";
 import TheatreMode from "@/components/TheatreMode";
 import ViewingModesMenu from "@/components/ViewingModesMenu";
+import { useIsDesktop } from "@/lib/useIsDesktop";
+import DesktopHome from "@/components/desktop/DesktopHome";
 import { AnimatePresence } from "framer-motion";
 
 type FeedState = "normal" | "exiting" | "entering";
@@ -47,6 +49,7 @@ export default function Home() {
   // Captured viewport position of the tapped post, so it stays anchored while
   // the feed reflows (another post may collapse above it).
   const anchorRef = useRef<{ id: string; top: number } | null>(null);
+  const isDesktop = useIsDesktop();
 
   // Stable (refs + setState only) so PostItem's memo holds across home re-renders.
   const toggleComments = useCallback((postId: string) => {
@@ -261,6 +264,11 @@ export default function Home() {
   if (!ready || !authenticated) {
     return <div style={{ position: 'fixed', inset: 0, background: '#000000' }} />;
   }
+
+  // Desktop seam — the mobile feed below is untouched; DesktopHome owns the
+  // desktop surface (3-across scope grid + viewing modes). Hooks above run
+  // regardless (React order), matching the profile page's desktop branch.
+  if (isDesktop) return <DesktopHome />;
 
   return (
     <div className="bg-black relative app-shell screen-min">
