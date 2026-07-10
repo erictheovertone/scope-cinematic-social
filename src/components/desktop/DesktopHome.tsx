@@ -13,10 +13,7 @@
 
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { usePrivy } from '@privy-io/react-auth';
 import { getAllPosts, FEED_PAGE_SIZE } from '@/lib/postsService';
-import { getUserByPrivyId, getProfile } from '@/lib/userService';
-import { resolveLayout, type ResolvedLayout } from '@/lib/layoutModel';
 import PostItem from '@/components/PostItem';
 import DesktopHomeLightbox from '@/components/desktop/DesktopHomeLightbox';
 import DesktopViewingModes, { type ViewingMode } from '@/components/desktop/DesktopViewingModes';
@@ -26,11 +23,6 @@ const RAIL_W = 71; // clear the global left rail
 
 export default function DesktopHome() {
   const router = useRouter();
-  const { user } = usePrivy();
-  // The VIEWER's grid-layout choice drives the feed density — the SAME resolver
-  // (deriveDesktopLayout) the desktop profile grid uses. desktop_layout wins;
-  // else derive from the mobile layout; else scope/4.
-  const [layout, setLayout] = useState<ResolvedLayout>({ aspect: 'scope', mobileCount: 1, desktopCount: 3 });
   const [posts, setPosts] = useState<Record<string, unknown>[] | null>(null);
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
@@ -59,24 +51,6 @@ export default function DesktopHome() {
     window.addEventListener('scope:open-viewing-modes', open);
     return () => window.removeEventListener('scope:open-viewing-modes', open);
   }, []);
-
-  // Resolve the viewer's desktop grid layout (count + aspect) — same resolver as
-  // the profile grid. Re-reads on a layout change dispatched by the picker.
-  useEffect(() => {
-    if (!user?.id) return;
-    let alive = true;
-    const load = async () => {
-      const sb = await getUserByPrivyId(user.id).catch(() => null);
-      if (!sb || !alive) return;
-      const p = await getProfile(sb.id).catch(() => null);
-      if (!alive) return;
-      setLayout(resolveLayout(p as Parameters<typeof resolveLayout>[0]));
-    };
-    void load();
-    const onChange = () => { void load(); };
-    window.addEventListener('scope:layout-changed', onChange);
-    return () => { alive = false; window.removeEventListener('scope:layout-changed', onChange); };
-  }, [user?.id]);
 
   const loadMore = useCallback(async () => {
     if (loadingMore || !hasMore) return;
@@ -122,11 +96,12 @@ export default function DesktopHome() {
           <p style={{ ...SKB, textAlign: 'center', fontSize: 12, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.14em', padding: '80px 0' }}>NOTHING SCREENING YET</p>
         ) : (
           <>
-            {/* HOME FEED: layout controls the COLUMN COUNT only. Each cell keeps
-                the POST's own canonical aspect (mixed heights, like mobile's
-                feed) — NOT a uniform crop. (The profile grid does force a uniform
-                aspect; that's its design, unchanged.) */}
-            <div style={{ display: 'grid', gridTemplateColumns: `repeat(${layout.desktopCount}, minmax(0, 1fr))`, columnGap: 34, alignItems: 'start' }}>
+            {/* HOME FEED = the house design: FIXED 3-across, severed from user
+                layout settings entirely (AR/counts govern the PROFILE grid only).
+                Each cell keeps the POST's OWN authored aspect (mixed heights) —
+                that's how a creator's AR intent reaches the feed. No viewer's or
+                creator's setting changes the feed's column structure. */}
+            <div style={{ display: 'grid', gridTemplateColumns: `repeat(3, minmax(0, 1fr))`, columnGap: 34, alignItems: 'start' }}>
               {posts.map((p, i) => (
                 <PostItem
                   key={String(p.id)}
