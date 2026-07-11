@@ -113,15 +113,22 @@ export default function DesktopBioSheet({ profile, isOwn, links, badges, posts, 
             width → far less zoom, subject recognizable), anchored right, face high
             (objectPosition center 20%). Then low-key scrims so it emerges from black. */}
         <div style={{ position: 'relative', height: 420, margin: '0 -40px', overflow: 'hidden', background: '#080808' }}>
-          {pfp && <img src={feedImage(pfp, 1200)} alt="" style={{ position: 'absolute', right: 0, top: 0, width: '55%', height: '100%', objectFit: 'cover', objectPosition: 'center 22%' }} />}
-          {/* overall low-key dim */}
-          <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.28)' }} />
-          {/* heavy left→right scrim — the data zone is effectively solid black */}
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, #000 0%, #000 42%, rgba(0,0,0,0.82) 62%, rgba(0,0,0,0.4) 84%, rgba(0,0,0,0.12) 100%)' }} />
-          {/* wide top/bottom feather — the image melts into black, not a hard edge */}
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.72) 0%, transparent 32%, transparent 52%, #000 100%)' }} />
-          {/* radial vignette — edges darken around the emerging subject */}
-          <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(130% 105% at 74% 42%, transparent 30%, rgba(0,0,0,0.55) 100%)' }} />
+          {/* CONTAIN + BLEED (round-4 geometry fix): the square PFP was cover-
+              filling a wide-short band → structural over-zoom (scaled to width,
+              ~35% of height cropped). Now the FULL square face renders at ~band
+              height, floating right-of-center, its edges dissolved into black by
+              a radial feather — a portrait emerging from darkness, not a wall crop. */}
+          {pfp && (
+            <div style={{ position: 'absolute', top: '50%', right: '17%', transform: 'translateY(-50%)', width: 350, height: 350 }}>
+              <img src={feedImage(pfp, 720)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              {/* the portrait's OWN edges melt into black (all sides) */}
+              <div style={{ position: 'absolute', inset: -1, background: 'radial-gradient(closest-side at 50% 46%, transparent 54%, #000 97%)' }} />
+            </div>
+          )}
+          {/* deep left data-zone gradient — name block sits on solid black */}
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, #000 0%, #000 42%, rgba(0,0,0,0.4) 60%, transparent 84%)' }} />
+          {/* soft top/bottom edge feather */}
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, #000 0%, transparent 22%, transparent 74%, #000 100%)' }} />
 
           {/* left overlay — identity */}
           <div style={{ position: 'absolute', left: 40, top: 0, bottom: 0, width: 480, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
