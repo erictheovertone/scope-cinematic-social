@@ -88,6 +88,7 @@ export default function Profile() {
  const [stableLayoutId, setStableLayoutId] = useState<string>('scope');
 const userLayoutId = stableLayoutId;
   const [layoutLoaded, setLayoutLoaded] = useState(false);
+  const [postsLoaded, setPostsLoaded] = useState(false);
   const [activeTab, setActiveTab] = useState<'main' | 'collected' | 'decks' | 'theatre'>('main');
   const [userPosts, setUserPosts] = useState<any[]>([]);
   const [analytics, setAnalytics] = useState({
@@ -268,6 +269,10 @@ const userLayoutId = stableLayoutId;
         setAnalytics(prev => ({ ...prev, totalPosts: posts.length, followers: fc, following: fgc }));
       } catch (error) {
         console.error('Error loading posts:', error);
+      } finally {
+        // Empty-vs-content is only known once posts resolve — flip this so the
+        // "create your first post" state can't flash before the real data lands.
+        setPostsLoaded(true);
       }
     };
     loadData();
@@ -588,7 +593,7 @@ const userLayoutId = stableLayoutId;
       )}
 
       {/* Posts grid — header space reserved by spacer in scroll content, not by moving the container. */}
-      {layoutLoaded && activeTab === 'main' && (
+      {layoutLoaded && postsLoaded && activeTab === 'main' && (
         <div style={{ position: 'absolute', inset: 0 }}>
           {userPosts.length === 0 ? (
             <div

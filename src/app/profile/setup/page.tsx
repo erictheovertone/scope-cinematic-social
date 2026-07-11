@@ -11,7 +11,9 @@ const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fon
 
 async function compressImage(file: File): Promise<File> {
   return new Promise((resolve) => {
-    const MAX = 1920, QUALITY = 0.82;
+    // PFP only — it renders at avatar sizes, so 512² WebP (~80–150KB) is plenty and
+    // uploads near-instant on cell. (Post media stays full-res in CreatePostFlow.)
+    const MAX = 512, QUALITY = 0.85;
     const url = URL.createObjectURL(file);
     const img = new Image();
     img.onload = () => {
@@ -29,8 +31,8 @@ async function compressImage(file: File): Promise<File> {
         ctx.drawImage(img, 0, 0, width, height);
         canvas.toBlob((blob) => {
           if (!blob) { resolve(file); return; }
-          resolve(new File([blob], file.name.replace(/\.[^.]+$/, '') + '-compressed.jpg', { type: 'image/jpeg' }));
-        }, 'image/jpeg', QUALITY);
+          resolve(new File([blob], file.name.replace(/\.[^.]+$/, '') + '-pfp.webp', { type: 'image/webp' }));
+        }, 'image/webp', QUALITY);
       } catch { resolve(file); }
     };
     img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };

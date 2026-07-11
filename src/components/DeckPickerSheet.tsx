@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import {
-  getUserDecks, createDeck, addPostToDeck,
+  getUserDecksBasic, createDeck, addPostToDeck,
   getUserByPrivyId, getProfile,
   type Deck,
 } from "@/lib/userService";
@@ -38,7 +38,7 @@ export default function DeckPickerSheet({ postId, onClose, onAdded }: Props) {
     const load = async () => {
       try {
         const [fetchedDecks, sbUser] = await Promise.all([
-          getUserDecks(user.id),
+          getUserDecksBasic(user.id),
           getUserByPrivyId(user.id),
         ]);
         setDecks(fetchedDecks);

@@ -640,6 +640,30 @@ export const getUserDecks = async (privyUserId: string): Promise<(Deck & { item_
   })
 }
 
+// Deck list WITHOUT thumbnail composites — for the add-to-deck picker, which only
+// needs title + cover_image_url + item_count. Skips getUserDecks' posts-media .in()
+// query (the amplifying one: it fans out over every item across every deck to build
+// the live 9-up thumbnail_urls the picker never renders). Two light queries only.
+export const getUserDecksBasic = async (privyUserId: string): Promise<(Deck & { item_count: number })[]> => {
+  const { data: decks, error } = await supabase
+    .from('decks')
+    .select('*')
+    .eq('user_id', privyUserId)
+    .order('created_at', { ascending: false })
+  if (error || !decks || decks.length === 0) return []
+
+  const deckIds = decks.map((d: Deck) => d.id)
+  const { data: items } = await supabase
+    .from('deck_items')
+    .select('deck_id')
+    .in('deck_id', deckIds)
+
+  const countMap = new Map<string, number>()
+  for (const item of items || []) countMap.set(item.deck_id, (countMap.get(item.deck_id) || 0) + 1)
+
+  return decks.map((d: Deck) => ({ ...d, item_count: countMap.get(d.id) || 0 }))
+}
+
 export const getDecksByUsername = async (username: string): Promise<(Deck & { item_count: number })[]> => {
   const profile = await getProfileByUsername(username)
   if (!profile) return []

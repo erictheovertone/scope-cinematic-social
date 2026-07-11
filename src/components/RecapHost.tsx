@@ -64,11 +64,15 @@ export default function RecapHost() {
       if (!alive || !data) return;
       setRecap(data);
 
-      // SHOW-ON-ENTRY gate.
-      const awayEnough = !lastSeenRef.current || Date.now() - Date.parse(lastSeenRef.current) > MIN_AWAY_MS;
+      // SHOW-ON-ENTRY gate — evaluate the away condition ONCE per app launch. We
+      // consume the session flag the MOMENT we evaluate (not only when we show), so a
+      // mid-session remount, a refetch, or a fresh mint that flips hasActivity (a mint
+      // is *current*-session activity, not "while you were away") can never re-pop it.
       const shownThisSession = typeof sessionStorage !== 'undefined' && sessionStorage.getItem(SESSION_KEY) === '1';
-      if (data.hasActivity && awayEnough && !shownThisSession) {
-        try { sessionStorage.setItem(SESSION_KEY, '1'); } catch { /* private mode */ }
+      if (shownThisSession) return;
+      try { sessionStorage.setItem(SESSION_KEY, '1'); } catch { /* private mode */ }
+      const awayEnough = !lastSeenRef.current || Date.now() - Date.parse(lastSeenRef.current) > MIN_AWAY_MS;
+      if (data.hasActivity && awayEnough) {
         setOpen(true);
       }
     })();

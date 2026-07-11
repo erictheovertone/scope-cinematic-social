@@ -56,6 +56,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
 
   const [profile, setProfile] = useState<Record<string, unknown> | null>(null);
   const [posts, setPosts] = useState<Record<string, unknown>[]>([]);
+  const [loaded, setLoaded] = useState(false);
   const [decks, setDecks] = useState<(Deck & { item_count: number; thumbnail_urls: string[] })[]>([]);
   const [links, setLinks] = useState<ProfileLink[]>([]);
   const [followers, setFollowers] = useState(0);
@@ -145,6 +146,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
         const { data: collectRows } = await supabase.from('notifications').select('sender_id').eq('recipient_id', privyId).eq('type', 'collect');
         setCollectors(new Set((collectRows ?? []).map((r) => r.sender_id)).size);
       } catch (e) { console.error('[desktop-profile] load error:', e); }
+      finally { if (alive) setLoaded(true); }
     })();
     return () => { alive = false; };
   }, [userId, privyId, economy]);
@@ -406,7 +408,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
                 </motion.button>
               );
             })}
-            {sortedPosts.length === 0 && (
+            {loaded && sortedPosts.length === 0 && (
               isOwn ? (
                 <button onClick={() => router.push('/create')} style={{ gridColumn: `span ${gridConf.count}`, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 24, background: 'transparent', border: 'none', cursor: 'pointer', padding: '90px 0 100px' }}>
                   {/* large, delicate crosshair plus — 1px stroke, viewfinder-thin */}
