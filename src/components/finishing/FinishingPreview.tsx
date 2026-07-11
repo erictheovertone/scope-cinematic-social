@@ -70,10 +70,13 @@ export default function FinishingPreview({ mediaUrl, mediaType, params, geometry
     }
     const img = new Image();
     img.crossOrigin = 'anonymous';
+    const use = () => { if (!cancelled && img.naturalWidth > 0) setSource(img); };
     img.src = mediaUrl;
+    // Same cold-start race fix as FinishingStep: if decode() rejects but the image
+    // already loaded, a late img.onload never fires → use it directly instead.
     img.decode()
-      .then(() => { if (!cancelled) setSource(img); })
-      .catch(() => { img.onload = () => { if (!cancelled) setSource(img); }; });
+      .then(use)
+      .catch(() => { if (img.complete && img.naturalWidth > 0) use(); else img.onload = use; });
     return () => { cancelled = true; };
   }, [mediaUrl, mediaType]);
 

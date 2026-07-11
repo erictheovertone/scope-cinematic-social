@@ -253,6 +253,7 @@ interface CreatePostFlowProps {
 export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope' }: CreatePostFlowProps) {
   const { showUpsell } = useUpsell();
   const [step, setStep] = useState<'media' | 'crop' | 'finishing' | 'edit' | 'deck' | 'posting'>('media');
+  const [discardConfirm, setDiscardConfirm] = useState(false); // OS back/edge-swipe guard
   // Geometry chosen in the crop tool. `chosenLayoutId` is the AR id picked by a
   // collage user; non-collage users keep their canonical grid layout_id.
   const [editGeometry, setEditGeometry] = useState<EditGeometry | null>(null);
@@ -350,6 +351,25 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
     document.documentElement.dataset.suiteOpen = '1';
     return () => { delete document.documentElement.dataset.suiteOpen; };
   }, [isOpen]);
+
+  // ── HISTORY GUARD (the iOS edge-back-swipe) ────────────────────────────────
+  // SwipeNav (in-app touch) is already stood down via data-suite-open, but the
+  // browser's own edge-back-swipe is a HISTORY navigation no touch listener can
+  // block in a PWA. We catch it via popstate: once there's progress to lose,
+  // push a sentinel entry; a back-nav pops it → we re-assert (stay) and confirm
+  // before discarding, so a swipe can never SILENTLY destroy edits. (Fully
+  // standalone PWAs where the edge-swipe closes the app with no history are a
+  // NATIVE-WRAPPER item — the container must own the gesture.)
+  const guardPushed = useRef(false);
+  useEffect(() => {
+    if (!isOpen) { guardPushed.current = false; return; }
+    const hasProgress = step === 'crop' || step === 'finishing' || step === 'edit' || step === 'deck';
+    if (!hasProgress) return;
+    if (!guardPushed.current && typeof window !== 'undefined') { window.history.pushState({ scopePostGuard: true }, ''); guardPushed.current = true; }
+    const onPop = () => { window.history.pushState({ scopePostGuard: true }, ''); setDiscardConfirm(true); };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, [isOpen, step]);
 
   // Re-read Pro status in place after an in-app purchase (no remount/reload).
   useEffect(() => {
@@ -1451,6 +1471,20 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
           {step === 'posting' && renderPostingStep()}
         </div>
       </div>
+      {/* Discard-edits confirm — intercepts the OS back/edge-swipe so progress is
+          never silently lost (see the history guard above). */}
+      {discardConfirm && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 32px' }}>
+          <div style={{ width: '100%', maxWidth: 340, background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.14)', padding: '26px 24px' }}>
+            <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 15, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.04em', margin: '0 0 10px' }}>DISCARD THIS POST?</p>
+            <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: 13, color: 'rgba(255,255,255,0.55)', lineHeight: 1.5, margin: '0 0 22px' }}>Your edits will be lost.</p>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button onClick={() => setDiscardConfirm(false)} style={{ flex: 1, fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 12, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.08em', background: 'transparent', border: '1px solid rgba(255,255,255,0.3)', cursor: 'pointer', padding: '12px 0' }}>KEEP EDITING</button>
+              <button onClick={() => { setDiscardConfirm(false); onClose(); setStep('media'); }} style={{ flex: 1, fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 12, color: '#FF0000', textTransform: 'uppercase', letterSpacing: '0.08em', background: 'transparent', border: '1px solid rgba(255,0,0,0.4)', cursor: 'pointer', padding: '12px 0' }}>DISCARD</button>
+            </div>
+          </div>
+        </div>
+      )}
       {step === 'crop' && selectedMedia[0] && (
         <CropTool
           mediaUrl={selectedMedia[0].url}
