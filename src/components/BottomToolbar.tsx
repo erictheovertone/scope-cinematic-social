@@ -16,7 +16,18 @@ const BTN: React.CSSProperties = {
   justifyContent: 'center',
   textDecoration: 'none',
   color: 'inherit',
+  // Kill the double-tap-zoom recognition delay (root is touch-action:none; these
+  // opt back into fast single-tap → click). Every footer tap fires first time.
+  touchAction: 'manipulation',
 };
+
+// The pop scale lives on an INNER span, never on the <Link> itself — so the link's
+// box and its .tap-target ::after hit-halo (48px, ≥44) stay put while the icon pops.
+// (Wrapping the link in PressPop scaled the halo to 0.82 mid-tap, so off-centre taps
+// landed on empty space and missed the click → the "needs multiple presses" bug.)
+function PopIcon({ children }: { children: React.ReactNode }) {
+  return <PressPop><span style={{ display: 'flex' }}>{children}</span></PressPop>;
+}
 
 function HomeIcon({ active }: { active: boolean }) {
   const c = active ? '#FF0000' : 'white';
@@ -166,49 +177,38 @@ export default function BottomToolbar({ page, unreadCount = 0, onNotificationsCl
         }}
       >
         {/* 1 — Home */}
-        <PressPop>
-          <Link className="tap-target" href="/" style={{ ...BTN, opacity: page === 'home' ? 1 : 0.7 }} aria-label="Home">
-            <HomeIcon active={page === 'home'} />
-          </Link>
-        </PressPop>
+        <Link className="tap-target" href="/" style={{ ...BTN, opacity: page === 'home' ? 1 : 0.7 }} aria-label="Home">
+          <PopIcon><HomeIcon active={page === 'home'} /></PopIcon>
+        </Link>
 
         {/* 2 — Create */}
-        <PressPop>
-          <Link className="tap-target" href="/create" style={{ ...BTN, opacity: 0.7 }} aria-label="Create post">
-            <CreateIcon />
-          </Link>
-        </PressPop>
+        <Link className="tap-target" href="/create" style={{ ...BTN, opacity: 0.7 }} aria-label="Create post">
+          <PopIcon><CreateIcon /></PopIcon>
+        </Link>
 
         {/* 3 — Profile (home/wallet) | Hamburger (profile / public-profile) */}
         {isHome || page === 'wallet' || page === 'public-profile' ? (
-          <PressPop>
-            <Link className="tap-target" href="/profile" style={{ ...BTN, opacity: 0.7 }} aria-label="Profile">
-              <ProfileIcon />
-            </Link>
-          </PressPop>
+          <Link className="tap-target" href="/profile" style={{ ...BTN, opacity: 0.7 }} aria-label="Profile">
+            <PopIcon><ProfileIcon /></PopIcon>
+          </Link>
         ) : (
-          <PressPop>
-            <button
-              onClick={onHamburgerPress} className="tap-target"
-              style={{ ...BTN, opacity: 0.7 }}
-              aria-label="Menu"
-            >
-              <HamburgerIcon />
-            </button>
-          </PressPop>
+          <button
+            onClick={onHamburgerPress} className="tap-target"
+            style={{ ...BTN, opacity: 0.7 }}
+            aria-label="Menu"
+          >
+            <PopIcon><HamburgerIcon /></PopIcon>
+          </button>
         )}
 
         {/* 4 — Bell (home) | Wallet (profile / public-profile) */}
         {!isHome && (
-          <PressPop>
-            <Link className="tap-target" href="/wallet" style={{ ...BTN, opacity: 0.7 }} aria-label="Wallet">
-              <WalletIcon />
-            </Link>
-          </PressPop>
+          <Link className="tap-target" href="/wallet" style={{ ...BTN, opacity: 0.7 }} aria-label="Wallet">
+            <PopIcon><WalletIcon /></PopIcon>
+          </Link>
         )}
 
         {isHome && (
-          <PressPop>
           <Link
             href="/profile/notifications"
             onClick={onNotificationsClick}
@@ -216,7 +216,7 @@ export default function BottomToolbar({ page, unreadCount = 0, onNotificationsCl
             style={{ ...BTN, opacity: 0.7 }}
             aria-label="Notifications"
           >
-            <BellIcon />
+            <PopIcon><BellIcon /></PopIcon>
             {unreadCount > 0 && (
               <div
                 className="absolute"
@@ -238,7 +238,6 @@ export default function BottomToolbar({ page, unreadCount = 0, onNotificationsCl
               </div>
             )}
           </Link>
-          </PressPop>
         )}
       </div>
     </div>

@@ -779,7 +779,9 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
                   </div>
                 )}
 
-                {/* Replace thumbnail */}
+                {/* Replace thumbnail — VIDEO ONLY: a still IS its own image; there's no
+                    separate poster frame to replace. */}
+                {isVideoPost && (
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", animation: "ripple-down 0.2s ease-out both", animationDelay: "150ms" }}>
                   <div>
                     <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: "white", textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 2px" }}>THUMBNAIL</p>
@@ -819,8 +821,12 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
                     }}
                   />
                 </div>
+                )}
 
-                {/* Re-frame */}
+                {/* Re-frame — VIDEO ONLY: a still's crop is baked into the stored image
+                    at publish, so there's nothing left to reposition. Video stores
+                    full-frame and crops live on the grid → reframe is meaningful there. */}
+                {isVideoPost && (
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", animation: "ripple-down 0.2s ease-out both", animationDelay: "200ms" }}>
                   <div>
                     <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: "white", textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 2px" }}>RE-FRAME</p>
@@ -833,6 +839,7 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
                     <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: "rgba(255,255,255,0.6)", textTransform: "uppercase", letterSpacing: "0.08em" }}>REFRAME</span>
                   </button>
                 </div>
+                )}
 
                 {/* Delete */}
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", animation: "ripple-down 0.2s ease-out both", animationDelay: "250ms" }}>
