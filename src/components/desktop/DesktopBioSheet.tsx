@@ -42,7 +42,7 @@ function Band({ label, sub, action, children }: { label: string; sub?: string; a
     <div style={{ display: 'flex', gap: 44, padding: '44px 0', borderTop: `1px solid ${HAIR}` }}>
       <div style={{ width: 250, flexShrink: 0 }}>
         {/* big left-column section title + red underline accent (per the reference) */}
-        <p style={{ ...SKB, fontSize: 30, lineHeight: 1, color: '#FFF', textTransform: 'uppercase', letterSpacing: '-0.01em', margin: 0 }}>{label}</p>
+        <p style={{ ...SKB, fontSize: 32, lineHeight: 1, color: '#FFF', textTransform: 'uppercase', letterSpacing: '-0.01em', margin: 0 }}>{label}</p>
         <div style={{ width: 32, height: 2, background: RED, margin: '13px 0 0' }} />
         {sub && <p style={{ ...SKR, fontSize: 11, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.12em', margin: '13px 0 0' }}>{sub}</p>}
         {action && <div style={{ marginTop: 16 }}>{action}</div>}
@@ -113,7 +113,7 @@ export default function DesktopBioSheet({ profile, isOwn, links, badges, posts, 
             width → far less zoom, subject recognizable), anchored right, face high
             (objectPosition center 20%). Then low-key scrims so it emerges from black. */}
         <div style={{ position: 'relative', height: 420, margin: '0 -40px', overflow: 'hidden', background: '#080808' }}>
-          {pfp && <img src={feedImage(pfp, 1200)} alt="" style={{ position: 'absolute', right: 0, top: 0, width: '60%', height: '100%', objectFit: 'cover', objectPosition: 'center 20%' }} />}
+          {pfp && <img src={feedImage(pfp, 1200)} alt="" style={{ position: 'absolute', right: 0, top: 0, width: '55%', height: '100%', objectFit: 'cover', objectPosition: 'center 22%' }} />}
           {/* overall low-key dim */}
           <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.28)' }} />
           {/* heavy left→right scrim — the data zone is effectively solid black */}
