@@ -106,12 +106,13 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
     let dead = false;
     (async () => {
       for (const d of toBake) {
-        const url = await bakeAndStoreDeckCover(d.id, d.thumbnail_urls, privyId);
+        const url = await bakeAndStoreDeckCover(d.id, d.thumbnail_urls, privyId, ratioForAspect(gridConf.aspect));
         if (!dead && url) setDecks((cur) => cur.map((x) => (x.id === d.id ? { ...x, thumbnail_url: url } : x)));
       }
     })();
     return () => { dead = true; };
-  }, [decks, isOwn, privyId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [decks, isOwn, privyId, gridConf.aspect]);
 
   useEffect(() => {
     let alive = true;
@@ -457,7 +458,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
             )}
             <div style={{ display: 'grid', gridTemplateColumns: `repeat(${decksCount}, 1fr)`, gap: 16 }}>
               {isOwn && (
-                <button onClick={() => setDeckCreateOpen(true)} style={{ aspectRatio: '16 / 10', border: `1px dashed ${HAIR}`, background: 'transparent', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+                <button onClick={() => setDeckCreateOpen(true)} style={{ aspectRatio: `${ratioForAspect(gridConf.aspect)}`, border: `1px dashed ${HAIR}`, background: 'transparent', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
                   <svg width="34" height="34" viewBox="0 0 34 34" fill="none"><path d="M17 6v22M6 17h22" stroke="rgba(255,255,255,0.7)" strokeWidth="1" /></svg>
                   <span style={{ ...SKB, fontSize: 11, color: 'rgba(255,255,255,0.7)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>CREATE DECK</span>
                 </button>
@@ -467,7 +468,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
                 const coverSrc = d.thumbnail_url || (fallback ? feedImage(fallback as string, 600) : null); // baked WebP is already display-sized
                 return (
                   <button key={d.id} onClick={() => router.push(`/profile/${handle}/decks/${d.id}`)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, textAlign: 'left', display: 'block' }}>
-                    <div style={{ aspectRatio: '16 / 10', overflow: 'hidden', background: '#101010', border: `1px solid ${HAIR}` }}>
+                    <div style={{ aspectRatio: `${ratioForAspect(gridConf.aspect)}`, overflow: 'hidden', background: '#101010', border: `1px solid ${HAIR}` }}>
                       {coverSrc && <img src={coverSrc} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
                     </div>
                     <p style={{ ...SKB, fontSize: 12, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '9px 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.title}</p>

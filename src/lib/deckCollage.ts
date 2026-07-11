@@ -14,14 +14,13 @@
 import { feedImage } from '@/lib/mediaUrl';
 import { uploadImage, updateDeck } from '@/lib/userService';
 
-const OUT_W = 600;
-const OUT_H = 375; // 16:10 deck-card ratio
+const OUT_W = 600; // display width for a 4-across cell
 const GAP = 3;
 
 type Cell = { x: number; y: number; w: number; h: number };
 
-function cells(n: number): Cell[] {
-  const W = OUT_W, H = OUT_H, g = GAP;
+function cells(n: number, W: number, H: number): Cell[] {
+  const g = GAP;
   if (n <= 1) return [{ x: 0, y: 0, w: W, h: H }];
   if (n === 2) { const w = (W - g) / 2; return [{ x: 0, y: 0, w, h: H }, { x: w + g, y: 0, w, h: H }]; }
   if (n === 3) {
@@ -38,9 +37,11 @@ function drawCover(ctx: CanvasRenderingContext2D, bm: ImageBitmap, c: Cell) {
   ctx.drawImage(bm, c.x + (c.w - dw) / 2, c.y + (c.h - dh) / 2, dw, dh);
 }
 
-/** Bake the collage → WebP Blob. null on any failure (caller falls back). */
-export async function bakeDeckCollage(thumbUrls: string[]): Promise<Blob | null> {
+/** Bake the collage → WebP Blob at the given W/H ratio (the user's shared AR).
+ *  null on any failure (caller falls back to CSS-crop of a fallback image). */
+export async function bakeDeckCollage(thumbUrls: string[], ratio = 1.6): Promise<Blob | null> {
   if (typeof document === 'undefined') return null;
+  const OUT_H = Math.max(120, Math.round(OUT_W / (ratio || 1.6)));
   const urls = thumbUrls.filter(Boolean).slice(0, 4);
   if (urls.length === 0) return null;
   try {
@@ -56,7 +57,7 @@ export async function bakeDeckCollage(thumbUrls: string[]): Promise<Blob | null>
     const ctx = canvas.getContext('2d');
     if (!ctx) return null;
     ctx.fillStyle = '#101010'; ctx.fillRect(0, 0, OUT_W, OUT_H);
-    const cs = cells(bitmaps.length);
+    const cs = cells(bitmaps.length, OUT_W, OUT_H);
     bitmaps.forEach((bm, i) => { drawCover(ctx, bm, cs[i]); bm.close?.(); });
     return await new Promise<Blob | null>((resolve) => canvas.toBlob((b) => resolve(b), 'image/webp', 0.82));
   } catch (e) {
@@ -66,8 +67,8 @@ export async function bakeDeckCollage(thumbUrls: string[]): Promise<Blob | null>
 }
 
 /** Bake + upload + persist deck.thumbnail_url. Returns the new URL, or null. */
-export async function bakeAndStoreDeckCover(deckId: string, thumbUrls: string[], privyId?: string): Promise<string | null> {
-  const blob = await bakeDeckCollage(thumbUrls);
+export async function bakeAndStoreDeckCover(deckId: string, thumbUrls: string[], privyId?: string, ratio = 1.6): Promise<string | null> {
+  const blob = await bakeDeckCollage(thumbUrls, ratio);
   if (!blob) return null;
   try {
     const file = new File([blob], `deck-${deckId}.webp`, { type: 'image/webp' });

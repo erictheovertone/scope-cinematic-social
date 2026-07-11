@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { useIsDesktop } from "@/lib/useIsDesktop";
+import DesktopDeck from "@/components/desktop/DesktopDeck";
 import { usePrivy } from "@privy-io/react-auth";
 import {
   getDeckById, removeFromDeck, updateDeck, addMediaToDeck, uploadImage,
@@ -186,6 +188,7 @@ export default function DeckDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { user } = usePrivy();
+  const isDesktop = useIsDesktop(); // desktop seam — the interior gets DesktopDeck
   const deckId = params?.deckId as string;
   const username = params?.username as string;
 
@@ -424,6 +427,9 @@ export default function DeckDetailPage() {
       setLightboxItem(item);
     }
   };
+
+  // Desktop interior (all hooks above run first, per React order). 375 untouched.
+  if (isDesktop) return <DesktopDeck deckId={deckId} />;
 
   // ── Loading / not found ───────────────────────────────────────────────────
 
