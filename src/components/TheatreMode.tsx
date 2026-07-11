@@ -303,10 +303,19 @@ export default function TheatreMode({
   };
 
   if (!post || posts.length === 0) {
-    // Nothing to show — exit straight back to the profile.
+    // Nothing to screen — a quiet explainer with an EXPLICIT way back. Tapping
+    // anywhere also exits, but the button makes the escape obvious → never stuck.
     return (
-      <div onClick={() => handleClose()} style={{ position: 'fixed', inset: 0, zIndex: 900, background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <span style={{ ...SKR, fontSize: 'var(--fs-11)', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>No posts</span>
+      <div onClick={() => handleClose()} style={{ position: 'fixed', inset: 0, zIndex: 900, background: '#000', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 22, padding: '0 40px' }}>
+        <span style={{ ...SKR, fontSize: 'var(--fs-11)', color: 'rgba(255,255,255,0.55)', textTransform: 'uppercase', letterSpacing: '0.1em', textAlign: 'center', lineHeight: 1.6 }}>
+          Nothing to screen yet<br />— post your first work
+        </span>
+        <button
+          onClick={(e) => { e.stopPropagation(); handleClose(); }}
+          style={{ ...SKB, fontSize: 'var(--fs-9)', color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.12em', background: 'transparent', border: '1px solid rgba(255,255,255,0.5)', cursor: 'pointer', padding: '12px 26px', touchAction: 'manipulation' }}
+        >
+          Back to profile
+        </button>
       </div>
     );
   }

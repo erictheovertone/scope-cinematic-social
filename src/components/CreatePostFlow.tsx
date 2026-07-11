@@ -1461,10 +1461,19 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
 
   if (!isOpen) return null;
 
+  // Backdrop-tap dismiss (the standard sheet pattern — CollectSheet / DecksSheet).
+  // If there's partial input, route through the SAME discard guard the OS back-swipe
+  // uses so nothing is silently lost; a clean media step closes straight away.
+  const hasPartialInput = selectedMedia.length > 0 || step !== 'media';
+  const handleBackdropDismiss = () => {
+    if (hasPartialInput) setDiscardConfirm(true);
+    else onClose();
+  };
+
   return (
     <>
-      <div style={{ position: 'fixed', inset: 0, backgroundColor: '#000000', opacity: 1, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div className="bg-black border border-[#333333] w-[375px] h-[600px] relative overflow-hidden">
+      <div onClick={handleBackdropDismiss} style={{ position: 'fixed', inset: 0, backgroundColor: '#000000', opacity: 1, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div onClick={(e) => e.stopPropagation()} className="bg-black border border-[#333333] w-[375px] h-[600px] relative overflow-hidden">
           {step === 'media' && renderMediaStep()}
           {step === 'edit' && renderEditStep()}
           {step === 'deck' && renderDeckStep()}

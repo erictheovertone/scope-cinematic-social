@@ -822,8 +822,9 @@ const userLayoutId = stableLayoutId;
           )}
         </div>
 
-        {/* NEW DECK footer — own profile only */}
-        <div style={{ flexShrink: 0, padding: '12px 16px', borderTop: '1px solid rgba(255,255,255,0.12)' }}>
+        {/* NEW DECK footer — own profile only. Bottom padding clears the home
+            indicator + the app footer band so the button is never buried at the edge. */}
+        <div style={{ flexShrink: 0, padding: '12px 16px', paddingBottom: 'calc(12px + env(safe-area-inset-bottom, 0px))', borderTop: '1px solid rgba(255,255,255,0.12)' }}>
           {!showNewDeckForm ? (
             <button
               onClick={() => setShowNewDeckForm(true)}

@@ -107,6 +107,14 @@ export default function CollectSheet({ post, visible, onClose }: CollectSheetPro
     }
   }, [visible]);
 
+  // Footer takeover — hide the bottom toolbar while the sheet is up so its icons
+  // can't sit over BUY / FUND WALLET (same discipline the suite + theatre use).
+  useEffect(() => {
+    if (!visible) return;
+    document.documentElement.dataset.suiteOpen = '1';
+    return () => { delete document.documentElement.dataset.suiteOpen; };
+  }, [visible]);
+
   const pricePerTokenEth = tokenPrice != null ? parseFloat(formatEther(tokenPrice)) : null;
   const totalEth = pricePerTokenEth != null ? (pricePerTokenEth * selectedQty).toFixed(5) : null;
   const totalUsd = pricePerTokenEth != null && ethUsd != null ? (pricePerTokenEth * selectedQty * ethUsd).toFixed(2) : null;
@@ -218,6 +226,24 @@ export default function CollectSheet({ post, visible, onClose }: CollectSheetPro
           transition: "transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)",
         }}
       >
+        {/* Close — 44×44 tap target, anchored to the panel (fixed = positioned). */}
+        <button
+          onClick={onClose}
+          aria-label="Close"
+          style={{
+            position: "absolute", top: 0, right: 0, zIndex: 2,
+            width: 44, height: 44,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            background: "transparent", border: "none", cursor: "pointer",
+            touchAction: "manipulation",
+          }}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" style={{ filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.8))" }}>
+            <line x1="5" y1="5" x2="19" y2="19" />
+            <line x1="19" y1="5" x2="5" y2="19" />
+          </svg>
+        </button>
+
         {post.media_urls?.[0] && (
           <div style={{ width: "100%", aspectRatio: getAspect(post.grid_layout), overflow: "hidden", flexShrink: 0 }}>
             <img

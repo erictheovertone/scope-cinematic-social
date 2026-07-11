@@ -669,7 +669,10 @@ export default function FinishingShell({
   const railW = compactRail ? 58 : 86;
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: '#000', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ position: 'fixed', inset: 0, background: '#000', display: 'flex', flexDirection: 'column',
+      // Hold-to-compare is a long-press → iOS fires text-selection/callout (the screen
+      // goes blue). Kill selection across the whole suite surface; inputs opt back in.
+      userSelect: 'none', WebkitUserSelect: 'none', WebkitTouchCallout: 'none' }}>
       {/* menu backdrop — outside tap closes (menu animates out via its own transition) */}
       {menuOpen && <div key="menu-backdrop" onClick={() => setMenuOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 29 }} />}
 

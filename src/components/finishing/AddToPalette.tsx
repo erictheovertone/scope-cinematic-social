@@ -40,7 +40,8 @@ export default function AddToPalette({ isPro, onUpsell, onSave }: AddToPalettePr
           onChange={(e) => setName(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') save(); if (e.key === 'Escape') cancel(); }}
           placeholder="LOOK NAME"
-          style={{ ...SKB, flex: 1, minWidth: 0, fontSize: 'max(16px, var(--fs-10))', color: 'white', background: 'transparent', border: '1px solid rgba(255,255,255,0.25)', padding: '7px 9px', textTransform: 'uppercase', letterSpacing: '0.06em', outline: 'none' }}
+          // Opt back into selection — the suite root sets user-select:none for hold-to-compare.
+          style={{ ...SKB, flex: 1, minWidth: 0, fontSize: 'max(16px, var(--fs-10))', color: 'white', background: 'transparent', border: '1px solid rgba(255,255,255,0.25)', padding: '7px 9px', textTransform: 'uppercase', letterSpacing: '0.06em', outline: 'none', userSelect: 'text', WebkitUserSelect: 'text', WebkitTouchCallout: 'default' }}
         />
         <button onClick={save} style={{ background: RED, border: 'none', cursor: 'pointer', padding: '7px 12px' }}>
           <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: '#000', textTransform: 'uppercase', letterSpacing: '0.08em' }}>SAVE</span>
