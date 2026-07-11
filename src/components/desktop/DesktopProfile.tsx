@@ -405,6 +405,14 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
                   ) : (
                     src && <img src={feedImage(src, 600)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                   )}
+                  {/* Pinned indicator — small white push-pin, top-right (mirrors mobile PostCell). */}
+                  {!!p.is_pinned && (
+                    <div style={{ position: 'absolute', top: 8, right: 8, zIndex: 3, pointerEvents: 'none', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.75))' }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="#FFFFFF" aria-hidden="true">
+                        <path d="M16 9V4h1c.55 0 1-.45 1-1s-.45-1-1-1H7c-.55 0-1 .45-1 1s.45 1 1 1h1v5c0 1.66-1.34 3-3 3v2h5.97v7l1 1 1-1v-7H19v-2c-1.66 0-3-1.34-3-3z" />
+                      </svg>
+                    </div>
+                  )}
                 </motion.button>
               );
             })}

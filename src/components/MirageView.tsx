@@ -260,10 +260,10 @@ export default function MirageView({ onClose }: { onClose: () => void }) {
             }}
           >
             <img
-              src="/mirage-logo-thick-red-new.png"
-              alt="Mirage"
+              src="/scope-logomark-corner-button-01.png"
+              alt="Scope — home"
               style={{
-                height: 12,
+                height: 18,
                 width: "auto",
                 objectFit: "contain",
                 flexShrink: 0,

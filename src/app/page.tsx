@@ -427,6 +427,7 @@ export default function Home() {
                 onImageClick={setLightboxPost}
                 commentsOpen={openCommentsPostId === post.id}
                 onToggleComments={toggleComments}
+                clampCaption
               />
             </div>
           ))}

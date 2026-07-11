@@ -20,6 +20,7 @@ import { createWalletClient, custom, parseUnits } from 'viem';
 import { base } from 'viem/chains';
 import { swapTokens, quoteSwap, erc20SwapNeedsApproval, swapTokenDecimals, errInfo, type SwapToken } from '@/lib/zoraCoins';
 import { preflightTrade, preflightMessage, GAS_FLOOR_ETH } from '@/lib/economy/preflight';
+import { getEthUsdRate } from '@/lib/coingecko';
 import FrameLoader from '@/components/FrameLoader';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
@@ -65,6 +66,12 @@ export default function SwapSheet({ visible, onClose, ethBalance, usdcBalance, z
   const [buyToken, setBuyToken] = useState<SwapToken>('USDC');
   const [cashOut, setCashOut] = useState(false);
   const [payAmount, setPayAmount] = useState('');
+  // ENTER-AS-USD (ETH→USDC only, where the tiny ETH decimals confuse). The user
+  // types dollars; we convert to ETH at the live spot and feed that ETH to the
+  // engine — payAmount stays the token amount, so the wei math is untouched.
+  const [usdMode, setUsdMode] = useState(true);
+  const [payUsd, setPayUsd] = useState('');
+  const [spotUsd, setSpotUsd] = useState<number | null>(null);
   const [quoteOut, setQuoteOut] = useState<number | null>(null); // display units of the receive side
   const [quoting, setQuoting] = useState(false);
   const quoteAtRef = useRef(0);
@@ -79,6 +86,17 @@ export default function SwapSheet({ visible, onClose, ethBalance, usdcBalance, z
   const payNum = parseFloat(payAmount);
   const validAmount = isFinite(payNum) && payNum > 0;
   const overMax = validAmount && payNum > maxPay + 1e-12;
+  // USD-first entry is offered only on the ETH→USDC leg (the decimals-confusion
+  // case) and only once the live spot has loaded.
+  const usdEntry = usdMode && sellToken === 'ETH' && buyToken === 'USDC' && spotUsd != null;
+
+  // Type dollars → set the underlying ETH amount at the live spot (6dp = wei-safe
+  // for the engine's parseUnits; the exact swap still quotes on this ETH amount).
+  const setPayFromUsd = (usdStr: string) => {
+    setPayUsd(usdStr);
+    const u = parseFloat(usdStr);
+    setPayAmount(spotUsd && isFinite(u) && u > 0 ? (u / spotUsd).toFixed(6) : '');
+  };
 
   // Reset on open — honoring the CASH OUT prefill when provided.
   useEffect(() => {
@@ -87,8 +105,17 @@ export default function SwapSheet({ visible, onClose, ethBalance, usdcBalance, z
     setBuyToken(initial?.buy ?? 'USDC');
     setCashOut(!!initial?.cashOut);
     setPayAmount(initial?.amount ?? '');
+    setPayUsd(''); setUsdMode(true);
     setQuoteOut(null); setPhase('input'); setSwapError(null); setDoneLine('');
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible]);
+
+  // Live ETH→USD spot for the dollar entry (refreshed each open).
+  useEffect(() => {
+    if (!visible) return;
+    let alive = true;
+    getEthUsdRate().then((r) => { if (alive) setSpotUsd(r); }).catch(() => {});
+    return () => { alive = false; };
   }, [visible]);
 
   // First-swap honesty: pre-read the Permit2 allowance for the current sell token.
@@ -127,12 +154,12 @@ export default function SwapSheet({ visible, onClose, ethBalance, usdcBalance, z
 
   const flip = () => {
     setSellToken(buyToken); setBuyToken(sellToken);
-    setPayAmount(''); setQuoteOut(null); setSwapError(null); setCashOut(false);
+    setPayAmount(''); setPayUsd(''); setQuoteOut(null); setSwapError(null); setCashOut(false);
   };
   const setPair = (a: SwapToken, b: SwapToken) => {
     if ((sellToken === a && buyToken === b) || (sellToken === b && buyToken === a)) return;
     setSellToken(a); setBuyToken(b);
-    setPayAmount(''); setQuoteOut(null); setSwapError(null); setCashOut(false);
+    setPayAmount(''); setPayUsd(''); setQuoteOut(null); setSwapError(null); setCashOut(false);
   };
 
   const doSwap = async () => {
@@ -257,31 +284,53 @@ export default function SwapSheet({ visible, onClose, ethBalance, usdcBalance, z
 
             {/* YOU PAY */}
             <div style={panel}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.14em' }}>YOU PAY</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, alignItems: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.14em' }}>YOU PAY</span>
+                  {/* $ / Ξ entry toggle — offered on the ETH→USDC leg only. */}
+                  {sellToken === 'ETH' && buyToken === 'USDC' && spotUsd != null && (
+                    <button
+                      onClick={() => setUsdMode((m) => { const next = !m; if (next) setPayUsd(payAmount && spotUsd ? (parseFloat(payAmount) * spotUsd).toFixed(2) : ''); return next; })}
+                      style={{ ...SKB, fontSize: 'var(--fs-7)', letterSpacing: '0.08em', color: usdMode ? '#FF0000' : 'rgba(255,255,255,0.45)', background: 'transparent', border: '1px solid rgba(255,255,255,0.15)', cursor: 'pointer', padding: '2px 6px', textTransform: 'uppercase' }}
+                    >
+                      {usdMode ? '$ USD' : 'Ξ ETH'}
+                    </button>
+                  )}
+                </div>
                 <span style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.35)', letterSpacing: '0.06em' }}>
                   BALANCE {fmtToken(payBalance, sellToken)} {sellToken}
                 </span>
               </div>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
+                {usdEntry && <span style={{ ...SKB, fontSize: 24, color: 'rgba(255,255,255,0.55)' }}>$</span>}
                 <input
                   inputMode="decimal"
-                  value={payAmount}
+                  value={usdEntry ? payUsd : payAmount}
                   disabled={phase === 'swapping'}
-                  // ZORA/USDC typed input clamps to 2 decimals (ETH keeps precision)
-                  onChange={(e) => { const v = e.target.value.replace(/[^0-9.]/g, ''); setPayAmount(sellToken === 'ETH' ? v : v.replace(/^(\d*\.\d{2})\d+$/, '$1')); }}
+                  // USD entry clamps to cents; ETH keeps precision; ZORA/USDC → 2 decimals.
+                  onChange={usdEntry
+                    ? (e) => setPayFromUsd(e.target.value.replace(/[^0-9.]/g, '').replace(/^(\d*\.\d{2})\d+$/, '$1'))
+                    : (e) => { const v = e.target.value.replace(/[^0-9.]/g, ''); setPayAmount(sellToken === 'ETH' ? v : v.replace(/^(\d*\.\d{2})\d+$/, '$1')); }}
                   placeholder="0"
                   style={{ ...SKB, fontSize: 24, color: '#FFF', background: 'transparent', border: 'none', outline: 'none', width: '100%', padding: 0 }}
                 />
-                <span style={{ ...SKB, fontSize: 'var(--fs-12)', color: 'rgba(255,255,255,0.7)' }}>{sellToken}</span>
+                <span style={{ ...SKB, fontSize: 'var(--fs-12)', color: 'rgba(255,255,255,0.7)' }}>{usdEntry ? 'USD' : sellToken}</span>
                 <button
                   // MAX floors at each token's display precision — never rounds UP past balance
-                  onClick={() => setPayAmount(sellToken === 'ETH' ? (Math.floor(maxPay * 1e6) / 1e6).toFixed(6) : (Math.floor(maxPay * 100) / 100).toFixed(2))}
+                  onClick={() => usdEntry
+                    ? setPayFromUsd((Math.floor(maxPay * spotUsd! * 100) / 100).toFixed(2))
+                    : setPayAmount(sellToken === 'ETH' ? (Math.floor(maxPay * 1e6) / 1e6).toFixed(6) : (Math.floor(maxPay * 100) / 100).toFixed(2))}
                   style={{ ...SKB, fontSize: 'var(--fs-9)', color: '#FF0000', background: 'transparent', border: 'none', cursor: 'pointer', letterSpacing: '0.08em', padding: 0 }}
                 >
                   MAX
                 </button>
               </div>
+              {/* ETH the dollars convert to — small, so the exact wei being swapped is visible. */}
+              {usdEntry && (
+                <p style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.4)', margin: '6px 0 0', letterSpacing: '0.04em' }}>
+                  ≈ {validAmount ? fmtToken(payNum, 'ETH') : '0'} ETH · live rate
+                </p>
+              )}
               {overMax && (
                 <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: '#FF0000', margin: '8px 0 0', lineHeight: 1.4 }}>
                   {sellToken === 'ETH'

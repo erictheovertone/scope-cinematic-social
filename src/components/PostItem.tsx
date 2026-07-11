@@ -68,9 +68,9 @@ interface PostItemProps {
   /** DESKTOP ONLY — wrap the card in the #030303/#2B2B2B backdrop. Mobile never
    *  passes it → its floating-post feed is unchanged. */
   card?: boolean;
-  /** DESKTOP ONLY — clamp the caption to 2 lines + a "… more" that opens the
-   *  lightbox (onImageClick). Display-only; the stored caption is never cut.
-   *  Mobile never passes it → mobile still shows the full caption. */
+  /** Clamp the caption to 2 lines + a "… more" that opens the lightbox
+   *  (onImageClick). Display-only; the stored caption is never cut. Passed by the
+   *  desktop cards AND the mobile home feed. */
   clampCaption?: boolean;
 }
 
@@ -315,7 +315,7 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
           disabled={loading || !user}
           style={{ background: "transparent", border: "none", cursor: user ? "pointer" : "default", display: "flex", alignItems: "center", gap: 4, padding: 0, color: isLiked ? "#FF0000" : "rgba(255,255,255,0.6)" }}
         >
-          <svg width="14.5" height="14.5" viewBox="0 0 24 24" fill={isLiked ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
+          <svg width="16.7" height="16.7" viewBox="0 0 24 24" fill={isLiked ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
           </svg>
           <span style={{ ...SKR, fontSize: 'var(--fs-7)', color: "inherit" }}>{likes.length}</span>
@@ -328,7 +328,7 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
           onClick={(e) => { e.stopPropagation(); toggleComments(); }}
           style={{ background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 4, padding: 0, color: "rgba(255,255,255,0.6)" }}
         >
-          <svg width="14.5" height="14.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg width="16.7" height="16.7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
           </svg>
           <span style={{ ...SKR, fontSize: 'var(--fs-7)', color: "inherit" }}>{comments.length}</span>

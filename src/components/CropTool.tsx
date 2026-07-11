@@ -277,20 +277,20 @@ export default function CropTool({
             ASPECT LOCKED TO YOUR GRID
           </p>
         )}
-        <div style={{ display: "flex", gap: 8, justifyContent: "space-between" }}>
-          {AR_CHIPS.map((c) => {
+        <div style={{ display: "flex", gap: 8, justifyContent: allowArChoice ? "space-between" : "center" }}>
+          {/* collage → the real, selectable chooser (all four chips). standard →
+              the single chosen chip only; no greyed "ghost" set of the others. */}
+          {(allowArChoice ? AR_CHIPS : AR_CHIPS.filter((c) => c.id === ar)).map((c) => {
             const active = c.id === ar;
-            const locked = !allowArChoice && c.id !== ar;
             const boxW = 40, boxH = Math.round(boxW / c.ratio);
             return (
               <button
                 key={c.id}
                 onClick={() => { if (allowArChoice) setAr(c.id); }}
-                disabled={locked}
+                disabled={!allowArChoice}
                 style={{
-                  flex: 1, background: "transparent", border: "none",
+                  flex: allowArChoice ? 1 : "0 0 auto", background: "transparent", border: "none",
                   cursor: allowArChoice ? "pointer" : "default",
-                  opacity: locked ? 0.28 : 1,
                   display: "flex", flexDirection: "column", alignItems: "center", gap: 6, padding: "4px 0",
                 }}
               >

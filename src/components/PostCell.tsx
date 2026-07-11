@@ -22,6 +22,7 @@ interface Post {
   edit_params?: unknown;
   coin_address?: string | null;
   coin_currency?: string | null;
+  is_pinned?: boolean;
 }
 
 interface PostCellProps {
@@ -65,6 +66,15 @@ export default function PostCell({ post, layoutId, index, onClick, showSoundTogg
           onError={(e) => { e.currentTarget.style.display = 'none'; }}
           style={{ position: 'absolute', top: 3, right: 3, width: '6%', minWidth: 12, height: 'auto', zIndex: 6, pointerEvents: 'none' }} /* ratified size: 6% of cell width, 12px floor */
         />
+      )}
+      {/* Pinned indicator — small white push-pin, top-right of the thumbnail.
+          Sits above media (z7) so it reads over any frame; purely decorative. */}
+      {post.is_pinned && (
+        <div style={{ position: 'absolute', top: 4, right: 4, zIndex: 7, pointerEvents: 'none', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.75))' }}>
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="#FFFFFF" aria-hidden="true">
+            <path d="M16 9V4h1c.55 0 1-.45 1-1s-.45-1-1-1H7c-.55 0-1 .45-1 1s.45 1 1 1h1v5c0 1.66-1.34 3-3 3v2h5.97v7l1 1 1-1v-7H19v-2c-1.66 0-3-1.34-3-3z" />
+          </svg>
+        </div>
       )}
       <div style={{ position: 'absolute', inset: 0 }}>
         {post.media_urls?.[0] && (

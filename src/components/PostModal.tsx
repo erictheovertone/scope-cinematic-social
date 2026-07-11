@@ -512,7 +512,7 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
                 below (which is also the whip target). */}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 12, marginBottom: 16 }}>
               {deckToast && (
-                <span style={{ ...SKR, fontSize: 'var(--fs-8)', color: "rgba(255,255,255,0.55)", animation: "theater-fade-in 0.2s ease-out both" }}>
+                <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: "#FF0000", textTransform: "uppercase", letterSpacing: "0.04em", animation: "theater-fade-in 0.2s ease-out both" }}>
                   Added to {deckToast}
                 </span>
               )}
@@ -569,7 +569,7 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
                 }}
               >
                 <PressPop><span style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                <svg width="15.5" height="15.5" viewBox="0 0 24 24" fill="none">
+                <svg width="17.7" height="17.7" viewBox="0 0 24 24" fill="none">
                   <path
                     d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
                     fill={isLiked ? "#FF0000" : "none"}

@@ -539,7 +539,7 @@ const userLayoutId = stableLayoutId;
             onClick={() => { setActiveTab('decks'); setShowDecks(true); }}
             style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', position: 'relative', left: (headerSnapped || headerUnsnapping) ? -8 : 5, animation: headerUnsnapping ? 'snapOutUp 0.28s cubic-bezier(0.16,1,0.3,1) 110ms both' : headerSnapped ? 'snapInUp 0.32s cubic-bezier(0.16,1,0.3,1) 55ms both' : 'none' }}
           >
-            <img src="/decks-logo-new-lg.png" style={{ height: 8, width: 'auto', display: 'block', filter: activeTab === 'decks' ? 'invert(27%) sepia(100%) saturate(7000%) hue-rotate(0deg) brightness(100%) contrast(100%)' : 'none' }} alt="Decks" />
+            <img src="/decks-logo-new-lg.png" style={{ height: 10.5, width: 'auto', display: 'block', opacity: activeTab === 'decks' ? 1 : 0.4, filter: activeTab === 'decks' ? 'invert(27%) sepia(100%) saturate(7000%) hue-rotate(0deg) brightness(100%) contrast(100%)' : 'none' }} alt="Decks" />
           </button>
 
           <button
@@ -548,7 +548,7 @@ const userLayoutId = stableLayoutId;
           >
             <img
               src="/theatre-mode-eye-solo.png"
-              style={{ height: 15.6, width: 'auto', display: 'block', opacity: activeTab === 'theatre' ? 1 : 0.7, position: 'relative', left: (headerSnapped || headerUnsnapping) ? 0 : 10 }}
+              style={{ height: 18.1, width: 'auto', display: 'block', opacity: activeTab === 'theatre' ? 1 : 0.4, position: 'relative', left: (headerSnapped || headerUnsnapping) ? 0 : 10 }}
               alt="Theatre"
             />
           </button>
