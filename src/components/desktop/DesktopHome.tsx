@@ -77,8 +77,10 @@ export default function DesktopHome() {
 
   const onSelectMode = (mode: ViewingMode) => {
     setModesOpen(false);
+    setView(null); // selecting a mode EXITS the lightbox into that mode
     if (mode === 'screening') router.push('/screening-room');
-    // feed = current; theatre/mirage/lightbox wired in the broader modes feature.
+    // feed = current (returns to the grid); theatre/mirage/lightbox wired in the
+    // broader modes feature.
   };
 
   return (
@@ -101,17 +103,25 @@ export default function DesktopHome() {
                 Each cell keeps the POST's OWN authored aspect (mixed heights) —
                 that's how a creator's AR intent reaches the feed. No viewer's or
                 creator's setting changes the feed's column structure. */}
-            {/* Cards on black: each post in a #030303/#2B2B2B card. With borders
-                visible the gutters tighten to 20px (was 34) for an organized grid. */}
-            <div style={{ display: 'grid', gridTemplateColumns: `repeat(3, minmax(0, 1fr))`, gap: 20, alignItems: 'start' }}>
-              {posts.map((p, i) => (
-                <PostItem
-                  key={String(p.id)}
-                  post={p as unknown as React.ComponentProps<typeof PostItem>['post']}
-                  onImageClick={() => setView(i)}
-                  card
-                  clampCaption
-                />
+            {/* MASONRY: 3 independent columns, each packing top-to-bottom with one
+                uniform 20px gap (both axes) → tops scatter, no craters from
+                row-alignment. ROUND-ROBIN distribution (i % 3) — cheap,
+                deterministic (a post's column is fixed by its feed index, so
+                load-more appends correctly), and it preserves the left-to-right
+                newest-first reading order across the top row. Cards unchanged. */}
+            <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start' }}>
+              {([0, 1, 2] as const).map((col) => (
+                <div key={col} style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 20 }}>
+                  {posts.map((p, i) => (i % 3 === col ? (
+                    <PostItem
+                      key={String(p.id)}
+                      post={p as unknown as React.ComponentProps<typeof PostItem>['post']}
+                      onImageClick={() => setView(i)}
+                      card
+                      clampCaption
+                    />
+                  ) : null))}
+                </div>
               ))}
             </div>
             {hasMore && <div ref={sentinelRef} style={{ height: 1 }} />}

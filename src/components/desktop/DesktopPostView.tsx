@@ -6,6 +6,7 @@
 // Self-fetches per post; stepping re-keys the fetches.
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { usePrivy } from '@privy-io/react-auth';
 import { useEconomy } from '@/components/EconomyProvider';
@@ -63,6 +64,7 @@ export default function DesktopPostView({
 }) {
   const lightbox = framing === 'lightbox';
   const { user } = usePrivy();
+  const router = useRouter();
   const economy = useEconomy();
   const post = posts[index];
   const postId = String(post?.id ?? '');
@@ -223,14 +225,26 @@ export default function DesktopPostView({
           )}
         </div>
 
-        {/* caption + location */}
-        {typeof post?.caption === 'string' && post.caption && (
-          <p style={{ ...SKR, fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.5, margin: '12px 0 0', maxWidth: 381 }}>{post.caption}</p>
+        {/* CREATOR ROW (lightbox, frame order: actions → pfp+handle → caption →
+            location·date): avatar + @handle → the creator's profile. */}
+        {lightbox && (post?.username as string) && (
+          <button onClick={() => router.push(`/profile/${post.username as string}`)} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, margin: '12px 0 0' }}>
+            {(post?.profile_image_url as string) ? (
+              <img src={feedImage(post.profile_image_url as string, 96)} alt="" style={{ width: 22, height: 22, borderRadius: '50%', objectFit: 'cover' }} />
+            ) : <span style={{ width: 22, height: 22, borderRadius: '50%', background: '#2a2a2a' }} />}
+            <span style={{ ...SKB, fontSize: 12, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.04em' }}>@{post.username as string}</span>
+          </button>
         )}
-        {location && (
+
+        {/* caption + location·date */}
+        {typeof post?.caption === 'string' && post.caption && (
+          <p style={{ ...SKR, fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.5, margin: lightbox ? '10px 0 0' : '12px 0 0', maxWidth: 381 }}>{post.caption}</p>
+        )}
+        {(location || (lightbox && !!post?.created_at)) && (
           <p style={{ ...SKB, fontSize: 8, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '10px 0 0', display: 'flex', alignItems: 'center', gap: 5 }}>
-            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.45)" strokeWidth="1.8"><path d="M12 21s-6.5-5.4-6.5-10.5A6.5 6.5 0 0 1 12 4a6.5 6.5 0 0 1 6.5 6.5C18.5 15.6 12 21 12 21z" /><circle cx="12" cy="10.5" r="2.2" /></svg>
-            {location}
+            {location && <><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.45)" strokeWidth="1.8"><path d="M12 21s-6.5-5.4-6.5-10.5A6.5 6.5 0 0 1 12 4a6.5 6.5 0 0 1 6.5 6.5C18.5 15.6 12 21 12 21z" /><circle cx="12" cy="10.5" r="2.2" /></svg>{location}</>}
+            {!!location && lightbox && !!post?.created_at && <span style={{ opacity: 0.5 }}>·</span>}
+            {lightbox && !!post?.created_at && <span>{new Date(post.created_at as string).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>}
           </p>
         )}
         {belowLeft && <div style={{ marginTop: lightbox ? 'auto' : undefined, paddingTop: 14 }}>{belowLeft}</div>}

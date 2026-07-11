@@ -66,7 +66,7 @@ export default function DesktopViewingModes({ currentMode, onClose, onSelect }: 
   };
 
   return createPortal(
-    <div data-swipe-exclude style={{ position: 'fixed', inset: 0, zIndex: 120 }}>
+    <div data-swipe-exclude style={{ position: 'fixed', inset: 0, zIndex: 200 }}>
       <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.92)', opacity: mounted ? 1 : 0, transition: reduced ? 'none' : 'opacity 220ms ease' }} />
       {/* content panel — offset right of the rail, scrollable, centered column */}
       <div style={{ position: 'absolute', top: 0, left: RAIL_W, right: 0, bottom: 0, overflowY: 'auto' }}>

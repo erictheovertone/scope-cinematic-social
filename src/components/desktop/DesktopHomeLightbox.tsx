@@ -160,7 +160,8 @@ export default function DesktopHomeLightbox({
     // left:RAIL_W keeps the global rail (z80) VISIBLE beneath this z140 overlay.
     // overflow:hidden → everything fits one screen, no scroll (frame 775:4).
     <div data-swipe-exclude style={{ position: 'fixed', top: 0, right: 0, bottom: 0, left: RAIL_W, zIndex: 140, background: '#000', overflow: 'hidden' }}>
-      <div style={{ maxWidth: 1369, margin: '0 auto', padding: '18px 24px 0', height: '100%', boxSizing: 'border-box' }}>
+      {/* header row seated 8px higher (top padding 18→10) */}
+      <div style={{ maxWidth: 1369, margin: '0 auto', padding: '10px 24px 0', height: '100%', boxSizing: 'border-box' }}>
 
         {/* ── FEED heading (page-title, 40px) + FOR YOU / FOLLOWING tabs (frame ~y38) ── */}
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 20, marginBottom: 12 }}>
@@ -189,8 +190,8 @@ export default function DesktopHomeLightbox({
                 <div style={{ width: '100%', aspectRatio: '2.39 / 1', overflow: 'hidden', background: '#0d0d0d', outline: isActive ? '1px solid rgba(242,13,13,0.7)' : 'none' }}>
                   {thumbOf(p) && <img src={feedImage(thumbOf(p), 340)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
                 </div>
-                {/* +30px air under the strip images: handles (and all content below) drop 30px */}
-                <p style={{ ...SKB, fontSize: 9, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '34px 0 0', textAlign: 'left', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>@{String(p.username ?? '')}</p>
+                {/* handle hugs the thumbnail (~5px), left-justified */}
+                <p style={{ ...SKB, fontSize: 9, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '5px 0 0', textAlign: 'left', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>@{String(p.username ?? '')}</p>
               </button>
             );
           })}
