@@ -537,6 +537,7 @@ export interface Deck {
   description: string | null
   grid_layout: string
   cover_image_url: string | null
+  thumbnail_url?: string | null // baked collage cover (deckCollage); null → (re)bake
   is_public: boolean
   camera?: string | null
   lens?: string | null
@@ -756,6 +757,9 @@ export const addPostToDeck = async (deckId: string, postId: string): Promise<Dec
     }
   }
 
+  // Posts changed → clear the baked collage cover so it re-bakes on next display.
+  // Tolerant pre-migration (column may not exist; the error is ignored).
+  await supabase.from('decks').update({ thumbnail_url: null }).eq('id', deckId)
   return data
 }
 
@@ -784,6 +788,7 @@ export const addMediaToDeck = async (deckId: string, mediaUrl: string): Promise<
     await supabase.from('decks').update({ cover_image_url: mediaUrl }).eq('id', deckId)
   }
 
+  await supabase.from('decks').update({ thumbnail_url: null }).eq('id', deckId) // re-bake trigger
   return data
 }
 
@@ -794,6 +799,7 @@ export const removeFromDeck = async (deckId: string, itemId: string): Promise<vo
     .eq('id', itemId)
     .eq('deck_id', deckId)
   if (error) throw error
+  await supabase.from('decks').update({ thumbnail_url: null }).eq('id', deckId) // re-bake trigger
 }
 
 export const deleteDeck = async (deckId: string): Promise<void> => {
@@ -856,7 +862,7 @@ export const deleteProfileLink = async (linkId: string): Promise<void> => {
 
 export const updateDeck = async (
   deckId: string,
-  updates: Partial<Pick<Deck, 'title' | 'description' | 'grid_layout' | 'cover_image_url' | 'is_public' | 'camera' | 'lens' | 'additional_notes'>>,
+  updates: Partial<Pick<Deck, 'title' | 'description' | 'grid_layout' | 'cover_image_url' | 'thumbnail_url' | 'is_public' | 'camera' | 'lens' | 'additional_notes'>>,
 ): Promise<Deck> => {
   const { data, error } = await supabase
     .from('decks')
@@ -887,6 +893,7 @@ export const updateProfileFields = async (
     mobile_count: number; // mobile grid columns (1|2)
     desktop_count: number; // desktop grid columns (3|4|5)
     grid_layout: string; // legacy mirror (kept in sync so un-migrated readers reflect AR)
+    decks_count: number; // desktop decks grid columns (3|4|5), default 4
   }>
 ): Promise<void> => {
   // Identity is ALWAYS uppercase — enforce here so no write path bypasses it

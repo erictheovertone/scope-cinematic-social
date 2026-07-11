@@ -13,6 +13,8 @@ import {
   createDeck, isProMember, type ProfileLink, type Deck,
 } from '@/lib/userService';
 import { createPortal } from 'react-dom';
+import { updateProfileFields } from '@/lib/userService';
+import { bakeAndStoreDeckCover } from '@/lib/deckCollage';
 import { getUserPosts } from '@/lib/postsService';
 import { useEconomy } from '@/components/EconomyProvider';
 import { resolveBadges } from '@/lib/economy/badges';
@@ -71,18 +73,45 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
   const [msgToast, setMsgToast] = useState(false);
   const [deckCreateOpen, setDeckCreateOpen] = useState(false);
   const [newDeckTitle, setNewDeckTitle] = useState('');
+  const [newDeckDesc, setNewDeckDesc] = useState('');
   const [creatingDeck, setCreatingDeck] = useState(false);
+  const [decksCount, setDecksCount] = useState(4); // desktop decks grid columns (3|4|5)
+  const bakingRef = useRef<Set<string>>(new Set());
 
   const submitDeck = async () => {
     const title = newDeckTitle.trim();
     if (!title || creatingDeck) return;
     setCreatingDeck(true);
     try {
-      const deck = await createDeck(privyId, handle, title, '');
-      if (deck?.id) router.push(`/profile/${handle}/decks/${deck.id}`);
+      const deck = await createDeck(privyId, handle, title, newDeckDesc.trim());
+      if (deck?.id) router.push(`/profile/${handle}/decks/${deck.id}`); // → editor to add posts (cover bakes there)
     } catch (e) { console.error('[desktop-profile] createDeck error:', e); }
-    finally { setCreatingDeck(false); setDeckCreateOpen(false); setNewDeckTitle(''); }
+    finally { setCreatingDeck(false); setDeckCreateOpen(false); setNewDeckTitle(''); setNewDeckDesc(''); }
   };
+
+  // Per-user desktop decks grid count (3|4|5) — persisted, applies immediately.
+  const changeDecksCount = (n: number) => {
+    setDecksCount(n);
+    if (userId) void updateProfileFields(userId, { decks_count: n }).catch(() => {});
+  };
+
+  // LAZY BAKE: the owner bakes any deck whose collage cover is missing (null
+  // thumbnail_url) — on first display and after add/remove cleared it. One small
+  // WebP per deck; graceful (a failed bake just keeps the first-post fallback).
+  useEffect(() => {
+    if (!isOwn) return;
+    const toBake = decks.filter((d) => !d.thumbnail_url && (d.thumbnail_urls?.length ?? 0) > 0 && !bakingRef.current.has(d.id));
+    if (!toBake.length) return;
+    toBake.forEach((d) => bakingRef.current.add(d.id));
+    let dead = false;
+    (async () => {
+      for (const d of toBake) {
+        const url = await bakeAndStoreDeckCover(d.id, d.thumbnail_urls, privyId);
+        if (!dead && url) setDecks((cur) => cur.map((x) => (x.id === d.id ? { ...x, thumbnail_url: url } : x)));
+      }
+    })();
+    return () => { dead = true; };
+  }, [decks, isOwn, privyId]);
 
   useEffect(() => {
     let alive = true;
@@ -99,6 +128,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
         ]);
         if (!alive) return;
         setProfile(p as Record<string, unknown> | null);
+        setDecksCount(Number((p as { decks_count?: number } | null)?.decks_count) || 4);
         { const R = resolveLayout(p as Parameters<typeof resolveLayout>[0]); setGridConf({ aspect: R.aspect, count: R.desktopCount }); }
         setFollowers(fw); setFollowing(fg);
         setPosts((ps as unknown as Record<string, unknown>[]) ?? []);
@@ -410,29 +440,43 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
           </div>
         )}
         {tab === 'decks' && (
-          // DESKTOP DECKS: fixed 4-across. Cover + title + post count (mobile's
-          // deck-card fields, desktop-scaled). CREATE DECK is the first card (own
-          // profile only). Tapping a deck → the existing deck route (v1 presents
-          // as the current deck page; a dedicated desktop deck view is a follow-up).
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, paddingBottom: 80 }}>
+          // DESKTOP DECKS: a full grid (default 4-across; per-user 3|4|5 via the
+          // header control). Cover = the BAKED collage (thumbnail_url) → first post
+          // → cover_image_url → placeholder. CREATE DECK is the first card (own).
+          // Tapping a deck → the existing deck route (v1 presents as the current
+          // deck page; a dedicated desktop deck view is a follow-up).
+          <div style={{ paddingBottom: 80 }}>
+            {/* count control (own profile only) — the decks-tab header */}
             {isOwn && (
-              <button onClick={() => setDeckCreateOpen(true)} style={{ aspectRatio: '16 / 10', border: `1px dashed ${HAIR}`, background: 'transparent', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
-                <svg width="34" height="34" viewBox="0 0 34 34" fill="none"><path d="M17 6v22M6 17h22" stroke="rgba(255,255,255,0.7)" strokeWidth="1" /></svg>
-                <span style={{ ...SKB, fontSize: 11, color: 'rgba(255,255,255,0.7)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>CREATE DECK</span>
-              </button>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8, margin: '0 0 16px' }}>
+                <span style={{ ...SKB, fontSize: 9, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.14em' }}>ACROSS</span>
+                {[3, 4, 5].map((n) => (
+                  <button key={n} onClick={() => changeDecksCount(n)} style={{ ...SKB, fontSize: 11, width: 24, height: 24, color: decksCount === n ? '#000' : 'rgba(255,255,255,0.6)', background: decksCount === n ? '#FFF' : 'transparent', border: `1px solid ${decksCount === n ? '#FFF' : HAIR}`, cursor: 'pointer', fontVariantNumeric: 'tabular-nums' }}>{n}</button>
+                ))}
+              </div>
             )}
-            {decks.map((d) => (
-              <button key={d.id} onClick={() => router.push(`/profile/${handle}/decks/${d.id}`)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, textAlign: 'left', display: 'block' }}>
-                <div style={{ aspectRatio: '16 / 10', overflow: 'hidden', background: '#101010', border: `1px solid ${HAIR}` }}>
-                  {(d.cover_image_url || d.thumbnail_urls?.[0]) && (
-                    <img src={feedImage((d.cover_image_url || d.thumbnail_urls[0]) as string, 600)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                  )}
-                </div>
-                <p style={{ ...SKB, fontSize: 12, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '9px 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.title}</p>
-                <p style={{ ...SKR, fontSize: 10, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '3px 0 0' }}>{d.item_count} {d.item_count === 1 ? 'POST' : 'POSTS'}</p>
-              </button>
-            ))}
-            {decks.length === 0 && !isOwn && <p style={{ ...SKR, fontSize: 12, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', gridColumn: 'span 4', padding: '40px 0', textAlign: 'center' }}>NO DECKS YET</p>}
+            <div style={{ display: 'grid', gridTemplateColumns: `repeat(${decksCount}, 1fr)`, gap: 16 }}>
+              {isOwn && (
+                <button onClick={() => setDeckCreateOpen(true)} style={{ aspectRatio: '16 / 10', border: `1px dashed ${HAIR}`, background: 'transparent', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+                  <svg width="34" height="34" viewBox="0 0 34 34" fill="none"><path d="M17 6v22M6 17h22" stroke="rgba(255,255,255,0.7)" strokeWidth="1" /></svg>
+                  <span style={{ ...SKB, fontSize: 11, color: 'rgba(255,255,255,0.7)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>CREATE DECK</span>
+                </button>
+              )}
+              {decks.map((d) => {
+                const fallback = d.thumbnail_urls?.[0] || d.cover_image_url || null;
+                const coverSrc = d.thumbnail_url || (fallback ? feedImage(fallback as string, 600) : null); // baked WebP is already display-sized
+                return (
+                  <button key={d.id} onClick={() => router.push(`/profile/${handle}/decks/${d.id}`)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, textAlign: 'left', display: 'block' }}>
+                    <div style={{ aspectRatio: '16 / 10', overflow: 'hidden', background: '#101010', border: `1px solid ${HAIR}` }}>
+                      {coverSrc && <img src={coverSrc} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
+                    </div>
+                    <p style={{ ...SKB, fontSize: 12, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '9px 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.title}</p>
+                    <p style={{ ...SKR, fontSize: 10, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '3px 0 0' }}>{d.item_count} {d.item_count === 1 ? 'POST' : 'POSTS'}</p>
+                  </button>
+                );
+              })}
+              {decks.length === 0 && !isOwn && <p style={{ ...SKR, fontSize: 12, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', gridColumn: `span ${decksCount}`, padding: '40px 0', textAlign: 'center' }}>NO DECKS YET</p>}
+            </div>
           </div>
         )}
       </div>
@@ -453,6 +497,12 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
               onKeyDown={(e) => { if (e.key === 'Enter') void submitDeck(); }}
               placeholder="DECK TITLE"
               style={{ ...SKR, width: '100%', fontSize: 14, color: '#FFF', background: 'transparent', border: 'none', borderBottom: `1px solid ${HAIR}`, outline: 'none', padding: '8px 0', letterSpacing: '0.04em', boxSizing: 'border-box' }}
+            />
+            <input
+              value={newDeckDesc} onChange={(e) => setNewDeckDesc(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') void submitDeck(); }}
+              placeholder="DESCRIPTION (OPTIONAL)"
+              style={{ ...SKR, width: '100%', fontSize: 13, color: 'rgba(255,255,255,0.75)', background: 'transparent', border: 'none', borderBottom: `1px solid ${HAIR}`, outline: 'none', padding: '8px 0', margin: '10px 0 0', letterSpacing: '0.04em', boxSizing: 'border-box' }}
             />
             <div style={{ display: 'flex', gap: 10, marginTop: 24 }}>
               <button onClick={() => setDeckCreateOpen(false)} style={{ ...SKB, flex: 1, fontSize: 11, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.08em', background: 'transparent', border: `1px solid ${HAIR}`, cursor: 'pointer', padding: '12px 0' }}>CANCEL</button>
