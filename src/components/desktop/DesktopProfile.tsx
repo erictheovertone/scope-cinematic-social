@@ -20,7 +20,7 @@ import { useEconomy } from '@/components/EconomyProvider';
 import { resolveBadges } from '@/lib/economy/badges';
 import { feedImage } from '@/lib/mediaUrl';
 import PostModal from '@/components/PostModal';
-import ProfileDataSheet from '@/components/ProfileDataSheet';
+import DesktopBioSheet from '@/components/desktop/DesktopBioSheet';
 import DesktopBadgesSheet from '@/components/desktop/DesktopBadgesSheet';
 import CollectedGrid from '@/components/economy/CollectedGrid';
 import TheatreMode from '@/components/TheatreMode';
@@ -516,18 +516,24 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
       {/* Desktop lightbox v1: PostModal (portaled) renders as the full overlay —
           acceptable centered presentation for v1. */}
       {openPost && <PostModal post={openPost as any} onClose={() => setOpenPost(null)} />}
-      <ProfileDataSheet
-        isOpen={infoOpen}
-        onClose={() => setInfoOpen(false)}
-        profile={profile as any}
-        links={links}
-        isOwnProfile={isOwn}
-        followers={followers}
-        following={following}
-        totalPosts={posts.length}
-        collectors={collectors}
-        firstCutCount={fcCount}
-      />
+      {/* Desktop bio SHEET — the personal-site treatment (replaces ProfileDataSheet). */}
+      {infoOpen && (
+        <DesktopBioSheet
+          profile={profile}
+          isOwn={isOwn}
+          links={links}
+          badges={badges}
+          posts={posts}
+          followers={followers}
+          following={following}
+          collectors={collectors}
+          totalPosts={posts.length}
+          firstCutCount={fcCount}
+          onClose={() => setInfoOpen(false)}
+          onViewBadges={() => { setInfoOpen(false); setBadgesOpen(true); }}
+          onMessage={() => { setMsgToast(true); window.setTimeout(() => setMsgToast(false), 1800); }}
+        />
+      )}
       {badgesOpen && (
         <DesktopBadgesSheet
           flags={{
