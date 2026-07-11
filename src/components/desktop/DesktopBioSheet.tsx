@@ -39,15 +39,15 @@ interface Props {
 // One shared band frame: full-width row, hairline top, left label column.
 function Band({ label, sub, action, children }: { label: string; sub?: string; action?: React.ReactNode; children: React.ReactNode }) {
   return (
-    <div style={{ display: 'flex', gap: 40, padding: '38px 0', borderTop: `1px solid ${HAIR}` }}>
-      <div style={{ width: 200, flexShrink: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 }}>
-          <p style={{ ...SKB, fontSize: 11, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.16em', margin: 0 }}>{label}</p>
-        </div>
-        {sub && <p style={{ ...SKR, fontSize: 10, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.12em', margin: '8px 0 0' }}>{sub}</p>}
-        {action && <div style={{ marginTop: 14 }}>{action}</div>}
+    <div style={{ display: 'flex', gap: 44, padding: '44px 0', borderTop: `1px solid ${HAIR}` }}>
+      <div style={{ width: 250, flexShrink: 0 }}>
+        {/* big left-column section title + red underline accent (per the reference) */}
+        <p style={{ ...SKB, fontSize: 30, lineHeight: 1, color: '#FFF', textTransform: 'uppercase', letterSpacing: '-0.01em', margin: 0 }}>{label}</p>
+        <div style={{ width: 32, height: 2, background: RED, margin: '13px 0 0' }} />
+        {sub && <p style={{ ...SKR, fontSize: 11, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.12em', margin: '13px 0 0' }}>{sub}</p>}
+        {action && <div style={{ marginTop: 16 }}>{action}</div>}
       </div>
-      <div style={{ flex: 1, minWidth: 0 }}>{children}</div>
+      <div style={{ flex: 1, minWidth: 0, paddingTop: 4 }}>{children}</div>
     </div>
   );
 }
@@ -109,12 +109,19 @@ export default function DesktopBioSheet({ profile, isOwn, links, badges, posts, 
       <div style={{ maxWidth: 1180, margin: '0 auto', padding: '0 40px 80px' }}>
 
         {/* ═══ 1. AUTO-BANNER HERO ═══ */}
-        <div style={{ position: 'relative', height: 420, margin: '0 -40px', overflow: 'hidden', background: '#0a0a0a' }}>
-          {/* the PFP, scaled up as the banner image, right-of-center */}
-          {pfp && <img src={feedImage(pfp, 1200)} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: '75% 30%' }} />}
-          {/* heavy black feathering: left scrim (data on solid black) + edge scrims */}
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, #000 0%, #000 34%, rgba(0,0,0,0.65) 55%, rgba(0,0,0,0.15) 100%)' }} />
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.55) 0%, transparent 24%, transparent 62%, #000 100%)' }} />
+        {/* Framing (nudge by number): the PFP covers the RIGHT ~60% (not the full
+            width → far less zoom, subject recognizable), anchored right, face high
+            (objectPosition center 20%). Then low-key scrims so it emerges from black. */}
+        <div style={{ position: 'relative', height: 420, margin: '0 -40px', overflow: 'hidden', background: '#080808' }}>
+          {pfp && <img src={feedImage(pfp, 1200)} alt="" style={{ position: 'absolute', right: 0, top: 0, width: '60%', height: '100%', objectFit: 'cover', objectPosition: 'center 20%' }} />}
+          {/* overall low-key dim */}
+          <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.28)' }} />
+          {/* heavy left→right scrim — the data zone is effectively solid black */}
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, #000 0%, #000 42%, rgba(0,0,0,0.82) 62%, rgba(0,0,0,0.4) 84%, rgba(0,0,0,0.12) 100%)' }} />
+          {/* wide top/bottom feather — the image melts into black, not a hard edge */}
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.72) 0%, transparent 32%, transparent 52%, #000 100%)' }} />
+          {/* radial vignette — edges darken around the emerging subject */}
+          <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(130% 105% at 74% 42%, transparent 30%, rgba(0,0,0,0.55) 100%)' }} />
 
           {/* left overlay — identity */}
           <div style={{ position: 'absolute', left: 40, top: 0, bottom: 0, width: 480, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
