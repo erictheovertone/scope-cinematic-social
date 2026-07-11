@@ -557,8 +557,7 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
 
             {/* Like + comments toggle */}
             <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 14 }}>
-              {/* Like */}
-              <PressPop>
+              {/* Like — pop the inner content, not the button (house rule). */}
               <button
                 onClick={handleLike}
                 disabled={loading || !user}
@@ -569,6 +568,7 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
                   color: isLiked ? "#FF0000" : "rgba(255,255,255,0.55)",
                 }}
               >
+                <PressPop><span style={{ display: "flex", alignItems: "center", gap: 5 }}>
                 <svg width="15.5" height="15.5" viewBox="0 0 24 24" fill="none">
                   <path
                     d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
@@ -578,8 +578,8 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
                   />
                 </svg>
                 <span style={{ ...SKR, fontSize: 'var(--fs-8)', color: "inherit" }}>{likes.length}</span>
+                </span></PressPop>
               </button>
-              </PressPop>
 
               {/* Comments toggle */}
               <button
@@ -594,19 +594,19 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
               {/* No bookmark/save: Scope has no free keep-mechanism — the
                   heart is feeling, COLLECT is conviction (ratified). */}
 
-              {/* Share */}
-              <PressPop>
+              {/* Share — pop the inner icon, not the button (house rule). */}
               <button
                 onClick={handleShare}
                 style={{ background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", padding: 0 }}
               >
+                <PressPop><span style={{ display: "flex" }}>
                 <svg width="15.5" height="15.5" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
                   <polyline points="16 6 12 2 8 6" />
                   <line x1="12" y1="2" x2="12" y2="15" />
                 </svg>
+                </span></PressPop>
               </button>
-              </PressPop>
 
               {/* ••• — owner controls reveal (ripple-down). Non-owners have no
                   extra actions today (share is already in the row) → hidden. */}

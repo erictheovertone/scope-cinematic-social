@@ -458,8 +458,8 @@ const userLayoutId = stableLayoutId;
         </p>
       </div>
 
-      {/* Info sheet trigger */}
-      <PressPop>
+      {/* Info sheet trigger — pop on the INNER icon only; the button + its hit area
+          never scale (house rule from Brief 3). */}
       <button
         onClick={() => setProfileDataOpen(true)}
         style={{
@@ -472,6 +472,7 @@ const userLayoutId = stableLayoutId;
         }}
         aria-label="View profile info"
       >
+        <PressPop><span style={{ display: 'flex' }}>
         <div style={{
           width: 14.6, height: 11.2,
           border: '0.5px solid #FFFFFF',
@@ -489,8 +490,8 @@ const userLayoutId = stableLayoutId;
             transition: 'color 200ms ease',
           }}>i</span>
         </div>
+        </span></PressPop>
       </button>
-      </PressPop>
 
       </div>{/* end header */}
 
