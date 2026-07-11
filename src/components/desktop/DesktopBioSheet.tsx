@@ -108,30 +108,31 @@ export default function DesktopBioSheet({ profile, isOwn, links, badges, posts, 
 
       <div style={{ maxWidth: 1180, margin: '0 auto', padding: '0 40px 80px' }}>
 
-        {/* ═══ 1. AUTO-BANNER HERO ═══ */}
-        {/* Framing (nudge by number): the PFP covers the RIGHT ~60% (not the full
-            width → far less zoom, subject recognizable), anchored right, face high
-            (objectPosition center 20%). Then low-key scrims so it emerges from black. */}
-        <div style={{ position: 'relative', height: 420, margin: '0 -40px', overflow: 'hidden', background: '#080808' }}>
-          {/* CONTAIN + BLEED (round-4 geometry fix): the square PFP was cover-
-              filling a wide-short band → structural over-zoom (scaled to width,
-              ~35% of height cropped). Now the FULL square face renders at ~band
-              height, floating right-of-center, its edges dissolved into black by
-              a radial feather — a portrait emerging from darkness, not a wall crop. */}
+        {/* ═══ 1. AUTO-BANNER HERO — the album-art treatment ═══ */}
+        {/* Blurred cover-fill of the PFP gives the WHOLE band the portrait's color
+            atmosphere; the sharp portrait floats over it, LARGER, radial-MASKED so
+            its edges dissolve into the underlay (no rectangular boundary anywhere).
+            One composition: atmosphere across the width, a clear subject emerging. */}
+        <div style={{ position: 'relative', height: 460, margin: '0 -40px', overflow: 'hidden', background: '#000' }}>
           {pfp && (
-            <div style={{ position: 'absolute', top: '50%', right: '17%', transform: 'translateY(-50%)', width: 350, height: 350 }}>
-              <img src={feedImage(pfp, 720)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-              {/* the portrait's OWN edges melt into black (all sides) */}
-              <div style={{ position: 'absolute', inset: -1, background: 'radial-gradient(closest-side at 50% 46%, transparent 54%, #000 97%)' }} />
-            </div>
+            <>
+              {/* 1. BLURRED ATMOSPHERE UNDERLAY (full band) */}
+              <img src={feedImage(pfp, 720)} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', filter: 'blur(70px) brightness(0.85)', opacity: 0.4, transform: 'scale(1.18)' }} />
+              {/* 2. SHARP PORTRAIT — large, right-of-center, edges masked into the underlay */}
+              <div style={{ position: 'absolute', top: '50%', right: '20%', transform: 'translateY(-50%)', width: 460, height: 460 }}>
+                <img src={feedImage(pfp, 900)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', filter: 'brightness(1.2)', WebkitMaskImage: 'radial-gradient(closest-side at 50% 46%, #000 52%, transparent 90%)', maskImage: 'radial-gradient(closest-side at 50% 46%, #000 52%, transparent 90%)' }} />
+              </div>
+            </>
           )}
-          {/* deep left data-zone gradient — name block sits on solid black */}
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, #000 0%, #000 42%, rgba(0,0,0,0.4) 60%, transparent 84%)' }} />
-          {/* soft top/bottom edge feather */}
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, #000 0%, transparent 22%, transparent 74%, #000 100%)' }} />
+          {/* 3. deep left data-zone gradient — name on a darkened zone */}
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, #000 0%, rgba(0,0,0,0.86) 28%, rgba(0,0,0,0.28) 52%, transparent 72%)' }} />
+          {/* 4. right stats scrim — a LOCAL dark zone for the stats, clear of the face */}
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(270deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.45) 22%, transparent 42%)' }} />
+          {/* 5. soft top/bottom edge feather */}
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.4) 0%, transparent 18%, transparent 82%, #000 100%)' }} />
 
           {/* left overlay — identity */}
-          <div style={{ position: 'absolute', left: 40, top: 0, bottom: 0, width: 480, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          <div style={{ position: 'absolute', left: 40, top: 0, bottom: 0, width: 440, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
             <p style={{ ...SKB, fontSize: 11, color: RED, textTransform: 'uppercase', letterSpacing: '0.22em', margin: '0 0 14px' }}>CREATOR</p>
             <h1 style={{ ...SKB, fontSize: 46, lineHeight: 1, letterSpacing: '-0.02em', color: '#FFF', textTransform: 'uppercase', margin: 0 }}>{name}</h1>
             {handle && <p style={{ ...SKR, fontSize: 14, color: 'rgba(255,255,255,0.55)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '10px 0 0' }}>@{handle}</p>}
