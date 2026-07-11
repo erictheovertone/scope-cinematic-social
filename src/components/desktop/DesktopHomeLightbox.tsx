@@ -47,6 +47,15 @@ export default function DesktopHomeLightbox({
   const [moreFrom, setMoreFrom] = useState<P[]>([]);
   const [mfMc, setMfMc] = useState<Map<string, string>>(new Map());
   const mfScroll = useRef<HTMLDivElement | null>(null);
+  const stripRef = useRef<HTMLDivElement | null>(null);
+
+  // The top strip tracks the ACTIVE post: whenever it changes (arrows/keyboard/
+  // strip tap), scroll its thumbnail to center. inline:'center' (chosen over
+  // 'nearest' so the active tile always lands mid-strip, not just barely in view).
+  useEffect(() => {
+    const el = stripRef.current?.querySelector('[data-active]') as HTMLElement | null;
+    el?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+  }, [pos, tab]);
 
   const step = useCallback((dir: 1 | -1) => {
     setPos((i) => { const n = i + dir; return n < 0 || n >= nav.length ? i : n; });
@@ -179,13 +188,13 @@ export default function DesktopHomeLightbox({
         </div>
 
         {/* ── TOP STRIP — the tab's posts, horizontal scroll, quiet handles ── */}
-        <div style={{ display: 'flex', gap: 9, overflowX: 'auto', paddingBottom: 8, marginBottom: 6, scrollbarWidth: 'none' }}>
+        <div ref={stripRef} style={{ display: 'flex', gap: 9, overflowX: 'auto', paddingBottom: 8, marginBottom: 6, scrollbarWidth: 'none' }}>
           {strip.length === 0 ? (
             <p style={{ ...SKR, fontSize: 11, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.1em', padding: '40px 0' }}>{tab === 'following' ? 'NO POSTS FROM ACCOUNTS YOU FOLLOW' : 'NOTHING HERE YET'}</p>
           ) : strip.map((p) => {
             const isActive = String(p.id) === String(active?.id);
             return (
-              <button key={String(p.id)} onClick={() => jumpTo(p)} aria-label={`Post by @${String(p.username ?? '')}`}
+              <button key={String(p.id)} data-active={isActive ? '' : undefined} onClick={() => jumpTo(p)} aria-label={`Post by @${String(p.username ?? '')}`}
                 style={{ flexShrink: 0, width: 164, background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, opacity: isActive ? 1 : 0.6, transition: 'opacity 160ms ease' }}>
                 <div style={{ width: '100%', aspectRatio: '2.39 / 1', overflow: 'hidden', background: '#0d0d0d', outline: isActive ? '1px solid rgba(242,13,13,0.7)' : 'none' }}>
                   {thumbOf(p) && <img src={feedImage(thumbOf(p), 340)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
@@ -199,7 +208,9 @@ export default function DesktopHomeLightbox({
 
         {/* ── STAGE + RIGHT PANEL + (below-left) MORE FROM — reused, lightbox framing.
               marginTop = extra air above the stage / panel top (frame rhythm, #4). ── */}
-        <div style={{ marginTop: 24 }}>
+        {/* group (stage/panel/actions/creator/caption/MORE FROM) sits 15px lower
+            than round 3 — marginTop 24→39; internal positioning unchanged. */}
+        <div style={{ marginTop: 39 }}>
           <DesktopPostView posts={nav} index={pos} onStep={step} location={null} framing="lightbox" belowLeft={moreFromRow} />
         </div>
       </div>

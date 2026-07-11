@@ -449,18 +449,20 @@ export default function TheatreMode({
           <button
             onClick={(e) => { stop(e); go(-1); }}
             aria-label="Previous"
-            style={{ position: 'absolute', left: sideMargin / 2, top: '50%', transform: 'translate(-50%, -50%)', background: 'transparent', border: 'none', cursor: 'pointer', padding: ARROW_PAD, opacity: 0.85 }}
+            style={{ position: 'absolute', left: sideMargin / 2, top: '50%', transform: 'translate(-50%, -50%)', background: 'transparent', border: 'none', cursor: 'pointer', padding: ARROW_PAD, opacity: isDesktopVp ? 1 : 0.85 }}
           >
-            <img src="/theatre-mode-arrow-01.png" alt="Previous" style={{ height: arrowH, width: 'auto', display: 'block', transform: 'scaleX(-1)' }} />
+            {/* DESKTOP: full opacity + a white glow so the arrows read clearly (the
+                0.85 button opacity was the only dimmer — no overlay above them). */}
+            <img src="/theatre-mode-arrow-01.png" alt="Previous" style={{ height: arrowH, width: 'auto', display: 'block', transform: 'scaleX(-1)', filter: isDesktopVp ? 'brightness(1.3) drop-shadow(0 0 6px rgba(255,255,255,0.55))' : undefined }} />
           </button>
         )}
         {!showData && index < posts.length - 1 && (
           <button
             onClick={(e) => { stop(e); go(1); }}
             aria-label="Next"
-            style={{ position: 'absolute', left: stageW - sideMargin / 2, top: '50%', transform: 'translate(-50%, -50%)', background: 'transparent', border: 'none', cursor: 'pointer', padding: ARROW_PAD, opacity: 0.85 }}
+            style={{ position: 'absolute', left: stageW - sideMargin / 2, top: '50%', transform: 'translate(-50%, -50%)', background: 'transparent', border: 'none', cursor: 'pointer', padding: ARROW_PAD, opacity: isDesktopVp ? 1 : 0.85 }}
           >
-            <img src="/theatre-mode-arrow-01.png" alt="Next" style={{ height: arrowH, width: 'auto', display: 'block' }} />
+            <img src="/theatre-mode-arrow-01.png" alt="Next" style={{ height: arrowH, width: 'auto', display: 'block', filter: isDesktopVp ? 'brightness(1.3) drop-shadow(0 0 6px rgba(255,255,255,0.55))' : undefined }} />
           </button>
         )}
 

@@ -17,6 +17,7 @@ import { getAllPosts, FEED_PAGE_SIZE } from '@/lib/postsService';
 import PostItem from '@/components/PostItem';
 import DesktopHomeLightbox from '@/components/desktop/DesktopHomeLightbox';
 import DesktopViewingModes, { type ViewingMode } from '@/components/desktop/DesktopViewingModes';
+import TheatreMode from '@/components/TheatreMode';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const RAIL_W = 71; // clear the global left rail
@@ -28,7 +29,9 @@ export default function DesktopHome() {
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [modesOpen, setModesOpen] = useState(false);
-  const [view, setView] = useState<number | null>(null); // interim lightbox (Part 2 replaces)
+  const [view, setView] = useState<number | null>(null); // home-feed lightbox
+  const [theatreOpen, setTheatreOpen] = useState(false); // theatre on the feed posts
+  const [flash, setFlash] = useState(false); // mode-switch flash-through-black
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null); // the feed's own scroller (body is overflow:hidden)
 
@@ -75,12 +78,29 @@ export default function DesktopHome() {
     return () => io.disconnect();
   }, [loadMore, hasMore, view, posts?.length]);
 
+  // ONE mode-switch language: a fast fade-through-black (~180ms, ease-out, opacity
+  // only = GPU). reduced-motion → instant. Feels like a cut. The surface swap
+  // happens at the black midpoint so it reads as a clean cut, not a dissolve.
+  const reduced = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  const switchWith = (fn: () => void) => {
+    if (reduced) { fn(); return; }
+    setFlash(true);
+    window.setTimeout(() => { fn(); }, 90);
+    window.setTimeout(() => setFlash(false), 190);
+  };
+
+  // MODE → SURFACE MAP. Every mode acts (if it reacts, it acts):
+  //  feed → the grid · lightbox → the home lightbox · theatre → desktop theatre
+  //  on the feed · screening → /screening-room. mirage → COMING (menu-gated).
   const onSelectMode = (mode: ViewingMode) => {
     setModesOpen(false);
-    setView(null); // selecting a mode EXITS the lightbox into that mode
-    if (mode === 'screening') router.push('/screening-room');
-    // feed = current (returns to the grid); theatre/mirage/lightbox wired in the
-    // broader modes feature.
+    switchWith(() => {
+      setTheatreOpen(false);
+      if (mode === 'theatre') { setView(null); setTheatreOpen(true); }
+      else if (mode === 'lightbox') { setTheatreOpen(false); setView((v) => (v == null ? 0 : v)); }
+      else if (mode === 'screening') { setView(null); router.push('/screening-room'); }
+      else { setView(null); } // feed → back to the grid
+    });
   };
 
   return (
@@ -91,7 +111,14 @@ export default function DesktopHome() {
       <div style={{ maxWidth: 1440, margin: '0 auto', padding: '40px 48px 96px' }}>
         {/* DISCOVER — the page title, top-left of the content column (mobile home's
             title, now on desktop). SK-Modernist Bold, −0.06em, 40px page-title scale. */}
-        <h1 style={{ ...SKB, fontSize: 40, lineHeight: 0.95, letterSpacing: '-0.06em', color: '#FFF', textTransform: 'uppercase', margin: '0 0 30px' }}>Discover</h1>
+        {/* DISCOVER title + SEARCH control (top-right — same language as the lightbox) */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '0 0 30px' }}>
+          <h1 style={{ ...SKB, fontSize: 40, lineHeight: 0.95, letterSpacing: '-0.06em', color: '#FFF', textTransform: 'uppercase', margin: 0 }}>Discover</h1>
+          <div style={{ width: 160, height: 34, border: '0.5px solid rgba(255,255,255,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 12px', flexShrink: 0 }}>
+            <span style={{ ...SKB, fontSize: 11, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>SEARCH</span>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3" strokeLinecap="round"/></svg>
+          </div>
+        </div>
         {posts == null ? (
           <div style={{ minHeight: '40vh' }} />
         ) : posts.length === 0 ? (
@@ -135,8 +162,20 @@ export default function DesktopHome() {
       )}
 
       {modesOpen && (
-        <DesktopViewingModes currentMode="feed" onClose={() => setModesOpen(false)} onSelect={onSelectMode} />
+        <DesktopViewingModes currentMode={theatreOpen ? 'theatre' : view != null ? 'lightbox' : 'feed'} onClose={() => setModesOpen(false)} onSelect={onSelectMode} />
       )}
+
+      {/* THEATRE on the feed's posts (desktop theatre — arrows/keyboard; the rail
+          stands down via the theatre-mode takeover). */}
+      {theatreOpen && posts && posts.length > 0 && (
+        <TheatreMode posts={posts} source="feed" onClose={() => setTheatreOpen(false)} />
+      )}
+
+      {/* MODE-SWITCH FLASH — one language for every switch: cut through black. */}
+      {flash && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 320, background: '#000', pointerEvents: 'none', opacity: 1, animation: 'modeFlash 190ms ease-out forwards' }} />
+      )}
+      <style>{`@keyframes modeFlash { 0%{opacity:0} 32%{opacity:1} 100%{opacity:0} }`}</style>
     </div>
   );
 }

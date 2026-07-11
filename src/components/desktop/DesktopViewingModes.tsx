@@ -18,11 +18,11 @@ const RAIL_W = 71; // keep the global rail visible
 export type ViewingMode = 'theatre' | 'screening' | 'lightbox' | 'mirage' | 'feed';
 
 // The baked cards; LIGHTBOX is built (no PNG). Order per the reference.
-const CARDS: { mode: ViewingMode; label: string; baked: boolean; sub: string }[] = [
+const CARDS: { mode: ViewingMode; label: string; baked: boolean; sub: string; coming?: boolean }[] = [
   { mode: 'theatre',   label: 'Theatre',        baked: true,  sub: 'Full-screen theatrical viewing' },
   { mode: 'screening', label: 'Screening Room', baked: true,  sub: 'The discovery feed' },
   { mode: 'lightbox',  label: 'Lightbox',       baked: false, sub: 'One frame, full attention' },
-  { mode: 'mirage',    label: 'Mirage',         baked: true,  sub: 'The cinematic home feed' },
+  { mode: 'mirage',    label: 'Mirage',         baked: true,  sub: 'The cinematic home feed', coming: true },
   { mode: 'feed',      label: 'Feed',           baked: true,  sub: 'The standard grid' },
 ];
 
@@ -103,10 +103,10 @@ export default function DesktopViewingModes({ currentMode, onClose, onSelect }: 
               return (
                 <button
                   key={card.mode}
-                  onClick={() => pick(card.mode)}
-                  aria-label={`${card.label} — ${card.sub}`}
+                  onClick={() => { if (card.coming) { setSelected(card.mode); return; } pick(card.mode); }}
+                  aria-label={`${card.label} — ${card.coming ? 'coming soon' : card.sub}`}
                   aria-pressed={isSel}
-                  style={{ position: 'relative', width: '100%', aspectRatio: '366 / 123', borderRadius: 2, overflow: 'hidden', background: '#0a0a0a', border: isSel ? `1px solid ${RED}` : `1px solid ${HAIR}`, padding: 0, cursor: 'pointer', outline: 'none', transition: 'border-color 200ms ease, transform 140ms ease' }}
+                  style={{ position: 'relative', width: '100%', aspectRatio: '366 / 123', borderRadius: 2, overflow: 'hidden', background: '#0a0a0a', border: isSel ? `1px solid ${RED}` : `1px solid ${HAIR}`, padding: 0, cursor: 'pointer', outline: 'none', opacity: card.coming ? 0.72 : 1, transition: 'border-color 200ms ease, transform 140ms ease' }}
                 >
                   {card.baked ? (
                     <>
@@ -123,8 +123,11 @@ export default function DesktopViewingModes({ currentMode, onClose, onSelect }: 
                       </div>
                     </div>
                   )}
-                  {/* SELECTED chip for baked cards (their PNG carries the visual; this labels state) */}
-                  {card.baked && isSel && (
+                  {/* COMING chip — an unbuilt mode reacts (labels itself) but doesn't
+                      navigate; never a dead click. */}
+                  {card.coming ? (
+                    <span style={{ position: 'absolute', top: 10, right: 12, ...SKB, fontSize: 9, color: 'rgba(255,255,255,0.75)', textTransform: 'uppercase', letterSpacing: '0.14em', background: 'rgba(0,0,0,0.6)', padding: '3px 7px', borderRadius: 1 }}>COMING</span>
+                  ) : card.baked && isSel && (
                     <span style={{ position: 'absolute', top: 10, right: 12, ...SKB, fontSize: 9, color: RED, textTransform: 'uppercase', letterSpacing: '0.14em', background: 'rgba(0,0,0,0.55)', padding: '3px 7px', borderRadius: 1 }}>SELECTED</span>
                   )}
                 </button>
