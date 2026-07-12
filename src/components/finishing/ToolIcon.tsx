@@ -185,7 +185,7 @@ const PATHS: Partial<Record<IconKey, React.ReactNode>> = {
   ),
 };
 
-export default function ToolIcon({ toolKey, size = 22, color }: ToolIconProps) {
+export default function ToolIcon({ toolKey, size = 24, color }: ToolIconProps) {
   return (
     <svg
       width={size}

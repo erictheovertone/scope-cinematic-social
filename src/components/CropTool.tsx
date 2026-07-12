@@ -192,11 +192,11 @@ export default function CropTool({
           buried under the notch — inset-relative, identical across devices) */}
       <div style={{ flexShrink: 0, height: "calc(48px + env(safe-area-inset-top, 0px))", paddingTop: "env(safe-area-inset-top, 0px)", display: "flex", alignItems: "center", justifyContent: "space-between", paddingLeft: 16, paddingRight: 16, borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
         <button onClick={onCancel} aria-label="Cancel" style={{ background: "transparent", border: "none", cursor: "pointer", padding: 8, lineHeight: 0 }}>
-          <svg width="17.5" height="17.5" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="white" strokeWidth="1.5" strokeLinecap="round" /></svg>
+          <svg width="19.5" height="19.5" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="white" strokeWidth="1.5" strokeLinecap="round" /></svg>
         </button>
         <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: "white", textTransform: "uppercase", letterSpacing: "0.1em" }}>CROP</span>
         <button onClick={handleConfirm} aria-label="Confirm" style={{ background: "transparent", border: "none", cursor: "pointer", padding: 8, lineHeight: 0 }}>
-          <svg width="19.5" height="19.5" viewBox="0 0 18 18" fill="none"><path d="M3 9.5l4 4L15 5" stroke={RED} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
+          <svg width="21.5" height="21.5" viewBox="0 0 18 18" fill="none"><path d="M3 9.5l4 4L15 5" stroke={RED} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
         </button>
       </div>
 

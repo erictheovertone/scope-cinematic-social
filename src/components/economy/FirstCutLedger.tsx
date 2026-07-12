@@ -100,7 +100,7 @@ export default function FirstCutLedger({
           </span>
           {/* caret — points right collapsed, down expanded */}
           <svg
-            width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"
+            width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"
             style={{ transform: expanded ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.25s cubic-bezier(0.16,0.84,0.3,1)', flexShrink: 0 }}
           >
             <polyline points="9 6 15 12 9 18" />

@@ -353,7 +353,7 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
               padding: 0,
             }}
           >
-            <svg width="14.5" height="14.5" viewBox="0 0 13 13" fill="none">
+            <svg width="16.5" height="16.5" viewBox="0 0 13 13" fill="none">
               <path d="M8.5 1.5L3.5 6.5l5 5" stroke="white" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
             <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "white", letterSpacing: "-0.1px" }}>BACK</span>
@@ -405,13 +405,13 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
                   {/* Inline SVG — the PNG asset's hairline stroke collapsed to ~0.2px at
                       this size and antialiased to grey-53 (measured); a vector stroke
                       rasterizes at native size = true white. */}
-                  <svg width="11" height="17" viewBox="0 0 11 17" fill="none" style={{ display: "block", filter: "drop-shadow(0 0 2px rgba(255,255,255,0.6))" }}><path d="M8.5 2.5l-6 6 6 6" stroke="#FFFFFF" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                  <svg width="13" height="19" viewBox="0 0 11 17" fill="none" style={{ display: "block", filter: "drop-shadow(0 0 2px rgba(255,255,255,0.6))" }}><path d="M8.5 2.5l-6 6 6 6" stroke="#FFFFFF" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
                 </button>
                 <span style={{ ...SKR, fontSize: 'var(--fs-8)', color: "rgba(255,255,255,0.5)", letterSpacing: "0.18em", fontVariantNumeric: "tabular-nums" }}>
                   {nav.index + 1} / {nav.total}
                 </span>
                 <button onClick={() => nav.onStep(1)} disabled={nav.index === nav.total - 1} aria-label="Next" style={{ background: "transparent", border: "none", cursor: nav.index === nav.total - 1 ? "default" : "pointer", padding: 4, lineHeight: 0, visibility: nav.index === nav.total - 1 ? "hidden" : "visible" }}>
-                  <svg width="11" height="17" viewBox="0 0 11 17" fill="none" style={{ display: "block", filter: "drop-shadow(0 0 2px rgba(255,255,255,0.6))" }}><path d="M2.5 2.5l6 6-6 6" stroke="#FFFFFF" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                  <svg width="13" height="19" viewBox="0 0 11 17" fill="none" style={{ display: "block", filter: "drop-shadow(0 0 2px rgba(255,255,255,0.6))" }}><path d="M2.5 2.5l6 6-6 6" stroke="#FFFFFF" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
                 </button>
               </div>
             )}
@@ -454,7 +454,7 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
                 onClick={() => { setVisible(false); setTimeout(onScrollDown, 300); }}
                 style={{ position: "absolute", bottom: 28, left: "50%", transform: "translateX(-50%)", background: "transparent", border: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 4, padding: 12 }}
               >
-                <svg width="21.5" height="21.5" viewBox="0 0 24 24" fill="none">
+                <svg width="23.5" height="23.5" viewBox="0 0 24 24" fill="none">
                   <path d="M12 5v14M5 12l7 7 7-7" stroke="rgba(255,255,255,0.5)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
                 <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.12em" }}>SCROLL</span>
@@ -494,7 +494,7 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
               {/* Market chrome — coin posts only; legacy 1155 shows none. */}
               {isCoinPost(post) && (
                 <span style={{ display: "flex", alignItems: "baseline", gap: 6, marginLeft: "auto" }}>
-                  {post.ticker && <TickerMark ticker={post.ticker} size={9.5} />}
+                  {post.ticker && <TickerMark ticker={post.ticker} size={11.5} />}
                   <span style={{ ...SKR, fontSize: 'var(--fs-9)', color: "rgba(255,255,255,0.4)", letterSpacing: "-0.14px" }}>
                     MC: {mcLabel ?? "…"}
                   </span>
@@ -571,7 +571,7 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
                 }}
               >
                 <PressPop><span style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                <svg width="17.7" height="17.7" viewBox="0 0 24 24" fill="none">
+                <svg width="19.7" height="19.7" viewBox="0 0 24 24" fill="none">
                   <path
                     d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
                     fill={isLiked ? "#FF0000" : "none"}
@@ -602,7 +602,7 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
                 style={{ background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", padding: 0 }}
               >
                 <PressPop><span style={{ display: "flex" }}>
-                <svg width="15.5" height="15.5" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="17.5" height="17.5" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
                   <polyline points="16 6 12 2 8 6" />
                   <line x1="12" y1="2" x2="12" y2="15" />
@@ -617,7 +617,7 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
                   onClick={(e) => { e.stopPropagation(); setOwnerMenuOpen((v) => !v); }}
                   style={{ background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", padding: 0, marginLeft: "auto" }}
                 >
-                  <svg width="17.5" height="17.5" viewBox="0 0 24 24" fill="none">
+                  <svg width="19.5" height="19.5" viewBox="0 0 24 24" fill="none">
                     <circle cx="5" cy="12" r="1.4" fill={ownerMenuOpen ? "#FF0000" : "rgba(255,255,255,0.6)"} />
                     <circle cx="12" cy="12" r="1.4" fill={ownerMenuOpen ? "#FF0000" : "rgba(255,255,255,0.6)"} />
                     <circle cx="19" cy="12" r="1.4" fill={ownerMenuOpen ? "#FF0000" : "rgba(255,255,255,0.6)"} />
@@ -773,9 +773,9 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
                       }}
                     >
                       {autoplayOn ? (
-                        <svg width="11.5" height="11.5" viewBox="0 0 24 24" fill="none"><rect x="6" y="4" width="4" height="16" fill="#FF0000"/><rect x="14" y="4" width="4" height="16" fill="#FF0000"/></svg>
+                        <svg width="13.5" height="13.5" viewBox="0 0 24 24" fill="none"><rect x="6" y="4" width="4" height="16" fill="#FF0000"/><rect x="14" y="4" width="4" height="16" fill="#FF0000"/></svg>
                       ) : (
-                        <svg width="11.5" height="11.5" viewBox="0 0 24 24" fill="none"><path d="M5 3l14 9-14 9V3z" fill="rgba(255,255,255,0.45)"/></svg>
+                        <svg width="13.5" height="13.5" viewBox="0 0 24 24" fill="none"><path d="M5 3l14 9-14 9V3z" fill="rgba(255,255,255,0.45)"/></svg>
                       )}
                     </button>
                   </div>

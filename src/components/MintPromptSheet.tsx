@@ -231,7 +231,7 @@ export default function MintPromptSheet({ visible, onMint, onSkip, onCoinSkipped
               <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
                 {expanded ? 'LESS' : 'HOW DOES THIS WORK?'}
               </span>
-              <svg width="11.5" height="11.5" viewBox="0 0 10 10" fill="none" style={{ transform: expanded ? 'rotate(45deg)' : 'none', transition: 'transform 0.2s ease' }}>
+              <svg width="13.5" height="13.5" viewBox="0 0 10 10" fill="none" style={{ transform: expanded ? 'rotate(45deg)' : 'none', transition: 'transform 0.2s ease' }}>
                 <path d="M5 1v8M1 5h8" stroke="rgba(255,255,255,0.4)" strokeWidth="1.2" strokeLinecap="round"/>
               </svg>
             </button>

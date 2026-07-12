@@ -72,7 +72,7 @@ html, body {
   /* Global UI bump — one lever for every tokenized size. Raise/lower app-wide type
      in one place; var(--fs-N) references never change. (Icon sizes use --icon-bump
      below.) */
-  --ui-bump: 1.5px;
+  --ui-bump: 3.5px;
   --fs-6:    calc(6px    + var(--ui-bump));
   --fs-6_5:  calc(6.5px  + var(--ui-bump));
   --fs-7:    calc(7px    + var(--ui-bump));

@@ -618,7 +618,7 @@ export default function FinishingShell({
   // Small red ‹ back affordance — returns to browsing (commits, value persists).
   const backToBrowsing = (
     <button onClick={commitTool} aria-label="Back to tools" style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4, lineHeight: 0, flexShrink: 0 }}>
-      <svg width="15.5" height="15.5" viewBox="0 0 16 16" fill="none"><path d="M10 3L5 8l5 5" stroke={RED} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
+      <svg width="17.5" height="17.5" viewBox="0 0 16 16" fill="none"><path d="M10 3L5 8l5 5" stroke={RED} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
     </button>
   );
 
@@ -682,7 +682,7 @@ export default function FinishingShell({
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             {onBack && (
               <button onClick={onBack} aria-label="Back" style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4, lineHeight: 0 }}>
-                <svg width="15.5" height="15.5" viewBox="0 0 16 16" fill="none"><path d="M10 3L5 8l5 5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                <svg width="17.5" height="17.5" viewBox="0 0 16 16" fill="none"><path d="M10 3L5 8l5 5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
               </button>
             )}
             <span style={{ ...SKB, fontSize: compactRail ? 10 : 12, color: 'white', textTransform: 'uppercase', letterSpacing: '0.06em' }}>FINISHING · THEATRE</span>
@@ -691,7 +691,7 @@ export default function FinishingShell({
             {/* "+" viewing menu (inline in the bar) */}
             <div style={{ position: 'relative' }}>
               <button onClick={() => setMenuOpen((o) => !o)} aria-label="Viewing options" style={{ width: 24, height: 24, background: 'transparent', cursor: 'pointer', lineHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${menuOpen ? RED : 'rgba(255,255,255,0.25)'}`, color: menuOpen || zoom.active ? RED : 'white', transition: `border-color 0.3s ${SNAP}, color 0.3s ${SNAP}` }}>
-                <svg width="12.5" height="12.5" viewBox="0 0 12 12" fill="none" style={{ transform: menuOpen ? 'rotate(45deg)' : 'rotate(0deg)', transition: `transform 0.3s ${SNAP}` }}><path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
+                <svg width="14.5" height="14.5" viewBox="0 0 12 12" fill="none" style={{ transform: menuOpen ? 'rotate(45deg)' : 'rotate(0deg)', transition: `transform 0.3s ${SNAP}` }}><path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
               </button>
               <div style={{ position: 'absolute', top: 'calc(100% + 6px)', right: 0, zIndex: 30, minWidth: 150, background: '#000', border: '1px solid rgba(255,255,255,0.18)', transformOrigin: 'top right', transform: menuOpen ? 'scale(1)' : 'scale(0.7)', opacity: menuOpen ? 1 : 0, pointerEvents: menuOpen ? 'auto' : 'none', transition: `transform ${menuOpen ? 0.3 : 0.2}s ${SNAP}, opacity ${menuOpen ? 0.3 : 0.2}s ${SNAP}` }}>
                 {menuItemsContent}
@@ -707,7 +707,7 @@ export default function FinishingShell({
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             {onBack && (
               <button onClick={onBack} aria-label="Back" style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4, lineHeight: 0 }}>
-                <svg width="17.5" height="17.5" viewBox="0 0 16 16" fill="none"><path d="M10 3L5 8l5 5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                <svg width="19.5" height="19.5" viewBox="0 0 16 16" fill="none"><path d="M10 3L5 8l5 5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
               </button>
             )}
             <span style={{ ...SKB, fontSize: 'var(--fs-12)', color: 'white', textTransform: 'uppercase', letterSpacing: '0.06em' }}>FINISHING</span>
@@ -738,7 +738,7 @@ export default function FinishingShell({
             }}
           >
             <svg
-              width="12" height="12" viewBox="0 0 12 12" fill="none"
+              width="14" height="14" viewBox="0 0 12 12" fill="none"
               style={{ transform: menuOpen ? 'rotate(45deg)' : 'rotate(0deg)', transition: `transform 0.3s ${SNAP}` }}
             >
               <path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -778,7 +778,7 @@ export default function FinishingShell({
               the image; returns to browsing. Minimal, red, no box. */}
           {adjusting && (
             <button onClick={commitTool} aria-label="Back to tools" style={{ position: 'absolute', top: 8, left: 8, zIndex: 6, background: 'transparent', border: 'none', cursor: 'pointer', padding: 6, lineHeight: 0 }}>
-              <svg width="19.5" height="19.5" viewBox="0 0 16 16" fill="none"><path d="M10 3L5 8l5 5" stroke={RED} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
+              <svg width="21.5" height="21.5" viewBox="0 0 16 16" fill="none"><path d="M10 3L5 8l5 5" stroke={RED} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
             </button>
           )}
           {/* Theatre AR label — viewing-at-size cue (portrait shows it via the dock context) */}
@@ -869,14 +869,14 @@ export default function FinishingShell({
           {/* header: X cancel / ✓ commit */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 22 }}>
             <button onClick={cancelTool} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4, lineHeight: 0 }}>
-              <svg width="15.5" height="15.5" viewBox="0 0 14 14" fill="none"><path d="M3 3l8 8M11 3l-8 8" stroke="white" strokeWidth="1.4" strokeLinecap="round" /></svg>
+              <svg width="17.5" height="17.5" viewBox="0 0 14 14" fill="none"><path d="M3 3l8 8M11 3l-8 8" stroke="white" strokeWidth="1.4" strokeLinecap="round" /></svg>
             </button>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}>
               <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{activeTool?.label ?? ''}</span>
               {activeTool?.pro && <span style={{ ...SKB, fontSize: 'var(--fs-7)', color: RED, textTransform: 'uppercase', letterSpacing: '0.12em', border: `1px solid ${RED}`, padding: '1px 4px' }}>PRO</span>}
             </span>
             <button onClick={commitTool} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4, lineHeight: 0 }}>
-              <svg width="17.5" height="17.5" viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3.5 3.5L13 4.5" stroke={RED} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
+              <svg width="19.5" height="19.5" viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3.5 3.5L13 4.5" stroke={RED} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
             </button>
           </div>
           {toolControlBody}
@@ -887,7 +887,7 @@ export default function FinishingShell({
       {theatre && compactRail && !adjusting && (activeMode === 'edit' || activeMode === 'fx') && (
         <div key="ml-subcat" style={{ position: 'fixed', left: 10, bottom: 10, zIndex: 31, display: 'flex', flexDirection: 'column-reverse', alignItems: 'flex-start', gap: 6, pointerEvents: 'none' }}>
           <button onClick={() => setSubcatMenuOpen((o) => !o)} aria-label="Filter" style={{ width: 26, height: 26, background: '#000', cursor: 'pointer', lineHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'auto', border: `1px solid ${subcatMenuOpen ? RED : 'rgba(255,255,255,0.25)'}`, color: subcatMenuOpen ? RED : 'white', transition: `border-color 0.3s ${SNAP}, color 0.3s ${SNAP}` }}>
-            <svg width="13.5" height="13.5" viewBox="0 0 12 12" fill="none" style={{ transform: subcatMenuOpen ? 'rotate(45deg)' : 'rotate(0deg)', transition: `transform 0.3s ${SNAP}` }}><path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
+            <svg width="15.5" height="15.5" viewBox="0 0 12 12" fill="none" style={{ transform: subcatMenuOpen ? 'rotate(45deg)' : 'rotate(0deg)', transition: `transform 0.3s ${SNAP}` }}><path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
           </button>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 2, background: '#000', border: subcatMenuOpen ? '1px solid rgba(255,255,255,0.18)' : '1px solid transparent', transformOrigin: 'bottom left', transform: subcatMenuOpen ? 'scale(1)' : 'scale(0.7)', opacity: subcatMenuOpen ? 1 : 0, pointerEvents: subcatMenuOpen ? 'auto' : 'none', transition: `transform ${subcatMenuOpen ? 0.3 : 0.2}s ${SNAP}, opacity ${subcatMenuOpen ? 0.3 : 0.2}s ${SNAP}` }}>
             {modeDef(activeMode).subcats.map((s) => (

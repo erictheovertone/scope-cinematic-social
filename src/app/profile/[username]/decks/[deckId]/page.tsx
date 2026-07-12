@@ -535,7 +535,7 @@ export default function DeckDetailPage() {
               transform: infoOpen ? "rotate(45deg)" : "rotate(0deg)",
             }}
           >
-            <svg width="17.5" height="17.5" viewBox="0 0 16 16" fill="none">
+            <svg width="19.5" height="19.5" viewBox="0 0 16 16" fill="none">
               <path d="M8 2 L8 14 M2 8 L14 8" stroke="#FFFFFF" strokeWidth="1.5" />
             </svg>
           </button>
@@ -863,7 +863,7 @@ export default function DeckDetailPage() {
             onClick={() => setLightboxItem(null)}
             style={{ position: "fixed", top: 16, left: 16, zIndex: 132, background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 6, padding: 0 }}
           >
-            <svg width="13.5" height="13.5" viewBox="0 0 13 13" fill="none">
+            <svg width="15.5" height="15.5" viewBox="0 0 13 13" fill="none">
               <path d="M8.5 1.5L3.5 6.5l5 5" stroke="white" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
             <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "white" }}>back</span>
@@ -1061,7 +1061,7 @@ export default function DeckDetailPage() {
                           padding: 0,
                         }}
                       >
-                        <svg width="13.5" height="13.5" viewBox="0 0 12 12" fill="none">
+                        <svg width="15.5" height="15.5" viewBox="0 0 12 12" fill="none">
                           <path d="M1 1L11 11M11 1L1 11" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
                         </svg>
                       </button>

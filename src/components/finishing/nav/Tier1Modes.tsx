@@ -13,7 +13,7 @@ import { MODES, type Mode } from './navModel';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const RED = '#FF0000';
-const ICON = 26;
+const ICON = 28;
 
 // Line-style mode glyphs (currentColor, stroke ~1.5, no fill unless noted).
 function ModeIcon({ mode, size = ICON }: { mode: Mode; size?: number }) {
@@ -75,7 +75,7 @@ export default function Tier1Modes({ active, onSelect, orientation = 'horizontal
   const vertical = orientation === 'vertical';
   // Vertical rail: shrink icons so all five modes fit the rail height with no
   // clipping/scroll (shortest case = landscape-mobile). Horizontal row unchanged.
-  const iconSize = vertical ? (compact ? 18 : 22) : ICON;
+  const iconSize = vertical ? (compact ? 20 : 24) : ICON;
   return (
     <div
       style={{

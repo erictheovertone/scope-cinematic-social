@@ -111,7 +111,7 @@ export default function ManageMembershipPage() {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', padding: '16px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
         <button onClick={() => router.back()} style={{ background: 'transparent', border: 'none', cursor: 'pointer', marginRight: 12, padding: 4 }}>
-          <svg width="21.5" height="21.5" viewBox="0 0 24 24" fill="none">
+          <svg width="23.5" height="23.5" viewBox="0 0 24 24" fill="none">
             <path d="M19 12H5M5 12l7 7M5 12l7-7" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         </button>

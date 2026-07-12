@@ -707,7 +707,7 @@ export default function WalletPage() {
           style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-38%)", background: "transparent", border: "none", cursor: "pointer", padding: 6 }}
         >
           <span style={{ position: "relative", display: "block", width: 18, height: 18 }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
               <path d="M10 5a2 2 0 1 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3h-16a4 4 0 0 0 2 -3v-3a7 7 0 0 1 4 -6" />
               <path d="M9 17v1a3 3 0 0 0 6 0v-1" />
             </svg>
@@ -1035,7 +1035,7 @@ export default function WalletPage() {
                     ? <img src={h.thumbUrl} alt="" style={{ width: 44, height: 30, objectFit: "cover", flexShrink: 0, background: "#111" }} />
                     : <div style={{ width: 44, height: 30, background: "#111", flexShrink: 0 }} />}
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    {h.ticker ? <TickerMark ticker={h.ticker} size={11.5} /> : <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: "rgba(255,255,255,0.4)" }}>—</span>}
+                    {h.ticker ? <TickerMark ticker={h.ticker} size={13.5} /> : <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: "rgba(255,255,255,0.4)" }}>—</span>}
                     <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: "rgba(255,255,255,0.45)", margin: "3px 0 0", textTransform: "uppercase", letterSpacing: "0.06em" }}>
                       {h.pieces.toLocaleString()} {h.pieces === 1 ? "FRAGMENT" : "FRAGMENTS"}
                     </p>
@@ -1253,7 +1253,7 @@ export default function WalletPage() {
                         {heroText}
                         {showTicker && row.ticker && (
                           <span style={{ marginLeft: 10 }}>
-                            <TickerMark ticker={row.ticker} size={15} color="#FF0000" />
+                            <TickerMark ticker={row.ticker} size={17} color="#FF0000" />
                           </span>
                         )}
                       </p>

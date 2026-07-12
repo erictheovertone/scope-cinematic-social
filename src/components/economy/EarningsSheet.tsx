@@ -197,7 +197,7 @@ export default function EarningsSheet({ data, onClose }: Props) {
           {!empty && (
             <p style={{ ...SKB, fontSize: 'var(--fs-11)', color: GREEN, margin: '8px 0 0', opacity: 0.85 }}>
               +${(last7 * e).toFixed(2)} LAST 7 DAYS{' '}
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke={GREEN} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: '-1px' }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={GREEN} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: '-1px' }}>
                 <path d="M3 17l6 -6l4 4l8 -8" /><path d="M14 7l7 0l0 7" />
               </svg>
             </p>

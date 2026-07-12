@@ -30,14 +30,14 @@ const fmtRowProceeds = (final: number, e: number): string => {
 
 
 // ── Inline Tabler-outline icons (no raster assets) ───────────────────────────
-const ICON = (d: React.ReactNode, size = 14, color = 'rgba(255,255,255,0.8)'): React.ReactNode => (
+const ICON = (d: React.ReactNode, size = 16, color = 'rgba(255,255,255,0.8)'): React.ReactNode => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">{d}</svg>
 );
 const UserPlus = ICON(<><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" /><path d="M6 21v-2a4 4 0 0 1 4 -4h3" /><path d="M16 19h6" /><path d="M19 16v6" /></>);
 const MessageCircle = ICON(<path d="M3 20l1.3 -3.9a9 8 0 1 1 3.4 2.9l-4.7 1" />);
 const Heart = ICON(<path d="M19.5 12.6l-7.5 7.4l-7.5 -7.4a5 5 0 1 1 7.5 -6.6a5 5 0 1 1 7.5 6.6" />);
-const TrendingUp = (s = 11) => ICON(<><path d="M3 17l6 -6l4 4l8 -8" /><path d="M14 7l7 0l0 7" /></>, s, GREEN);
-const Chevron = ICON(<path d="M9 6l6 6l-6 6" />, 14, 'rgba(255,255,255,0.4)');
+const TrendingUp = (s = 13) => ICON(<><path d="M3 17l6 -6l4 4l8 -8" /><path d="M14 7l7 0l0 7" /></>, s, GREEN);
+const Chevron = ICON(<path d="M9 6l6 6l-6 6" />, 16, 'rgba(255,255,255,0.4)');
 
 // Synchronized count-up easing (0→1). Starts ~150ms after open, ~700ms easeOutExpo,
 // snaps to 1. Reduced-motion → instant 1. Runs once per show (keyed on `open`).
@@ -156,7 +156,7 @@ export default function WhileYouWereAwaySheet({ visible, recap, username, onClos
       <p style={{ ...SKB, fontSize: 28, color: '#fff', margin: '14px 0 0', lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>+{Math.round(n * e)}</p>
       {/* −0.5px (fs-7_5) + nowrap so NEW COMMENTS fits one line alongside the others */}
       <p style={{ ...SKB, fontSize: 'var(--fs-7_5)', color: W65, margin: '6px 0 0', textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3 }}>
-        {label} {TrendingUp(9)}
+        {label} {TrendingUp(11)}
       </p>
     </div>
   );
@@ -209,7 +209,7 @@ export default function WhileYouWereAwaySheet({ visible, recap, username, onClos
         {/* BREAKDOWN HEADER */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, flexShrink: 0 }}>
           <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: '#fff', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'flex', alignItems: 'center', gap: 7 }}>
-            <svg width="9" height="11" viewBox="0 0 9 11" fill={RED}><path d="M0 0v11l9 -5.5z" /></svg>
+            <svg width="11" height="13" viewBox="0 0 9 11" fill={RED}><path d="M0 0v11l9 -5.5z" /></svg>
             BREAKDOWN
           </span>
           <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: W65, textTransform: 'uppercase', letterSpacing: '0.06em' }}>VIEW ALL ›</span>

@@ -343,10 +343,10 @@ export default function CollectedGrid({
               )}
               {/* grid / list toggle — icons only */}
               <button onClick={() => setViewMode('grid')} aria-label="Grid view" style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, lineHeight: 0, opacity: viewMode === 'grid' ? 1 : 0.4 }}>
-                <svg width="13" height="13" viewBox="0 0 13 13"><rect x="0" y="0" width="5.5" height="5.5" fill="#FFF"/><rect x="7.5" y="0" width="5.5" height="5.5" fill="#FFF"/><rect x="0" y="7.5" width="5.5" height="5.5" fill="#FFF"/><rect x="7.5" y="7.5" width="5.5" height="5.5" fill="#FFF"/></svg>
+                <svg width="15" height="15" viewBox="0 0 13 13"><rect x="0" y="0" width="5.5" height="5.5" fill="#FFF"/><rect x="7.5" y="0" width="5.5" height="5.5" fill="#FFF"/><rect x="0" y="7.5" width="5.5" height="5.5" fill="#FFF"/><rect x="7.5" y="7.5" width="5.5" height="5.5" fill="#FFF"/></svg>
               </button>
               <button onClick={() => setViewMode('list')} aria-label="List view" style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, lineHeight: 0, opacity: viewMode === 'list' ? 1 : 0.4 }}>
-                <svg width="13" height="13" viewBox="0 0 13 13"><rect x="0" y="1" width="13" height="2" fill="#FFF"/><rect x="0" y="5.5" width="13" height="2" fill="#FFF"/><rect x="0" y="10" width="13" height="2" fill="#FFF"/></svg>
+                <svg width="15" height="15" viewBox="0 0 13 13"><rect x="0" y="1" width="13" height="2" fill="#FFF"/><rect x="0" y="5.5" width="13" height="2" fill="#FFF"/><rect x="0" y="10" width="13" height="2" fill="#FFF"/></svg>
               </button>
             </span>
           </div>

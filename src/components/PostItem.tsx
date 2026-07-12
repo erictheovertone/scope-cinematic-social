@@ -235,7 +235,7 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
       {/* Market chrome — coin posts only; legacy 1155 tiles show none. */}
       {post.token_standard === 'coin' && post.coin_address && (
         <span style={{ display: 'flex', alignItems: 'baseline', gap: 5, fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: 'var(--fs-8)', color: 'white', opacity: 0.85 }}>
-          {post.ticker && <TickerMark ticker={post.ticker} size={9.5} />}
+          {post.ticker && <TickerMark ticker={post.ticker} size={11.5} />}
           <span>MC: {mc ?? '…'}</span>
         </span>
       )}
@@ -316,7 +316,7 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
           disabled={loading || !user}
           style={{ background: "transparent", border: "none", cursor: user ? "pointer" : "default", display: "flex", alignItems: "center", gap: 4, padding: 0, color: isLiked ? "#FF0000" : "rgba(255,255,255,0.6)" }}
         >
-          <svg width="16.7" height="16.7" viewBox="0 0 24 24" fill={isLiked ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
+          <svg width="18.7" height="18.7" viewBox="0 0 24 24" fill={isLiked ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
           </svg>
           <span style={{ ...SKR, fontSize: 'var(--fs-7)', color: "inherit" }}>{likes.length}</span>
@@ -329,7 +329,7 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
           onClick={(e) => { e.stopPropagation(); toggleComments(); }}
           style={{ background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 4, padding: 0, color: "rgba(255,255,255,0.6)" }}
         >
-          <svg width="16.7" height="16.7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg width="18.7" height="18.7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
           </svg>
           <span style={{ ...SKR, fontSize: 'var(--fs-7)', color: "inherit" }}>{comments.length}</span>

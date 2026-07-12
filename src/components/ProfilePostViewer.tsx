@@ -231,7 +231,7 @@ function PostViewerItem({
               <span
                 style={{ display: "flex", alignItems: "baseline", gap: 5, fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: 'var(--fs-8)', color: "white", lineHeight: 1, opacity: 0.85, textTransform: "uppercase" }}
               >
-                {(post as { ticker?: string | null }).ticker && <TickerMark ticker={(post as { ticker?: string }).ticker as string} size={9.5} />}
+                {(post as { ticker?: string | null }).ticker && <TickerMark ticker={(post as { ticker?: string }).ticker as string} size={11.5} />}
                 <span>MC: {mc ?? "…"}</span>
               </span>
             )}
@@ -267,7 +267,7 @@ function PostViewerItem({
             disabled={loading || !user}
             style={{ background: "transparent", border: "none", cursor: user ? "pointer" : "default", display: "flex", alignItems: "center", gap: 4, padding: 0 }}
           >
-            <svg width="14.7" height="14.7" viewBox="0 0 24 24" fill="none" style={{ opacity: isLiked ? 1 : 0.7 }}>
+            <svg width="16.7" height="16.7" viewBox="0 0 24 24" fill="none" style={{ opacity: isLiked ? 1 : 0.7 }}>
               <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
                 fill={isLiked ? "#FF0000" : "none"} stroke={isLiked ? "#FF0000" : "white"} strokeWidth="1.8"
               />
@@ -281,7 +281,7 @@ function PostViewerItem({
             onClick={() => setShowComments(v => !v)}
             style={{ background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 4, padding: 0 }}
           >
-            <svg width="14.7" height="14.7" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" style={{ opacity: 0.7 }}>
+            <svg width="16.7" height="16.7" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" style={{ opacity: 0.7 }}>
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
             </svg>
             <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: "white", opacity: 0.7 }}>{comments.length}</span>
@@ -325,7 +325,7 @@ function PostViewerItem({
                 onClick={() => setMenuOpen(o => !o)}
                 style={{ background: "transparent", border: "none", cursor: "pointer", padding: "8px", display: "flex", alignItems: "center", justifyContent: "center" }}
               >
-                <svg width="19.5" height="19.5" viewBox="0 0 18 18" fill="none">
+                <svg width="21.5" height="21.5" viewBox="0 0 18 18" fill="none">
                   <circle cx="3" cy="9" r="1.5" fill="white" opacity="0.7" />
                   <circle cx="9" cy="9" r="1.5" fill="white" opacity="0.7" />
                   <circle cx="15" cy="9" r="1.5" fill="white" opacity="0.7" />
@@ -593,7 +593,7 @@ export default function ProfilePostViewer({
           content) · THEATRE eye (right, enters theatre for this profile's posts). */}
       <div style={{ flexShrink: 0, height: 44, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
         <button onClick={handleClose} style={{ background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 7, padding: 0 }}>
-          <svg width="14.5" height="14.5" viewBox="0 0 13 13" fill="none">
+          <svg width="16.5" height="16.5" viewBox="0 0 13 13" fill="none">
             <path d="M8.5 1.5L3.5 6.5l5 5" stroke="white" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
           <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "white", letterSpacing: "-0.1px", textTransform: "uppercase" }}>BACK</span>

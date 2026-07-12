@@ -55,7 +55,7 @@ export default function ContactUs() {
         {submitted ? (
           <div className="flex flex-col items-center justify-center h-full">
             <div className="w-16 h-16 bg-green-600 rounded-full flex items-center justify-center mb-6">
-              <svg width="25.5" height="25.5" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+              <svg width="27.5" height="27.5" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
                 <polyline points="20,6 9,17 4,12"/>
               </svg>
             </div>

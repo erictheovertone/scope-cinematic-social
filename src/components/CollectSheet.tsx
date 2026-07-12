@@ -238,7 +238,7 @@ export default function CollectSheet({ post, visible, onClose }: CollectSheetPro
             touchAction: "manipulation",
           }}
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" style={{ filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.8))" }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" style={{ filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.8))" }}>
             <line x1="5" y1="5" x2="19" y2="19" />
             <line x1="19" y1="5" x2="5" y2="19" />
           </svg>
@@ -317,7 +317,7 @@ export default function CollectSheet({ post, visible, onClose }: CollectSheetPro
                   </p>
                 </div>
                 <div style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "rgba(255,255,255,0.1)", padding: "4px 8px", marginTop: 4 }}>
-                  <svg width="11.5" height="11.5" viewBox="0 0 24 24" fill="none">
+                  <svg width="13.5" height="13.5" viewBox="0 0 24 24" fill="none">
                     <path d="M11.944 17.97L4.58 13.62 11.943 24l7.37-10.38-7.372 4.35z" fill="white" />
                     <path d="M12.056 0L4.69 12.223l7.365 4.354 7.365-4.35L12.056 0z" fill="white" opacity="0.7" />
                   </svg>
