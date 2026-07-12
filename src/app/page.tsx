@@ -384,12 +384,11 @@ export default function Home() {
           zIndex: 1,
         }}
       >
-        {/* paddingBottom is footer-clearance ONLY — NOT + inset-bottom. The footer floats
-            with its OWN bottom-inset padding, so adding the inset here double-counts it and
-            leaves a body-black gap in the home-indicator zone (invisible in Safari behind
-            its chrome, but a black bar in the standalone PWA). Content now runs edge-to-edge
-            to the true bottom under the floating footer. */}
-        <div style={{ paddingBottom: 72 }}>
+        {/* Clearance for the floating frosted PILL: it sits at bottom 12px + safe-inset
+            with height 66 → its top is ~78px + inset up. Reserve enough scroll space that
+            the last post can rise fully ABOVE the pill (mid-scroll content still flows
+            under the glass by design). */}
+        <div style={{ paddingBottom: 'calc(90px + env(safe-area-inset-bottom, 0px))' }}>
           {/* ── LANDING BLOCK — IN the scroll flow (the profile-view push):
               scrolling physically pushes mark + DISCOVER + breathing space out
               1:1; back-to-top restores it the same way. It carries the top
