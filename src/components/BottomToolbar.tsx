@@ -164,9 +164,9 @@ export default function BottomToolbar({ page, unreadCount = 0, onNotificationsCl
         position: 'fixed',
         left: 15,
         right: 15,
-        // Sit LOW: 15px on non-notch; on the home-indicator phones the inset floors it
-        // just above the indicator (max, not +).
-        bottom: 'max(15px, env(safe-area-inset-bottom, 0px))',
+        // Sit LOW (round 5, down another 12px): on the 15 the ~34px inset minus 12 → ~22px
+        // from the bottom, just above the home indicator; non-notch floors at 3px.
+        bottom: 'max(3px, calc(env(safe-area-inset-bottom, 0px) - 12px))',
         height: 38,
         borderRadius: 2,
         border: '0.5px solid rgba(255,255,255,0.3)',
@@ -196,7 +196,7 @@ export default function BottomToolbar({ page, unreadCount = 0, onNotificationsCl
         {activeIndex >= 0 && (
           <div aria-hidden style={{
             position: 'absolute', bottom: 3, left: `calc((${activeIndex} + 0.5) * 25%)`,
-            transform: 'translateX(-50%)', width: 18, height: 2, borderRadius: 1,
+            transform: 'translateX(-50%)', width: 18, height: 0.7, borderRadius: 0,
             background: '#FF0000', pointerEvents: 'none', zIndex: 0,
             transition: 'left 200ms cubic-bezier(0.34, 1.5, 0.5, 1)',
           }} />
