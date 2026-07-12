@@ -179,6 +179,21 @@ button:active,
 .press-pop.pop-active.pop-mid    { animation: pressPopMid 250ms cubic-bezier(0.34, 1.4, 0.64, 1); }
 .press-pop.pop-active.pop-punchy { animation: pressPopPunchy 320ms cubic-bezier(0.34, 1.7, 0.5, 1); }
 
+/* MOBILE ICON PROFILE (feel round 2) — the FELT press. The listener lives on the
+   HOST (the Link/button hit target), so any tap in the 48px area fires; the
+   animation runs on the inner .pp-inner glyph, so the host + its tap-halo NEVER move
+   (the PopIcon rule). The old bug: the listener sat on the ~19px inner span, so taps
+   on the surrounding halo never popped → the press felt gone. This is mobile's OWN
+   calibration — stronger + longer than desktop's dial-backs: 0.90 dip, 1.08 spring-
+   back, 220ms round trip (visible, not subliminal). */
+.press-pop.pop-active.pop-icon .pp-inner { animation: pressPopIconMobile 220ms cubic-bezier(0.34, 1.6, 0.5, 1); }
+@keyframes pressPopIconMobile {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(0.90); }
+  70%  { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+
 @keyframes pressPopSubtle {
   0%   { transform: scale(1); }
   45%  { transform: scale(0.92); }

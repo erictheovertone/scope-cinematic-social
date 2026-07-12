@@ -21,18 +21,25 @@ const BTN: React.CSSProperties = {
   touchAction: 'manipulation',
   // White icons over LIGHT FROST need contrast on bright frames → subtle drop-shadow.
   filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.55))',
+  // Equal-width cells → the sliding marker maps exactly to each icon's centre.
+  // Sit above the marker (which is zIndex 0 behind).
+  flex: 1,
+  position: 'relative',
+  zIndex: 1,
 };
 
 // Footer pill fill — flip to 'smoke' for the darker-contrast fallback. Eric judges on
 // device over real feed content; this one line is the toggle.
 const PILL_FILL: 'frost' | 'smoke' = 'frost';
 
-// The pop scale lives on an INNER span, never on the <Link> itself — so the link's
-// box and its .tap-target ::after hit-halo (48px, ≥44) stay put while the icon pops.
-// (Wrapping the link in PressPop scaled the halo to 0.82 mid-tap, so off-centre taps
-// landed on empty space and missed the click → the "needs multiple presses" bug.)
-function PopIcon({ children }: { children: React.ReactNode }) {
-  return <PressPop><span style={{ display: 'flex' }}>{children}</span></PressPop>;
+// Inner glyph wrapper: `.pp-inner` is the ONLY thing that scales on press. The press
+// LISTENER lives on the host Link/button (each entry is wrapped in <PressPop level="icon">),
+// so ANY tap in the 48px target fires the pop — while the host + its .tap-target halo
+// never move (the PopIcon rule; also avoids the mid-tap halo-shrink dead-tap bug).
+// (Round-2 fix: the listener used to sit on this inner span, so taps on the ~29px halo
+// ring around the 19px glyph never popped → the press felt gone.)
+function PopInner({ children }: { children: React.ReactNode }) {
+  return <span className="pp-inner" style={{ display: 'flex' }}>{children}</span>;
 }
 
 function HomeIcon({ active }: { active: boolean }) {
@@ -126,73 +133,101 @@ export default function BottomToolbar({ page, unreadCount = 0, onNotificationsCl
   if (takeover) return null;
 
   const isHome = page === 'home';
+  // Sliding active marker rests under the current destination (always 4 icons).
+  // /profile shows the hamburger slot (2); public-profile is someone else's page → none.
+  const activeIndex = page === 'home' ? 0 : page === 'wallet' ? 3 : page === 'profile' ? 2 : -1;
 
   return (
     <>
-    {/* FROSTED PILL — floats inset from the edges; the feed scrolls VISIBLY (blurred)
-        beneath AND beside it. No hairline border (the blur edge is the boundary); the
-        drop-shadow gives it float. Icons space-evenly, pulled inward (case reach). */}
+    {/* FROSTED PILL (feel round 2) — Eric's geometry: floats 15px from the bottom AND
+        sides, TIGHT height hugging the icons (~3.5px to the hairline), 0.5px grey
+        hairline + frost. The feed scrolls VISIBLY (blurred) beneath AND beside it. */}
     <div
       className={`footer-pill${PILL_FILL === 'smoke' ? ' smoke' : ''}`}
       style={{
         position: 'fixed',
-        left: '10%',
-        right: '10%',
-        bottom: 'calc(12px + env(safe-area-inset-bottom, 0px))',
-        height: 66,
+        left: 15,
+        right: 15,
+        bottom: 'calc(15px + env(safe-area-inset-bottom, 0px))',
+        height: 38,
         borderRadius: 2,
+        border: '0.5px solid rgba(255,255,255,0.3)',
         zIndex: 50,
-        boxShadow: '0 6px 24px rgba(0,0,0,0.34)',
+        boxShadow: '0 6px 22px rgba(0,0,0,0.34)',
         boxSizing: 'border-box' as const,
       }}
     >
       <div
         style={{
+          position: 'relative',
           display: 'flex',
-          justifyContent: 'space-evenly',
           alignItems: 'center',
-          // Pull the icons inward from the pill's rounded ends (reachability), and
-          // clear the notch/rounded corners in landscape via the horizontal insets.
-          paddingLeft: 'max(10px, env(safe-area-inset-left, 0px))',
-          paddingRight: 'max(10px, env(safe-area-inset-right, 0px))',
+          // Horizontal safe-area only (0 in portrait); flex:1 cells + the 15px pill
+          // inset already pull the icons inward from the rounded ends.
+          paddingLeft: 'env(safe-area-inset-left, 0px)',
+          paddingRight: 'env(safe-area-inset-right, 0px)',
           width: '100%',
           height: '100%',
           boxSizing: 'border-box' as const,
         }}
       >
+        {/* SLIDING ACTIVE MARKER — one persistent capsule that travels between icons as
+            `page` changes. On the AppShell (layout-level, non-remounting) routes it SLIDES
+            icon→icon with a ~220ms spring; the eye follows it while the shell/content
+            stream in behind (the continuity decoy). Sits behind the icons (zIndex 0). */}
+        {activeIndex >= 0 && (
+          <div aria-hidden style={{
+            position: 'absolute', top: '50%', left: `calc((${activeIndex} + 0.5) * 25%)`,
+            transform: 'translate(-50%, -50%)', width: 34, height: 28, borderRadius: 2,
+            background: 'rgba(255,255,255,0.16)', pointerEvents: 'none', zIndex: 0,
+            transition: 'left 220ms cubic-bezier(0.34, 1.4, 0.5, 1)',
+          }} />
+        )}
+
         {/* 1 — Home */}
-        <Link className="tap-target" href="/" style={{ ...BTN, opacity: page === 'home' ? 1 : 0.7 }} aria-label="Home">
-          <PopIcon><HomeIcon active={page === 'home'} /></PopIcon>
-        </Link>
+        <PressPop level="icon">
+          <Link className="tap-target" href="/" style={{ ...BTN, opacity: page === 'home' ? 1 : 0.7 }} aria-label="Home">
+            <PopInner><HomeIcon active={page === 'home'} /></PopInner>
+          </Link>
+        </PressPop>
 
         {/* 2 — Create */}
-        <Link className="tap-target" href="/create" style={{ ...BTN, opacity: 0.7 }} aria-label="Create post">
-          <PopIcon><CreateIcon /></PopIcon>
-        </Link>
+        <PressPop level="icon">
+          <Link className="tap-target" href="/create" style={{ ...BTN, opacity: 0.7 }} aria-label="Create post">
+            <PopInner><CreateIcon /></PopInner>
+          </Link>
+        </PressPop>
 
         {/* 3 — Profile (home/wallet) | Hamburger (profile / public-profile) */}
         {isHome || page === 'wallet' || page === 'public-profile' ? (
-          <Link className="tap-target" href="/profile" style={{ ...BTN, opacity: 0.7 }} aria-label="Profile">
-            <PopIcon><ProfileIcon /></PopIcon>
-          </Link>
+          <PressPop level="icon">
+            <Link className="tap-target" href="/profile" style={{ ...BTN, opacity: 0.7 }} aria-label="Profile">
+              <PopInner><ProfileIcon /></PopInner>
+            </Link>
+          </PressPop>
         ) : (
-          <button
-            onClick={onHamburgerPress} className="tap-target"
-            style={{ ...BTN, opacity: 0.7 }}
-            aria-label="Menu"
-          >
-            <PopIcon><HamburgerIcon /></PopIcon>
-          </button>
+          <PressPop level="icon">
+            <button
+              onClick={onHamburgerPress} className="tap-target"
+              style={{ ...BTN, opacity: 1 }}
+              aria-label="Menu"
+            >
+              <PopInner><HamburgerIcon /></PopInner>
+            </button>
+          </PressPop>
         )}
 
         {/* 4 — Bell (home) | Wallet (profile / public-profile) */}
         {!isHome && (
-          <Link className="tap-target" href="/wallet" style={{ ...BTN, opacity: 0.7 }} aria-label="Wallet">
-            <PopIcon><WalletIcon /></PopIcon>
-          </Link>
+          <PressPop level="icon">
+            <Link className="tap-target" href="/wallet" style={{ ...BTN, opacity: page === 'wallet' ? 1 : 0.7 }} aria-label="Wallet">
+              <PopInner><WalletIcon /></PopInner>
+            </Link>
+          </PressPop>
         )}
 
         {isHome && (
+          <PressPop level="icon">
           <Link
             href="/profile/notifications"
             onClick={onNotificationsClick}
@@ -200,7 +235,7 @@ export default function BottomToolbar({ page, unreadCount = 0, onNotificationsCl
             style={{ ...BTN, opacity: 0.7 }}
             aria-label="Notifications"
           >
-            <PopIcon><BellIcon /></PopIcon>
+            <PopInner><BellIcon /></PopInner>
             {unreadCount > 0 && (
               <div
                 className="absolute"
@@ -222,6 +257,7 @@ export default function BottomToolbar({ page, unreadCount = 0, onNotificationsCl
               </div>
             )}
           </Link>
+          </PressPop>
         )}
       </div>
     </div>

@@ -20,7 +20,7 @@
 
 import React from 'react';
 
-export type PopLevel = 'subtle' | 'mid' | 'punchy';
+export type PopLevel = 'subtle' | 'mid' | 'punchy' | 'icon';
 
 // Restart the keyframe even on a rapid repeat tap: drop the class, force a reflow,
 // re-add it. Reading offsetWidth flushes layout so the browser sees a real restart.

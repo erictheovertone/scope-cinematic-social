@@ -384,11 +384,10 @@ export default function Home() {
           zIndex: 1,
         }}
       >
-        {/* Clearance for the floating frosted PILL: it sits at bottom 12px + safe-inset
-            with height 66 → its top is ~78px + inset up. Reserve enough scroll space that
-            the last post can rise fully ABOVE the pill (mid-scroll content still flows
-            under the glass by design). */}
-        <div style={{ paddingBottom: 'calc(90px + env(safe-area-inset-bottom, 0px))' }}>
+        {/* Clearance for the floating frosted PILL: bottom 15px + safe-inset, height 38
+            → its top is ~53px + inset up. Reserve enough scroll space that the last post
+            can rise fully ABOVE the pill (mid-scroll content still flows under the glass). */}
+        <div style={{ paddingBottom: 'calc(72px + env(safe-area-inset-bottom, 0px))' }}>
           {/* ── LANDING BLOCK — IN the scroll flow (the profile-view push):
               scrolling physically pushes mark + DISCOVER + breathing space out
               1:1; back-to-top restores it the same way. It carries the top
