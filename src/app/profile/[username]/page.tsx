@@ -348,6 +348,19 @@ export default function PublicProfilePage() {
           </button>
         )}
 
+        {/* MESSAGE — persistent on other users' profiles (Stage 2 DM entry point).
+            Matches FOLLOW's pill language; sits BELOW follow when it's shown, slides
+            up to the primary slot once following (follow pill gone). → the thread,
+            keyed by @handle; the send route creates the conversation on first send. */}
+        {user && !isOwnProfile && targetPrivyId && (
+          <button
+            onClick={() => router.push(`/dm/${encodeURIComponent(username)}`)}
+            style={{ position: 'absolute', ...SKB, fontSize: 'var(--fs-8)', color: 'white', letterSpacing: '-0.18px', background: 'transparent', border: '1px solid rgba(255,255,255,0.5)', padding: '3px 8px', right: 4, top: (!followingUser || justFollowed) ? 84 : 60, cursor: 'pointer', textTransform: 'uppercase', opacity: profileDataOpen ? 0 : 1, pointerEvents: profileDataOpen ? 'none' : 'auto', transition: 'opacity 200ms ease, top 200ms ease' }}
+          >
+            MESSAGE
+          </button>
+        )}
+
       </div>{/* end header */}
 
       {/* FOLLOW flyer — a red pill arcing from the button to the ⓘ. The arc:

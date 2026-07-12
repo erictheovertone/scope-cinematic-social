@@ -1,33 +1,111 @@
 'use client';
 
-// ── /dm — Direct Messages ─────────────────────────────────────────────────────
+// ── /dm — Direct Messages INBOX (Stage 2) ─────────────────────────────────────
 //
-// STAGE 1 PLACEHOLDER. The DM foundation (schema + /api/dm/* routes + src/lib/dm.ts)
-// is shipped, but the inbox/thread UI is Stage 2. Until it lands, the pill's DM
-// icon is a first-class citizen that routes here to a quiet COMING SOON state —
-// never a dead tap, never a half-built shell. Swap this whole file for the inbox
-// when Stage 2 arrives; the route + pill wiring stay.
+// The footer DM icon's destination. Conversation list from /api/dm/inbox,
+// newest-first. Each row: other participant's avatar + @handle, last-message
+// preview (bold when unread), relative time, red unread dot. Row → the thread,
+// keyed by the other party's @handle (unifies with profile MESSAGE + notif tap).
+// Refresh on focus/visibility (the polling model — inbox is focus-driven, not a
+// timer). The footer pill SHOWS here (this is the DM tab, icon active).
+
+import { useEffect, useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
+import { usePrivy } from '@privy-io/react-auth';
+import { getInbox, dmTimeAgo, type InboxConversation } from '@/lib/dm';
+import { feedImage } from '@/lib/mediaUrl';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
 
-export default function DMPage() {
+export default function DMInboxPage() {
+  const { user } = usePrivy();
+  const router = useRouter();
+  const [convs, setConvs] = useState<InboxConversation[] | null>(null);
+
+  const load = useCallback(() => {
+    if (!user?.id) return;
+    getInbox(user.id).then(setConvs).catch(() => setConvs([]));
+  }, [user?.id]);
+
+  useEffect(() => { load(); }, [load]);
+
+  // Refresh on focus / tab-visible (the inbox half of the polling model).
+  useEffect(() => {
+    const onFocus = () => { if (document.visibilityState !== 'hidden') load(); };
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onFocus);
+    return () => {
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onFocus);
+    };
+  }, [load]);
+
   return (
-    <main
-      style={{
-        minHeight: '100dvh', background: '#000',
-        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-        gap: 14, padding: '0 40px 96px', textAlign: 'center',
-      }}
-    >
-      {/* the red dot — the Scope mark, quiet at rest */}
-      <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#FF0000', marginBottom: 8 }} />
-      <h1 style={{ ...SKB, fontSize: 'var(--fs-13)', color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.14em', margin: 0 }}>
-        Direct Messages
-      </h1>
-      <p style={{ ...SKR, fontSize: 'var(--fs-10)', color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>
-        Coming soon
-      </p>
+    <main style={{ minHeight: '100dvh', background: '#000', paddingBottom: 'calc(72px + env(safe-area-inset-bottom, 0px))' }}>
+      {/* Header — the app's tracked page language. */}
+      <div style={{ padding: 'calc(16px + env(safe-area-inset-top, 0px)) 20px 14px' }}>
+        <h1 style={{ ...SKB, fontSize: 'var(--fs-13)', color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.16em', margin: 0 }}>Messages</h1>
+      </div>
+
+      {convs === null ? (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '40vh' }}>
+          <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>LOADING…</span>
+        </div>
+      ) : convs.length === 0 ? (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '50vh', gap: 12, padding: '0 40px', textAlign: 'center' }}>
+          <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: 'rgba(255,255,255,0.55)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>No messages yet</span>
+          <span style={{ ...SKR, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.08em', lineHeight: 1.6 }}>
+            Start one from any profile — tap MESSAGE.
+          </span>
+        </div>
+      ) : (
+        <div>
+          {convs.map((c) => {
+            const unread = c.unreadCount > 0;
+            const handle = c.otherHandle;
+            return (
+              <button
+                key={c.conversationId}
+                className="press-row"
+                onClick={() => { if (handle) router.push(`/dm/${encodeURIComponent(handle)}`); }}
+                disabled={!handle}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 12, width: '100%',
+                  background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.06)',
+                  cursor: handle ? 'pointer' : 'default', padding: '13px 20px', textAlign: 'left',
+                }}
+              >
+                {/* avatar */}
+                <div style={{ width: 44, height: 44, borderRadius: '50%', background: '#222', flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {c.otherAvatar
+                    ? <img src={feedImage(c.otherAvatar, 96)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    : <span style={{ ...SKB, fontSize: 'var(--fs-13)', color: '#FFF' }}>{handle?.[0]?.toUpperCase() ?? '?'}</span>}
+                </div>
+                {/* handle + preview */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.02em', display: 'block' }}>
+                    @{handle ?? 'unknown'}
+                  </span>
+                  <span style={{
+                    ...(unread ? SKB : SKR),
+                    fontSize: 'var(--fs-9)',
+                    color: unread ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.45)',
+                    display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: 3,
+                  }}>
+                    {c.lastMessagePreview ?? ''}
+                  </span>
+                </div>
+                {/* time + unread dot */}
+                <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
+                  <span style={{ ...SKR, fontSize: 'var(--fs-7)', color: 'rgba(255,255,255,0.4)', fontVariantNumeric: 'tabular-nums' }}>{dmTimeAgo(c.lastMessageAt)}</span>
+                  {unread && <span aria-label="unread" style={{ width: 8, height: 8, borderRadius: '50%', background: '#FF0000', display: 'block' }} />}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      )}
     </main>
   );
 }

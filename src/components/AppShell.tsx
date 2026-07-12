@@ -7,6 +7,7 @@ import { useIsDesktop } from '@/lib/useIsDesktop';
 import { usePathname } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
 import { getUnreadNotificationCount } from "@/lib/userService";
+import { getInbox } from "@/lib/dm";
 import BottomToolbar from "@/components/BottomToolbar";
 import { isStandalone, setInstalled } from "@/lib/pwaUtils";
 
@@ -39,6 +40,7 @@ export default function AppShell() {
   const pathname = usePathname();
   const { user } = usePrivy();
   const [unreadCount, setUnreadCount] = useState(0);
+  const [dmUnread, setDmUnread] = useState(0);
   const isDesktop = useIsDesktop();
   const [mounted, setMounted] = useState(false);
   // Takeover surfaces (theatre mode, any entry) hide the footer for their whole
@@ -81,6 +83,11 @@ export default function AppShell() {
     getUnreadNotificationCount(user.id)
       .then(setUnreadCount)
       .catch(() => {});
+    // Footer DM dot — total unread across conversations. Refetched on route change
+    // (so leaving a thread, which marks it read, clears the dot).
+    getInbox(user.id)
+      .then((cs) => setDmUnread(cs.reduce((n, c) => n + c.unreadCount, 0)))
+      .catch(() => {});
   }, [user?.id, pathname]);
 
   // Before mount: always render 3 icons (home, create, wallet) — no pathname logic
@@ -113,6 +120,7 @@ export default function AppShell() {
     <BottomToolbar
       page={page}
       unreadCount={unreadCount}
+      dmUnread={dmUnread}
       onNotificationsClick={() => setUnreadCount(0)}
     />
   );

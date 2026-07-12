@@ -315,7 +315,7 @@ export interface AppNotification {
   sender_id: string
   sender_username: string | null
   sender_avatar: string | null
-  type: 'like' | 'comment' | 'follow' | 'collect'
+  type: 'like' | 'comment' | 'follow' | 'collect' | 'message' | 'reply' | 'comment_like'
   post_id: string | null
   post_image_url: string | null
   /** The post's immutable layout (set at creation) → its TRUE aspect ratio. Used

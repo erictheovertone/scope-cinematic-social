@@ -31,7 +31,7 @@ function timeAgo(iso: string): string {
 // ECONOMIC = everything else (collect, earnings, badges…) — new economy types
 // land in the right tab by default. SELLS are excluded everywhere (ratified:
 // sells don't notify; historical 'sell' rows are hidden at render).
-const SOCIAL_TYPES = ['like', 'comment', 'follow', 'mention', 'reply'];
+const SOCIAL_TYPES = ['like', 'comment', 'follow', 'mention', 'reply', 'comment_like', 'message'];
 const isSocial = (n: AppNotification) => SOCIAL_TYPES.includes(n.type);
 
 export default function NotificationsPage() {
@@ -92,6 +92,12 @@ export default function NotificationsPage() {
     if (n.type === "follow") {
       const handle = n.actor_handle ?? n.sender_username;
       if (handle) router.push(`/profile/${handle}`);
+      return;
+    }
+    if (n.type === "message") {
+      // DM notification → open the thread with the sender (keyed by @handle).
+      const handle = n.actor_handle ?? n.sender_username;
+      if (handle) router.push(`/dm/${encodeURIComponent(handle)}`);
       return;
     }
     if (!n.post_id) return; // legacy row without a post reference — stays dead

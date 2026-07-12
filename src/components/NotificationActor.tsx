@@ -22,6 +22,9 @@ export function notificationActionText(type: string): string {
     case "comment": return "commented on your post";
     case "follow": return "started following you";
     case "collect": return "collected your post";
+    case "message": return "sent you a message";
+    case "reply": return "replied to your comment";
+    case "comment_like": return "liked your comment";
     default: return "interacted with you";
   }
 }

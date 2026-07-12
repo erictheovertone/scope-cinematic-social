@@ -105,6 +105,7 @@ function DMIcon({ active }: { active?: boolean }) {
 interface Props {
   page: Page;
   unreadCount?: number;
+  dmUnread?: number;
   onNotificationsClick?: () => void;
   onHamburgerPress?: () => void;
 }
@@ -123,7 +124,7 @@ function HamburgerIcon({ active }: { active?: boolean }) {
 // Display component. Holds two hooks (takeover sync + the pill-pop ref) — BOTH
 // declared before the `if (takeover) return null` early-return, so hook order is
 // stable on every render. Routing logic lives in AppShell; this only displays.
-export default function BottomToolbar({ page, unreadCount = 0, onNotificationsClick, onHamburgerPress }: Props) {
+export default function BottomToolbar({ page, unreadCount = 0, dmUnread = 0, onNotificationsClick, onHamburgerPress }: Props) {
   // TAKEOVER STANDDOWN (root fix): theatre mode (any entry) sets
   // data-suite-open on <html> and dispatches scope:takeover-change. The check
   // lives HERE — in the footer component itself — because footers mount from
@@ -259,8 +260,12 @@ export default function BottomToolbar({ page, unreadCount = 0, onNotificationsCl
         {/* 4 — DM (always) — first-class citizen: active state + press pop +
               marker slide, same as the rest. Routes to the DM inbox. */}
         <PressPop level="icon">
-          <Link className="tap-target" href="/dm" style={{ ...BTN, opacity: page === 'dm' ? 1 : 0.7 }} aria-label="Direct messages">
+          <Link className="relative tap-target" href="/dm" style={{ ...BTN, opacity: page === 'dm' ? 1 : 0.7 }} aria-label="Direct messages">
             <PopInner><DMIcon active={page === 'dm'} /></PopInner>
+            {dmUnread > 0 && page !== 'dm' && (
+              // Unread DM dot — the notification-dot language (small, red, no count).
+              <span aria-label="unread messages" className="absolute" style={{ top: 3, right: 6, width: 7, height: 7, borderRadius: '50%', background: '#FF0000', display: 'block' }} />
+            )}
           </Link>
         </PressPop>
 
