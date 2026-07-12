@@ -142,6 +142,7 @@ export default function DeckPickerSheet({ postId, onClose, onAdded }: Props) {
             {decks.map(deck => (
               <button
                 key={deck.id}
+                className="press-row"
                 onClick={() => handleAdd(deck.id, deck.title)}
                 disabled={!!adding}
                 style={{

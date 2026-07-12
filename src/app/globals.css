@@ -147,6 +147,10 @@ html, body {
    1.2 Kill the ~300ms tap delay + accidental double-tap zoom. */
 button, a, [role="button"], input, textarea, select, .tappable { touch-action: manipulation; }
 
+/* 1.2b Kill the grey iOS tap flash EVERYWHERE (previously only on .press-pop). WebKit
+   inherits tap-highlight-color from the root, so one rule covers every control. */
+html { -webkit-tap-highlight-color: transparent; }
+
 /* 1.3 Pressed states — instant tactile feedback on leaf controls. NOTE: a pressed
    transform on an ANCESTOR of a position:fixed element breaks that fixed pin, so this
    is scoped to buttons/[role=button]/.tappable (leaf controls, never layout wrappers).
@@ -193,6 +197,19 @@ button:active,
   80%  { transform: scale(0.97); }
   100% { transform: scale(1); }
 }
+
+/* 1.3c ROW-LIFT — the fourth press variant, for full-width list/sheet ROWS (deck
+   picker, settings rows, menu items). Rows lift their BACKGROUND on press (the iOS
+   table-row language) instead of scaling — a scale on a full-bleed row reads wrong
+   and can nudge a fixed ancestor. Add `press-row` to a row whose rest bg is the
+   #0a0a0a / transparent surface class; :active floats it to a #141414 tint.
+   Feedback is finger-down (iOS applies :active on touch), never the hit geometry. */
+.press-row {
+  transition: background-color 0.12s cubic-bezier(0.16,0.84,0.3,1);
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.press-row:active { background-color: #141414; transform: none; } /* transform:none overrides the button :active scale — rows lift, never shrink */
 
 /* ── Surface slide-on-commit (SlideShell) ─────────────────────────────────────
    REST = display:contents (no box → no containing-block effect on the app's

@@ -151,7 +151,7 @@ function LayoutSection({
 
   if (layout.id === "collage") {
     return (
-      <div onClick={onSelect} style={{ paddingLeft: 2, cursor: "pointer" }}>
+      <div className="tappable" onClick={onSelect} style={{ paddingLeft: 2, cursor: "pointer" }}>
         <div style={{ position: "relative", width: 371, height: 112 }}>
           {COLLAGE_CELLS.map((cell, i) => (
             <div key={i} style={{ position: "absolute", left: cell.left, top: cell.top, width: cell.width, height: cell.height, border, background: "transparent" }}>
@@ -177,7 +177,7 @@ function LayoutSection({
   const gap = 1;
 
   return (
-    <div onClick={onSelect} style={{ paddingLeft: 2, cursor: "pointer" }}>
+    <div className="tappable" onClick={onSelect} style={{ paddingLeft: 2, cursor: "pointer" }}>
       <div style={{ display: "flex", gap, width: 371, height: containerHeight }}>
         {cells.map((cell, i) => (
           <CellOverlay key={i} layout={layout} selected={selected} width={cell.width} height={cell.height} isFirst={i === 0} />
