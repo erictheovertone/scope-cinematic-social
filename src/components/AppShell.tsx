@@ -96,9 +96,11 @@ export default function AppShell() {
 
   if (takeover || HIDDEN.some(p => pathname === p)) return null;
 
-  const page: 'home' | 'profile' | 'public-profile' | 'wallet' =
+  const page: 'home' | 'profile' | 'public-profile' | 'wallet' | 'dm' =
     pathname === '/wallet'
       ? 'wallet'
+      : pathname === '/dm'
+      ? 'dm'
       : pathname === '/profile'
       ? 'profile'
       : pathname?.startsWith('/profile/') && !pathname.includes('/decks')

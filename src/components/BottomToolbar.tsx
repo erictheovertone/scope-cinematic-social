@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import PressPop from "@/components/PressPop";
 
-type Page = 'home' | 'profile' | 'public-profile' | 'wallet';
+type Page = 'home' | 'profile' | 'public-profile' | 'wallet' | 'dm';
 
 const BTN: React.CSSProperties = {
   background: 'transparent',
@@ -90,6 +90,18 @@ function WalletIcon({ active }: { active?: boolean }) {
   );
 }
 
+// DM — a squared speech bubble in the app's line language (sharp corners over
+// rounded, per the design system). Message glyph (not envelope: envelope reads
+// as email; a bubble reads as direct messages). Turns red when active.
+function DMIcon({ active }: { active?: boolean }) {
+  const c = active ? '#FF0000' : 'white';
+  return (
+    <svg width="21" height="21" viewBox="0 0 24 24" fill="none">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke={c} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+}
+
 interface Props {
   page: Page;
   unreadCount?: number;
@@ -108,8 +120,9 @@ function HamburgerIcon({ active }: { active?: boolean }) {
   );
 }
 
-// Pure render component — no hooks, no state, no async.
-// All routing logic lives in AppShell; this component only displays.
+// Display component. Holds two hooks (takeover sync + the pill-pop ref) — BOTH
+// declared before the `if (takeover) return null` early-return, so hook order is
+// stable on every render. Routing logic lives in AppShell; this only displays.
 export default function BottomToolbar({ page, unreadCount = 0, onNotificationsClick, onHamburgerPress }: Props) {
   // TAKEOVER STANDDOWN (root fix): theatre mode (any entry) sets
   // data-suite-open on <html> and dispatches scope:takeover-change. The check
@@ -117,6 +130,13 @@ export default function BottomToolbar({ page, unreadCount = 0, onNotificationsCl
   // multiple scopes (AppShell on most routes, the profile pages render their
   // own instances): every instance reacts, no entry point can escape.
   const [takeover, setTakeover] = useState(false);
+  // PILL POP ref (round 4C) — declared ABOVE the takeover early-return so this
+  // hook runs on EVERY render (hooks unconditional; only LOGIC is conditional).
+  // It previously sat BELOW `if (takeover) return null`, so any data-suite-open
+  // setter (collect / theatre / create takeover) flipped takeover → the component
+  // early-returned before this useRef → React #300 "rendered fewer hooks than
+  // expected". Keep every hook above the return.
+  const pillRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const sync = () => setTakeover(!!document.documentElement.dataset.suiteOpen);
     sync();
@@ -135,13 +155,14 @@ export default function BottomToolbar({ page, unreadCount = 0, onNotificationsCl
   if (takeover) return null;
 
   const isHome = page === 'home';
-  // The active destination the red marker rests under (always 4 quarter-cells).
-  // /profile → hamburger slot (2); public-profile is someone else's page → no marker.
-  const activeIndex = page === 'home' ? 0 : page === 'wallet' ? 3 : page === 'profile' ? 2 : -1;
+  // The active destination the red marker rests under (always 5 fifth-cells now
+  // that DM slots in at index 3, right of profile). /profile → hamburger slot (2);
+  // public-profile is someone else's page → no marker.
+  const activeIndex = page === 'home' ? 0 : page === 'wallet' ? 4 : page === 'profile' ? 2 : page === 'dm' ? 3 : -1;
 
   // PILL POP (round 4C) — a subtle scale flex on any nav tap, timed with the marker
   // slide. Furniture, not a button: it flexes, doesn't jump. Retrigger on rapid taps.
-  const pillRef = useRef<HTMLDivElement>(null);
+  // (pillRef is declared above the takeover early-return — see the #300 fix.)
   const popPill = () => {
     const el = pillRef.current;
     if (!el) return;
@@ -195,7 +216,7 @@ export default function BottomToolbar({ page, unreadCount = 0, onNotificationsCl
             persistent AppShell footer). The icon still turns red on arrival. */}
         {activeIndex >= 0 && (
           <div aria-hidden style={{
-            position: 'absolute', bottom: 3, left: `calc((${activeIndex} + 0.5) * 25%)`,
+            position: 'absolute', bottom: 3, left: `calc((${activeIndex} + 0.5) * 20%)`,
             transform: 'translateX(-50%)', width: 18, height: 0.7, borderRadius: 0,
             background: '#FF0000', pointerEvents: 'none', zIndex: 0,
             transition: 'left 250ms cubic-bezier(0.34, 1.5, 0.5, 1)',
@@ -235,7 +256,15 @@ export default function BottomToolbar({ page, unreadCount = 0, onNotificationsCl
           </PressPop>
         )}
 
-        {/* 4 — Bell (home) | Wallet (profile / public-profile) */}
+        {/* 4 — DM (always) — first-class citizen: active state + press pop +
+              marker slide, same as the rest. Routes to the DM inbox. */}
+        <PressPop level="icon">
+          <Link className="tap-target" href="/dm" style={{ ...BTN, opacity: page === 'dm' ? 1 : 0.7 }} aria-label="Direct messages">
+            <PopInner><DMIcon active={page === 'dm'} /></PopInner>
+          </Link>
+        </PressPop>
+
+        {/* 5 — Bell (home) | Wallet (profile / public-profile) */}
         {!isHome && (
           <PressPop level="icon">
             <Link className="tap-target" href="/wallet" style={{ ...BTN, opacity: page === 'wallet' ? 1 : 0.7 }} aria-label="Wallet">
