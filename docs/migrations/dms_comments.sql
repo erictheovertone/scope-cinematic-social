@@ -35,8 +35,13 @@ CREATE INDEX IF NOT EXISTS conversations_user_b_idx ON conversations (user_b, la
 
 
 -- ── 2. messages ──────────────────────────────────────────────────────────────
--- body capped at 2000 chars (and non-empty). read_at NULL = unread; set by the
--- recipient calling /api/dm/read.
+-- body capped at 2000 chars. read_at NULL = unread; set by the recipient calling
+-- /api/dm/read.
+-- NOTE (matches what actually ran): the DB CHECK is an UPPER bound only
+-- (char_length <= 2000) — an empty body is NOT rejected at the DB layer. Non-empty
+-- is enforced one level up, in /api/dm/send (empty → 400), so no empty message is
+-- ever created through the API. If you want the DB to reject empty too, tighten to
+-- `BETWEEN 1 AND 2000` (see the optional ALTER at the end of this file).
 CREATE TABLE IF NOT EXISTS messages (
   id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   conversation_id uuid NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
@@ -44,7 +49,7 @@ CREATE TABLE IF NOT EXISTS messages (
   body            text NOT NULL,
   created_at      timestamptz NOT NULL DEFAULT now(),
   read_at         timestamptz,
-  CONSTRAINT messages_body_len CHECK (char_length(body) BETWEEN 1 AND 2000)
+  CONSTRAINT messages_body_len CHECK (char_length(body) <= 2000)
 );
 
 -- Thread paging: messages of a conversation in time order (the (conv, created_at)
@@ -123,3 +128,11 @@ CREATE POLICY "comment_likes deletable by all" ON comment_likes
 
 -- comments.parent_comment_id needs no policy change: replies are inserted through
 -- the same permissive path as top-level comments.
+
+
+-- ── OPTIONAL (not run) — tighten the body CHECK to reject empty at the DB too ──
+-- The live constraint is upper-bound only; the /api/dm/send route already rejects
+-- empty bodies, so this is belt-and-braces. Run only if you want the DB to enforce
+-- non-empty as well.
+--   ALTER TABLE messages DROP CONSTRAINT messages_body_len;
+--   ALTER TABLE messages ADD  CONSTRAINT messages_body_len CHECK (char_length(body) BETWEEN 1 AND 2000);
