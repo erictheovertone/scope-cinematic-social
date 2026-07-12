@@ -466,6 +466,7 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
             {/* Avatar + @username | MC */}
             <div style={{ display: "flex", alignItems: "center", marginBottom: 10 }}>
               <div
+                className="tappable"
                 onClick={() => goToProfile()}
                 style={{
                   width: 24, height: 24, borderRadius: "50%", overflow: "hidden",
@@ -483,8 +484,9 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
               </div>
 
               <span
+                className="tappable"
                 onClick={() => goToProfile()}
-                style={{ ...SKB, fontSize: 'var(--fs-9)', color: "white", letterSpacing: "-0.14px", cursor: "pointer", textTransform: "uppercase" }}
+                style={{ ...SKB, fontSize: 'var(--fs-9)', color: "white", letterSpacing: "-0.14px", cursor: "pointer", textTransform: "uppercase", display: "inline-block" }}
               >
                 @{post.username}
               </span>

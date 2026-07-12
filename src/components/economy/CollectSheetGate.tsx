@@ -8,6 +8,7 @@
 
 import CollectSheet from '@/components/CollectSheet';
 import CollectSheetV2 from '@/components/economy/CollectSheetV2';
+import NotCollectibleSheet from '@/components/economy/NotCollectibleSheet';
 import { economyPreviewEnabled } from '@/lib/economy/flag';
 import { isCoinPost } from '@/components/EconomyProvider';
 import { isUntradeableCoin } from '@/lib/economy/pairing';
@@ -15,6 +16,18 @@ import { isUntradeableCoin } from '@/lib/economy/pairing';
 type CollectSheetProps = React.ComponentProps<typeof CollectSheet>;
 
 export default function CollectSheetGate(props: CollectSheetProps) {
+  // UNMINTED GATE (fix): a post with no coin (Coins) and no legacy 1155 token has
+  // nothing to read — sending it to a market sheet fires coin reads against a null
+  // address and crashes. Intercept it here, before ANY market/collect sheet, with the
+  // quiet explainer. (Covers the preview-flag path too — unminted is never collectible.)
+  {
+    const p = props.post as Record<string, unknown>;
+    const hasCoin = !!(p.coin_address as string | null);
+    const legacyMinted = !!p.is_minted && !!(p.contract_address as string | null);
+    if (!hasCoin && !legacyMinted) {
+      return <NotCollectibleSheet visible={props.visible} onClose={props.onClose} />;
+    }
+  }
   // Market sheet (v2) shows for real COIN posts (production legacy gate), OR
   // under the dev preview flag on mock data (skeleton testing). Legacy 1155
   // posts in production (flag off, no coin_address) fall through to the existing

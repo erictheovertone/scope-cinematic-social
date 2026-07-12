@@ -225,8 +225,9 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
           <img src={feedImage(post.profile_image_url, 96)} style={{ width: '14px', height: '14px', borderRadius: '50%', objectFit: 'cover' }} />
         )}
         <span
+          className="tappable"
           onClick={(e) => { e.stopPropagation(); router.push('/profile/' + post.username); }}
-          style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-8)', color: 'white', cursor: 'pointer', textTransform: 'uppercase' }}
+          style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-8)', color: 'white', cursor: 'pointer', textTransform: 'uppercase', display: 'inline-block' }}
         >
           @{post.username}
         </span>

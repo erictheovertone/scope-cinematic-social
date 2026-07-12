@@ -216,6 +216,7 @@ function PostViewerItem({
         const metadataRow = (
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8, padding: "0 2px" }}>
             <div
+              className="tappable"
               onClick={(e) => { e.stopPropagation(); onNavigateToProfile(); }}
               style={{ display: "flex", alignItems: "center", gap: 4, cursor: "pointer", opacity: 0.85 }}
             >

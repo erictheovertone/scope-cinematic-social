@@ -198,7 +198,7 @@ export default function BottomToolbar({ page, unreadCount = 0, onNotificationsCl
             position: 'absolute', bottom: 3, left: `calc((${activeIndex} + 0.5) * 25%)`,
             transform: 'translateX(-50%)', width: 18, height: 0.7, borderRadius: 0,
             background: '#FF0000', pointerEvents: 'none', zIndex: 0,
-            transition: 'left 200ms cubic-bezier(0.34, 1.5, 0.5, 1)',
+            transition: 'left 250ms cubic-bezier(0.34, 1.5, 0.5, 1)',
           }} />
         )}
 

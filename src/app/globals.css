@@ -159,9 +159,11 @@ html { -webkit-tap-highlight-color: transparent; }
 button:active,
 [role="button"]:active,
 .tappable:active {
-  transform: scale(0.97);
-  opacity: 0.9;
-  transition: transform 0.1s cubic-bezier(0.16,0.84,0.3,1), opacity 0.1s;
+  /* Round 6: FELT on mobile — words/buttons/boxes dip to 0.945 with a brightness cut
+     (was 0.97/0.9, subliminal). Spring cubic + ~130ms so the press reads, not blinks. */
+  transform: scale(0.945);
+  opacity: 0.82;
+  transition: transform 0.13s cubic-bezier(0.34,1.5,0.5,1), opacity 0.13s;
 }
 
 /* 1.3b Press-pop — JS-retriggered scale "pop" on tap (the <PressPop> primitive).
@@ -186,7 +188,7 @@ button:active,
    on the surrounding halo never popped → the press felt gone. This is mobile's OWN
    calibration — stronger + longer than desktop's dial-backs: 0.90 dip, 1.08 spring-
    back, 220ms round trip (visible, not subliminal). */
-.press-pop.pop-active.pop-icon .pp-inner { animation: pressPopIconMobile 260ms cubic-bezier(0.34, 1.7, 0.5, 1); }
+.press-pop.pop-active.pop-icon .pp-inner { animation: pressPopIconMobile 310ms cubic-bezier(0.34, 1.7, 0.5, 1); }
 @keyframes pressPopIconMobile {
   0%   { transform: scale(1); }
   35%  { transform: scale(0.86); }   /* round 3: harder dip */
@@ -244,7 +246,7 @@ button:active,
 .footer-pill.smoke { background: rgba(0,0,0,0.5); }
 /* Pill POP (4C) — a subtle scale flex on nav tap, timed with the marker slide. GPU
    transform only; collapsed to instant under the reduced-motion net (Stage 4.1). */
-.footer-pill.pill-pop { animation: pillPop 200ms cubic-bezier(0.34, 1.5, 0.5, 1); }
+.footer-pill.pill-pop { animation: pillPop 240ms cubic-bezier(0.34, 1.5, 0.5, 1); }
 @keyframes pillPop {
   0%   { transform: scale(1); }
   40%  { transform: scale(0.985); }
