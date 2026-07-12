@@ -26,7 +26,9 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
         <link rel="dns-prefetch" href="https://auth.privy.io" />
         <link rel="manifest" href="/manifest.json" />
-        <meta name="theme-color" content="#000000" />
+        {/* No theme-color: on iOS 16.4+ standalone an opaque theme-color paints the
+            status-bar background (a black band), overriding black-translucent. Omitting
+            it lets the translucent status bar overlay content that bleeds edge-to-edge. */}
         <link rel="apple-touch-icon" href="/scope-square-thumbnail-logo-v2.png" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />

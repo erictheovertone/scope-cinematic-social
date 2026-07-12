@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import PressPop from "@/components/PressPop";
 
@@ -21,6 +21,11 @@ const BTN: React.CSSProperties = {
   touchAction: 'manipulation',
   // White icons need contrast where a bright frame shows through the dark glass → subtle shadow.
   filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.55))',
+  // Equal quarter-cells → the red marker maps exactly to each icon's centre; icons sit
+  // above the marker (zIndex 0 behind).
+  flex: 1,
+  position: 'relative',
+  zIndex: 1,
 };
 
 // Footer pill fill — flip to 'smoke' for the darker-contrast fallback. Eric judges on
@@ -130,43 +135,73 @@ export default function BottomToolbar({ page, unreadCount = 0, onNotificationsCl
   if (takeover) return null;
 
   const isHome = page === 'home';
+  // The active destination the red marker rests under (always 4 quarter-cells).
+  // /profile → hamburger slot (2); public-profile is someone else's page → no marker.
+  const activeIndex = page === 'home' ? 0 : page === 'wallet' ? 3 : page === 'profile' ? 2 : -1;
+
+  // PILL POP (round 4C) — a subtle scale flex on any nav tap, timed with the marker
+  // slide. Furniture, not a button: it flexes, doesn't jump. Retrigger on rapid taps.
+  const pillRef = useRef<HTMLDivElement>(null);
+  const popPill = () => {
+    const el = pillRef.current;
+    if (!el) return;
+    el.classList.remove('pill-pop');
+    void el.offsetWidth; // reflow so the animation restarts
+    el.classList.add('pill-pop');
+  };
 
   return (
     <>
-    {/* DARK-GLASS PILL (feel round 3) — floats low (15px min from bottom + sides), TIGHT
-        height hugging the icons, 0.5px grey hairline + dark frost. NO drop-shadow (the
-        hairline + glass define it). Icons span the FULL width (space-between). The feed
-        scrolls VISIBLY (blurred) beneath AND beside it. */}
+    {/* DARK-GLASS PILL — floats low (15px min from bottom + sides), TIGHT height hugging
+        the icons, 0.5px grey hairline + dark frost, no shadow. The feed scrolls VISIBLY
+        (blurred) beneath AND beside it. Pops subtly on a nav tap (4C). */}
     <div
+      ref={pillRef}
       className={`footer-pill${PILL_FILL === 'smoke' ? ' smoke' : ''}`}
+      onPointerDownCapture={popPill}
+      onAnimationEnd={(e) => { if (e.animationName === 'pillPop') e.currentTarget.classList.remove('pill-pop'); }}
       style={{
         position: 'fixed',
         left: 15,
         right: 15,
         // Sit LOW: 15px on non-notch; on the home-indicator phones the inset floors it
-        // just above the indicator (max, not +, so it drops ~15px vs round 2's 15+inset).
+        // just above the indicator (max, not +).
         bottom: 'max(15px, env(safe-area-inset-bottom, 0px))',
         height: 38,
         borderRadius: 2,
         border: '0.5px solid rgba(255,255,255,0.3)',
         zIndex: 50,
+        transformOrigin: 'center',
         boxSizing: 'border-box' as const,
       }}
     >
       <div
         style={{
+          position: 'relative',
           display: 'flex',
-          justifyContent: 'space-between',
           alignItems: 'center',
-          // Icons spread END-TO-END across the full pill; small inset keeps them off the
-          // rounded corners. env() = 0 in portrait so 375 is unchanged.
-          paddingLeft: 'calc(16px + env(safe-area-inset-left, 0px))',
-          paddingRight: 'calc(16px + env(safe-area-inset-right, 0px))',
+          // Quarter-cells (flex:1) fill the full pill → icons spread evenly across the
+          // whole bar; horizontal safe-area only (0 in portrait) so the marker % maps
+          // exactly to cell centres.
+          paddingLeft: 'env(safe-area-inset-left, 0px)',
+          paddingRight: 'env(safe-area-inset-right, 0px)',
           width: '100%',
           height: '100%',
           boxSizing: 'border-box' as const,
         }}
       >
+        {/* RED SLIDING MARKER (4B) — a plate-less 18×2 red underline beneath the active
+            icon; travels cell→cell with a ~200ms spring as `page` changes (on the
+            persistent AppShell footer). The icon still turns red on arrival. */}
+        {activeIndex >= 0 && (
+          <div aria-hidden style={{
+            position: 'absolute', bottom: 3, left: `calc((${activeIndex} + 0.5) * 25%)`,
+            transform: 'translateX(-50%)', width: 18, height: 2, borderRadius: 1,
+            background: '#FF0000', pointerEvents: 'none', zIndex: 0,
+            transition: 'left 200ms cubic-bezier(0.34, 1.5, 0.5, 1)',
+          }} />
+        )}
+
         {/* 1 — Home */}
         <PressPop level="icon">
           <Link className="tap-target" href="/" style={{ ...BTN, opacity: page === 'home' ? 1 : 0.7 }} aria-label="Home">
