@@ -95,7 +95,17 @@ export default function ToolSlider({ type, value, onChange, label, trackGradient
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
       onPointerLeave={onPointerUp}
-      style={{ position: 'relative', height: inline ? 24 : 28, flex: inline ? 1 : undefined, display: 'flex', alignItems: 'center', cursor: 'pointer', touchAction: 'none' }}
+      style={{
+        position: 'relative', height: inline ? 24 : 28, flex: inline ? 1 : undefined,
+        display: 'flex', alignItems: 'center', cursor: 'pointer', touchAction: 'none',
+        // Horizontal breathing so a drag never STARTS at the screen edge (where iOS's
+        // edge-back-swipe lives). 28px inset each side on the full-width suite sliders;
+        // the theatre inline bar is already inset by its label/value, so 0 there.
+        // The track SHORTENS — frac is measured from trackRef.rect, so range/behaviour
+        // is unchanged.
+        marginLeft: inline ? 0 : 28,
+        marginRight: inline ? 0 : 28,
+      }}
     >
       {/* base line — WB exception draws a thin 1px gradient hairline; else a strict line */}
       <div style={{ position: 'absolute', left: 0, right: 0, height: grad ? 1 : 2, background: trackGradient ?? 'rgba(255,255,255,0.18)' }} />

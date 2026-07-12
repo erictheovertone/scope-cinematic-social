@@ -186,11 +186,12 @@ button:active,
    on the surrounding halo never popped → the press felt gone. This is mobile's OWN
    calibration — stronger + longer than desktop's dial-backs: 0.90 dip, 1.08 spring-
    back, 220ms round trip (visible, not subliminal). */
-.press-pop.pop-active.pop-icon .pp-inner { animation: pressPopIconMobile 220ms cubic-bezier(0.34, 1.6, 0.5, 1); }
+.press-pop.pop-active.pop-icon .pp-inner { animation: pressPopIconMobile 260ms cubic-bezier(0.34, 1.7, 0.5, 1); }
 @keyframes pressPopIconMobile {
   0%   { transform: scale(1); }
-  40%  { transform: scale(0.90); }
-  70%  { transform: scale(1.08); }
+  35%  { transform: scale(0.86); }   /* round 3: harder dip */
+  65%  { transform: scale(1.10); }   /* pronounced overshoot — the spring-back */
+  85%  { transform: scale(0.98); }
   100% { transform: scale(1); }
 }
 
@@ -232,11 +233,13 @@ button:active,
    PILL_FILL) for the darker-contrast fallback. No hairline border — the blur edge
    IS the boundary; the drop-shadow gives it float. */
 .footer-pill {
+  /* Round 3: DARK GLASS (#030303-class) — blurred content shines THROUGH dark, not a
+     light frost. Blur kept. */
   backdrop-filter: blur(18px) saturate(1.3);
   -webkit-backdrop-filter: blur(18px) saturate(1.3);
-  background: rgba(255,255,255,0.15);
+  background: rgba(3,3,3,0.6);
 }
-.footer-pill.smoke { background: rgba(0,0,0,0.4); }
+.footer-pill.smoke { background: rgba(0,0,0,0.5); }
 /* Accessibility: OS asks for less transparency → solid, no blur. */
 @media (prefers-reduced-transparency: reduce) {
   .footer-pill, .footer-pill.smoke {

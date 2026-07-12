@@ -24,7 +24,6 @@ const HIDDEN = [
   '/profile/preferences',
   '/profile/account',
   '/profile/data',
-  '/profile/notifications',
   '/profile/invite',
   '/profile/hidden',
   '/profile/contact',

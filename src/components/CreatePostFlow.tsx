@@ -1116,7 +1116,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
   const renderMediaStep = () => (
     <div className="h-full flex flex-col">
       <div className="flex items-center justify-between p-4 border-b border-[#333333]" style={{ paddingTop: 'calc(1rem + env(safe-area-inset-top, 0px))' }}>
-        <button onClick={onClose} className="text-white text-lg">×</button>
+        <button onClick={onClose} aria-label="Close" style={{ width: 44, height: 44, marginLeft: -10, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', cursor: 'pointer', color: 'white', fontSize: 30, lineHeight: 1, fontWeight: 300, touchAction: 'manipulation' }}>×</button>
         <h2 style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-16)', color: 'white', textTransform: 'uppercase', letterSpacing: '0.04em', margin: 0 }}>New Post</h2>
         <button
           onClick={() => setStep('crop')}
