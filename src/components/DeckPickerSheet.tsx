@@ -32,6 +32,19 @@ export default function DeckPickerSheet({ postId, onClose, onAdded }: Props) {
   const [username, setUsername] = useState("");
   const [visible, setVisible] = useState(false);
 
+  // Hide the footer pill while the sheet is up (takeover discipline — same as
+  // collect / create / theatre / not-collectible; this sheet had missed the list,
+  // so the pill fought the +NEW DECK row at the bottom). Mount = open, unmount =
+  // closed, so set on mount / clear on unmount.
+  useEffect(() => {
+    document.documentElement.dataset.suiteOpen = '1';
+    window.dispatchEvent(new CustomEvent('scope:takeover-change'));
+    return () => {
+      delete document.documentElement.dataset.suiteOpen;
+      window.dispatchEvent(new CustomEvent('scope:takeover-change'));
+    };
+  }, []);
+
   useEffect(() => {
     const id = requestAnimationFrame(() => setVisible(true));
     if (!user) { setLoading(false); return () => cancelAnimationFrame(id); }

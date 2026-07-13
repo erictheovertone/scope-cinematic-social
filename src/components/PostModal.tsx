@@ -366,18 +366,19 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
               <button
                 onClick={() => onTheaterMode()}
                 aria-label="Theatre mode"
-                style={{ background: "transparent", border: "none", cursor: "pointer", padding: 4 }}
+                /* DOUBLED (glyph + target): eye 22→44px, tap target ~30→52px. */
+                style={{ background: "transparent", border: "none", cursor: "pointer", minWidth: 52, minHeight: 52, display: "inline-flex", alignItems: "center", justifyContent: "center", padding: 0 }}
               >
-                <img src="/theatre-mode-eye-framed-v2.png" alt="" style={{ height: 22, width: "auto", display: "block", opacity: 0.92 }} />
+                <img src="/theatre-mode-eye-framed-v2.png" alt="" style={{ height: 44, width: "auto", display: "block", opacity: 0.92 }} />
               </button>
             )}
-            {/* × dismiss — explicit, ≥44px target, both lightbox variants */}
+            {/* × dismiss — DOUBLED: glyph var(--fs-15)→×2 (~18.5→37px), target 44→52px. */}
             <button
               onClick={handleClose}
               aria-label="Close"
-              style={{ background: "transparent", border: "none", cursor: "pointer", minWidth: 44, minHeight: 44, display: "inline-flex", alignItems: "center", justifyContent: "center", padding: 0, marginRight: -10 }}
+              style={{ background: "transparent", border: "none", cursor: "pointer", minWidth: 52, minHeight: 52, display: "inline-flex", alignItems: "center", justifyContent: "center", padding: 0, marginRight: -10 }}
             >
-              <span style={{ ...SKR, fontSize: 'var(--fs-15)', color: "rgba(255,255,255,0.75)", lineHeight: 1 }}>×</span>
+              <span style={{ ...SKR, fontSize: 'calc(var(--fs-15) * 2)', color: "rgba(255,255,255,0.75)", lineHeight: 1 }}>×</span>
             </button>
           </span>
         </div>

@@ -106,6 +106,11 @@ interface Props {
   page: Page;
   unreadCount?: number;
   dmUnread?: number;
+  /** Settings/menu is OPEN → the hamburger reddens (the only time it does). The
+   *  profile page navigates to /profile/preferences (no inline menu), so it stays
+   *  false there today; the prop keeps the model correct if a settings surface ever
+   *  shows the footer. */
+  settingsOpen?: boolean;
   onNotificationsClick?: () => void;
   onHamburgerPress?: () => void;
 }
@@ -124,7 +129,7 @@ function HamburgerIcon({ active }: { active?: boolean }) {
 // Display component. Holds two hooks (takeover sync + the pill-pop ref) — BOTH
 // declared before the `if (takeover) return null` early-return, so hook order is
 // stable on every render. Routing logic lives in AppShell; this only displays.
-export default function BottomToolbar({ page, unreadCount = 0, dmUnread = 0, onNotificationsClick, onHamburgerPress }: Props) {
+export default function BottomToolbar({ page, unreadCount = 0, dmUnread = 0, settingsOpen = false, onNotificationsClick, onHamburgerPress }: Props) {
   // TAKEOVER STANDDOWN (root fix): theatre mode (any entry) sets
   // data-suite-open on <html> and dispatches scope:takeover-change. The check
   // lives HERE — in the footer component itself — because footers mount from
@@ -238,22 +243,28 @@ export default function BottomToolbar({ page, unreadCount = 0, dmUnread = 0, onN
           </Link>
         </PressPop>
 
-        {/* 3 — Profile (home/wallet) | Hamburger (profile / public-profile) */}
-        {isHome || page === 'wallet' || page === 'public-profile' ? (
+        {/* 3 — Profile slot. On your OWN profile (/profile) it's the menu/settings
+              hamburger (opens settings); everywhere else (home, wallet, DM, public
+              profile) it's the Profile link. The hamburger is red ONLY when settings
+              is open — NEVER for merely being on /profile, and never left stale on
+              another surface (DMs). The current route is shown by the sliding marker,
+              not by reddening this slot. (Was: hardcoded `active` + a branch that let
+              /dm fall through to the hamburger → the false-active bug.) */}
+        {page === 'profile' ? (
+          <PressPop level="icon">
+            <button
+              onClick={onHamburgerPress} className="tap-target"
+              style={{ ...BTN, opacity: 0.7 }}
+              aria-label="Menu"
+            >
+              <PopInner><HamburgerIcon active={settingsOpen} /></PopInner>
+            </button>
+          </PressPop>
+        ) : (
           <PressPop level="icon">
             <Link className="tap-target" href="/profile" style={{ ...BTN, opacity: 0.7 }} aria-label="Profile">
               <PopInner><ProfileIcon /></PopInner>
             </Link>
-          </PressPop>
-        ) : (
-          <PressPop level="icon">
-            <button
-              onClick={onHamburgerPress} className="tap-target"
-              style={{ ...BTN, opacity: 1 }}
-              aria-label="Menu"
-            >
-              <PopInner><HamburgerIcon active /></PopInner>
-            </button>
           </PressPop>
         )}
 
