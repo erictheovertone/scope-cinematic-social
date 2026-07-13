@@ -17,6 +17,8 @@ import {
 } from '@/lib/dm';
 import { getUserByPrivyId, getProfileByUsername } from '@/lib/userService';
 import { feedImage } from '@/lib/mediaUrl';
+import { useIsDesktop } from '@/lib/useIsDesktop';
+import DesktopDM from '@/components/desktop/DesktopDM';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -28,9 +30,18 @@ type Item = { key: string; body: string; mine: boolean; iso: string; status?: 's
 
 const TIME_BREAK_MS = 10 * 60 * 1000; // group timestamps: a break only after a 10-min gap
 
+// Thin gate: desktop → two-pane surface with this user's thread active; mobile →
+// the full-screen thread. Only useIsDesktop + useParams run here (stable hook count),
+// so the mobile thread's takeover effect never runs on desktop (the rail stays).
 export default function DMThreadPage() {
+  const isDesktop = useIsDesktop();
   const params = useParams();
   const username = decodeURIComponent(String(params?.username ?? ''));
+  if (isDesktop) return <DesktopDM initialUsername={username} />;
+  return <MobileDMThread username={username} />;
+}
+
+function MobileDMThread({ username }: { username: string }) {
   const { user } = usePrivy();
   const router = useRouter();
 

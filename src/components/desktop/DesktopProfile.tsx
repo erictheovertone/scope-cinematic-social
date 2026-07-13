@@ -38,7 +38,7 @@ const RED = '#f20d0d';
 
 // DM button: rendered DISABLED behind this flag (Eric decides on sight —
 // flip to false to hide entirely). DMs are their own upcoming build.
-const SHOW_INERT_MESSAGE_BUTTON = true;
+const SHOW_MESSAGE_BUTTON = true;
 
 interface Props {
   /** Supabase users.id of the PROFILE user. */
@@ -71,7 +71,6 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
   const [badgesOpen, setBadgesOpen] = useState(false);
   // Profile grid = the SHARED aspect × the DESKTOP count (resolveLayout).
   const [gridConf, setGridConf] = useState<{ aspect: AspectId; count: number }>({ aspect: 'scope', count: 4 });
-  const [msgToast, setMsgToast] = useState(false);
   const [deckCreateOpen, setDeckCreateOpen] = useState(false);
   const [newDeckTitle, setNewDeckTitle] = useState('');
   const [newDeckDesc, setNewDeckDesc] = useState('');
@@ -281,22 +280,17 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
 
           </div>
 
-          {/* TOP-RIGHT cluster — MESSAGE (public, inert v1) then the ⓘ box,
-              10px gap. Own profile: ⓘ alone (editing lives in Settings). */}
+          {/* TOP-RIGHT cluster — MESSAGE (public) then the ⓘ box, 10px gap.
+              Own profile: ⓘ alone (editing lives in Settings). */}
           <div style={{ position: 'absolute', right: 0, top: 17, display: 'flex', alignItems: 'center', gap: 10 }}> {/* tops level with the name */}
-            {!isOwn && SHOW_INERT_MESSAGE_BUTTON && (
-              /* Public profiles only (own = correctly absent — the round-2 shot
-                 showed it rendering on public; the 45% disabled text read as
-                 missing). Full-white per the frame; tap → COMING SOON toast. */
-              <button onClick={() => { setMsgToast(true); window.setTimeout(() => setMsgToast(false), 1800); }} aria-label="Messages coming soon" style={{ ...SKB, fontSize: 11, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.06em', width: 123, height: 33, borderRadius: 4, border: '0.5px solid rgba(255,255,255,0.3)', background: 'transparent', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}>
+            {!isOwn && SHOW_MESSAGE_BUTTON && (
+              /* Public profiles only (own = correctly absent). Full-white per the
+                 frame; tap → the DM surface with this user's thread active. */
+              <button onClick={() => router.push(`/dm/${encodeURIComponent(handle)}`)} aria-label={`Message @${handle}`} style={{ ...SKB, fontSize: 11, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.06em', width: 123, height: 33, borderRadius: 4, border: '0.5px solid rgba(255,255,255,0.3)', background: 'transparent', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}>
+                {/* red dot kept as a live accent (the DM status colour). */}
                 <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#f20d0d', display: 'inline-block' }} />
                 MESSAGE
               </button>
-            )}
-            {msgToast && (
-              <span style={{ position: 'absolute', top: 40, right: 0, ...SKB, fontSize: 10, color: 'rgba(255,255,255,0.7)', textTransform: 'uppercase', letterSpacing: '0.1em', background: '#0b0b0b', border: '1px solid rgba(255,255,255,0.18)', padding: '6px 10px', whiteSpace: 'nowrap' }}>
-                MESSAGES · COMING SOON
-              </span>
             )}
             <button onClick={() => setInfoOpen(true)} aria-label="Profile info" style={{ width: 34, height: 33, borderRadius: 4, border: '0.5px solid rgba(255,255,255,0.3)', background: 'transparent', cursor: 'pointer', ...SKB, fontSize: 13, color: '#FFF' }}>
               <span>i</span> {/* upright — the frame's rotation was an authoring artifact */}
@@ -541,7 +535,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
           firstCutCount={fcCount}
           onClose={() => setInfoOpen(false)}
           onViewBadges={() => { setInfoOpen(false); setBadgesOpen(true); }}
-          onMessage={() => { setMsgToast(true); window.setTimeout(() => setMsgToast(false), 1800); }}
+          onMessage={() => { setInfoOpen(false); router.push(`/dm/${encodeURIComponent(handle)}`); }}
         />
       )}
       {badgesOpen && (

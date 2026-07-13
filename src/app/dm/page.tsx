@@ -14,11 +14,21 @@ import { useRouter } from 'next/navigation';
 import { usePrivy } from '@privy-io/react-auth';
 import { getInbox, dmTimeAgo, type InboxConversation } from '@/lib/dm';
 import { feedImage } from '@/lib/mediaUrl';
+import { useIsDesktop } from '@/lib/useIsDesktop';
+import DesktopDM from '@/components/desktop/DesktopDM';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
 
+// Thin gate: desktop → two-pane surface; mobile → the inbox page. Only useIsDesktop
+// runs here, so switching viewport just mounts/unmounts a child (no hook-order risk).
 export default function DMInboxPage() {
+  const isDesktop = useIsDesktop();
+  if (isDesktop) return <DesktopDM />;
+  return <MobileDMInbox />;
+}
+
+function MobileDMInbox() {
   const { user } = usePrivy();
   const router = useRouter();
   const [convs, setConvs] = useState<InboxConversation[] | null>(null);
