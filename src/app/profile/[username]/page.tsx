@@ -121,6 +121,18 @@ export default function PublicProfilePage() {
     getDecksByUsername(username).then(d => setPublicDecks(d as any)).catch(console.error).finally(() => setDecksLoading(false));
   }, [showDecks, username]);
 
+  // Footer pill stands down while the DECKS pull-up is open (takeover discipline —
+  // the hide-list must cover EVERY decks sheet, this public one included).
+  useEffect(() => {
+    if (!showDecks) return;
+    document.documentElement.dataset.suiteOpen = '1';
+    window.dispatchEvent(new CustomEvent('scope:takeover-change'));
+    return () => {
+      delete document.documentElement.dataset.suiteOpen;
+      window.dispatchEvent(new CustomEvent('scope:takeover-change'));
+    };
+  }, [showDecks]);
+
   useEffect(() => {
     if (headerSnapped && !headerUnsnapping && (gridScrollY > snapScrollYRef.current + 30 || gridScrollY < 20)) setHeaderSnapped(false);
   }, [gridScrollY, headerSnapped, headerUnsnapping]);
@@ -554,7 +566,12 @@ export default function PublicProfilePage() {
           : publicDecks.map(deck => (
             <div key={deck.id} onClick={() => { setShowDecks(false); router.push(`/profile/${username}/decks/${deck.id}`); }} style={{ marginBottom: 12, cursor: 'pointer' }}>
               <div style={{ width: '100%', aspectRatio: getDeckAspect(deck.grid_layout), overflow: 'hidden', background: '#1a1a1a' }}>
-                {deck.thumbnail_urls.length > 0 && <div style={{ display: 'grid', gridTemplateColumns: thumbCols(deck.thumbnail_urls.length), width: '100%', height: '100%' }}>{deck.thumbnail_urls.map((url, i) => <img key={i} src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />)}</div>}
+                {/* Baked collage cover (one ~600px WebP), not the live N-image composite. */}
+                {deck.thumbnail_url
+                  ? <img src={deck.thumbnail_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                  : deck.thumbnail_urls.length > 0
+                  ? <img src={feedImage(deck.thumbnail_urls[0], 600)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                  : null}
               </div>
               <p style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'white', margin: '4px 0 0', textTransform: 'uppercase' }}>{deck.title}</p>
               <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.5)', margin: '2px 0 0', textTransform: 'uppercase' }}>{deck.item_count} FRAMES</p>

@@ -334,6 +334,19 @@ const userLayoutId = stableLayoutId;
       .finally(() => setDecksLoading(false));
   }, [showDecks, user?.id]);
 
+  // Footer pill stands down while the DECKS pull-up is open (the takeover discipline
+  // — same as collect/theatre/create). This inline sheet, NOT DeckPickerSheet, is the
+  // one with the +NEW DECK footer; last round wired the wrong sheet. Cleared on close.
+  useEffect(() => {
+    if (!showDecks) return;
+    document.documentElement.dataset.suiteOpen = '1';
+    window.dispatchEvent(new CustomEvent('scope:takeover-change'));
+    return () => {
+      delete document.documentElement.dataset.suiteOpen;
+      window.dispatchEvent(new CustomEvent('scope:takeover-change'));
+    };
+  }, [showDecks]);
+
   const fmt = (n: number) => n.toLocaleString();
 
   const getDeckAspect = (gl?: string | null) => {
@@ -804,14 +817,14 @@ const userLayoutId = stableLayoutId;
                 onClick={() => { setShowDecks(false); router.push(`/profile/${userProfile.username}/decks/${deck.id}`); }}
                 style={{ marginBottom: 12, cursor: 'pointer' }}
               >
-                {/* Thumbnail */}
+                {/* Cover — the BAKED collage (thumbnail_url: one ~600px WebP) instead
+                    of compositing N master-size post images live (the old slowness).
+                    Fallback: the first post's display rendition. */}
                 <div style={{ width: '100%', aspectRatio: getDeckAspect(deck.grid_layout), overflow: 'hidden', background: '#1a1a1a' }}>
-                  {deck.thumbnail_urls.length > 0 ? (
-                    <div style={{ display: 'grid', gridTemplateColumns: thumbCols(deck.thumbnail_urls.length), width: '100%', height: '100%' }}>
-                      {deck.thumbnail_urls.map((url, i) => (
-                        <img key={i} src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                      ))}
-                    </div>
+                  {deck.thumbnail_url ? (
+                    <img src={deck.thumbnail_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                  ) : deck.thumbnail_urls.length > 0 ? (
+                    <img src={feedImage(deck.thumbnail_urls[0], 600)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                   ) : null}
                 </div>
                 {/* Title + count */}

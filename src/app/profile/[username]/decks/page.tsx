@@ -8,6 +8,7 @@ import {
   createDeck, type Deck,
 } from "@/lib/userService";
 import { getScopeLimitType } from "@/lib/limits";
+import { feedImage } from "@/lib/mediaUrl";
 import { useUpsell } from "@/components/UpsellProvider";
 import FrameLoader from "@/components/FrameLoader";
 
@@ -148,9 +149,11 @@ export default function DecksPage() {
             >
               {/* Cover image */}
               <div style={{ width: "100%", aspectRatio: "2.4 / 1", background: "#111", overflow: "hidden" }}>
-                {deck.cover_image_url ? (
+                {(deck.thumbnail_url || deck.cover_image_url) ? (
                   <img
-                    src={deck.cover_image_url}
+                    /* Prefer the baked collage WebP (~600px); else the cover as a
+                       display rendition — never the master-size original. */
+                    src={deck.thumbnail_url ?? feedImage(deck.cover_image_url, 600)}
                     alt={deck.title}
                     style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
                   />
