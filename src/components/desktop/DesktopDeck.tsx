@@ -46,12 +46,17 @@ export default function DesktopDeck({ deckId }: { deckId: string }) {
     setDeck(d);
     setLoading(false);
     if (!d) return;
-    // grid AR × count = the deck OWNER's shared layout (their curation aesthetic).
-    const owner = await getProfile(d.user_id).catch(() => null);
+    // decks.user_id stores the OWNER'S Privy DID (like comments/likes) — NOT a uuid.
+    // The old code fed the DID to getProfile (uuid-keyed) → null owner → default
+    // layout, AND compared the DID to the viewer's resolved uuid → isOwn always
+    // false → the "···" menu never rendered. Resolve DID→uuid for the profile read;
+    // compare DIDs directly for ownership.
+    const ownerUser = await getUserByPrivyId(d.user_id).catch(() => null);
+    const owner = ownerUser ? await getProfile(ownerUser.id).catch(() => null) : null;
     const R = resolveLayout(owner as Parameters<typeof resolveLayout>[0]);
     setAspect(ratioForAspect(R.aspect));
     setCount(R.desktopCount);
-    if (user) { const sb = await getUserByPrivyId(user.id).catch(() => null); setIsOwn(!!sb && sb.id === d.user_id); }
+    setIsOwn(!!user?.id && user.id === d.user_id);
   };
   useEffect(() => { void load(); /* eslint-disable-next-line */ }, [deckId, user?.id]);
 
