@@ -15,8 +15,25 @@ import {
   createTradeCall,
   getCoinCreateFromLogs,
   CreateConstants,
+  setApiKey,
   type ContentCoinCurrency,
 } from "@zoralabs/coins-sdk";
+
+// ── Authenticate the SDK's HOSTED calls (create/content calldata build, trade
+// quotes) ──────────────────────────────────────────────────────────────────────
+// Root cause of the mint outage: this path runs CLIENT-side and never set an API
+// key, so createCoin → createCoinCall → POST api-sdk.zora.engineering/create/content
+// hit Zora's UNAUTHENTICATED tier — persistently failing (526 on their internal
+// base-proxy) while Zora's own (authenticated) app mints fine. 0.7.1 still builds
+// calldata via that hosted endpoint (NOT locally), so the SDK bump alone doesn't
+// help — the KEY does. The mint is client-side, so the key must be NEXT_PUBLIC.
+// (Server read paths already key via ZORA_API_KEY.) Once-guarded.
+let _zoraKeyed = false;
+function ensureZoraApiKey(): void {
+  if (_zoraKeyed) return;
+  const key = process.env.NEXT_PUBLIC_ZORA_API_KEY;
+  if (key) { try { setApiKey(key); } catch { /* SDK guards its own state */ } _zoraKeyed = true; }
+}
 import { createPublicClient, http, getAddress, parseEther, formatEther } from "viem";
 import { base } from "viem/chains";
 import { supabase } from "@/lib/supabase/client";
@@ -163,6 +180,7 @@ export async function createScopeCoin({
     mimeType?: string;
   };
 }): Promise<CreateScopeCoinResult> {
+  ensureZoraApiKey(); // authenticate the hosted create/content calldata build
   // Guard FIRST — never reach createCoin without a valid referrer.
   const platformReferrer = getScopePlatformReferrer();
   const creator = getAddress(creatorAddress);
@@ -328,6 +346,7 @@ export async function buyCoin({
       recipient: sender,
     };
     console.log("[zoraCoins] buyCoin quote request:", JSON.stringify({ ...tradeParameters, amountIn: amountIn.toString(), usd: usdAmount, ethUsd }));
+    ensureZoraApiKey();
     const quote = await createTradeCall(tradeParameters);
     console.log("[zoraCoins] buyCoin quote response:", JSON.stringify(quote)?.slice(0, 400));
     const exec = await executeQuotedTrade({ walletClient, sender, quote, label: `buy $${usdAmount}` });
@@ -675,6 +694,7 @@ export async function quoteSwap({ sell, buy, amountIn, sender, slippage = SWAP_S
   sender: `0x${string}`;
   slippage?: number;
 }): Promise<{ amountOut: bigint }> {
+  ensureZoraApiKey();
   const quote: any = await createTradeCall(swapParams(sell, buy, amountIn, sender, slippage));
   return { amountOut: BigInt(quote?.quote?.amountOut ?? 0) };
 }
@@ -708,6 +728,7 @@ export async function swapTokens({ walletClient, sender, sell, buy, amountIn, sl
     const mined = await publicClient.waitForTransactionReceipt({ hash });
     if (mined.status !== "success") throw new Error(`Swap reverted on-chain (tx ${hash}) — nothing was swapped.`);
   } else {
+    ensureZoraApiKey();
     const quote = await createTradeCall(swapParams(sell, buy, amountIn, sender, slippage));
     const exec = await executeQuotedTrade({ walletClient, sender, quote, label: `swap ${sell}→${buy}` });
     hash = exec.hash; // executeQuotedTrade already enforced mined status:success
