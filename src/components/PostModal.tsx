@@ -369,7 +369,7 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
                 /* DOUBLED (glyph + target): eye 22→44px, tap target ~30→52px. */
                 style={{ background: "transparent", border: "none", cursor: "pointer", minWidth: 52, minHeight: 52, display: "inline-flex", alignItems: "center", justifyContent: "center", padding: 0 }}
               >
-                <img src="/theatre-mode-eye-framed-v2.png" alt="" style={{ height: 44, width: "auto", display: "block", opacity: 0.92 }} />
+                <img src="/theatre-mode-eye-solo.png" alt="" style={{ height: 44, width: "auto", display: "block", opacity: 0.92 }} />
               </button>
             )}
             {/* × dismiss — DOUBLED: glyph var(--fs-15)→×2 (~18.5→37px), target 44→52px. */}
