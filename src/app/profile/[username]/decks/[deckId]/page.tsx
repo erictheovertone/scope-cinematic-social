@@ -488,8 +488,12 @@ export default function DeckDetailPage() {
 
   // ── Render ────────────────────────────────────────────────────────────────
 
+  // screen-min: with html/body locked (iOS standalone rubber-band fix), a page ROOT
+  // must be its OWN scroller or its content is clipped by the fixed body — exactly the
+  // deck-grid trap. min-h-[100dvh] (document scroll) never scrolled here. screen-min =
+  // 100dvh + overflow-y:auto + momentum + contained overscroll (the established pattern).
   return (
-    <div className="bg-black w-full app-shell min-h-[100dvh] mx-auto" style={{ paddingBottom: 'calc(80px + env(safe-area-inset-bottom, 0px))' }}>
+    <div className="bg-black w-full app-shell screen-min mx-auto" style={{ paddingBottom: 'calc(80px + env(safe-area-inset-bottom, 0px))' }}>
 
       {/* ── Backdrops ────────────────────────────────────────────────────── */}
 
