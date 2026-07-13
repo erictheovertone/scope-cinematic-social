@@ -1,34 +1,55 @@
-// ── mediaUrl — the ONE place transform (resize/WebP) URLs are built ──────────
+// ── mediaUrl — resolve a stored image to its DISPLAY rendition (NO transform) ──
 //
-// Feed/grid/lightbox request DISPLAY-sized WebP via Supabase Image Transformations
-// (render/image endpoint) instead of the full-res original. Originals in storage are
-// untouched (the finishing suite / future server-bake still read them). Transformed
-// URLs are CDN-cacheable (max-age=31536000), preserving media fix #1.
+// The app used to build Supabase Image-Transformation URLs (/render/image?width=…).
+// That endpoint is metered and its usage scaled with traffic → quota blew. This now
+// returns PLAIN public object URLs (which cost nothing): a BAKED rendition when one
+// exists, else the master.
 //
-// Passes through UNCHANGED: videos, non-Supabase URLs, and already-transformed URLs —
-// so it's safe to call anywhere; only real Supabase image objects get rewritten.
+// Renditions are baked at PUBLISH (uploadImageWithRenditions) and stored ALONGSIDE
+// the master as `{masterPath}.{width}.webp` (e.g. `.../abc.jpg.600.webp`). The suffix
+// is appended to the FULL master path, so it's reversible — a missing rendition 404s
+// and the global <ImageRenditionFallback/> handler strips `.{w}.webp` back to the
+// master. No DB change: the URL fully determines the rendition path.
+//
+// Only post-media IMAGES get renditions. profile-images (avatars, deck covers) are
+// already baked small at upload → served as-is. Videos / foreign hosts / already-
+// rendition URLs pass through untouched.
 
 const IMAGE_EXT = /\.(jpe?g|png|webp|gif|heic|heif|avif|bmp|tiff?)$/i;
 const PUBLIC_OBJECT = '/storage/v1/object/public/';
+const RENDITION_SUFFIX = /\.(?:600|1600)\.webp$/;
+
+/** The baked display sizes (longest side, WebP). feedImage picks the nearest ≥ the
+ *  requested width; the publish bake produces exactly these. Keep the two in sync. */
+export const RENDITION_WIDTHS = [600, 1600] as const;
+
+/** Map a requested display width → the rendition size to serve (nearest baked ≥ it),
+ *  or null when it exceeds the largest baked size (→ serve the master). */
+function renditionFor(width: number): number | null {
+  for (const w of RENDITION_WIDTHS) if (width <= w) return w;
+  return null;
+}
 
 /**
- * Rewrite a Supabase public IMAGE object URL to a resized WebP transform URL.
- * @param url  the stored public object URL (or anything — non-images pass through)
- * @param width  target pixel width (retina-aware: request ~2–3× the CSS width)
- * @param quality  1–100 (default 78)
+ * Resolve a stored image URL to the URL to actually load — a baked rendition when
+ * applicable, else the master. NEVER a transform URL.
+ * @param url      the stored public object URL (or anything — non-images pass through)
+ * @param width    target CSS×DPR pixel width (retina-aware — request ~2–3× the CSS width)
+ * @param _quality accepted for call-site compatibility; ignored (quality is baked in)
  */
-export function feedImage(url: string | null | undefined, width: number, quality = 78): string {
+export function feedImage(url: string | null | undefined, width: number, _quality = 78): string {
   if (!url) return url ?? '';
-  // Only Supabase public OBJECT URLs are transformable; render/image URLs & foreign
-  // hosts already lack this marker → pass through untouched.
+  // Foreign hosts / already-transformed URLs lack the object marker → untouched.
   if (!url.includes(PUBLIC_OBJECT)) return url;
-  // Video (or any non-image) must never hit the image transform endpoint.
   const path = url.split('?')[0];
+  // Videos and other non-images never get a rendition.
   if (!IMAGE_EXT.test(path)) return url;
-
-  const transformed = url.split('?')[0].replace(PUBLIC_OBJECT, '/storage/v1/render/image/public/');
-  // resize=contain: width-only transforms otherwise keep the ORIGINAL height (distorting the
-  // aspect → the normalized crop render lands zoomed/off). contain scales proportionally, so
-  // getCropStyle (untouched) gets a right-aspect image and renders the crop exactly as full-res.
-  return `${transformed}?width=${width}&quality=${quality}&format=webp&resize=contain`;
+  // Already a rendition (idempotent) → as-is.
+  if (RENDITION_SUFFIX.test(path)) return url;
+  // Only post-media images are baked into renditions. profile-images (avatars/deck
+  // covers) are already baked small at upload → serve the master directly.
+  if (!path.includes('/post-media/')) return url;
+  const size = renditionFor(width);
+  if (size == null) return url; // larger than the biggest baked size → the master
+  return `${path}.${size}.webp`;
 }

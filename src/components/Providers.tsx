@@ -11,6 +11,7 @@ import PostLightboxHost from '@/components/PostLightboxHost';
 import SlideShell from '@/components/SlideShell';
 import SwipeNav from '@/components/SwipeNav';
 import RecapHost from '@/components/RecapHost';
+import ImageRenditionFallback from '@/components/ImageRenditionFallback';
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -22,6 +23,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
               <SlideShell>{children}</SlideShell>
             </Suspense>
             <AppShell />
+            <ImageRenditionFallback />
             <SwipeNav />
             <PostLightboxHost />
             <RecapHost />

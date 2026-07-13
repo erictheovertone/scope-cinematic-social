@@ -16,7 +16,7 @@ import { useTxNarrator } from '@/components/TxNarrator';
 import { notifyTradeSettled } from '@/lib/economy/tradeEvents';
 import MintPromptSheet from '@/components/MintPromptSheet';
 import {
-  getUserByPrivyId, getProfile, uploadImage, isProMember,
+  getUserByPrivyId, getProfile, uploadImage, uploadImageWithRenditions, isProMember,
   getUserDecks, createDeck, addPostToDeck,
   type Deck,
 } from '@/lib/userService';
@@ -711,9 +711,11 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
             console.log('[handlePost] look baked (graded)');
           }
         }
-        const url = await uploadImage(fileToUpload, 'post-media', user.id);
+        // Main post image is shown through feedImage everywhere → bake its 600/1600
+        // display renditions alongside the master (no transform at read time).
+        const url = await uploadImageWithRenditions(fileToUpload, 'post-media', user.id);
         mediaUrls.push(url);
-        console.log('[handlePost] uploaded:', url);
+        console.log('[handlePost] uploaded (+renditions):', url);
       }
 
       // ── Poster bake (VIDEO) — ONE frame (hero frame if graded, else first),
@@ -732,8 +734,9 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
             const posterBlob = await bakeLook(posterImg, editParams, exportChip.exportW, exportChip.exportH);
             posterFile = new File([posterBlob], 'poster.jpg', { type: 'image/jpeg' });
           }
-          posterUrl = await uploadImage(posterFile, 'post-media', user.id);
-          console.log('[handlePost] poster baked (hero frame:', heroT, '):', posterUrl);
+          // Poster is the video post's feed face (shown via feedImage) → renditions.
+          posterUrl = await uploadImageWithRenditions(posterFile, 'post-media', user.id);
+          console.log('[handlePost] poster baked (hero frame:', heroT, ') (+renditions):', posterUrl);
         } catch (e) {
           console.warn('[handlePost] poster bake failed (publishing without graded poster):', e);
         }
@@ -764,8 +767,8 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
 
       let thumbnailUrl: string | null = null;
       if (customThumbnail) {
-        thumbnailUrl = await uploadImage(customThumbnail, 'post-media', user.id);
-        console.log('[handlePost] thumbnail uploaded:', thumbnailUrl);
+        thumbnailUrl = await uploadImageWithRenditions(customThumbnail, 'post-media', user.id);
+        console.log('[handlePost] thumbnail uploaded (+renditions):', thumbnailUrl);
       } else if (selectedMedia[0]?.type === 'video' && autoThumbnail) {
         thumbnailUrl = await uploadAutoThumbnail(autoThumbnail, user.id);
         console.log('[handlePost] auto thumbnail uploaded:', thumbnailUrl);
