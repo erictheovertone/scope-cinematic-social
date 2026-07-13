@@ -279,17 +279,22 @@ export const uploadImageWithRenditions = async (
   privyUserId?: string,
 ): Promise<string> => {
   const masterUrl = await uploadImage(file, bucket, privyUserId);
-  // Bake renditions on the server (reliable WebP). Awaited so a fresh post's feed
-  // cell finds its rendition immediately; a failure is swallowed (rides master).
+  // FIRE-AND-FORGET — NEVER awaited. Rendition baking is an OPTIMIZATION and must not
+  // block or gate the publish/mint. It used to be awaited: on the deployment the route
+  // (sharp cold-start + fetch/upload) could stall past the function limit, and because
+  // the MAIN-image call at handlePost is not itself try/caught, that stall/instability
+  // took the whole publish down before the coin mint ever fired. Now the request is
+  // dispatched and forgotten (keepalive → completes even if the flow finishes); any
+  // failure is irrelevant — the image rides the master via the onError fallback until
+  // the retry/backfill catches it. The mint path can no longer be blocked by this.
   try {
-    await fetch('/api/renditions', {
+    void fetch('/api/renditions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ masterUrl }),
-    });
-  } catch (e) {
-    console.warn('[renditions] server bake request failed (rides master):', sbErr(e));
-  }
+      keepalive: true,
+    }).catch(() => {});
+  } catch { /* dispatch itself never throws */ }
   return masterUrl;
 }
 
