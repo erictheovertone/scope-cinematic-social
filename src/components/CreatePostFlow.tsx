@@ -1464,7 +1464,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
   return (
     <>
       <div onClick={handleBackdropDismiss} style={{ position: 'fixed', inset: 0, backgroundColor: '#000000', opacity: 1, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div onClick={(e) => e.stopPropagation()} className="bg-black border border-[#333333] w-[375px] h-[600px] relative overflow-hidden">
+        <div onClick={(e) => e.stopPropagation()} className="bg-black w-[375px] h-[600px] relative overflow-hidden">
           {step === 'media' && renderMediaStep()}
           {step === 'edit' && renderEditStep()}
           {step === 'deck' && renderDeckStep()}

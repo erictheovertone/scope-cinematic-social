@@ -718,10 +718,9 @@ export default function FinishingShell({
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             {!theatre && (
               <div style={{ position: 'relative' }}>
-                <button onClick={() => setMenuOpen((o) => !o)} aria-label="Viewing options" className="tappable" style={{ width: 44, height: 44, background: 'transparent', cursor: 'pointer', lineHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}>
-                  <span style={{ width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${menuOpen ? RED : 'rgba(255,255,255,0.25)'}`, color: menuOpen || zoom.active ? RED : 'white', transition: `border-color 0.3s ${SNAP}, color 0.3s ${SNAP}` }}>
-                    <svg width="14" height="14" viewBox="0 0 12 12" fill="none" style={{ transform: menuOpen ? 'rotate(45deg)' : 'rotate(0deg)', transition: `transform 0.3s ${SNAP}` }}><path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
-                  </span>
+                <button onClick={() => setMenuOpen((o) => !o)} aria-label="Viewing options" className="tappable" style={{ width: 44, height: 44, background: 'transparent', border: 'none', cursor: 'pointer', lineHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, color: menuOpen || zoom.active ? RED : 'white', transition: `color 0.3s ${SNAP}` }}>
+                  {/* Bare glyph — no box border (the repositioning wrapper's white box removed). */}
+                  <svg width="18" height="18" viewBox="0 0 12 12" fill="none" style={{ transform: menuOpen ? 'rotate(45deg)' : 'rotate(0deg)', transition: `transform 0.3s ${SNAP}` }}><path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
                 </button>
                 <div style={{ position: 'absolute', top: 'calc(100% + 2px)', right: 0, zIndex: 30, minWidth: 150, background: '#000', border: '1px solid rgba(255,255,255,0.18)', transformOrigin: 'top right', transform: menuOpen ? 'scale(1)' : 'scale(0.7)', opacity: menuOpen ? 1 : 0, pointerEvents: menuOpen ? 'auto' : 'none', transition: `transform ${menuOpen ? 0.3 : 0.2}s ${SNAP}, opacity ${menuOpen ? 0.3 : 0.2}s ${SNAP}` }}>
                   {menuItemsContent}
