@@ -110,6 +110,19 @@ export default function SwapSheet({ visible, onClose, ethBalance, usdcBalance, z
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
 
+  // Footer takeover — bottom-anchored money sheet over the wallet's pill: same escape
+  // class as the collect sheet (frosted pill bleeds above the panel on iOS). Emit the
+  // body-level flag so the toolbar stands down while SWAP is up.
+  useEffect(() => {
+    if (!visible) return;
+    document.documentElement.dataset.suiteOpen = '1';
+    window.dispatchEvent(new CustomEvent('scope:takeover-change'));
+    return () => {
+      delete document.documentElement.dataset.suiteOpen;
+      window.dispatchEvent(new CustomEvent('scope:takeover-change'));
+    };
+  }, [visible]);
+
   // Live ETH→USD spot for the dollar entry (refreshed each open).
   useEffect(() => {
     if (!visible) return;

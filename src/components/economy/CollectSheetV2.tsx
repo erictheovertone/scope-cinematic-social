@@ -126,6 +126,22 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
     return () => { cancelled = true; };
   }, [visible, post.id, economy]);
 
+  // Footer takeover — hide the bottom pill while THIS (market/BUY-SELL) sheet is up.
+  // The bug: Batch A added this to the legacy CollectSheet, but CollectSheetGate shows
+  // CollectSheetV2 for coin posts / preview — and V2 never emitted the flag, so the
+  // frosted pill (backdrop-filter re-composite bleeds it above the z:501 sheet on iOS)
+  // sat over BUY/SELL. Body-level attribute on <html> → BottomToolbar's MutationObserver
+  // (+ the takeover-change event for the AppShell/rail listeners). Keyed on `visible`.
+  useEffect(() => {
+    if (!visible) return;
+    document.documentElement.dataset.suiteOpen = '1';
+    window.dispatchEvent(new CustomEvent('scope:takeover-change'));
+    return () => {
+      delete document.documentElement.dataset.suiteOpen;
+      window.dispatchEvent(new CustomEvent('scope:takeover-change'));
+    };
+  }, [visible]);
+
   // Live BUY quote.
   useEffect(() => {
     const v = parseFloat(buyUsd);
