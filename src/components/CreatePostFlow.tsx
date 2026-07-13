@@ -1206,7 +1206,11 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
       </div>
 
       <div className="flex-1 flex flex-col">
-        <div className="flex-1 p-4">
+        {/* SCROLLABLE (fixes the dead caption input): with body{position:fixed;
+            overflow:hidden;touch-action:none} (the iOS standalone lock), an input needs
+            a SCROLLABLE ancestor or iOS can't focus it / raise the keyboard — the deck
+            step works because ITS container is overflow-y-auto; this one wasn't. */}
+        <div className="flex-1 overflow-y-auto p-4" style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}>
           <div style={{ position: 'relative', width: '100%', marginBottom: 16, backgroundColor: '#000' }}>
             {/* WYSIWYG preview — live gl-react render of geometry + ALL look params
                 (matches FINISHING; no preview bake → no generational loss; works for
@@ -1253,8 +1257,8 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
             className="w-full bg-transparent resize-none outline-none"
             /* fontSize MUST be ≥16px: iOS Safari auto-zooms a focused input under 16px and
                won't restore it (trapping the user). 16px is fine for an active caption field.
-               Hairline underline = the app's input language (no box). */
-            style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: 16, color: '#FFFFFF', caretColor: '#FF0000', backgroundColor: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.15)', padding: '0 0 10px' }}
+               Borderless — no hairline anywhere in the flow (content on black). */
+            style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: 16, color: '#FFFFFF', caretColor: '#FF0000', backgroundColor: 'transparent', border: 'none' }}
             rows={3}
           />
           {selectedMedia[0]?.type === 'video' && (
