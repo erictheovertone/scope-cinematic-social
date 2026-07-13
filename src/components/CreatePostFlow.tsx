@@ -303,6 +303,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
   const [ceremonySub, setCeremonySub] = useState<string | null>(null);
   const [customThumbnail, setCustomThumbnail] = useState<File | null>(null);
   const thumbnailInputRef = useRef<HTMLInputElement>(null);
+  const captionInputRef = useRef<HTMLTextAreaElement>(null);
   const [videoAutoplay, setVideoAutoplay] = useState(true);
   const [autoThumbnail, setAutoThumbnail] = useState<string | null>(null);
 
@@ -1210,8 +1211,8 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
             overflow:hidden;touch-action:none} (the iOS standalone lock), an input needs
             a SCROLLABLE ancestor or iOS can't focus it / raise the keyboard — the deck
             step works because ITS container is overflow-y-auto; this one wasn't. */}
-        <div className="flex-1 overflow-y-auto p-4" style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}>
-          <div style={{ position: 'relative', width: '100%', marginBottom: 16, backgroundColor: '#000' }}>
+        <div className="flex-1 overflow-y-auto p-4 flex flex-col" style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}>
+          <div style={{ position: 'relative', width: '100%', marginBottom: 16, backgroundColor: '#000', flexShrink: 0 }}>
             {/* WYSIWYG preview — live gl-react render of geometry + ALL look params
                 (matches FINISHING; no preview bake → no generational loss; works for
                 video too). The single publish bake stays in handlePost. */}
@@ -1233,36 +1234,41 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
               <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-8)', color: 'white', textTransform: 'uppercase', letterSpacing: '0.06em' }}>ADJUST CROP</span>
             </button>
           </div>
-          {/* Autoplay-clip window selector (video only). Optional — untouched = auto
-              on publish. The preview above is the graded video. */}
+          {/* Autoplay-clip window selector (video only). */}
           {selectedMedia[0]?.type === 'video' && (
-            <SnippetSelector
-              videoUrl={selectedMedia[0].url}
-              heroFrameTime={editParams.heroFrameTime}
-              onChange={(w) => setSnippetWindow(w)}
-              params={editParams}
-              geometry={editGeometry ?? neutralGeometry(chipForLayout(chosenLayoutId || userLayoutId).id)}
-              layoutId={chosenLayoutId || userLayoutId}
-            />
+            <div style={{ flexShrink: 0 }}>
+              <SnippetSelector
+                videoUrl={selectedMedia[0].url}
+                heroFrameTime={editParams.heroFrameTime}
+                onChange={(w) => setSnippetWindow(w)}
+                params={editParams}
+                geometry={editGeometry ?? neutralGeometry(chipForLayout(chosenLayoutId || userLayoutId).id)}
+                layoutId={chosenLayoutId || userLayoutId}
+              />
+            </div>
           )}
-          {/* The quiet final step: a tracked label, then a hairline-underline caption
-              field. Generous space above (the media breathes). */}
-          <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-10)', color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.12em', margin: '18px 0 10px' }}>
-            Add a caption
-          </p>
-          <textarea
-            value={caption}
-            onChange={(e) => setCaption(e.target.value)}
-            placeholder=""
-            className="w-full bg-transparent resize-none outline-none"
-            /* fontSize MUST be ≥16px: iOS Safari auto-zooms a focused input under 16px and
-               won't restore it (trapping the user). 16px is fine for an active caption field.
-               Borderless — no hairline anywhere in the flow (content on black). */
-            style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: 16, color: '#FFFFFF', caretColor: '#FF0000', backgroundColor: 'transparent', border: 'none' }}
-            rows={3}
-          />
+          {/* CAPTION TARGET — the ENTIRE region below the media focuses the caption. The
+              textarea GROWS to fill this zone (so most taps land in it directly), AND the
+              zone's onClick → input.focus() so even taps in the dead space around it land
+              in the caption. Only child <button>s opt out. "Add a caption" is the
+              placeholder INSIDE the flow — no separate dead label. No precision required. */}
+          <div
+            onClick={(e) => { if (!(e.target as HTMLElement).closest('button')) captionInputRef.current?.focus(); }}
+            style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 160, cursor: 'text' }}
+          >
+            <textarea
+              ref={captionInputRef}
+              value={caption}
+              onChange={(e) => setCaption(e.target.value)}
+              placeholder="Add a caption"
+              className="w-full bg-transparent resize-none outline-none placeholder-[#5c5c5c]"
+              /* fontSize MUST be ≥16px (iOS zoom floor). flex:1 → fills the writable zone
+                 so the tap target spans the whole region below the media. Borderless. */
+              style={{ flex: 1, minHeight: 120, fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: 16, lineHeight: 1.5, color: '#FFFFFF', caretColor: '#FF0000', backgroundColor: 'transparent', border: 'none', padding: '2px 0 0' }}
+            />
+          </div>
           {selectedMedia[0]?.type === 'video' && (
-            <>
+            <div style={{ flexShrink: 0 }}>
             <div style={{ marginTop: 12 }}>
               <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 8px' }}>
                 CUSTOM THUMBNAIL (OPTIONAL)
@@ -1296,7 +1302,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
                 <div style={{ position: 'absolute', top: 2, left: videoAutoplay ? 18 : 2, width: 16, height: 16, borderRadius: 0, background: 'white', transition: 'left 0.2s ease' }} />
               </button>
             </div>
-            </>
+            </div>
           )}
         </div>
 
