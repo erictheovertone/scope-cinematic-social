@@ -1011,7 +1011,17 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
       const msg = (coinError as Error)?.message ?? '';
       setMintStatus('coin-failed');
       setCodified(false);
-      setBackingNarration(msg.length > 0 && msg.length < 120 ? msg : 'Something failed on the way to the chain. Your post is safe.');
+      // Zora UPSTREAM OUTAGE (their create/content 500s, or its internal Base-RPC
+      // proxy 5xx/526s) → a human "temporarily unavailable" line, never the raw
+      // "Failed to create content calldata" / proxy error. Testers must not see a
+      // dead technical string for an incident on Zora's side. Everything else keeps
+      // its plain-English reason.
+      const upstreamOutage = /failed to create content calldata|create\/content|base-proxy|notnotzora|http request failed|status:\s*5\d\d|\b(500|502|503|504|526)\b/i.test(msg);
+      setBackingNarration(
+        upstreamOutage
+          ? 'Minting is temporarily unavailable — Zora’s service is having trouble. Your post is safe; retry in a bit.'
+          : (msg.length > 0 && msg.length < 120 ? msg : 'Something failed on the way to the chain. Your post is safe.'),
+      );
     }
   };
 
