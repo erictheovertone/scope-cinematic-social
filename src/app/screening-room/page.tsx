@@ -17,6 +17,8 @@ import { openPostLightbox } from '@/lib/postLightbox';
 import { getAspectRatio, ratioPadding } from '@/lib/aspectRatio';
 import PillarboxFrame from '@/components/PillarboxFrame';
 import GradedVideo from '@/components/finishing/GradedVideo';
+import { useIsDesktop } from '@/lib/useIsDesktop';
+import DesktopScreeningRoom from '@/components/desktop/DesktopScreeningRoom';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -50,7 +52,15 @@ interface RoomRow {
   } | null;
 }
 
+// Thin gate: desktop → the Figma 56:2 showcase; mobile → the B1 list. Only
+// useIsDesktop runs here, so the mobile hooks never run on desktop (and vice-versa).
 export default function ScreeningRoomPage() {
+  const isDesktop = useIsDesktop();
+  if (isDesktop) return <DesktopScreeningRoom />;
+  return <MobileScreeningRoom />;
+}
+
+function MobileScreeningRoom() {
   const router = useRouter();
   const [rows, setRows] = useState<RoomRow[] | null>(null); // null = loading
   // Reduced-motion → the tiles stay static posters (the pre-live behavior).
