@@ -712,54 +712,31 @@ export default function FinishingShell({
             )}
             <span style={{ ...SKB, fontSize: 'var(--fs-12)', color: 'white', textTransform: 'uppercase', letterSpacing: '0.06em' }}>FINISHING</span>
           </div>
-          <button onClick={onDone} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4 }}>
-            <span style={{ ...SKB, fontSize: 'var(--fs-12)', color: RED, textTransform: 'uppercase', letterSpacing: '0.06em' }}>DONE</span>
-          </button>
-        </div>
-      )}
-
-      {/* ── Portrait-only "+" viewing menu — + and box share the RIGHT edge; box
-            unfurls from the +'s top-right corner (scale+fade), + rotates to ×.
-            Wrapper is pointer-events:none so its empty area never blocks the stage. ── */}
-      {!theatre && (
-        <div key="portrait-menu" style={{
-          position: 'absolute', top: 56, right: 22, zIndex: 30,
-          display: 'flex', flexDirection: 'column', alignItems: 'flex-end', pointerEvents: 'none',
-        }}>
-          <button
-            onClick={() => setMenuOpen((o) => !o)}
-            aria-label="Viewing options"
-            style={{
-              width: 26, height: 26, flexShrink: 0, background: 'transparent', cursor: 'pointer', lineHeight: 0,
-              display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'auto',
-              border: `1px solid ${menuOpen ? RED : 'rgba(255,255,255,0.25)'}`,
-              color: menuOpen || zoom.active ? RED : 'white',
-              transition: `border-color 0.3s ${SNAP}, color 0.3s ${SNAP}`,
-            }}
-          >
-            <svg
-              width="14" height="14" viewBox="0 0 12 12" fill="none"
-              style={{ transform: menuOpen ? 'rotate(45deg)' : 'rotate(0deg)', transition: `transform 0.3s ${SNAP}` }}
-            >
-              <path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
-          </button>
-
-          {/* Always mounted so CLOSE animates; visibility/scale/opacity drive the state. */}
-          <div
-            style={{
-              marginTop: 6, minWidth: 150, background: '#000', border: '1px solid rgba(255,255,255,0.18)',
-              transformOrigin: 'top right',
-              transform: menuOpen ? 'scale(1)' : 'scale(0.7)',
-              opacity: menuOpen ? 1 : 0,
-              pointerEvents: menuOpen ? 'auto' : 'none',
-              transition: `transform ${menuOpen ? 0.3 : 0.2}s ${SNAP}, opacity ${menuOpen ? 0.3 : 0.2}s ${SNAP}`,
-            }}
-          >
-            {menuItemsContent}
+          {/* Right cluster: "+" viewing menu to the LEFT of DONE (the "+" used to be an
+              absolute top:56 element that slid UNDER DONE beneath the notch). Both ≥44px
+              tap targets + press treatment; DONE stays top-right. */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            {!theatre && (
+              <div style={{ position: 'relative' }}>
+                <button onClick={() => setMenuOpen((o) => !o)} aria-label="Viewing options" className="tappable" style={{ width: 44, height: 44, background: 'transparent', cursor: 'pointer', lineHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}>
+                  <span style={{ width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${menuOpen ? RED : 'rgba(255,255,255,0.25)'}`, color: menuOpen || zoom.active ? RED : 'white', transition: `border-color 0.3s ${SNAP}, color 0.3s ${SNAP}` }}>
+                    <svg width="14" height="14" viewBox="0 0 12 12" fill="none" style={{ transform: menuOpen ? 'rotate(45deg)' : 'rotate(0deg)', transition: `transform 0.3s ${SNAP}` }}><path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
+                  </span>
+                </button>
+                <div style={{ position: 'absolute', top: 'calc(100% + 2px)', right: 0, zIndex: 30, minWidth: 150, background: '#000', border: '1px solid rgba(255,255,255,0.18)', transformOrigin: 'top right', transform: menuOpen ? 'scale(1)' : 'scale(0.7)', opacity: menuOpen ? 1 : 0, pointerEvents: menuOpen ? 'auto' : 'none', transition: `transform ${menuOpen ? 0.3 : 0.2}s ${SNAP}, opacity ${menuOpen ? 0.3 : 0.2}s ${SNAP}` }}>
+                  {menuItemsContent}
+                </div>
+              </div>
+            )}
+            <button onClick={onDone} aria-label="Done" className="tappable" style={{ minWidth: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', cursor: 'pointer', padding: '0 4px' }}>
+              <span style={{ ...SKB, fontSize: 'var(--fs-12)', color: RED, textTransform: 'uppercase', letterSpacing: '0.06em' }}>DONE</span>
+            </button>
           </div>
         </div>
       )}
+
+      {/* (Portrait "+" viewing menu now lives INLINE in the top bar, left of DONE —
+          see the topbar above. The old absolute top:56 element collided with DONE.) */}
 
       {/* ── MAIN ROW — the PERSISTENT stage (decoded source + Pipeline) mounts ONCE
             here and survives the portrait↔Theatre toggle (stable key="main"). The

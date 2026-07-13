@@ -1118,7 +1118,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
 
   const renderMediaStep = () => (
     <div className="h-full flex flex-col">
-      <div className="flex items-center justify-between p-4 border-b border-[#333333]" style={{ paddingTop: 'calc(1rem + env(safe-area-inset-top, 0px))' }}>
+      <div className="flex items-center justify-between p-4" style={{ paddingTop: 'calc(1rem + env(safe-area-inset-top, 0px))' }}>
         <button onClick={onClose} aria-label="Close" style={{ width: 44, height: 44, marginLeft: -10, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', cursor: 'pointer', color: 'white', fontSize: 30, lineHeight: 1, fontWeight: 300, touchAction: 'manipulation' }}>×</button>
         <h2 style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-16)', color: 'white', textTransform: 'uppercase', letterSpacing: '0.04em', margin: 0 }}>New Post</h2>
         <button
@@ -1146,55 +1146,45 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
         )}
 
         {selectedMedia.length === 0 ? (
+          /* Empty state — content on black, no container chrome. Red-gradient-border
+             CHOOSE FROM LIBRARY (transparent fill; border 135deg #f20d0d→#7a0505, 1.5px). */
           <div className="flex-1 flex flex-col items-center justify-center">
-            <div className="w-24 h-24 border-2 border-dashed border-[#333333] rounded-lg flex items-center justify-center mb-4">
-              <svg width="35.5" height="35.5" viewBox="0 0 24 24" fill="none">
-                <path d="M21 19V5C21 3.9 20.1 3 19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19ZM8.5 13.5L11 16.51L14.5 12L19 18H5L8.5 13.5Z" fill="#666666"/>
-              </svg>
-            </div>
-            <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-11)', color: '#666666', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 8, textAlign: 'center' }}>
-              Select photos and videos from your library
+            <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-11)', color: 'rgba(255,255,255,0.55)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8, textAlign: 'center' }}>
+              Select a photo or video from your library
             </p>
-            <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-9)', color: '#444444', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 24, textAlign: 'center' }}>
+            <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 28, textAlign: 'center' }}>
               Videos up to 50MB · MP4 recommended
             </p>
             <button
               onClick={() => fileInputRef.current?.click()}
-              style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-12)', textTransform: 'uppercase', letterSpacing: '0.06em', background: '#FF0000', color: 'white', border: 'none', padding: '12px 24px', cursor: 'pointer' }}
+              className="tappable"
+              style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-12)', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'white', border: '1.5px solid transparent', background: 'linear-gradient(#000, #000) padding-box, linear-gradient(135deg, #f20d0d, #7a0505) border-box', padding: '14px 28px', cursor: 'pointer' }}
             >
               Choose from Library
             </button>
-            <input ref={fileInputRef} type="file" multiple accept="image/*,video/mp4,video/webm" onChange={handleMediaSelect} className="hidden" />
+            <input ref={fileInputRef} type="file" accept="image/*,video/mp4,video/webm" onChange={handleMediaSelect} className="hidden" />
           </div>
         ) : (
-          <div className="flex-1">
-            <div className="grid grid-cols-3 gap-2 mb-4">
-              {selectedMedia.map((item) => (
-                <div key={item.id} className="relative aspect-square bg-[#333333] rounded-lg overflow-hidden">
-                  {item.type === 'image' ? (
-                    <img src={item.url} alt="" className="w-full h-full object-cover" />
-                  ) : (
-                    <video src={item.url} className="w-full h-full object-cover" />
-                  )}
-                  <button
-                    onClick={() => handleRemoveMedia(item.id)}
-                    className="absolute top-2 right-2 w-6 h-6 bg-black bg-opacity-70 rounded-full flex items-center justify-center text-white text-sm"
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
+          /* Loaded — the single selected media WHOLE (true aspect, letterboxed on black,
+             never cropped), no border box, no multi-add "+". Single-media flow. */
+          <div className="flex-1 flex flex-col" style={{ minHeight: 0 }}>
+            <div style={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+              {selectedMedia[0].type === 'image' ? (
+                <img src={selectedMedia[0].url} alt="" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', display: 'block' }} />
+              ) : (
+                <video src={selectedMedia[0].url} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', display: 'block' }} muted playsInline />
+              )}
               <button
-                onClick={() => fileInputRef.current?.click()}
-                className="aspect-square bg-[#333333] rounded-lg border-2 border-dashed border-[#666666] flex items-center justify-center"
-              >
-                <span className="text-[#666666] text-2xl">+</span>
-              </button>
+                onClick={() => handleRemoveMedia(selectedMedia[0].id)}
+                aria-label="Remove"
+                className="tappable"
+                style={{ position: 'absolute', top: 6, right: 6, width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', cursor: 'pointer', color: 'white', fontSize: 'var(--fs-20)', lineHeight: 1, textShadow: '0 1px 4px rgba(0,0,0,0.9)' }}
+              >×</button>
             </div>
-            <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-9)', color: '#444444', textTransform: 'uppercase', letterSpacing: '0.04em', textAlign: 'center' }}>
+            <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.06em', textAlign: 'center', marginTop: 12 }}>
               Videos up to 50MB · MP4 recommended
             </p>
-            <input ref={fileInputRef} type="file" multiple accept="image/*,video/mp4,video/webm" onChange={handleMediaSelect} className="hidden" />
+            <input ref={fileInputRef} type="file" accept="image/*,video/mp4,video/webm" onChange={handleMediaSelect} className="hidden" />
           </div>
         )}
       </div>
@@ -1203,7 +1193,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
 
   const renderEditStep = () => (
     <div className="h-full flex flex-col">
-      <div className="flex items-center justify-between p-4 border-b border-[#333333]" style={{ paddingTop: 'calc(1rem + env(safe-area-inset-top, 0px))' }}>
+      <div className="flex items-center justify-between p-4" style={{ paddingTop: 'calc(1rem + env(safe-area-inset-top, 0px))' }}>
         <button onClick={() => setStep('media')} className="text-white text-lg">←</button>
         <h2 style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-14)', color: 'white', textTransform: 'uppercase', letterSpacing: '0.04em', margin: 0 }}>Edit & Post</h2>
         <button
@@ -1251,15 +1241,21 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
               layoutId={chosenLayoutId || userLayoutId}
             />
           )}
+          {/* The quiet final step: a tracked label, then a hairline-underline caption
+              field. Generous space above (the media breathes). */}
+          <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-10)', color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.12em', margin: '18px 0 10px' }}>
+            Add a caption
+          </p>
           <textarea
             value={caption}
             onChange={(e) => setCaption(e.target.value)}
-            placeholder="Write a caption..."
-            className="w-full bg-transparent resize-none border-none outline-none placeholder-[#666666]"
+            placeholder=""
+            className="w-full bg-transparent resize-none outline-none"
             /* fontSize MUST be ≥16px: iOS Safari auto-zooms a focused input under 16px and
-               won't restore it (trapping the user). 16px is fine for an active caption field. */
-            style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: 16, color: '#FFFFFF', caretColor: '#FFFFFF', backgroundColor: 'transparent' }}
-            rows={4}
+               won't restore it (trapping the user). 16px is fine for an active caption field.
+               Hairline underline = the app's input language (no box). */
+            style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: 16, color: '#FFFFFF', caretColor: '#FF0000', backgroundColor: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.15)', padding: '0 0 10px' }}
+            rows={3}
           />
           {selectedMedia[0]?.type === 'video' && (
             <>
@@ -1300,23 +1296,15 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
           )}
         </div>
 
-        <div className="border-t border-[#333333] p-4">
-          <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-10)', color: '#666666', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 4 }}>
-            {/* Collage posts read the AR chosen in the crop tool; non-collage keeps the grid layout. */}
-            LAYOUT: {(() => {
-              const footerLayoutId = userLayoutId === 'collage' ? (chosenLayoutId || userLayoutId) : userLayoutId;
-              return `${profileLayoutName(footerLayoutId)} (${profileLayoutLabel(footerLayoutId)})`;
-            })()}
-          </p>
-          <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-9)', color: '#666666', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-            {selectedMedia.length} media item{selectedMedia.length !== 1 ? 's' : ''} selected
-          </p>
-          {postError && (
-            <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-10)', color: '#FF0000', textTransform: 'uppercase', letterSpacing: '0.04em', marginTop: 8 }}>
+        {/* The LAYOUT / "N media items selected" footer was removed — temporary-looking
+            and the layout is already decided by here. Only a publish error surfaces. */}
+        {postError && (
+          <div className="p-4">
+            <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-10)', color: '#FF0000', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
               {postError}
             </p>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );
