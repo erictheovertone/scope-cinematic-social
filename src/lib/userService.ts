@@ -1,6 +1,5 @@
 import { supabase } from './supabase/client'
 import type { User, Profile } from './supabase'
-import { RENDITION_WIDTHS } from './mediaUrl'
 
 // ── Session cache + in-flight dedup for profile/user reads ───────────────────
 //
@@ -264,44 +263,15 @@ export const uploadImage = async (file: File, bucket: string = 'profile-images',
   return publicUrl
 }
 
-// ── Baked display renditions (kills the transform dependency) ─────────────────
-// Bake a WebP rendition (longest side ≤ maxW, proportional) from a source image
-// File via canvas. Client-only (uses the DOM); returns null on any failure so a
-// missing rendition just rides the master. quality 0.8 ≈ the transform's 78.
-async function bakeWebp(file: File, maxW: number, quality = 0.8): Promise<Blob | null> {
-  if (typeof document === 'undefined') return null;
-  return new Promise((resolve) => {
-    const objectUrl = URL.createObjectURL(file);
-    const img = new Image();
-    img.onload = () => {
-      URL.revokeObjectURL(objectUrl);
-      try {
-        let { width, height } = img;
-        if (width > maxW || height > maxW) {
-          if (width >= height) { height = Math.round((height * maxW) / width); width = maxW; }
-          else { width = Math.round((width * maxW) / height); height = maxW; }
-        }
-        const canvas = document.createElement('canvas');
-        canvas.width = width; canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) { resolve(null); return; }
-        ctx.drawImage(img, 0, 0, width, height);
-        canvas.toBlob((b) => resolve(b), 'image/webp', quality);
-      } catch { resolve(null); }
-    };
-    img.onerror = () => { URL.revokeObjectURL(objectUrl); resolve(null); };
-    img.src = objectUrl;
-  });
-}
-
 /**
- * Upload a post-media IMAGE plus its display renditions. The master uploads exactly
- * as before (via uploadImage); each rendition is baked and uploaded ALONGSIDE it at
- * `{masterPath}.{width}.webp` — the same path feedImage derives, so nothing is stored
- * in the DB. Renditions are BEST-EFFORT: a bake/upload failure just means that size
- * rides the master (served via the global onError fallback). Returns the MASTER url.
- * Use for images shown through feedImage (post photos, video posters); leave plain
- * uploadImage for non-displayed assets (autoplay clips) and already-baked buckets.
+ * Upload a post-media IMAGE, then bake its display renditions SERVER-SIDE (sharp,
+ * via /api/renditions) at `{masterPath}.600.webp` / `.1600.webp` — the exact paths
+ * feedImage derives, so nothing is stored in the DB. Server sharp replaces the old
+ * CLIENT canvas.toBlob('image/webp'), which fell back to PNG on iOS and produced
+ * renditions LARGER than the master. Renditions are BEST-EFFORT + fire-and-forget:
+ * a failure just means that image rides the master via the global onError fallback.
+ * Returns the MASTER url. Use for images shown through feedImage (post photos, video
+ * posters); leave plain uploadImage for non-displayed assets (autoplay clips).
  */
 export const uploadImageWithRenditions = async (
   file: File,
@@ -309,21 +279,16 @@ export const uploadImageWithRenditions = async (
   privyUserId?: string,
 ): Promise<string> => {
   const masterUrl = await uploadImage(file, bucket, privyUserId);
-  // Derive the object PATH from the returned public URL: …/public/{bucket}/{path}
-  const marker = `/storage/v1/object/public/${bucket}/`;
-  const i = masterUrl.indexOf(marker);
-  if (i === -1) return masterUrl; // unexpected shape — skip renditions, master still works
-  const path = masterUrl.slice(i + marker.length).split('?')[0];
-  for (const w of RENDITION_WIDTHS) {
-    try {
-      const blob = await bakeWebp(file, w);
-      if (!blob) continue;
-      await supabase.storage.from(bucket).upload(`${path}.${w}.webp`, blob, {
-        cacheControl: '31536000', upsert: true, contentType: 'image/webp',
-      });
-    } catch (e) {
-      console.warn(`[renditions] ${w}w bake/upload failed (rides master):`, sbErr(e));
-    }
+  // Bake renditions on the server (reliable WebP). Awaited so a fresh post's feed
+  // cell finds its rendition immediately; a failure is swallowed (rides master).
+  try {
+    await fetch('/api/renditions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ masterUrl }),
+    });
+  } catch (e) {
+    console.warn('[renditions] server bake request failed (rides master):', sbErr(e));
   }
   return masterUrl;
 }

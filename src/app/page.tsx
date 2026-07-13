@@ -426,6 +426,7 @@ export default function Home() {
                 commentsOpen={openCommentsPostId === post.id}
                 onToggleComments={toggleComments}
                 clampCaption
+                priority={index < 3}
               />
             </div>
           ))}

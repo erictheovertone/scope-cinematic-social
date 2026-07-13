@@ -72,12 +72,15 @@ interface PostItemProps {
    *  (onImageClick). Display-only; the stored caption is never cut. Passed by the
    *  desktop cards AND the mobile home feed. */
   clampCaption?: boolean;
+  /** Above-the-fold cell (first 2–3 in the feed) → eager + high fetch priority so the
+   *  first paint is instant. Below the fold stays lazy. */
+  priority?: boolean;
 }
 
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 
-function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, clampCaption }: PostItemProps) {
+function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, clampCaption, priority }: PostItemProps) {
   const router = useRouter();
   const { user } = usePrivy();
   const [likes, setLikes] = useState<any[]>([]);
@@ -266,7 +269,8 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
   ) : (
     <MediaRenderer
       url={post.media_urls?.[0]}
-      width={750}
+      width={600}
+      priority={priority}
       mediaType={post.media_type}
       caption={post.caption}
       thumbnailUrl={post.poster_url ?? post.thumbnail_url}

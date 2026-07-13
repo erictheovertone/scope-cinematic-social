@@ -20,6 +20,9 @@ interface MediaRendererProps {
   /** Request a resized WebP at this display width (retina-aware). Unset → full-res
    *  original (editor / any un-migrated caller). Images only; video is unaffected. */
   width?: number;
+  /** Above-the-fold cells (first 2–3 in the feed): eager + fetchPriority high so the
+   *  first paint is instant. Everything else stays lazy. Images only. */
+  priority?: boolean;
 }
 
 function isVideo(url: string, mediaType?: string): boolean {
@@ -48,11 +51,20 @@ function getCropStyle(cropX = 0, cropY = 0, cropWidth = 1, cropHeight = 1): Reac
 export default function MediaRenderer({
   url, mediaType, caption, autoplay = false,
   showSoundToggle = false, className, style, onClick, thumbnailUrl,
-  cropX, cropY, cropWidth, cropHeight, width,
+  cropX, cropY, cropWidth, cropHeight, width, priority = false,
 }: MediaRendererProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [muted, setMuted] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
+  // Fade-in on load so images ARRIVE (opacity 0→1) rather than assemble on screen.
+  const [imgLoaded, setImgLoaded] = useState(false);
+  const imgElRef = useRef<HTMLImageElement>(null);
+  // A CACHED image can finish before onLoad is attached → onLoad never fires → the
+  // fade would trap it at opacity 0. Catch the already-complete case on mount / src
+  // change so cached images show instantly (no stuck-invisible frames).
+  useEffect(() => {
+    if (imgElRef.current?.complete && imgElRef.current.naturalWidth > 0) setImgLoaded(true);
+  }, [url, width]);
   // LAZY: don't fetch video bytes until near the viewport. `near` gates the <video>
   // src (below) — off-screen videos download nothing; scrolling away drops the src
   // (disposes/frees the decoder). preload="none" keeps it from buffering ahead of play.
@@ -91,11 +103,17 @@ export default function MediaRenderer({
   if (!video) {
     return (
       <img
+        ref={imgElRef}
         src={width ? feedImage(url, width) : url}
         alt="" /* never the caption — alt text paints as a visible "ghost
                   caption" over slow-loading media, duplicating the real one */
         className={className}
-        style={{ width: '100%', height: '100%', display: 'block', ...getCropStyle(cropX, cropY, cropWidth, cropHeight), ...style }}
+        loading={priority ? 'eager' : 'lazy'}
+        // @ts-expect-error fetchPriority is valid HTML but not yet in React's img types
+        fetchpriority={priority ? 'high' : 'auto'}
+        decoding="async"
+        onLoad={() => setImgLoaded(true)}
+        style={{ width: '100%', height: '100%', display: 'block', ...getCropStyle(cropX, cropY, cropWidth, cropHeight), ...style, opacity: imgLoaded ? 1 : 0, transition: 'opacity 150ms ease-out' }}
         onClick={onClick}
       />
     );
