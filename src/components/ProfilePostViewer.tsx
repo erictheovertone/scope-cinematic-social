@@ -18,6 +18,8 @@ import { isCoinPost, useEconomy } from "@/components/EconomyProvider";
 import FirstCutChip from "@/components/economy/FirstCutChip";
 import TickerMark from "@/components/economy/TickerMark";
 import DeletePostSheet from "@/components/DeletePostSheet";
+import CommentList, { useCommentLikes, ReplyingToChip, type UIComment } from "@/components/CommentList";
+import { replyToComment } from "@/lib/commentInteractions";
 import MediaRenderer from "@/components/MediaRenderer";
 import GradedVideo from "@/components/finishing/GradedVideo";
 import TheatreMode from "@/components/TheatreMode";
@@ -73,6 +75,9 @@ function PostViewerItem({
   const [loading, setLoading] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [newComment, setNewComment] = useState("");
+  const [replyingTo, setReplyingTo] = useState<UIComment | null>(null);
+  const commentInputRef = useRef<HTMLInputElement>(null);
+  const { likeStates, toggleLike } = useCommentLikes(comments, user?.id ?? null, viewerUsername);
   const [showCollectSheet, setShowCollectSheet] = useState(false);
   const [showDeckPicker, setShowDeckPicker] = useState(false);
   const [showCreateCoin, setShowCreateCoin] = useState(false);
@@ -153,11 +158,15 @@ function PostViewerItem({
     if (!user || !newComment.trim()) return;
     // OPTIMISTIC: render immediately, reconcile on success / mark failed.
     const text = newComment.trim();
+    const parentId = replyingTo?.parent_comment_id ? replyingTo.parent_comment_id : (replyingTo?.id ?? null);
     const tempId = `temp-${Date.now()}`;
-    setComments(p => [...p, { id: tempId, content: text, username: viewerUsername || "user", user_id: user.id, profile_image_url: viewerAvatar, created_at: new Date().toISOString(), pending: true }]);
+    setComments(p => [...p, { id: tempId, content: text, username: viewerUsername || "user", user_id: user.id, profile_image_url: viewerAvatar, parent_comment_id: parentId, created_at: new Date().toISOString(), pending: true }]);
     setNewComment("");
+    setReplyingTo(null);
     try {
-      const c = await addComment(post.id, user.id, viewerUsername || "user", text);
+      const c = parentId
+        ? await replyToComment(post.id, parentId, user.id, viewerUsername || "user", text)
+        : await addComment(post.id, user.id, viewerUsername || "user", text);
       setComments(p => p.map(x => x.id === tempId ? { ...c, profile_image_url: viewerAvatar } : x));
     } catch (e) {
       console.error("Comment error:", e);
@@ -416,39 +425,29 @@ function PostViewerItem({
             {comments.length === 0 ? (
               <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: "rgba(255,255,255,0.25)", margin: 0, textTransform: "uppercase" }}>NO COMMENTS YET</p>
             ) : (
-              comments.map((c, i) => (
-                <div key={c.id} style={{ display: "flex", alignItems: "flex-start", gap: 6, marginBottom: 8, animation: "ripple-down 0.2s ease-out both", animationDelay: `${i * 50}ms` }}>
-                  {/* Avatar → commenter's profile (by handle). stopPropagation so the
-                      tap doesn't bubble to the sheet/row. */}
-                  <div
-                    onClick={c.username ? (e) => { e.stopPropagation(); onNavigateToProfile(c.username); } : undefined}
-                    style={{ width: 16, height: 16, borderRadius: "50%", background: "#2a2a2a", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", cursor: c.username ? "pointer" : "default" }}
-                  >
-                    {c.profile_image_url
-                      ? <img src={feedImage(c.profile_image_url, 96)} alt={c.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                      : <span style={{ ...SKB, fontSize: 'var(--fs-6)', color: "white", textTransform: "uppercase" }}>{c.username?.[0] ?? "?"}</span>
-                    }
-                  </div>
-                  <div>
-                    {/* Handle → commenter's profile (by handle). */}
-                    <span
-                      onClick={c.username ? (e) => { e.stopPropagation(); onNavigateToProfile(c.username); } : undefined}
-                      style={{ ...SKB, fontSize: 'var(--fs-9)', color: "white", marginRight: 5, textTransform: "uppercase", cursor: c.username ? "pointer" : "default" }}
-                    >@{c.username}</span>
-                    <span style={{ ...SKR, fontSize: 'var(--fs-9)', color: "rgba(255,255,255,0.6)", textTransform: "none" }}>{c.content}</span>
-                  </div>
-                </div>
-              ))
+              <CommentList
+                comments={comments}
+                variant="scroll"
+                likeStates={likeStates}
+                onToggleLike={toggleLike}
+                onReply={(c) => { setReplyingTo(c); requestAnimationFrame(() => commentInputRef.current?.focus()); }}
+                onProfile={(h) => onNavigateToProfile(h)}
+                viewerDid={user?.id ?? null}
+              />
+            )}
+            {user && replyingTo && (
+              <ReplyingToChip handle={replyingTo.username ?? ""} onCancel={() => setReplyingTo(null)} size="var(--fs-9)" />
             )}
             {user && (
               <div style={{ display: "flex", gap: 8, alignItems: "center", borderTop: "1px solid rgba(255,255,255,0.07)", paddingTop: 8, marginTop: 4 }}>
                 <input
+                  ref={commentInputRef}
                   className="pm-input"
                   type="text"
                   value={newComment}
                   onChange={e => setNewComment(e.target.value)}
                   onKeyDown={e => e.key === "Enter" && handleAddComment()}
-                  placeholder="add a comment..."
+                  placeholder={replyingTo ? `reply to @${replyingTo.username}...` : "add a comment..."}
                   style={{ flex: 1, background: "transparent", border: "none", borderBottom: "1px solid rgba(255,255,255,0.15)", outline: "none", ...SKR, fontSize: 'max(16px, var(--fs-9))', color: "white", padding: "2px 0" }}
                 />
                 <button

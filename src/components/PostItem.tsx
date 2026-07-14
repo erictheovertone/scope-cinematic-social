@@ -23,6 +23,8 @@ import TickerMark from "@/components/economy/TickerMark";
 const FEED_POST_GAP_PX = 52;
 import MediaRenderer from "@/components/MediaRenderer";
 import GradedVideo from "@/components/finishing/GradedVideo";
+import CommentList, { useCommentLikes, ReplyingToChip, type UIComment } from "@/components/CommentList";
+import { replyToComment } from "@/lib/commentInteractions";
 import { getAspectRatio, ratioPadding } from "@/lib/aspectRatio";
 import PillarboxFrame from "@/components/PillarboxFrame";
 
@@ -93,8 +95,11 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
   // Internal wrapper so the feed's onImageClick prop can stay stable (post passed here).
   const openLightbox = onImageClick ? () => onImageClick(post) : undefined;
   const [newComment, setNewComment] = useState("");
+  const [replyingTo, setReplyingTo] = useState<UIComment | null>(null);
+  const commentInputRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
   const [viewerUsername, setViewerUsername] = useState("");
+  const { likeStates, toggleLike } = useCommentLikes(comments, user?.id ?? null, viewerUsername);
   const [showCollectSheet, setShowCollectSheet] = useState(false);
   const [mc, setMc] = useState<string | null>(null);
   const economy = useEconomy();
@@ -203,12 +208,16 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
     if (!user || !newComment.trim()) return;
     // OPTIMISTIC: render the comment immediately, reconcile on success / mark failed.
     const text = newComment.trim();
+    const parentId = replyingTo?.parent_comment_id ? replyingTo.parent_comment_id : (replyingTo?.id ?? null);
     const tempId = `temp-${Date.now()}`;
-    const optimistic = { id: tempId, content: text, username: viewerUsername || "user", user_id: user.id, created_at: new Date().toISOString(), pending: true };
+    const optimistic = { id: tempId, content: text, username: viewerUsername || "user", user_id: user.id, parent_comment_id: parentId, created_at: new Date().toISOString(), pending: true };
     setComments((prev) => [...prev, optimistic]);
     setNewComment("");
+    setReplyingTo(null);
     try {
-      const c = await addComment(post.id, user.id, viewerUsername || "user", text);
+      const c = parentId
+        ? await replyToComment(post.id, parentId, user.id, viewerUsername || "user", text)
+        : await addComment(post.id, user.id, viewerUsername || "user", text);
       setComments((prev) => prev.map((x) => (x.id === tempId ? c : x)));
     } catch (e) {
       console.error("Error adding comment:", e);
@@ -403,14 +412,18 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
       >
         <div style={{ overflow: "hidden", minHeight: 0 }}>
           <div onClick={(e) => e.stopPropagation()} style={{ marginTop: 10, borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 10 }}>
+            {user && replyingTo && (
+              <ReplyingToChip handle={replyingTo.username ?? ""} onCancel={() => setReplyingTo(null)} size="var(--fs-7)" />
+            )}
             {user && (
               <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
                 <input
+                  ref={commentInputRef}
                   type="text"
                   value={newComment}
                   onChange={(e) => setNewComment(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleAddComment()}
-                  placeholder="add a comment..."
+                  placeholder={replyingTo ? `reply to @${replyingTo.username}...` : "add a comment..."}
                   style={{ flex: 1, background: "transparent", border: "none", borderBottom: "1px solid rgba(255,255,255,0.15)", outline: "none", ...SKR, fontSize: 'max(16px, var(--fs-8))', color: "white", padding: "2px 0" }}
                 />
                 <button
@@ -422,23 +435,16 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
                 </button>
               </div>
             )}
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {comments.map((c, i) => (
-                <div
-                  key={c.id}
-                  style={{
-                    animation: showComments ? "ripple-down 0.2s ease-out both" : "none",
-                    animationDelay: showComments ? `${i * 50}ms` : "0ms",
-                  }}
-                >
-                  {/* Handle → commenter's profile (by handle). */}
-                  <span
-                    onClick={c.username ? (e) => { e.stopPropagation(); router.push('/profile/' + c.username); } : undefined}
-                    style={{ ...SKB, fontSize: 'var(--fs-7)', color: "white", marginRight: 6, textTransform: 'uppercase', cursor: c.username ? "pointer" : "default" }}
-                  >@{c.username}</span>
-                  <span style={{ ...SKR, fontSize: 'var(--fs-10)', color: "rgba(255,255,255,0.6)" }}>{c.content}</span>
-                </div>
-              ))}
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              <CommentList
+                comments={comments}
+                variant="feed"
+                likeStates={likeStates}
+                onToggleLike={toggleLike}
+                onReply={(c) => { setReplyingTo(c); requestAnimationFrame(() => commentInputRef.current?.focus()); }}
+                onProfile={(h) => router.push('/profile/' + h)}
+                viewerDid={user?.id ?? null}
+              />
             </div>
           </div>
         </div>

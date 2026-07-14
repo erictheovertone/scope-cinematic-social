@@ -18,18 +18,12 @@ import { feedImage } from '@/lib/mediaUrl';
 import GradedVideo from '@/components/finishing/GradedVideo';
 import CollectSheetGate from '@/components/economy/CollectSheetGate';
 import TickerMark from '@/components/economy/TickerMark';
+import CommentList, { useCommentLikes, ReplyingToChip, type UIComment } from '@/components/CommentList';
+import { replyToComment } from '@/lib/commentInteractions';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
 const HAIR = 'rgba(255,255,255,0.14)';
-
-const timeAgo = (iso: string): string => {
-  const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
-  if (diff < 60) return `${diff}s`;
-  if (diff < 3600) return `${Math.floor(diff / 60)}m`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h`;
-  return `${Math.floor(diff / 86400)}d`;
-};
 
 const usd = (n: number) => (n >= 1000 ? `$${Math.round(n).toLocaleString()}` : `$${n.toFixed(2)}`);
 
@@ -76,8 +70,10 @@ export default function DesktopPostView({
   const [viewer, setViewer] = useState<{ uuid: string; name: string; avatar: string | null } | null>(null);
   const [avatars, setAvatars] = useState<Map<string, string>>(new Map());
   const [newComment, setNewComment] = useState('');
+  const [replyingTo, setReplyingTo] = useState<UIComment | null>(null);
   const [collectOpen, setCollectOpen] = useState(false);
   const commentInputRef = useRef<HTMLInputElement>(null);
+  const { likeStates, toggleLike: toggleCommentLike } = useCommentLikes(comments as UIComment[], user?.id ?? null, viewer?.name ?? null);
   const fcHolders = useFirstCutLedger(coinAddr);
 
   useEffect(() => {
@@ -123,9 +119,14 @@ export default function DesktopPostView({
   const submitComment = async () => {
     const text = newComment.trim();
     if (!text || !user || !viewer) return;
+    const parentId = replyingTo?.parent_comment_id ? replyingTo.parent_comment_id : (replyingTo?.id ?? null);
     setNewComment('');
-    setComments((prev) => [...prev, { id: `tmp-${prev.length}`, username: viewer.name, content: text, created_at: new Date().toISOString() }]);
-    try { await addComment(postId, user.id, viewer.name, text); } catch { /* keep optimistic */ }
+    setReplyingTo(null);
+    setComments((prev) => [...prev, { id: `tmp-${prev.length}`, username: viewer.name, content: text, created_at: new Date().toISOString(), parent_comment_id: parentId } as typeof prev[number]]);
+    try {
+      if (parentId) await replyToComment(postId, parentId, user.id, viewer.name, text);
+      else await addComment(postId, user.id, viewer.name, text);
+    } catch { /* keep optimistic */ }
   };
 
   // Stage geometry — MEASURED binder (3C): media is HEIGHT-constrained (a
@@ -304,25 +305,26 @@ export default function DesktopPostView({
           {/* COMMENTS */}
           <div style={{ padding: '6px 12px 12px' }}>
             <p style={{ ...SKB, fontSize: 11, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 8px' }}>COMMENTS ( {comments.length} )</p>
-            {comments.map((c) => (
-              <div key={c.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 7, margin: '0 0 9px' }}>
-                {c.username && avatars.get(c.username) ? (
-                  <img src={feedImage(avatars.get(c.username) as string, 96)} alt="" style={{ width: 12, height: 12, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, marginTop: 2 }} />
-                ) : (
-                  <span style={{ width: 12, height: 12, borderRadius: '50%', background: '#2a2a2a', flexShrink: 0, marginTop: 2 }} />
-                )}
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <span style={{ ...SKB, fontSize: lightbox ? 11.5 : 10, color: 'rgba(255,255,255,0.75)', textTransform: 'uppercase' }}>@{c.username}</span>
-                  <span style={{ ...SKR, fontSize: lightbox ? 11.5 : 10, color: 'rgba(255,255,255,0.44)', marginLeft: 7 }}>{c.content}</span>
-                </div>
-                {c.created_at && <span style={{ ...SKR, fontSize: 9, color: 'rgba(255,255,255,0.3)', flexShrink: 0 }}>{timeAgo(c.created_at)}</span>}
-              </div>
-            ))}
+            <CommentList
+              comments={comments as UIComment[]}
+              variant="desktop"
+              desktopLightbox={lightbox}
+              likeStates={likeStates}
+              onToggleLike={toggleCommentLike}
+              onReply={(c) => { setReplyingTo(c); requestAnimationFrame(() => commentInputRef.current?.focus()); }}
+              onProfile={(h) => router.push('/profile/' + h)}
+              viewerDid={user?.id ?? null}
+              avatarUrl={(c) => (c.username ? avatars.get(c.username) ?? null : null)}
+            />
           </div>
         </div>
 
         {/* ADD A COMMENT */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', borderTop: `1px solid ${HAIR}` }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: '8px 10px', borderTop: `1px solid ${HAIR}` }}>
+          {replyingTo && (
+            <ReplyingToChip handle={replyingTo.username ?? ''} onCancel={() => setReplyingTo(null)} size="10px" />
+          )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {viewer?.avatar ? (
             <img src={feedImage(viewer.avatar, 96)} alt="" style={{ width: 14, height: 14, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
           ) : (
@@ -333,10 +335,11 @@ export default function DesktopPostView({
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') submitComment(); e.stopPropagation(); }}
-            placeholder="ADD A COMMENT"
+            placeholder={replyingTo ? `REPLY TO @${(replyingTo.username ?? '').toUpperCase()}` : 'ADD A COMMENT'}
             style={{ ...SKR, flex: 1, fontSize: 10, color: '#FFF', background: 'rgba(75,75,75,0.17)', border: 'none', outline: 'none', padding: '7px 9px', letterSpacing: '0.02em' }} /* NO text-transform — comments type & render as typed */
           />
           <button onClick={submitComment} aria-label="Send" style={{ background: 'transparent', border: 'none', cursor: 'pointer', ...SKB, fontSize: 11, color: 'rgba(255,255,255,0.7)', padding: 4 }}>↑</button>
+          </div>
         </div>
       </div>
 

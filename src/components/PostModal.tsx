@@ -28,6 +28,8 @@ import { useEconomy, isCoinPost } from "@/components/EconomyProvider";
 import TickerMark from "@/components/economy/TickerMark";
 import FirstCutLedger from "@/components/economy/FirstCutLedger";
 import DeletePostSheet from "@/components/DeletePostSheet";
+import CommentList, { useCommentLikes, ReplyingToChip, type UIComment } from "@/components/CommentList";
+import { replyToComment } from "@/lib/commentInteractions";
 import ReframeOverlay from "@/components/ReframeOverlay";
 
 interface Post {
@@ -101,6 +103,8 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
   // UI
   const [showComments, setShowComments] = useState(false);
   const [newComment, setNewComment] = useState("");
+  const [replyingTo, setReplyingTo] = useState<UIComment | null>(null);
+  const commentInputRef = useRef<HTMLInputElement>(null);
   const [collectToast, setCollectToast] = useState(false);
   const [showCollectSheet, setShowCollectSheet] = useState(false);
   const [showDeckPicker, setShowDeckPicker] = useState(false);
@@ -110,6 +114,9 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
   const [viewerUsername, setViewerUsername] = useState<string>("");
   const [viewerAvatar, setViewerAvatar] = useState<string | null>(null);
   const [viewerSbId, setViewerSbId] = useState<string | null>(null);
+
+  // Comment like-state (batch load + optimistic toggle) — shared across surfaces.
+  const { likeStates, toggleLike } = useCommentLikes(comments, user?.id ?? null, viewerUsername);
 
   // Market chrome — coin posts only, through the boundary (legacy 1155 = none).
   const [mcLabel, setMcLabel] = useState<string | null>(null);
@@ -265,11 +272,15 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
     if (!user || !newComment.trim()) return;
     // OPTIMISTIC: render immediately, reconcile on success / mark failed.
     const text = newComment.trim();
+    const parentId = replyingTo?.parent_comment_id ? replyingTo.parent_comment_id : (replyingTo?.id ?? null);
     const tempId = `temp-${Date.now()}`;
-    setComments((p) => [...p, { id: tempId, content: text, username: viewerUsername || "user", user_id: user.id, profile_image_url: viewerAvatar, created_at: new Date().toISOString(), pending: true }]);
+    setComments((p) => [...p, { id: tempId, content: text, username: viewerUsername || "user", user_id: user.id, profile_image_url: viewerAvatar, parent_comment_id: parentId, created_at: new Date().toISOString(), pending: true }]);
     setNewComment("");
+    setReplyingTo(null);
     try {
-      const c = await addComment(post.id, user.id, viewerUsername || "user", text);
+      const c = parentId
+        ? await replyToComment(post.id, parentId, user.id, viewerUsername || "user", text)
+        : await addComment(post.id, user.id, viewerUsername || "user", text);
       setComments((p) => p.map((x) => x.id === tempId ? { ...c, profile_image_url: viewerAvatar } : x));
     } catch (e) {
       console.error("Comment error:", e);
@@ -585,43 +596,15 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
                     no comments yet
                   </p>
                 ) : (
-                  comments.map((c, i) => (
-                    <div
-                      key={c.id}
-                      style={{
-                        display: "flex", alignItems: "flex-start", gap: 7, marginBottom: 8,
-                        animation: "ripple-down 0.2s ease-out both",
-                        animationDelay: `${i * 50}ms`,
-                      }}
-                    >
-                      {/* Avatar → commenter's profile (by handle). stopPropagation
-                          so the tap doesn't bubble to the modal/row. */}
-                      <div
-                        onClick={c.username ? (e) => { e.stopPropagation(); goToProfile(c.username); } : undefined}
-                        style={{
-                          width: 16, height: 16, borderRadius: "50%", background: "#2a2a2a",
-                          flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center",
-                          overflow: "hidden", cursor: c.username ? "pointer" : "default",
-                        }}
-                      >
-                        {c.profile_image_url ? (
-                          <img src={feedImage(c.profile_image_url, 96)} alt={c.username} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-                        ) : (
-                          <span style={{ ...SKB, fontSize: 'var(--fs-7)', color: "white", textTransform: "uppercase", lineHeight: 1 }}>
-                            {c.username?.[0] ?? "?"}
-                          </span>
-                        )}
-                      </div>
-                      <div style={{ lineHeight: 1.1 }}>
-                        {/* Handle → commenter's profile (by handle). */}
-                        <span
-                          onClick={c.username ? (e) => { e.stopPropagation(); goToProfile(c.username); } : undefined}
-                          style={{ ...SKB, fontSize: 'var(--fs-8)', color: "white", marginRight: 5, textTransform: "uppercase", cursor: c.username ? "pointer" : "default" }}
-                        >@{c.username}</span>
-                        <span style={{ ...SKR, fontSize: 'var(--fs-8)', color: "rgba(255,255,255,0.6)" }}>{c.content}</span>
-                      </div>
-                    </div>
-                  ))
+                  <CommentList
+                    comments={comments}
+                    variant="lightbox"
+                    likeStates={likeStates}
+                    onToggleLike={toggleLike}
+                    onReply={(c) => { setReplyingTo(c); requestAnimationFrame(() => commentInputRef.current?.focus()); }}
+                    onProfile={(h) => goToProfile(h)}
+                    viewerDid={user?.id ?? null}
+                  />
                 )}
               </div>
             )}
@@ -630,18 +613,22 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
             {user && (
               <div
                 style={{
-                  display: "flex", gap: 10, alignItems: "center",
                   borderTop: "1px solid rgba(255,255,255,0.07)",
                   paddingTop: 12, paddingBottom: 80,
                 }}
               >
+                {replyingTo && (
+                  <ReplyingToChip handle={replyingTo.username ?? ""} onCancel={() => setReplyingTo(null)} size="var(--fs-8)" />
+                )}
+                <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
                 <input
+                  ref={commentInputRef}
                   className="pm-input"
                   type="text"
                   value={newComment}
                   onChange={(e) => setNewComment(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleAddComment()}
-                  placeholder="add a comment..."
+                  placeholder={replyingTo ? `reply to @${replyingTo.username}...` : "add a comment..."}
                   style={{
                     flex: 1, background: "transparent", border: "none",
                     borderBottom: "1px solid rgba(255,255,255,0.15)",
@@ -661,6 +648,7 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
                 >
                   post
                 </button>
+                </div>
               </div>
             )}
 
