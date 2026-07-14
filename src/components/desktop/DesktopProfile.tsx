@@ -304,7 +304,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
               {badges.slice(0, badges.length > 5 ? 4 : 5).map((b) => {
                 const count = b.key === 'firstCut' ? Math.max(1, fcCount) : b.key === 'srh' ? srhCount : null;
                 return (
-                  <div key={b.key} onClick={() => setBadgesOpen(true)} style={{ position: 'relative', width: 78, height: 99, cursor: 'pointer' }}>
+                  <div key={b.key} className="tappable" onClick={() => setBadgesOpen(true)} style={{ position: 'relative', width: 78, height: 99, cursor: 'pointer' }}>
                     <img src="/badges/desktop-profile-badge-backdrop-v1.png" alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', display: 'block' }} />
                     {/* UNFRAMED (desktop): the min-design no-background set — the backdrop
                         card IS the frame (frame-in-frame was redundant); mobile keeps framed. */}

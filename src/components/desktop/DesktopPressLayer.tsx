@@ -18,15 +18,25 @@ export default function DesktopPressLayer() {
     const onDown = (e: PointerEvent) => {
       const t = e.target as Element | null;
       if (!t) return;
-      const el = t.closest('button, a, [role="button"]') as HTMLElement | null;
+      const el = t.closest('button, a, [role="button"], .tappable') as HTMLElement | null;
       if (!el || el.closest(SKIP)) return;
-      // CALIBRATION (round 2): icons take the −40% variant, words/buttons the
-      // −60% — classified by content (glyph-only vs text). Cards (img + label)
-      // read as icons per the brief. Same retrigger discipline.
-      const iconish = !!el.querySelector('svg, img') || (el.textContent ?? '').trim().length <= 2;
-      const rail = !!el.closest('nav[aria-label="Primary"]'); // side toolbar: +18% pop
-      el.classList.remove('pop-punchy', 'pop-dk-icon', 'pop-dk-text', 'pop-dk-rail', 'pop-active');
-      el.classList.add('press-pop', rail ? 'pop-dk-rail' : iconish ? 'pop-dk-icon' : 'pop-dk-text');
+      // CALIBRATION (feel pass): four tiers, matched to the hover language.
+      //   rail  → 0.92 (side toolbar glyphs)
+      //   card  → 0.985 (a PHOTO card: <img> in a sizable box — gentle)
+      //   icon  → 0.92 (a glyph: svg, or a small img/avatar, or ≤2 chars)
+      //   text  → 0.96 (words/buttons)
+      const rail = !!el.closest('nav[aria-label="Primary"]');
+      const hasImg = !!el.querySelector('img');
+      const hasSvg = !!el.querySelector('svg');
+      const txt = (el.textContent ?? '').trim();
+      const r = el.getBoundingClientRect();
+      const big = r.width >= 72 && r.height >= 72;
+      const variant = rail ? 'pop-dk-rail'
+        : (hasImg && big) ? 'pop-dk-card'
+        : (hasSvg || txt.length <= 2 || hasImg) ? 'pop-dk-icon'
+        : 'pop-dk-text';
+      el.classList.remove('pop-punchy', 'pop-dk-icon', 'pop-dk-text', 'pop-dk-rail', 'pop-dk-card', 'pop-active');
+      el.classList.add('press-pop', variant);
       void el.offsetWidth;
       el.classList.add('pop-active');
     };

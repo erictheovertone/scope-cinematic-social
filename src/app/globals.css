@@ -633,43 +633,88 @@ input, textarea, select {
   font-size: max(16px, 1em);
 }
 
-/* ── DESKTOP INTERACTION LANGUAGE (≥1024) ─────────────────────────────────────
-   HOVER = ONE language: brightness lift (chosen over scale-1.02 — it composes
-   with the press keyframe with zero double-animation and never shimmers
-   layout on mixed-size elements). Text links just brighten via the same rule.
-   PRESS = mobile's press-pop keyframes, applied by DesktopPressLayer with the
-   SAME classes — identical feel. focus-visible keeps the accessibility ring. */
+/* ── DESKTOP INTERACTION LANGUAGE (≥1024) — hover invites, press confirms ──────
+   THE FEEL PASS. Mobile's punchier rounds never came back to desktop; this wakes
+   it up. HOVER is now DIFFERENTIATED by class (not one flat brightness):
+     · ICONS  (glyph buttons → :has(svg)): lean-in scale 1.06 + brighter
+     · WORDS/BUTTONS (default): brighten + a 1px lift
+     · CARDS/MEDIA  (:has(img)): a gentle scale 1.015 + media brighten
+     · media CELLS  ([data-no-pop]): brighten ONLY — artwork never scales
+     · ROWS  (.press-row): background lift
+   Everything interactive gets cursor:pointer + a 120ms transition so hover eases
+   in AND out. PRESS = the recalibrated dkPop* keyframes below (toward the mobile
+   profile), applied by DesktopPressLayer. Reduced-motion strips scale/lift. */
 @media (min-width: 1024px) {
-  button:hover, a:hover, [role="button"]:hover {
-    filter: brightness(1.12); /* softened proportionally with the round-2 pop dial-back */
+  button, a, [role="button"], .tappable, [data-no-pop] { cursor: pointer; }
+  button, a, [role="button"], .tappable { transition: filter 120ms ease-out, transform 120ms ease-out; }
+  [data-no-pop] { transition: filter 120ms ease-out; } /* no transform transition — many are framer-motion */
+
+  /* WORDS / BUTTONS — brighten + slight lift */
+  button:hover, a:hover, [role="button"]:hover, .tappable:hover { filter: brightness(1.18); }
+  button:hover, [role="button"]:hover, .tappable:hover { transform: translateY(-1px); }
+  a:hover { transform: none; } /* text links: brighten only, no lift */
+
+  /* ICONS — a glyph button (contains an svg): lean toward the cursor, brighter */
+  button:has(svg):hover, a:has(svg):hover, [role="button"]:has(svg):hover, .tappable:has(svg):hover {
+    transform: scale(1.06);
+    filter: brightness(1.28);
   }
-  /* desktop pop calibration (round 2): icons −40% of mobile's delta, text −60%.
-     Same mechanism — DesktopPressLayer picks the variant class. */
-  .press-pop.pop-active.pop-dk-icon { animation: dkPopIcon 180ms ease-out; }
-  .press-pop.pop-active.pop-dk-rail { animation: dkPopRail 180ms ease-out; } /* rail icons: +18% pop per Eric */
-  .press-pop.pop-active.pop-dk-text { animation: dkPopText 160ms ease-out; }
-  /* media cells: the image IS the content — hover lifts, no press scale */
-  [data-no-pop]:hover { filter: brightness(1.1); }
+  /* CARDS / MEDIA — contains a photo <img>: a gentle lift + media brighten */
+  button:has(img):hover, a:has(img):hover, [role="button"]:has(img):hover, .tappable:has(img):hover {
+    transform: scale(1.015);
+    filter: brightness(1.08);
+  }
+  /* media CELLS — the image IS the content: brighten only, never scale/lift */
+  [data-no-pop]:hover { filter: brightness(1.1); transform: none; }
+  /* ROWS — background lift (the mobile row variant's hover sibling) */
+  .press-row:hover { background-color: rgba(255,255,255,0.045); }
+
+  /* PRESS — recalibrated toward the mobile profile: round-trip ~280–300ms with a
+     visible spring-back. icons 0.92 (was 0.976) · words 0.96 (0.984) · cards 0.985
+     · rail 0.92 (0.95). DesktopPressLayer picks the variant class. */
+  .press-pop.pop-active.pop-dk-icon { animation: dkPopIcon 290ms cubic-bezier(0.34,1.6,0.5,1); }
+  .press-pop.pop-active.pop-dk-rail { animation: dkPopRail 290ms cubic-bezier(0.34,1.6,0.5,1); }
+  .press-pop.pop-active.pop-dk-card { animation: dkPopCard 260ms cubic-bezier(0.34,1.4,0.6,1); }
+  .press-pop.pop-active.pop-dk-text { animation: dkPopText 270ms cubic-bezier(0.34,1.5,0.55,1); }
+
   button:focus-visible, a:focus-visible, [role="button"]:focus-visible {
     outline: 1px solid rgba(255,255,255,0.6);
     outline-offset: 2px;
   }
 }
 
+/* RESTRAINT — reduced-motion: hover brightens only (no scale/lift), press is
+   brightness-only (the pop keyframe is collapsed by the Stage 4.1 net below). */
+@media (prefers-reduced-motion: reduce) and (min-width: 1024px) {
+  button:hover, a:hover, [role="button"]:hover, .tappable:hover { transform: none !important; }
+  button:active, a:active, [role="button"]:active, .tappable:active { filter: brightness(0.9) !important; }
+}
+
+/* DESKTOP PRESS PROFILE — its own calibration set (mouse ≠ thumb: brought UP toward
+   mobile but not all the way). Each has a real dip → overshoot → settle spring. */
 @keyframes dkPopIcon {
   0%   { transform: scale(1); }
-  45%  { transform: scale(0.976); }
+  35%  { transform: scale(0.92); }   /* the dip */
+  62%  { transform: scale(1.05); }   /* visible spring-back */
+  82%  { transform: scale(0.985); }
   100% { transform: scale(1); }
 }
 @keyframes dkPopText {
   0%   { transform: scale(1); }
-  45%  { transform: scale(0.984); }
+  40%  { transform: scale(0.96); }
+  72%  { transform: scale(1.02); }
   100% { transform: scale(1); }
 }
-
+@keyframes dkPopCard {
+  0%   { transform: scale(1); }
+  42%  { transform: scale(0.985); }
+  72%  { transform: scale(1.008); }
+  100% { transform: scale(1); }
+}
 @keyframes dkPopRail {
   0%   { transform: scale(1); }
-  45%  { transform: scale(0.95); } /* rail delta 0.05 (Eric) */
+  35%  { transform: scale(0.92); }
+  62%  { transform: scale(1.05); }
   100% { transform: scale(1); }
 }
 
