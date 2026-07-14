@@ -6,6 +6,7 @@
 // Gated: the caller's Privy DID must equal process.env.SCOPE_ADMIN_USER_ID.
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { isAdminUser } from '@/lib/adminUser';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 30;
@@ -18,14 +19,9 @@ function svc(): SupabaseClient {
   );
 }
 
-function isAdmin(did: string | null | undefined): boolean {
-  const admin = process.env.SCOPE_ADMIN_USER_ID;
-  return !!admin && !!did && did === admin;
-}
-
 export async function GET(req: NextRequest) {
   const adminUserId = req.nextUrl.searchParams.get('adminUserId');
-  if (!isAdmin(adminUserId)) return NextResponse.json({ error: 'forbidden' }, { status: 403 });
+  if (!isAdminUser(adminUserId)) return NextResponse.json({ error: 'forbidden' }, { status: 403 });
 
   const supabase = svc();
   const { data, error } = await supabase
@@ -52,7 +48,7 @@ export async function POST(req: NextRequest) {
   const adminUserId = String(body.adminUserId ?? '');
   const trackId = String(body.trackId ?? '');
   const action = String(body.action ?? '');
-  if (!isAdmin(adminUserId)) return NextResponse.json({ error: 'forbidden' }, { status: 403 });
+  if (!isAdminUser(adminUserId)) return NextResponse.json({ error: 'forbidden' }, { status: 403 });
   if (!trackId || (action !== 'approve' && action !== 'reject')) {
     return NextResponse.json({ error: 'trackId + action(approve|reject) required' }, { status: 400 });
   }

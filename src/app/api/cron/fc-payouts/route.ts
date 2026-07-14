@@ -28,6 +28,7 @@ import { base } from 'viem/chains';
 import { accrueFcTrade, zoraSpotUsd, erc20BalanceOf, ZORA_BASE } from '@/lib/economy/fcRewards';
 import { swapUsd } from '@/lib/economy/firstCut';
 import { GAS_FLOOR_ETH } from '@/lib/economy/preflight';
+import { getAdminUserId } from '@/lib/adminUser';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
@@ -192,7 +193,7 @@ export async function GET(req: NextRequest) {
   const gasNeedEth = Math.max(GAS_FLOOR_ETH, gasPrice ? Number(gasPrice) * 60_000 * due.length / 1e18 : 0);
   if (ethGas != null && ethGas < gasNeedEth) {
     console.warn(`[fc-payout] FLOAT LOW — ETH (gas): wallet ${ethGas.toFixed(6)} ETH < needed ${gasNeedEth.toFixed(6)} — skipping payouts, accruals roll`);
-    const admin = process.env.SCOPE_ADMIN_USER_ID;
+    const admin = getAdminUserId();
     if (admin) {
       await supabase.from('notifications').insert({
         recipient_id: admin, sender_id: admin, sender_username: 'SCOPE',
@@ -210,7 +211,7 @@ export async function GET(req: NextRequest) {
     // fit oldest-first within the float
     let budget = floatZora;
     payList = due.filter(([, e]) => { if (e.zora <= budget) { budget -= e.zora; return true; } return false; });
-    const admin = process.env.SCOPE_ADMIN_USER_ID;
+    const admin = getAdminUserId();
     if (admin) {
       await supabase.from('notifications').insert({
         recipient_id: admin, sender_id: admin, sender_username: 'SCOPE',
