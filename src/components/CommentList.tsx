@@ -126,6 +126,7 @@ interface VCfg {
   indent: number; // reply indent
   meta: string; // reply-link / time size
   showTime?: boolean;
+  avNudge?: number; // extra px added to the measured avatar offset (feed: −1.2 up)
 }
 
 function cfgFor(variant: CommentVariant, desktopLightbox: boolean): VCfg {
@@ -135,7 +136,7 @@ function cfgFor(variant: CommentVariant, desktopLightbox: boolean): VCfg {
     case "scroll":
       return { avatar: true, avSize: 16, handle: "var(--fs-9)", text: "calc(var(--fs-9) + 1.2px)", hOp: 1, tOp: 0.72, heart: 12, gap: 6, indent: 26, meta: "var(--fs-7)" };
     case "feed":
-      return { avatar: true, avSize: 15, handle: "var(--fs-7)", text: "var(--fs-10)", hOp: 1, tOp: 0.72, heart: 12, gap: 7, indent: 22, meta: "var(--fs-7)" };
+      return { avatar: true, avSize: 15, handle: "var(--fs-7)", text: "var(--fs-10)", hOp: 1, tOp: 0.72, heart: 12, gap: 7, indent: 22, meta: "var(--fs-7)", avNudge: -1.2 };
     case "desktop":
       return {
         avatar: true, avSize: 12,
@@ -199,7 +200,7 @@ function LikeButton({ state, onToggle, cfg }: { state: CommentLikeState; onToggl
 // left), re-run once the custom font loads (metrics shift on swap). Self-correcting →
 // it lands level regardless of variant / font size / DPR, and it's ONE place for
 // every surface. Set NEXT_PUBLIC_DEBUG_COMMENT_ALIGN=1 to print the rects.
-function useLevelAvatar(depKey: string) {
+function useLevelAvatar(depKey: string, biasPx = 0) {
   const avatarRef = useRef<HTMLDivElement>(null);
   const handleRef = useRef<HTMLSpanElement>(null);
   const [offset, setOffset] = useState(0);
@@ -214,7 +215,8 @@ function useLevelAvatar(depKey: string) {
       const hr = h.getBoundingClientRect();
       if (!ar.height || !hr.height) return;
       const avatarCenter = ar.top + ar.height / 2;
-      const handleCenter = hr.top + hr.height / 2; // the @-line box center
+      // Target the @-line box center, plus an optional bias (feed: −1.2 → 1.2px up).
+      const handleCenter = hr.top + hr.height / 2 + biasPx;
       const residual = handleCenter - avatarCenter; // >0 → avatar sits high → nudge down
       if (typeof process !== "undefined" && process.env.NEXT_PUBLIC_DEBUG_COMMENT_ALIGN === "1") {
         // eslint-disable-next-line no-console
@@ -251,7 +253,7 @@ function Row({
   const textSize = isReply ? scale(cfg.text, 0.94) : cfg.text;
   const avSize = isReply ? Math.round(cfg.avSize * 0.9) : cfg.avSize;
   const canProfile = !!(c.username && onProfile);
-  const { avatarRef, handleRef, offset } = useLevelAvatar(`${handleSize}:${avSize}`);
+  const { avatarRef, handleRef, offset } = useLevelAvatar(`${handleSize}:${avSize}`, cfg.avNudge ?? 0);
 
   return (
     <div
