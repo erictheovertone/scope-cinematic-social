@@ -131,15 +131,11 @@ export const TIER_DETAILS: Record<string, {
     size: 64,
     label: 'COMPOSER',
     color: '#7FB2FF',
-    tagline: 'Score the platform. Earn forever.',
+    tagline: 'Score the platform.',
     sections: [
       {
         title: 'HOW TO EARN IT',
-        body: "Contribute original music to the Scope library and keep at least 12 vetted tracks live each quarter. Submissions are reviewed for quality and originality before they go in. Hit the threshold and the badge is yours; keep your catalog live and it stays. This is a working musician's badge — it rewards a body of work, not a single upload.",
-      },
-      {
-        title: 'PERPETUAL ROYALTY',
-        body: "Every time a creator scores a post with one of your tracks, you earn a perpetual share of that post's trading activity — automatically, for as long as the post lives on Scope. You don't chase licensing or sign paperwork. Your music works while you sleep. The more your sound spreads across the platform, the more you earn.",
+        body: "Contribute original music to the Scope Original Music Library. Submissions are reviewed for quality and originality before they go in — get one approved and the badge is yours. It's held while you have at least one approved track live.",
       },
       {
         title: 'WHY IT MATTERS',

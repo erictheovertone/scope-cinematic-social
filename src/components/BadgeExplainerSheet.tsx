@@ -103,8 +103,8 @@ const tiers = [
     label: 'COMPOSER',
     color: '#7FB2FF',
     title: 'COMPOSER',
-    description: 'For musicians who contribute original tracks to the Scope library. Keep 12+ vetted tracks live each quarter; earn a perpetual share of trades on posts using your music.',
-    sub: '12 VETTED TRACKS / QUARTER · ROYALTY SHARE',
+    description: 'For musicians who contribute original tracks to the Scope Original Music Library. Held while you have at least one approved track.',
+    sub: 'CONTRIBUTE TO THE SCOPE ORIGINAL MUSIC LIBRARY',
   },
   {
     key: 'srh',
