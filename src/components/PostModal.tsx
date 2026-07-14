@@ -281,15 +281,6 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
     setShowCollectSheet(true);
   };
 
-  const handleShare = async () => {
-    const url = window.location.href;
-    if (navigator.share) {
-      try { await navigator.share({ url }); } catch (_) {}
-    } else {
-      try { await navigator.clipboard.writeText(url); } catch (_) {}
-    }
-  };
-
   // PORTALED to document.body: the lightbox previously rendered in-tree —
   // inside scrolling/transformed ancestors (the documented globals.css class:
   // a transform on an ancestor BREAKS a fixed pin), so its chrome could land
@@ -361,24 +352,25 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
           {/* THEATRE entry — the eye, alone in the bar's right slot (BACK owns the
               left; nothing else lives up here, so no crowding). Enters theatre AT
               this post; replaces the old THEATER text button in the action row. */}
-          <span style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 4 }}>
+          <span style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 8 }}>
             {onTheaterMode && (
               <button
                 onClick={() => onTheaterMode()}
                 aria-label="Theatre mode"
-                /* DOUBLED (glyph + target): eye 22→44px, tap target ~30→52px. */
-                style={{ background: "transparent", border: "none", cursor: "pointer", minWidth: 52, minHeight: 52, display: "inline-flex", alignItems: "center", justifyContent: "center", padding: 0 }}
+                /* Eye −65% (44→15px), sized to read as one control group with the ×;
+                   44px tap target. */
+                style={{ background: "transparent", border: "none", cursor: "pointer", minWidth: 44, minHeight: 44, display: "inline-flex", alignItems: "center", justifyContent: "center", padding: 0 }}
               >
-                <img src="/theatre-mode-eye-solo.png" alt="" style={{ height: 44, width: "auto", display: "block", opacity: 0.92 }} />
+                <img src="/theatre-mode-eye-solo.png" alt="" style={{ height: 15, width: "auto", display: "block", opacity: 0.85 }} />
               </button>
             )}
-            {/* × dismiss — DOUBLED: glyph var(--fs-15)→×2 (~18.5→37px), target 44→52px. */}
+            {/* × dismiss — glyph sized to visually match the small eye (~15px); 44px target. */}
             <button
               onClick={handleClose}
               aria-label="Close"
-              style={{ background: "transparent", border: "none", cursor: "pointer", minWidth: 52, minHeight: 52, display: "inline-flex", alignItems: "center", justifyContent: "center", padding: 0, marginRight: -10 }}
+              style={{ background: "transparent", border: "none", cursor: "pointer", minWidth: 44, minHeight: 44, display: "inline-flex", alignItems: "center", justifyContent: "center", padding: 0, marginRight: -10 }}
             >
-              <span style={{ ...SKR, fontSize: 'calc(var(--fs-15) * 2)', color: "rgba(255,255,255,0.75)", lineHeight: 1 }}>×</span>
+              <span style={{ ...SKR, fontSize: 22, color: "rgba(255,255,255,0.75)", lineHeight: 1 }}>×</span>
             </button>
           </span>
         </div>
@@ -416,6 +408,22 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
                 </button>
               </div>
             )}
+            {/* Compact header ABOVE the media (declutter): creator + ticker/MC lifted off
+                the below-media block. @handle quieter (opacity 0.7 = −30%). */}
+            <div style={{ width: "92%", margin: "0 auto 8px", display: "flex", alignItems: "center", gap: 8 }}>
+              <div className="tappable" onClick={() => goToProfile()} style={{ width: 22, height: 22, borderRadius: "50%", overflow: "hidden", background: "#333", flexShrink: 0, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                {post.profile_image_url
+                  ? <img src={feedImage(post.profile_image_url, 96)} alt={post.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  : <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "white", textTransform: "uppercase" }}>{post.username?.[0] ?? "?"}</span>}
+              </div>
+              <span className="tappable" onClick={() => goToProfile()} style={{ ...SKB, fontSize: 'var(--fs-9)', color: "white", opacity: 0.7, letterSpacing: "-0.14px", cursor: "pointer", textTransform: "uppercase", display: "inline-block" }}>@{post.username}</span>
+              {isCoinPost(post) && (
+                <span style={{ display: "flex", alignItems: "baseline", gap: 6, marginLeft: "auto" }}>
+                  {post.ticker && <TickerMark ticker={post.ticker} size={11.5} />}
+                  <span style={{ ...SKR, fontSize: 'var(--fs-9)', color: "rgba(255,255,255,0.4)", letterSpacing: "-0.14px" }}>MC: {mcLabel ?? "…"}</span>
+                </span>
+              )}
+            </div>
             <div style={{ width: "92%", margin: "0 auto", aspectRatio: getAspectRatio(post.layout_id ?? ''), overflow: "hidden", background: "#0a0a0a" }}>
               {post.media_urls?.[0] ? (
                 isVideoPost ? (
@@ -464,44 +472,7 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
 
           <div style={{ padding: "14px 16px 0" }}>
 
-            {/* Avatar + @username | MC */}
-            <div style={{ display: "flex", alignItems: "center", marginBottom: 10 }}>
-              <div
-                className="tappable"
-                onClick={() => goToProfile()}
-                style={{
-                  width: 24, height: 24, borderRadius: "50%", overflow: "hidden",
-                  background: "#333", flexShrink: 0, marginRight: 8,
-                  cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
-                }}
-              >
-                {post.profile_image_url ? (
-                  <img src={feedImage(post.profile_image_url, 96)} alt={post.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                ) : (
-                  <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "white", textTransform: "uppercase" }}>
-                    {post.username?.[0] ?? "?"}
-                  </span>
-                )}
-              </div>
-
-              <span
-                className="tappable"
-                onClick={() => goToProfile()}
-                style={{ ...SKB, fontSize: 'var(--fs-9)', color: "white", letterSpacing: "-0.14px", cursor: "pointer", textTransform: "uppercase", display: "inline-block" }}
-              >
-                @{post.username}
-              </span>
-
-              {/* Market chrome — coin posts only; legacy 1155 shows none. */}
-              {isCoinPost(post) && (
-                <span style={{ display: "flex", alignItems: "baseline", gap: 6, marginLeft: "auto" }}>
-                  {post.ticker && <TickerMark ticker={post.ticker} size={11.5} />}
-                  <span style={{ ...SKR, fontSize: 'var(--fs-9)', color: "rgba(255,255,255,0.4)", letterSpacing: "-0.14px" }}>
-                    MC: {mcLabel ?? "…"}
-                  </span>
-                </span>
-              )}
-            </div>
+            {/* (Creator + ticker/MC moved ABOVE the media — see the compact header.) */}
 
             {/* Caption */}
             {post.caption ? (
@@ -558,56 +529,35 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
             {/* Divider */}
             <div style={{ height: 1, background: "rgba(255,255,255,0.1)", marginBottom: 12 }} />
 
-            {/* Like + comments toggle */}
-            <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 14 }}>
+            {/* Like + comment — the SAME arrangement as the home feed card (heart+count,
+                comment+count) so the card and its lightbox read as one. NO share (not an
+                offered feature — no false affordances). No bookmark/save (ratified: the
+                heart is feeling, COLLECT is conviction). */}
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
               {/* Like — pop the inner content, not the button (house rule). */}
               <button
                 onClick={handleLike}
                 disabled={loading || !user}
-                style={{
-                  background: "transparent", border: "none",
-                  cursor: user ? "pointer" : "default",
-                  display: "flex", alignItems: "center", gap: 5, padding: 0,
-                  color: isLiked ? "#FF0000" : "rgba(255,255,255,0.55)",
-                }}
+                style={{ background: "transparent", border: "none", cursor: user ? "pointer" : "default", display: "flex", alignItems: "center", gap: 4, padding: 0, color: isLiked ? "#FF0000" : "rgba(255,255,255,0.6)" }}
               >
-                <PressPop><span style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                <svg width="19.7" height="19.7" viewBox="0 0 24 24" fill="none">
-                  <path
-                    d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
-                    fill={isLiked ? "#FF0000" : "none"}
-                    stroke={isLiked ? "#FF0000" : "white"}
-                    strokeWidth="2"
-                  />
+                <PressPop><span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                <svg width="18.7" height="18.7" viewBox="0 0 24 24" fill={isLiked ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
                 </svg>
-                <span style={{ ...SKR, fontSize: 'var(--fs-8)', color: "inherit" }}>{likes.length}</span>
+                <span style={{ ...SKR, fontSize: 'var(--fs-7)', color: "inherit" }}>{likes.length}</span>
                 </span></PressPop>
               </button>
 
-              {/* Comments toggle */}
+              {/* Comment — icon + count (toggles the comments), matching the feed card. */}
               <button
                 onClick={() => setShowComments((v) => !v)}
-                style={{ background: "transparent", border: "none", cursor: "pointer", padding: 0 }}
+                style={{ background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 4, padding: 0, color: "rgba(255,255,255,0.6)" }}
               >
-                <span style={{ ...SKR, fontSize: 'var(--fs-8)', color: "rgba(255,255,255,0.4)", letterSpacing: "-0.1px" }}>
-                  {showComments ? "hide comments" : `tap to see comments (${comments.length})`}
-                </span>
-              </button>
-
-              {/* No bookmark/save: Scope has no free keep-mechanism — the
-                  heart is feeling, COLLECT is conviction (ratified). */}
-
-              {/* Share — pop the inner icon, not the button (house rule). */}
-              <button
-                onClick={handleShare}
-                style={{ background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", padding: 0 }}
-              >
-                <PressPop><span style={{ display: "flex" }}>
-                <svg width="17.5" height="17.5" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
-                  <polyline points="16 6 12 2 8 6" />
-                  <line x1="12" y1="2" x2="12" y2="15" />
+                <PressPop><span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                <svg width="18.7" height="18.7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                 </svg>
+                <span style={{ ...SKR, fontSize: 'var(--fs-7)', color: "inherit" }}>{comments.length}</span>
                 </span></PressPop>
               </button>
 

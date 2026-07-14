@@ -20,7 +20,6 @@ import TickerMark from "@/components/economy/TickerMark";
 import DeletePostSheet from "@/components/DeletePostSheet";
 import MediaRenderer from "@/components/MediaRenderer";
 import GradedVideo from "@/components/finishing/GradedVideo";
-import PostModal from "@/components/PostModal";
 import TheatreMode from "@/components/TheatreMode";
 import { supabase } from "@/lib/supabase/client";
 import { getAspectRatio } from "@/lib/aspectRatio";
@@ -205,7 +204,6 @@ function PostViewerItem({
               autoplay={true}
               showSoundToggle={true}
               style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-              onClick={() => onOpenPost(post)}
             />
           )
         ) : (
@@ -240,15 +238,14 @@ function PostViewerItem({
         return (
           <>
             {metadataRow}
+            {/* Media is NOT tappable here — the post-scroll already shows it full-size;
+                the old tap opened a redundant single-post PostModal (killed). */}
             {is43 ? (
-              <PillarboxFrame onClick={(e) => { e.stopPropagation(); onOpenPost(post); }} cursor="pointer">
+              <PillarboxFrame>
                 {mediaEl}
               </PillarboxFrame>
             ) : (
-              <div
-                style={{ position: "relative", width: "100%", aspectRatio: getAspectRatio(post.layout_id ?? ''), overflow: "hidden", background: "#0a0a0a", cursor: "pointer" }}
-                onClick={(e) => { e.stopPropagation(); onOpenPost(post); }}
-              >
+              <div style={{ position: "relative", width: "100%", aspectRatio: getAspectRatio(post.layout_id ?? ''), overflow: "hidden", background: "#0a0a0a" }}>
                 {mediaEl}
               </div>
             )}
@@ -494,13 +491,11 @@ export default function ProfilePostViewer({
   const [localPosts, setLocalPosts] = useState(initialPosts);
   const [showDeleteSheet, setShowDeleteSheet] = useState(false);
   const [deletePostId, setDeletePostId] = useState<string>('');
-  // Standalone post view (the SAME PostModal as the home feed), opened over the
-  // scroll. Closing it returns here at the same scroll position (this stays mounted).
-  const [modalPost, setModalPost] = useState<any>(null);
   const [showTheatre, setShowTheatre] = useState(false);
   const [theatreStart, setTheatreStart] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
   const postRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const rotateArmed = useRef(true); // rotate-to-theatre re-trigger guard
 
   // Theatre entry — scoped to THIS profile's posts, starting on whichever post is
   // currently nearest the scroll position (per the desktop theatre-eye pattern).
@@ -519,6 +514,29 @@ export default function ProfilePostViewer({
     setTheatreStart(idx);
     setShowTheatre(true);
   };
+
+  // ROTATE-TO-THEATRE — while the post-scroll is mounted, rotating to LANDSCAPE enters
+  // theatre (scoped to this profile's posts, at the currently-viewed post). Both entries
+  // stay live (the eye is the tap path). Guards: (1) an `armed` flag — theatre force-
+  // rotates in portrait (it does NOT exit on portrait), so we only re-arm once the scroll
+  // is back in portrait, preventing a re-trigger loop when the user exits theatre while
+  // still landscape; (2) don't fire while theatre is already up or a sheet/takeover is
+  // over the scroll (delete sheet / data-suite-open collect+deck sheets). It's a MODE
+  // change, not an animation → prefers-reduced-motion is unaffected.
+  useEffect(() => {
+    const onOrient = () => {
+      const landscape = window.innerWidth > window.innerHeight;
+      if (!landscape) { rotateArmed.current = true; return; } // re-arm in portrait
+      if (!rotateArmed.current || showTheatre) return;
+      if (showDeleteSheet || document.documentElement.dataset.suiteOpen) return; // sheet/takeover up
+      rotateArmed.current = false; // no re-trigger (esp. exiting theatre while still landscape)
+      openTheatre();
+    };
+    window.addEventListener('resize', onOrient);
+    window.addEventListener('orientationchange', onOrient);
+    return () => { window.removeEventListener('resize', onOrient); window.removeEventListener('orientationchange', onOrient); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showTheatre, showDeleteSheet]);
 
   // Slide-up entrance
   useEffect(() => {
@@ -611,6 +629,7 @@ export default function ProfilePostViewer({
           flex: 1,
           overflowY: "auto",
           scrollSnapType: "y mandatory",
+          paddingTop: 14, // top breathing room — the first post doesn't crowd the header
           // @ts-ignore
           WebkitOverflowScrolling: "touch",
         }}
@@ -628,7 +647,7 @@ export default function ProfilePostViewer({
               viewerUsername={viewerUsername}
               viewerAvatar={viewerAvatar}
               onNavigateToProfile={goToProfile}
-              onOpenPost={(p) => setModalPost({ ...p, profile_image_url: (p as any).profile_image_url ?? ownerAvatarUrl ?? null })}
+              onOpenPost={() => {}}
               isOwnProfile={isOwnProfile}
               onDeletePress={(postId) => { setDeletePostId(postId); setShowDeleteSheet(true); }}
             />
@@ -649,9 +668,6 @@ export default function ProfilePostViewer({
         }}
       />
 
-      {/* Standalone post view — the SAME component the home feed opens. BACK
-          (onClose) dismisses it and reveals this scroll at the same position. */}
-      {modalPost && <PostModal post={modalPost} onClose={() => setModalPost(null)} />}
 
       {/* Theatre — landscape full-screen viewing of this profile's posts. */}
       {showTheatre && (
