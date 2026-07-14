@@ -59,6 +59,8 @@ export default function TheatreMode({
   onClose,
   source = 'profile',
   zBase = 490,
+  exitOnPortrait = false,
+  onIndexChange,
 }: {
   posts: AnyPost[];
   startIndex?: number;
@@ -68,6 +70,14 @@ export default function TheatreMode({
   /** 'feed' = home-feed entry (many creators, infinite) → show @handle + always-on
       stats, no counter. 'profile' = one creator → expand-only stats, counter kept. */
   source?: 'feed' | 'profile';
+  /** When theatre was ENTERED by physically rotating to landscape, rotating BACK to
+      portrait exits it through the normal close chain — the gesture is symmetric.
+      Eye-entered sessions (false) keep the force-rotate rule and NEVER exit on
+      orientation. At entry the device is landscape (portrait=false), so this can't
+      self-trigger on mount. */
+  exitOnPortrait?: boolean;
+  /** Reports the current post index up so the caller can restore its scroll on exit. */
+  onIndexChange?: (i: number) => void;
 }) {
   const isFeed = source === 'feed';
   const economy = useEconomy();
@@ -137,11 +147,26 @@ export default function TheatreMode({
     const r = requestAnimationFrame(() => requestAnimationFrame(() => setShown(true)));
     return () => cancelAnimationFrame(r);
   }, []);
+  const closing = useRef(false);
   const handleClose = useCallback(() => {
+    if (closing.current) return; // idempotent — rapid rotations can't stack exits
+    closing.current = true;
     setShown(false);
     const t = setTimeout(onClose, reduceMotion.current ? 120 : 360);
     return () => clearTimeout(t);
   }, [onClose]);
+
+  // Report the current index up so the profile can land on the last-viewed post.
+  useEffect(() => { onIndexChange?.(index); }, [index]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Symmetric rotation gesture — a rotation-entered session exits when the device
+  // returns to portrait. Routed through handleClose so it uses the SAME animated
+  // exit chain as the black-tap / eye (no bespoke teardown). Eye-entered sessions
+  // (exitOnPortrait=false) never reach here → they keep the force-rotate rule.
+  useEffect(() => {
+    if (exitOnPortrait && portrait) handleClose();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [exitOnPortrait, portrait]);
 
   // PRELOAD (fetch AND decode) both neighbors' theatre-tier images the moment
   // the index settles — img.decode() finishes the pixel work off-gesture, so a

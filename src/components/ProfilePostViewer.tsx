@@ -495,6 +495,8 @@ export default function ProfilePostViewer({
   const scrollRef = useRef<HTMLDivElement>(null);
   const postRefs = useRef<(HTMLDivElement | null)[]>([]);
   const rotateArmed = useRef(true); // rotate-to-theatre re-trigger guard
+  const enteredViaRotation = useRef(false); // theatre opened by a rotate (vs the eye)
+  const theatreIndexRef = useRef(0); // theatre's live index, for scroll-restore on exit
 
   // Theatre entry — scoped to THIS profile's posts, starting on whichever post is
   // currently nearest the scroll position (per the desktop theatre-eye pattern).
@@ -511,6 +513,7 @@ export default function ProfilePostViewer({
       });
     }
     setTheatreStart(idx);
+    theatreIndexRef.current = idx;
     setShowTheatre(true);
   };
 
@@ -529,6 +532,7 @@ export default function ProfilePostViewer({
       if (!rotateArmed.current || showTheatre) return;
       if (showDeleteSheet || document.documentElement.dataset.suiteOpen) return; // sheet/takeover up
       rotateArmed.current = false; // no re-trigger (esp. exiting theatre while still landscape)
+      enteredViaRotation.current = true; // this session exits when the device returns to portrait
       openTheatre();
     };
     window.addEventListener('resize', onOrient);
@@ -536,6 +540,16 @@ export default function ProfilePostViewer({
     return () => { window.removeEventListener('resize', onOrient); window.removeEventListener('orientationchange', onOrient); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showTheatre, showDeleteSheet]);
+
+  // When a ROTATION-entered theatre closes (TheatreMode fires its own portrait exit),
+  // land the post-scroll on whichever post was last viewed in theatre, then clear the
+  // flag. Eye-entered closes leave the flag false → the scroll stays put (unchanged).
+  useEffect(() => {
+    if (showTheatre || !enteredViaRotation.current) return;
+    enteredViaRotation.current = false;
+    const el = postRefs.current[theatreIndexRef.current];
+    if (el && scrollRef.current) scrollRef.current.scrollTop = el.offsetTop;
+  }, [showTheatre]);
 
   // Slide-up entrance
   useEffect(() => {
@@ -616,7 +630,7 @@ export default function ProfilePostViewer({
           <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "white", letterSpacing: "-0.1px", textTransform: "uppercase" }}>BACK</span>
         </button>
         <img src="/logomark-plain-white.png" alt="Scope" style={{ height: 14, width: "auto", objectFit: "contain", display: "block", opacity: 0.9 }} />
-        <button onClick={openTheatre} aria-label="Theatre" style={{ background: "transparent", border: "none", cursor: "pointer", padding: 0, display: "flex", alignItems: "center" }}>
+        <button onClick={() => { enteredViaRotation.current = false; openTheatre(); }} aria-label="Theatre" style={{ background: "transparent", border: "none", cursor: "pointer", padding: 0, display: "flex", alignItems: "center" }}>
           <img src="/theatre-mode-eye-solo.png" alt="" style={{ height: 17, width: "auto", display: "block", opacity: 0.85 }} />
         </button>
       </div>
@@ -628,7 +642,7 @@ export default function ProfilePostViewer({
           flex: 1,
           overflowY: "auto",
           scrollSnapType: "y mandatory",
-          paddingTop: 14, // top breathing room — the first post doesn't crowd the header
+          paddingTop: 34, // top breathing room (14 + 20 this round) — first post clears the header
           // @ts-ignore
           WebkitOverflowScrolling: "touch",
         }}
@@ -674,6 +688,8 @@ export default function ProfilePostViewer({
           posts={localPosts as unknown as Record<string, unknown>[]}
           startIndex={theatreStart}
           source="profile"
+          exitOnPortrait={enteredViaRotation.current}
+          onIndexChange={(i) => { theatreIndexRef.current = i; }}
           onClose={() => setShowTheatre(false)}
         />
       )}
