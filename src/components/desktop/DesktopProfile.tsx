@@ -63,6 +63,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
   const [following, setFollowing] = useState(0);
   const [collectors, setCollectors] = useState(0);
   const [fcCount, setFcCount] = useState(0);
+  const [composerCount, setComposerCount] = useState(0);
   const [joined, setJoined] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>('portfolio');
   const [theatreOpen, setTheatreOpen] = useState(false);
@@ -125,7 +126,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
           getUserPosts(userId),
           getUserDecks(privyId).catch(() => []),
           getProfileLinks(privyId).catch(() => []),
-          economy.getBadges(userId).catch(() => ({} as { firstCutCount?: number })),
+          economy.getBadges(userId).catch(() => ({} as { firstCutCount?: number; composerTrackCount?: number })),
         ]);
         if (!alive) return;
         setProfile(p as Record<string, unknown> | null);
@@ -135,6 +136,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
         setPosts((ps as unknown as Record<string, unknown>[]) ?? []);
         setDecks(dk); setLinks(ln);
         setFcCount(badges.firstCutCount ?? 0);
+        setComposerCount(badges.composerTrackCount ?? 0);
         const { supabase } = await import('@/lib/supabase/client');
         // JOINED = users.created_at (no schema change)
         const { data: u } = await supabase.from('users').select('created_at').eq('id', userId).maybeSingle();
@@ -166,7 +168,8 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
     isPaidMember: profile ? isProMember(profile as { is_paid_member?: boolean; paid_member_until?: string | null }) : false,
     isInHouseCreator: !!profile?.is_in_house_creator,
     firstCutCount: fcCount,
-  }).filter((b) => b.framedSrc ?? b.bannerSrc ?? b.src), [profile, fcCount]);
+    composerTrackCount: composerCount,
+  }).filter((b) => b.framedSrc ?? b.bannerSrc ?? b.src), [profile, fcCount, composerCount]);
   const srhCount = Math.max(1, Number(profile?.srh_count ?? 0) || 1);
 
   const sortedPosts = posts; // recent order (SORT BY was a temp control — removed)
@@ -547,6 +550,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
             isScreeningRoomHolder: !!profile?.is_screening_room_holder,
             isInHouseCreator: !!profile?.is_in_house_creator,
             firstCutCount: fcCount,
+            composerTrackCount: composerCount,
           }}
           isOwn={isOwn}
           onClose={() => setBadgesOpen(false)}

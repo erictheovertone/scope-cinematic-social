@@ -116,6 +116,8 @@ export interface Badges {
   topKRank?: number;
   /** Scope Pro member. */
   pro?: boolean;
+  /** Number of APPROVED tracks in the Original Music Library (>0 → Composer badge). */
+  composerTrackCount?: number;
 }
 
 /** Result of the (mocked, Phase 1) collect action. */

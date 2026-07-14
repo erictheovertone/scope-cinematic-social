@@ -60,8 +60,8 @@ export default function DesktopBadgesSheet({
 
   if (typeof document === 'undefined') return null;
   // ORDER: the two membership tiers together at top, earned honors below.
-  const order: BadgeKey[] = ['free', 'pro', 'augmented', 'firstCut', 'top1k', 'srh', 'inHouse'];
-  const DETAIL_KEY: Partial<Record<BadgeKey, string>> = { free: 'free', pro: 'pro', augmented: 'founding', firstCut: 'firstCut', top1k: 'top1k', srh: 'srh', inHouse: 'creator' };
+  const order: BadgeKey[] = ['free', 'pro', 'augmented', 'firstCut', 'top1k', 'srh', 'composer', 'inHouse'];
+  const DETAIL_KEY: Partial<Record<BadgeKey, string>> = { free: 'free', pro: 'pro', augmented: 'founding', firstCut: 'firstCut', top1k: 'top1k', srh: 'srh', composer: 'composer', inHouse: 'creator' };
 
   return createPortal(
     <div data-swipe-exclude style={{ position: 'fixed', inset: 0, zIndex: 660, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

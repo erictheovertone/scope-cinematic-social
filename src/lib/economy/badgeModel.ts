@@ -20,6 +20,7 @@ export interface BadgeFlags {
   isScreeningRoomHolder?: boolean;
   isInHouseCreator?: boolean;
   firstCutCount?: number;
+  composerTrackCount?: number;
 }
 
 export type BadgeNature = 'buy' | 'earned' | 'base';
@@ -27,7 +28,7 @@ export type BadgeState = 'held' | 'buyable' | 'locked';
 
 export const BADGE_NATURE: Record<BadgeKey, BadgeNature> = {
   free: 'base', pro: 'buy',
-  augmented: 'earned', firstCut: 'earned', top1k: 'earned', srh: 'earned', inHouse: 'earned',
+  augmented: 'earned', firstCut: 'earned', top1k: 'earned', srh: 'earned', composer: 'earned', inHouse: 'earned',
 };
 
 export function badgeHeld(key: BadgeKey, f: BadgeFlags): boolean {
@@ -38,6 +39,7 @@ export function badgeHeld(key: BadgeKey, f: BadgeFlags): boolean {
     case 'firstCut': return (f.firstCutCount ?? 0) > 0;
     case 'top1k': return !!f.isTopCollector;
     case 'srh': return !!f.isScreeningRoomHolder;
+    case 'composer': return (f.composerTrackCount ?? 0) > 0;
     case 'inHouse': return !!f.isInHouseCreator;
     default: return false;
   }
@@ -57,5 +59,6 @@ export const BADGE_EARN_PATH: Record<BadgeKey, string> = {
   srh: 'Hold work featured in the Screening Room — Scope’s top-50 most-traded showcase — to earn this.',
   top1k: 'Collect work from other creators to earn this — the top 1,000 collectors hold it.',
   augmented: 'Given to Scope’s first 500 members. This one’s closed — a permanent founding honor.',
+  composer: 'Contribute to the Scope Original Music Library.',
   inHouse: 'Earned by creators who regularly use Scope’s built-in tools to make their work. It can’t be bought — only earned.',
 };

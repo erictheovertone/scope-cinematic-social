@@ -123,6 +123,7 @@ const userLayoutId = stableLayoutId;
   // founding positions that aren't real yet. Off-flag it stays 0 (coin absent).
   const economy = useEconomy();
   const [firstCutCount, setFirstCutCount] = useState(0);
+  const [composerTrackCount, setComposerTrackCount] = useState(0);
   // Bumped by scope:badges-changed (a sell just released a First Cut slot) —
   // re-runs the badge fetch so banner + pill update without a reload.
   const [badgeTick, setBadgeTick] = useState(0);
@@ -144,7 +145,7 @@ const userLayoutId = stableLayoutId;
     if (!supabaseUserId) { setFirstCutCount(0); setBadgesLoaded(true); return; }
     let cancelled = false;
     economy.getBadges(supabaseUserId)
-      .then((b) => { if (!cancelled) { setFirstCutCount(b.firstCutCount ?? 0); setBadgesLoaded(true); } })
+      .then((b) => { if (!cancelled) { setFirstCutCount(b.firstCutCount ?? 0); setComposerTrackCount(b.composerTrackCount ?? 0); setBadgesLoaded(true); } })
       .catch(() => { if (!cancelled) setBadgesLoaded(true); });
     return () => { cancelled = true; };
   }, [economy, supabaseUserId, badgeTick]);
@@ -160,7 +161,7 @@ const userLayoutId = stableLayoutId;
   // what Moment 1 celebrated. The strip itself gates the pull on an open slot.
   useEffect(() => {
     if (!badgesLoaded || !supabaseUserId) return;
-    const keys = resolveBadges({ isFoundingMember, isTopCollector, isScreeningRoomHolder, isPaidMember, isInHouseCreator, firstCutCount }).map((b) => b.key);
+    const keys = resolveBadges({ isFoundingMember, isTopCollector, isScreeningRoomHolder, isPaidMember, isInHouseCreator, firstCutCount, composerTrackCount }).map((b) => b.key);
     const storeKey = `scope:seenBadges:${supabaseUserId}`;
     let seen: string[] | null = null;
     try { const raw = localStorage.getItem(storeKey); seen = raw ? JSON.parse(raw) : null; } catch {}
@@ -181,7 +182,7 @@ const userLayoutId = stableLayoutId;
     }
     try { localStorage.setItem(storeKey, JSON.stringify(keys)); } catch {}
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [badgesLoaded, supabaseUserId, firstCutCount, isFoundingMember, isTopCollector, isScreeningRoomHolder, isPaidMember, isInHouseCreator]);
+  }, [badgesLoaded, supabaseUserId, firstCutCount, composerTrackCount, isFoundingMember, isTopCollector, isScreeningRoomHolder, isPaidMember, isInHouseCreator]);
 
   // PORTFOLIO MC — VALUATION RULE 2 (ratified): the PUBLIC number counts
   // EXTERNAL positions only (coins collected from others), never the user's
@@ -432,7 +433,7 @@ const userLayoutId = stableLayoutId;
           height={80}
           dividerColor={dividerBackground(dividerLine)}
           holo={holoBanner && isFoundingMember}
-          badges={resolveBadges({ isFoundingMember, isTopCollector, isScreeningRoomHolder, isPaidMember, isInHouseCreator, firstCutCount })
+          badges={resolveBadges({ isFoundingMember, isTopCollector, isScreeningRoomHolder, isPaidMember, isInHouseCreator, firstCutCount, composerTrackCount })
             .filter((b) => b.bannerSrc)
             .map((b) => ({ key: b.key, src: (b.framedSrc ?? b.bannerSrc) as string, title: b.title }))}
           pullKey={firstCutPull}

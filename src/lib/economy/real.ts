@@ -324,7 +324,20 @@ export function createRealEconomy(
       // HOLDING-GATED by the balance join above — count = coins actually held.
       const active = await firstCutActiveCoins(userId).catch(() => [] as string[]);
       const firstCutCount = active.length;
-      return { ...base, firstCutCount: firstCutCount > 0 ? firstCutCount : undefined };
+      // COMPOSER — ≥1 approved track in the Original Music Library. composer_user_id
+      // is a users.id uuid (same identity as `userId` here). Fails soft to 0 before
+      // the migration runs (the query errors → count null → badge simply absent).
+      const { count: approvedTracks } = await supabase
+        .from("tracks")
+        .select("id", { count: "exact", head: true })
+        .eq("composer_user_id", userId)
+        .eq("status", "approved");
+      const composerTrackCount = approvedTracks ?? 0;
+      return {
+        ...base,
+        firstCutCount: firstCutCount > 0 ? firstCutCount : undefined,
+        composerTrackCount: composerTrackCount > 0 ? composerTrackCount : undefined,
+      };
     },
 
     // COLLECTED-tab insignia — the SAME balance-joined read as the badge count

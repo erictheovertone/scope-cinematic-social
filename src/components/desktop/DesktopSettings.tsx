@@ -38,6 +38,7 @@ import { useEconomy } from '@/components/EconomyProvider';
 import { feedImage } from '@/lib/mediaUrl';
 import PfpCropStage from '@/components/desktop/PfpCropStage';
 import DesktopGridPicker from '@/components/desktop/DesktopGridPicker';
+import ContributeMusicFlow from '@/components/ContributeMusicFlow';
 import { type DesktopLayout, type DesktopAspect, type DesktopCount } from '@/lib/desktopLayout';
 import { resolveLayout } from '@/lib/layoutModel';
 
@@ -65,6 +66,7 @@ export default function DesktopSettings() {
 
   const [section, setSection] = useState<Section>('edit-profile');
   const [fade, setFade] = useState(false);
+  const [contributeMusicOpen, setContributeMusicOpen] = useState(false);
   const [hovered, setHovered] = useState<string | null>(null);
 
   const [sbUserId, setSbUserId] = useState('');
@@ -465,6 +467,7 @@ export default function DesktopSettings() {
             {row(`More From · ${moreFrom.length}/${MORE_FROM_CAP} featured`, () => { void openMoreFrom(); }, 'morefrom')}
             {row(`While You Were Away · ${showRecap ? 'ON' : 'OFF'}`, () => { const next = !showRecap; setShowRecapState(next); if (sbUserId) void setShowRecap(sbUserId, next); }, 'wywa')}
             {row('Notifications', () => router.push('/profile/notifications'))}
+            {row('Contribute Music', () => setContributeMusicOpen(true), 'contribmusic')}
             {row('Add to Home Screen', () => router.push('/profile/preferences'))}
           </div>
         );
@@ -557,6 +560,8 @@ export default function DesktopSettings() {
           onClose={() => setGridPickerOpen(false)}
         />
       )}
+
+      {contributeMusicOpen && <ContributeMusicFlow onClose={() => setContributeMusicOpen(false)} />}
 
       {/* ── MORE FROM picker — multi-select up to 6 own posts for the lightbox shelf ── */}
       {moreFromOpen && createPortal(

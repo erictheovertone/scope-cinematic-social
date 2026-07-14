@@ -81,14 +81,15 @@ export default function PublicProfilePage() {
   // First Cut coin for the VIEWED user's stack — boundary-only, preview-gated.
   const economy = useEconomy();
   const [firstCutCount, setFirstCutCount] = useState(0);
+  const [composerTrackCount, setComposerTrackCount] = useState(0);
   useEffect(() => {
     const uid = profile?.user_id;
     // First Cut is a REAL, table-backed award — not preview/mock data — so it is
     // NOT gated behind the economy-preview flag (which hid the resolving badge).
-    if (!uid) { setFirstCutCount(0); return; }
+    if (!uid) { setFirstCutCount(0); setComposerTrackCount(0); return; }
     let cancelled = false;
     economy.getBadges(uid)
-      .then((b) => { if (!cancelled) setFirstCutCount(b.firstCutCount ?? 0); })
+      .then((b) => { if (!cancelled) { setFirstCutCount(b.firstCutCount ?? 0); setComposerTrackCount(b.composerTrackCount ?? 0); } })
       .catch(() => {});
     return () => { cancelled = true; };
   }, [economy, profile?.user_id]);
@@ -285,7 +286,7 @@ export default function PublicProfilePage() {
             height={80}
             dividerColor={dividerBackground((profile as any)?.divider_line)}
             holo={!!(profile as any)?.holo_banner && isFoundingMember}
-            badges={resolveBadges({ isFoundingMember, isTopCollector, isScreeningRoomHolder, isPaidMember, isInHouseCreator, firstCutCount })
+            badges={resolveBadges({ isFoundingMember, isTopCollector, isScreeningRoomHolder, isPaidMember, isInHouseCreator, firstCutCount, composerTrackCount })
               .filter((b) => b.bannerSrc)
               .map((b) => ({ key: b.key, src: (b.framedSrc ?? b.bannerSrc) as string, title: b.title }))}
             onPress={() => setShowBadgeSheet(true)}

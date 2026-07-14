@@ -121,14 +121,15 @@ const tiers = [
 // Real earned status from the viewer's flags (CHANGE 4) — fixes the inverted
 // "NOT YET YOURS" that keyed off a single highest tier. firstCut/composer/srh
 // have no flags yet → correctly "not yet".
-function tierEarned(key: string, t: BadgeExplainerSheetProps['userTiers'], isPaid: boolean): boolean {
+function tierEarned(key: string, t: BadgeExplainerSheetProps['userTiers'], isPaid: boolean, composerCount = 0): boolean {
   switch (key) {
     case 'free': return true;            // every account has it
     case 'pro': return isPaid;           // paid_member_until active
     case 'founding': return !!t.isFoundingMember;
     case 'creator': return !!t.isInHouseCreator;
     case 'top1k': return !!t.isTopCollector;
-    default: return false;               // firstCut, composer, srh
+    case 'composer': return composerCount > 0; // ≥1 approved track
+    default: return false;               // firstCut, srh (no viewer flag yet)
   }
 }
 
@@ -169,6 +170,7 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
     paidUntil: Date | null;
     cancelsAt: Date | null; // scheduled cancel → the bar reads CANCELS, not RENEWS
     firstCutCount: number; // active First Cut slots (expired_at IS NULL)
+    composerTrackCount: number; // approved Original Music Library tracks
   } | null>(null);
 
   useEffect(() => {
@@ -183,8 +185,9 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
         // First Cut via the ONE engine (balance-joined active holdings) — this
         // sheet used to run its own raw first_cut_awards count, which kept
         // showing released (dust) positions after banner/bio cleared.
-        const badges = await economy.getBadges(sbUser.id).catch(() => ({ firstCutCount: 0 } as { firstCutCount?: number }));
+        const badges = await economy.getBadges(sbUser.id).catch(() => ({ firstCutCount: 0 } as { firstCutCount?: number; composerTrackCount?: number }));
         const fcCount = badges.firstCutCount ?? 0;
+        const composerCount = badges.composerTrackCount ?? 0;
         if (cancelled) return;
         const isPaid = isProMember(p);
         const isTop = !!p.is_top_collector;
@@ -205,6 +208,7 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
           paidUntil: p.paid_member_until ? new Date(p.paid_member_until) : null,
           cancelsAt: p.membership_cancels_at ? new Date(p.membership_cancels_at) : null,
           firstCutCount: fcCount ?? 0,
+          composerTrackCount: composerCount,
         });
       } catch (e) {
         console.error('Badge sheet viewer resolve error:', e);
@@ -217,6 +221,7 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
   // only a fallback (correct on own-profile, replaced on public once resolved).
   const vTiers = viewer?.tiers ?? userTiers;
   const vFirstCutCount = viewer?.firstCutCount ?? 0; // active First Cut slots → lights First Cut in the earned grid
+  const vComposerTrackCount = viewer?.composerTrackCount ?? 0; // approved tracks → lights Composer
   const vIsPaid = viewer?.isPaid ?? !!isPaidMember;
   const vPaidUntil = viewer?.paidUntil ?? paidMemberUntil ?? null;
   const vCancelsAt = viewer?.cancelsAt ?? null;
@@ -342,6 +347,7 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
             isPaidMember: vTiers.isPaidMember,
             isInHouseCreator: vTiers.isInHouseCreator,
             firstCutCount: vFirstCutCount, // active First Cut slots (viewer-centric) — now lights here too
+            composerTrackCount: vComposerTrackCount, // approved Original Music Library tracks
           }).filter((b) => b.key !== 'free'); // the Free baseline isn't an "earned" badge
           if (earned.length === 0) return null;
           return (
@@ -389,7 +395,7 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
                 {/* Flat min-design icon — consistent with the BADGES EARNED grid
                     above (no 3D/glow; the new flat assets don't suit a round coin). */}
                 <img src={tier.img} alt={tier.label} style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block', animation: visible ? `badgeGlowPulse 400ms ease-out ${i * 45 + 150}ms both` : undefined }} />
-                {tierEarned(tier.key, vTiers, vIsPaid) && (
+                {tierEarned(tier.key, vTiers, vIsPaid, vComposerTrackCount) && (
                   <div style={{ position: 'absolute', top: -3, right: -3, width: 6, height: 6, borderRadius: '50%', backgroundColor: '#FF0000', zIndex: 2 }} />
                 )}
               </div>
@@ -398,7 +404,7 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
                   <span>{tier.title}</span>
                   {/* Real earned status per the viewer's flags — every tier they
                       hold reads YOURS; the rest read NOT YET YOURS. */}
-                  {tierEarned(tier.key, vTiers, vIsPaid) ? (
+                  {tierEarned(tier.key, vTiers, vIsPaid, vComposerTrackCount) ? (
                     <span style={{ ...BOLD, fontSize: 'var(--fs-7)', color: '#FF0000', letterSpacing: '0.12em', border: '1px solid rgba(255,0,0,0.55)', padding: '1px 4px' }}>YOURS</span>
                   ) : (
                     <span style={{ ...BOLD, fontSize: 'var(--fs-7)', color: 'rgba(255,255,255,0.3)', letterSpacing: '0.12em' }}>NOT YET YOURS</span>

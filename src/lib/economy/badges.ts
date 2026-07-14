@@ -14,6 +14,7 @@ export type BadgeKey =
   | 'firstCut'
   | 'top1k'
   | 'srh'
+  | 'composer'
   | 'pro'
   | 'inHouse'
   | 'free';
@@ -44,13 +45,14 @@ export const BADGES: Record<BadgeKey, BadgeMeta> = {
   firstCut:  { key: 'firstCut',  src: '/first-cut-badge-green.png',                  title: 'FIRST CUT', color: '#00E08A',            bannerSrc: '/badges/first-cut-badge-min-design-01.png', framedSrc: '/badges/framed-badges/first-cut-badge-min-design-01-framed.png' },
   top1k:     { key: 'top1k',     src: '/top-1k-collector-aperture-gold.png',         title: 'TOP 1K',    color: '#C9A84C',            bannerSrc: '/badges/collector-badge-min-design-01.png', framedSrc: '/badges/framed-badges/collector-badge-min-design-01-framed.png' },
   srh:       { key: 'srh',       src: '/badges/srh-badge-min-design-01.png',         title: 'SRH',       color: '#C9A84C',            bannerSrc: '/badges/srh-badge-min-design-01.png', framedSrc: '/badges/framed-badges/srh-badge-min-design-01-framed.png' },
+  composer:  { key: 'composer',  src: '/badges/composer-badge-min-design-01.png',    title: 'COMPOSER',  color: '#7FB2FF',            bannerSrc: '/badges/composer-badge-min-design-01.png', framedSrc: '/badges/framed-badges/composer-badge-min-design-01-framed.png' },
   pro:       { key: 'pro',       src: '/scope-pro-icon-aperture.png',                title: 'SCOPE PRO', color: '#FF0000',            bannerSrc: '/badges/scope-pro-badge-min-design-01.png', framedSrc: '/badges/framed-badges/scope-pro-badge-min-design-01-framed.png' },
   inHouse:   { key: 'inHouse',   src: '/in-house-creator-logo-grey.png',             title: 'IN-HOUSE',  color: 'rgba(255,255,255,0.6)', bannerSrc: '/badges/in-house-badge-min-design-01.png', framedSrc: '/badges/framed-badges/in-house-badge-min-design-01-framed.png' },
   free:      { key: 'free',      src: '/free-tier-aperture-logo-red.png',            title: 'FREE TIER', color: '#FF0000' },
 };
 
 /** Rarity order for the stack/section. */
-export const RARITY_ORDER: BadgeKey[] = ['augmented', 'firstCut', 'top1k', 'srh', 'pro', 'inHouse'];
+export const RARITY_ORDER: BadgeKey[] = ['augmented', 'firstCut', 'top1k', 'srh', 'composer', 'pro', 'inHouse'];
 
 // ── Tap-blurb copy (BADGES section pop-up) ───────────────────────────────────
 // RATIFIED by Eric 2026-06-11. From Scope_Economy.docx §4: one breath each,
@@ -61,6 +63,7 @@ export const BADGE_BLURBS: Record<BadgeKey, string> = {
   firstCut: 'Given for being one of the first 10 people to collect a post. As long as they keep every piece, they earn a cut each time that post is traded.',
   top1k: 'One of the 1,000 biggest collectors on Scope. Together they earn 1% of everything traded, split among them.',
   srh: 'Holds a post in the Screening Room — Scope’s top-50 most-traded showcase. A live signal, held only while the post stays in the room.',
+  composer: 'Earned by musicians who contribute original tracks to the Scope Original Music Library. Held while at least one of your tracks is approved.',
   pro: 'A paid Scope membership — the full finishing suite, every look, every tool.',
   inHouse: 'Earned by creators who regularly use Scope’s built-in tools to make their work. It can’t be bought — only earned.',
   free: 'Every Scope account starts here: full posting and collecting, minted on Base from day one.',
@@ -76,6 +79,7 @@ export const BADGE_SHORT_BLURB: Record<BadgeKey, string> = {
   augmented: 'One of the first 500 members of Scope. The earliest believers.',
   top1k: 'Among the top 1,000 collectors on Scope by collecting activity.',
   srh: 'Currently holds a post in the Screening Room — Scope’s top-50 most-traded showcase. Held in real time; lost if the post drops out.',
+  composer: 'Contribute to the Scope Original Music Library.',
   inHouse: 'Content created using Scope’s in-app editing tools (the NLE).',
   free: 'Every Scope account starts here — full posting and collecting from day one.',
 };
@@ -88,6 +92,8 @@ export interface BadgeTierFlags {
   isInHouseCreator?: boolean;     // In-House
   /** From the economy boundary (gated); >0 → user holds founding positions. */
   firstCutCount?: number;
+  /** >0 → user has ≥1 approved track in the Original Music Library (Composer). */
+  composerTrackCount?: number;
 }
 
 /**
@@ -102,6 +108,7 @@ export function resolveBadges(flags: BadgeTierFlags): BadgeMeta[] {
     firstCut: (flags.firstCutCount ?? 0) > 0,
     top1k: !!flags.isTopCollector,
     srh: !!flags.isScreeningRoomHolder,
+    composer: (flags.composerTrackCount ?? 0) > 0,
     pro: !!flags.isPaidMember,
     inHouse: !!flags.isInHouseCreator,
     free: false,
