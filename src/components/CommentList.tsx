@@ -136,7 +136,7 @@ function cfgFor(variant: CommentVariant, desktopLightbox: boolean): VCfg {
     case "scroll":
       return { avatar: true, avSize: 16, handle: "var(--fs-9)", text: "calc(var(--fs-9) + 1.2px)", hOp: 1, tOp: 0.72, heart: 12, gap: 6, indent: 26, meta: "var(--fs-7)" };
     case "feed":
-      return { avatar: true, avSize: 15, handle: "var(--fs-7)", text: "var(--fs-10)", hOp: 1, tOp: 0.72, heart: 12, gap: 7, indent: 22, meta: "var(--fs-7)", avNudge: -1.2 };
+      return { avatar: true, avSize: 15, handle: "var(--fs-7)", text: "var(--fs-10)", hOp: 1, tOp: 0.72, heart: 12, gap: 7, indent: 22, meta: "var(--fs-7)", avNudge: -2.2 };
     case "desktop":
       return {
         avatar: true, avSize: 12,
