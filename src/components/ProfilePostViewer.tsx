@@ -18,7 +18,7 @@ import { isCoinPost, useEconomy } from "@/components/EconomyProvider";
 import FirstCutChip from "@/components/economy/FirstCutChip";
 import TickerMark from "@/components/economy/TickerMark";
 import DeletePostSheet from "@/components/DeletePostSheet";
-import CommentList, { useCommentLikes, ReplyingToChip, type UIComment } from "@/components/CommentList";
+import CommentList, { useCommentLikes, ReplyComposer, type UIComment } from "@/components/CommentList";
 import { replyToComment } from "@/lib/commentInteractions";
 import MediaRenderer from "@/components/MediaRenderer";
 import GradedVideo from "@/components/finishing/GradedVideo";
@@ -158,19 +158,31 @@ function PostViewerItem({
     if (!user || !newComment.trim()) return;
     // OPTIMISTIC: render immediately, reconcile on success / mark failed.
     const text = newComment.trim();
-    const parentId = replyingTo?.parent_comment_id ? replyingTo.parent_comment_id : (replyingTo?.id ?? null);
     const tempId = `temp-${Date.now()}`;
-    setComments(p => [...p, { id: tempId, content: text, username: viewerUsername || "user", user_id: user.id, profile_image_url: viewerAvatar, parent_comment_id: parentId, created_at: new Date().toISOString(), pending: true }]);
+    setComments(p => [...p, { id: tempId, content: text, username: viewerUsername || "user", user_id: user.id, profile_image_url: viewerAvatar, created_at: new Date().toISOString(), pending: true }]);
     setNewComment("");
-    setReplyingTo(null);
     try {
-      const c = parentId
-        ? await replyToComment(post.id, parentId, user.id, viewerUsername || "user", text)
-        : await addComment(post.id, user.id, viewerUsername || "user", text);
+      const c = await addComment(post.id, user.id, viewerUsername || "user", text);
       setComments(p => p.map(x => x.id === tempId ? { ...c, profile_image_url: viewerAvatar } : x));
     } catch (e) {
       console.error("Comment error:", e);
       setComments(p => p.map(x => x.id === tempId ? { ...x, pending: false, failed: true } : x));
+    }
+  };
+
+  // REPLIES → centered composer; optimistic nested insert (avatar carried).
+  const submitReply = async (text: string) => {
+    if (!user || !replyingTo) return;
+    const parentId = replyingTo.parent_comment_id ? replyingTo.parent_comment_id : replyingTo.id;
+    const tempId = `temp-${Date.now()}`;
+    setComments(p => [...p, { id: tempId, content: text, username: viewerUsername || "user", user_id: user.id, profile_image_url: viewerAvatar, parent_comment_id: parentId, created_at: new Date().toISOString(), pending: true }]);
+    try {
+      const c = await replyToComment(post.id, parentId, user.id, viewerUsername || "user", text);
+      setComments(p => p.map(x => x.id === tempId ? { ...c, profile_image_url: viewerAvatar } : x));
+    } catch (e) {
+      console.error("Reply error:", e);
+      setComments(p => p.map(x => x.id === tempId ? { ...x, pending: false, failed: true } : x));
+      throw e;
     }
   };
 
@@ -430,13 +442,10 @@ function PostViewerItem({
                 variant="scroll"
                 likeStates={likeStates}
                 onToggleLike={toggleLike}
-                onReply={(c) => { setReplyingTo(c); requestAnimationFrame(() => commentInputRef.current?.focus()); }}
+                onReply={(c) => setReplyingTo(c)}
                 onProfile={(h) => onNavigateToProfile(h)}
                 viewerDid={user?.id ?? null}
               />
-            )}
-            {user && replyingTo && (
-              <ReplyingToChip handle={replyingTo.username ?? ""} onCancel={() => setReplyingTo(null)} size="var(--fs-9)" />
             )}
             {user && (
               <div style={{ display: "flex", gap: 8, alignItems: "center", borderTop: "1px solid rgba(255,255,255,0.07)", paddingTop: 8, marginTop: 4 }}>
@@ -447,7 +456,7 @@ function PostViewerItem({
                   value={newComment}
                   onChange={e => setNewComment(e.target.value)}
                   onKeyDown={e => e.key === "Enter" && handleAddComment()}
-                  placeholder={replyingTo ? `reply to @${replyingTo.username}...` : "add a comment..."}
+                  placeholder="add a comment..."
                   style={{ flex: 1, background: "transparent", border: "none", borderBottom: "1px solid rgba(255,255,255,0.15)", outline: "none", ...SKR, fontSize: 'max(16px, var(--fs-9))', color: "white", padding: "2px 0" }}
                 />
                 <button
@@ -462,6 +471,14 @@ function PostViewerItem({
           </div>
         )}
       </div>
+      {replyingTo && (
+        <ReplyComposer
+          parent={replyingTo}
+          variant="mobile"
+          onClose={() => setReplyingTo(null)}
+          onSubmit={submitReply}
+        />
+      )}
     </div>
   );
 }

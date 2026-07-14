@@ -18,7 +18,7 @@ import { feedImage } from '@/lib/mediaUrl';
 import GradedVideo from '@/components/finishing/GradedVideo';
 import CollectSheetGate from '@/components/economy/CollectSheetGate';
 import TickerMark from '@/components/economy/TickerMark';
-import CommentList, { useCommentLikes, ReplyingToChip, type UIComment } from '@/components/CommentList';
+import CommentList, { useCommentLikes, ReplyComposer, type UIComment } from '@/components/CommentList';
 import { replyToComment } from '@/lib/commentInteractions';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
@@ -119,14 +119,19 @@ export default function DesktopPostView({
   const submitComment = async () => {
     const text = newComment.trim();
     if (!text || !user || !viewer) return;
-    const parentId = replyingTo?.parent_comment_id ? replyingTo.parent_comment_id : (replyingTo?.id ?? null);
     setNewComment('');
-    setReplyingTo(null);
-    setComments((prev) => [...prev, { id: `tmp-${prev.length}`, username: viewer.name, content: text, created_at: new Date().toISOString(), parent_comment_id: parentId } as typeof prev[number]]);
-    try {
-      if (parentId) await replyToComment(postId, parentId, user.id, viewer.name, text);
-      else await addComment(postId, user.id, viewer.name, text);
-    } catch { /* keep optimistic */ }
+    setComments((prev) => [...prev, { id: `tmp-${prev.length}`, username: viewer.name, content: text, created_at: new Date().toISOString() }]);
+    try { await addComment(postId, user.id, viewer.name, text); } catch { /* keep optimistic */ }
+  };
+
+  // REPLIES → centered composer; optimistic nested insert.
+  const submitReply = async (text: string) => {
+    if (!user || !viewer || !replyingTo) return;
+    const parentId = replyingTo.parent_comment_id ? replyingTo.parent_comment_id : replyingTo.id;
+    const av = viewer.avatar ?? undefined;
+    setComments((prev) => [...prev, { id: `tmp-${prev.length}`, username: viewer.name, content: text, created_at: new Date().toISOString(), parent_comment_id: parentId, profile_image_url: av } as typeof prev[number]]);
+    try { await replyToComment(postId, parentId, user.id, viewer.name, text); }
+    catch (e) { throw e; }
   };
 
   // Stage geometry — MEASURED binder (3C): media is HEIGHT-constrained (a
@@ -311,20 +316,16 @@ export default function DesktopPostView({
               desktopLightbox={lightbox}
               likeStates={likeStates}
               onToggleLike={toggleCommentLike}
-              onReply={(c) => { setReplyingTo(c); requestAnimationFrame(() => commentInputRef.current?.focus()); }}
+              onReply={(c) => setReplyingTo(c)}
               onProfile={(h) => router.push('/profile/' + h)}
               viewerDid={user?.id ?? null}
-              avatarUrl={(c) => (c.username ? avatars.get(c.username) ?? null : null)}
+              avatarUrl={(c) => (c.username ? avatars.get(c.username) ?? null : null) ?? c.profile_image_url ?? null}
             />
           </div>
         </div>
 
         {/* ADD A COMMENT */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: '8px 10px', borderTop: `1px solid ${HAIR}` }}>
-          {replyingTo && (
-            <ReplyingToChip handle={replyingTo.username ?? ''} onCancel={() => setReplyingTo(null)} size="10px" />
-          )}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', borderTop: `1px solid ${HAIR}` }}>
           {viewer?.avatar ? (
             <img src={feedImage(viewer.avatar, 96)} alt="" style={{ width: 14, height: 14, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
           ) : (
@@ -335,12 +336,19 @@ export default function DesktopPostView({
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') submitComment(); e.stopPropagation(); }}
-            placeholder={replyingTo ? `REPLY TO @${(replyingTo.username ?? '').toUpperCase()}` : 'ADD A COMMENT'}
+            placeholder="ADD A COMMENT"
             style={{ ...SKR, flex: 1, fontSize: 10, color: '#FFF', background: 'rgba(75,75,75,0.17)', border: 'none', outline: 'none', padding: '7px 9px', letterSpacing: '0.02em' }} /* NO text-transform — comments type & render as typed */
           />
           <button onClick={submitComment} aria-label="Send" style={{ background: 'transparent', border: 'none', cursor: 'pointer', ...SKB, fontSize: 11, color: 'rgba(255,255,255,0.7)', padding: 4 }}>↑</button>
-          </div>
         </div>
+        {replyingTo && (
+          <ReplyComposer
+            parent={replyingTo}
+            variant="desktop"
+            onClose={() => setReplyingTo(null)}
+            onSubmit={submitReply}
+          />
+        )}
       </div>
 
       <style>{`button:hover > .dk-arrow-glyph { opacity: 1 !important; }`}</style>

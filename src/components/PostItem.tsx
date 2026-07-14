@@ -23,8 +23,9 @@ import TickerMark from "@/components/economy/TickerMark";
 const FEED_POST_GAP_PX = 52;
 import MediaRenderer from "@/components/MediaRenderer";
 import GradedVideo from "@/components/finishing/GradedVideo";
-import CommentList, { useCommentLikes, ReplyingToChip, type UIComment } from "@/components/CommentList";
+import CommentList, { useCommentLikes, ReplyComposer, type UIComment } from "@/components/CommentList";
 import { replyToComment } from "@/lib/commentInteractions";
+import { supabase } from "@/lib/supabase/client";
 import { getAspectRatio, ratioPadding } from "@/lib/aspectRatio";
 import PillarboxFrame from "@/components/PillarboxFrame";
 
@@ -99,6 +100,7 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
   const commentInputRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
   const [viewerUsername, setViewerUsername] = useState("");
+  const [viewerAvatar, setViewerAvatar] = useState<string | null>(null);
   const { likeStates, toggleLike } = useCommentLikes(comments, user?.id ?? null, viewerUsername);
   const [showCollectSheet, setShowCollectSheet] = useState(false);
   const [mc, setMc] = useState<string | null>(null);
@@ -121,6 +123,7 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
         if (!sbUser) return;
         const profile = await getProfile(sbUser.id);
         if (profile?.username) setViewerUsername(profile.username);
+        if (profile?.profile_image_url) setViewerAvatar(profile.profile_image_url);
       } catch (e) {
         console.error("PostItem viewer profile error:", e);
       }
@@ -137,8 +140,17 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
           user ? isPostLikedByUser(post.id, user.id) : Promise.resolve(false),
         ]);
         setLikes(l);
-        setComments(c);
         setIsLiked(liked);
+        // Enrich comments with commenter avatars (batched profiles read by username)
+        // — the feed sheet shows real PFPs, level with the handle.
+        const names = [...new Set((c as any[]).map((x) => x.username).filter(Boolean))];
+        let avatarMap = new Map<string, string | null>();
+        if (names.length > 0) {
+          const { data: profiles } = await supabase
+            .from("profiles").select("username, profile_image_url").in("username", names);
+          avatarMap = new Map((profiles || []).map((p) => [p.username, p.profile_image_url]));
+        }
+        setComments((c as any[]).map((x) => ({ ...x, profile_image_url: avatarMap.get(x.username) ?? null })));
       } catch (e) {
         console.error("Error loading post data:", e);
       }
@@ -208,20 +220,32 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
     if (!user || !newComment.trim()) return;
     // OPTIMISTIC: render the comment immediately, reconcile on success / mark failed.
     const text = newComment.trim();
-    const parentId = replyingTo?.parent_comment_id ? replyingTo.parent_comment_id : (replyingTo?.id ?? null);
     const tempId = `temp-${Date.now()}`;
-    const optimistic = { id: tempId, content: text, username: viewerUsername || "user", user_id: user.id, parent_comment_id: parentId, created_at: new Date().toISOString(), pending: true };
+    const optimistic = { id: tempId, content: text, username: viewerUsername || "user", user_id: user.id, profile_image_url: viewerAvatar, created_at: new Date().toISOString(), pending: true };
     setComments((prev) => [...prev, optimistic]);
     setNewComment("");
-    setReplyingTo(null);
     try {
-      const c = parentId
-        ? await replyToComment(post.id, parentId, user.id, viewerUsername || "user", text)
-        : await addComment(post.id, user.id, viewerUsername || "user", text);
-      setComments((prev) => prev.map((x) => (x.id === tempId ? c : x)));
+      const c = await addComment(post.id, user.id, viewerUsername || "user", text);
+      setComments((prev) => prev.map((x) => (x.id === tempId ? { ...c, profile_image_url: viewerAvatar } : x)));
     } catch (e) {
       console.error("Error adding comment:", e);
       setComments((prev) => prev.map((x) => (x.id === tempId ? { ...x, pending: false, failed: true } : x)));
+    }
+  };
+
+  // REPLIES → centered composer; optimistic nested insert (avatar carried).
+  const submitReply = async (text: string) => {
+    if (!user || !replyingTo) return;
+    const parentId = replyingTo.parent_comment_id ? replyingTo.parent_comment_id : replyingTo.id;
+    const tempId = `temp-${Date.now()}`;
+    setComments((prev) => [...prev, { id: tempId, content: text, username: viewerUsername || "user", user_id: user.id, profile_image_url: viewerAvatar, parent_comment_id: parentId, created_at: new Date().toISOString(), pending: true }]);
+    try {
+      const c = await replyToComment(post.id, parentId, user.id, viewerUsername || "user", text);
+      setComments((prev) => prev.map((x) => (x.id === tempId ? { ...c, profile_image_url: viewerAvatar } : x)));
+    } catch (e) {
+      console.error("Reply error:", e);
+      setComments((prev) => prev.map((x) => (x.id === tempId ? { ...x, pending: false, failed: true } : x)));
+      throw e;
     }
   };
 
@@ -412,9 +436,6 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
       >
         <div style={{ overflow: "hidden", minHeight: 0 }}>
           <div onClick={(e) => e.stopPropagation()} style={{ marginTop: 10, borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 10 }}>
-            {user && replyingTo && (
-              <ReplyingToChip handle={replyingTo.username ?? ""} onCancel={() => setReplyingTo(null)} size="var(--fs-7)" />
-            )}
             {user && (
               <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
                 <input
@@ -423,7 +444,7 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
                   value={newComment}
                   onChange={(e) => setNewComment(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleAddComment()}
-                  placeholder={replyingTo ? `reply to @${replyingTo.username}...` : "add a comment..."}
+                  placeholder="add a comment..."
                   style={{ flex: 1, background: "transparent", border: "none", borderBottom: "1px solid rgba(255,255,255,0.15)", outline: "none", ...SKR, fontSize: 'max(16px, var(--fs-8))', color: "white", padding: "2px 0" }}
                 />
                 <button
@@ -441,11 +462,19 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
                 variant="feed"
                 likeStates={likeStates}
                 onToggleLike={toggleLike}
-                onReply={(c) => { setReplyingTo(c); requestAnimationFrame(() => commentInputRef.current?.focus()); }}
+                onReply={(c) => setReplyingTo(c)}
                 onProfile={(h) => router.push('/profile/' + h)}
                 viewerDid={user?.id ?? null}
               />
             </div>
+            {replyingTo && (
+              <ReplyComposer
+                parent={replyingTo}
+                variant="mobile"
+                onClose={() => setReplyingTo(null)}
+                onSubmit={submitReply}
+              />
+            )}
           </div>
         </div>
       </div>

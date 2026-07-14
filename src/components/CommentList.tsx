@@ -10,7 +10,8 @@
 // `onReply(comment)` callback to arm their input's replying-to state.
 "use client";
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { feedImage } from "@/lib/mediaUrl";
 import {
   getCommentLikeStates,
@@ -134,7 +135,7 @@ function cfgFor(variant: CommentVariant, desktopLightbox: boolean): VCfg {
     case "scroll":
       return { avatar: true, avSize: 16, handle: "var(--fs-9)", text: "calc(var(--fs-9) + 1.2px)", hOp: 1, tOp: 0.72, heart: 12, gap: 6, indent: 26, meta: "var(--fs-7)" };
     case "feed":
-      return { avatar: false, avSize: 0, handle: "var(--fs-7)", text: "var(--fs-10)", hOp: 1, tOp: 0.72, heart: 12, gap: 6, indent: 22, meta: "var(--fs-7)" };
+      return { avatar: true, avSize: 15, handle: "var(--fs-7)", text: "var(--fs-10)", hOp: 1, tOp: 0.72, heart: 12, gap: 7, indent: 22, meta: "var(--fs-7)" };
     case "desktop":
       return {
         avatar: true, avSize: 12,
@@ -308,7 +309,8 @@ export default function CommentList({
     <>
       {groups.map(({ parent, replies }) => {
         const isOpen = expanded.has(parent.id);
-        const collapsed = replies.length > 2 && !isOpen;
+        // Never collapse while a reply is in flight — a just-posted reply must stay visible.
+        const collapsed = replies.length > 2 && !isOpen && !replies.some((r) => r.pending);
         const shown = collapsed ? [] : replies;
         return (
           <div key={parent.id}>
@@ -339,26 +341,154 @@ export default function CommentList({
   );
 }
 
-// ── Replying-to chip — dropped above each surface's own input ────────────────
-export function ReplyingToChip({
-  handle, onCancel, size = "var(--fs-8)",
+// ── Reply composer — a centered shadow-box takeover (IG-style) ───────────────
+// REPLIES get a focused overlay (the parent comment is quoted for context) instead
+// of squeezing the inline thread input. Top-level comments keep their surface's own
+// bottom composer. Discipline: scrim + centered elevated card, autofocus ≥16px, the
+// card centers in the VISIBLE viewport (rides above the mobile keyboard via
+// visualViewport), Esc / scrim tap cancels with a dirty-state confirm, and on mobile
+// it raises the body-level takeover flag so the footer pill hides.
+export function ReplyComposer({
+  parent,
+  onSubmit,
+  onClose,
+  variant = "mobile",
 }: {
-  handle: string;
-  onCancel: () => void;
-  size?: string;
+  parent: UIComment;
+  onSubmit: (text: string) => Promise<void>;
+  onClose: () => void;
+  variant?: "mobile" | "desktop";
 }) {
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-      <span style={{ ...SKR, fontSize: size, color: "rgba(255,255,255,0.45)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
-        Replying to <span style={{ ...SKB, color: "rgba(255,255,255,0.75)" }}>@{handle}</span>
-      </span>
-      <button
-        onClick={onCancel}
-        aria-label="Cancel reply"
-        style={{ background: "none", border: "none", padding: 0, cursor: "pointer", ...SKR, fontSize: size, color: "rgba(255,255,255,0.5)", lineHeight: 1 }}
+  const [text, setText] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [askDiscard, setAskDiscard] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [vv, setVv] = useState<{ h: number; top: number } | null>(null);
+
+  // Body-level takeover flag (mobile) → BottomToolbar hides the footer pill.
+  useEffect(() => {
+    if (variant !== "mobile") return;
+    const had = document.documentElement.dataset.suiteOpen;
+    document.documentElement.dataset.suiteOpen = "1";
+    window.dispatchEvent(new CustomEvent("scope:takeover-change"));
+    return () => {
+      if (!had) delete document.documentElement.dataset.suiteOpen;
+      window.dispatchEvent(new CustomEvent("scope:takeover-change"));
+    };
+  }, [variant]);
+
+  // Autofocus the input (defer a frame so the keyboard rises with the card).
+  useEffect(() => {
+    const t = setTimeout(() => inputRef.current?.focus(), 60);
+    return () => clearTimeout(t);
+  }, []);
+
+  // Track the visual viewport so the card centers ABOVE the keyboard on mobile.
+  useEffect(() => {
+    const vpo = typeof window !== "undefined" ? window.visualViewport : null;
+    if (!vpo) return;
+    const on = () => setVv({ h: vpo.height, top: vpo.offsetTop });
+    on();
+    vpo.addEventListener("resize", on);
+    vpo.addEventListener("scroll", on);
+    return () => {
+      vpo.removeEventListener("resize", on);
+      vpo.removeEventListener("scroll", on);
+    };
+  }, []);
+
+  const attemptClose = useCallback(() => {
+    if (text.trim()) setAskDiscard(true);
+    else onClose();
+  }, [text, onClose]);
+
+  // Esc cancels (through the dirty-state gate).
+  useEffect(() => {
+    const on = (e: KeyboardEvent) => { if (e.key === "Escape") { e.stopPropagation(); attemptClose(); } };
+    window.addEventListener("keydown", on, true);
+    return () => window.removeEventListener("keydown", on, true);
+  }, [attemptClose]);
+
+  const submit = async () => {
+    const t = text.trim();
+    if (!t || submitting) return;
+    setSubmitting(true);
+    try { await onSubmit(t); onClose(); }
+    catch { setSubmitting(false); }
+  };
+
+  const isDesktop = variant === "desktop";
+
+  return createPortal(
+    <div
+      style={{
+        position: "fixed", left: 0,
+        top: vv?.top ?? 0,
+        width: "100%", height: vv?.h ?? "100%",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        padding: isDesktop ? 24 : 18, zIndex: 1200,
+      }}
+    >
+      <div onClick={attemptClose} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.72)", backdropFilter: "blur(2px)", WebkitBackdropFilter: "blur(2px)" }} />
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          position: "relative", width: isDesktop ? 480 : "100%", maxWidth: isDesktop ? 480 : 440,
+          background: "#0c0c0c", border: "1px solid rgba(255,255,255,0.1)",
+          boxShadow: "0 24px 90px rgba(0,0,0,0.75)", padding: 18,
+          display: "flex", flexDirection: "column", gap: 12,
+        }}
       >
-        ✕
-      </button>
-    </div>
+        {/* Header + close */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+          <span style={{ ...SKB, fontSize: 10, color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: "0.12em" }}>
+            Replying to @{parent.username}
+          </span>
+          <button onClick={attemptClose} aria-label="Cancel reply" style={{ background: "none", border: "none", padding: 0, cursor: "pointer", ...SKR, fontSize: 18, color: "rgba(255,255,255,0.55)", lineHeight: 1 }}>✕</button>
+        </div>
+
+        {/* Parent comment quoted for context (muted, clamped) */}
+        <div style={{ borderLeft: "2px solid rgba(255,255,255,0.14)", paddingLeft: 10 }}>
+          <span style={{ ...SKB, fontSize: "var(--fs-8)", color: "rgba(255,255,255,0.6)", textTransform: "uppercase", marginRight: 5 }}>@{parent.username}</span>
+          <span style={{ ...SKR, fontSize: "var(--fs-8)", color: "rgba(255,255,255,0.4)", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{parent.content}</span>
+        </div>
+
+        {/* Input */}
+        <input
+          ref={inputRef}
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter") submit(); }}
+          placeholder={`reply to @${parent.username}…`}
+          style={{
+            width: "100%", background: "transparent", border: "none",
+            borderBottom: "1px solid rgba(255,255,255,0.18)", outline: "none",
+            ...SKR, fontSize: "max(16px, var(--fs-10))", color: "white", padding: "6px 0",
+          }}
+        />
+
+        {/* Discard confirm (dirty state) OR the POST row */}
+        {askDiscard ? (
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+            <span style={{ ...SKR, fontSize: "var(--fs-8)", color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: "0.04em" }}>Discard reply?</span>
+            <div style={{ display: "flex", gap: 16 }}>
+              <button onClick={() => setAskDiscard(false)} style={{ background: "none", border: "none", padding: 0, cursor: "pointer", ...SKB, fontSize: "var(--fs-9)", color: "rgba(255,255,255,0.55)", textTransform: "uppercase" }}>keep</button>
+              <button onClick={onClose} style={{ background: "none", border: "none", padding: 0, cursor: "pointer", ...SKB, fontSize: "var(--fs-9)", color: "#FF0000", textTransform: "uppercase" }}>discard</button>
+            </div>
+          </div>
+        ) : (
+          <div style={{ display: "flex", justifyContent: "flex-end" }}>
+            <button
+              onClick={submit}
+              disabled={!text.trim() || submitting}
+              style={{ background: "none", border: "none", padding: 0, cursor: text.trim() ? "pointer" : "default", ...SKB, fontSize: "var(--fs-10)", color: text.trim() ? "white" : "rgba(255,255,255,0.25)", textTransform: "uppercase", letterSpacing: "0.04em" }}
+            >
+              {submitting ? "posting…" : "post"}
+            </button>
+          </div>
+        )}
+      </div>
+    </div>,
+    document.body,
   );
 }
