@@ -12,6 +12,7 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { usePrivy } from "@privy-io/react-auth";
 import { getUserByPrivyId } from "@/lib/userService";
+import { supabase } from "@/lib/supabase/client";
 import { useIsDesktop } from "@/lib/useIsDesktop";
 import TrackArt from "@/components/TrackArt";
 import { peaksFromFile } from "@/lib/waveform";
@@ -65,19 +66,43 @@ function readAudioDuration(file: File): Promise<number> {
     el.src = URL.createObjectURL(file);
   });
 }
-function uploadWithProgress(file: File, userId: string, trackId: string, onProgress: (pct: number) => void): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-    xhr.open("POST", `/api/music/upload?userId=${encodeURIComponent(userId)}&trackId=${encodeURIComponent(trackId)}`);
-    xhr.setRequestHeader("content-type", file.type);
-    xhr.upload.onprogress = (e) => { if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100)); };
-    xhr.onload = () => {
-      try { const r = JSON.parse(xhr.responseText || "{}"); if (xhr.status === 200 && r.file_url) resolve(r.file_url as string); else reject(new Error(r.error || "upload failed")); }
-      catch { reject(new Error("upload failed")); }
-    };
-    xhr.onerror = () => reject(new Error("network error"));
-    xhr.send(file);
+// DIRECT-TO-STORAGE: the file never touches the serverless function (Vercel's
+// ~4.5MB request-body cap made byte-carrying uploads 500 on real 10–15MB files).
+// A tiny /api/music/sign call mints a one-time token; the browser PUTs straight to
+// Supabase Storage. (Supabase's storage upload has no granular progress event, so
+// the row shows an indeterminate uploading state — reported.)
+async function directUpload(file: File, userId: string, trackId: string): Promise<string> {
+  const ext = AUDIO_MIME_EXT[(file.type || "").toLowerCase()];
+  if (!ext) throw new Error("unsupported audio type");
+  const signRes = await fetch("/api/music/sign", {
+    method: "POST", headers: { "content-type": "application/json" },
+    body: JSON.stringify({ userId, trackId, ext }),
   });
+  const sign = await signRes.json().catch(() => ({}));
+  if (!signRes.ok || !sign.token || !sign.path) throw new Error(sign.error || "sign failed");
+  const { error } = await supabase.storage.from("music").uploadToSignedUrl(sign.path, sign.token, file, { contentType: file.type });
+  if (error) throw error;
+  if (!sign.publicUrl) throw new Error("no url");
+  return sign.publicUrl as string;
+}
+
+// Downscale a source image before the (small-body) artwork bake POST, so a large
+// cover can't hit the same ~4.5MB function-body cap. sharp still bakes 600² WebP.
+async function downscaleForUpload(file: File, maxDim = 1400): Promise<Blob> {
+  try {
+    const img = await createImageBitmap(file);
+    const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+    if (scale >= 1 && file.size < 3_500_000) { img.close?.(); return file; }
+    const w = Math.max(1, Math.round(img.width * scale)), h = Math.max(1, Math.round(img.height * scale));
+    const canvas = document.createElement("canvas");
+    canvas.width = w; canvas.height = h;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) { img.close?.(); return file; }
+    ctx.drawImage(img, 0, 0, w, h);
+    img.close?.();
+    const blob = await new Promise<Blob | null>((r) => canvas.toBlob(r, "image/jpeg", 0.9));
+    return blob ?? file;
+  } catch { return file; }
 }
 
 export default function ContributeMusicFlow({ onClose }: { onClose: () => void }) {
@@ -140,10 +165,10 @@ export default function ContributeMusicFlow({ onClose }: { onClose: () => void }
   const startUpload = async (row: Row) => {
     const uid = userUuidRef.current ?? userUuid;
     if (!uid) { patchRow(row.localId, { status: "failed" }); return; }
-    patchRow(row.localId, { status: "uploading", progress: 0 });
+    patchRow(row.localId, { status: "uploading", progress: 20 }); // indeterminate — direct upload has no progress event
     try {
-      const url = await uploadWithProgress(row.file, uid, row.trackId, (p) => patchRow(row.localId, { progress: p }));
-      patchRow(row.localId, { fileUrl: url, status: "done" });
+      const url = await directUpload(row.file, uid, row.trackId);
+      patchRow(row.localId, { fileUrl: url, status: "done", progress: 100 });
       // Decode the waveform peaks client-side (serialized globally in waveform.ts →
       // 12 parallel uploads decode one-at-a-time, bounding memory). Non-blocking.
       peaksFromFile(row.file).then((peaks) => { if (peaks.length) patchRow(row.localId, { peaks }); }).catch(() => {});
@@ -213,7 +238,8 @@ export default function ContributeMusicFlow({ onClose }: { onClose: () => void }
     if (!row || !uid) return;
     patchRow(localId, { artBusy: true });
     try {
-      const res = await fetch(`/api/music/artwork?userId=${encodeURIComponent(uid)}&trackId=${encodeURIComponent(row.trackId)}`, { method: "POST", headers: { "content-type": file.type }, body: file });
+      const blob = await downscaleForUpload(file); // keep the art POST body well under the function cap
+      const res = await fetch(`/api/music/artwork?userId=${encodeURIComponent(uid)}&trackId=${encodeURIComponent(row.trackId)}`, { method: "POST", headers: { "content-type": blob.type || "image/jpeg" }, body: blob });
       const r = await res.json().catch(() => ({}));
       patchRow(localId, { artUrl: res.ok ? (r.artwork_url ?? null) : row.artUrl, artBusy: false });
       if (!res.ok) setError("Artwork upload failed — try again.");
