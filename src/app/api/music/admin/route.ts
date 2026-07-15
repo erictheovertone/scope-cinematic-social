@@ -46,50 +46,62 @@ export async function POST(req: NextRequest) {
   try { body = await req.json(); } catch { return NextResponse.json({ error: 'bad json' }, { status: 400 }); }
 
   const adminUserId = String(body.adminUserId ?? '');
-  const trackId = String(body.trackId ?? '');
   const action = String(body.action ?? '');
   if (!isAdminUser(adminUserId)) return NextResponse.json({ error: 'forbidden' }, { status: 403 });
-  if (!trackId || (action !== 'approve' && action !== 'reject')) {
-    return NextResponse.json({ error: 'trackId + action(approve|reject) required' }, { status: 400 });
+  // Accept a batch (trackIds[]) or a single (trackId) — one code path for both, so
+  // APPROVE ALL / REJECT ALL and single decisions behave identically.
+  const trackIds: string[] = Array.isArray(body.trackIds)
+    ? body.trackIds.map(String).filter(Boolean)
+    : (body.trackId ? [String(body.trackId)] : []);
+  if (trackIds.length === 0 || (action !== 'approve' && action !== 'reject')) {
+    return NextResponse.json({ error: 'trackId(s) + action(approve|reject) required' }, { status: 400 });
   }
 
   const supabase = svc();
 
   if (action === 'reject') {
-    const { error } = await supabase.from('tracks').update({ status: 'rejected', approved_at: null }).eq('id', trackId);
+    // Silent (matches M1 — a rejection doesn't notify; the composer can resubmit).
+    const { error } = await supabase.from('tracks').update({ status: 'rejected', approved_at: null }).in('id', trackIds);
     if (error) return NextResponse.json({ error: 'update failed' }, { status: 500 });
-    return NextResponse.json({ ok: true, status: 'rejected' });
+    return NextResponse.json({ ok: true, status: 'rejected', count: trackIds.length });
   }
 
-  // approve
-  const { data: track, error } = await supabase
+  // approve the whole set at once
+  const { data: approved, error } = await supabase
     .from('tracks')
     .update({ status: 'approved', approved_at: new Date().toISOString() })
-    .eq('id', trackId)
-    .select('id, title, composer_user_id')
-    .single();
-  if (error || !track) return NextResponse.json({ error: 'update failed' }, { status: 500 });
+    .in('id', trackIds)
+    .select('id, title, composer_user_id');
+  if (error) return NextResponse.json({ error: 'update failed' }, { status: 500 });
 
-  // Fire-and-forget: notify the composer. recipient_id is a Privy DID → translate
-  // composer_user_id (users.id uuid) → users.privy_id (see postsService convention).
+  // Fire-and-forget: ONE notification per composer per DECISION WAVE (a 12-batch
+  // doesn't spam 12 bells). recipient_id is a Privy DID → translate composer uuid →
+  // users.privy_id. The badge auto-derives from the approved rows (first-approval
+  // award; already-held is a no-op).
   ;(async () => {
     try {
-      const { data: composerUser } = await supabase.from('users').select('privy_id').eq('id', track.composer_user_id).single();
-      const did = composerUser?.privy_id;
-      if (!did) return;
-      await supabase.from('notifications').insert({
-        recipient_id: did,
-        sender_id: adminUserId,
-        sender_username: 'SCOPE',
-        sender_avatar: null,
-        type: 'badge',
-        message: `Your track "${track.title}" was approved — you've earned the COMPOSER badge`,
-        is_read: false,
-      });
+      const byComposer = new Map<string, { count: number; firstTitle: string }>();
+      for (const t of approved ?? []) {
+        const g = byComposer.get(t.composer_user_id) ?? { count: 0, firstTitle: t.title };
+        g.count += 1;
+        byComposer.set(t.composer_user_id, g);
+      }
+      for (const [uuid, g] of byComposer) {
+        const { data: composerUser } = await supabase.from('users').select('privy_id').eq('id', uuid).single();
+        const did = composerUser?.privy_id;
+        if (!did) continue;
+        const message = g.count === 1
+          ? `Your track "${g.firstTitle}" was approved — you've earned the COMPOSER badge`
+          : `${g.count} of your tracks were approved — you've earned the COMPOSER badge`;
+        await supabase.from('notifications').insert({
+          recipient_id: did, sender_id: adminUserId, sender_username: 'SCOPE',
+          sender_avatar: null, type: 'badge', message, is_read: false,
+        });
+      }
     } catch (e) {
       console.error('composer approval notification error:', e);
     }
   })();
 
-  return NextResponse.json({ ok: true, status: 'approved' });
+  return NextResponse.json({ ok: true, status: 'approved', count: (approved ?? []).length });
 }

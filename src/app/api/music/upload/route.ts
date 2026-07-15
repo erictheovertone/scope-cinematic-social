@@ -39,3 +39,31 @@ export async function POST(req: NextRequest) {
   const { data } = supabase.storage.from('music').getPublicUrl(path);
   return NextResponse.json({ file_url: data?.publicUrl ?? null });
 }
+
+// DELETE — abandon cleanup. When the contribution flow closes WITHOUT submitting,
+// the client best-effort removes the audio it uploaded so orphaned storage can't
+// accumulate. Body: { userId, fileUrls: string[] }. Only paths under the caller's
+// own folder are removed (a safety guard on a service-role delete).
+export async function DELETE(req: NextRequest) {
+  let body: Record<string, unknown>;
+  try { body = await req.json(); } catch { return NextResponse.json({ error: 'bad json' }, { status: 400 }); }
+  const userId = String(body.userId ?? '');
+  const fileUrls: string[] = Array.isArray(body.fileUrls) ? body.fileUrls.map(String) : [];
+  if (!userId || fileUrls.length === 0) return NextResponse.json({ error: 'userId, fileUrls required' }, { status: 400 });
+
+  const prefix = `${userId.replace(/[^a-zA-Z0-9-]/g, '_')}/`;
+  const marker = '/object/public/music/';
+  const paths = fileUrls
+    .map((u) => { const i = u.indexOf(marker); return i >= 0 ? u.slice(i + marker.length).split('?')[0] : null; })
+    .filter((p): p is string => !!p && p.startsWith(prefix)); // never delete outside the caller's folder
+  if (paths.length === 0) return NextResponse.json({ ok: true, removed: 0 });
+
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { persistSession: false } },
+  );
+  const { error } = await supabase.storage.from('music').remove(paths);
+  if (error) { console.error('music cleanup error:', error); return NextResponse.json({ error: 'cleanup failed' }, { status: 500 }); }
+  return NextResponse.json({ ok: true, removed: paths.length });
+}
