@@ -48,7 +48,13 @@ export async function POST(req: NextRequest) {
   const waveformPeaks = Array.isArray(body.waveformPeaks) && body.waveformPeaks.length && body.waveformPeaks.length <= 2000
     && body.waveformPeaks.every((n) => typeof n === 'number' && n >= 0 && n <= 1)
     ? body.waveformPeaks : null;
+  console.log('[contrib] submit received', { id, titleLen: title.length, kw: keywords.length, hasArt: !!artworkUrl, peaks: waveformPeaks?.length ?? 0 });
 
+  // ── CORE INSERT — M1 columns ONLY (guaranteed to exist) ──────────────────────
+  // The critical path. artwork_url / waveform_peaks are DELIBERATELY excluded here:
+  // if the M2/M3 migration hasn't been run, including them makes the whole insert
+  // error → a 500 that sinks EVERY row of the batch. They land as a best-effort
+  // follow-up below instead, so a missing optional column can never sink a submit.
   const { data, error } = await supabase.from('tracks').upsert({
     id,
     composer_user_id: userId,
@@ -56,15 +62,29 @@ export async function POST(req: NextRequest) {
     keywords,
     duration_seconds: duration,
     file_url: fileUrl,
-    artwork_url: artworkUrl,
-    waveform_peaks: waveformPeaks,
     status: 'pending',
     approved_at: null,
   }, { onConflict: 'id' }).select('id, status').single();
 
   if (error) {
-    console.error('track submit error:', error);
-    return NextResponse.json({ error: 'submit failed' }, { status: 500 });
+    console.error('[contrib] core insert FAILED', id, error);
+    return NextResponse.json({ error: 'submit failed', detail: error.message }, { status: 500 });
   }
+  console.log('[contrib] core insert ok', id);
+
+  // ── OPTIONAL COLUMNS — best-effort, NEVER blocks the submission ──────────────
+  // A missing column (un-run artwork/waveform migration) or any error here is
+  // swallowed: the track already landed pending. Peaks also self-heal on first
+  // view (/api/music/waveform); art fills in once the migration runs + re-submit.
+  if (artworkUrl || waveformPeaks) {
+    const patch: Record<string, unknown> = {};
+    if (artworkUrl) patch.artwork_url = artworkUrl;
+    if (waveformPeaks) patch.waveform_peaks = waveformPeaks;
+    const { error: optErr } = await supabase.from('tracks').update(patch).eq('id', id);
+    if (optErr) console.warn('[contrib] optional cols skipped (run the art/waveform migration):', optErr.message);
+    else console.log('[contrib] optional cols ok', id);
+  }
+
+  console.log('[contrib] submit done', id);
   return NextResponse.json({ track: data });
 }

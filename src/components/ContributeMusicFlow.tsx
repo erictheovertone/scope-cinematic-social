@@ -262,19 +262,22 @@ export default function ContributeMusicFlow({ onClose }: { onClose: () => void }
     if (!userUuid || submitting) return;
     setSubmitting(true); setError(null);
     const targets = rowsRef.current.filter((r) => r.status === "done" && r.fileUrl);
-    let anyFail = false;
+    // Per-track POSTs, fully isolated — one bad row fails alone, the rest land.
+    let ok = 0;
     await Promise.all(targets.map(async (r) => {
       try {
         const res = await fetch("/api/music/submit", {
           method: "POST", headers: { "content-type": "application/json" },
           body: JSON.stringify({ id: r.trackId, userId: userUuid, title: r.title.trim(), keywords: r.keywords, durationSeconds: Math.round(r.duration), fileUrl: r.fileUrl, artworkUrl: r.artUrl, waveformPeaks: r.peaks }),
         });
-        if (!res.ok) anyFail = true;
-      } catch { anyFail = true; }
+        if (res.ok) ok++;
+      } catch { /* counted as not-ok */ }
     }));
     submittedRef.current = true; // committed — do NOT clean these files up on close
     setSubmitting(false);
-    if (anyFail) { setError("Some tracks didn't submit — try again."); return; }
+    // Aggregated admin alert — ONE per batch, fire-and-forget (never blocks).
+    if (ok > 0) fetch("/api/music/notify-admin", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ count: ok }), keepalive: true }).catch(() => {});
+    if (ok < targets.length) { setError(`${ok} of ${targets.length} submitted — retry the rest.`); if (ok === 0) return; }
     setStep("done");
   };
 
