@@ -148,6 +148,7 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
   // description WITHOUT leaving the sheet; Back from the detail returns to the list
   // (not the profile). Sheet close (onClose) returns to the profile.
   const [detailKey, setDetailKey] = useState<string | null>(null);
+  const [viewerHandle, setViewerHandle] = useState<string | null>(null); // for the held-composer → discography route
   // The SAME scroller renders the list AND the detail (detailKey swaps content
   // in place) — its scrollTop persisted across the swap, so details opened
   // half-scrolled. Reset on every switch, both directions, every tier.
@@ -182,6 +183,7 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
         if (!sbUser || cancelled) return;
         const p = await getProfile(sbUser.id) as any;
         if (!p || cancelled) return;
+        setViewerHandle(p.username ?? null);
         // First Cut via the ONE engine (balance-joined active holdings) — this
         // sheet used to run its own raw first_cut_awards count, which kept
         // showing released (dust) positions after banner/bio cleared.
@@ -390,7 +392,7 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
           return O.indexOf(a.key) - O.indexOf(b.key);
         }).map((tier, i) => (
           <div key={tier.key} id={`badge-tier-${tier.key}`}>
-            <div onClick={() => setDetailKey(tier.key)} style={{ display: 'flex', gap: 16, marginBottom: 24, alignItems: 'flex-start', cursor: 'pointer', animation: visible ? `badgeRippleIn 300ms ease-out ${i * 45}ms both` : undefined }}>
+            <div onClick={() => { if (tier.key === 'composer' && vComposerTrackCount > 0 && viewerHandle) { onClose(); router.push(`/composer/${viewerHandle}`); } else setDetailKey(tier.key); }} style={{ display: 'flex', gap: 16, marginBottom: 24, alignItems: 'flex-start', cursor: 'pointer', animation: visible ? `badgeRippleIn 300ms ease-out ${i * 45}ms both` : undefined }}>
               <div style={{ flexShrink: 0, marginTop: 2, position: 'relative', width: tier.size, height: tier.size }}>
                 {/* Flat min-design icon — consistent with the BADGES EARNED grid
                     above (no 3D/glow; the new flat assets don't suit a round coin). */}

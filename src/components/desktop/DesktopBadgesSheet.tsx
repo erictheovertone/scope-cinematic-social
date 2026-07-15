@@ -23,13 +23,15 @@ const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fon
 const HAIR = 'rgba(255,255,255,0.12)';
 
 export default function DesktopBadgesSheet({
-  flags, isOwn, onClose,
+  flags, isOwn, onClose, composerHandle,
 }: {
   /** The viewed profile's tier flags — the shared model resolves state. */
   flags: BadgeFlags;
   /** Own profile → the PRO buy CTA links to the upsell (self-serve). */
   isOwn: boolean;
   onClose: () => void;
+  /** The viewed profile's @handle — a HELD composer row routes to their discography. */
+  composerHandle?: string;
 }) {
   const { goPro } = useUpsell();
   const router = useRouter();
@@ -139,9 +141,17 @@ export default function DesktopBadgesSheet({
                 <p style={{ ...SKR, fontSize: 12, color: 'rgba(255,255,255,0.55)', lineHeight: 1.5, margin: '6px 0 0' }}>{BADGE_BLURBS[k]}</p>
                 {/* two clear paths: LEARN MORE → the full descriptor · GET PRO → membership */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 18, marginTop: 10 }}>
-                  <button onClick={() => setDetailKey(k)} style={{ ...SKB, fontSize: 11, color: 'rgba(255,255,255,0.75)', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>
-                    LEARN MORE →
-                  </button>
+                  {/* HELD composer → the work (discography); everyone else / locked
+                      composer → the earn-path descriptor. Coherent with held-vs-locked. */}
+                  {k === 'composer' && state === 'held' && composerHandle ? (
+                    <button onClick={() => { onClose(); router.push(`/composer/${composerHandle}`); }} style={{ ...SKB, fontSize: 11, color: 'rgba(255,255,255,0.75)', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>
+                      DISCOGRAPHY →
+                    </button>
+                  ) : (
+                    <button onClick={() => setDetailKey(k)} style={{ ...SKB, fontSize: 11, color: 'rgba(255,255,255,0.75)', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>
+                      LEARN MORE →
+                    </button>
+                  )}
                   {state === 'buyable' && isOwn && (
                     <button onClick={(e) => { e.stopPropagation(); onClose(); goPro(); }} style={{ ...SKB, fontSize: 11, color: '#f20d0d', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>
                       GET PRO →

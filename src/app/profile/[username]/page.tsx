@@ -289,7 +289,7 @@ export default function PublicProfilePage() {
             badges={resolveBadges({ isFoundingMember, isTopCollector, isScreeningRoomHolder, isPaidMember, isInHouseCreator, firstCutCount, composerTrackCount })
               .filter((b) => b.bannerSrc)
               .map((b) => ({ key: b.key, src: (b.framedSrc ?? b.bannerSrc) as string, title: b.title }))}
-            onPress={() => setShowBadgeSheet(true)}
+            onPress={(key) => { if (key === 'composer' && composerTrackCount > 0 && profile?.username) router.push(`/composer/${profile.username}`); else setShowBadgeSheet(true); }}
           />
         </div>
 

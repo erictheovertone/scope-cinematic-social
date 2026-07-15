@@ -67,7 +67,10 @@ export default function BannerBadgeStrip({
   holo?: boolean;
   pullKey?: string | null;
   arriveKeys?: string[] | null;
-  onPress?: () => void;
+  /** Tapping a badge calls this with that badge's key; tapping the strip backdrop
+      calls it with no key. Lets the profile route a HELD composer badge to the
+      discography while other badges open the badges sheet. */
+  onPress?: (key?: string) => void;
 }) {
   // FLIP refs: existing icons slide from their pre-insertion rects → new
   // positions BEFORE the newcomer lands (no jump-cut reflow).
@@ -162,8 +165,10 @@ export default function BannerBadgeStrip({
               src={b.src}
               alt={b.title ?? b.key}
               className={arriving ? 'badge-arrive' : pull ? 'focus-pull' : undefined}
+              onClick={onPress ? (e) => { e.stopPropagation(); onPress(b.key); } : undefined}
               style={{
                 position: 'relative', zIndex: 1, width: framed ? 19 : sz, height: framed ? 14 : sz, objectFit: 'contain', display: 'block',
+                cursor: onPress ? 'pointer' : 'default',
                 ...(pull && !arriving ? { animation: 'focusPull 2s cubic-bezier(0.16,0.84,0.3,1) both' } : null),
               }}
             />

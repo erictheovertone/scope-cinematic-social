@@ -438,7 +438,7 @@ const userLayoutId = stableLayoutId;
             .map((b) => ({ key: b.key, src: (b.framedSrc ?? b.bannerSrc) as string, title: b.title }))}
           pullKey={firstCutPull}
           arriveKeys={arriveKeys}
-          onPress={() => setShowBadgeSheet(true)}
+          onPress={(key) => { if (key === 'composer' && composerTrackCount > 0 && userProfile.username) router.push(`/composer/${userProfile.username}`); else setShowBadgeSheet(true); }}
         />
       </div>
 
