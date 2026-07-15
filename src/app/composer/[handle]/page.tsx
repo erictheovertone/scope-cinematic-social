@@ -14,6 +14,8 @@ import { feedImage } from "@/lib/mediaUrl";
 import { getUserByPrivyId } from "@/lib/userService";
 import ContributeMusicFlow from "@/components/ContributeMusicFlow";
 import TrackArt from "@/components/TrackArt";
+import Waveform from "@/components/Waveform";
+import { backfillPeaks } from "@/lib/waveform";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -27,6 +29,7 @@ interface Track {
   duration_seconds: number | null;
   file_url: string;
   artwork_url: string | null;
+  waveform_peaks: number[] | null;
   approved_at: string | null;
   created_at: string;
 }
@@ -56,6 +59,7 @@ export default function ComposerDiscographyPage() {
   const [viewerIsComposer, setViewerIsComposer] = useState<boolean | null>(null);
   const [viewerIsOwner, setViewerIsOwner] = useState(false);
   const [playing, setPlaying] = useState<string | null>(null);
+  const [progress, setProgress] = useState(0); // 0..1 for the playing track
   const [showContribute, setShowContribute] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -72,7 +76,7 @@ export default function ComposerDiscographyPage() {
       setProfile(p as Profile);
 
       const { data: tk } = await supabase
-        .from("tracks").select("id, title, keywords, duration_seconds, file_url, artwork_url, approved_at, created_at")
+        .from("tracks").select("id, title, keywords, duration_seconds, file_url, artwork_url, waveform_peaks, approved_at, created_at")
         .eq("composer_user_id", (p as Profile).user_id).eq("status", "approved")
         .order("created_at", { ascending: false });
       const rows = (tk ?? []) as Track[];
@@ -121,15 +125,39 @@ export default function ComposerDiscographyPage() {
     if (!a) return;
     if (playing === t.id) { a.pause(); setPlaying(null); return; }
     a.src = t.file_url;
+    setProgress(0);
     a.play().then(() => setPlaying(t.id)).catch(() => setPlaying(null));
   };
+
+  // Scrub anywhere on a track's wave → seek (starting playback there if idle).
+  const seekTrack = (t: Track, pct: number) => {
+    const a = audioRef.current;
+    if (!a) return;
+    setProgress(pct);
+    const apply = () => { if (a.duration && isFinite(a.duration)) a.currentTime = pct * a.duration; };
+    if (playing === t.id) { apply(); return; }
+    a.src = t.file_url;
+    a.play().then(() => { setPlaying(t.id); a.addEventListener("loadedmetadata", apply, { once: true }); apply(); }).catch(() => {});
+  };
+
+  // Legacy self-heal — decode peaks for any peakless track on first view (guarded
+  // per id + serialized in waveform.ts), then patch it into state.
+  useEffect(() => {
+    if (!tracks) return;
+    tracks.forEach((t) => {
+      if ((!t.waveform_peaks || t.waveform_peaks.length === 0) && t.file_url) {
+        backfillPeaks(t.id, t.file_url).then((p) => { if (p) setTracks((cur) => cur?.map((x) => (x.id === t.id ? { ...x, waveform_peaks: p } : x)) ?? cur); });
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tracks?.length]);
 
   // Zero approved tracks (or unknown handle) — unreachable by design; a quiet state.
   const empty = tracks !== null && tracks.length === 0;
 
   return (
     <div style={{ minHeight: "100vh", background: "#000", color: "#FFF" }}>
-      <audio ref={audioRef} onEnded={() => setPlaying(null)} />
+      <audio ref={audioRef} onEnded={() => { setPlaying(null); setProgress(0); }} onTimeUpdate={() => { const a = audioRef.current; if (a && a.duration && isFinite(a.duration)) setProgress(a.currentTime / a.duration); }} />
 
       {/* ── BANNER — album-art-style blurred underlay + sharp portrait ─────────
           (No standalone banner component exists to import — the profile header is
@@ -184,7 +212,10 @@ export default function ComposerDiscographyPage() {
                   <span style={{ ...SKB, fontSize: 14, color: "#FFF", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t.title}</span>
                   <span style={{ ...SKR, fontSize: 11, color: "rgba(255,255,255,0.4)", flexShrink: 0 }}>{fmt(t.duration_seconds)}</span>
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4, flexWrap: "wrap" }}>
+                <div style={{ margin: "6px 0 5px" }}>
+                  <Waveform peaks={t.waveform_peaks} progress={isPlaying ? progress : 0} onSeek={(pct) => seekTrack(t, pct)} height={34} />
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                   {t.keywords.slice(0, 4).map((k) => (
                     <span key={k} style={{ ...SKR, fontSize: 10.5, color: "rgba(255,255,255,0.4)", border: `1px solid ${HAIR}`, padding: "2px 7px" }}>{k}</span>
                   ))}

@@ -14,6 +14,7 @@ import { usePrivy } from "@privy-io/react-auth";
 import { getUserByPrivyId } from "@/lib/userService";
 import { useIsDesktop } from "@/lib/useIsDesktop";
 import TrackArt from "@/components/TrackArt";
+import { peaksFromFile } from "@/lib/waveform";
 import {
   MUSIC_TAXONOMY, KEYWORDS_MIN, KEYWORDS_MAX, TITLE_MAX,
   AUDIO_MAX_BYTES, AUDIO_MAX_SECONDS, AUDIO_MIME_EXT, MUSIC_LICENSE_COPY,
@@ -41,6 +42,7 @@ interface Row {
   progress: number;
   artUrl: string | null;   // optional square cover (600² WebP)
   artBusy: boolean;
+  peaks: number[] | null;  // ~300 normalized peaks, decoded client-side
 }
 
 function cleanTitle(name: string): string {
@@ -142,6 +144,9 @@ export default function ContributeMusicFlow({ onClose }: { onClose: () => void }
     try {
       const url = await uploadWithProgress(row.file, uid, row.trackId, (p) => patchRow(row.localId, { progress: p }));
       patchRow(row.localId, { fileUrl: url, status: "done" });
+      // Decode the waveform peaks client-side (serialized globally in waveform.ts →
+      // 12 parallel uploads decode one-at-a-time, bounding memory). Non-blocking.
+      peaksFromFile(row.file).then((peaks) => { if (peaks.length) patchRow(row.localId, { peaks }); }).catch(() => {});
     } catch {
       patchRow(row.localId, { status: "failed" });
     }
@@ -164,7 +169,7 @@ export default function ContributeMusicFlow({ onClose }: { onClose: () => void }
         localId: newId(), file, fileName: file.name, trackId: newId(),
         title: cleanTitle(file.name), keywords: [], duration: dur,
         fileUrl: null, status: "uploading", progress: 0,
-        artUrl: null, artBusy: false,
+        artUrl: null, artBusy: false, peaks: null,
       });
     }
     if (list.length > room) setError(`Only ${room} more allowed (max ${BATCH_CAP} per submission).`);
@@ -236,7 +241,7 @@ export default function ContributeMusicFlow({ onClose }: { onClose: () => void }
       try {
         const res = await fetch("/api/music/submit", {
           method: "POST", headers: { "content-type": "application/json" },
-          body: JSON.stringify({ id: r.trackId, userId: userUuid, title: r.title.trim(), keywords: r.keywords, durationSeconds: Math.round(r.duration), fileUrl: r.fileUrl, artworkUrl: r.artUrl }),
+          body: JSON.stringify({ id: r.trackId, userId: userUuid, title: r.title.trim(), keywords: r.keywords, durationSeconds: Math.round(r.duration), fileUrl: r.fileUrl, artworkUrl: r.artUrl, waveformPeaks: r.peaks }),
         });
         if (!res.ok) anyFail = true;
       } catch { anyFail = true; }

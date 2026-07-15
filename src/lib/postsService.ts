@@ -575,11 +575,11 @@ export const updatePostMusic = async (
   postId: string,
   musicTrackId: string | null,
   musicMode: 'bed' | 'music_only' | null,
+  musicStartSeconds?: number | null, // omit (undefined) to leave the clip offset untouched
 ): Promise<{ ok: boolean }> => {
-  const { error } = await supabase
-    .from('posts')
-    .update({ music_track_id: musicTrackId, music_mode: musicMode })
-    .eq('id', postId);
+  const patch: Record<string, unknown> = { music_track_id: musicTrackId, music_mode: musicMode };
+  if (musicStartSeconds !== undefined) patch.music_start_seconds = musicStartSeconds;
+  const { error } = await supabase.from('posts').update(patch).eq('id', postId);
   if (error) { console.error('[updatePostMusic] error:', JSON.stringify(error)); return { ok: false }; }
   return { ok: true };
 };

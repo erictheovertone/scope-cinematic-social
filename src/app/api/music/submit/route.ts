@@ -45,6 +45,9 @@ export async function POST(req: NextRequest) {
   if (!composer) return NextResponse.json({ error: 'unknown user' }, { status: 403 });
 
   const artworkUrl = typeof body.artworkUrl === 'string' && body.artworkUrl ? body.artworkUrl : null;
+  const waveformPeaks = Array.isArray(body.waveformPeaks) && body.waveformPeaks.length && body.waveformPeaks.length <= 2000
+    && body.waveformPeaks.every((n) => typeof n === 'number' && n >= 0 && n <= 1)
+    ? body.waveformPeaks : null;
 
   const { data, error } = await supabase.from('tracks').upsert({
     id,
@@ -54,6 +57,7 @@ export async function POST(req: NextRequest) {
     duration_seconds: duration,
     file_url: fileUrl,
     artwork_url: artworkUrl,
+    waveform_peaks: waveformPeaks,
     status: 'pending',
     approved_at: null,
   }, { onConflict: 'id' }).select('id, status').single();

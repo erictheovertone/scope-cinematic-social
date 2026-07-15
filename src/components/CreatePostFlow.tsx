@@ -36,6 +36,7 @@ import {
 import FinishingPreview from '@/components/finishing/FinishingPreview';
 import SnippetSelector from '@/components/finishing/SnippetSelector';
 import MusicPicker, { type LibraryTrack } from '@/components/MusicPicker';
+import ClipSelector from '@/components/ClipSelector';
 
 function profileLayoutToAspect(layoutId: string): number {
   switch (layoutId) {
@@ -267,6 +268,8 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
   const [musicTrackId, setMusicTrackId] = useState<string | null>(null);
   const [musicTrack, setMusicTrack] = useState<LibraryTrack | null>(null);
   const [musicMode, setMusicMode] = useState<'bed' | 'music_only' | null>(null);
+  const [musicStart, setMusicStart] = useState(0); // clip start offset (seconds) → posts.music_start_seconds
+  const [videoDuration, setVideoDuration] = useState(0); // selected video's length → the clip window width
   const [showMusicPicker, setShowMusicPicker] = useState(false);
   // Real Pro status + grid gating for FINISHING, resolved via the verified path
   // (DID → getUserByPrivyId → getProfile → isProMember). uuid typing respected.
@@ -277,6 +280,15 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
   const [proTick, setProTick] = useState(0);
   const [chosenLayoutId, setChosenLayoutId] = useState<string | null>(null);
   const [selectedMedia, setSelectedMedia] = useState<MediaItem[]>([]);
+  // Read the selected video's duration (the clip window matches it for video posts).
+  useEffect(() => {
+    if (selectedMedia[0]?.type !== 'video' || !selectedMedia[0]?.url) { setVideoDuration(0); return; }
+    const v = document.createElement('video');
+    v.preload = 'metadata';
+    v.onloadedmetadata = () => setVideoDuration(isFinite(v.duration) ? v.duration : 0);
+    v.src = selectedMedia[0].url;
+    return () => { v.src = ''; };
+  }, [selectedMedia]);
   const [caption, setCaption] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const [isPosting, setIsPosting] = useState(false);
@@ -819,7 +831,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
       // follow-up UPDATE, never awaited. A failure degrades to "published without
       // music" + a quiet log — it can never block publish or the mint that follows.
       if (newPost?.id && musicTrackId) {
-        updatePostMusic(newPost.id, musicTrackId, musicMode)
+        updatePostMusic(newPost.id, musicTrackId, musicMode, musicStart)
           .then((r) => { if (!r.ok) console.warn('[music] attach failed — post published without music'); })
           .catch(() => console.warn('[music] attach threw — post published without music'));
       }
@@ -875,6 +887,8 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
     setMusicTrackId(null);
     setMusicTrack(null);
     setMusicMode(null);
+    setMusicStart(0);
+    setVideoDuration(0);
     setShowMusicPicker(false);
     setPendingMintData(null);
     setShowMintPrompt(false);
@@ -1365,6 +1379,19 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
                     })}
                   </div>
                 )}
+                {/* CLIP SELECTOR — image posts get a fixed 20s window; videos get a
+                    window the length of the video. Drag to choose the section; the
+                    video-longer-than-track case falls to the whole track (loops). */}
+                {musicTrack?.file_url && (
+                  <ClipSelector
+                    fileUrl={musicTrack.file_url}
+                    peaks={musicTrack.waveform_peaks}
+                    trackDuration={musicTrack.duration_seconds ?? 0}
+                    windowSeconds={selectedMedia[0]?.type === 'video' ? (videoDuration || (musicTrack.duration_seconds ?? 20)) : 20}
+                    startSeconds={musicStart}
+                    onChange={setMusicStart}
+                  />
+                )}
               </>
             )}
           </div>
@@ -1627,6 +1654,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
           onSelect={(t) => {
             setMusicTrackId(t.id);
             setMusicTrack(t);
+            setMusicStart(0); // clip window defaults to the track start
             // Video → default the layering to 'bed' (keep an existing choice on swap);
             // image/no-original-audio → mode stays null (nothing to layer against).
             setMusicMode(selectedMedia[0]?.type === 'video' ? (musicMode ?? 'bed') : null);

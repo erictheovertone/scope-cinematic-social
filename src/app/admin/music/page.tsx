@@ -13,6 +13,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import TrackArt from "@/components/TrackArt";
+import Waveform from "@/components/Waveform";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -27,6 +28,7 @@ interface PendingTrack {
   duration_seconds: number | null;
   file_url: string;
   artwork_url: string | null;
+  waveform_peaks: number[] | null;
   created_at: string;
 }
 
@@ -122,6 +124,7 @@ export default function AdminMusicPage() {
                     <span key={k} style={{ ...SKR, fontSize: 11, color: "rgba(255,255,255,0.55)", border: `1px solid ${HAIR}`, padding: "3px 8px" }}>{k}</span>
                   ))}
                 </div>
+                <Waveform peaks={t.waveform_peaks} height={30} />
                 {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
                 <audio src={t.file_url} controls preload="none" style={{ width: "100%", height: 34 }} />
                 <div style={{ display: "flex", gap: 20 }}>

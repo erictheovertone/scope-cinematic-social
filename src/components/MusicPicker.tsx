@@ -10,6 +10,8 @@ import { createPortal } from "react-dom";
 import { supabase } from "@/lib/supabase/client";
 import { MUSIC_TAXONOMY } from "@/lib/musicTaxonomy";
 import TrackArt from "@/components/TrackArt";
+import Waveform from "@/components/Waveform";
+import { backfillPeaks } from "@/lib/waveform";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -24,6 +26,7 @@ export interface LibraryTrack {
   duration_seconds: number | null;
   file_url: string;
   artwork_url: string | null;
+  waveform_peaks: number[] | null;
 }
 
 function fmt(s: number | null): string {
@@ -43,6 +46,7 @@ export default function MusicPicker({
   const [q, setQ] = useState("");
   const [chips, setChips] = useState<string[]>([]);
   const [playing, setPlaying] = useState<string | null>(null);
+  const [progress, setProgress] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // Footer-pill takeover while the picker is up; stop preview on unmount.
@@ -62,7 +66,7 @@ export default function MusicPicker({
     (async () => {
       const { data } = await supabase
         .from("tracks")
-        .select("id, title, composer_user_id, keywords, duration_seconds, file_url, artwork_url")
+        .select("id, title, composer_user_id, keywords, duration_seconds, file_url, artwork_url, waveform_peaks")
         .eq("status", "approved")
         .order("created_at", { ascending: false })
         .limit(300);
@@ -76,6 +80,17 @@ export default function MusicPicker({
     })();
     return () => { dead = true; };
   }, []);
+
+  // Legacy self-heal for peakless tracks (guarded per id + serialized).
+  useEffect(() => {
+    if (!tracks) return;
+    tracks.forEach((t) => {
+      if ((!t.waveform_peaks || t.waveform_peaks.length === 0) && t.file_url) {
+        backfillPeaks(t.id, t.file_url).then((p) => { if (p) setTracks((cur) => cur?.map((x) => (x.id === t.id ? { ...x, waveform_peaks: p } : x)) ?? cur); });
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tracks?.length]);
 
   const toggleChip = (w: string) => setChips((c) => c.includes(w) ? c.filter((x) => x !== w) : [...c, w]);
 
@@ -94,7 +109,18 @@ export default function MusicPicker({
     if (!a) return;
     if (playing === t.id) { a.pause(); setPlaying(null); return; }
     a.src = t.file_url;
+    setProgress(0);
     a.play().then(() => setPlaying(t.id)).catch(() => setPlaying(null));
+  };
+
+  const seekTrack = (t: LibraryTrack, pct: number) => {
+    const a = audioRef.current;
+    if (!a) return;
+    setProgress(pct);
+    const apply = () => { if (a.duration && isFinite(a.duration)) a.currentTime = pct * a.duration; };
+    if (playing === t.id) { apply(); return; }
+    a.src = t.file_url;
+    a.play().then(() => { setPlaying(t.id); a.addEventListener("loadedmetadata", apply, { once: true }); apply(); }).catch(() => {});
   };
 
   const pick = (t: LibraryTrack) => { try { audioRef.current?.pause(); } catch {} onSelect(t); };
@@ -102,7 +128,7 @@ export default function MusicPicker({
   return createPortal(
     <div style={{ position: "fixed", inset: 0, zIndex: 1300, background: "#000", display: "flex", flexDirection: "column", maxWidth: "30rem", margin: "0 auto" }}>
       {/* audio engine (one, single-at-a-time) */}
-      <audio ref={audioRef} onEnded={() => setPlaying(null)} onPause={() => { /* keep state on manual toggle */ }} />
+      <audio ref={audioRef} onEnded={() => { setPlaying(null); setProgress(0); }} onTimeUpdate={() => { const a = audioRef.current; if (a && a.duration && isFinite(a.duration)) setProgress(a.currentTime / a.duration); }} />
 
       {/* header + search */}
       <div style={{ padding: "16px 18px 12px", borderBottom: `1px solid ${HAIR}` }}>
@@ -154,7 +180,10 @@ export default function MusicPicker({
                   <span style={{ ...SKB, fontSize: "var(--fs-9)", color: "#FFF", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t.title}</span>
                   <span style={{ ...SKR, fontSize: "var(--fs-7)", color: "rgba(255,255,255,0.4)", flexShrink: 0 }}>{fmt(t.duration_seconds)}</span>
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 2 }}>
+                <div style={{ margin: "5px 0 4px" }}>
+                  <Waveform peaks={t.waveform_peaks} progress={isPlaying ? progress : 0} onSeek={(pct) => seekTrack(t, pct)} height={26} />
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                   <span style={{ ...SKR, fontSize: "var(--fs-7)", color: "rgba(255,255,255,0.45)" }}>{t.composer_handle ? `@${t.composer_handle}` : ""}</span>
                   <span style={{ ...SKR, fontSize: "var(--fs-7)", color: "rgba(255,255,255,0.28)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t.keywords.slice(0, 3).join(" · ")}</span>
                 </div>
