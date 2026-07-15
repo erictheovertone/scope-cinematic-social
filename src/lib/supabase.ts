@@ -45,6 +45,8 @@ export interface Post {
   token_id?: string
   created_at: string
   updated_at: string
+  music_track_id?: string | null
+  music_mode?: 'bed' | 'music_only' | null
 }
 
 // Helper functions

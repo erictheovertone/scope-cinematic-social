@@ -31,6 +31,7 @@ import DeletePostSheet from "@/components/DeletePostSheet";
 import CommentList, { useCommentLikes, ReplyComposer, type UIComment } from "@/components/CommentList";
 import { replyToComment } from "@/lib/commentInteractions";
 import ReframeOverlay from "@/components/ReframeOverlay";
+import EditMusicSheet from "@/components/EditMusicSheet";
 
 interface Post {
   id: string;
@@ -127,6 +128,7 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
   const [autoplayOn, setAutoplayOn] = useState(post.autoplay !== false);
   const [replacingThumb, setReplacingThumb] = useState(false);
   const [showReframe, setShowReframe] = useState(false);
+  const [showEditMusic, setShowEditMusic] = useState(false);
   const [showDeleteSheet, setShowDeleteSheet] = useState(false);
   const [ownerMenuOpen, setOwnerMenuOpen] = useState(false);
   const thumbInputRef = useRef<HTMLInputElement>(null);
@@ -792,6 +794,21 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
                 </div>
                 )}
 
+                {/* Edit Music (M2) — swap / change mode / remove. Pure flag updates
+                    (music_track_id / music_mode); applies to image + video posts. */}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", animation: "ripple-down 0.2s ease-out both", animationDelay: "225ms" }}>
+                  <div>
+                    <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: "white", textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 2px" }}>EDIT MUSIC</p>
+                    <p style={{ ...SKR, fontSize: 'var(--fs-8)', color: "rgba(255,255,255,0.4)", margin: 0 }}>{(post as { music_track_id?: string | null }).music_track_id ? "Swap, change mode, or remove" : "Add a track from the library"}</p>
+                  </div>
+                  <button
+                    onClick={() => setShowEditMusic(true)}
+                    style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.2)", cursor: "pointer", padding: "5px 10px" }}
+                  >
+                    <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: "rgba(255,255,255,0.6)", textTransform: "uppercase", letterSpacing: "0.08em" }}>MUSIC</span>
+                  </button>
+                </div>
+
                 {/* Delete */}
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", animation: "ripple-down 0.2s ease-out both", animationDelay: "250ms" }}>
                   <div>
@@ -862,6 +879,13 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
           variant="mobile"
           onClose={() => setReplyingTo(null)}
           onSubmit={submitReply}
+        />
+      )}
+      {showEditMusic && (
+        <EditMusicSheet
+          post={post as unknown as { id: string; media_type?: string | null; music_track_id?: string | null; music_mode?: 'bed' | 'music_only' | null }}
+          onClose={() => setShowEditMusic(false)}
+          onUpdated={(trackId, mode) => { const p = post as unknown as Record<string, unknown>; p.music_track_id = trackId; p.music_mode = mode; }}
         />
       )}
     </>,

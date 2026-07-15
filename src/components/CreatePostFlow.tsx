@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { usePrivy, useWallets } from "@privy-io/react-auth";
 import { createWalletClient, custom } from "viem";
 import { base } from "viem/chains";
-import { createPost, updatePostCoinData, updatePostCoinTxHash } from '@/lib/postsService';
+import { createPost, updatePostCoinData, updatePostCoinTxHash, updatePostMusic } from '@/lib/postsService';
 import MediaRenderer from '@/components/MediaRenderer';
 // NOTE: the 1155 path (mintNewPost) is DORMANT — intact in src/lib/zora.ts as the
 // rollback lifeboat, deliberately unreferenced here. New posts mint as coins.
@@ -35,6 +35,7 @@ import {
 } from '@/lib/editGeometry';
 import FinishingPreview from '@/components/finishing/FinishingPreview';
 import SnippetSelector from '@/components/finishing/SnippetSelector';
+import MusicPicker, { type LibraryTrack } from '@/components/MusicPicker';
 
 function profileLayoutToAspect(layoutId: string): number {
   switch (layoutId) {
@@ -261,6 +262,12 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
   const [editParams, setEditParams] = useState<EditParams>(DEFAULT_PARAMS);
   // Creator-chosen autoplay snippet window (null = auto on publish). { start, length } in seconds.
   const [snippetWindow, setSnippetWindow] = useState<{ start: number; length: number } | null>(null);
+  // Music (M2) — an attached library track + its layering mode. Playback flags only;
+  // NEVER on the publish critical path (just columns on the create insert).
+  const [musicTrackId, setMusicTrackId] = useState<string | null>(null);
+  const [musicTrack, setMusicTrack] = useState<LibraryTrack | null>(null);
+  const [musicMode, setMusicMode] = useState<'bed' | 'music_only' | null>(null);
+  const [showMusicPicker, setShowMusicPicker] = useState(false);
   // Real Pro status + grid gating for FINISHING, resolved via the verified path
   // (DID → getUserByPrivyId → getProfile → isProMember). uuid typing respected.
   const [finishCtx, setFinishCtx] = useState<{ isPro: boolean; gridLayout: 'standard' | 'collage'; layoutId: string; userUuid: string } | null>(null);
@@ -807,6 +814,16 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
         addPostToDeck(deckId, newPost.id).catch(e => console.error('addPostToDeck error:', errInfo(e)));
       }
 
+      // MUSIC ATTACH — STRICTLY NON-BLOCKING (the critical-path rule). The post is
+      // already published above; attaching the library track is a best-effort
+      // follow-up UPDATE, never awaited. A failure degrades to "published without
+      // music" + a quiet log — it can never block publish or the mint that follows.
+      if (newPost?.id && musicTrackId) {
+        updatePostMusic(newPost.id, musicTrackId, musicMode)
+          .then((r) => { if (!r.ok) console.warn('[music] attach failed — post published without music'); })
+          .catch(() => console.warn('[music] attach threw — post published without music'));
+      }
+
       // Post saved — show mint prompt instead of auto-minting
       // Minting now triggered manually by user via MintPromptSheet
       selectedMedia.forEach(item => URL.revokeObjectURL(item.url));
@@ -855,6 +872,10 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
     setCustomThumbnail(null);
     setVideoAutoplay(true);
     setAutoThumbnail(null);
+    setMusicTrackId(null);
+    setMusicTrack(null);
+    setMusicMode(null);
+    setShowMusicPicker(false);
     setPendingMintData(null);
     setShowMintPrompt(false);
     setJustPostedId(null);
@@ -1314,6 +1335,39 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
             </div>
             </div>
           )}
+          {/* MUSIC (M2) — attach an approved library track. Applies to image + video;
+              the bed/music_only layering choice shows only for videos. Never gates
+              publish — it's just columns on the create insert. */}
+          <div style={{ marginTop: 16, flexShrink: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>MUSIC</p>
+              <button onClick={() => setShowMusicPicker(true)} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', padding: '6px 12px', cursor: 'pointer' }}>
+                <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase' }}>{musicTrackId ? 'CHANGE' : '+ ADD MUSIC'}</span>
+              </button>
+            </div>
+            {musicTrackId && (
+              <>
+                <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+                  <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: 'var(--fs-8)', color: '#FFF', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {musicTrack?.title ?? 'Track attached'}{musicTrack?.composer_handle ? ` · @${musicTrack.composer_handle}` : ''}
+                  </span>
+                  <button onClick={() => { setMusicTrackId(null); setMusicTrack(null); setMusicMode(null); }} style={{ flexShrink: 0, background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-8)', color: '#FF0000', textTransform: 'uppercase', letterSpacing: '0.06em', padding: 0 }}>REMOVE</button>
+                </div>
+                {selectedMedia[0]?.type === 'video' && (
+                  <div style={{ marginTop: 10, display: 'flex', gap: 8 }}>
+                    {(['bed', 'music_only'] as const).map((m) => {
+                      const on = musicMode === m;
+                      return (
+                        <button key={m} onClick={() => setMusicMode(m)} style={{ flex: 1, background: on ? '#FFF' : 'transparent', border: `1px solid ${on ? '#FFF' : 'rgba(255,255,255,0.2)'}`, cursor: 'pointer', padding: '8px 6px', fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-8)', color: on ? '#000' : 'rgba(255,255,255,0.7)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                          {m === 'bed' ? 'MUSIC AS BED' : 'MUSIC ONLY'}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
         </div>
 
         {/* The LAYOUT / "N media items selected" footer was removed — temporary-looking
@@ -1566,6 +1620,20 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
         onRetry={mintStatus === 'backing-failed' ? retryBacking : handleDoMint}
         onContinue={completeFlow}
       />
+      {showMusicPicker && (
+        <MusicPicker
+          currentTrackId={musicTrackId}
+          onClose={() => setShowMusicPicker(false)}
+          onSelect={(t) => {
+            setMusicTrackId(t.id);
+            setMusicTrack(t);
+            // Video → default the layering to 'bed' (keep an existing choice on swap);
+            // image/no-original-audio → mode stays null (nothing to layer against).
+            setMusicMode(selectedMedia[0]?.type === 'video' ? (musicMode ?? 'bed') : null);
+            setShowMusicPicker(false);
+          }}
+        />
+      )}
       {isPosting && !showMintPrompt && (
         <div style={{
           position: 'fixed', inset: 0, zIndex: 600,

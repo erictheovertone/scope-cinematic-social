@@ -74,6 +74,10 @@ export const createPost = async (postData: {
   cropY?: number;
   cropWidth?: number;
   cropHeight?: number;
+  // Music (M2) — playback-layer flags ONLY. Additive columns on the SAME insert
+  // that already runs before any mint, so an attached track can never block publish.
+  musicTrackId?: string | null;
+  musicMode?: string | null;
 }): Promise<Post> => {
   const { data, error } = await supabase
     .from('posts')
@@ -101,6 +105,10 @@ export const createPost = async (postData: {
         ...(postData.cropY !== undefined ? { crop_y: postData.cropY } : {}),
         ...(postData.cropWidth !== undefined ? { crop_width: postData.cropWidth } : {}),
         ...(postData.cropHeight !== undefined ? { crop_height: postData.cropHeight } : {}),
+        // Music (M2) — the featured library track + its layering mode. Playback
+        // flags only; the post's own media/audio is never baked or stripped.
+        ...(postData.musicTrackId !== undefined ? { music_track_id: postData.musicTrackId } : {}),
+        ...(postData.musicMode !== undefined ? { music_mode: postData.musicMode } : {}),
       }
     ])
     .select()
@@ -560,6 +568,22 @@ export const updatePostMintData = async (
 // Optimistic breadcrumb: persist the createCoin tx hash BEFORE confirmation so
 // the reconciliation path always has a thread, even if the post-mining write
 // fails (proposal §5.5 / amendment C). Idempotent.
+// Music (M2) — pure flag updates for the post-publish EDIT MUSIC action (swap /
+// change mode / remove). Playback-layer only; the post's own media is untouched.
+// Returns { ok } so the caller can surface a quiet error without throwing.
+export const updatePostMusic = async (
+  postId: string,
+  musicTrackId: string | null,
+  musicMode: 'bed' | 'music_only' | null,
+): Promise<{ ok: boolean }> => {
+  const { error } = await supabase
+    .from('posts')
+    .update({ music_track_id: musicTrackId, music_mode: musicMode })
+    .eq('id', postId);
+  if (error) { console.error('[updatePostMusic] error:', JSON.stringify(error)); return { ok: false }; }
+  return { ok: true };
+};
+
 export const updatePostCoinTxHash = async (postId: string, txHash: string): Promise<void> => {
   const { error } = await supabase
     .from('posts')
