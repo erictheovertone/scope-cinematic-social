@@ -9,6 +9,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { supabase } from "@/lib/supabase/client";
 import { MUSIC_TAXONOMY } from "@/lib/musicTaxonomy";
+import TrackArt from "@/components/TrackArt";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -22,6 +23,7 @@ export interface LibraryTrack {
   keywords: string[];
   duration_seconds: number | null;
   file_url: string;
+  artwork_url: string | null;
 }
 
 function fmt(s: number | null): string {
@@ -60,7 +62,7 @@ export default function MusicPicker({
     (async () => {
       const { data } = await supabase
         .from("tracks")
-        .select("id, title, composer_user_id, keywords, duration_seconds, file_url")
+        .select("id, title, composer_user_id, keywords, duration_seconds, file_url, artwork_url")
         .eq("status", "approved")
         .order("created_at", { ascending: false })
         .limit(300);
@@ -137,6 +139,7 @@ export default function MusicPicker({
           const isCurrent = currentTrackId === t.id;
           return (
             <div key={t.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 18px", borderBottom: `1px solid rgba(255,255,255,0.06)` }}>
+              <TrackArt url={t.artwork_url} title={t.title} id={t.id} size={38} />
               {/* play/pause */}
               <button onClick={() => togglePlay(t)} aria-label={isPlaying ? "Pause" : "Play"} style={{ flexShrink: 0, width: 32, height: 32, borderRadius: "50%", border: `1px solid ${HAIR}`, background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>
                 {isPlaying ? (

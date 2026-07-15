@@ -13,6 +13,7 @@ import { supabase } from "@/lib/supabase/client";
 import { feedImage } from "@/lib/mediaUrl";
 import { getUserByPrivyId } from "@/lib/userService";
 import ContributeMusicFlow from "@/components/ContributeMusicFlow";
+import TrackArt from "@/components/TrackArt";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -25,6 +26,7 @@ interface Track {
   keywords: string[];
   duration_seconds: number | null;
   file_url: string;
+  artwork_url: string | null;
   approved_at: string | null;
   created_at: string;
 }
@@ -70,7 +72,7 @@ export default function ComposerDiscographyPage() {
       setProfile(p as Profile);
 
       const { data: tk } = await supabase
-        .from("tracks").select("id, title, keywords, duration_seconds, file_url, approved_at, created_at")
+        .from("tracks").select("id, title, keywords, duration_seconds, file_url, artwork_url, approved_at, created_at")
         .eq("composer_user_id", (p as Profile).user_id).eq("status", "approved")
         .order("created_at", { ascending: false });
       const rows = (tk ?? []) as Track[];
@@ -171,6 +173,7 @@ export default function ComposerDiscographyPage() {
           const inN = inPostsByTrack.get(t.id) ?? 0;
           return (
             <div key={t.id} style={{ display: "flex", alignItems: "center", gap: 13, padding: "14px 0", borderBottom: `1px solid rgba(255,255,255,0.07)` }}>
+              <TrackArt url={t.artwork_url} title={t.title} id={t.id} size={46} />
               <button onClick={() => togglePlay(t)} aria-label={isPlaying ? "Pause" : "Play"} style={{ flexShrink: 0, width: 34, height: 34, borderRadius: "50%", border: `1px solid ${HAIR}`, background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>
                 {isPlaying
                   ? <svg width="12" height="12" viewBox="0 0 24 24" fill="#FFF"><rect x="6" y="5" width="4" height="14" /><rect x="14" y="5" width="4" height="14" /></svg>

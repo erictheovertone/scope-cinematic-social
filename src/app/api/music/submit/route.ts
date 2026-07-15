@@ -44,6 +44,8 @@ export async function POST(req: NextRequest) {
   const { data: composer } = await supabase.from('users').select('id').eq('id', userId).maybeSingle();
   if (!composer) return NextResponse.json({ error: 'unknown user' }, { status: 403 });
 
+  const artworkUrl = typeof body.artworkUrl === 'string' && body.artworkUrl ? body.artworkUrl : null;
+
   const { data, error } = await supabase.from('tracks').upsert({
     id,
     composer_user_id: userId,
@@ -51,6 +53,7 @@ export async function POST(req: NextRequest) {
     keywords,
     duration_seconds: duration,
     file_url: fileUrl,
+    artwork_url: artworkUrl,
     status: 'pending',
     approved_at: null,
   }, { onConflict: 'id' }).select('id, status').single();

@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
   const supabase = svc();
   const { data, error } = await supabase
     .from('tracks')
-    .select('id, title, composer_user_id, keywords, duration_seconds, file_url, status, created_at')
+    .select('id, title, composer_user_id, keywords, duration_seconds, file_url, artwork_url, status, created_at')
     .eq('status', 'pending')
     .order('created_at', { ascending: true });
   if (error) return NextResponse.json({ error: 'query failed' }, { status: 500 });

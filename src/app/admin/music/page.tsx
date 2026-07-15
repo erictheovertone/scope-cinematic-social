@@ -12,6 +12,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { usePrivy } from "@privy-io/react-auth";
+import TrackArt from "@/components/TrackArt";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -25,6 +26,7 @@ interface PendingTrack {
   keywords: string[];
   duration_seconds: number | null;
   file_url: string;
+  artwork_url: string | null;
   created_at: string;
 }
 
@@ -108,9 +110,12 @@ export default function AdminMusicPage() {
             {/* per-track rows */}
             {c.tracks.map((t) => (
               <div key={t.id} style={{ borderTop: `1px solid rgba(255,255,255,0.06)`, padding: "14px 0", display: "flex", flexDirection: "column", gap: 10 }}>
-                <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 16 }}>
-                  <span style={{ ...SKB, fontSize: 13.5 }}>{t.title}</span>
-                  <span style={{ ...SKR, fontSize: 11, color: "rgba(255,255,255,0.4)", flexShrink: 0 }}>{fmt(t.duration_seconds)}</span>
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <TrackArt url={t.artwork_url} title={t.title} id={t.id} size={40} />
+                  <div style={{ flex: 1, display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 16 }}>
+                    <span style={{ ...SKB, fontSize: 13.5 }}>{t.title}</span>
+                    <span style={{ ...SKR, fontSize: 11, color: "rgba(255,255,255,0.4)", flexShrink: 0 }}>{fmt(t.duration_seconds)}</span>
+                  </div>
                 </div>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                   {t.keywords.map((k) => (

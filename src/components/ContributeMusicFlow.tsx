@@ -13,6 +13,7 @@ import { createPortal } from "react-dom";
 import { usePrivy } from "@privy-io/react-auth";
 import { getUserByPrivyId } from "@/lib/userService";
 import { useIsDesktop } from "@/lib/useIsDesktop";
+import TrackArt from "@/components/TrackArt";
 import {
   MUSIC_TAXONOMY, KEYWORDS_MIN, KEYWORDS_MAX, TITLE_MAX,
   AUDIO_MAX_BYTES, AUDIO_MAX_SECONDS, AUDIO_MIME_EXT, MUSIC_LICENSE_COPY,
@@ -38,6 +39,8 @@ interface Row {
   fileUrl: string | null;
   status: RowStatus;
   progress: number;
+  artUrl: string | null;   // optional square cover (600² WebP)
+  artBusy: boolean;
 }
 
 function cleanTitle(name: string): string {
@@ -88,6 +91,8 @@ export default function ContributeMusicFlow({ onClose }: { onClose: () => void }
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
+  const artInput = useRef<HTMLInputElement>(null);
+  const artForRow = useRef<string | null>(null);
 
   // Refs for the abandon-cleanup path (unmount reads current values).
   const rowsRef = useRef<Row[]>([]);
@@ -120,7 +125,7 @@ export default function ContributeMusicFlow({ onClose }: { onClose: () => void }
   // Abandon cleanup — best-effort delete of uploaded-but-unsubmitted audio.
   const cleanupUnsubmitted = () => {
     if (submittedRef.current) return;
-    const urls = rowsRef.current.filter((r) => r.fileUrl).map((r) => r.fileUrl!) as string[];
+    const urls = rowsRef.current.flatMap((r) => [r.fileUrl, r.artUrl]).filter((u): u is string => !!u); // audio + art, same folder
     const uid = userUuidRef.current;
     if (!urls.length || !uid) return;
     fetch("/api/music/upload", { method: "DELETE", headers: { "content-type": "application/json" }, body: JSON.stringify({ userId: uid, fileUrls: urls }), keepalive: true }).catch(() => {});
@@ -159,6 +164,7 @@ export default function ContributeMusicFlow({ onClose }: { onClose: () => void }
         localId: newId(), file, fileName: file.name, trackId: newId(),
         title: cleanTitle(file.name), keywords: [], duration: dur,
         fileUrl: null, status: "uploading", progress: 0,
+        artUrl: null, artBusy: false,
       });
     }
     if (list.length > room) setError(`Only ${room} more allowed (max ${BATCH_CAP} per submission).`);
@@ -192,6 +198,29 @@ export default function ContributeMusicFlow({ onClose }: { onClose: () => void }
     setRows((cur) => cur.map((r) => ({ ...r, keywords: [...src.keywords] })));
   };
 
+  // ── Artwork (optional) ─────────────────────────────────────────────────────
+  const pickArt = (localId: string) => { artForRow.current = localId; artInput.current?.click(); };
+  const onArtFile = async (file: File | null | undefined) => {
+    const localId = artForRow.current;
+    if (!file || !localId) return;
+    const row = rowsRef.current.find((r) => r.localId === localId);
+    const uid = userUuidRef.current;
+    if (!row || !uid) return;
+    patchRow(localId, { artBusy: true });
+    try {
+      const res = await fetch(`/api/music/artwork?userId=${encodeURIComponent(uid)}&trackId=${encodeURIComponent(row.trackId)}`, { method: "POST", headers: { "content-type": file.type }, body: file });
+      const r = await res.json().catch(() => ({}));
+      patchRow(localId, { artUrl: res.ok ? (r.artwork_url ?? null) : row.artUrl, artBusy: false });
+      if (!res.ok) setError("Artwork upload failed — try again.");
+    } catch { patchRow(localId, { artBusy: false }); setError("Artwork upload failed — try again."); }
+  };
+  // An album's cues share a cover — one upload covers the pack (per-row overrides allowed).
+  const applyArtToAll = (localId: string) => {
+    const src = rowsRef.current.find((r) => r.localId === localId);
+    if (!src?.artUrl) return;
+    setRows((cur) => cur.map((r) => ({ ...r, artUrl: src.artUrl })));
+  };
+
   const uploading = rows.some((r) => r.status === "uploading");
   const doneRows = rows.filter((r) => r.status === "done");
   const failedRows = rows.filter((r) => r.status === "failed");
@@ -207,7 +236,7 @@ export default function ContributeMusicFlow({ onClose }: { onClose: () => void }
       try {
         const res = await fetch("/api/music/submit", {
           method: "POST", headers: { "content-type": "application/json" },
-          body: JSON.stringify({ id: r.trackId, userId: userUuid, title: r.title.trim(), keywords: r.keywords, durationSeconds: Math.round(r.duration), fileUrl: r.fileUrl }),
+          body: JSON.stringify({ id: r.trackId, userId: userUuid, title: r.title.trim(), keywords: r.keywords, durationSeconds: Math.round(r.duration), fileUrl: r.fileUrl, artworkUrl: r.artUrl }),
         });
         if (!res.ok) anyFail = true;
       } catch { anyFail = true; }
@@ -221,6 +250,8 @@ export default function ContributeMusicFlow({ onClose }: { onClose: () => void }
   // ── Step bodies ────────────────────────────────────────────────────────────
   const Body = (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      {/* always-mounted art picker (used from the table step) */}
+      <input ref={artInput} type="file" accept="image/*" hidden onChange={(e) => { onArtFile(e.target.files?.[0]); e.target.value = ""; }} />
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
         <span style={{ ...SKB, fontSize: "var(--fs-11)", color: "#FFF", textTransform: "uppercase", letterSpacing: "0.1em" }}>
           {step === "done" ? "Submitted" : "Contribute Music"}
@@ -286,12 +317,23 @@ export default function ContributeMusicFlow({ onClose }: { onClose: () => void }
               const ok = rowReady(r);
               return (
                 <div key={r.localId} style={{ border: `1px solid ${ok ? HAIR : "rgba(255,0,0,0.35)"}`, padding: "10px 12px" }}>
-                  <input
-                    value={r.title}
-                    onChange={(e) => patchRow(r.localId, { title: e.target.value.slice(0, TITLE_MAX) })}
-                    placeholder="track title"
-                    style={{ width: "100%", boxSizing: "border-box", background: "transparent", border: "none", borderBottom: `1px solid rgba(255,255,255,0.18)`, outline: "none", ...SKR, fontSize: "max(16px, var(--fs-9))", color: "#FFF", padding: "4px 0" }}
-                  />
+                  <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+                    {/* art slot — tap to add a cover; shows the generated default until set */}
+                    <div style={{ flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+                      <button onClick={() => pickArt(r.localId)} aria-label="Add artwork" style={{ padding: 0, border: "none", background: "none", cursor: r.artBusy ? "default" : "pointer", opacity: r.artBusy ? 0.5 : 1 }}>
+                        <TrackArt url={r.artUrl} title={r.title} id={r.trackId} size={44} />
+                      </button>
+                      {doneRows.length > 1 && r.artUrl && (
+                        <button onClick={() => applyArtToAll(r.localId)} style={{ ...SKR, fontSize: 9, color: "rgba(255,255,255,0.4)", background: "none", border: "none", cursor: "pointer", padding: 0, textTransform: "uppercase", letterSpacing: "0.04em" }}>All</button>
+                      )}
+                    </div>
+                    <input
+                      value={r.title}
+                      onChange={(e) => patchRow(r.localId, { title: e.target.value.slice(0, TITLE_MAX) })}
+                      placeholder="track title"
+                      style={{ flex: 1, minWidth: 0, boxSizing: "border-box", background: "transparent", border: "none", borderBottom: `1px solid rgba(255,255,255,0.18)`, outline: "none", ...SKR, fontSize: "max(16px, var(--fs-9))", color: "#FFF", padding: "4px 0", alignSelf: "center" }}
+                    />
+                  </div>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginTop: 8 }}>
                     <span style={{ ...SKR, fontSize: "var(--fs-7)", color: r.keywords.length >= KEYWORDS_MIN ? "rgba(255,255,255,0.5)" : "rgba(255,0,0,0.7)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                       {r.keywords.length ? r.keywords.join(" · ") : "no keywords yet"} ({r.keywords.length}/{KEYWORDS_MAX})
