@@ -164,6 +164,7 @@ export default function Preferences() {
         { label: `While You Were Away · ${showRecap ? 'ON' : 'OFF'}`, action: toggleShowRecap },
         { label: 'Notifications', action: () => router.push('/profile/notifications') },
         { label: 'Contribute Music', action: () => setShowContributeMusic(true) },
+        { label: 'Browse the Library', action: () => router.push('/library') },
         ...(mounted && !isStandalone() ? [{ label: 'Add to Home Screen', action: () => setShowA2HS(true) }] : []),
       ],
     },

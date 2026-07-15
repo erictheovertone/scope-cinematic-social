@@ -34,6 +34,7 @@ import CollectSheetGate from '@/components/economy/CollectSheetGate';
 import FirstCutLedger from '@/components/economy/FirstCutLedger';
 import GradedVideo from '@/components/finishing/GradedVideo';
 import { feedImage } from '@/lib/mediaUrl';
+import MusicWaveButton from '@/components/music/MusicWaveButton';
 import MediaRenderer from '@/components/MediaRenderer';
 import type { PostMarket } from '@/lib/economy/types';
 
@@ -404,8 +405,9 @@ export default function TheatreMode({
       >
         <div
           onClick={center ? (e) => { e.stopPropagation(); if (showData) setShowData(false); } : undefined}
-          style={{ width: w, height: h, background: '#000', overflow: 'hidden', flexShrink: 0 }}
+          style={{ position: 'relative', width: w, height: h, background: '#000', overflow: 'hidden', flexShrink: 0 }}
         >
+          {center && <MusicWaveButton post={p as { music_track_id?: string | null; music_mode?: string | null; music_start_seconds?: number | null; media_type?: string | null }} />}
           {vid ? (
             <GradedVideo
               url={url ?? ''}

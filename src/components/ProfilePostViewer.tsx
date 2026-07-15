@@ -20,6 +20,8 @@ import TickerMark from "@/components/economy/TickerMark";
 import DeletePostSheet from "@/components/DeletePostSheet";
 import CommentList, { useCommentLikes, ReplyComposer, type UIComment } from "@/components/CommentList";
 import { replyToComment } from "@/lib/commentInteractions";
+import MusicWaveButton from "@/components/music/MusicWaveButton";
+import MusicTitleChip from "@/components/music/MusicTitleChip";
 import MediaRenderer from "@/components/MediaRenderer";
 import GradedVideo from "@/components/finishing/GradedVideo";
 import TheatreMode from "@/components/TheatreMode";
@@ -244,6 +246,7 @@ function PostViewerItem({
                 @{ownerUsername}
               </span>
             </div>
+            <MusicTitleChip post={post as { music_track_id?: string | null }} />
             {/* Market chrome — coin posts only (ticker + real MC via the boundary),
                 matching the feed. Legacy/non-coin posts show none. */}
             {isCoinPost(post as { coin_address?: string | null; token_standard?: string | null }) && (post as { coin_address?: string | null }).coin_address && (
@@ -268,6 +271,7 @@ function PostViewerItem({
             ) : (
               <div style={{ position: "relative", width: "100%", aspectRatio: getAspectRatio(post.layout_id ?? ''), overflow: "hidden", background: "#0a0a0a" }}>
                 {mediaEl}
+                <MusicWaveButton post={post as { music_track_id?: string | null; music_mode?: string | null; music_start_seconds?: number | null; media_type?: string | null }} />
               </div>
             )}
           </>

@@ -718,6 +718,17 @@ input, textarea, select {
   100% { transform: scale(1); }
 }
 
+/* ── MUSIC — the sine-wave indicator's undulation (playing state) ────────────
+   A wave path twice the glyph width slid left by half → a seamless loop. GPU
+   (transform only). prefers-reduced-motion holds it static (slash-state only). */
+@keyframes musicUndulate {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .music-undulate { animation: none !important; }
+}
+
 /* ── BADGES SHEET entrance (both platforms) — ripple-down + glow chase ──────── */
 @keyframes badgeRippleIn {
   from { opacity: 0; transform: translateY(8px); }

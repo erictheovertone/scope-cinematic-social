@@ -24,6 +24,8 @@ const FEED_POST_GAP_PX = 52;
 import MediaRenderer from "@/components/MediaRenderer";
 import GradedVideo from "@/components/finishing/GradedVideo";
 import CommentList, { useCommentLikes, ReplyComposer, type UIComment } from "@/components/CommentList";
+import MusicWaveButton from "@/components/music/MusicWaveButton";
+import MusicTitleChip from "@/components/music/MusicTitleChip";
 import { replyToComment } from "@/lib/commentInteractions";
 import { supabase } from "@/lib/supabase/client";
 import { getAspectRatio, ratioPadding } from "@/lib/aspectRatio";
@@ -267,6 +269,7 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
         >
           @{post.username}
         </span>
+        <MusicTitleChip post={post as { music_track_id?: string | null }} />
       </div>
       {/* Market chrome — coin posts only; legacy 1155 tiles show none. */}
       {post.token_standard === 'coin' && post.coin_address && (
@@ -341,6 +344,7 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
           <div style={{ position: 'absolute', inset: 0 }}>
             {mediaContent}
           </div>
+          <MusicWaveButton post={post as { music_track_id?: string | null; music_mode?: string | null; music_start_seconds?: number | null; media_type?: string | null }} />
         </div>
       )}
 

@@ -32,6 +32,8 @@ import CommentList, { useCommentLikes, ReplyComposer, type UIComment } from "@/c
 import { replyToComment } from "@/lib/commentInteractions";
 import ReframeOverlay from "@/components/ReframeOverlay";
 import EditMusicSheet from "@/components/EditMusicSheet";
+import MusicWaveButton from "@/components/music/MusicWaveButton";
+import MusicTitleChip from "@/components/music/MusicTitleChip";
 
 interface Post {
   id: string;
@@ -443,6 +445,7 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
                   : <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "white", textTransform: "uppercase" }}>{post.username?.[0] ?? "?"}</span>}
               </div>
               <span className="tappable" onClick={() => goToProfile()} style={{ ...SKB, fontSize: 'var(--fs-9)', color: "white", opacity: 0.7, letterSpacing: "-0.14px", cursor: "pointer", textTransform: "uppercase", display: "inline-block" }}>@{post.username}</span>
+              <MusicTitleChip post={post as { music_track_id?: string | null }} />
               {isCoinPost(post) && (
                 <span style={{ display: "flex", alignItems: "baseline", gap: 6, marginLeft: "auto" }}>
                   {post.ticker && <TickerMark ticker={post.ticker} size={11.5} />}
@@ -450,7 +453,8 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
                 </span>
               )}
             </div>
-            <div style={{ width: "92%", margin: "0 auto", aspectRatio: getAspectRatio(post.layout_id ?? ''), overflow: "hidden", background: "#0a0a0a" }}>
+            <div style={{ position: "relative", width: "92%", margin: "0 auto", aspectRatio: getAspectRatio(post.layout_id ?? ''), overflow: "hidden", background: "#0a0a0a" }}>
+              <MusicWaveButton post={post as { music_track_id?: string | null; music_mode?: string | null; music_start_seconds?: number | null; media_type?: string | null }} />
               {post.media_urls?.[0] ? (
                 isVideoPost ? (
                   // Standalone view → always play GRADED (look applied live via the pipeline).

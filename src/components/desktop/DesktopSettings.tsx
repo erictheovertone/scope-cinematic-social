@@ -468,6 +468,7 @@ export default function DesktopSettings() {
             {row(`While You Were Away · ${showRecap ? 'ON' : 'OFF'}`, () => { const next = !showRecap; setShowRecapState(next); if (sbUserId) void setShowRecap(sbUserId, next); }, 'wywa')}
             {row('Notifications', () => router.push('/profile/notifications'))}
             {row('Contribute Music', () => setContributeMusicOpen(true), 'contribmusic')}
+            {row('Browse the Library', () => router.push('/library'), 'browselib')}
             {row('Add to Home Screen', () => router.push('/profile/preferences'))}
           </div>
         );
