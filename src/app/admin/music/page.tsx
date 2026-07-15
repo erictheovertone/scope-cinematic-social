@@ -82,7 +82,12 @@ export default function AdminMusicPage() {
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: "#000", color: "#FFF", padding: "40px 20px 80px", maxWidth: 720, margin: "0 auto" }}>
+    // .screen-min = the established full-height self-scroller (globals.css:135) —
+    // the body is position:fixed/overflow:hidden (iOS lock), so the document can't
+    // scroll; the queue scrolls here with momentum, a 12-track batch reachable end-
+    // to-end. Inner div keeps the centered 720 column + padding.
+    <div className="screen-min" style={{ background: "#000" }}>
+    <div style={{ color: "#FFF", padding: "40px 20px 80px", maxWidth: 720, margin: "0 auto" }}>
       <h1 style={{ ...SKB, fontSize: 15, textTransform: "uppercase", letterSpacing: "0.14em", margin: "0 0 24px" }}>Music · Approval Queue</h1>
 
       {ready && !user && <p style={{ ...SKR, fontSize: 13, color: "rgba(255,255,255,0.5)" }}>Sign in to continue.</p>}
@@ -136,6 +141,7 @@ export default function AdminMusicPage() {
           </div>
         );
       })}
+    </div>
     </div>
   );
 }
