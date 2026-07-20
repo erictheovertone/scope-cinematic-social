@@ -17,7 +17,7 @@ import Waveform from "@/components/Waveform";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
-const HAIR = "rgba(255,255,255,0.12)";
+const HAIR = "rgba(229,225,219,0.12)";
 
 interface PendingTrack {
   id: string;
@@ -87,13 +87,13 @@ export default function AdminMusicPage() {
     // scroll; the queue scrolls here with momentum, a 12-track batch reachable end-
     // to-end. Inner div keeps the centered 720 column + padding.
     <div className="screen-min" style={{ background: "#000" }}>
-    <div style={{ color: "#FFF", padding: "40px 20px 80px", maxWidth: 720, margin: "0 auto" }}>
+    <div style={{ color: "#E5E1DB", padding: "40px 20px 80px", maxWidth: 720, margin: "0 auto" }}>
       <h1 style={{ ...SKB, fontSize: 15, textTransform: "uppercase", letterSpacing: "0.14em", margin: "0 0 24px" }}>Music · Approval Queue</h1>
 
-      {ready && !user && <p style={{ ...SKR, fontSize: 13, color: "rgba(255,255,255,0.5)" }}>Sign in to continue.</p>}
-      {authed === false && <p style={{ ...SKR, fontSize: 13, color: "rgba(255,255,255,0.5)" }}>Not authorized.</p>}
-      {authed === true && tracks === null && <p style={{ ...SKR, fontSize: 13, color: "rgba(255,255,255,0.4)" }}>Loading…</p>}
-      {authed === true && tracks?.length === 0 && <p style={{ ...SKR, fontSize: 13, color: "rgba(255,255,255,0.4)" }}>No pending tracks.</p>}
+      {ready && !user && <p style={{ ...SKR, fontSize: 13, color: "rgba(229,225,219,0.5)" }}>Sign in to continue.</p>}
+      {authed === false && <p style={{ ...SKR, fontSize: 13, color: "rgba(229,225,219,0.5)" }}>Not authorized.</p>}
+      {authed === true && tracks === null && <p style={{ ...SKR, fontSize: 13, color: "rgba(229,225,219,0.4)" }}>Loading…</p>}
+      {authed === true && tracks?.length === 0 && <p style={{ ...SKR, fontSize: 13, color: "rgba(229,225,219,0.4)" }}>No pending tracks.</p>}
 
       {authed === true && clusters.map((c) => {
         const ids = c.tracks.map((t) => t.id);
@@ -104,37 +104,37 @@ export default function AdminMusicPage() {
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 12 }}>
               <span style={{ ...SKB, fontSize: 13, letterSpacing: "0.04em" }}>
                 {c.composer_handle ? `@${c.composer_handle}` : c.composer_user_id.slice(0, 8)}
-                <span style={{ ...SKR, fontSize: 11, color: "rgba(255,255,255,0.4)", marginLeft: 8 }}>{c.tracks.length} pending</span>
+                <span style={{ ...SKR, fontSize: 11, color: "rgba(229,225,219,0.4)", marginLeft: 8 }}>{c.tracks.length} pending</span>
               </span>
               {c.tracks.length > 1 && (
                 <div style={{ display: "flex", gap: 14 }}>
-                  <button onClick={() => act(ids, "approve", batchKey)} disabled={busy === batchKey} style={{ ...SKB, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em", color: "#FFF", background: "transparent", border: "1px solid rgba(255,255,255,0.4)", cursor: "pointer", padding: "6px 12px" }}>Approve all</button>
-                  <button onClick={() => act(ids, "reject", batchKey)} disabled={busy === batchKey} style={{ ...SKB, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em", color: "#FF0000", background: "transparent", border: "1px solid rgba(255,0,0,0.5)", cursor: "pointer", padding: "6px 12px" }}>Reject all</button>
+                  <button onClick={() => act(ids, "approve", batchKey)} disabled={busy === batchKey} style={{ ...SKB, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em", color: "#E5E1DB", background: "transparent", border: "1px solid rgba(229,225,219,0.4)", cursor: "pointer", padding: "6px 12px" }}>Approve all</button>
+                  <button onClick={() => act(ids, "reject", batchKey)} disabled={busy === batchKey} style={{ ...SKB, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em", color: "#E5E1DB", background: "transparent", border: "1px solid rgba(229,225,219,0.5)", cursor: "pointer", padding: "6px 12px" }}>Reject all</button>
                 </div>
               )}
             </div>
 
             {/* per-track rows */}
             {c.tracks.map((t) => (
-              <div key={t.id} style={{ borderTop: `1px solid rgba(255,255,255,0.06)`, padding: "14px 0", display: "flex", flexDirection: "column", gap: 10 }}>
+              <div key={t.id} style={{ borderTop: `1px solid rgba(229,225,219,0.06)`, padding: "14px 0", display: "flex", flexDirection: "column", gap: 10 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                   <TrackArt url={t.artwork_url} title={t.title} id={t.id} size={40} />
                   <div style={{ flex: 1, display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 16 }}>
                     <span style={{ ...SKB, fontSize: 13.5 }}>{t.title}</span>
-                    <span style={{ ...SKR, fontSize: 11, color: "rgba(255,255,255,0.4)", flexShrink: 0 }}>{fmt(t.duration_seconds)}</span>
+                    <span style={{ ...SKR, fontSize: 11, color: "rgba(229,225,219,0.4)", flexShrink: 0 }}>{fmt(t.duration_seconds)}</span>
                   </div>
                 </div>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                   {t.keywords.map((k) => (
-                    <span key={k} style={{ ...SKR, fontSize: 11, color: "rgba(255,255,255,0.55)", border: `1px solid ${HAIR}`, padding: "3px 8px" }}>{k}</span>
+                    <span key={k} style={{ ...SKR, fontSize: 11, color: "rgba(229,225,219,0.55)", border: `1px solid ${HAIR}`, padding: "3px 8px" }}>{k}</span>
                   ))}
                 </div>
                 <Waveform peaks={t.waveform_peaks} height={30} />
                 {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
                 <audio src={t.file_url} controls preload="none" style={{ width: "100%", height: 34 }} />
                 <div style={{ display: "flex", gap: 20 }}>
-                  <button onClick={() => act([t.id], "approve", t.id)} disabled={busy === t.id} style={{ ...SKB, fontSize: 12, textTransform: "uppercase", letterSpacing: "0.08em", color: "#FFF", background: "transparent", border: "1px solid rgba(255,255,255,0.4)", cursor: "pointer", padding: "8px 18px" }}>Approve</button>
-                  <button onClick={() => act([t.id], "reject", t.id)} disabled={busy === t.id} style={{ ...SKB, fontSize: 12, textTransform: "uppercase", letterSpacing: "0.08em", color: "#FF0000", background: "transparent", border: "1px solid rgba(255,0,0,0.5)", cursor: "pointer", padding: "8px 18px" }}>Reject</button>
+                  <button onClick={() => act([t.id], "approve", t.id)} disabled={busy === t.id} style={{ ...SKB, fontSize: 12, textTransform: "uppercase", letterSpacing: "0.08em", color: "#E5E1DB", background: "transparent", border: "1px solid rgba(229,225,219,0.4)", cursor: "pointer", padding: "8px 18px" }}>Approve</button>
+                  <button onClick={() => act([t.id], "reject", t.id)} disabled={busy === t.id} style={{ ...SKB, fontSize: 12, textTransform: "uppercase", letterSpacing: "0.08em", color: "#E5E1DB", background: "transparent", border: "1px solid rgba(229,225,219,0.5)", cursor: "pointer", padding: "8px 18px" }}>Reject</button>
                 </div>
               </div>
             ))}

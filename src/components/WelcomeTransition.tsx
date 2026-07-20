@@ -19,7 +19,7 @@ export default function WelcomeTransition({ onComplete }: WelcomeTransitionProps
 
   const cornerSize = 28;
   const strokeWidth = 1.5;
-  const strokeColor = "#FF0000";
+  const strokeColor = "#E5E1DB";
   const offset = phase === "fade" ? 40 : 0;
   const cornerOpacity = phase === "fade" ? 0 : 1;
   const logoOpacity = phase === "logo" || phase === "pulse" || phase === "done" ? 1 : 0;

@@ -114,12 +114,12 @@ export default function PfpCropStage({
   return createPortal(
     <div data-swipe-exclude style={{ position: 'fixed', inset: 0, zIndex: 640 }}>
       <div onClick={onCancel} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.88)' }} />
-      <div style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', background: '#080808', border: '1px solid rgba(255,255,255,0.14)', padding: 22 }}>
-        <p style={{ ...SKB, fontSize: 12, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 0 14px' }}>FRAME YOUR PHOTO</p>
+      <div style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', background: '#080808', border: '1px solid rgba(229,225,219,0.14)', padding: 22 }}>
+        <p style={{ ...SKB, fontSize: 12, color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 0 14px' }}>FRAME YOUR PHOTO</p>
 
         {error ? (
           <div style={{ width: CROP, padding: '40px 0', textAlign: 'center' }}>
-            <p style={{ ...SKR, fontSize: 11, color: '#f20d0d', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{error}</p>
+            <p style={{ ...SKR, fontSize: 11, color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{error}</p>
           </div>
         ) : (
           <div
@@ -143,7 +143,7 @@ export default function PfpCropStage({
               />
             )}
             {/* circle guide over the square crop — protects both presentations */}
-            <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', boxShadow: `inset 0 0 0 1px rgba(255,255,255,0.25)` }} />
+            <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', boxShadow: `inset 0 0 0 1px rgba(229,225,219,0.25)` }} />
             <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', borderRadius: '50%', boxShadow: '0 0 0 9999px rgba(0,0,0,0.45)' }} />
           </div>
         )}
@@ -153,16 +153,16 @@ export default function PfpCropStage({
           <input
             type="range" min={1} max={3} step={0.01} value={zoom}
             onChange={(e) => setZoom(parseFloat(e.target.value))}
-            style={{ width: '100%', margin: '14px 0 0', accentColor: '#f20d0d' }}
+            style={{ width: '100%', margin: '14px 0 0', accentColor: '#E5E1DB' }}
             aria-label="Zoom"
           />
         )}
 
         <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
-          <button onClick={onCancel} style={{ ...SKB, flex: 1, fontSize: 11, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.08em', background: 'transparent', border: '1px solid rgba(255,255,255,0.18)', cursor: 'pointer', padding: '11px 0' }}>
+          <button onClick={onCancel} style={{ ...SKB, flex: 1, fontSize: 11, color: 'rgba(229,225,219,0.6)', textTransform: 'uppercase', letterSpacing: '0.08em', background: 'transparent', border: '1px solid rgba(229,225,219,0.18)', cursor: 'pointer', padding: '11px 0' }}>
             CANCEL
           </button>
-          <button onClick={apply} disabled={!!error || !img || busy} style={{ ...SKB, flex: 1, fontSize: 11, color: '#000', textTransform: 'uppercase', letterSpacing: '0.08em', background: '#FFF', border: 'none', cursor: error || !img ? 'default' : 'pointer', padding: '11px 0', opacity: error || !img ? 0.4 : 1 }}>
+          <button onClick={apply} disabled={!!error || !img || busy} style={{ ...SKB, flex: 1, fontSize: 11, color: '#000', textTransform: 'uppercase', letterSpacing: '0.08em', background: '#E5E1DB', border: 'none', cursor: error || !img ? 'default' : 'pointer', padding: '11px 0', opacity: error || !img ? 0.4 : 1 }}>
             {busy ? 'APPLYING…' : 'APPLY'}
           </button>
         </div>

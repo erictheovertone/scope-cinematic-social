@@ -29,12 +29,12 @@ export const DIVIDER_LINES: Record<DividerLineKey, DividerLine> = {
   default: { key: 'default', name: 'DEFAULT', gradient: '#000000', tier: 0 },
   slate:   { key: 'slate',   name: 'SLATE',   gradient: 'linear-gradient(180deg, #483D3D 0%, #919191 100%)', tier: 1 },
   splice:  { key: 'splice',  name: 'SPLICE',  gradient: 'linear-gradient(180deg, #959595 0%, #CC0000 50%, #8A8A8A 100%)', tier: 1 },
-  drip:    { key: 'drip',    name: 'DRIP',    gradient: 'linear-gradient(180deg, #FF0000 0%, #A42424 32%, #212121 100%)', tier: 2 },
+  drip:    { key: 'drip',    name: 'DRIP',    gradient: 'linear-gradient(180deg, #E5E1DB 0%, #A42424 32%, #212121 100%)', tier: 2 },
   // GOLDEN 0% — reference starts light/grey before the 695B53→FFBB00 ramp;
   // using ~#959595 as the grey start (confirm against Figma fills).
   golden:  { key: 'golden',  name: 'GOLDEN',  gradient: 'linear-gradient(180deg, #959595 0%, #695B53 34%, #FFBB00 100%)', tier: 2 },
-  sunset:  { key: 'sunset',  name: 'SUNSET',  gradient: 'linear-gradient(180deg, #D77BFF 0%, #E15CBF 33%, #E74C9D 50%, #EB3E80 66%, #F51F40 88%, #FF0000 100%)', tier: 3 },
-  burn:    { key: 'burn',    name: 'BURN',    gradient: 'linear-gradient(180deg, #FFF3EC 0%, #FFBB00 39%, #FF0000 100%)', tier: 3 },
+  sunset:  { key: 'sunset',  name: 'SUNSET',  gradient: 'linear-gradient(180deg, #D77BFF 0%, #E15CBF 33%, #E74C9D 50%, #EB3E80 66%, #F51F40 88%, #E5E1DB 100%)', tier: 3 },
+  burn:    { key: 'burn',    name: 'BURN',    gradient: 'linear-gradient(180deg, #FFF3EC 0%, #FFBB00 39%, #E5E1DB 100%)', tier: 3 },
 };
 
 export const DIVIDER_ORDER: DividerLineKey[] = ['default', 'slate', 'splice', 'drip', 'golden', 'sunset', 'burn'];

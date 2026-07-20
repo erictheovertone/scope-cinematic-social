@@ -23,7 +23,7 @@ import {
 } from './grainStocks';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
-const RED = '#FF0000';
+const RED = '#E5E1DB';
 const DEFAULT_INTENSITY = 6; // sensible visible starting point on first selection
 
 interface GrainPickerProps {
@@ -56,7 +56,7 @@ export default function GrainPicker({ stock, intensity, onChange }: GrainPickerP
               onClick={() => setActiveGauge(g)}
               style={{ flexShrink: 0, background: 'transparent', border: 'none', cursor: 'pointer', padding: '2px 4px', position: 'relative' }}
             >
-              <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: on ? 'white' : 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{g}</span>
+              <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: on ? '#E5E1DB' : 'rgba(229,225,219,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{g}</span>
               {on && <div style={{ position: 'absolute', left: 4, right: 4, bottom: -4, height: 2, background: RED }} />}
             </button>
           );
@@ -78,7 +78,7 @@ export default function GrainPicker({ stock, intensity, onChange }: GrainPickerP
             >
               <div style={{
                 width: '100%', aspectRatio: '1 / 1', overflow: 'hidden',
-                border: `1px solid ${on ? RED : 'rgba(255,255,255,0.18)'}`,
+                border: `1px solid ${on ? RED : 'rgba(229,225,219,0.18)'}`,
               }}>
                 <img
                   src={s.file}
@@ -87,7 +87,7 @@ export default function GrainPicker({ stock, intensity, onChange }: GrainPickerP
                   style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                 />
               </div>
-              <span style={{ ...SKB, fontSize: 'var(--fs-7)', color: on ? RED : 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em', whiteSpace: 'nowrap' }}>{s.density}</span>
+              <span style={{ ...SKB, fontSize: 'var(--fs-7)', color: on ? RED : 'rgba(229,225,219,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em', whiteSpace: 'nowrap' }}>{s.density}</span>
             </button>
           );
         })}

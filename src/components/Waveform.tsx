@@ -10,7 +10,7 @@ import { useEffect, useRef } from "react";
 const LOGICAL_W = 600; // canvas logical width; CSS stretches to the container
 
 export default function Waveform({
-  peaks, progress = 0, onSeek, height = 40, rest = "#4a4a4a", played = "#FF0000",
+  peaks, progress = 0, onSeek, height = 40, rest = "#4a4a4a", played = "#E5E1DB",
 }: {
   peaks?: number[] | null;
   progress?: number; // 0..1

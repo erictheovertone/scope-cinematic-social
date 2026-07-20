@@ -19,7 +19,7 @@ import { SPLIT_HUES, splitCss, type SplitRegion } from './splitTonePalette';
 import type { SplitTone } from '@/lib/editor/params';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
-const RED = '#FF0000';
+const RED = '#E5E1DB';
 const DEFAULT_STRENGTH = 6; // visible starting point on first hue selection
 
 interface SplitTonePanelProps {
@@ -53,7 +53,7 @@ export default function SplitTonePanel({ value, onChange }: SplitTonePanelProps)
           const on = r === region;
           return (
             <button key={r} onClick={() => setRegion(r)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '2px 0', position: 'relative' }}>
-              <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: on ? 'white' : 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{r === 'shadows' ? 'SHADOWS TINT' : 'HIGHLIGHTS TINT'}</span>
+              <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: on ? '#E5E1DB' : 'rgba(229,225,219,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{r === 'shadows' ? 'SHADOWS TINT' : 'HIGHLIGHTS TINT'}</span>
               {on && <div style={{ position: 'absolute', left: 0, right: 0, bottom: -4, height: 2, background: RED }} />}
             </button>
           );
@@ -82,7 +82,7 @@ export default function SplitTonePanel({ value, onChange }: SplitTonePanelProps)
               style={{
                 width: 34, height: 34, padding: 0, cursor: 'pointer',
                 background: splitCss(h.h, region),
-                border: selected ? `2px solid ${RED}` : '1px solid rgba(255,255,255,0.25)',
+                border: selected ? `2px solid ${RED}` : '1px solid rgba(229,225,219,0.25)',
                 outline: selected ? `1px solid ${RED}` : 'none', outlineOffset: 2,
               }}
             />

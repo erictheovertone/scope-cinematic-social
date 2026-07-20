@@ -15,7 +15,7 @@ import { backfillPeaks } from "@/lib/waveform";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
-const HAIR = "rgba(255,255,255,0.12)";
+const HAIR = "rgba(229,225,219,0.12)";
 
 export interface LibraryTrack {
   id: string;
@@ -133,14 +133,14 @@ export default function MusicPicker({
       {/* header + search */}
       <div style={{ padding: "16px 18px 12px", borderBottom: `1px solid ${HAIR}` }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-          <span style={{ ...SKB, fontSize: "var(--fs-11)", color: "#FFF", textTransform: "uppercase", letterSpacing: "0.1em" }}>Add Music</span>
-          <button onClick={onClose} aria-label="Close" style={{ background: "none", border: "none", cursor: "pointer", ...SKR, fontSize: 20, color: "rgba(255,255,255,0.55)", lineHeight: 1, padding: 4 }}>✕</button>
+          <span style={{ ...SKB, fontSize: "var(--fs-11)", color: "#E5E1DB", textTransform: "uppercase", letterSpacing: "0.1em" }}>Add Music</span>
+          <button onClick={onClose} aria-label="Close" style={{ background: "none", border: "none", cursor: "pointer", ...SKR, fontSize: 20, color: "rgba(229,225,219,0.55)", lineHeight: 1, padding: 4 }}>✕</button>
         </div>
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="search title or composer…"
-          style={{ width: "100%", boxSizing: "border-box", background: "rgba(255,255,255,0.05)", border: "none", outline: "none", ...SKR, fontSize: "max(16px, var(--fs-9))", color: "#FFF", padding: "9px 11px" }}
+          style={{ width: "100%", boxSizing: "border-box", background: "rgba(229,225,219,0.05)", border: "none", outline: "none", ...SKR, fontSize: "max(16px, var(--fs-9))", color: "#E5E1DB", padding: "9px 11px" }}
         />
         {/* keyword chips */}
         <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 10, maxHeight: 92, overflowY: "auto" }}>
@@ -148,7 +148,7 @@ export default function MusicPicker({
             const on = chips.includes(w);
             return (
               <button key={w} onClick={() => toggleChip(w)}
-                style={{ ...SKR, fontSize: "var(--fs-7)", color: on ? "#000" : "rgba(255,255,255,0.7)", background: on ? "#FFF" : "transparent", border: `1px solid ${on ? "#FFF" : HAIR}`, padding: "4px 9px", cursor: "pointer", textTransform: "lowercase" }}>
+                style={{ ...SKR, fontSize: "var(--fs-7)", color: on ? "#000" : "rgba(229,225,219,0.7)", background: on ? "#E5E1DB" : "transparent", border: `1px solid ${on ? "#E5E1DB" : HAIR}`, padding: "4px 9px", cursor: "pointer", textTransform: "lowercase" }}>
                 {w}
               </button>
             );
@@ -158,38 +158,38 @@ export default function MusicPicker({
 
       {/* results */}
       <div style={{ flex: 1, overflowY: "auto", padding: "6px 0 40px" }}>
-        {tracks === null && <p style={{ ...SKR, fontSize: "var(--fs-8)", color: "rgba(255,255,255,0.4)", padding: "20px 18px" }}>Loading…</p>}
-        {tracks !== null && results.length === 0 && <p style={{ ...SKR, fontSize: "var(--fs-8)", color: "rgba(255,255,255,0.4)", padding: "20px 18px" }}>No tracks match.</p>}
+        {tracks === null && <p style={{ ...SKR, fontSize: "var(--fs-8)", color: "rgba(229,225,219,0.4)", padding: "20px 18px" }}>Loading…</p>}
+        {tracks !== null && results.length === 0 && <p style={{ ...SKR, fontSize: "var(--fs-8)", color: "rgba(229,225,219,0.4)", padding: "20px 18px" }}>No tracks match.</p>}
         {results.map((t) => {
           const isPlaying = playing === t.id;
           const isCurrent = currentTrackId === t.id;
           return (
-            <div key={t.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 18px", borderBottom: `1px solid rgba(255,255,255,0.06)` }}>
+            <div key={t.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 18px", borderBottom: `1px solid rgba(229,225,219,0.06)` }}>
               <TrackArt url={t.artwork_url} title={t.title} id={t.id} size={38} />
               {/* play/pause */}
               <button onClick={() => togglePlay(t)} aria-label={isPlaying ? "Pause" : "Play"} style={{ flexShrink: 0, width: 32, height: 32, borderRadius: "50%", border: `1px solid ${HAIR}`, background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>
                 {isPlaying ? (
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="#FFF"><rect x="6" y="5" width="4" height="14" /><rect x="14" y="5" width="4" height="14" /></svg>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="#E5E1DB"><rect x="6" y="5" width="4" height="14" /><rect x="14" y="5" width="4" height="14" /></svg>
                 ) : (
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="#FFF"><path d="M7 5v14l12-7z" /></svg>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="#E5E1DB"><path d="M7 5v14l12-7z" /></svg>
                 )}
               </button>
               {/* info */}
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-                  <span style={{ ...SKB, fontSize: "var(--fs-9)", color: "#FFF", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t.title}</span>
-                  <span style={{ ...SKR, fontSize: "var(--fs-7)", color: "rgba(255,255,255,0.4)", flexShrink: 0 }}>{fmt(t.duration_seconds)}</span>
+                  <span style={{ ...SKB, fontSize: "var(--fs-9)", color: "#E5E1DB", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t.title}</span>
+                  <span style={{ ...SKR, fontSize: "var(--fs-7)", color: "rgba(229,225,219,0.4)", flexShrink: 0 }}>{fmt(t.duration_seconds)}</span>
                 </div>
                 <div style={{ margin: "5px 0 4px" }}>
                   <Waveform peaks={t.waveform_peaks} progress={isPlaying ? progress : 0} onSeek={(pct) => seekTrack(t, pct)} height={26} />
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  <span style={{ ...SKR, fontSize: "var(--fs-7)", color: "rgba(255,255,255,0.45)" }}>{t.composer_handle ? `@${t.composer_handle}` : ""}</span>
-                  <span style={{ ...SKR, fontSize: "var(--fs-7)", color: "rgba(255,255,255,0.28)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t.keywords.slice(0, 3).join(" · ")}</span>
+                  <span style={{ ...SKR, fontSize: "var(--fs-7)", color: "rgba(229,225,219,0.45)" }}>{t.composer_handle ? `@${t.composer_handle}` : ""}</span>
+                  <span style={{ ...SKR, fontSize: "var(--fs-7)", color: "rgba(229,225,219,0.28)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t.keywords.slice(0, 3).join(" · ")}</span>
                 </div>
               </div>
               {/* select */}
-              <button onClick={() => pick(t)} style={{ flexShrink: 0, ...SKB, fontSize: "var(--fs-8)", color: isCurrent ? "#FF0000" : "#FFF", textTransform: "uppercase", letterSpacing: "0.06em", background: "transparent", border: `1px solid ${isCurrent ? "rgba(255,0,0,0.6)" : "rgba(255,255,255,0.4)"}`, cursor: "pointer", padding: "7px 12px" }}>
+              <button onClick={() => pick(t)} style={{ flexShrink: 0, ...SKB, fontSize: "var(--fs-8)", color: isCurrent ? "#E5E1DB" : "#E5E1DB", textTransform: "uppercase", letterSpacing: "0.06em", background: "transparent", border: `1px solid ${isCurrent ? "rgba(229,225,219,0.6)" : "rgba(229,225,219,0.4)"}`, cursor: "pointer", padding: "7px 12px" }}>
                 {isCurrent ? "Current" : "Select"}
               </button>
             </div>

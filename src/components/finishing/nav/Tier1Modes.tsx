@@ -12,7 +12,7 @@
 import { MODES, type Mode } from './navModel';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
-const RED = '#FF0000';
+const RED = '#E5E1DB';
 const ICON = 28;
 
 // Line-style mode glyphs (currentColor, stroke ~1.5, no fill unless noted).
@@ -84,8 +84,8 @@ export default function Tier1Modes({ active, onSelect, orientation = 'horizontal
         ...(vertical
           // Distribute all five within the rail height (flex:1 items below) so
           // none clip at top/bottom; overflow hidden guards the shortest rails.
-          ? { borderLeft: '1px solid rgba(255,255,255,0.08)', height: '100%', justifyContent: 'space-between', padding: compact ? '4px 0' : '8px 0', overflow: 'hidden' }
-          : { borderTop: '1px solid rgba(255,255,255,0.08)' }),
+          ? { borderLeft: '1px solid rgba(229,225,219,0.08)', height: '100%', justifyContent: 'space-between', padding: compact ? '4px 0' : '8px 0', overflow: 'hidden' }
+          : { borderTop: '1px solid rgba(229,225,219,0.08)' }),
         background: '#000',
       }}
     >
@@ -102,7 +102,7 @@ export default function Tier1Modes({ active, onSelect, orientation = 'horizontal
               background: 'transparent', border: 'none', cursor: 'pointer',
               padding: vertical ? (compact ? '2px 0' : '6px 0') : '11px 0 13px',
               display: 'flex', flexDirection: 'column', alignItems: 'center', gap: compact ? 3 : 5,
-              color: on ? RED : 'rgba(255,255,255,0.5)', // drives the icon (currentColor)
+              color: on ? RED : 'rgba(229,225,219,0.5)', // drives the icon (currentColor)
             }}
           >
             {/* active marker — left red bar in the vertical rail */}
@@ -112,7 +112,7 @@ export default function Tier1Modes({ active, onSelect, orientation = 'horizontal
             <span style={{ display: 'inline-flex', animation: pingKey === m.key ? 'tabPing 0.4s ease-out' : undefined }}>
               <ModeIcon mode={m.key} size={iconSize} />
             </span>
-            <span style={{ ...SKB, fontSize: compact ? 7 : 9, color: on ? 'white' : 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{m.label}</span>
+            <span style={{ ...SKB, fontSize: compact ? 7 : 9, color: on ? '#E5E1DB' : 'rgba(229,225,219,0.45)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{m.label}</span>
           </button>
         );
       })}

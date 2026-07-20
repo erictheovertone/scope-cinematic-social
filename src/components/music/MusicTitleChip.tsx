@@ -10,7 +10,7 @@ import TrackSheet from "@/components/music/TrackSheet";
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 
 export default function MusicTitleChip({
-  post, color = "rgba(255,255,255,0.6)",
+  post, color = "rgba(229,225,219,0.6)",
 }: {
   post: { music_track_id?: string | null };
   color?: string;

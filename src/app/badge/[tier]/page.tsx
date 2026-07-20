@@ -17,7 +17,7 @@ export const TIER_DETAILS: Record<string, {
     img: '/free-tier-aperture-logo-red.png',
     size: 64,
     label: 'FREE TIER',
-    color: '#FF0000',
+    color: '#E5E1DB',
     tagline: 'Your first token. Your first post. Your first piece of the ecosystem.',
     sections: [
       {
@@ -38,7 +38,7 @@ export const TIER_DETAILS: Record<string, {
     img: '/badges/in-house-badge-min-design-01.png',
     size: 64,
     label: 'IN-HOUSE CREATOR',
-    color: 'rgba(255,255,255,0.7)',
+    color: 'rgba(229,225,219,0.7)',
     tagline: 'Make it here. Show it here. Win here.',
     sections: [
       {
@@ -59,7 +59,7 @@ export const TIER_DETAILS: Record<string, {
     img: '/badges/scope-pro-badge-min-design-01.png',
     size: 64,
     label: 'SCOPE PRO',
-    color: '#FF0000',
+    color: '#E5E1DB',
     tagline: 'The full toolkit. No limits.',
     sections: [
       {
@@ -196,7 +196,7 @@ export default function BadgeDetailPage() {
   if (!detail) {
     return (
       <div style={{ backgroundColor: '#000', minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <p style={{ ...BOLD, color: 'white', fontSize: 'var(--fs-11)' }}>BADGE NOT FOUND</p>
+        <p style={{ ...BOLD, color: '#E5E1DB', fontSize: 'var(--fs-11)' }}>BADGE NOT FOUND</p>
       </div>
     );
   }
@@ -209,7 +209,7 @@ export default function BadgeDetailPage() {
           onClick={() => router.back()}
           style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}
         >
-          <span style={{ ...BOLD, fontSize: 'var(--fs-10)', color: 'rgba(255,255,255,0.5)', letterSpacing: '0.1em' }}>← BACK</span>
+          <span style={{ ...BOLD, fontSize: 'var(--fs-10)', color: 'rgba(229,225,219,0.5)', letterSpacing: '0.1em' }}>← BACK</span>
         </button>
       </div>
 
@@ -251,13 +251,13 @@ export default function BadgeDetailPage() {
         <p style={{ ...BOLD, fontSize: 'var(--fs-18)', color: detail.color, textTransform: 'uppercase', letterSpacing: '-0.02em', margin: '0 0 12px', textAlign: 'center' }}>
           {detail.label}
         </p>
-        <p style={{ ...REG, fontSize: 'var(--fs-13)', color: 'rgba(255,255,255,0.6)', textAlign: 'center', lineHeight: 1.6, margin: 0, maxWidth: 280 }}>
+        <p style={{ ...REG, fontSize: 'var(--fs-13)', color: 'rgba(229,225,219,0.6)', textAlign: 'center', lineHeight: 1.6, margin: 0, maxWidth: 280 }}>
           {detail.tagline}
         </p>
       </div>
 
       {/* Divider */}
-      <div style={{ height: 1, backgroundColor: 'rgba(255,255,255,0.06)', margin: '0 20px 32px' }} />
+      <div style={{ height: 1, backgroundColor: 'rgba(229,225,219,0.06)', margin: '0 20px 32px' }} />
 
       {/* Sections */}
       {detail.sections.map((section, i) => (
@@ -265,11 +265,11 @@ export default function BadgeDetailPage() {
           <p style={{ ...BOLD, fontSize: 'var(--fs-9)', color: detail.color, textTransform: 'uppercase', letterSpacing: '0.15em', margin: '0 0 10px' }}>
             {section.title}
           </p>
-          <p style={{ ...REG, fontSize: 'var(--fs-13)', color: 'rgba(255,255,255,0.75)', lineHeight: 1.4, margin: 0 }}>
+          <p style={{ ...REG, fontSize: 'var(--fs-13)', color: 'rgba(229,225,219,0.75)', lineHeight: 1.4, margin: 0 }}>
             {section.body}
           </p>
           {i < detail.sections.length - 1 && (
-            <div style={{ height: 1, backgroundColor: 'rgba(255,255,255,0.05)', marginTop: 28 }} />
+            <div style={{ height: 1, backgroundColor: 'rgba(229,225,219,0.05)', marginTop: 28 }} />
           )}
         </div>
       ))}
@@ -279,9 +279,9 @@ export default function BadgeDetailPage() {
         <div style={{ padding: '0 20px' }}>
           <button
             onClick={() => router.push('/profile?showMembership=true')}
-            style={{ width: '100%', background: '#FF0000', border: 'none', cursor: 'pointer', padding: '14px 0' }}
+            style={{ width: '100%', background: '#E5E1DB', border: 'none', cursor: 'pointer', padding: '14px 0' }}
           >
-            <span style={{ ...BOLD, fontSize: 'var(--fs-12)', color: 'white', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+            <span style={{ ...BOLD, fontSize: 'var(--fs-12)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
               BECOME A SCOPE MEMBER
             </span>
           </button>

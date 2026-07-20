@@ -27,13 +27,13 @@ export default function PrivacyPage() {
     // class required (the globals rule hides fixed divs without it).
     <div className="bg-black" style={{ position: "fixed", inset: 0, overflowY: "auto", WebkitOverflowScrolling: "touch" }}>
       <div style={{ background: "#000", minHeight: "100%", padding: "calc(20px + env(safe-area-inset-top, 0px)) 20px calc(60px + env(safe-area-inset-bottom, 0px))", maxWidth: 640, margin: "0 auto" }}>
-      <Link href="/" style={{ ...SKR, fontSize: 12, color: "rgba(255,255,255,0.5)", textDecoration: "none", textTransform: "uppercase", letterSpacing: "0.08em" }}>← SCOPE</Link>
-      <h1 style={{ ...SKB, fontSize: 22, color: "#FFF", textTransform: "uppercase", letterSpacing: "0.06em", margin: "22px 0 4px" }}>Privacy Policy</h1>
-      <p style={{ ...SKR, fontSize: 11, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 28px" }}>DRAFT · LAST UPDATED JULY 2026</p>
+      <Link href="/" style={{ ...SKR, fontSize: 12, color: "rgba(229,225,219,0.5)", textDecoration: "none", textTransform: "uppercase", letterSpacing: "0.08em" }}>← SCOPE</Link>
+      <h1 style={{ ...SKB, fontSize: 22, color: "#E5E1DB", textTransform: "uppercase", letterSpacing: "0.06em", margin: "22px 0 4px" }}>Privacy Policy</h1>
+      <p style={{ ...SKR, fontSize: 11, color: "rgba(229,225,219,0.4)", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 28px" }}>DRAFT · LAST UPDATED JULY 2026</p>
       {SECTIONS.map((s) => (
         <section key={s.title} style={{ margin: "0 0 24px" }}>
-          <h2 style={{ ...SKB, fontSize: 12, color: "rgba(255,255,255,0.85)", textTransform: "uppercase", letterSpacing: "0.14em", margin: "0 0 8px" }}>{s.title}</h2>
-          <p style={{ ...SKR, fontSize: 13, color: "rgba(255,255,255,0.7)", lineHeight: 1.6, margin: 0 }}>{s.body}</p>
+          <h2 style={{ ...SKB, fontSize: 12, color: "rgba(229,225,219,0.85)", textTransform: "uppercase", letterSpacing: "0.14em", margin: "0 0 8px" }}>{s.title}</h2>
+          <p style={{ ...SKR, fontSize: 13, color: "rgba(229,225,219,0.7)", lineHeight: 1.6, margin: 0 }}>{s.body}</p>
         </section>
       ))}
       </div>

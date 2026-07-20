@@ -113,16 +113,16 @@ export default function DesktopHome() {
             title, now on desktop). SK-Modernist Bold, −0.06em, 40px page-title scale. */}
         {/* DISCOVER title + SEARCH control (top-right — same language as the lightbox) */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '0 0 30px' }}>
-          <h1 style={{ ...SKB, fontSize: 40, lineHeight: 0.95, letterSpacing: '-0.06em', color: '#FFF', textTransform: 'uppercase', margin: 0 }}>Discover</h1>
-          <div style={{ width: 160, height: 34, border: '0.5px solid rgba(255,255,255,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 12px', flexShrink: 0 }}>
-            <span style={{ ...SKB, fontSize: 11, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>SEARCH</span>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3" strokeLinecap="round"/></svg>
+          <h1 style={{ ...SKB, fontSize: 40, lineHeight: 0.95, letterSpacing: '-0.06em', color: '#E5E1DB', textTransform: 'uppercase', margin: 0 }}>Discover</h1>
+          <div style={{ width: 160, height: 34, border: '0.5px solid rgba(229,225,219,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 12px', flexShrink: 0 }}>
+            <span style={{ ...SKB, fontSize: 11, color: 'rgba(229,225,219,0.5)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>SEARCH</span>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(229,225,219,0.5)" strokeWidth="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3" strokeLinecap="round"/></svg>
           </div>
         </div>
         {posts == null ? (
           <div style={{ minHeight: '40vh' }} />
         ) : posts.length === 0 ? (
-          <p style={{ ...SKB, textAlign: 'center', fontSize: 12, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.14em', padding: '80px 0' }}>NOTHING SCREENING YET</p>
+          <p style={{ ...SKB, textAlign: 'center', fontSize: 12, color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase', letterSpacing: '0.14em', padding: '80px 0' }}>NOTHING SCREENING YET</p>
         ) : (
           <>
             {/* HOME FEED = the house design: FIXED 3-across, severed from user

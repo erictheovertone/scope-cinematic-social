@@ -103,7 +103,7 @@ export default function HiddenPosts() {
                       </button>
                       <button
                         onClick={() => deletePost(post.id)}
-                        className="bg-transparent border border-[#FF0000] text-[#FF0000] px-4 py-2 rounded-lg font-['IBM_Plex_Mono'] text-[var(--fs-12)] hover:bg-[#FF0000] hover:bg-opacity-10 transition-colors"
+                        className="bg-transparent border border-[#E5E1DB] text-[#E5E1DB] px-4 py-2 rounded-lg font-['IBM_Plex_Mono'] text-[var(--fs-12)] hover:bg-[#E5E1DB] hover:bg-opacity-10 transition-colors"
                       >
                         Delete
                       </button>
@@ -124,15 +124,15 @@ export default function HiddenPosts() {
           </p>
           <ul className="space-y-1">
             <li className="font-['IBM_Plex_Mono'] font-normal text-[#888888] text-[var(--fs-11)] flex items-start">
-              <span className="text-[#FF0000] mr-2">•</span>
+              <span className="text-[#E5E1DB] mr-2">•</span>
               Hidden posts don't appear on your profile
             </li>
             <li className="font-['IBM_Plex_Mono'] font-normal text-[#888888] text-[var(--fs-11)] flex items-start">
-              <span className="text-[#FF0000] mr-2">•</span>
+              <span className="text-[#E5E1DB] mr-2">•</span>
               You can unhide them anytime
             </li>
             <li className="font-['IBM_Plex_Mono'] font-normal text-[#888888] text-[var(--fs-11)] flex items-start">
-              <span className="text-[#FF0000] mr-2">•</span>
+              <span className="text-[#E5E1DB] mr-2">•</span>
               Deleting removes them permanently
             </li>
           </ul>

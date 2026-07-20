@@ -26,22 +26,22 @@ export default function FramesProUpsellSheet({ isOpen, onClose, onUpgrade }: Pro
           position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 91,
           maxWidth: '30rem', margin: "0 auto",
           background: "#080808",
-          borderTop: "1px solid rgba(255,255,255,0.12)",
+          borderTop: "1px solid rgba(229,225,219,0.12)",
           padding: "0 20px 28px",
         }}
       >
         {/* Drag handle */}
         <div style={{ display: "flex", justifyContent: "center", paddingTop: 20, marginBottom: 4 }}>
-          <div style={{ width: 36, height: 3, background: "rgba(255,255,255,0.2)" }} />
+          <div style={{ width: 36, height: 3, background: "rgba(229,225,219,0.2)" }} />
         </div>
 
         {/* Header row */}
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", paddingTop: 16 }}>
           <div>
-            <p style={{ ...SKB, fontSize: 'var(--fs-9)', letterSpacing: "0.15em", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", margin: "0 0 4px" }}>
+            <p style={{ ...SKB, fontSize: 'var(--fs-9)', letterSpacing: "0.15em", color: "rgba(229,225,219,0.4)", textTransform: "uppercase", margin: "0 0 4px" }}>
               FRAMES
             </p>
-            <p style={{ ...SKR, fontSize: 'var(--fs-13)', lineHeight: 1.5, color: "rgba(255,255,255,0.85)", margin: 0, maxWidth: 260 }}>
+            <p style={{ ...SKR, fontSize: 'var(--fs-13)', lineHeight: 1.5, color: "rgba(229,225,219,0.85)", margin: 0, maxWidth: 260 }}>
               Export your decks as cinematic frame stacks. Curate up to 6 images into a single 9:16 image ready to share. SCOPE Pro feature.
             </p>
           </div>
@@ -50,7 +50,7 @@ export default function FramesProUpsellSheet({ isOpen, onClose, onUpgrade }: Pro
             style={{ background: "transparent", border: "none", cursor: "pointer", padding: 0, width: 18, height: 18, flexShrink: 0, marginLeft: 8 }}
           >
             <svg width="21.5" height="21.5" viewBox="0 0 18 18" fill="none">
-              <path d="M3 3L15 15M15 3L3 15" stroke="rgba(255,255,255,0.5)" strokeWidth="1.5" strokeLinecap="round" />
+              <path d="M3 3L15 15M15 3L3 15" stroke="rgba(229,225,219,0.5)" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
           </button>
         </div>
@@ -61,7 +61,7 @@ export default function FramesProUpsellSheet({ isOpen, onClose, onUpgrade }: Pro
             style={{
               width: 90, height: 160,
               background: "#111",
-              border: "1px solid rgba(255,255,255,0.12)",
+              border: "1px solid rgba(229,225,219,0.12)",
               display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-end",
               padding: "0 0 10px",
             }}
@@ -73,7 +73,7 @@ export default function FramesProUpsellSheet({ isOpen, onClose, onUpgrade }: Pro
                   key={i}
                   style={{
                     height: 28,
-                    background: `rgba(255,255,255,${0.04 + i * 0.03})`,
+                    background: `rgba(229,225,219,${0.04 + i * 0.03})`,
                     marginBottom: 2,
                   }}
                 />
@@ -88,7 +88,7 @@ export default function FramesProUpsellSheet({ isOpen, onClose, onUpgrade }: Pro
         </div>
 
         {/* What you get */}
-        <p style={{ ...SKB, fontSize: 'var(--fs-9)', letterSpacing: "0.15em", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", margin: "0 0 12px" }}>
+        <p style={{ ...SKB, fontSize: 'var(--fs-9)', letterSpacing: "0.15em", color: "rgba(229,225,219,0.4)", textTransform: "uppercase", margin: "0 0 12px" }}>
           WHAT YOU GET
         </p>
         <div style={{ marginBottom: 20 }}>
@@ -99,7 +99,7 @@ export default function FramesProUpsellSheet({ isOpen, onClose, onUpgrade }: Pro
           ].map((line, i) => (
             <p
               key={i}
-              style={{ ...SKR, fontSize: 'var(--fs-12)', lineHeight: 1.5, color: "rgba(255,255,255,0.7)", margin: i < 2 ? "0 0 12px" : 0 }}
+              style={{ ...SKR, fontSize: 'var(--fs-12)', lineHeight: 1.5, color: "rgba(229,225,219,0.7)", margin: i < 2 ? "0 0 12px" : 0 }}
             >
               {line}
             </p>
@@ -110,17 +110,17 @@ export default function FramesProUpsellSheet({ isOpen, onClose, onUpgrade }: Pro
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           <button
             onClick={onUpgrade}
-            style={{ width: "100%", padding: "14px 0", background: "#FF0000", border: "none", cursor: "pointer" }}
+            style={{ width: "100%", padding: "14px 0", background: "#E5E1DB", border: "none", cursor: "pointer" }}
           >
-            <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: "white", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+            <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: "#E5E1DB", textTransform: "uppercase", letterSpacing: "0.1em" }}>
               UPGRADE TO PRO
             </span>
           </button>
           <button
             onClick={onClose}
-            style={{ width: "100%", padding: "14px 0", background: "transparent", border: "1px solid rgba(255,255,255,0.2)", cursor: "pointer" }}
+            style={{ width: "100%", padding: "14px 0", background: "transparent", border: "1px solid rgba(229,225,219,0.2)", cursor: "pointer" }}
           >
-            <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: "rgba(255,255,255,0.7)", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+            <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: "rgba(229,225,219,0.7)", textTransform: "uppercase", letterSpacing: "0.1em" }}>
               NOT NOW
             </span>
           </button>

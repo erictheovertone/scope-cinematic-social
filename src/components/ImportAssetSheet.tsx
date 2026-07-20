@@ -56,26 +56,26 @@ export default function ImportAssetSheet({ visible, onClose, userUuid, onAdded }
         data-swipe-exclude
         style={{
           position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 1101,
-          background: '#080808', borderTop: '1px solid rgba(255,255,255,0.08)',
+          background: '#080808', borderTop: '1px solid rgba(229,225,219,0.08)',
           transform: visible ? 'translateY(0)' : 'translateY(100%)',
           transition: 'transform 0.4s cubic-bezier(0.32, 0.72, 0, 1)',
           padding: '20px 20px calc(28px + env(safe-area-inset-bottom, 0px))',
         }}
       >
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
-          <div style={{ width: 36, height: 2, backgroundColor: 'rgba(255,255,255,0.12)' }} />
+          <div style={{ width: 36, height: 2, backgroundColor: 'rgba(229,225,219,0.12)' }} />
         </div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-          <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.18em', margin: 0 }}>IMPORT ASSET</p>
+          <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'rgba(229,225,219,0.45)', textTransform: 'uppercase', letterSpacing: '0.18em', margin: 0 }}>IMPORT ASSET</p>
           <button onClick={onClose} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 6, margin: -6 }}>
-            <span style={{ ...SKR, fontSize: 'var(--fs-16)', color: 'rgba(255,255,255,0.5)', lineHeight: 1 }}>×</span>
+            <span style={{ ...SKR, fontSize: 'var(--fs-16)', color: 'rgba(229,225,219,0.5)', lineHeight: 1 }}>×</span>
           </button>
         </div>
 
-        <p style={{ ...SKR, fontSize: 'var(--fs-10)', color: 'rgba(255,255,255,0.5)', lineHeight: 1.5, margin: '0 0 12px' }}>
+        <p style={{ ...SKR, fontSize: 'var(--fs-10)', color: 'rgba(229,225,219,0.5)', lineHeight: 1.5, margin: '0 0 12px' }}>
           Paste an ERC-20 contract address on Base. The token appears in your balances list.
         </p>
-        <div style={{ border: '1px solid rgba(255,255,255,0.18)', padding: '0 12px' }}>
+        <div style={{ border: '1px solid rgba(229,225,219,0.18)', padding: '0 12px' }}>
           <input
             inputMode="text"
             autoCapitalize="none"
@@ -85,25 +85,25 @@ export default function ImportAssetSheet({ visible, onClose, userUuid, onAdded }
             disabled={busy}
             onChange={(e) => { setAddress(e.target.value); setError(null); }}
             placeholder="0x…"
-            style={{ ...SKR, fontSize: 16, color: '#FFF', background: 'transparent', border: 'none', outline: 'none', width: '100%', padding: '12px 0' }}
+            style={{ ...SKR, fontSize: 16, color: '#E5E1DB', background: 'transparent', border: 'none', outline: 'none', width: '100%', padding: '12px 0' }}
           />
         </div>
         {error && (
-          <p style={{ ...SKR, fontSize: 'var(--fs-10)', color: '#FF0000', margin: '10px 0 0', lineHeight: 1.4 }}>{error}</p>
+          <p style={{ ...SKR, fontSize: 'var(--fs-10)', color: '#E5E1DB', margin: '10px 0 0', lineHeight: 1.4 }}>{error}</p>
         )}
 
         {busy ? (
-          <div style={{ width: '100%', border: '1px solid rgba(255,0,0,0.55)', padding: '13px 0', marginTop: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, minHeight: 46 }}>
+          <div style={{ width: '100%', border: '1px solid rgba(229,225,219,0.55)', padding: '13px 0', marginTop: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, minHeight: 46 }}>
             <FrameLoader size={23.5} />
-            <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: 'white', textTransform: 'uppercase', letterSpacing: '0.1em' }}>CHECKING TOKEN…</span>
+            <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.1em' }}>CHECKING TOKEN…</span>
           </div>
         ) : (
           <button
             onClick={doImport}
             disabled={!address.trim()}
-            style={{ width: '100%', background: !address.trim() ? 'rgba(255,0,0,0.4)' : '#FF0000', border: 'none', cursor: !address.trim() ? 'default' : 'pointer', padding: '14px 0', marginTop: 14 }}
+            style={{ width: '100%', background: !address.trim() ? 'rgba(229,225,219,0.4)' : '#E5E1DB', border: 'none', cursor: !address.trim() ? 'default' : 'pointer', padding: '14px 0', marginTop: 14 }}
           >
-            <span style={{ ...SKB, fontSize: 'var(--fs-12)', color: 'white', textTransform: 'uppercase', letterSpacing: '0.08em' }}>IMPORT</span>
+            <span style={{ ...SKB, fontSize: 'var(--fs-12)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.08em' }}>IMPORT</span>
           </button>
         )}
       </div>

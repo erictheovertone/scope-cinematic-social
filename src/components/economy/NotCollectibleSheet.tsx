@@ -33,25 +33,25 @@ export default function NotCollectibleSheet({ visible, onClose }: { visible: boo
       <div
         style={{
           position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 301,
-          backgroundColor: '#111111', borderTop: '1px solid rgba(255,255,255,0.12)',
+          backgroundColor: '#111111', borderTop: '1px solid rgba(229,225,219,0.12)',
           padding: '26px 24px calc(30px + env(safe-area-inset-bottom, 0px))',
           transform: visible ? 'translateY(0)' : 'translateY(100%)',
           transition: 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)',
         }}
       >
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 18 }}>
-          <div style={{ width: 40, height: 2, backgroundColor: 'rgba(255,255,255,0.2)' }} />
+          <div style={{ width: 40, height: 2, backgroundColor: 'rgba(229,225,219,0.2)' }} />
         </div>
-        <p style={{ ...SKB, fontSize: 'var(--fs-11)', color: '#FF0000', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 8px' }}>
+        <p style={{ ...SKB, fontSize: 'var(--fs-11)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 8px' }}>
           Not yet collectible
         </p>
-        <p style={{ ...SKR, fontSize: 'var(--fs-10)', color: 'rgba(255,255,255,0.55)', lineHeight: 1.5, margin: '0 0 22px' }}>
+        <p style={{ ...SKR, fontSize: 'var(--fs-10)', color: 'rgba(229,225,219,0.55)', lineHeight: 1.5, margin: '0 0 22px' }}>
           This post hasn&rsquo;t been minted, so there&rsquo;s nothing to collect yet.
         </p>
         <button
           onClick={onClose}
           className="press-row"
-          style={{ ...SKB, width: '100%', fontSize: 'var(--fs-10)', color: 'white', textTransform: 'uppercase', letterSpacing: '0.08em', background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', cursor: 'pointer', padding: '13px 0', touchAction: 'manipulation' }}
+          style={{ ...SKB, width: '100%', fontSize: 'var(--fs-10)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.08em', background: 'transparent', border: '1px solid rgba(229,225,219,0.2)', cursor: 'pointer', padding: '13px 0', touchAction: 'manipulation' }}
         >
           Got it
         </button>

@@ -19,7 +19,7 @@
 // MC, price/piece — from the real (hardened) sources. Exit: tap the black field,
 // the framed-eye top-right, or BACK (mobile).
 //
-// Design system: pure black, #FF0000, SK-Modernist, sharp corners, no shadow/blur,
+// Design system: pure black, #E5E1DB, SK-Modernist, sharp corners, no shadow/blur,
 // signature easing cubic-bezier(0.16,0.84,0.3,1). No IBM Plex Mono.
 
 import { useEffect, useRef, useState, useCallback } from 'react';
@@ -333,12 +333,12 @@ export default function TheatreMode({
     // anywhere also exits, but the button makes the escape obvious → never stuck.
     return (
       <div onClick={() => handleClose()} style={{ position: 'fixed', inset: 0, zIndex: 900, background: '#000', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 22, padding: '0 40px' }}>
-        <span style={{ ...SKR, fontSize: 'var(--fs-11)', color: 'rgba(255,255,255,0.55)', textTransform: 'uppercase', letterSpacing: '0.1em', textAlign: 'center', lineHeight: 1.6 }}>
+        <span style={{ ...SKR, fontSize: 'var(--fs-11)', color: 'rgba(229,225,219,0.55)', textTransform: 'uppercase', letterSpacing: '0.1em', textAlign: 'center', lineHeight: 1.6 }}>
           Nothing to screen yet<br />— post your first work
         </span>
         <button
           onClick={(e) => { e.stopPropagation(); handleClose(); }}
-          style={{ ...SKB, fontSize: 'var(--fs-9)', color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.12em', background: 'transparent', border: '1px solid rgba(255,255,255,0.5)', cursor: 'pointer', padding: '12px 26px', touchAction: 'manipulation' }}
+          style={{ ...SKB, fontSize: 'var(--fs-9)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.12em', background: 'transparent', border: '1px solid rgba(229,225,219,0.5)', cursor: 'pointer', padding: '12px 26px', touchAction: 'manipulation' }}
         >
           Back to profile
         </button>
@@ -491,7 +491,7 @@ export default function TheatreMode({
                 MOBILE: full opacity + a softer brightness (no glow) so they read
                 clearly without the harsh desktop halo — the 0.85 button opacity
                 plus a missing filter were the only mobile dimmers. */}
-            <img src="/theatre-mode-arrow-01.png" alt="Previous" style={{ height: arrowH, width: 'auto', display: 'block', transform: 'scaleX(-1)', filter: isDesktopVp ? 'brightness(1.3) drop-shadow(0 0 6px rgba(255,255,255,0.55))' : 'brightness(1.2)' }} />
+            <img src="/theatre-mode-arrow-01.png" alt="Previous" style={{ height: arrowH, width: 'auto', display: 'block', transform: 'scaleX(-1)', filter: isDesktopVp ? 'brightness(1.3) drop-shadow(0 0 6px rgba(229,225,219,0.55))' : 'brightness(1.2)' }} />
           </button>
         )}
         {!showData && index < posts.length - 1 && (
@@ -500,7 +500,7 @@ export default function TheatreMode({
             aria-label="Next"
             style={{ position: 'absolute', left: stageW - sideMargin / 2, top: '50%', transform: 'translate(-50%, -50%)', background: 'transparent', border: 'none', cursor: 'pointer', padding: ARROW_PAD, opacity: 1 }}
           >
-            <img src="/theatre-mode-arrow-01.png" alt="Next" style={{ height: arrowH, width: 'auto', display: 'block', filter: isDesktopVp ? 'brightness(1.3) drop-shadow(0 0 6px rgba(255,255,255,0.55))' : 'brightness(1.2)' }} />
+            <img src="/theatre-mode-arrow-01.png" alt="Next" style={{ height: arrowH, width: 'auto', display: 'block', filter: isDesktopVp ? 'brightness(1.3) drop-shadow(0 0 6px rgba(229,225,219,0.55))' : 'brightness(1.2)' }} />
           </button>
         )}
 
@@ -509,7 +509,7 @@ export default function TheatreMode({
           onClick={(e) => { stop(e); handleClose(); }}
           style={{ position: 'absolute', left: 16, top: 14, background: 'transparent', border: 'none', cursor: 'pointer', padding: 4 }}
         >
-          <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: '#FFF', letterSpacing: '0.02em', textTransform: 'uppercase' }}>Back</span>
+          <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: '#E5E1DB', letterSpacing: '0.02em', textTransform: 'uppercase' }}>Back</span>
         </button>
 
         {/* ── Framed-eye close (top-right) ── */}
@@ -542,10 +542,10 @@ export default function TheatreMode({
               {/* −3px optical trim: the '+' glyph draws low in its em box (math-
                   axis baseline), which read as sitting below the handle/icons even
                   though the flex row centers every box. One row, no offsets. */}
-              <span style={{ ...SKL, fontSize: 'var(--fs-30)', lineHeight: 1, color: '#FFF', display: 'block', transform: 'translateY(-3px)' }}>+</span>
+              <span style={{ ...SKL, fontSize: 'var(--fs-30)', lineHeight: 1, color: '#E5E1DB', display: 'block', transform: 'translateY(-3px)' }}>+</span>
             </button>
             {isFeed && f(post, 'username') && (
-              <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'rgba(255,255,255,0.85)', letterSpacing: '0.02em', textTransform: 'uppercase', pointerEvents: 'none', marginRight: 6 }}>
+              <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'rgba(229,225,219,0.85)', letterSpacing: '0.02em', textTransform: 'uppercase', pointerEvents: 'none', marginRight: 6 }}>
                 @{f(post, 'username')}
               </span>
             )}
@@ -553,17 +553,17 @@ export default function TheatreMode({
               <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                 {/* +6px icons, ≥44px targets — visual size up, still in the band. */}
                 <button onClick={(e) => { stop(e); handleLike(); }} aria-label="Like" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4, background: 'transparent', border: 'none', cursor: 'pointer', minWidth: 44, minHeight: 44, padding: 0 }}>
-                  <svg width="20.5" height="20.5" viewBox="0 0 24 24" fill={isLiked ? '#FF0000' : 'none'} stroke={isLiked ? '#FF0000' : 'rgba(255,255,255,0.85)'} strokeWidth="2" strokeLinejoin="round"><path d="M12 21s-7-4.5-9.5-9C1 9 2.5 5.5 6 5.5c2 0 3.2 1.2 4 2.3.8-1.1 2-2.3 4-2.3 3.5 0 5 3.5 3.5 6.5C19 16.5 12 21 12 21z"/></svg>
-                  <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: '#FFF', fontVariantNumeric: 'tabular-nums' }}>{likes.length}</span>
+                  <svg width="20.5" height="20.5" viewBox="0 0 24 24" fill={isLiked ? '#E5E1DB' : 'none'} stroke={isLiked ? '#E5E1DB' : 'rgba(229,225,219,0.85)'} strokeWidth="2" strokeLinejoin="round"><path d="M12 21s-7-4.5-9.5-9C1 9 2.5 5.5 6 5.5c2 0 3.2 1.2 4 2.3.8-1.1 2-2.3 4-2.3 3.5 0 5 3.5 3.5 6.5C19 16.5 12 21 12 21z"/></svg>
+                  <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: '#E5E1DB', fontVariantNumeric: 'tabular-nums' }}>{likes.length}</span>
                 </button>
                 <button onClick={(e) => { stop(e); setShowData(true); setShowComments(true); }} aria-label="Comments" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4, background: 'transparent', border: 'none', cursor: 'pointer', minWidth: 44, minHeight: 44, padding: 0 }}>
-                  <svg width="20.5" height="20.5" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2" strokeLinejoin="round"><path d="M21 11.5a8.5 8.5 0 0 1-12.5 7.5L3 21l2-5.5A8.5 8.5 0 1 1 21 11.5z"/></svg>
-                  <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: '#FFF', fontVariantNumeric: 'tabular-nums' }}>{comments.length}</span>
+                  <svg width="20.5" height="20.5" viewBox="0 0 24 24" fill="none" stroke="rgba(229,225,219,0.85)" strokeWidth="2" strokeLinejoin="round"><path d="M21 11.5a8.5 8.5 0 0 1-12.5 7.5L3 21l2-5.5A8.5 8.5 0 1 1 21 11.5z"/></svg>
+                  <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: '#E5E1DB', fontVariantNumeric: 'tabular-nums' }}>{comments.length}</span>
                 </button>
                 {coinAddr && (
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, minHeight: 44 }}>
                     <img src={FC_MARK} alt="First Cut" style={{ width: 18, height: 18, objectFit: 'contain', display: 'block' }} />
-                    <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: fcCount > 0 ? '#FF0000' : '#FFF', fontVariantNumeric: 'tabular-nums' }}>{fcCount}/{FIRST_CUT_SLOTS}</span>
+                    <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: fcCount > 0 ? '#E5E1DB' : '#E5E1DB', fontVariantNumeric: 'tabular-nums' }}>{fcCount}/{FIRST_CUT_SLOTS}</span>
                   </span>
                 )}
               </div>
@@ -578,7 +578,7 @@ export default function TheatreMode({
           onClick={stop}
           style={{
             position: 'absolute', left: 0, right: 0, bottom: 0,
-            background: '#000', borderTop: '1px solid #FF0000',
+            background: '#000', borderTop: '1px solid #E5E1DB',
             padding: '9px 16px 11px', maxHeight: '40%', overflowY: 'auto',
             transform: showData ? 'translateY(0)' : 'translateY(101%)',
             transition: `transform ${reduceMotion.current ? 0 : 360}ms ${EASE}`,
@@ -587,14 +587,14 @@ export default function TheatreMode({
         >
           {/* @handle + caption + COLLECT — compact */}
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 8 }}>
-            <span style={{ ...SKB, fontSize: 'var(--fs-12)', color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.02em' }}>@{f(post, 'username') ?? '—'}</span>
+            <span style={{ ...SKB, fontSize: 'var(--fs-12)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.02em' }}>@{f(post, 'username') ?? '—'}</span>
             {f(post, 'caption') && (
-              <span style={{ ...SKR, fontSize: 'var(--fs-10)', color: 'rgba(255,255,255,0.55)', lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, minWidth: 0 }}>{f(post, 'caption')}</span>
+              <span style={{ ...SKR, fontSize: 'var(--fs-10)', color: 'rgba(229,225,219,0.55)', lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, minWidth: 0 }}>{f(post, 'caption')}</span>
             )}
             {isCoin && (
               <button
                 onClick={(e) => { stop(e); setShowCollect(true); }}
-                style={{ ...SKB, fontSize: 'var(--fs-9)', letterSpacing: '0.08em', color: '#FF0000', textTransform: 'uppercase', background: 'transparent', border: '1px solid #FF0000', cursor: 'pointer', padding: '4px 12px', flexShrink: 0 }}
+                style={{ ...SKB, fontSize: 'var(--fs-9)', letterSpacing: '0.08em', color: '#E5E1DB', textTransform: 'uppercase', background: 'transparent', border: '1px solid #E5E1DB', cursor: 'pointer', padding: '4px 12px', flexShrink: 0 }}
               >
                 Collect
               </button>
@@ -602,25 +602,25 @@ export default function TheatreMode({
           </div>
 
           {/* Stat shelf — LIKES (tap to like) · COMMENTS (tap → ripple up) · MC · price */}
-          <div style={{ display: 'flex', gap: 1, background: 'rgba(255,255,255,0.08)' }}>
+          <div style={{ display: 'flex', gap: 1, background: 'rgba(229,225,219,0.08)' }}>
             <button onClick={(e) => { stop(e); handleLike(); }} style={{ flex: 1, background: '#000', padding: '7px 6px', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
-              <p style={{ ...SKB, fontSize: 'var(--fs-6_5)', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 0 5px' }}>LIKES</p>
-              <p style={{ ...SKB, fontSize: 'var(--fs-13)', color: isLiked ? '#FF0000' : '#FFF', margin: 0, fontVariantNumeric: 'tabular-nums' }}>{likes.length.toLocaleString()}</p>
+              <p style={{ ...SKB, fontSize: 'var(--fs-6_5)', color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 0 5px' }}>LIKES</p>
+              <p style={{ ...SKB, fontSize: 'var(--fs-13)', color: isLiked ? '#E5E1DB' : '#E5E1DB', margin: 0, fontVariantNumeric: 'tabular-nums' }}>{likes.length.toLocaleString()}</p>
             </button>
             <button onClick={(e) => { stop(e); setShowComments((v) => !v); }} style={{ flex: 1, background: '#000', padding: '7px 6px', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
-              <p style={{ ...SKB, fontSize: 'var(--fs-6_5)', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 0 5px' }}>COMMENTS</p>
-              <p style={{ ...SKB, fontSize: 'var(--fs-13)', color: showComments ? '#FF0000' : '#FFF', margin: 0, fontVariantNumeric: 'tabular-nums' }}>{comments.length.toLocaleString()}</p>
+              <p style={{ ...SKB, fontSize: 'var(--fs-6_5)', color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 0 5px' }}>COMMENTS</p>
+              <p style={{ ...SKB, fontSize: 'var(--fs-13)', color: showComments ? '#E5E1DB' : '#E5E1DB', margin: 0, fontVariantNumeric: 'tabular-nums' }}>{comments.length.toLocaleString()}</p>
             </button>
             {isCoin && (
               <div style={{ flex: 1, background: '#000', padding: '7px 6px' }}>
-                <p style={{ ...SKB, fontSize: 'var(--fs-6_5)', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 0 5px' }}>MARKET CAP</p>
-                <p style={{ ...SKB, fontSize: 'var(--fs-13)', color: '#FFF', margin: 0, fontVariantNumeric: 'tabular-nums' }}>{market ? usd(market.mcUsd) : '…'}</p>
+                <p style={{ ...SKB, fontSize: 'var(--fs-6_5)', color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 0 5px' }}>MARKET CAP</p>
+                <p style={{ ...SKB, fontSize: 'var(--fs-13)', color: '#E5E1DB', margin: 0, fontVariantNumeric: 'tabular-nums' }}>{market ? usd(market.mcUsd) : '…'}</p>
               </div>
             )}
             {isCoin && (
               <div style={{ flex: 1, background: '#000', padding: '7px 6px' }}>
-                <p style={{ ...SKB, fontSize: 'var(--fs-6_5)', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 0 5px' }}>PRICE / FRAGMENT</p>
-                <p style={{ ...SKB, fontSize: 'var(--fs-13)', color: '#FFF', margin: 0, fontVariantNumeric: 'tabular-nums' }}>{market ? (market.priceUsd != null ? usd(market.priceUsd) : '—') : '…'}</p>
+                <p style={{ ...SKB, fontSize: 'var(--fs-6_5)', color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 0 5px' }}>PRICE / FRAGMENT</p>
+                <p style={{ ...SKB, fontSize: 'var(--fs-13)', color: '#E5E1DB', margin: 0, fontVariantNumeric: 'tabular-nums' }}>{market ? (market.priceUsd != null ? usd(market.priceUsd) : '—') : '…'}</p>
               </div>
             )}
           </div>
@@ -637,11 +637,11 @@ export default function TheatreMode({
             <div className="fc-slot" style={{ marginTop: 9, animation: reduceMotion.current ? 'none' : `fcSlotRipple 0.32s ${EASE} both` }}>
               <div style={{ maxHeight: 96, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 7 }}>
                 {comments.length === 0 ? (
-                  <span style={{ ...SKR, fontSize: 'var(--fs-10)', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>No comments yet</span>
+                  <span style={{ ...SKR, fontSize: 'var(--fs-10)', color: 'rgba(229,225,219,0.35)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>No comments yet</span>
                 ) : comments.map((c, i) => (
                   <div key={c.id ?? i} style={{ display: 'flex', gap: 7, alignItems: 'baseline' }}>
-                    <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: '#FFF', textTransform: 'uppercase', flexShrink: 0 }}>@{c.username ?? '—'}</span>
-                    <span style={{ ...SKR, fontSize: 'var(--fs-11)', color: 'rgba(255,255,255,0.7)', lineHeight: 1.35 }}>{c.content}</span>
+                    <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: '#E5E1DB', textTransform: 'uppercase', flexShrink: 0 }}>@{c.username ?? '—'}</span>
+                    <span style={{ ...SKR, fontSize: 'var(--fs-11)', color: 'rgba(229,225,219,0.7)', lineHeight: 1.35 }}>{c.content}</span>
                   </div>
                 ))}
               </div>
@@ -652,9 +652,9 @@ export default function TheatreMode({
                     onChange={(e) => setNewComment(e.target.value)}
                     onKeyDown={(e) => { if (e.key === 'Enter') handleAddComment(); }}
                     placeholder="Add a comment…"
-                    style={{ ...SKR, flex: 1, fontSize: 'max(16px, var(--fs-11))', color: '#FFF', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.18)', outline: 'none', padding: '6px 0' }}
+                    style={{ ...SKR, flex: 1, fontSize: 'max(16px, var(--fs-11))', color: '#E5E1DB', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(229,225,219,0.18)', outline: 'none', padding: '6px 0' }}
                   />
-                  <button onClick={(e) => { stop(e); handleAddComment(); }} disabled={!newComment.trim()} style={{ ...SKB, fontSize: 'var(--fs-9)', letterSpacing: '0.1em', color: newComment.trim() ? '#FF0000' : 'rgba(255,255,255,0.3)', textTransform: 'uppercase', background: 'transparent', border: 'none', cursor: newComment.trim() ? 'pointer' : 'default', flexShrink: 0 }}>Post</button>
+                  <button onClick={(e) => { stop(e); handleAddComment(); }} disabled={!newComment.trim()} style={{ ...SKB, fontSize: 'var(--fs-9)', letterSpacing: '0.1em', color: newComment.trim() ? '#E5E1DB' : 'rgba(229,225,219,0.3)', textTransform: 'uppercase', background: 'transparent', border: 'none', cursor: newComment.trim() ? 'pointer' : 'default', flexShrink: 0 }}>Post</button>
                 </div>
               )}
             </div>
@@ -664,7 +664,7 @@ export default function TheatreMode({
         {/* Position counter — PROFILE only (finite posts). The feed is effectively
             infinite, so the number climbs meaninglessly → removed there. */}
         {!isFeed && (
-          <div style={{ position: 'absolute', right: 16, bottom: 14, ...SKB, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.45)', letterSpacing: '0.08em', pointerEvents: 'none' }}>
+          <div style={{ position: 'absolute', right: 16, bottom: 14, ...SKB, fontSize: 'var(--fs-9)', color: 'rgba(229,225,219,0.45)', letterSpacing: '0.08em', pointerEvents: 'none' }}>
             {index + 1} / {posts.length}
           </div>
         )}

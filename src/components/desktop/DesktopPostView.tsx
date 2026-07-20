@@ -23,7 +23,7 @@ import { replyToComment } from '@/lib/commentInteractions';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
-const HAIR = 'rgba(255,255,255,0.14)';
+const HAIR = 'rgba(229,225,219,0.14)';
 
 const usd = (n: number) => (n >= 1000 ? `$${Math.round(n).toLocaleString()}` : `$${n.toFixed(2)}`);
 
@@ -36,7 +36,7 @@ function Chevron({ dir }: { dir: 1 | -1 }) {
       width="10" height="22" viewBox="0 0 10 22" fill="none"
       style={{ display: 'block', transform: dir === -1 ? 'scaleX(-1)' : undefined }}
     >
-      <path d="M1 1L8.6 11L1 21" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M1 1L8.6 11L1 21" stroke="#E5E1DB" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -209,23 +209,23 @@ export default function DesktopPostView({
         {/* ── Actions row ── */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 22, margin: '14px 0 0' }}>
           <button onClick={toggleLike} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill={isLiked ? '#FF0000' : 'none'} stroke={isLiked ? '#FF0000' : 'rgba(255,255,255,0.85)'} strokeWidth="2" strokeLinejoin="round"><path d="M12 21s-7-4.5-9.5-9C1 9 2.5 5.5 6 5.5c2 0 3.2 1.2 4 2.3.8-1.1 2-2.3 4-2.3 3.5 0 5 3.5 3.5 6.5C19 16.5 12 21 12 21z"/></svg>
-            <span style={{ ...SKB, fontSize: 12, color: '#FFF', fontVariantNumeric: 'tabular-nums' }}>{likes.length}</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill={isLiked ? '#E5E1DB' : 'none'} stroke={isLiked ? '#E5E1DB' : 'rgba(229,225,219,0.85)'} strokeWidth="2" strokeLinejoin="round"><path d="M12 21s-7-4.5-9.5-9C1 9 2.5 5.5 6 5.5c2 0 3.2 1.2 4 2.3.8-1.1 2-2.3 4-2.3 3.5 0 5 3.5 3.5 6.5C19 16.5 12 21 12 21z"/></svg>
+            <span style={{ ...SKB, fontSize: 12, color: '#E5E1DB', fontVariantNumeric: 'tabular-nums' }}>{likes.length}</span>
           </button>
           <button onClick={() => { commentInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }); commentInputRef.current?.focus(); }} aria-label="Comment" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2" strokeLinejoin="round"><path d="M21 11.5a8.5 8.5 0 0 1-12.5 7.5L3 21l2-5.5A8.5 8.5 0 1 1 21 11.5z"/></svg>
-            <span style={{ ...SKB, fontSize: 12, color: '#FFF', fontVariantNumeric: 'tabular-nums' }}>{comments.length}</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(229,225,219,0.85)" strokeWidth="2" strokeLinejoin="round"><path d="M21 11.5a8.5 8.5 0 0 1-12.5 7.5L3 21l2-5.5A8.5 8.5 0 1 1 21 11.5z"/></svg>
+            <span style={{ ...SKB, fontSize: 12, color: '#E5E1DB', fontVariantNumeric: 'tabular-nums' }}>{comments.length}</span>
           </button>
           {coinAddr && (
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}>
               <span style={{ border: `1px solid ${HAIR}`, borderRadius: 3, padding: '2px 5px', display: 'inline-flex' }}>
                 <img src="/badges/first-cut-badge-min-design-01.png" alt="" style={{ width: 13, height: 13, objectFit: 'contain', display: 'block' }} />
               </span>
-              <span style={{ ...SKB, fontSize: 11, color: fcCount > 0 ? '#FF0000' : 'rgba(255,255,255,0.6)', fontVariantNumeric: 'tabular-nums' }}>{fcCount} / 10</span>
+              <span style={{ ...SKB, fontSize: 11, color: fcCount > 0 ? '#E5E1DB' : 'rgba(229,225,219,0.6)', fontVariantNumeric: 'tabular-nums' }}>{fcCount} / 10</span>
             </span>
           )}
           {coinAddr && (
-            <button onClick={() => setCollectOpen(true)} style={{ marginLeft: 'auto', ...SKB, fontSize: 11, letterSpacing: '0.1em', color: '#FFF', textTransform: 'uppercase', width: 82, height: 22, border: '1.2px solid #525252', background: 'transparent', cursor: 'pointer', lineHeight: 1 }}>
+            <button onClick={() => setCollectOpen(true)} style={{ marginLeft: 'auto', ...SKB, fontSize: 11, letterSpacing: '0.1em', color: '#E5E1DB', textTransform: 'uppercase', width: 82, height: 22, border: '1.2px solid #525252', background: 'transparent', cursor: 'pointer', lineHeight: 1 }}>
               COLLECT
             </button>
           )}
@@ -238,17 +238,17 @@ export default function DesktopPostView({
             {(post?.profile_image_url as string) ? (
               <img src={feedImage(post.profile_image_url as string, 96)} alt="" style={{ width: 22, height: 22, borderRadius: '50%', objectFit: 'cover' }} />
             ) : <span style={{ width: 22, height: 22, borderRadius: '50%', background: '#2a2a2a' }} />}
-            <span style={{ ...SKB, fontSize: 12, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.04em' }}>@{post.username as string}</span>
+            <span style={{ ...SKB, fontSize: 12, color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.04em' }}>@{post.username as string}</span>
           </button>
         )}
 
         {/* caption + location·date */}
         {typeof post?.caption === 'string' && post.caption && (
-          <p style={{ ...SKR, fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.5, margin: lightbox ? '10px 0 0' : '12px 0 0', maxWidth: 381 }}>{post.caption}</p>
+          <p style={{ ...SKR, fontSize: 12, color: 'rgba(229,225,219,0.5)', lineHeight: 1.5, margin: lightbox ? '10px 0 0' : '12px 0 0', maxWidth: 381 }}>{post.caption}</p>
         )}
         {(location || (lightbox && !!post?.created_at)) && (
-          <p style={{ ...SKB, fontSize: 8, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '10px 0 0', display: 'flex', alignItems: 'center', gap: 5 }}>
-            {location && <><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.45)" strokeWidth="1.8"><path d="M12 21s-6.5-5.4-6.5-10.5A6.5 6.5 0 0 1 12 4a6.5 6.5 0 0 1 6.5 6.5C18.5 15.6 12 21 12 21z" /><circle cx="12" cy="10.5" r="2.2" /></svg>{location}</>}
+          <p style={{ ...SKB, fontSize: 8, color: 'rgba(229,225,219,0.45)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '10px 0 0', display: 'flex', alignItems: 'center', gap: 5 }}>
+            {location && <><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="rgba(229,225,219,0.45)" strokeWidth="1.8"><path d="M12 21s-6.5-5.4-6.5-10.5A6.5 6.5 0 0 1 12 4a6.5 6.5 0 0 1 6.5 6.5C18.5 15.6 12 21 12 21z" /><circle cx="12" cy="10.5" r="2.2" /></svg>{location}</>}
             {!!location && lightbox && !!post?.created_at && <span style={{ opacity: 0.5 }}>·</span>}
             {lightbox && !!post?.created_at && <span>{new Date(post.created_at as string).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>}
           </p>
@@ -257,23 +257,23 @@ export default function DesktopPostView({
       </div>
 
       {/* ═══ RIGHT PANEL (309×573, #030303) ═══ */}
-      <div style={{ width: 309, flexShrink: 0, height: lightbox ? 600 : 573, marginTop: lightbox ? 0 : -25, background: '#030303', border: '0.25px solid rgba(255,255,255,0.27)', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ width: 309, flexShrink: 0, height: lightbox ? 600 : 573, marginTop: lightbox ? 0 : -25, background: '#030303', border: '0.25px solid rgba(229,225,219,0.27)', display: 'flex', flexDirection: 'column' }}>
         {/* header strip: ticker · MC · collectors */}
         {/* three zones distributed across the panel width, hairlines between */}
         <div style={{ display: 'flex', alignItems: 'center', padding: '12px 0' }}>
           {/* Unminted posts (no coin) carry NO market — quiet dash, never $0.00/0. */}
           <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
-            {coinAddr && (post?.ticker as string) ? <TickerMark ticker={post.ticker as string} size={11} /> : <span style={{ ...SKB, fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>—</span>}
+            {coinAddr && (post?.ticker as string) ? <TickerMark ticker={post.ticker as string} size={11} /> : <span style={{ ...SKB, fontSize: 11, color: 'rgba(229,225,219,0.35)' }}>—</span>}
           </div>
           <div style={{ width: 1, height: 28, background: HAIR }} />
           <div style={{ flex: 1, textAlign: 'center' }}>
-            <p style={{ ...SKB, fontSize: 8, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>MC</p>
-            <p style={{ ...SKB, fontSize: 11, color: '#FFF', margin: '2px 0 0', fontVariantNumeric: 'tabular-nums' }}>{coinAddr ? (market ? usd(market.mcUsd) : '…') : '—'}</p>
+            <p style={{ ...SKB, fontSize: 8, color: 'rgba(229,225,219,0.45)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>MC</p>
+            <p style={{ ...SKB, fontSize: 11, color: '#E5E1DB', margin: '2px 0 0', fontVariantNumeric: 'tabular-nums' }}>{coinAddr ? (market ? usd(market.mcUsd) : '…') : '—'}</p>
           </div>
           <div style={{ width: 1, height: 28, background: HAIR }} />
           <div style={{ flex: 1, textAlign: 'center' }}>
-            <p style={{ ...SKB, fontSize: 8, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>COLLECTORS</p>
-            <p style={{ ...SKB, fontSize: 11, color: '#FFF', margin: '2px 0 0', fontVariantNumeric: 'tabular-nums' }}>{coinAddr ? (market?.holders ?? '…') : '—'}</p>
+            <p style={{ ...SKB, fontSize: 8, color: 'rgba(229,225,219,0.45)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>COLLECTORS</p>
+            <p style={{ ...SKB, fontSize: 11, color: '#E5E1DB', margin: '2px 0 0', fontVariantNumeric: 'tabular-nums' }}>{coinAddr ? (market?.holders ?? '…') : '—'}</p>
           </div>
         </div>
         <div style={{ height: 1, background: HAIR }} />
@@ -286,21 +286,21 @@ export default function DesktopPostView({
                 <span style={{ border: `1px solid ${HAIR}`, borderRadius: 4, width: 28, height: 22, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
                   <img src="/badges/first-cut-badge-min-design-01.png" alt="" style={{ width: 14, height: 14, objectFit: 'contain' }} />
                 </span>
-                <span style={{ ...SKB, fontSize: 11, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.06em', lineHeight: 1.25, flex: 1 }}>FIRST CUT<br />LEADERBOARD</span>
-                <span style={{ ...SKB, fontSize: 11, color: fcCount > 0 ? '#FF0000' : 'rgba(255,255,255,0.5)', fontVariantNumeric: 'tabular-nums' }}>{fcCount} / 10</span>
+                <span style={{ ...SKB, fontSize: 11, color: 'rgba(229,225,219,0.5)', textTransform: 'uppercase', letterSpacing: '0.06em', lineHeight: 1.25, flex: 1 }}>FIRST CUT<br />LEADERBOARD</span>
+                <span style={{ ...SKB, fontSize: 11, color: fcCount > 0 ? '#E5E1DB' : 'rgba(229,225,219,0.5)', fontVariantNumeric: 'tabular-nums' }}>{fcCount} / 10</span>
               </div>
               <div style={{ margin: '10px 0 0' }}>
                 {(fcHolders ?? []).map((h) => (
                   <div key={h.rank} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 0' }}>
-                    <span style={{ ...SKB, fontSize: 11, color: 'rgba(255,255,255,0.5)', width: 18, fontVariantNumeric: 'tabular-nums' }}>{String(h.rank).padStart(2, '0')}</span>
+                    <span style={{ ...SKB, fontSize: 11, color: 'rgba(229,225,219,0.5)', width: 18, fontVariantNumeric: 'tabular-nums' }}>{String(h.rank).padStart(2, '0')}</span>
                     {h.avatarUrl ? (
                       <img src={feedImage(h.avatarUrl, 48)} alt="" style={{ width: 12, height: 12, borderRadius: '50%', objectFit: 'cover' }} />
                     ) : <span style={{ width: 12, height: 12, borderRadius: '50%', background: '#2a2a2a', display: 'inline-block' }} />}
-                    <span style={{ ...SKB, fontSize: 10, color: 'rgba(255,255,255,0.65)', textTransform: 'uppercase', flex: 1 }}>@{h.username ?? '—'}</span>
+                    <span style={{ ...SKB, fontSize: 10, color: 'rgba(229,225,219,0.65)', textTransform: 'uppercase', flex: 1 }}>@{h.username ?? '—'}</span>
                   </div>
                 ))}
                 {fcHolders && fcHolders.length === 0 && (
-                  <p style={{ ...SKR, fontSize: 10, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', margin: '4px 0 0' }}>ALL 10 SLOTS OPEN</p>
+                  <p style={{ ...SKR, fontSize: 10, color: 'rgba(229,225,219,0.35)', textTransform: 'uppercase', margin: '4px 0 0' }}>ALL 10 SLOTS OPEN</p>
                 )}
               </div>
             </div>
@@ -309,7 +309,7 @@ export default function DesktopPostView({
 
           {/* COMMENTS */}
           <div style={{ padding: '6px 12px 12px' }}>
-            <p style={{ ...SKB, fontSize: 11, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 8px' }}>COMMENTS ( {comments.length} )</p>
+            <p style={{ ...SKB, fontSize: 11, color: 'rgba(229,225,219,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 8px' }}>COMMENTS ( {comments.length} )</p>
             <CommentList
               comments={comments as UIComment[]}
               variant="desktop"
@@ -337,9 +337,9 @@ export default function DesktopPostView({
             onChange={(e) => setNewComment(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') submitComment(); e.stopPropagation(); }}
             placeholder="ADD A COMMENT"
-            style={{ ...SKR, flex: 1, fontSize: 10, color: '#FFF', background: 'rgba(75,75,75,0.17)', border: 'none', outline: 'none', padding: '7px 9px', letterSpacing: '0.02em' }} /* NO text-transform — comments type & render as typed */
+            style={{ ...SKR, flex: 1, fontSize: 10, color: '#E5E1DB', background: 'rgba(75,75,75,0.17)', border: 'none', outline: 'none', padding: '7px 9px', letterSpacing: '0.02em' }} /* NO text-transform — comments type & render as typed */
           />
-          <button onClick={submitComment} aria-label="Send" style={{ background: 'transparent', border: 'none', cursor: 'pointer', ...SKB, fontSize: 11, color: 'rgba(255,255,255,0.7)', padding: 4 }}>↑</button>
+          <button onClick={submitComment} aria-label="Send" style={{ background: 'transparent', border: 'none', cursor: 'pointer', ...SKB, fontSize: 11, color: 'rgba(229,225,219,0.7)', padding: 4 }}>↑</button>
         </div>
         {replyingTo && (
           <ReplyComposer

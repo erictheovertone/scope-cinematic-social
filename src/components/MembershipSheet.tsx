@@ -257,10 +257,10 @@ export default function MembershipSheet({ visible, onClose, onSuccess, isPaidMem
           iframe auto-sizes to content and fills the centred column cleanly. */}
       {embeddedOpen && typeof document !== "undefined" && createPortal(
         <div data-swipe-exclude style={{ position: "fixed", inset: 0, width: "100dvw", height: "100dvh", zIndex: 600, backgroundColor: "#000", display: "flex", flexDirection: "column", overflow: "hidden", paddingTop: "env(safe-area-inset-top, 0px)" }}>
-          <div style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 18px", borderBottom: "1px solid rgba(255,255,255,0.08)", background: "#000" }}>
-            <span style={{ ...BOLD, fontSize: 'var(--fs-12)', color: "white", textTransform: "uppercase", letterSpacing: "0.06em" }}>SCOPE PRO</span>
+          <div style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 18px", borderBottom: "1px solid rgba(229,225,219,0.08)", background: "#000" }}>
+            <span style={{ ...BOLD, fontSize: 'var(--fs-12)', color: "#E5E1DB", textTransform: "uppercase", letterSpacing: "0.06em" }}>SCOPE PRO</span>
             <button onClick={closeEmbedded} aria-label="Cancel" style={{ background: "transparent", border: "none", cursor: "pointer", padding: 6, lineHeight: 0 }}>
-              <svg width="19.5" height="19.5" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="white" strokeWidth="1.5" strokeLinecap="round" /></svg>
+              <svg width="19.5" height="19.5" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="#E5E1DB" strokeWidth="1.5" strokeLinecap="round" /></svg>
             </button>
           </div>
           {/* FULL-PAGE checkout: the mount column is full-bleed (no 480px card
@@ -325,7 +325,7 @@ export default function MembershipSheet({ visible, onClose, onSuccess, isPaidMem
       <div data-swipe-exclude style={{
         position: "fixed", bottom: 0, left: 0, right: 0,
         backgroundColor: "#080808",
-        borderTop: "1px solid rgba(255,255,255,0.08)",
+        borderTop: "1px solid rgba(229,225,219,0.08)",
         zIndex: 501,
         transform: visible ? "translateY(0)" : "translateY(100%)",
         transition: "transform 0.4s cubic-bezier(0.32, 0.72, 0, 1)",
@@ -335,44 +335,44 @@ export default function MembershipSheet({ visible, onClose, onSuccess, isPaidMem
       }}>
         {/* Drag handle */}
         <div style={{ display: "flex", justifyContent: "center", marginBottom: 8 }}>
-          <div style={{ width: 36, height: 2, backgroundColor: "rgba(255,255,255,0.12)" }} />
+          <div style={{ width: 36, height: 2, backgroundColor: "rgba(229,225,219,0.12)" }} />
         </div>
 
         {/* Active member guard */}
         {isPaidMember && paidMemberUntil && (
           <div style={{ padding: '20px 0', textAlign: 'center', marginBottom: 16 }}>
-            <div style={{ height: 1, backgroundColor: 'rgba(255,255,255,0.06)', marginBottom: 20 }} />
-            <p style={{ ...BOLD, fontSize: 'var(--fs-10)', color: '#FF0000', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 8px' }}>
+            <div style={{ height: 1, backgroundColor: 'rgba(229,225,219,0.06)', marginBottom: 20 }} />
+            <p style={{ ...BOLD, fontSize: 'var(--fs-10)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 8px' }}>
               ACTIVE MEMBER
             </p>
-            <p style={{ ...REG, fontSize: 'var(--fs-11)', color: 'rgba(255,255,255,0.5)', margin: '0 0 4px' }}>
+            <p style={{ ...REG, fontSize: 'var(--fs-11)', color: 'rgba(229,225,219,0.5)', margin: '0 0 4px' }}>
               Your membership is active until
             </p>
-            <p style={{ ...BOLD, fontSize: 'var(--fs-13)', color: 'white', margin: '0 0 16px' }}>
+            <p style={{ ...BOLD, fontSize: 'var(--fs-13)', color: '#E5E1DB', margin: '0 0 16px' }}>
               {paidMemberUntil.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
             </p>
             <button
               onClick={onClose}
-              style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', cursor: 'pointer', padding: '10px 32px' }}
+              style={{ background: 'transparent', border: '1px solid rgba(229,225,219,0.2)', cursor: 'pointer', padding: '10px 32px' }}
             >
-              <span style={{ ...BOLD, fontSize: 'var(--fs-10)', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>CLOSE</span>
+              <span style={{ ...BOLD, fontSize: 'var(--fs-10)', color: 'rgba(229,225,219,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>CLOSE</span>
             </button>
-            <div style={{ height: 1, backgroundColor: 'rgba(255,255,255,0.06)', marginTop: 20 }} />
+            <div style={{ height: 1, backgroundColor: 'rgba(229,225,219,0.06)', marginTop: 20 }} />
           </div>
         )}
 
         {/* Header */}
         <div style={{ marginBottom: 28 }}>
-          <p style={{ ...BOLD, fontSize: 'var(--fs-18)', color: "white", textTransform: "uppercase", letterSpacing: "-0.02em", margin: "0 0 8px" }}>
+          <p style={{ ...BOLD, fontSize: 'var(--fs-18)', color: "#E5E1DB", textTransform: "uppercase", letterSpacing: "-0.02em", margin: "0 0 8px" }}>
             BECOME A SCOPE MEMBER
           </p>
-          <p style={{ ...REG, fontSize: 'var(--fs-11)', color: "rgba(255,255,255,0.5)", lineHeight: 1.6, margin: 0 }}>
+          <p style={{ ...REG, fontSize: 'var(--fs-11)', color: "rgba(229,225,219,0.5)", lineHeight: 1.6, margin: 0 }}>
             Unlock unlimited posts, unlimited decks, more links, and the full cinematic editing suite. Membership is debited directly from your wallet.
           </p>
         </div>
 
         {/* What you get */}
-        <div style={{ marginBottom: 28, borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: 20 }}>
+        <div style={{ marginBottom: 28, borderTop: "1px solid rgba(229,225,219,0.06)", paddingTop: 20 }}>
           {[
             "UNLIMITED POSTS",
             "UNLIMITED DECKS",
@@ -380,8 +380,8 @@ export default function MembershipSheet({ visible, onClose, onSuccess, isPaidMem
             "FULL EDITING SUITE",
           ].map(benefit => (
             <div key={benefit} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-              <div style={{ width: 4, height: 4, borderRadius: "50%", backgroundColor: "#FF0000", flexShrink: 0 }} />
-              <p style={{ ...BOLD, fontSize: 'var(--fs-9)', color: "white", textTransform: "uppercase", letterSpacing: "0.06em", margin: 0 }}>{benefit}</p>
+              <div style={{ width: 4, height: 4, borderRadius: "50%", backgroundColor: "#E5E1DB", flexShrink: 0 }} />
+              <p style={{ ...BOLD, fontSize: 'var(--fs-9)', color: "#E5E1DB", textTransform: "uppercase", letterSpacing: "0.06em", margin: 0 }}>{benefit}</p>
             </div>
           ))}
         </div>
@@ -394,19 +394,19 @@ export default function MembershipSheet({ visible, onClose, onSuccess, isPaidMem
               onClick={() => setSelectedPlan(plan.id)}
               style={{
                 background: 'transparent',
-                border: `1px solid ${selectedPlan === plan.id ? 'white' : 'rgba(255,255,255,0.15)'}`,
+                border: `1px solid ${selectedPlan === plan.id ? '#E5E1DB' : 'rgba(229,225,219,0.15)'}`,
                 padding: '10px 8px',
                 cursor: 'pointer',
                 textAlign: 'center',
               }}
             >
-              <p style={{ ...BOLD, fontSize: 'var(--fs-8)', color: selectedPlan === plan.id ? 'white' : 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 4px' }}>
+              <p style={{ ...BOLD, fontSize: 'var(--fs-8)', color: selectedPlan === plan.id ? '#E5E1DB' : 'rgba(229,225,219,0.4)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 4px' }}>
                 {plan.label}
               </p>
-              <p style={{ ...BOLD, fontSize: 'var(--fs-13)', color: selectedPlan === plan.id ? 'white' : 'rgba(255,255,255,0.4)', margin: '0 0 4px' }}>
+              <p style={{ ...BOLD, fontSize: 'var(--fs-13)', color: selectedPlan === plan.id ? '#E5E1DB' : 'rgba(229,225,219,0.4)', margin: '0 0 4px' }}>
                 {plan.price}
               </p>
-              <p style={{ ...REG, fontSize: 'var(--fs-7)', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.04em', margin: 0 }}>
+              <p style={{ ...REG, fontSize: 'var(--fs-7)', color: 'rgba(229,225,219,0.35)', textTransform: 'uppercase', letterSpacing: '0.04em', margin: 0 }}>
                 {plan.sub}
               </p>
             </button>
@@ -415,7 +415,7 @@ export default function MembershipSheet({ visible, onClose, onSuccess, isPaidMem
 
         {/* Error */}
         {txStatus === "error" && txError && (
-          <p style={{ ...REG, fontSize: 'var(--fs-9)', color: "#FF0000", textAlign: "center", margin: "0 0 12px", lineHeight: 1.4 }}>
+          <p style={{ ...REG, fontSize: 'var(--fs-9)', color: "#E5E1DB", textAlign: "center", margin: "0 0 12px", lineHeight: 1.4 }}>
             {txError.slice(0, 80)}
           </p>
         )}
@@ -426,18 +426,18 @@ export default function MembershipSheet({ visible, onClose, onSuccess, isPaidMem
           disabled={working || txStatus === "success" || isPaidMember}
           style={{
             width: "100%",
-            background: working ? "rgba(255,0,0,0.4)" : "#FF0000",
+            background: working ? "rgba(229,225,219,0.4)" : "#E5E1DB",
             border: "none",
             padding: "16px 0",
             cursor: working ? "default" : "pointer",
           }}
         >
-          <span style={{ ...BOLD, fontSize: 'var(--fs-12)', color: "white", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+          <span style={{ ...BOLD, fontSize: 'var(--fs-12)', color: "#E5E1DB", textTransform: "uppercase", letterSpacing: "0.06em" }}>
             {working ? "PROCESSING..." : txStatus === "confirming" ? "CONFIRMING..." : "JOIN SCOPE · " + plans.find(p => p.id === selectedPlan)?.price}
           </span>
         </button>
 
-        <p style={{ ...REG, fontSize: 'var(--fs-8)', color: "rgba(255,255,255,0.25)", textAlign: "center", margin: "12px 0 0", lineHeight: 1.5 }}>
+        <p style={{ ...REG, fontSize: 'var(--fs-8)', color: "rgba(229,225,219,0.25)", textAlign: "center", margin: "12px 0 0", lineHeight: 1.5 }}>
           CRYPTO PAYMENTS SENT TO SCOPE TREASURY ON BASE. CARD PAYMENTS PROCESSED BY STRIPE.
         </p>
       </div>

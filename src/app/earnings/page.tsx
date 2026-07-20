@@ -41,7 +41,7 @@ export default function EarningsPage() {
   if (!economyPreviewEnabled()) {
     return (
       <div style={{ minHeight: '100dvh', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <button onClick={() => router.push('/')} style={{ ...SKB, fontSize: 'var(--fs-11)', color: 'rgba(255,255,255,0.5)', background: 'transparent', border: 'none', textTransform: 'uppercase', letterSpacing: '0.1em', cursor: 'pointer' }}>
+        <button onClick={() => router.push('/')} style={{ ...SKB, fontSize: 'var(--fs-11)', color: 'rgba(229,225,219,0.5)', background: 'transparent', border: 'none', textTransform: 'uppercase', letterSpacing: '0.1em', cursor: 'pointer' }}>
           ← HOME
         </button>
       </div>
@@ -56,37 +56,37 @@ export default function EarningsPage() {
 
   return (
     <div style={{ minHeight: '100dvh', background: '#000', maxWidth: '30rem', margin: '0 auto', padding: '24px 20px 60px' }}>
-      <div style={{ ...SKB, fontSize: 'var(--fs-7)', letterSpacing: '0.2em', color: '#FF0000', textTransform: 'uppercase', marginBottom: 18 }}>
+      <div style={{ ...SKB, fontSize: 'var(--fs-7)', letterSpacing: '0.2em', color: '#E5E1DB', textTransform: 'uppercase', marginBottom: 18 }}>
         ECONOMY PREVIEW · MOCK DATA
       </div>
 
-      <h1 style={{ ...SKB, fontSize: 40, letterSpacing: '-1.6px', color: '#FFF', textTransform: 'uppercase', lineHeight: 1.05, margin: '0 0 4px' }}>
+      <h1 style={{ ...SKB, fontSize: 40, letterSpacing: '-1.6px', color: '#E5E1DB', textTransform: 'uppercase', lineHeight: 1.05, margin: '0 0 4px' }}>
         EARNINGS
       </h1>
-      <p style={{ ...SKR, fontSize: 'var(--fs-11)', color: 'rgba(255,255,255,0.5)', margin: '0 0 28px', lineHeight: 1.4 }}>
+      <p style={{ ...SKR, fontSize: 'var(--fs-11)', color: 'rgba(229,225,219,0.5)', margin: '0 0 28px', lineHeight: 1.4 }}>
         Everything you’ve earned on Scope, in dollars.
       </p>
 
       {/* Total */}
-      <div style={{ borderTop: '1px solid #FF0000', borderBottom: '1px solid #FF0000', padding: '18px 0', marginBottom: 24 }}>
-        <p style={{ ...SKB, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.16em', margin: '0 0 8px' }}>TOTAL EARNED</p>
-        <p style={{ ...SKB, fontSize: 'var(--fs-38)', color: '#FF0000', margin: 0, letterSpacing: '-1px', fontVariantNumeric: 'tabular-nums' }}>
+      <div style={{ borderTop: '1px solid #E5E1DB', borderBottom: '1px solid #E5E1DB', padding: '18px 0', marginBottom: 24 }}>
+        <p style={{ ...SKB, fontSize: 'var(--fs-8)', color: 'rgba(229,225,219,0.45)', textTransform: 'uppercase', letterSpacing: '0.16em', margin: '0 0 8px' }}>TOTAL EARNED</p>
+        <p style={{ ...SKB, fontSize: 'var(--fs-38)', color: '#E5E1DB', margin: 0, letterSpacing: '-1px', fontVariantNumeric: 'tabular-nums' }}>
           {data ? usd(data.totalUsd) : '—'}
         </p>
       </div>
 
       {/* Breakdown */}
       {rows.map((r, i) => (
-        <div key={r.label} style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '16px 0', borderBottom: i < rows.length - 1 ? '1px solid rgba(255,255,255,0.08)' : 'none' }}>
+        <div key={r.label} style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '16px 0', borderBottom: i < rows.length - 1 ? '1px solid rgba(229,225,219,0.08)' : 'none' }}>
           <div style={{ flex: 1, paddingRight: 16 }}>
-            <p style={{ ...SKB, fontSize: 'var(--fs-11)', color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.04em', margin: '0 0 4px' }}>{r.label}</p>
-            <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0, lineHeight: 1.35 }}>{r.sub}</p>
+            <p style={{ ...SKB, fontSize: 'var(--fs-11)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.04em', margin: '0 0 4px' }}>{r.label}</p>
+            <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0, lineHeight: 1.35 }}>{r.sub}</p>
           </div>
-          <p style={{ ...SKB, fontSize: 'var(--fs-15)', color: '#FFF', margin: 0, whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' }}>{r.value === null ? '—' : usd(r.value)}</p>
+          <p style={{ ...SKB, fontSize: 'var(--fs-15)', color: '#E5E1DB', margin: 0, whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' }}>{r.value === null ? '—' : usd(r.value)}</p>
         </div>
       ))}
 
-      <button onClick={() => router.back()} style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'rgba(255,255,255,0.5)', background: 'transparent', border: 'none', textTransform: 'uppercase', letterSpacing: '0.1em', cursor: 'pointer', marginTop: 32 }}>
+      <button onClick={() => router.back()} style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'rgba(229,225,219,0.5)', background: 'transparent', border: 'none', textTransform: 'uppercase', letterSpacing: '0.1em', cursor: 'pointer', marginTop: 32 }}>
         ← BACK
       </button>
     </div>

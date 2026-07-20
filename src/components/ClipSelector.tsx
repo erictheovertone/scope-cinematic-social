@@ -72,10 +72,10 @@ export default function ClipSelector({
     <div style={{ marginTop: 10 }}>
       <audio ref={audioRef} onEnded={() => setPlaying(false)} onTimeUpdate={onTime} />
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        <button onClick={play} aria-label={playing ? "Pause" : "Play"} style={{ flexShrink: 0, width: 34, height: 34, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.2)", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>
+        <button onClick={play} aria-label={playing ? "Pause" : "Play"} style={{ flexShrink: 0, width: 34, height: 34, borderRadius: "50%", border: "1px solid rgba(229,225,219,0.2)", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>
           {playing
-            ? <svg width="12" height="12" viewBox="0 0 24 24" fill="#FFF"><rect x="6" y="5" width="4" height="14" /><rect x="14" y="5" width="4" height="14" /></svg>
-            : <svg width="12" height="12" viewBox="0 0 24 24" fill="#FFF"><path d="M7 5v14l12-7z" /></svg>}
+            ? <svg width="12" height="12" viewBox="0 0 24 24" fill="#E5E1DB"><rect x="6" y="5" width="4" height="14" /><rect x="14" y="5" width="4" height="14" /></svg>
+            : <svg width="12" height="12" viewBox="0 0 24 24" fill="#E5E1DB"><path d="M7 5v14l12-7z" /></svg>}
         </button>
         <div
           ref={wrapRef}
@@ -85,11 +85,11 @@ export default function ClipSelector({
         >
           <Waveform peaks={peaks} progress={playing ? progress : 0} height={64} />
           {/* selection window — translucent red, red border, draggable */}
-          <div style={{ position: "absolute", top: 0, bottom: 0, left: `${startFrac * 100}%`, width: `${winFrac * 100}%`, background: "rgba(255,0,0,0.14)", borderLeft: "2px solid #FF0000", borderRight: "2px solid #FF0000", pointerEvents: "none" }} />
+          <div style={{ position: "absolute", top: 0, bottom: 0, left: `${startFrac * 100}%`, width: `${winFrac * 100}%`, background: "rgba(229,225,219,0.14)", borderLeft: "2px solid #E5E1DB", borderRight: "2px solid #E5E1DB", pointerEvents: "none" }} />
         </div>
       </div>
-      <p style={{ ...SKR, fontSize: "var(--fs-7)", color: "rgba(255,255,255,0.4)", margin: "6px 0 0" }}>
-        <span style={{ ...SKB, color: "rgba(255,255,255,0.6)" }}>{fmt(start)}</span> – {fmt(start + winSec)} · drag to choose the section
+      <p style={{ ...SKR, fontSize: "var(--fs-7)", color: "rgba(229,225,219,0.4)", margin: "6px 0 0" }}>
+        <span style={{ ...SKB, color: "rgba(229,225,219,0.6)" }}>{fmt(start)}</span> – {fmt(start + winSec)} · drag to choose the section
       </p>
     </div>
   );

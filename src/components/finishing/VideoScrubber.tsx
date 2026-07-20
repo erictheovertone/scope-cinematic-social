@@ -10,7 +10,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
-const RED = "#FF0000";
+const RED = "#E5E1DB";
 const REG: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
 
 function fmt(t: number): string {
@@ -94,9 +94,9 @@ export default function VideoScrubber({ video, onHeroFrame, compact = false }: P
       {/* Play / pause */}
       <button onClick={togglePlay} aria-label={playing ? "Pause" : "Play"} style={{ background: "transparent", border: "none", cursor: "pointer", padding: 0, lineHeight: 0, flexShrink: 0 }}>
         {playing ? (
-          <svg width="15.5" height="15.5" viewBox="0 0 12 12" fill="none"><rect x="2" y="1.5" width="2.6" height="9" fill="#fff" /><rect x="7.4" y="1.5" width="2.6" height="9" fill="#fff" /></svg>
+          <svg width="15.5" height="15.5" viewBox="0 0 12 12" fill="none"><rect x="2" y="1.5" width="2.6" height="9" fill="#E5E1DB" /><rect x="7.4" y="1.5" width="2.6" height="9" fill="#E5E1DB" /></svg>
         ) : (
-          <svg width="15.5" height="15.5" viewBox="0 0 12 12" fill="none"><path d="M2.5 1.5l8 4.5-8 4.5z" fill="#fff" /></svg>
+          <svg width="15.5" height="15.5" viewBox="0 0 12 12" fill="none"><path d="M2.5 1.5l8 4.5-8 4.5z" fill="#E5E1DB" /></svg>
         )}
       </button>
 
@@ -108,22 +108,22 @@ export default function VideoScrubber({ video, onHeroFrame, compact = false }: P
         onPointerUp={onPointerUp}
         style={{ position: "relative", flex: 1, height: 18, display: "flex", alignItems: "center", cursor: "pointer", touchAction: "none" }}
       >
-        <div style={{ position: "absolute", left: 0, right: 0, height: 1.5, background: "rgba(255,255,255,0.2)" }} />
+        <div style={{ position: "absolute", left: 0, right: 0, height: 1.5, background: "rgba(229,225,219,0.2)" }} />
         <div style={{ position: "absolute", left: 0, width: `${pct}%`, height: 1.5, background: RED }} />
         <div style={{ position: "absolute", left: `${pct}%`, transform: "translateX(-50%)", width: 4, height: 12, background: RED }} />
       </div>
 
       {/* Timecode */}
-      <span style={{ ...REG, fontSize: 'var(--fs-8)', color: "rgba(255,255,255,0.55)", letterSpacing: "0.04em", flexShrink: 0, minWidth: 56, textAlign: "right" }}>
+      <span style={{ ...REG, fontSize: 'var(--fs-8)', color: "rgba(229,225,219,0.55)", letterSpacing: "0.04em", flexShrink: 0, minWidth: 56, textAlign: "right" }}>
         {fmt(current)} / {fmt(duration)}
       </span>
 
       {/* Mute / unmute — austere speaker; red when audible so it reads as active */}
       <button onClick={toggleMute} aria-label={muted ? "Unmute" : "Mute"} style={{ background: "transparent", border: "none", cursor: "pointer", padding: 0, lineHeight: 0, flexShrink: 0 }}>
         {muted ? (
-          <svg width="16.5" height="16.5" viewBox="0 0 24 24" fill="rgba(255,255,255,0.7)">
+          <svg width="16.5" height="16.5" viewBox="0 0 24 24" fill="rgba(229,225,219,0.7)">
             <path d="M3.5 9v6h4l5 5V4l-5 5h-4z" />
-            <path d="M15.5 8.5l5 7M20.5 8.5l-5 7" stroke="rgba(255,255,255,0.7)" strokeWidth="1.6" strokeLinecap="round" />
+            <path d="M15.5 8.5l5 7M20.5 8.5l-5 7" stroke="rgba(229,225,219,0.7)" strokeWidth="1.6" strokeLinecap="round" />
           </svg>
         ) : (
           <svg width="16.5" height="16.5" viewBox="0 0 24 24" fill={RED}>

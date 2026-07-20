@@ -6,7 +6,7 @@
 // /api/recap shape. Earnings hero + per-post breakdown + social strip, all real.
 // Greeting fades in first; every number counts up 0→value together (easeOutExpo,
 // ~700ms). Read-only — row taps open the post via the global lightbox event.
-// Brand: black, red #FF0000, money-green #4ade80, SK-Modernist, sharp corners.
+// Brand: black, red #E5E1DB, money-green #4ade80, SK-Modernist, sharp corners.
 
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -15,9 +15,9 @@ import { openPostLightbox } from '@/lib/postLightbox';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
-const RED = '#FF0000';
+const RED = '#E5E1DB';
 const GREEN = '#4ade80';
-const W65 = 'rgba(255,255,255,0.65)';
+const W65 = 'rgba(229,225,219,0.65)';
 
 const fmtMoney = (n: number) => `+$${(Number.isFinite(n) ? n : 0).toFixed(2)}`;
 
@@ -30,14 +30,14 @@ const fmtRowProceeds = (final: number, e: number): string => {
 
 
 // ── Inline Tabler-outline icons (no raster assets) ───────────────────────────
-const ICON = (d: React.ReactNode, size = 16, color = 'rgba(255,255,255,0.8)'): React.ReactNode => (
+const ICON = (d: React.ReactNode, size = 16, color = 'rgba(229,225,219,0.8)'): React.ReactNode => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">{d}</svg>
 );
 const UserPlus = ICON(<><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" /><path d="M6 21v-2a4 4 0 0 1 4 -4h3" /><path d="M16 19h6" /><path d="M19 16v6" /></>);
 const MessageCircle = ICON(<path d="M3 20l1.3 -3.9a9 8 0 1 1 3.4 2.9l-4.7 1" />);
 const Heart = ICON(<path d="M19.5 12.6l-7.5 7.4l-7.5 -7.4a5 5 0 1 1 7.5 -6.6a5 5 0 1 1 7.5 6.6" />);
 const TrendingUp = (s = 13) => ICON(<><path d="M3 17l6 -6l4 4l8 -8" /><path d="M14 7l7 0l0 7" /></>, s, GREEN);
-const Chevron = ICON(<path d="M9 6l6 6l-6 6" />, 16, 'rgba(255,255,255,0.4)');
+const Chevron = ICON(<path d="M9 6l6 6l-6 6" />, 16, 'rgba(229,225,219,0.4)');
 
 // Synchronized count-up easing (0→1). Starts ~150ms after open, ~700ms easeOutExpo,
 // snaps to 1. Reduced-motion → instant 1. Runs once per show (keyed on `open`).
@@ -153,7 +153,7 @@ export default function WhileYouWereAwaySheet({ visible, recap, username, onClos
     // Icon TOP-LEFT (unchanged); number + label + trend mark CENTER-aligned in the column.
     <div style={{ flex: 1, position: 'relative', padding: '14px 8px 12px', minWidth: 0, textAlign: 'center' }}>
       <div style={{ position: 'absolute', top: 10, left: 8 }}>{icon}</div>
-      <p style={{ ...SKB, fontSize: 28, color: '#fff', margin: '14px 0 0', lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>+{Math.round(n * e)}</p>
+      <p style={{ ...SKB, fontSize: 28, color: '#E5E1DB', margin: '14px 0 0', lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>+{Math.round(n * e)}</p>
       {/* −0.5px (fs-7_5) + nowrap so NEW COMMENTS fits one line alongside the others */}
       <p style={{ ...SKB, fontSize: 'var(--fs-7_5)', color: W65, margin: '6px 0 0', textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3 }}>
         {label} {TrendingUp(11)}
@@ -201,14 +201,14 @@ export default function WhileYouWereAwaySheet({ visible, recap, username, onClos
           {/* Holo logo top-right (~19px from top, ~124×81) */}
           <img src="/opaque-scope-logo-holo.png" alt="" style={{ position: 'absolute', top: 19, right: 12, width: 124, height: 'auto', zIndex: 2, pointerEvents: 'none' }} />
           <p style={{ position: 'absolute', top: 21, left: 12, zIndex: 1, ...SKB, fontSize: 'var(--fs-9)', color: W65, margin: 0, textTransform: 'uppercase', letterSpacing: '0.12em' }}>YOUR WORK EARNED</p>
-          <p style={{ position: 'absolute', top: 39, left: 16, zIndex: 1, ...SKB, fontSize: 48, color: '#fff', margin: 0, lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>{fmtMoney(hero.earned * e)}</p>
+          <p style={{ position: 'absolute', top: 39, left: 16, zIndex: 1, ...SKB, fontSize: 48, color: '#E5E1DB', margin: 0, lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>{fmtMoney(hero.earned * e)}</p>
           {/* across — indented (~86px from left), just below the number */}
           <p style={{ position: 'absolute', top: 98, left: 86, zIndex: 1, ...SKR, fontSize: 'var(--fs-7)', color: W65, margin: 0, textTransform: 'uppercase', letterSpacing: '0.04em' }}>across {hero.postCount} of your posts</p>
         </div>
 
         {/* BREAKDOWN HEADER */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, flexShrink: 0 }}>
-          <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: '#fff', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'flex', alignItems: 'center', gap: 7 }}>
+          <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'flex', alignItems: 'center', gap: 7 }}>
             <svg width="11" height="13" viewBox="0 0 9 11" fill={RED}><path d="M0 0v11l9 -5.5z" /></svg>
             BREAKDOWN
           </span>
@@ -257,13 +257,13 @@ export default function WhileYouWereAwaySheet({ visible, recap, username, onClos
         <button
           onClick={onClose}
           className="tap-target"
-          style={{ width: '100%', flexShrink: 0, background: 'linear-gradient(to right, #FF0000 0%, #990000 100%)', border: '0.25px solid #FFFFFF', borderRadius: 2, cursor: 'pointer', padding: '13px 0' }}
+          style={{ width: '100%', flexShrink: 0, background: 'linear-gradient(to right, #E5E1DB 0%, #990000 100%)', border: '0.25px solid #E5E1DB', borderRadius: 2, cursor: 'pointer', padding: '13px 0' }}
         >
-          <span style={{ ...SKB, fontSize: 'var(--fs-12)', color: '#fff', textTransform: 'uppercase', letterSpacing: '0.14em' }}>ENTER</span>
+          <span style={{ ...SKB, fontSize: 'var(--fs-12)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.14em' }}>ENTER</span>
         </button>
 
         {/* FOOTER */}
-        <p style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.35)', textAlign: 'center', margin: '12px 0 0', flexShrink: 0, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+        <p style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(229,225,219,0.35)', textAlign: 'center', margin: '12px 0 0', flexShrink: 0, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
           SHOW ON RETURN · TURN OFF IN SETTINGS
         </p>
       </div>

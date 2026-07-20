@@ -216,7 +216,7 @@ export default function CollectedGrid({
   if (rows === null) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '30vh' }}>
-        <p style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>LOADING…</p>
+        <p style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>LOADING…</p>
       </div>
     );
   }
@@ -235,13 +235,13 @@ export default function CollectedGrid({
   if (rows.length === 0 && visibleStacks.length === 0) {
     return isOwn ? (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '30vh', padding: '0 32px' }}>
-        <p style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', textAlign: 'center', letterSpacing: '0.08em', lineHeight: 1.8 }}>
+        <p style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase', textAlign: 'center', letterSpacing: '0.08em', lineHeight: 1.8 }}>
           NOTHING COLLECTED YET.<br />COLLECT IS HOW YOU KEEP THINGS ON SCOPE.
         </p>
       </div>
     ) : (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '30vh', padding: '0 32px' }}>
-        <p style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', textAlign: 'center', letterSpacing: '0.08em' }}>
+        <p style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'rgba(229,225,219,0.35)', textTransform: 'uppercase', textAlign: 'center', letterSpacing: '0.08em' }}>
           NOTHING COLLECTED YET
         </p>
       </div>
@@ -258,14 +258,14 @@ export default function CollectedGrid({
               radial hairline; + NEW PROGRAM small/regular in the understated
               gradient-stroke box. */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '26px 10px 37px' }}>
-            <span style={{ ...SKB, fontSize: 33, color: '#FFF', textTransform: 'uppercase', letterSpacing: '-0.02em', lineHeight: 1 }}>REPERTORY</span>
+            <span style={{ ...SKB, fontSize: 33, color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '-0.02em', lineHeight: 1 }}>REPERTORY</span>
             {isOwn && (
               <button
                 onClick={() => setCreateOpen(true)}
                 style={{
-                  ...SKR, fontSize: 12, color: '#FFF', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.1em',
+                  ...SKR, fontSize: 12, color: '#E5E1DB', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.1em',
                   padding: '7px 12px', border: '0.5px solid transparent',
-                  background: 'linear-gradient(#000, #000) padding-box, linear-gradient(135deg, rgba(255,0,0,0.7), rgba(255,0,0,0.15)) border-box',
+                  background: 'linear-gradient(#000, #000) padding-box, linear-gradient(135deg, rgba(229,225,219,0.7), rgba(229,225,219,0.15)) border-box',
                 }}
               >
                 + NEW PROGRAM
@@ -275,8 +275,8 @@ export default function CollectedGrid({
 
 
           {visibleStacks.length === 0 && isOwn && (
-            <button onClick={() => setCreateOpen(true)} style={{ display: 'block', width: '100%', background: 'transparent', border: '1px dashed rgba(255,255,255,0.18)', cursor: 'pointer', padding: '18px 0', margin: '0 0 2px' }}>
-              <span style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>CURATE YOUR FIRST PROGRAM</span>
+            <button onClick={() => setCreateOpen(true)} style={{ display: 'block', width: '100%', background: 'transparent', border: '1px dashed rgba(229,225,219,0.18)', cursor: 'pointer', padding: '18px 0', margin: '0 0 2px' }}>
+              <span style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(229,225,219,0.45)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>CURATE YOUR FIRST PROGRAM</span>
             </button>
           )}
 
@@ -297,7 +297,7 @@ export default function CollectedGrid({
                   // a glow of selection, not an alert.
                   border: '0.5px solid transparent',
                   background: activeStackId === s.id
-                    ? 'linear-gradient(#0d0d0d, #0d0d0d) padding-box, linear-gradient(135deg, rgba(255,0,0,0.55), rgba(255,0,0,0.08)) border-box'
+                    ? 'linear-gradient(#0d0d0d, #0d0d0d) padding-box, linear-gradient(135deg, rgba(229,225,219,0.55), rgba(229,225,219,0.08)) border-box'
                     : '#0d0d0d',
                 }}
               >
@@ -310,11 +310,11 @@ export default function CollectedGrid({
                 {/* left→right scrim for legibility */}
                 <span style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.35) 42%, rgba(0,0,0,0) 75%)' }} />
                 <span style={{ position: 'absolute', left: 12, bottom: 8 }}>
-                  <span style={{ ...SKR, fontSize: 'var(--fs-10)', color: 'rgba(255,255,255,0.75)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{s.title}</span>
+                  <span style={{ ...SKR, fontSize: 'var(--fs-10)', color: 'rgba(229,225,219,0.75)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{s.title}</span>
                 </span>
                 <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ ...SKB, fontSize: 'var(--fs-7)', color: 'rgba(255,255,255,0.7)', border: '1px solid rgba(255,255,255,0.3)', padding: '2px 6px', fontVariantNumeric: 'tabular-nums' }}>{items.length}</span>
-                  <span style={{ ...SKR, fontSize: 'var(--fs-12)', color: 'rgba(255,255,255,0.7)' }}>›</span>
+                  <span style={{ ...SKB, fontSize: 'var(--fs-7)', color: 'rgba(229,225,219,0.7)', border: '1px solid rgba(229,225,219,0.3)', padding: '2px 6px', fontVariantNumeric: 'tabular-nums' }}>{items.length}</span>
+                  <span style={{ ...SKR, fontSize: 'var(--fs-12)', color: 'rgba(229,225,219,0.7)' }}>›</span>
                 </span>
               </button>
             );
@@ -325,28 +325,28 @@ export default function CollectedGrid({
       {/* ═══ COLLECTED ITEMS — the randomized collage ═══ */}
       {rows.length > 0 && (
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 10px 10px', borderTop: '1px solid rgba(255,255,255,0.08)', whiteSpace: 'nowrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 10px 10px', borderTop: '1px solid rgba(229,225,219,0.08)', whiteSpace: 'nowrap' }}>
             {activeStack ? (
-              <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.16em', overflow: 'hidden', textOverflow: 'ellipsis' }}>{activeStack.title}</span>
+              <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.16em', overflow: 'hidden', textOverflow: 'ellipsis' }}>{activeStack.title}</span>
             ) : (
-              <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'rgba(255,255,255,0.85)', textTransform: 'uppercase', letterSpacing: '0.16em' }}>COLLECTED ITEMS</span>
+              <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'rgba(229,225,219,0.85)', textTransform: 'uppercase', letterSpacing: '0.16em' }}>COLLECTED ITEMS</span>
             )}
             <span style={{ display: 'flex', alignItems: 'center', gap: 14, flexShrink: 0 }}>
               {activeStack && isOwn && (
-                <button onClick={() => setEditStackId(activeStack.id)} style={{ ...SKB, fontSize: 'var(--fs-7)', color: '#FF0000', background: 'transparent', border: 'none', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.08em', padding: 0 }}>EDIT</button>
+                <button onClick={() => setEditStackId(activeStack.id)} style={{ ...SKB, fontSize: 'var(--fs-7)', color: '#E5E1DB', background: 'transparent', border: 'none', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.08em', padding: 0 }}>EDIT</button>
               )}
               {activeStack && (
-                <button onClick={() => setFullscreen('open')} aria-label="Full-screen program" style={{ ...SKR, fontSize: 'var(--fs-11)', color: 'rgba(255,255,255,0.6)', background: 'transparent', border: 'none', cursor: 'pointer', lineHeight: 1, padding: 0 }}>⤢</button>
+                <button onClick={() => setFullscreen('open')} aria-label="Full-screen program" style={{ ...SKR, fontSize: 'var(--fs-11)', color: 'rgba(229,225,219,0.6)', background: 'transparent', border: 'none', cursor: 'pointer', lineHeight: 1, padding: 0 }}>⤢</button>
               )}
               {activeStack && (
-                <button onClick={() => switchTo(null)} aria-label="Show all items" style={{ ...SKR, fontSize: 'var(--fs-12)', color: 'rgba(255,255,255,0.6)', background: 'transparent', border: 'none', cursor: 'pointer', lineHeight: 1, padding: 0 }}>×</button>
+                <button onClick={() => switchTo(null)} aria-label="Show all items" style={{ ...SKR, fontSize: 'var(--fs-12)', color: 'rgba(229,225,219,0.6)', background: 'transparent', border: 'none', cursor: 'pointer', lineHeight: 1, padding: 0 }}>×</button>
               )}
               {/* grid / list toggle — icons only */}
               <button onClick={() => setViewMode('grid')} aria-label="Grid view" style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, lineHeight: 0, opacity: viewMode === 'grid' ? 1 : 0.4 }}>
-                <svg width="15" height="15" viewBox="0 0 13 13"><rect x="0" y="0" width="5.5" height="5.5" fill="#FFF"/><rect x="7.5" y="0" width="5.5" height="5.5" fill="#FFF"/><rect x="0" y="7.5" width="5.5" height="5.5" fill="#FFF"/><rect x="7.5" y="7.5" width="5.5" height="5.5" fill="#FFF"/></svg>
+                <svg width="15" height="15" viewBox="0 0 13 13"><rect x="0" y="0" width="5.5" height="5.5" fill="#E5E1DB"/><rect x="7.5" y="0" width="5.5" height="5.5" fill="#E5E1DB"/><rect x="0" y="7.5" width="5.5" height="5.5" fill="#E5E1DB"/><rect x="7.5" y="7.5" width="5.5" height="5.5" fill="#E5E1DB"/></svg>
               </button>
               <button onClick={() => setViewMode('list')} aria-label="List view" style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, lineHeight: 0, opacity: viewMode === 'list' ? 1 : 0.4 }}>
-                <svg width="15" height="15" viewBox="0 0 13 13"><rect x="0" y="1" width="13" height="2" fill="#FFF"/><rect x="0" y="5.5" width="13" height="2" fill="#FFF"/><rect x="0" y="10" width="13" height="2" fill="#FFF"/></svg>
+                <svg width="15" height="15" viewBox="0 0 13 13"><rect x="0" y="1" width="13" height="2" fill="#E5E1DB"/><rect x="0" y="5.5" width="13" height="2" fill="#E5E1DB"/><rect x="0" y="10" width="13" height="2" fill="#E5E1DB"/></svg>
               </button>
             </span>
           </div>
@@ -374,13 +374,13 @@ export default function CollectedGrid({
           ) : (
             <div className={swapPhase === 'out' ? 'collage-swap-out' : ''}>
               {collage.slice(0, shownCount).map((h) => (
-                <button key={h.postId} onClick={() => openLightbox(h.postId)} style={{ display: 'flex', width: '100%', alignItems: 'center', gap: 10, background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.06)', cursor: 'pointer', padding: '8px 10px', textAlign: 'left' }}>
+                <button key={h.postId} onClick={() => openLightbox(h.postId)} style={{ display: 'flex', width: '100%', alignItems: 'center', gap: 10, background: 'transparent', border: 'none', borderBottom: '1px solid rgba(229,225,219,0.06)', cursor: 'pointer', padding: '8px 10px', textAlign: 'left' }}>
                   <img src={feedImage(thumbOf(h) ?? '', 96)} alt="" style={{ width: 56, height: 34, objectFit: 'cover', display: 'block', background: '#111', flexShrink: 0 }} />
-                  <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: '#FFF', textTransform: 'uppercase', flex: 1 }}>{h.ticker ? `[ ${h.ticker} ]` : '—'}</span>
+                  <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: '#E5E1DB', textTransform: 'uppercase', flex: 1 }}>{h.ticker ? `[ ${h.ticker} ]` : '—'}</span>
                   {/* PUBLIC data only — the post's MCAP (the feed's MC language).
                       NEVER holdings/position values here (owner economics live in
                       the wallet's PORTFOLIO/COLLECTED, not on a public surface). */}
-                  <span style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.55)', fontVariantNumeric: 'tabular-nums' }}>{mcOf(h)}</span>
+                  <span style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(229,225,219,0.55)', fontVariantNumeric: 'tabular-nums' }}>{mcOf(h)}</span>
                 </button>
               ))}
             </div>
@@ -388,12 +388,12 @@ export default function CollectedGrid({
 
           {!activeStack && !expanded && collage.length > 4 && (
             <button onClick={() => { setExpanded(true); setVisible(20); }} style={{ display: 'block', width: '100%', background: 'transparent', border: 'none', cursor: 'pointer', padding: '14px 0 18px' }}>
-              <span style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.16em' }}>VIEW ALL · {collage.length}</span>
+              <span style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(229,225,219,0.5)', textTransform: 'uppercase', letterSpacing: '0.16em' }}>VIEW ALL · {collage.length}</span>
             </button>
           )}
           {(activeStack ? false : expanded) && collage.length > visible && (
             <button onClick={() => setVisible((v) => v + 20)} style={{ display: 'block', width: '100%', background: 'transparent', border: 'none', cursor: 'pointer', padding: '14px 0 18px' }}>
-              <span style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>LOAD MORE</span>
+              <span style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(229,225,219,0.5)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>LOAD MORE</span>
             </button>
           )}
         </div>
@@ -415,12 +415,12 @@ export default function CollectedGrid({
           }}
         >
           <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 'calc(12px + env(safe-area-inset-top, 0px)) 14px 10px' }}>
-            <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.16em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{activeStack.title}</span>
+            <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.16em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{activeStack.title}</span>
             <span style={{ display: 'flex', alignItems: 'center', gap: 16, flexShrink: 0 }}>
               <button onClick={() => setFsTheatre(true)} aria-label="Theatre mode" style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 2, lineHeight: 0 }}>
                 <img src="/theatre-mode-eye-framed-v2.png" alt="" style={{ height: 22, width: 'auto', display: 'block', opacity: 0.92 }} />
               </button>
-              <button onClick={closeFullscreen} aria-label="Collapse" style={{ ...SKR, fontSize: 'var(--fs-12)', color: 'rgba(255,255,255,0.7)', background: 'transparent', border: 'none', cursor: 'pointer', lineHeight: 1, padding: 0 }}>⤡</button>
+              <button onClick={closeFullscreen} aria-label="Collapse" style={{ ...SKR, fontSize: 'var(--fs-12)', color: 'rgba(229,225,219,0.7)', background: 'transparent', border: 'none', cursor: 'pointer', lineHeight: 1, padding: 0 }}>⤡</button>
             </span>
           </div>
           <div style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
@@ -552,11 +552,11 @@ function ProgramSheet({
   return createPortal(
     <div data-swipe-exclude style={{ position: 'fixed', inset: 0, zIndex: 520 }}>
       <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.85)' }} />
-      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, maxHeight: '86dvh', overflowY: 'auto', background: '#080808', borderTop: '1px solid rgba(255,255,255,0.1)', padding: '18px 14px calc(22px + env(safe-area-inset-bottom, 0px))' }}>
+      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, maxHeight: '86dvh', overflowY: 'auto', background: '#080808', borderTop: '1px solid rgba(229,225,219,0.1)', padding: '18px 14px calc(22px + env(safe-area-inset-bottom, 0px))' }}>
         <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 14 }}>
-          <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.12em' }}>NEW PROGRAM</span>
+          <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.12em' }}>NEW PROGRAM</span>
           <button onClick={onClose} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 6 }}>
-            <span style={{ ...SKR, fontSize: 'var(--fs-16)', color: 'rgba(255,255,255,0.5)', lineHeight: 1 }}>×</span>
+            <span style={{ ...SKR, fontSize: 'var(--fs-16)', color: 'rgba(229,225,219,0.5)', lineHeight: 1 }}>×</span>
           </button>
         </div>
 
@@ -566,11 +566,11 @@ function ProgramSheet({
             onChange={(e) => setTitle(e.target.value.slice(0, STACK_TITLE_MAX))}
             maxLength={STACK_TITLE_MAX}
             placeholder="PROGRAM NAME"
-            style={{ ...SKB, flex: 1, fontSize: 'max(16px, var(--fs-12))', color: '#FFF', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.25)', outline: 'none', textTransform: 'uppercase', letterSpacing: '0.06em', padding: '6px 0' }}
+            style={{ ...SKB, flex: 1, fontSize: 'max(16px, var(--fs-12))', color: '#E5E1DB', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(229,225,219,0.25)', outline: 'none', textTransform: 'uppercase', letterSpacing: '0.06em', padding: '6px 0' }}
           />
-          <span style={{ ...SKR, fontSize: 'var(--fs-7)', color: 'rgba(255,255,255,0.4)', fontVariantNumeric: 'tabular-nums' }}>{title.length}/{STACK_TITLE_MAX}</span>
+          <span style={{ ...SKR, fontSize: 'var(--fs-7)', color: 'rgba(229,225,219,0.4)', fontVariantNumeric: 'tabular-nums' }}>{title.length}/{STACK_TITLE_MAX}</span>
         </div>
-        <p style={{ ...SKR, fontSize: 'var(--fs-7)', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '10px 0 8px' }}>
+        <p style={{ ...SKR, fontSize: 'var(--fs-7)', color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '10px 0 8px' }}>
           SELECT WORKS · TAP AGAIN TO SET THE HERO {hero ? '· HERO SET' : ''}
         </p>
         <div className="grid grid-cols-3 gap-[2px]">
@@ -581,10 +581,10 @@ function ProgramSheet({
               <button
                 key={h.postId}
                 onClick={() => { if (sel) { if (isHero) toggle(h.postId); else setHero(h.postId); } else toggle(h.postId); }}
-                style={{ position: 'relative', aspectRatio: '16 / 10', overflow: 'hidden', background: '#111', border: isHero ? '1px solid #FF0000' : sel ? '1px solid rgba(255,255,255,0.8)' : '1px solid transparent', cursor: 'pointer', padding: 0 }}
+                style={{ position: 'relative', aspectRatio: '16 / 10', overflow: 'hidden', background: '#111', border: isHero ? '1px solid #E5E1DB' : sel ? '1px solid rgba(229,225,219,0.8)' : '1px solid transparent', cursor: 'pointer', padding: 0 }}
               >
                 <img src={feedImage(thumbOf(h) ?? '', 300)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', opacity: sel ? 1 : 0.55 }} />
-                {isHero && <span style={{ position: 'absolute', left: 4, bottom: 3, ...SKB, fontSize: 9, color: '#FF0000', textTransform: 'uppercase' }}>HERO</span>}
+                {isHero && <span style={{ position: 'absolute', left: 4, bottom: 3, ...SKB, fontSize: 9, color: '#E5E1DB', textTransform: 'uppercase' }}>HERO</span>}
               </button>
             );
           })}
@@ -593,9 +593,9 @@ function ProgramSheet({
         <button
           onClick={create}
           disabled={!canCreate}
-          style={{ display: 'block', width: '100%', marginTop: 16, background: canCreate ? '#FF0000' : 'rgba(255,255,255,0.08)', border: 'none', cursor: canCreate ? 'pointer' : 'default', padding: '13px 0' }}
+          style={{ display: 'block', width: '100%', marginTop: 16, background: canCreate ? '#E5E1DB' : 'rgba(229,225,219,0.08)', border: 'none', cursor: canCreate ? 'pointer' : 'default', padding: '13px 0' }}
         >
-          <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: canCreate ? '#FFF' : 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+          <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: canCreate ? '#E5E1DB' : 'rgba(229,225,219,0.35)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
             {busy ? 'CREATING…' : 'CREATE PROGRAM'}
           </span>
         </button>
@@ -653,7 +653,7 @@ function ProgramDetail({
   return createPortal(
     <div data-swipe-exclude style={{ position: 'fixed', inset: 0, zIndex: 510 }}>
       <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.88)' }} />
-      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, maxHeight: '88dvh', overflowY: 'auto', background: '#080808', borderTop: '1px solid rgba(255,255,255,0.1)', padding: '18px 14px calc(22px + env(safe-area-inset-bottom, 0px))' }}>
+      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, maxHeight: '88dvh', overflowY: 'auto', background: '#080808', borderTop: '1px solid rgba(229,225,219,0.1)', padding: '18px 14px calc(22px + env(safe-area-inset-bottom, 0px))' }}>
         <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 4 }}>
           {renaming ? (
             <span style={{ display: 'flex', alignItems: 'baseline', gap: 8, flex: 1 }}>
@@ -662,54 +662,54 @@ function ProgramDetail({
                 onChange={(e) => setName(e.target.value.slice(0, STACK_TITLE_MAX))}
                 maxLength={STACK_TITLE_MAX}
                 autoFocus
-                style={{ ...SKB, fontSize: 'max(16px, var(--fs-12))', color: '#FFF', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.3)', outline: 'none', textTransform: 'uppercase', letterSpacing: '0.06em', width: '55%' }}
+                style={{ ...SKB, fontSize: 'max(16px, var(--fs-12))', color: '#E5E1DB', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(229,225,219,0.3)', outline: 'none', textTransform: 'uppercase', letterSpacing: '0.06em', width: '55%' }}
               />
-              <button onClick={async () => { if (await renameStack(stack.id, name)) { setRenaming(false); onChanged(); } }} style={{ ...SKB, fontSize: 'var(--fs-8)', color: '#FF0000', background: 'transparent', border: 'none', cursor: 'pointer', textTransform: 'uppercase' }}>SAVE</button>
+              <button onClick={async () => { if (await renameStack(stack.id, name)) { setRenaming(false); onChanged(); } }} style={{ ...SKB, fontSize: 'var(--fs-8)', color: '#E5E1DB', background: 'transparent', border: 'none', cursor: 'pointer', textTransform: 'uppercase' }}>SAVE</button>
             </span>
           ) : (
             <span style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
-              <span style={{ ...SKB, fontSize: 'var(--fs-13)', color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{stack.title}</span>
-              <span style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase' }}>{items.length} ITEMS</span>
+              <span style={{ ...SKB, fontSize: 'var(--fs-13)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{stack.title}</span>
+              <span style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(229,225,219,0.5)', textTransform: 'uppercase' }}>{items.length} ITEMS</span>
             </span>
           )}
           <button onClick={onClose} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 6 }}>
-            <span style={{ ...SKR, fontSize: 'var(--fs-16)', color: 'rgba(255,255,255,0.5)', lineHeight: 1 }}>×</span>
+            <span style={{ ...SKR, fontSize: 'var(--fs-16)', color: 'rgba(229,225,219,0.5)', lineHeight: 1 }}>×</span>
           </button>
         </div>
 
         {isOwn && (
           <div style={{ display: 'flex', gap: 16, margin: '6px 0 12px' }}>
-            <button onClick={() => setAdding((a) => !a)} style={{ ...SKR, fontSize: 'var(--fs-8)', color: adding ? '#FFF' : 'rgba(255,255,255,0.55)', background: 'transparent', border: 'none', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.06em', padding: 0 }}>+ ADD ITEMS</button>
-            <button onClick={() => setRenaming((r) => !r)} style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.55)', background: 'transparent', border: 'none', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.06em', padding: 0 }}>RENAME</button>
-            <button onClick={async () => { if (await deleteStack(stack.id)) { onChanged(); onClose(); } }} style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(255,0,0,0.7)', background: 'transparent', border: 'none', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.06em', padding: 0 }}>DELETE</button>
+            <button onClick={() => setAdding((a) => !a)} style={{ ...SKR, fontSize: 'var(--fs-8)', color: adding ? '#E5E1DB' : 'rgba(229,225,219,0.55)', background: 'transparent', border: 'none', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.06em', padding: 0 }}>+ ADD ITEMS</button>
+            <button onClick={() => setRenaming((r) => !r)} style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(229,225,219,0.55)', background: 'transparent', border: 'none', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.06em', padding: 0 }}>RENAME</button>
+            <button onClick={async () => { if (await deleteStack(stack.id)) { onChanged(); onClose(); } }} style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(229,225,219,0.7)', background: 'transparent', border: 'none', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.06em', padding: 0 }}>DELETE</button>
           </div>
         )}
 
         {heroError && (
-          <p style={{ ...SKR, fontSize: 'var(--fs-8)', color: '#FF0000', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 10px' }}>{heroError}</p>
+          <p style={{ ...SKR, fontSize: 'var(--fs-8)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 10px' }}>{heroError}</p>
         )}
         {isOwn && heroSold && items.length > 0 && (
           /* HERO SOLD — the banner already falls back; this is the owner nudge. */
-          <p style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 10px' }}>
-            HERO NO LONGER HELD · <span style={{ color: '#FF0000' }}>SET NEW HERO</span> — tap SET HERO on any item
+          <p style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(229,225,219,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 10px' }}>
+            HERO NO LONGER HELD · <span style={{ color: '#E5E1DB' }}>SET NEW HERO</span> — tap SET HERO on any item
           </p>
         )}
         {items.length === 0 && (
-          <p style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '8px 0 12px' }}>
+          <p style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(229,225,219,0.45)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '8px 0 12px' }}>
             0 ITEMS — {isOwn ? 'EVERYTHING HERE WAS SOLD. ADD HELD WORKS TO REVIVE IT.' : 'NOTHING HELD.'}
           </p>
         )}
 
         {adding && (
           <div style={{ marginBottom: 14 }}>
-            <p style={{ ...SKR, fontSize: 'var(--fs-7)', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 6px' }}>TAP TO ADD</p>
+            <p style={{ ...SKR, fontSize: 'var(--fs-7)', color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 6px' }}>TAP TO ADD</p>
             <div className="grid grid-cols-4 gap-[2px]">
               {addable.map((h) => (
-                <button key={h.postId} onClick={async () => { if (await addStackItems(stack.id, [h.postId], stack.itemPostIds.length)) onChanged(); }} style={{ aspectRatio: '16 / 10', overflow: 'hidden', background: '#111', border: '1px solid rgba(255,255,255,0.15)', cursor: 'pointer', padding: 0 }}>
+                <button key={h.postId} onClick={async () => { if (await addStackItems(stack.id, [h.postId], stack.itemPostIds.length)) onChanged(); }} style={{ aspectRatio: '16 / 10', overflow: 'hidden', background: '#111', border: '1px solid rgba(229,225,219,0.15)', cursor: 'pointer', padding: 0 }}>
                   <img src={feedImage(thumbOf(h) ?? '', 300)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                 </button>
               ))}
-              {addable.length === 0 && <p style={{ ...SKR, fontSize: 'var(--fs-7)', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', gridColumn: 'span 4', padding: '8px 0' }}>EVERYTHING HELD IS ALREADY IN THIS PROGRAM.</p>}
+              {addable.length === 0 && <p style={{ ...SKR, fontSize: 'var(--fs-7)', color: 'rgba(229,225,219,0.35)', textTransform: 'uppercase', gridColumn: 'span 4', padding: '8px 0' }}>EVERYTHING HELD IS ALREADY IN THIS PROGRAM.</p>}
             </div>
           </div>
         )}
@@ -726,10 +726,10 @@ function ProgramDetail({
               />
               {isOwn && (
                 <span style={{ position: 'absolute', left: 4, bottom: 4, display: 'flex', gap: 6, zIndex: 7 }}>
-                  <button onClick={() => doSetHero(h)} disabled={busyHero !== null} style={{ ...SKB, fontSize: 8.5, color: stack.hero_post_id === h.postId ? '#FF0000' : 'rgba(255,255,255,0.8)', background: 'rgba(0,0,0,0.72)', border: '1px solid rgba(255,255,255,0.25)', cursor: 'pointer', padding: '2px 5px', textTransform: 'uppercase' }}>
+                  <button onClick={() => doSetHero(h)} disabled={busyHero !== null} style={{ ...SKB, fontSize: 8.5, color: stack.hero_post_id === h.postId ? '#E5E1DB' : 'rgba(229,225,219,0.8)', background: 'rgba(0,0,0,0.72)', border: '1px solid rgba(229,225,219,0.25)', cursor: 'pointer', padding: '2px 5px', textTransform: 'uppercase' }}>
                     {busyHero === h.postId ? 'BAKING…' : stack.hero_post_id === h.postId ? 'HERO' : 'SET HERO'}
                   </button>
-                  <button onClick={async () => { if (await removeStackItem(stack.id, h.postId)) onChanged(); }} style={{ ...SKB, fontSize: 8.5, color: 'rgba(255,255,255,0.8)', background: 'rgba(0,0,0,0.72)', border: '1px solid rgba(255,255,255,0.25)', cursor: 'pointer', padding: '2px 5px' }}>✕</button>
+                  <button onClick={async () => { if (await removeStackItem(stack.id, h.postId)) onChanged(); }} style={{ ...SKB, fontSize: 8.5, color: 'rgba(229,225,219,0.8)', background: 'rgba(0,0,0,0.72)', border: '1px solid rgba(229,225,219,0.25)', cursor: 'pointer', padding: '2px 5px' }}>✕</button>
                 </span>
               )}
             </div>

@@ -51,10 +51,10 @@ export default function TrackArt({
   return (
     <div style={{ ...box, position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
       {WITH_INITIAL && (
-        <span style={{ ...SKB, position: "absolute", fontSize: size * 0.42, color: "rgba(255,255,255,0.14)", lineHeight: 1, userSelect: "none" }}>{initial}</span>
+        <span style={{ ...SKB, position: "absolute", fontSize: size * 0.42, color: "rgba(229,225,219,0.14)", lineHeight: 1, userSelect: "none" }}>{initial}</span>
       )}
       <svg viewBox="0 0 100 100" width={size} height={size} preserveAspectRatio="none" style={{ position: "absolute", inset: 0 }}>
-        <path d={d} fill="none" stroke="rgba(255,255,255,0.42)" strokeWidth={2} strokeLinecap="round" />
+        <path d={d} fill="none" stroke="rgba(229,225,219,0.42)" strokeWidth={2} strokeLinecap="round" />
       </svg>
     </div>
   );

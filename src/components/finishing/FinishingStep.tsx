@@ -92,8 +92,8 @@ export default function FinishingStep({
   if (loadError) {
     return (
       <div style={{ position: 'fixed', inset: 0, background: '#000', zIndex: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 18, padding: '0 40px' }}>
-        <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 1.5, textAlign: 'center', margin: 0 }}>Something went wrong loading your photo.</p>
-        <button onClick={() => { setSource(null); setLoadError(false); retriedRef.current = false; setRetryKey((k) => k + 1); }} style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 12, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'transparent', border: '1px solid rgba(255,255,255,0.5)', cursor: 'pointer', padding: '13px 26px' }}>RETAP TO CONTINUE</button>
+        <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: 14, color: 'rgba(229,225,219,0.7)', lineHeight: 1.5, textAlign: 'center', margin: 0 }}>Something went wrong loading your photo.</p>
+        <button onClick={() => { setSource(null); setLoadError(false); retriedRef.current = false; setRetryKey((k) => k + 1); }} style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 12, color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'transparent', border: '1px solid rgba(229,225,219,0.5)', cursor: 'pointer', padding: '13px 26px' }}>RETAP TO CONTINUE</button>
       </div>
     );
   }

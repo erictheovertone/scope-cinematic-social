@@ -10,7 +10,7 @@
 import { useState } from 'react';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
-const RED = '#FF0000';
+const RED = '#E5E1DB';
 
 interface AddToPaletteProps {
   isPro: boolean;
@@ -41,13 +41,13 @@ export default function AddToPalette({ isPro, onUpsell, onSave }: AddToPalettePr
           onKeyDown={(e) => { if (e.key === 'Enter') save(); if (e.key === 'Escape') cancel(); }}
           placeholder="LOOK NAME"
           // Opt back into selection — the suite root sets user-select:none for hold-to-compare.
-          style={{ ...SKB, flex: 1, minWidth: 0, fontSize: 'max(16px, var(--fs-10))', color: 'white', background: 'transparent', border: '1px solid rgba(255,255,255,0.25)', padding: '7px 9px', textTransform: 'uppercase', letterSpacing: '0.06em', outline: 'none', userSelect: 'text', WebkitUserSelect: 'text', WebkitTouchCallout: 'default' }}
+          style={{ ...SKB, flex: 1, minWidth: 0, fontSize: 'max(16px, var(--fs-10))', color: '#E5E1DB', background: 'transparent', border: '1px solid rgba(229,225,219,0.25)', padding: '7px 9px', textTransform: 'uppercase', letterSpacing: '0.06em', outline: 'none', userSelect: 'text', WebkitUserSelect: 'text', WebkitTouchCallout: 'default' }}
         />
         <button onClick={save} style={{ background: RED, border: 'none', cursor: 'pointer', padding: '7px 12px' }}>
           <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: '#000', textTransform: 'uppercase', letterSpacing: '0.08em' }}>SAVE</span>
         </button>
-        <button onClick={cancel} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', cursor: 'pointer', padding: '7px 10px' }}>
-          <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>✕</span>
+        <button onClick={cancel} style={{ background: 'transparent', border: '1px solid rgba(229,225,219,0.2)', cursor: 'pointer', padding: '7px 10px' }}>
+          <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'rgba(229,225,219,0.6)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>✕</span>
         </button>
       </div>
     );

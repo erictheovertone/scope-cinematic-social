@@ -317,7 +317,7 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
   return createPortal(
     <>
       {/* Scoped placeholder colour */}
-      <style>{`.pm-input::placeholder { color: rgba(255,255,255,0.35); }`}</style>
+      <style>{`.pm-input::placeholder { color: rgba(229,225,219,0.35); }`}</style>
 
       {/*
         Outer div needs bg-black in className so the globals.css rule
@@ -357,7 +357,7 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
             alignItems: "center",
             paddingLeft: 14,
             paddingRight: 14,
-            borderBottom: "1px solid rgba(255,255,255,0.06)",
+            borderBottom: "1px solid rgba(229,225,219,0.06)",
           }}
         >
           <button
@@ -373,9 +373,9 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
             }}
           >
             <svg width="16.5" height="16.5" viewBox="0 0 13 13" fill="none">
-              <path d="M8.5 1.5L3.5 6.5l5 5" stroke="white" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M8.5 1.5L3.5 6.5l5 5" stroke="#E5E1DB" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-            <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "white", letterSpacing: "-0.1px" }}>BACK</span>
+            <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "#E5E1DB", letterSpacing: "-0.1px" }}>BACK</span>
           </button>
           {/* THEATRE entry — the eye, alone in the bar's right slot (BACK owns the
               left; nothing else lives up here, so no crowding). Enters theatre AT
@@ -398,7 +398,7 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
               aria-label="Close"
               style={{ background: "transparent", border: "none", cursor: "pointer", minWidth: 44, minHeight: 44, display: "inline-flex", alignItems: "center", justifyContent: "center", padding: 0, marginRight: -10 }}
             >
-              <span style={{ ...SKR, fontSize: 22, color: "rgba(255,255,255,0.75)", lineHeight: 1 }}>×</span>
+              <span style={{ ...SKR, fontSize: 22, color: "rgba(229,225,219,0.75)", lineHeight: 1 }}>×</span>
             </button>
           </span>
         </div>
@@ -426,13 +426,13 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
                   {/* Inline SVG — the PNG asset's hairline stroke collapsed to ~0.2px at
                       this size and antialiased to grey-53 (measured); a vector stroke
                       rasterizes at native size = true white. */}
-                  <svg width="13" height="19" viewBox="0 0 11 17" fill="none" style={{ display: "block", filter: "drop-shadow(0 0 2px rgba(255,255,255,0.6))" }}><path d="M8.5 2.5l-6 6 6 6" stroke="#FFFFFF" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                  <svg width="13" height="19" viewBox="0 0 11 17" fill="none" style={{ display: "block", filter: "drop-shadow(0 0 2px rgba(229,225,219,0.6))" }}><path d="M8.5 2.5l-6 6 6 6" stroke="#E5E1DB" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
                 </button>
-                <span style={{ ...SKR, fontSize: 'var(--fs-8)', color: "rgba(255,255,255,0.5)", letterSpacing: "0.18em", fontVariantNumeric: "tabular-nums" }}>
+                <span style={{ ...SKR, fontSize: 'var(--fs-8)', color: "rgba(229,225,219,0.5)", letterSpacing: "0.18em", fontVariantNumeric: "tabular-nums" }}>
                   {nav.index + 1} / {nav.total}
                 </span>
                 <button onClick={() => nav.onStep(1)} disabled={nav.index === nav.total - 1} aria-label="Next" style={{ background: "transparent", border: "none", cursor: nav.index === nav.total - 1 ? "default" : "pointer", padding: 4, lineHeight: 0, visibility: nav.index === nav.total - 1 ? "hidden" : "visible" }}>
-                  <svg width="13" height="19" viewBox="0 0 11 17" fill="none" style={{ display: "block", filter: "drop-shadow(0 0 2px rgba(255,255,255,0.6))" }}><path d="M2.5 2.5l6 6-6 6" stroke="#FFFFFF" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                  <svg width="13" height="19" viewBox="0 0 11 17" fill="none" style={{ display: "block", filter: "drop-shadow(0 0 2px rgba(229,225,219,0.6))" }}><path d="M2.5 2.5l6 6-6 6" stroke="#E5E1DB" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
                 </button>
               </div>
             )}
@@ -442,14 +442,14 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
               <div className="tappable" onClick={() => goToProfile()} style={{ width: 22, height: 22, borderRadius: "50%", overflow: "hidden", background: "#333", flexShrink: 0, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 {post.profile_image_url
                   ? <img src={feedImage(post.profile_image_url, 96)} alt={post.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                  : <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "white", textTransform: "uppercase" }}>{post.username?.[0] ?? "?"}</span>}
+                  : <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "#E5E1DB", textTransform: "uppercase" }}>{post.username?.[0] ?? "?"}</span>}
               </div>
-              <span className="tappable" onClick={() => goToProfile()} style={{ ...SKB, fontSize: 'var(--fs-9)', color: "white", opacity: 0.7, letterSpacing: "-0.14px", cursor: "pointer", textTransform: "uppercase", display: "inline-block" }}>@{post.username}</span>
+              <span className="tappable" onClick={() => goToProfile()} style={{ ...SKB, fontSize: 'var(--fs-9)', color: "#E5E1DB", opacity: 0.7, letterSpacing: "-0.14px", cursor: "pointer", textTransform: "uppercase", display: "inline-block" }}>@{post.username}</span>
               <MusicTitleChip post={post as { music_track_id?: string | null }} />
               {isCoinPost(post) && (
                 <span style={{ display: "flex", alignItems: "baseline", gap: 6, marginLeft: "auto" }}>
                   {post.ticker && <TickerMark ticker={post.ticker} size={11.5} />}
-                  <span style={{ ...SKR, fontSize: 'var(--fs-9)', color: "rgba(255,255,255,0.4)", letterSpacing: "-0.14px" }}>MC: {mcLabel ?? "…"}</span>
+                  <span style={{ ...SKR, fontSize: 'var(--fs-9)', color: "rgba(229,225,219,0.4)", letterSpacing: "-0.14px" }}>MC: {mcLabel ?? "…"}</span>
                 </span>
               )}
             </div>
@@ -494,9 +494,9 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
                 style={{ position: "absolute", bottom: 28, left: "50%", transform: "translateX(-50%)", background: "transparent", border: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 4, padding: 12 }}
               >
                 <svg width="23.5" height="23.5" viewBox="0 0 24 24" fill="none">
-                  <path d="M12 5v14M5 12l7 7 7-7" stroke="rgba(255,255,255,0.5)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M12 5v14M5 12l7 7 7-7" stroke="rgba(229,225,219,0.5)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
-                <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.12em" }}>SCROLL</span>
+                <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: "rgba(229,225,219,0.35)", textTransform: "uppercase", letterSpacing: "0.12em" }}>SCROLL</span>
               </button>
             )}
 
@@ -506,7 +506,7 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
 
             {/* Caption */}
             {post.caption ? (
-              <p style={{ ...SKR, fontSize: 'var(--fs-12)', color: "white", letterSpacing: "-0.1px", lineHeight: 1.55, margin: "0 0 14px" }}>
+              <p style={{ ...SKR, fontSize: 'var(--fs-12)', color: "#E5E1DB", letterSpacing: "-0.1px", lineHeight: 1.55, margin: "0 0 14px" }}>
                 {post.caption}
               </p>
             ) : null}
@@ -516,7 +516,7 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
                 below (which is also the whip target). */}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 12, marginBottom: 16 }}>
               {deckToast && (
-                <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: "#FF0000", textTransform: "uppercase", letterSpacing: "0.04em", animation: "theater-fade-in 0.2s ease-out both" }}>
+                <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: "#E5E1DB", textTransform: "uppercase", letterSpacing: "0.04em", animation: "theater-fade-in 0.2s ease-out both" }}>
                   Added to {deckToast}
                 </span>
               )}
@@ -525,7 +525,7 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
                   onClick={() => setShowDeckPicker(true)}
                   style={{ background: "transparent", border: "none", cursor: "pointer", padding: 0 }}
                 >
-                  <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: "rgba(255,255,255,0.6)", letterSpacing: "-0.1px" }}>
+                  <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: "rgba(229,225,219,0.6)", letterSpacing: "-0.1px" }}>
                     ADD TO DECK
                   </span>
                 </button>
@@ -534,7 +534,7 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
                 onClick={handleCollect}
                 style={{
                   background: "transparent",
-                  border: showCollectSheet ? "1px solid #FF0000" : "1px solid rgba(255,255,255,0.7)",
+                  border: showCollectSheet ? "1px solid #E5E1DB" : "1px solid rgba(229,225,219,0.7)",
                   cursor: "pointer",
                   padding: "5px 10px",
                 }}
@@ -543,7 +543,7 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
                     dollars. (The old "· 0.001 ETH" was the 1155 flat mint fee.)
                     Legacy ETH-paired coins read LEGACY and open to the sheet's
                     non-tradeable note rather than a misleading COLLECT. */}
-                <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: showCollectSheet ? "#FF0000" : "rgba(255,255,255,0.7)", letterSpacing: "-0.1px" }}>
+                <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: showCollectSheet ? "#E5E1DB" : "rgba(229,225,219,0.7)", letterSpacing: "-0.1px" }}>
                   {isUntradeableCoin(post as { coin_address?: string | null; coin_currency?: string | null }) ? "LEGACY" : "COLLECT"}
                 </span>
               </button>
@@ -557,7 +557,7 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
             )}
 
             {/* Divider */}
-            <div style={{ height: 1, background: "rgba(255,255,255,0.1)", marginBottom: 12 }} />
+            <div style={{ height: 1, background: "rgba(229,225,219,0.1)", marginBottom: 12 }} />
 
             {/* Like + comment — the SAME arrangement as the home feed card (heart+count,
                 comment+count) so the card and its lightbox read as one. NO share (not an
@@ -568,7 +568,7 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
               <button
                 onClick={handleLike}
                 disabled={loading || !user}
-                style={{ background: "transparent", border: "none", cursor: user ? "pointer" : "default", display: "flex", alignItems: "center", gap: 4, padding: 0, color: isLiked ? "#FF0000" : "rgba(255,255,255,0.6)" }}
+                style={{ background: "transparent", border: "none", cursor: user ? "pointer" : "default", display: "flex", alignItems: "center", gap: 4, padding: 0, color: isLiked ? "#E5E1DB" : "rgba(229,225,219,0.6)" }}
               >
                 <PressPop><span style={{ display: "flex", alignItems: "center", gap: 4 }}>
                 <svg width="18.7" height="18.7" viewBox="0 0 24 24" fill={isLiked ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
@@ -581,7 +581,7 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
               {/* Comment — icon + count (toggles the comments), matching the feed card. */}
               <button
                 onClick={() => setShowComments((v) => !v)}
-                style={{ background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 4, padding: 0, color: "rgba(255,255,255,0.6)" }}
+                style={{ background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 4, padding: 0, color: "rgba(229,225,219,0.6)" }}
               >
                 <PressPop><span style={{ display: "flex", alignItems: "center", gap: 4 }}>
                 <svg width="18.7" height="18.7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -599,9 +599,9 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
                   style={{ background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", padding: 0, marginLeft: "auto" }}
                 >
                   <svg width="19.5" height="19.5" viewBox="0 0 24 24" fill="none">
-                    <circle cx="5" cy="12" r="1.4" fill={ownerMenuOpen ? "#FF0000" : "rgba(255,255,255,0.6)"} />
-                    <circle cx="12" cy="12" r="1.4" fill={ownerMenuOpen ? "#FF0000" : "rgba(255,255,255,0.6)"} />
-                    <circle cx="19" cy="12" r="1.4" fill={ownerMenuOpen ? "#FF0000" : "rgba(255,255,255,0.6)"} />
+                    <circle cx="5" cy="12" r="1.4" fill={ownerMenuOpen ? "#E5E1DB" : "rgba(229,225,219,0.6)"} />
+                    <circle cx="12" cy="12" r="1.4" fill={ownerMenuOpen ? "#E5E1DB" : "rgba(229,225,219,0.6)"} />
+                    <circle cx="19" cy="12" r="1.4" fill={ownerMenuOpen ? "#E5E1DB" : "rgba(229,225,219,0.6)"} />
                   </svg>
                 </button>
               )}
@@ -611,7 +611,7 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
             {showComments && (
               <div style={{ marginBottom: 16 }}>
                 {comments.length === 0 ? (
-                  <p style={{ ...SKR, fontSize: 'var(--fs-8)', color: "rgba(255,255,255,0.25)", animation: "ripple-down 0.2s ease-out both" }}>
+                  <p style={{ ...SKR, fontSize: 'var(--fs-8)', color: "rgba(229,225,219,0.25)", animation: "ripple-down 0.2s ease-out both" }}>
                     no comments yet
                   </p>
                 ) : (
@@ -632,7 +632,7 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
             {user && (
               <div
                 style={{
-                  borderTop: "1px solid rgba(255,255,255,0.07)",
+                  borderTop: "1px solid rgba(229,225,219,0.07)",
                   paddingTop: 12, paddingBottom: 80,
                 }}
               >
@@ -647,8 +647,8 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
                   placeholder="add a comment..."
                   style={{
                     flex: 1, background: "transparent", border: "none",
-                    borderBottom: "1px solid rgba(255,255,255,0.15)",
-                    outline: "none", ...SKR, fontSize: 'max(16px, var(--fs-9))', color: "white", padding: "2px 0",
+                    borderBottom: "1px solid rgba(229,225,219,0.15)",
+                    outline: "none", ...SKR, fontSize: 'max(16px, var(--fs-9))', color: "#E5E1DB", padding: "2px 0",
                   }}
                 />
                 <button
@@ -658,7 +658,7 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
                     background: "transparent", border: "none", padding: 0,
                     cursor: newComment.trim() ? "pointer" : "default",
                     ...SKB, fontSize: 'var(--fs-9)',
-                    color: newComment.trim() ? "white" : "rgba(255,255,255,0.2)",
+                    color: newComment.trim() ? "#E5E1DB" : "rgba(229,225,219,0.2)",
                     transition: "color 0.15s ease",
                   }}
                 >
@@ -672,15 +672,15 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
                 ••• kebab with the ripple-down stagger (the established ripple
                 language; tap-out or ••• again collapses). ── */}
             {ownerView && ownerMenuOpen && (
-              <div onClick={(e) => e.stopPropagation()} style={{ borderTop: "1px solid rgba(255,255,255,0.08)", padding: "16px 0 90px", display: "flex", flexDirection: "column", gap: 14 }}>
-                <p style={{ ...SKB, fontSize: 'var(--fs-7)', color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.18em", margin: 0, animation: "ripple-down 0.2s ease-out both" }}>OWNER</p>
+              <div onClick={(e) => e.stopPropagation()} style={{ borderTop: "1px solid rgba(229,225,219,0.08)", padding: "16px 0 90px", display: "flex", flexDirection: "column", gap: 14 }}>
+                <p style={{ ...SKB, fontSize: 'var(--fs-7)', color: "rgba(229,225,219,0.35)", textTransform: "uppercase", letterSpacing: "0.18em", margin: 0, animation: "ripple-down 0.2s ease-out both" }}>OWNER</p>
 
                 {/* Pin to grid — max 2 (enforced in pinPost service). */}
                 <div>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", animation: "ripple-down 0.2s ease-out both", animationDelay: "50ms" }}>
                     <div>
-                      <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: "white", textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 2px" }}>PIN</p>
-                      <p style={{ ...SKR, fontSize: 'var(--fs-8)', color: "rgba(255,255,255,0.4)", margin: 0 }}>{pinned ? "Pinned to the top of your grid" : "Pin to the top of your grid (max 2)"}</p>
+                      <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: "#E5E1DB", textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 2px" }}>PIN</p>
+                      <p style={{ ...SKR, fontSize: 'var(--fs-8)', color: "rgba(229,225,219,0.4)", margin: 0 }}>{pinned ? "Pinned to the top of your grid" : "Pin to the top of your grid (max 2)"}</p>
                     </div>
                     <button
                       onClick={async () => {
@@ -696,13 +696,13 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
                           else setPinError(r.error ?? "Could not pin.");
                         }
                       }}
-                      style={{ background: "transparent", border: `1px solid ${pinned ? "rgba(255,0,0,0.5)" : "rgba(255,255,255,0.2)"}`, cursor: "pointer", padding: "5px 10px" }}
+                      style={{ background: "transparent", border: `1px solid ${pinned ? "rgba(229,225,219,0.5)" : "rgba(229,225,219,0.2)"}`, cursor: "pointer", padding: "5px 10px" }}
                     >
-                      <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: pinned ? "#FF0000" : "rgba(255,255,255,0.6)", textTransform: "uppercase", letterSpacing: "0.08em" }}>{pinned ? "PINNED" : "PIN"}</span>
+                      <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: pinned ? "#E5E1DB" : "rgba(229,225,219,0.6)", textTransform: "uppercase", letterSpacing: "0.08em" }}>{pinned ? "PINNED" : "PIN"}</span>
                     </button>
                   </div>
                   {pinError && (
-                    <p style={{ ...SKR, fontSize: 'var(--fs-8)', color: "#FF0000", margin: "6px 0 0" }}>{pinError}</p>
+                    <p style={{ ...SKR, fontSize: 'var(--fs-8)', color: "#E5E1DB", margin: "6px 0 0" }}>{pinError}</p>
                   )}
                 </div>
 
@@ -710,8 +710,8 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
                 {isVideoPost && (
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", animation: "ripple-down 0.2s ease-out both", animationDelay: "100ms" }}>
                     <div>
-                      <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: "white", textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 2px" }}>AUTOPLAY ON GRID</p>
-                      <p style={{ ...SKR, fontSize: 'var(--fs-8)', color: "rgba(255,255,255,0.4)", margin: 0 }}>{autoplayOn ? "Playing automatically" : "Shows thumbnail with play button"}</p>
+                      <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: "#E5E1DB", textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 2px" }}>AUTOPLAY ON GRID</p>
+                      <p style={{ ...SKR, fontSize: 'var(--fs-8)', color: "rgba(229,225,219,0.4)", margin: 0 }}>{autoplayOn ? "Playing automatically" : "Shows thumbnail with play button"}</p>
                     </div>
                     <button
                       onClick={async () => {
@@ -721,16 +721,16 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
                       }}
                       style={{
                         width: 28, height: 28,
-                        background: autoplayOn ? "rgba(255,0,0,0.15)" : "rgba(255,255,255,0.08)",
-                        border: `1px solid ${autoplayOn ? "rgba(255,0,0,0.5)" : "rgba(255,255,255,0.2)"}`,
+                        background: autoplayOn ? "rgba(229,225,219,0.15)" : "rgba(229,225,219,0.08)",
+                        border: `1px solid ${autoplayOn ? "rgba(229,225,219,0.5)" : "rgba(229,225,219,0.2)"}`,
                         cursor: "pointer", flexShrink: 0,
                         display: "flex", alignItems: "center", justifyContent: "center",
                       }}
                     >
                       {autoplayOn ? (
-                        <svg width="13.5" height="13.5" viewBox="0 0 24 24" fill="none"><rect x="6" y="4" width="4" height="16" fill="#FF0000"/><rect x="14" y="4" width="4" height="16" fill="#FF0000"/></svg>
+                        <svg width="13.5" height="13.5" viewBox="0 0 24 24" fill="none"><rect x="6" y="4" width="4" height="16" fill="#E5E1DB"/><rect x="14" y="4" width="4" height="16" fill="#E5E1DB"/></svg>
                       ) : (
-                        <svg width="13.5" height="13.5" viewBox="0 0 24 24" fill="none"><path d="M5 3l14 9-14 9V3z" fill="rgba(255,255,255,0.45)"/></svg>
+                        <svg width="13.5" height="13.5" viewBox="0 0 24 24" fill="none"><path d="M5 3l14 9-14 9V3z" fill="rgba(229,225,219,0.45)"/></svg>
                       )}
                     </button>
                   </div>
@@ -741,14 +741,14 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
                 {isVideoPost && (
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", animation: "ripple-down 0.2s ease-out both", animationDelay: "150ms" }}>
                   <div>
-                    <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: "white", textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 2px" }}>THUMBNAIL</p>
-                    <p style={{ ...SKR, fontSize: 'var(--fs-8)', color: "rgba(255,255,255,0.4)", margin: 0 }}>{replacingThumb ? "Uploading..." : "Replace poster image"}</p>
+                    <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: "#E5E1DB", textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 2px" }}>THUMBNAIL</p>
+                    <p style={{ ...SKR, fontSize: 'var(--fs-8)', color: "rgba(229,225,219,0.4)", margin: 0 }}>{replacingThumb ? "Uploading..." : "Replace poster image"}</p>
                   </div>
                   <button
                     onClick={() => thumbInputRef.current?.click()}
-                    style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.2)", cursor: "pointer", padding: "5px 10px" }}
+                    style={{ background: "transparent", border: "1px solid rgba(229,225,219,0.2)", cursor: "pointer", padding: "5px 10px" }}
                   >
-                    <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: "rgba(255,255,255,0.6)", textTransform: "uppercase", letterSpacing: "0.08em" }}>{replacingThumb ? "..." : "REPLACE"}</span>
+                    <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: "rgba(229,225,219,0.6)", textTransform: "uppercase", letterSpacing: "0.08em" }}>{replacingThumb ? "..." : "REPLACE"}</span>
                   </button>
                   <input
                     ref={thumbInputRef}
@@ -786,14 +786,14 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
                 {isVideoPost && (
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", animation: "ripple-down 0.2s ease-out both", animationDelay: "200ms" }}>
                   <div>
-                    <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: "white", textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 2px" }}>RE-FRAME</p>
-                    <p style={{ ...SKR, fontSize: 'var(--fs-8)', color: "rgba(255,255,255,0.4)", margin: 0 }}>Adjust crop on grid</p>
+                    <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: "#E5E1DB", textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 2px" }}>RE-FRAME</p>
+                    <p style={{ ...SKR, fontSize: 'var(--fs-8)', color: "rgba(229,225,219,0.4)", margin: 0 }}>Adjust crop on grid</p>
                   </div>
                   <button
                     onClick={() => setShowReframe(true)}
-                    style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.2)", cursor: "pointer", padding: "5px 10px" }}
+                    style={{ background: "transparent", border: "1px solid rgba(229,225,219,0.2)", cursor: "pointer", padding: "5px 10px" }}
                   >
-                    <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: "rgba(255,255,255,0.6)", textTransform: "uppercase", letterSpacing: "0.08em" }}>REFRAME</span>
+                    <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: "rgba(229,225,219,0.6)", textTransform: "uppercase", letterSpacing: "0.08em" }}>REFRAME</span>
                   </button>
                 </div>
                 )}
@@ -802,28 +802,28 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
                     (music_track_id / music_mode); applies to image + video posts. */}
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", animation: "ripple-down 0.2s ease-out both", animationDelay: "225ms" }}>
                   <div>
-                    <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: "white", textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 2px" }}>EDIT MUSIC</p>
-                    <p style={{ ...SKR, fontSize: 'var(--fs-8)', color: "rgba(255,255,255,0.4)", margin: 0 }}>{(post as { music_track_id?: string | null }).music_track_id ? "Swap, change mode, or remove" : "Add a track from the library"}</p>
+                    <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: "#E5E1DB", textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 2px" }}>EDIT MUSIC</p>
+                    <p style={{ ...SKR, fontSize: 'var(--fs-8)', color: "rgba(229,225,219,0.4)", margin: 0 }}>{(post as { music_track_id?: string | null }).music_track_id ? "Swap, change mode, or remove" : "Add a track from the library"}</p>
                   </div>
                   <button
                     onClick={() => setShowEditMusic(true)}
-                    style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.2)", cursor: "pointer", padding: "5px 10px" }}
+                    style={{ background: "transparent", border: "1px solid rgba(229,225,219,0.2)", cursor: "pointer", padding: "5px 10px" }}
                   >
-                    <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: "rgba(255,255,255,0.6)", textTransform: "uppercase", letterSpacing: "0.08em" }}>MUSIC</span>
+                    <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: "rgba(229,225,219,0.6)", textTransform: "uppercase", letterSpacing: "0.08em" }}>MUSIC</span>
                   </button>
                 </div>
 
                 {/* Delete */}
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", animation: "ripple-down 0.2s ease-out both", animationDelay: "250ms" }}>
                   <div>
-                    <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: "#FF0000", textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 2px" }}>DELETE</p>
-                    <p style={{ ...SKR, fontSize: 'var(--fs-8)', color: "rgba(255,255,255,0.4)", margin: 0 }}>Remove from your profile</p>
+                    <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: "#E5E1DB", textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 2px" }}>DELETE</p>
+                    <p style={{ ...SKR, fontSize: 'var(--fs-8)', color: "rgba(229,225,219,0.4)", margin: 0 }}>Remove from your profile</p>
                   </div>
                   <button
                     onClick={() => setShowDeleteSheet(true)}
-                    style={{ background: "transparent", border: "1px solid rgba(255,0,0,0.5)", cursor: "pointer", padding: "5px 10px" }}
+                    style={{ background: "transparent", border: "1px solid rgba(229,225,219,0.5)", cursor: "pointer", padding: "5px 10px" }}
                   >
-                    <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: "#FF0000", textTransform: "uppercase", letterSpacing: "0.08em" }}>DELETE</span>
+                    <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: "#E5E1DB", textTransform: "uppercase", letterSpacing: "0.08em" }}>DELETE</span>
                   </button>
                 </div>
               </div>

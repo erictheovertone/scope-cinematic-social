@@ -11,7 +11,7 @@ const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fon
 export default function TickerMark({
   ticker,
   size = 9,
-  color = '#FF0000',
+  color = '#E5E1DB',
 }: {
   ticker: string;
   size?: number;

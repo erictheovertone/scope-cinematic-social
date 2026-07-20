@@ -60,7 +60,7 @@ async function drawWatermarkBand(
     ctx.drawImage(logo, logoX, logoY, logoTargetWidth, logoTargetHeight);
   } catch (logoErr: any) {
     console.warn('[frames-export] watermark: logo load failed, falling back to text:', logoErr?.message);
-    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+    ctx.fillStyle = 'rgba(229,225,219,0.6)';
     ctx.font = 'bold 32px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -71,7 +71,7 @@ async function drawWatermarkBand(
     ? `@${opts.currentUserUsername.toUpperCase()} · SCOPE`
     : `CURATED BY @${opts.currentUserUsername.toUpperCase()} · WORK BY @${opts.deckOwnerUsername.toUpperCase()}`;
 
-  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  ctx.fillStyle = 'rgba(229,225,219,0.5)';
   ctx.font = 'bold 16px sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';

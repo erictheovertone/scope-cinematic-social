@@ -66,8 +66,8 @@ export default function VideoCelebration({ videoSrc, badgeSrc, onDone, renderFal
           onClick={reveal}
           style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', gap: 22 }}
         >
-          <img src={badgeSrc} alt="" style={{ width: 72, height: 72, objectFit: 'contain', filter: 'drop-shadow(0 0 18px rgba(255,255,255,0.14))' }} />
-          <p style={{ ...BOLD, fontSize: 'var(--fs-11)', color: 'rgba(255,255,255,0.65)', letterSpacing: '0.3em', textTransform: 'uppercase', margin: 0 }}>TAP TO REVEAL</p>
+          <img src={badgeSrc} alt="" style={{ width: 72, height: 72, objectFit: 'contain', filter: 'drop-shadow(0 0 18px rgba(229,225,219,0.14))' }} />
+          <p style={{ ...BOLD, fontSize: 'var(--fs-11)', color: 'rgba(229,225,219,0.65)', letterSpacing: '0.3em', textTransform: 'uppercase', margin: 0 }}>TAP TO REVEAL</p>
         </div>
       )}
 
@@ -76,7 +76,7 @@ export default function VideoCelebration({ videoSrc, badgeSrc, onDone, renderFal
           onClick={done}
           style={{ position: 'absolute', top: 'calc(env(safe-area-inset-top, 0px) + 16px)', right: 16, background: 'transparent', border: 'none', cursor: 'pointer', padding: 8, zIndex: 2 }}
         >
-          <span style={{ ...BOLD, fontSize: 'var(--fs-10)', color: 'rgba(255,255,255,0.5)', letterSpacing: '0.18em', textTransform: 'uppercase' }}>SKIP</span>
+          <span style={{ ...BOLD, fontSize: 'var(--fs-10)', color: 'rgba(229,225,219,0.5)', letterSpacing: '0.18em', textTransform: 'uppercase' }}>SKIP</span>
         </button>
       )}
     </div>,

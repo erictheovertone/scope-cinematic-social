@@ -58,28 +58,28 @@ export default function EarningsExplainerSheet({ onClose }: Props) {
         transition={reduced ? { duration: 0 } : { type: 'spring', duration: 0.28, bounce: 0.14 }}
         style={{
           position: 'absolute', bottom: 0, left: 0, right: 0,
-          background: '#080808', borderTop: '1px solid rgba(255,255,255,0.08)',
+          background: '#080808', borderTop: '1px solid rgba(229,225,219,0.08)',
           padding: '20px 22px calc(30px + env(safe-area-inset-bottom, 0px))',
         }}
       >
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 18 }}>
-          <div style={{ width: 36, height: 2, backgroundColor: 'rgba(255,255,255,0.12)' }} />
+          <div style={{ width: 36, height: 2, backgroundColor: 'rgba(229,225,219,0.12)' }} />
         </div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 22 }}>
-          <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.18em', margin: 0 }}>
+          <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'rgba(229,225,219,0.45)', textTransform: 'uppercase', letterSpacing: '0.18em', margin: 0 }}>
             HOW EARNINGS WORK
           </p>
           <button onClick={onClose} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 6, margin: -6 }}>
-            <span style={{ ...SKR, fontSize: 'var(--fs-16)', color: 'rgba(255,255,255,0.5)', lineHeight: 1 }}>×</span>
+            <span style={{ ...SKR, fontSize: 'var(--fs-16)', color: 'rgba(229,225,219,0.5)', lineHeight: 1 }}>×</span>
           </button>
         </div>
 
         {BEATS.map((b) => (
           <div key={b.lead} style={{ marginBottom: 22 }}>
-            <p style={{ ...SKB, fontSize: 'var(--fs-13)', color: '#FFFFFF', margin: '0 0 5px', letterSpacing: '-0.01em' }}>
+            <p style={{ ...SKB, fontSize: 'var(--fs-13)', color: '#E5E1DB', margin: '0 0 5px', letterSpacing: '-0.01em' }}>
               {b.lead}
             </p>
-            <p style={{ ...SKR, fontSize: 'var(--fs-11)', color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, margin: 0 }}>
+            <p style={{ ...SKR, fontSize: 'var(--fs-11)', color: 'rgba(229,225,219,0.55)', lineHeight: 1.6, margin: 0 }}>
               {b.body}
             </p>
           </div>

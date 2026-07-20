@@ -377,12 +377,12 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
   const tabStyle = (active: boolean): React.CSSProperties => ({
     ...SKB, flex: 1, fontSize: 'var(--fs-11)', letterSpacing: '0.12em', textTransform: 'uppercase',
     padding: '10px 0', textAlign: 'center', cursor: 'pointer',
-    color: active ? '#FFF' : 'rgba(255,255,255,0.4)',
+    color: active ? '#E5E1DB' : 'rgba(229,225,219,0.4)',
     background: 'transparent',
     borderTop: 'none', borderLeft: 'none', borderRight: 'none',
     borderBottomWidth: 1,
     borderBottomStyle: 'solid',
-    borderBottomColor: active ? '#FF0000' : 'rgba(255,255,255,0.1)',
+    borderBottomColor: active ? '#E5E1DB' : 'rgba(229,225,219,0.1)',
   });
 
   return (
@@ -406,7 +406,7 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
         }}
         style={{
         position: 'fixed', bottom: 0, left: 0, right: 0, margin: '0 auto', maxWidth: '30rem',
-        background: '#080808', borderTop: '1px solid rgba(255,255,255,0.08)', zIndex: 501,
+        background: '#080808', borderTop: '1px solid rgba(229,225,219,0.08)', zIndex: 501,
         transform: visible ? 'translateY(0)' : 'translateY(100%)',
         transition: 'transform 0.4s cubic-bezier(0.32,0.72,0,1)',
         padding: '24px 22px 40px', maxHeight: '90vh', overflowY: 'auto',
@@ -414,12 +414,12 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
         {/* × dismiss — the app's sheet close (matches the earnings/swap sheets'
             top-right ×). Backdrop tap keeps working; nothing else moves. */}
         <button onClick={onClose} aria-label="Close" style={{ position: 'absolute', top: 10, right: 12, zIndex: 5, background: 'transparent', border: 'none', cursor: 'pointer', padding: 6 }}>
-          <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: 'var(--fs-16)', color: 'rgba(255,255,255,0.5)', lineHeight: 1 }}>×</span>
+          <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: 'var(--fs-16)', color: 'rgba(229,225,219,0.5)', lineHeight: 1 }}>×</span>
         </button>
 
         {/* Banner ONLY for mock data — real coin reads (live) carry no banner. */}
         {market && !market.live && (
-          <div style={{ ...SKB, fontSize: 'var(--fs-7)', letterSpacing: '0.2em', color: '#FF0000', textTransform: 'uppercase', marginBottom: 14 }}>
+          <div style={{ ...SKB, fontSize: 'var(--fs-7)', letterSpacing: '0.2em', color: '#E5E1DB', textTransform: 'uppercase', marginBottom: 14 }}>
             ECONOMY PREVIEW · MOCK DATA
           </div>
         )}
@@ -442,10 +442,10 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
           const text = (
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, margin: '0 0 3px' }}>
-                <p style={{ ...SKB, fontSize: 'var(--fs-11)', color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.02em', margin: 0 }}>@{post.username}</p>
+                <p style={{ ...SKB, fontSize: 'var(--fs-11)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.02em', margin: 0 }}>@{post.username}</p>
                 {post.ticker && <TickerMark ticker={post.ticker} size={13.5} />}
               </div>
-              <p style={{ ...SKR, fontSize: 'var(--fs-10)', color: 'rgba(255,255,255,0.5)', margin: 0, lineHeight: 1.35, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const }}>{post.caption || ''}</p>
+              <p style={{ ...SKR, fontSize: 'var(--fs-10)', color: 'rgba(229,225,219,0.5)', margin: 0, lineHeight: 1.35, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const }}>{post.caption || ''}</p>
             </div>
           );
           const media = (
@@ -475,10 +475,10 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
                   the look-saved choreography): the work is claimed. */}
               {captured && (
                 <>
-                  <div style={{ position: 'absolute', top: 6, left: 6, width: 22, height: 22, borderTop: '2px solid #FF0000', borderLeft: '2px solid #FF0000', animation: 'cornerReveal 0.6s ease forwards', opacity: 0 }} />
-                  <div style={{ position: 'absolute', top: 6, right: 6, width: 22, height: 22, borderTop: '2px solid #FF0000', borderRight: '2px solid #FF0000', animation: 'cornerReveal 0.6s ease 0.1s forwards', opacity: 0 }} />
-                  <div style={{ position: 'absolute', bottom: 6, left: 6, width: 22, height: 22, borderBottom: '2px solid #FF0000', borderLeft: '2px solid #FF0000', animation: 'cornerReveal 0.6s ease 0.2s forwards', opacity: 0 }} />
-                  <div style={{ position: 'absolute', bottom: 6, right: 6, width: 22, height: 22, borderBottom: '2px solid #FF0000', borderRight: '2px solid #FF0000', animation: 'cornerReveal 0.6s ease 0.3s forwards', opacity: 0 }} />
+                  <div style={{ position: 'absolute', top: 6, left: 6, width: 22, height: 22, borderTop: '2px solid #E5E1DB', borderLeft: '2px solid #E5E1DB', animation: 'cornerReveal 0.6s ease forwards', opacity: 0 }} />
+                  <div style={{ position: 'absolute', top: 6, right: 6, width: 22, height: 22, borderTop: '2px solid #E5E1DB', borderRight: '2px solid #E5E1DB', animation: 'cornerReveal 0.6s ease 0.1s forwards', opacity: 0 }} />
+                  <div style={{ position: 'absolute', bottom: 6, left: 6, width: 22, height: 22, borderBottom: '2px solid #E5E1DB', borderLeft: '2px solid #E5E1DB', animation: 'cornerReveal 0.6s ease 0.2s forwards', opacity: 0 }} />
+                  <div style={{ position: 'absolute', bottom: 6, right: 6, width: 22, height: 22, borderBottom: '2px solid #E5E1DB', borderRight: '2px solid #E5E1DB', animation: 'cornerReveal 0.6s ease 0.3s forwards', opacity: 0 }} />
                   <style>{`@keyframes cornerReveal { from { opacity: 0; transform: scale(0.7); } to { opacity: 1; transform: scale(1); } }`}</style>
                 </>
               )}
@@ -504,15 +504,15 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
 
         {/* Price + MC in dollars, pieces framing. A no-trades pool has no
             discovered price yet — show "—", never a fabricated number. */}
-        <div style={{ display: 'flex', gap: 1, marginBottom: 18, background: 'rgba(255,255,255,0.08)' }}>
+        <div style={{ display: 'flex', gap: 1, marginBottom: 18, background: 'rgba(229,225,219,0.08)' }}>
           {[
             { k: 'PRICE / FRAGMENT', v: market ? (market.priceUsd != null ? usd(market.priceUsd) : '—') : '—' },
             { k: 'MARKET CAP', v: market ? usd(market.mcUsd) : '—' },
             { k: 'FRAGMENTS', v: market ? market.supply.toLocaleString() : '10,000' },
           ].map((c) => (
             <div key={c.k} style={{ flex: 1, background: '#080808', padding: '12px 10px' }}>
-              <p style={{ ...SKB, fontSize: 'var(--fs-6_5)', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.14em', margin: '0 0 5px' }}>{c.k}</p>
-              <p style={{ ...SKB, fontSize: 'var(--fs-13)', color: '#FFF', margin: 0, fontVariantNumeric: 'tabular-nums' }}>{c.v}</p>
+              <p style={{ ...SKB, fontSize: 'var(--fs-6_5)', color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase', letterSpacing: '0.14em', margin: '0 0 5px' }}>{c.k}</p>
+              <p style={{ ...SKB, fontSize: 'var(--fs-13)', color: '#E5E1DB', margin: 0, fontVariantNumeric: 'tabular-nums' }}>{c.v}</p>
             </div>
           ))}
         </div>
@@ -523,8 +523,8 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
             own YOU HOLD) and during the confirmation terminal. */}
         {!done && mode === 'buy' && held > 0 && (
           <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 16 }}>
-            <span style={{ ...SKR, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>YOU HOLD</span>
-            <span style={{ ...SKB, fontSize: 'var(--fs-13)', color: '#FFF', fontVariantNumeric: 'tabular-nums' }}>
+            <span style={{ ...SKR, fontSize: 'var(--fs-9)', color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>YOU HOLD</span>
+            <span style={{ ...SKB, fontSize: 'var(--fs-13)', color: '#E5E1DB', fontVariantNumeric: 'tabular-nums' }}>
               {held.toLocaleString()}{' '}
               <img
                 src="/fragments-wordmark-v3.png"
@@ -532,7 +532,7 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
                 style={{ height: '0.82em', width: 'auto', display: 'inline-block', verticalAlign: 'baseline', transform: 'translateY(0.06em)' }}
               />
               {market?.priceUsd != null && (
-                <span style={{ ...SKR, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.45)', marginLeft: 7 }}>· {usd(held * market.priceUsd)}</span>
+                <span style={{ ...SKR, fontSize: 'var(--fs-9)', color: 'rgba(229,225,219,0.45)', marginLeft: 7 }}>· {usd(held * market.priceUsd)}</span>
               )}
             </span>
           </div>
@@ -541,10 +541,10 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
         {/* STAGE B: real trades for live coins through the same boundary calls
             the mock skeleton always used — identical UI, real tradeCoin. */}
         {done ? (
-          <div style={{ border: '1px solid rgba(255,255,255,0.12)', padding: '18px 14px', textAlign: 'center', marginBottom: 18 }}>
-            <p style={{ ...SKB, fontSize: 'var(--fs-12)', color: done.startsWith('[') ? '#FF0000' : '#FFF', textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>{done}</p>
+          <div style={{ border: '1px solid rgba(229,225,219,0.12)', padding: '18px 14px', textAlign: 'center', marginBottom: 18 }}>
+            <p style={{ ...SKB, fontSize: 'var(--fs-12)', color: done.startsWith('[') ? '#E5E1DB' : '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>{done}</p>
             {market && !market.live && (
-              <p style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '8px 0 0' }}>PREVIEW ONLY · NO REAL TRANSACTION</p>
+              <p style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(229,225,219,0.3)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '8px 0 0' }}>PREVIEW ONLY · NO REAL TRANSACTION</p>
             )}
           </div>
         ) : (
@@ -559,14 +559,14 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
               /* ── BUY — dollar-led ── */
               <>
                 {/* Large amount input */}
-                <div style={{ display: 'flex', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.15)', paddingBottom: 8, marginBottom: 12 }}>
-                  <span style={{ ...SKB, fontSize: 'var(--fs-34)', color: buyUsd ? '#FFF' : 'rgba(255,255,255,0.25)' }}>$</span>
+                <div style={{ display: 'flex', alignItems: 'center', borderBottom: '1px solid rgba(229,225,219,0.15)', paddingBottom: 8, marginBottom: 12 }}>
+                  <span style={{ ...SKB, fontSize: 'var(--fs-34)', color: buyUsd ? '#E5E1DB' : 'rgba(229,225,219,0.25)' }}>$</span>
                   <input
                     inputMode="decimal"
                     placeholder="0"
                     value={buyUsd}
                     onChange={(e) => setBuyUsd(e.target.value.replace(/[^0-9.]/g, ''))}
-                    style={{ ...SKB, fontSize: 'var(--fs-34)', color: '#FFF', background: 'transparent', border: 'none', outline: 'none', width: '100%', padding: 0, fontVariantNumeric: 'tabular-nums' }}
+                    style={{ ...SKB, fontSize: 'var(--fs-34)', color: '#E5E1DB', background: 'transparent', border: 'none', outline: 'none', width: '100%', padding: 0, fontVariantNumeric: 'tabular-nums' }}
                   />
                 </div>
 
@@ -576,7 +576,7 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
                     <button
                       key={c}
                       onClick={() => setBuyUsd(String(c))}
-                      style={{ ...SKB, flex: 1, fontSize: 'var(--fs-11)', color: '#FFF', background: 'transparent', border: '1px solid rgba(255,255,255,0.18)', padding: '8px 0', cursor: 'pointer' }}
+                      style={{ ...SKB, flex: 1, fontSize: 'var(--fs-11)', color: '#E5E1DB', background: 'transparent', border: '1px solid rgba(229,225,219,0.18)', padding: '8px 0', cursor: 'pointer' }}
                     >
                       ${c}
                     </button>
@@ -584,10 +584,10 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
                 </div>
 
                 {/* Live receipt — pieces lead, ETH/USDC secondary */}
-                <div style={{ border: '1px solid rgba(255,255,255,0.1)', padding: '12px 12px', marginBottom: 14 }}>
+                <div style={{ border: '1px solid rgba(229,225,219,0.1)', padding: '12px 12px', marginBottom: 14 }}>
                   <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
-                    <span style={{ ...SKR, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>YOU RECEIVE</span>
-                    <span style={{ ...SKB, fontSize: 'var(--fs-18)', color: '#FFF', fontVariantNumeric: 'tabular-nums' }}>
+                    <span style={{ ...SKR, fontSize: 'var(--fs-9)', color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>YOU RECEIVE</span>
+                    <span style={{ ...SKB, fontSize: 'var(--fs-18)', color: '#E5E1DB', fontVariantNumeric: 'tabular-nums' }}>
                       ≈ {buyQuote ? buyQuote.pieces.toLocaleString() : 0}{' '}
                       <img
                         src="/fragments-wordmark-v3.png"
@@ -597,8 +597,8 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
                     </span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginTop: 6 }}>
-                    <span style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>1 FRAGMENT = {TOKENS_PER_PIECE.toLocaleString()} TOKENS</span>
-                    <span style={{ ...SKR, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.4)' }}>
+                    <span style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(229,225,219,0.3)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>1 FRAGMENT = {TOKENS_PER_PIECE.toLocaleString()} TOKENS</span>
+                    <span style={{ ...SKR, fontSize: 'var(--fs-9)', color: 'rgba(229,225,219,0.4)' }}>
                       {buyCurrency === 'ETH' ? (buyQuote ? `≈ ${eth(buyQuote.ethAmount)}` : '') : (buyQuote ? `≈ ${buyQuote.usdAmount.toFixed(2)} USDC` : '')}
                     </span>
                   </div>
@@ -606,13 +606,13 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
 
                 {/* Currency selector (payment side) */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-                  <span style={{ ...SKR, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>PAY WITH</span>
-                  <div style={{ display: 'flex', gap: 1, background: 'rgba(255,255,255,0.12)' }}>
+                  <span style={{ ...SKR, fontSize: 'var(--fs-9)', color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>PAY WITH</span>
+                  <div style={{ display: 'flex', gap: 1, background: 'rgba(229,225,219,0.12)' }}>
                     {(['USDC', 'ETH'] as TradeCurrency[]).map((c) => (
                       <button
                         key={c}
                         onClick={() => setBuyCurrency(c)}
-                        style={{ ...SKB, fontSize: 'var(--fs-10)', letterSpacing: '0.08em', padding: '6px 14px', cursor: 'pointer', border: 'none', color: buyCurrency === c ? '#000' : '#FFF', background: buyCurrency === c ? '#FFF' : '#080808' }}
+                        style={{ ...SKB, fontSize: 'var(--fs-10)', letterSpacing: '0.08em', padding: '6px 14px', cursor: 'pointer', border: 'none', color: buyCurrency === c ? '#000' : '#E5E1DB', background: buyCurrency === c ? '#E5E1DB' : '#080808' }}
                       >
                         {c}
                       </button>
@@ -621,13 +621,13 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
                 </div>
 
                 {tradeError && (
-                  <p style={{ ...SKR, fontSize: 'var(--fs-10)', color: '#FF0000', margin: '0 0 10px', lineHeight: 1.4 }}>{tradeError}</p>
+                  <p style={{ ...SKR, fontSize: 'var(--fs-10)', color: '#E5E1DB', margin: '0 0 10px', lineHeight: 1.4 }}>{tradeError}</p>
                 )}
                 {busy ? (
                   /* THE WHEEL — pressed button transformed into narration. */
-                  <div style={{ width: '100%', border: '1px solid rgba(255,0,0,0.55)', padding: '13px 0', marginBottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, minHeight: 46 }}>
+                  <div style={{ width: '100%', border: '1px solid rgba(229,225,219,0.55)', padding: '13px 0', marginBottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, minHeight: 46 }}>
                     <FrameLoader size={23.5} />
-                    <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: 'white', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                    <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
                       BUYING · {buyQuote ? usd(buyQuote.usdAmount) : ''}…
                     </span>
                   </div>
@@ -635,26 +635,26 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
                   <button
                     onClick={doBuy}
                     disabled={!buyQuote}
-                    style={{ width: '100%', background: !buyQuote ? 'rgba(255,0,0,0.4)' : '#FF0000', border: 'none', cursor: !buyQuote ? 'default' : 'pointer', padding: '14px 0', marginBottom: 8 }}
+                    style={{ width: '100%', background: !buyQuote ? 'rgba(229,225,219,0.4)' : '#E5E1DB', border: 'none', cursor: !buyQuote ? 'default' : 'pointer', padding: '14px 0', marginBottom: 8 }}
                   >
-                    <span style={{ ...SKB, fontSize: 'var(--fs-12)', color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                    <span style={{ ...SKB, fontSize: 'var(--fs-12)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                       {buyQuote ? `BUY · ${usd(buyQuote.usdAmount)}` : 'ENTER AN AMOUNT'}
                     </span>
                   </button>
                 )}
                 <button
                   onClick={() => { if (viewerWallet) fundWallet(viewerWallet, { chain: base, asset: 'USDC' }); }}
-                  style={{ width: '100%', background: 'transparent', border: '1px solid rgba(255,255,255,0.15)', cursor: 'pointer', padding: '11px 0' }}
+                  style={{ width: '100%', background: 'transparent', border: '1px solid rgba(229,225,219,0.15)', cursor: 'pointer', padding: '11px 0' }}
                 >
-                  <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>FUND WALLET</span>
+                  <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'rgba(229,225,219,0.6)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>FUND WALLET</span>
                 </button>
               </>
             ) : (
               /* ── SELL — position-led ── */
               <>
                 <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 12 }}>
-                  <span style={{ ...SKR, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>YOU HOLD</span>
-                  <span style={{ ...SKB, fontSize: 'var(--fs-18)', color: '#FFF', fontVariantNumeric: 'tabular-nums' }}>
+                  <span style={{ ...SKR, fontSize: 'var(--fs-9)', color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>YOU HOLD</span>
+                  <span style={{ ...SKB, fontSize: 'var(--fs-18)', color: '#E5E1DB', fontVariantNumeric: 'tabular-nums' }}>
                     {held.toLocaleString()}{' '}
                     {/* Holographic wordmark replaces ONLY the word; cap-height matched to
                         the surrounding text, nudged onto the baseline. Scoped to this sell line. */}
@@ -664,27 +664,27 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
                       style={{ height: '0.82em', width: 'auto', display: 'inline-block', verticalAlign: 'baseline', transform: 'translateY(0.06em)' }}
                     />
                     {market?.priceUsd != null && held > 0 && (
-                      <span style={{ ...SKR, fontSize: 'var(--fs-11)', color: 'rgba(255,255,255,0.45)', marginLeft: 7 }}>· {usd(held * market.priceUsd)}</span>
+                      <span style={{ ...SKR, fontSize: 'var(--fs-11)', color: 'rgba(229,225,219,0.45)', marginLeft: 7 }}>· {usd(held * market.priceUsd)}</span>
                     )}
                   </span>
                 </div>
 
                 {held <= 0 ? (
-                  <p style={{ ...SKR, fontSize: 'var(--fs-11)', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.06em', padding: '16px 0' }}>
+                  <p style={{ ...SKR, fontSize: 'var(--fs-11)', color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase', letterSpacing: '0.06em', padding: '16px 0' }}>
                     NOTHING TO SELL ON THIS POST.
                   </p>
                 ) : (
                   <>
                     {/* pieces input */}
-                    <div style={{ display: 'flex', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.15)', paddingBottom: 8, marginBottom: 12 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', borderBottom: '1px solid rgba(229,225,219,0.15)', paddingBottom: 8, marginBottom: 12 }}>
                       <input
                         inputMode="numeric"
                         placeholder="0"
                         value={sellPieces || ''}
                         onChange={(e) => { setConfirmEndFirstCut(false); setSellPieces(Math.min(held, Math.max(0, parseInt(e.target.value.replace(/[^0-9]/g, '') || '0', 10)))); }}
-                        style={{ ...SKB, fontSize: 'var(--fs-30)', color: '#FFF', background: 'transparent', border: 'none', outline: 'none', width: '100%', padding: 0, fontVariantNumeric: 'tabular-nums' }}
+                        style={{ ...SKB, fontSize: 'var(--fs-30)', color: '#E5E1DB', background: 'transparent', border: 'none', outline: 'none', width: '100%', padding: 0, fontVariantNumeric: 'tabular-nums' }}
                       />
-                      <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em', whiteSpace: 'nowrap' }}>FRAGMENTS</span>
+                      <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em', whiteSpace: 'nowrap' }}>FRAGMENTS</span>
                     </div>
 
                     {/* 25% / 50% / MAX chips + custom (the input is custom entry) */}
@@ -693,7 +693,7 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
                         <button
                           key={p}
                           onClick={() => { setConfirmEndFirstCut(false); setSellPieces(p === 100 ? held : Math.max(1, Math.round((held * p) / 100))); }}
-                          style={{ ...SKB, flex: 1, fontSize: 'var(--fs-11)', color: '#FFF', background: 'transparent', border: '1px solid rgba(255,255,255,0.18)', padding: '8px 0', cursor: 'pointer' }}
+                          style={{ ...SKB, flex: 1, fontSize: 'var(--fs-11)', color: '#E5E1DB', background: 'transparent', border: '1px solid rgba(229,225,219,0.18)', padding: '8px 0', cursor: 'pointer' }}
                         >
                           {p === 100 ? 'MAX' : `${p}%`}
                         </button>
@@ -701,12 +701,12 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
                     </div>
 
                     {/* $ proceeds preview ("YOU RECEIVE") + price impact */}
-                    <div style={{ border: '1px solid rgba(255,255,255,0.1)', padding: '12px 12px', marginBottom: 14 }}>
+                    <div style={{ border: '1px solid rgba(229,225,219,0.1)', padding: '12px 12px', marginBottom: 14 }}>
                       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
-                        <span style={{ ...SKR, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>YOU RECEIVE</span>
-                        <span style={{ ...SKB, fontSize: 'var(--fs-18)', color: '#FFF', fontVariantNumeric: 'tabular-nums' }}>
+                        <span style={{ ...SKR, fontSize: 'var(--fs-9)', color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>YOU RECEIVE</span>
+                        <span style={{ ...SKB, fontSize: 'var(--fs-18)', color: '#E5E1DB', fontVariantNumeric: 'tabular-nums' }}>
                           ≈ {sellQuote ? usd(sellQuote.usdAmount) : '$0.00'}
-                          <span style={{ ...SKR, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.4)', marginLeft: 6 }}>{sellQuote && sellCurrency === 'ETH' ? `(${eth(sellQuote.ethAmount)})` : sellQuote ? '(USDC)' : ''}</span>
+                          <span style={{ ...SKR, fontSize: 'var(--fs-9)', color: 'rgba(229,225,219,0.4)', marginLeft: 6 }}>{sellQuote && sellCurrency === 'ETH' ? `(${eth(sellQuote.ethAmount)})` : sellQuote ? '(USDC)' : ''}</span>
                         </span>
                       </div>
                       {/* PRICE IMPACT — mandatory on thin pools: selling moves
@@ -718,7 +718,7 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
                         const impact = Math.max(0, (spot - sellQuote.usdAmount) / spot) * 100;
                         if (impact < 0.5) return null;
                         return (
-                          <p style={{ ...SKB, fontSize: 'var(--fs-8)', color: impact >= 5 ? '#FF0000' : 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '8px 0 0' }}>
+                          <p style={{ ...SKB, fontSize: 'var(--fs-8)', color: impact >= 5 ? '#E5E1DB' : 'rgba(229,225,219,0.45)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '8px 0 0' }}>
                             PRICE IMPACT ≈ {impact.toFixed(1)}%{impact >= 5 ? ' — THIS POOL IS THIN; YOUR SALE MOVES THE PRICE' : ''}
                           </p>
                         );
@@ -727,13 +727,13 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
 
                     {/* Receive-currency selector (same options as the buy side) */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-                      <span style={{ ...SKR, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>RECEIVE</span>
-                      <div style={{ display: 'flex', gap: 1, background: 'rgba(255,255,255,0.12)' }}>
+                      <span style={{ ...SKR, fontSize: 'var(--fs-9)', color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>RECEIVE</span>
+                      <div style={{ display: 'flex', gap: 1, background: 'rgba(229,225,219,0.12)' }}>
                         {(['USDC', 'ETH'] as TradeCurrency[]).map((c) => (
                           <button
                             key={c}
                             onClick={() => setSellCurrency(c)}
-                            style={{ ...SKB, fontSize: 'var(--fs-10)', letterSpacing: '0.08em', padding: '6px 14px', cursor: 'pointer', border: 'none', color: sellCurrency === c ? '#000' : '#FFF', background: sellCurrency === c ? '#FFF' : '#080808' }}
+                            style={{ ...SKB, fontSize: 'var(--fs-10)', letterSpacing: '0.08em', padding: '6px 14px', cursor: 'pointer', border: 'none', color: sellCurrency === c ? '#000' : '#E5E1DB', background: sellCurrency === c ? '#E5E1DB' : '#080808' }}
                           >
                             {c}
                           </button>
@@ -743,22 +743,22 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
 
                     {/* FIRST CUT guard */}
                     {sellEndsFirstCut && (
-                      <div style={{ border: '1px solid #FF0000', padding: '12px 12px', marginBottom: 14, display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                      <div style={{ border: '1px solid #E5E1DB', padding: '12px 12px', marginBottom: 14, display: 'flex', gap: 10, alignItems: 'flex-start' }}>
                         <ApertureMark size={15.5} />
-                        <p style={{ ...SKR, fontSize: 'var(--fs-10)', color: '#FFF', lineHeight: 1.4, margin: 0 }}>
-                          This sale ends your First Cut on this post — <span style={{ color: '#FF0000', ...SKB }}>permanently.</span>
+                        <p style={{ ...SKR, fontSize: 'var(--fs-10)', color: '#E5E1DB', lineHeight: 1.4, margin: 0 }}>
+                          This sale ends your First Cut on this post — <span style={{ color: '#E5E1DB', ...SKB }}>permanently.</span>
                         </p>
                       </div>
                     )}
 
                     {tradeError && (
-                      <p style={{ ...SKR, fontSize: 'var(--fs-10)', color: '#FF0000', margin: '0 0 10px', lineHeight: 1.4 }}>{tradeError}</p>
+                      <p style={{ ...SKR, fontSize: 'var(--fs-10)', color: '#E5E1DB', margin: '0 0 10px', lineHeight: 1.4 }}>{tradeError}</p>
                     )}
                     {busy ? (
                       /* THE WHEEL — pressed button transformed into narration. */
-                      <div style={{ width: '100%', border: '1px solid rgba(255,0,0,0.55)', padding: '13px 0', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, minHeight: 46 }}>
+                      <div style={{ width: '100%', border: '1px solid rgba(229,225,219,0.55)', padding: '13px 0', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, minHeight: 46 }}>
                         <FrameLoader size={23.5} />
-                        <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: 'white', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                        <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
                           SELLING · {sellPieces} {sellPieces === 1 ? 'FRAGMENT' : 'FRAGMENTS'}…
                         </span>
                       </div>
@@ -766,9 +766,9 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
                       <button
                         onClick={doSell}
                         disabled={sellPieces <= 0}
-                        style={{ width: '100%', background: sellPieces <= 0 ? 'rgba(255,255,255,0.08)' : (sellEndsFirstCut && confirmEndFirstCut ? '#FF0000' : 'transparent'), border: sellPieces <= 0 ? 'none' : '1px solid #FF0000', cursor: sellPieces <= 0 ? 'default' : 'pointer', padding: '14px 0' }}
+                        style={{ width: '100%', background: sellPieces <= 0 ? 'rgba(229,225,219,0.08)' : (sellEndsFirstCut && confirmEndFirstCut ? '#E5E1DB' : 'transparent'), border: sellPieces <= 0 ? 'none' : '1px solid #E5E1DB', cursor: sellPieces <= 0 ? 'default' : 'pointer', padding: '14px 0' }}
                       >
-                        <span style={{ ...SKB, fontSize: 'var(--fs-12)', color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                        <span style={{ ...SKB, fontSize: 'var(--fs-12)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                           {sellPieces <= 0 ? 'ENTER FRAGMENTS'
                             : sellEndsFirstCut && !confirmEndFirstCut ? 'SELL — END FIRST CUT'
                             : sellEndsFirstCut && confirmEndFirstCut ? 'CONFIRM — END FIRST CUT'
@@ -791,18 +791,18 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
         {economyPreviewEnabled() && (
         <div
           onClick={() => setShowSlots((v) => !v)}
-          style={{ border: '1px solid rgba(255,255,255,0.1)', padding: '12px 12px', marginTop: 18, cursor: 'pointer' }}
+          style={{ border: '1px solid rgba(229,225,219,0.1)', padding: '12px 12px', marginTop: 18, cursor: 'pointer' }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
             <ApertureMark size={15.5} />
-            <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.12em' }}>FIRST CUT</span>
+            <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.12em' }}>FIRST CUT</span>
             <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6 }}>
               {openCount > 0 ? (
-                <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: '#FF0000', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{openCount} OF 10 SLOTS OPEN</span>
+                <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{openCount} OF 10 SLOTS OPEN</span>
               ) : (
-                <span style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{holdingCount} HOLDING</span>
+                <span style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(229,225,219,0.45)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{holdingCount} HOLDING</span>
               )}
-              <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: 'rgba(255,255,255,0.5)', lineHeight: 1, transform: showSlots ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s ease' }}>›</span>
+              <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: 'rgba(229,225,219,0.5)', lineHeight: 1, transform: showSlots ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s ease' }}>›</span>
             </span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -813,7 +813,7 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
                   {slot && slot.avatarUrl ? (
                     <img src={feedImage(slot.avatarUrl, 96)} alt={slot.handle} style={{ width: 18, height: 18, borderRadius: '50%', border: '1px solid #080808', display: 'block', opacity: slot.holding ? 1 : 0.3, filter: slot.holding ? 'none' : 'grayscale(1)' }} />
                   ) : (
-                    <div style={{ width: 18, height: 18, borderRadius: '50%', border: '1px dashed rgba(255,255,255,0.25)', background: 'transparent' }} />
+                    <div style={{ width: 18, height: 18, borderRadius: '50%', border: '1px dashed rgba(229,225,219,0.25)', background: 'transparent' }} />
                   )}
                 </div>
               );
@@ -821,11 +821,11 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
           </div>
 
           {showSlots && (
-            <div style={{ marginTop: 12, borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 12 }}>
+            <div style={{ marginTop: 12, borderTop: '1px solid rgba(229,225,219,0.08)', paddingTop: 12 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
                 <ApertureMark size={14.5} />
-                <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.12em' }}>FIRST CUT</span>
-                <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.4)', marginLeft: 'auto', textTransform: 'uppercase', letterSpacing: '0.08em' }}>THE FIRST 10 · PERMANENT</span>
+                <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.12em' }}>FIRST CUT</span>
+                <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'rgba(229,225,219,0.4)', marginLeft: 'auto', textTransform: 'uppercase', letterSpacing: '0.08em' }}>THE FIRST 10 · PERMANENT</span>
               </div>
               {Array.from({ length: 10 }).map((_, idx) => {
                 const pos = idx + 1;
@@ -834,14 +834,14 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
                 const lit = slot?.holding;
                 return (
                   <div key={pos} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 0', opacity: !isOpen && !lit ? 0.38 : 1 }}>
-                    <span style={{ ...SKB, fontSize: 'var(--fs-10)', width: 18, color: lit ? '#FF0000' : 'rgba(255,255,255,0.35)', fontVariantNumeric: 'tabular-nums' }}>{String(pos).padStart(2, '0')}</span>
+                    <span style={{ ...SKB, fontSize: 'var(--fs-10)', width: 18, color: lit ? '#E5E1DB' : 'rgba(229,225,219,0.35)', fontVariantNumeric: 'tabular-nums' }}>{String(pos).padStart(2, '0')}</span>
                     {isOpen ? (
-                      <span style={{ ...SKR, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>OPEN</span>
+                      <span style={{ ...SKR, fontSize: 'var(--fs-9)', color: 'rgba(229,225,219,0.3)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>OPEN</span>
                     ) : (
                       <>
                         {slot!.avatarUrl && <img src={feedImage(slot!.avatarUrl, 96)} alt="" style={{ width: 24, height: 24, borderRadius: '50%' }} />}
-                        <span style={{ ...SKR, fontSize: 'var(--fs-10)', color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.04em' }}>@{slot!.handle}</span>
-                        <span style={{ ...SKB, fontSize: 'var(--fs-8)', marginLeft: 'auto', color: lit ? '#FF0000' : 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>{lit ? 'HOLDING' : 'DEPARTED'}</span>
+                        <span style={{ ...SKR, fontSize: 'var(--fs-10)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.04em' }}>@{slot!.handle}</span>
+                        <span style={{ ...SKB, fontSize: 'var(--fs-8)', marginLeft: 'auto', color: lit ? '#E5E1DB' : 'rgba(229,225,219,0.6)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>{lit ? 'HOLDING' : 'DEPARTED'}</span>
                       </>
                     )}
                   </div>
@@ -854,9 +854,9 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
 
         </>) : (
           /* ── NOT TRADEABLE — legacy ETH-paired coin ── */
-          <div style={{ border: '1px solid rgba(255,0,0,0.4)', padding: '24px 16px', textAlign: 'center', marginTop: 2 }}>
-            <p style={{ ...SKB, fontSize: 'var(--fs-12)', color: '#FF0000', textTransform: 'uppercase', letterSpacing: '0.16em', margin: '0 0 12px' }}>[ NOT TRADEABLE ]</p>
-            <p style={{ ...SKR, fontSize: 'var(--fs-11)', color: 'rgba(255,255,255,0.6)', lineHeight: 1.6, margin: '0 auto', maxWidth: 240 }}>
+          <div style={{ border: '1px solid rgba(229,225,219,0.4)', padding: '24px 16px', textAlign: 'center', marginTop: 2 }}>
+            <p style={{ ...SKB, fontSize: 'var(--fs-12)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.16em', margin: '0 0 12px' }}>[ NOT TRADEABLE ]</p>
+            <p style={{ ...SKR, fontSize: 'var(--fs-11)', color: 'rgba(229,225,219,0.6)', lineHeight: 1.6, margin: '0 auto', maxWidth: 240 }}>
               This coin uses a legacy pairing and can&rsquo;t be traded.
             </p>
           </div>
@@ -864,7 +864,7 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
 
         {/* Mock-data disclaimer only — live coins carry no fake-trade caveat. */}
         {market && !market.live && (
-          <p style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.25)', textAlign: 'center', margin: '14px 0 0', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+          <p style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(229,225,219,0.25)', textAlign: 'center', margin: '14px 0 0', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
             PREVIEW ONLY · NO REAL TRANSACTION
           </p>
         )}

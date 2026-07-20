@@ -100,7 +100,7 @@ export default function OnboardingModal({ onComplete }: Props) {
             <div key={i} style={{
               width: i === screen ? 20 : 6,
               height: 2,
-              backgroundColor: i === screen ? '#FF0000' : 'rgba(255,255,255,0.2)',
+              backgroundColor: i === screen ? '#E5E1DB' : 'rgba(229,225,219,0.2)',
               transition: 'width 0.3s ease, background-color 0.3s ease',
               borderRadius: 1,
             }} />
@@ -111,17 +111,17 @@ export default function OnboardingModal({ onComplete }: Props) {
 
       {/* Content */}
       <div>
-        <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.35)', letterSpacing: '0.15em', margin: '0 0 24px' }}>
+        <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'rgba(229,225,219,0.35)', letterSpacing: '0.15em', margin: '0 0 24px' }}>
           {current.label}
         </p>
         <p style={{
-          ...SKB, fontSize: 'var(--fs-36)', color: 'white',
+          ...SKB, fontSize: 'var(--fs-36)', color: '#E5E1DB',
           lineHeight: 1.1, letterSpacing: '-0.03em',
           margin: '0 0 28px', whiteSpace: 'pre-line',
         }}>
           {current.title}
         </p>
-        <p style={{ ...SKR, fontSize: 'var(--fs-14)', color: 'rgba(255,255,255,0.6)', lineHeight: 1.65, margin: 0 }}>
+        <p style={{ ...SKR, fontSize: 'var(--fs-14)', color: 'rgba(229,225,219,0.6)', lineHeight: 1.65, margin: 0 }}>
           {current.body}
         </p>
       </div>
@@ -129,10 +129,10 @@ export default function OnboardingModal({ onComplete }: Props) {
       {/* Actions */}
       <div>
         <button onClick={handleNext} style={{
-          width: '100%', background: '#FF0000', border: 'none',
+          width: '100%', background: '#E5E1DB', border: 'none',
           cursor: 'pointer', padding: '16px 0', marginBottom: 12,
         }}>
-          <span style={{ ...SKB, fontSize: 'var(--fs-12)', color: 'white', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+          <span style={{ ...SKB, fontSize: 'var(--fs-12)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
             {current.cta}
           </span>
         </button>
@@ -141,7 +141,7 @@ export default function OnboardingModal({ onComplete }: Props) {
             width: '100%', background: 'transparent', border: 'none',
             cursor: 'pointer', padding: '10px 0',
           }}>
-            <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+            <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'rgba(229,225,219,0.3)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
               SKIP
             </span>
           </button>

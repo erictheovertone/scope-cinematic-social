@@ -2,7 +2,7 @@
  * ToolIcon — Scope line-icon set for the finishing tool rail.
  *
  * One thin, sharp, monochrome SVG per tool. Strokes use `currentColor`, so the
- * caller drives colour (white at rest, #FF0000 when the tool is active/touched)
+ * caller drives colour (white at rest, #E5E1DB when the tool is active/touched)
  * by setting `color` on the icon or an ancestor. No fills except where a glyph
  * reads better half-filled (contrast) or corner-filled (fade); those use
  * `currentColor` too. ~24px box, stroke-width 1.6 — matches the Scope chrome.
@@ -35,9 +35,9 @@ const PATHS: Partial<Record<IconKey, React.ReactNode>> = {
   // CORRECTION
   curve: ( // red S-curve inside a faint graph frame (resembles the curve tool)
     <>
-      <rect x="3" y="3" width="18" height="18" stroke="rgba(255,255,255,0.5)" />
-      <path d="M3 21 21 3" stroke="rgba(255,255,255,0.22)" />
-      <path d="M4 20C9 20 8 13 12 12s3-8 8-8" stroke="#FF0000" />
+      <rect x="3" y="3" width="18" height="18" stroke="rgba(229,225,219,0.5)" />
+      <path d="M3 21 21 3" stroke="rgba(229,225,219,0.22)" />
+      <path d="M4 20C9 20 8 13 12 12s3-8 8-8" stroke="#E5E1DB" />
     </>
   ),
   exposure: (
@@ -113,8 +113,8 @@ const PATHS: Partial<Record<IconKey, React.ReactNode>> = {
     <>
       <defs>
         <radialGradient id="iconBlurGlow" cx="50%" cy="50%" r="66%">
-          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.6" />
-          <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
+          <stop offset="0%" stopColor="#E5E1DB" stopOpacity="0.6" />
+          <stop offset="100%" stopColor="#E5E1DB" stopOpacity="0" />
         </radialGradient>
       </defs>
       <circle cx="12" cy="12" r="8.5" fill="url(#iconBlurGlow)" stroke="none" />
@@ -151,9 +151,9 @@ const PATHS: Partial<Record<IconKey, React.ReactNode>> = {
     <>
       <defs>
         <radialGradient id="iconBloomGlow" cx="38%" cy="38%" r="72%">
-          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.95" />
-          <stop offset="55%" stopColor="#ffffff" stopOpacity="0.32" />
-          <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
+          <stop offset="0%" stopColor="#E5E1DB" stopOpacity="0.95" />
+          <stop offset="55%" stopColor="#E5E1DB" stopOpacity="0.32" />
+          <stop offset="100%" stopColor="#E5E1DB" stopOpacity="0" />
         </radialGradient>
       </defs>
       <circle cx="12" cy="12" r="8.5" fill="url(#iconBloomGlow)" stroke="none" />

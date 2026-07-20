@@ -13,8 +13,8 @@
 import ToolSlider from './ToolSlider';
 
 // Full-strength endpoints (not pastel), drawn as a thin hairline by ToolSlider.
-const TEMP_TRACK = 'linear-gradient(90deg, #1E6BFF 0%, #FFFFFF 50%, #FFB000 100%)';
-const TINT_TRACK = 'linear-gradient(90deg, #00C853 0%, #FFFFFF 50%, #FF1FB0 100%)';
+const TEMP_TRACK = 'linear-gradient(90deg, #1E6BFF 0%, #E5E1DB 50%, #FFB000 100%)';
+const TINT_TRACK = 'linear-gradient(90deg, #00C853 0%, #E5E1DB 50%, #FF1FB0 100%)';
 
 interface WhiteBalancePanelProps {
   /** temperature stop (params.whiteBalance.t) */

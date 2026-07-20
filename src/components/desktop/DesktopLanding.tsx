@@ -19,11 +19,11 @@ export default function DesktopLanding() {
       <img src="/scope-logo-new-no-black.png" alt="Scope" style={{ width: 240, height: 'auto', objectFit: 'contain', display: 'block' }} />
       <div style={{ display: 'flex', gap: 14 }}>
         {/* LOG IN — primary (white block) */}
-        <button onClick={login} style={{ ...SKB, fontSize: 12, color: '#000', textTransform: 'uppercase', letterSpacing: '0.12em', background: '#FFF', border: '1px solid #FFF', cursor: 'pointer', width: 150, height: 46 }}>
+        <button onClick={login} style={{ ...SKB, fontSize: 12, color: '#000', textTransform: 'uppercase', letterSpacing: '0.12em', background: '#E5E1DB', border: '1px solid #E5E1DB', cursor: 'pointer', width: 150, height: 46 }}>
           LOG IN
         </button>
         {/* SIGN UP — secondary (outline) */}
-        <button onClick={login} style={{ ...SKB, fontSize: 12, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.12em', background: 'transparent', border: '1px solid rgba(255,255,255,0.4)', cursor: 'pointer', width: 150, height: 46 }}>
+        <button onClick={login} style={{ ...SKB, fontSize: 12, color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.12em', background: 'transparent', border: '1px solid rgba(229,225,219,0.4)', cursor: 'pointer', width: 150, height: 46 }}>
           SIGN UP
         </button>
       </div>

@@ -53,7 +53,7 @@ export default function FirstCutPage() {
   if (!economyPreviewEnabled()) {
     return (
       <div style={{ minHeight: '100dvh', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <button onClick={() => router.push('/')} style={{ ...SKB, fontSize: 'var(--fs-11)', color: 'rgba(255,255,255,0.5)', background: 'transparent', border: 'none', textTransform: 'uppercase', letterSpacing: '0.1em', cursor: 'pointer' }}>
+        <button onClick={() => router.push('/')} style={{ ...SKB, fontSize: 'var(--fs-11)', color: 'rgba(229,225,219,0.5)', background: 'transparent', border: 'none', textTransform: 'uppercase', letterSpacing: '0.1em', cursor: 'pointer' }}>
           ← HOME
         </button>
       </div>
@@ -65,37 +65,37 @@ export default function FirstCutPage() {
 
   return (
     <div style={{ minHeight: '100dvh', background: '#000', maxWidth: '30rem', margin: '0 auto', padding: '20px 18px 60px' }}>
-      <div style={{ ...SKB, fontSize: 'var(--fs-7)', letterSpacing: '0.2em', color: '#FF0000', textTransform: 'uppercase', marginBottom: 16 }}>
+      <div style={{ ...SKB, fontSize: 'var(--fs-7)', letterSpacing: '0.2em', color: '#E5E1DB', textTransform: 'uppercase', marginBottom: 16 }}>
         ECONOMY PREVIEW · MOCK DATA
       </div>
 
       {/* Header — left: ] • [ FIRST CUT + @HANDLE · N HOLDING grey sub.
           right: total earned, red, large tabular, with EARNED label under.
           (Green coin retained per the badge-asset instruction.) */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 14, marginBottom: 24, borderBottom: '1px solid #FF0000', paddingBottom: 18 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 14, marginBottom: 24, borderBottom: '1px solid #E5E1DB', paddingBottom: 18 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
           <img src={BADGES.firstCut.src} alt="First Cut" style={{ width: 44, height: 44, borderRadius: '50%', flexShrink: 0, filter: `drop-shadow(0 0 6px ${BADGES.firstCut.color}66)` }} />
           <div style={{ minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <ApertureMark size={17.5} />
-              <span style={{ ...SKB, fontSize: 'var(--fs-15)', color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.06em' }}>FIRST CUT</span>
+              <span style={{ ...SKB, fontSize: 'var(--fs-15)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.06em' }}>FIRST CUT</span>
             </div>
-            <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.45)', margin: '6px 0 0', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+            <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'rgba(229,225,219,0.45)', margin: '6px 0 0', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
               @{username} · {data ? holding : 0} HOLDING
             </p>
           </div>
         </div>
         <div style={{ textAlign: 'right' as const, flexShrink: 0 }}>
-          <p style={{ ...SKB, fontSize: 'var(--fs-26)', color: '#FF0000', margin: 0, letterSpacing: '-0.5px', fontVariantNumeric: 'tabular-nums' }}>
+          <p style={{ ...SKB, fontSize: 'var(--fs-26)', color: '#E5E1DB', margin: 0, letterSpacing: '-0.5px', fontVariantNumeric: 'tabular-nums' }}>
             {data ? usd(data.totalEarnedUsd) : '—'}
           </p>
-          <p style={{ ...SKB, fontSize: 'var(--fs-7)', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.16em', margin: '4px 0 0' }}>EARNED</p>
+          <p style={{ ...SKB, fontSize: 'var(--fs-7)', color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase', letterSpacing: '0.16em', margin: '4px 0 0' }}>EARNED</p>
         </div>
       </div>
 
       {/* Rows */}
       {loaded && positions.length === 0 && (
-        <p style={{ ...SKR, fontSize: 'var(--fs-11)', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+        <p style={{ ...SKR, fontSize: 'var(--fs-11)', color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
           NO FOUNDING POSITIONS YET.
         </p>
       )}
@@ -103,8 +103,8 @@ export default function FirstCutPage() {
         .slice()
         .sort((a, b) => Number(b.active) - Number(a.active) || b.earnedUsd - a.earnedUsd)
         .map((p) => (
-          <div key={p.postId} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 0', borderBottom: '1px solid rgba(255,255,255,0.07)', opacity: p.active ? 1 : 0.45 }}>
-            <span style={{ ...SKB, fontSize: 'var(--fs-10)', width: 20, color: p.active ? '#FF0000' : 'rgba(255,255,255,0.35)', fontVariantNumeric: 'tabular-nums' }}>
+          <div key={p.postId} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 0', borderBottom: '1px solid rgba(229,225,219,0.07)', opacity: p.active ? 1 : 0.45 }}>
+            <span style={{ ...SKB, fontSize: 'var(--fs-10)', width: 20, color: p.active ? '#E5E1DB' : 'rgba(229,225,219,0.35)', fontVariantNumeric: 'tabular-nums' }}>
               {String(p.slot).padStart(2, '0')}
             </span>
             {p.thumbUrl
@@ -112,25 +112,25 @@ export default function FirstCutPage() {
               : <div style={{ width: 64, height: 38, background: '#111', flexShrink: 0 }} />}
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 7, margin: '0 0 3px', minWidth: 0 }}>
-                <p style={{ ...SKB, fontSize: 'var(--fs-11)', color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.03em', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <p style={{ ...SKB, fontSize: 'var(--fs-11)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.03em', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {p.postTitle}
                 </p>
                 {p.ticker && <TickerMark ticker={p.ticker} size={11.5} />}
               </div>
-              <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.45)', margin: 0, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: 'rgba(229,225,219,0.45)', margin: 0, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                 @{p.creatorHandle} · holding {p.holdingDays} days
               </p>
             </div>
             <div style={{ textAlign: 'right' as const }}>
-              <p style={{ ...SKB, fontSize: 'var(--fs-13)', color: '#FF0000', margin: '0 0 2px', fontVariantNumeric: 'tabular-nums' }}>{usd(p.earnedUsd)}</p>
-              <p style={{ ...SKB, fontSize: 'var(--fs-6_5)', color: p.active ? '#FF0000' : 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>
+              <p style={{ ...SKB, fontSize: 'var(--fs-13)', color: '#E5E1DB', margin: '0 0 2px', fontVariantNumeric: 'tabular-nums' }}>{usd(p.earnedUsd)}</p>
+              <p style={{ ...SKB, fontSize: 'var(--fs-6_5)', color: p.active ? '#E5E1DB' : 'rgba(229,225,219,0.3)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>
                 {p.active ? 'HOLDING' : 'DEPARTED'}
               </p>
             </div>
           </div>
         ))}
 
-      <button onClick={() => router.back()} style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'rgba(255,255,255,0.5)', background: 'transparent', border: 'none', textTransform: 'uppercase', letterSpacing: '0.1em', cursor: 'pointer', marginTop: 28 }}>
+      <button onClick={() => router.back()} style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'rgba(229,225,219,0.5)', background: 'transparent', border: 'none', textTransform: 'uppercase', letterSpacing: '0.1em', cursor: 'pointer', marginTop: 28 }}>
         ← BACK
       </button>
     </div>

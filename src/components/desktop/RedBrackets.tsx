@@ -1,9 +1,9 @@
 'use client';
 // ── RED L-CORNER BRACKETS — the viewfinder motif (reusable) ──────────────────
-// Four #f20d0d L-corners (34×2px arms) inset on a relative parent. Used by the
+// Four #E5E1DB L-corners (34×2px arms) inset on a relative parent. Used by the
 // onboarding cards; the same language as the create-flow codification brackets.
 
-const RED = '#f20d0d';
+const RED = '#E5E1DB';
 const ARM = 34;
 const W = 2;
 

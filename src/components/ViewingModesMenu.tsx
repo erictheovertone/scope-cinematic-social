@@ -94,13 +94,13 @@ export default function ViewingModesMenu({ currentMode, onClose, onSelect }: Pro
         }}
       >
         {/* Top hairline — frame width ~234, left-anchored at the title indent */}
-        <div style={{ height: 1, width: 234, background: 'rgba(255,255,255,0.14)', margin: '0 0 18px 19px' }} />
+        <div style={{ height: 1, width: 234, background: 'rgba(229,225,219,0.14)', margin: '0 0 18px 19px' }} />
 
         {/* Header row: title two lines + close × */}
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '0 8px 0 19px' }}>
           <motion.h1
             {...headerIn(120)}
-            style={{ ...SKB, fontSize: 40, lineHeight: 0.94, letterSpacing: '-1.2px', color: '#FFF', textTransform: 'uppercase', margin: 0, whiteSpace: 'pre-line' }}
+            style={{ ...SKB, fontSize: 40, lineHeight: 0.94, letterSpacing: '-1.2px', color: '#E5E1DB', textTransform: 'uppercase', margin: 0, whiteSpace: 'pre-line' }}
           >
             {'VIEWING\nMODES'}
           </motion.h1>
@@ -108,7 +108,7 @@ export default function ViewingModesMenu({ currentMode, onClose, onSelect }: Pro
             {...headerIn(120)}
             onClick={onClose}
             aria-label="Close viewing modes"
-            style={{ ...SKB, background: 'transparent', border: 'none', cursor: 'pointer', color: '#FFF', fontSize: 22, lineHeight: 1, padding: '4px 2px' }}
+            style={{ ...SKB, background: 'transparent', border: 'none', cursor: 'pointer', color: '#E5E1DB', fontSize: 22, lineHeight: 1, padding: '4px 2px' }}
           >
             ✕
           </motion.button>
@@ -116,18 +116,18 @@ export default function ViewingModesMenu({ currentMode, onClose, onSelect }: Pro
 
         {/* Tagline — red + glyph, right-aligned */}
         <motion.div {...headerIn(180)} style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 7, margin: '14px 8px 0 0' }}>
-          <span style={{ ...SKB, fontSize: 14, color: '#FF0000', lineHeight: 1 }}>+</span>
-          <span style={{ ...SKR, fontSize: 8.6, color: 'rgba(255,255,255,0.6)', letterSpacing: '2.5px', textTransform: 'uppercase' }}>
+          <span style={{ ...SKB, fontSize: 14, color: '#E5E1DB', lineHeight: 1 }}>+</span>
+          <span style={{ ...SKR, fontSize: 8.6, color: 'rgba(229,225,219,0.6)', letterSpacing: '2.5px', textTransform: 'uppercase' }}>
             DEFINE YOUR PERSPECTIVE. CONTROL YOUR EXPERIENCE.
           </span>
         </motion.div>
 
         {/* SELECT A FORMAT over a hairline */}
         <motion.div {...headerIn(240)} style={{ margin: '22px 0 0', paddingLeft: 19 }}>
-          <p style={{ ...SKB, fontSize: 14, color: 'rgba(255,255,255,0.6)', letterSpacing: '2.52px', textTransform: 'uppercase', margin: '0 0 8px' }}>
+          <p style={{ ...SKB, fontSize: 14, color: 'rgba(229,225,219,0.6)', letterSpacing: '2.52px', textTransform: 'uppercase', margin: '0 0 8px' }}>
             SELECT A FORMAT
           </p>
-          <div style={{ height: 1, width: 268, background: 'rgba(255,255,255,0.14)' }} />
+          <div style={{ height: 1, width: 268, background: 'rgba(229,225,219,0.14)' }} />
         </motion.div>
 
         {/* The four cards — baked two-state PNGs, ratio-locked, cascading in

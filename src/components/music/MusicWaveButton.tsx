@@ -96,11 +96,11 @@ export default function MusicWaveButton({
           className={playing && !reduce ? "music-undulate" : undefined}
           style={{ position: "absolute", left: 0, top: 0, ...(playing && !reduce ? { animation: "musicUndulate 1.5s linear infinite" } : null) }}
         >
-          <path d={buildWave(W * 2)} fill="none" stroke="#FFFFFF" strokeWidth={1.4} strokeLinecap="round" opacity={playing ? 1 : 0.85} />
+          <path d={buildWave(W * 2)} fill="none" stroke="#E5E1DB" strokeWidth={1.4} strokeLinecap="round" opacity={playing ? 1 : 0.85} />
         </svg>
         {!playing && (
           <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ position: "absolute", left: 0, top: 0 }}>
-            <line x1={1} y1={H - 1} x2={W - 1} y2={1} stroke="#FFFFFF" strokeWidth={1.4} strokeLinecap="round" />
+            <line x1={1} y1={H - 1} x2={W - 1} y2={1} stroke="#E5E1DB" strokeWidth={1.4} strokeLinecap="round" />
           </svg>
         )}
       </span>

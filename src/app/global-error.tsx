@@ -37,7 +37,7 @@ export default function GlobalError({
 
   return (
     <html lang="en">
-      <body style={{ margin: 0, background: '#000', color: '#fff', fontFamily: mono }}>
+      <body style={{ margin: 0, background: '#000', color: '#E5E1DB', fontFamily: mono }}>
         <div
           style={{
             minHeight: '100dvh',
@@ -50,11 +50,11 @@ export default function GlobalError({
             gap: 18,
           }}
         >
-          <div style={{ width: 15, height: 15, borderRadius: '50%', background: '#FF0000' }} />
+          <div style={{ width: 15, height: 15, borderRadius: '50%', background: '#E5E1DB' }} />
           <p style={{ fontSize: 'var(--fs-13)', letterSpacing: '0.14em', textTransform: 'uppercase', margin: 0 }}>
             Something broke
           </p>
-          <p style={{ fontSize: 'var(--fs-11)', lineHeight: 1.6, color: 'rgba(255,255,255,0.55)', maxWidth: 320, margin: 0 }}>
+          <p style={{ fontSize: 'var(--fs-11)', lineHeight: 1.6, color: 'rgba(229,225,219,0.55)', maxWidth: 320, margin: 0 }}>
             The app hit an error and stopped. Try again — if it keeps happening,
             send us the detail below.
           </p>
@@ -64,9 +64,9 @@ export default function GlobalError({
               style={{
                 fontSize: 'var(--fs-10)',
                 lineHeight: 1.5,
-                color: '#FF0000',
-                background: 'rgba(255,0,0,0.06)',
-                border: '1px solid rgba(255,0,0,0.25)',
+                color: '#E5E1DB',
+                background: 'rgba(229,225,219,0.06)',
+                border: '1px solid rgba(229,225,219,0.25)',
                 padding: '10px 12px',
                 margin: 0,
                 maxWidth: '92vw',
@@ -85,8 +85,8 @@ export default function GlobalError({
               onClick={() => reset()}
               style={{
                 background: 'transparent',
-                color: '#fff',
-                border: '1px solid rgba(255,255,255,0.4)',
+                color: '#E5E1DB',
+                border: '1px solid rgba(229,225,219,0.4)',
                 padding: '9px 18px',
                 fontFamily: mono,
                 fontSize: 'var(--fs-11)',
@@ -107,8 +107,8 @@ export default function GlobalError({
               }}
               style={{
                 background: 'transparent',
-                color: 'rgba(255,255,255,0.6)',
-                border: '1px solid rgba(255,255,255,0.2)',
+                color: 'rgba(229,225,219,0.6)',
+                border: '1px solid rgba(229,225,219,0.2)',
                 padding: '9px 18px',
                 fontFamily: mono,
                 fontSize: 'var(--fs-11)',
@@ -128,7 +128,7 @@ export default function GlobalError({
               fontSize: 'var(--fs-10)',
               letterSpacing: '0.1em',
               textTransform: 'uppercase',
-              color: 'rgba(255,255,255,0.4)',
+              color: 'rgba(229,225,219,0.4)',
               textDecoration: 'none',
             }}
           >

@@ -12,7 +12,7 @@ import MusicPicker, { type LibraryTrack } from "@/components/MusicPicker";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
-const HAIR = "rgba(255,255,255,0.12)";
+const HAIR = "rgba(229,225,219,0.12)";
 
 export default function EditMusicSheet({
   post, onClose, onUpdated,
@@ -71,24 +71,24 @@ export default function EditMusicSheet({
       <div onClick={close} style={{ position: "fixed", inset: 0, zIndex: 560, background: "rgba(0,0,0,0.7)", opacity: visible ? 1 : 0, transition: "opacity 220ms ease" }} />
       <div style={{ position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 561, maxWidth: "30rem", margin: "0 auto", background: "#000", borderTop: `1px solid ${HAIR}`, padding: "16px 20px calc(28px + env(safe-area-inset-bottom))", transform: visible ? "translateY(0)" : "translateY(100%)", transition: "transform 220ms cubic-bezier(0.32,0.72,0,1)" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-          <span style={{ ...SKB, fontSize: "var(--fs-11)", color: "#FFF", textTransform: "uppercase", letterSpacing: "0.1em" }}>Edit Music</span>
-          <button onClick={close} aria-label="Close" style={{ background: "none", border: "none", cursor: "pointer", ...SKR, fontSize: 20, color: "rgba(255,255,255,0.55)", lineHeight: 1, padding: 4 }}>✕</button>
+          <span style={{ ...SKB, fontSize: "var(--fs-11)", color: "#E5E1DB", textTransform: "uppercase", letterSpacing: "0.1em" }}>Edit Music</span>
+          <button onClick={close} aria-label="Close" style={{ background: "none", border: "none", cursor: "pointer", ...SKR, fontSize: 20, color: "rgba(229,225,219,0.55)", lineHeight: 1, padding: 4 }}>✕</button>
         </div>
 
         {trackId ? (
           <>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 14 }}>
-              <span style={{ ...SKR, fontSize: "var(--fs-9)", color: "#FFF", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              <span style={{ ...SKR, fontSize: "var(--fs-9)", color: "#E5E1DB", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                 {meta?.title ?? "Track attached"}{meta?.handle ? ` · @${meta.handle}` : ""}
               </span>
-              <button onClick={() => persist(null, null)} disabled={saving} style={{ flexShrink: 0, ...SKB, fontSize: "var(--fs-8)", color: "#FF0000", textTransform: "uppercase", letterSpacing: "0.06em", background: "transparent", border: "none", cursor: "pointer", padding: 0 }}>Remove</button>
+              <button onClick={() => persist(null, null)} disabled={saving} style={{ flexShrink: 0, ...SKB, fontSize: "var(--fs-8)", color: "#E5E1DB", textTransform: "uppercase", letterSpacing: "0.06em", background: "transparent", border: "none", cursor: "pointer", padding: 0 }}>Remove</button>
             </div>
             {isVideo && (
               <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
                 {(['bed', 'music_only'] as const).map((m) => {
                   const on = mode === m;
                   return (
-                    <button key={m} onClick={() => persist(trackId, m)} disabled={saving} style={{ flex: 1, background: on ? "#FFF" : "transparent", border: `1px solid ${on ? "#FFF" : "rgba(255,255,255,0.2)"}`, cursor: "pointer", padding: "9px 6px", ...SKB, fontSize: "var(--fs-8)", color: on ? "#000" : "rgba(255,255,255,0.7)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                    <button key={m} onClick={() => persist(trackId, m)} disabled={saving} style={{ flex: 1, background: on ? "#E5E1DB" : "transparent", border: `1px solid ${on ? "#E5E1DB" : "rgba(229,225,219,0.2)"}`, cursor: "pointer", padding: "9px 6px", ...SKB, fontSize: "var(--fs-8)", color: on ? "#000" : "rgba(229,225,219,0.7)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
                       {m === "bed" ? "Music as bed" : "Music only"}
                     </button>
                   );
@@ -97,13 +97,13 @@ export default function EditMusicSheet({
             )}
           </>
         ) : (
-          <p style={{ ...SKR, fontSize: "var(--fs-8)", color: "rgba(255,255,255,0.4)", margin: "0 0 14px" }}>No music on this post.</p>
+          <p style={{ ...SKR, fontSize: "var(--fs-8)", color: "rgba(229,225,219,0.4)", margin: "0 0 14px" }}>No music on this post.</p>
         )}
 
-        <button onClick={() => setShowPicker(true)} style={{ width: "100%", background: "transparent", border: `1px solid ${HAIR}`, cursor: "pointer", padding: "12px 0", ...SKB, fontSize: "var(--fs-9)", color: "#FFF", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+        <button onClick={() => setShowPicker(true)} style={{ width: "100%", background: "transparent", border: `1px solid ${HAIR}`, cursor: "pointer", padding: "12px 0", ...SKB, fontSize: "var(--fs-9)", color: "#E5E1DB", textTransform: "uppercase", letterSpacing: "0.08em" }}>
           {trackId ? "Change track" : "Add music"}
         </button>
-        {error && <p style={{ ...SKR, fontSize: "var(--fs-8)", color: "#FF0000", margin: "10px 0 0" }}>{error}</p>}
+        {error && <p style={{ ...SKR, fontSize: "var(--fs-8)", color: "#E5E1DB", margin: "10px 0 0" }}>{error}</p>}
       </div>
 
       {showPicker && (

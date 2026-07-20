@@ -21,7 +21,7 @@ import { getAspectRatio } from "@/lib/aspectRatio";
 import type { EditParams } from "@/lib/editor/params";
 import type { EditGeometry } from "@/lib/editGeometry";
 
-const RED = "#FF0000";
+const RED = "#E5E1DB";
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const REG: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
 const CLIP_LEN = 4; // seconds (3–5s band)
@@ -118,11 +118,11 @@ export default function SnippetSelector({ videoUrl, heroFrameTime, onChange, par
             clipWindow={{ start, length: len }}
           />
         )}
-        <span style={{ position: "absolute", bottom: 4, left: 5, ...SKB, fontSize: 'var(--fs-6_5)', color: "rgba(255,255,255,0.75)", letterSpacing: "0.14em", textTransform: "uppercase", textShadow: "0 1px 2px rgba(0,0,0,0.9)" }}>AUDITION</span>
+        <span style={{ position: "absolute", bottom: 4, left: 5, ...SKB, fontSize: 'var(--fs-6_5)', color: "rgba(229,225,219,0.75)", letterSpacing: "0.14em", textTransform: "uppercase", textShadow: "0 1px 2px rgba(0,0,0,0.9)" }}>AUDITION</span>
       </div>
       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-        <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: "0.1em" }}>AUTOPLAY CLIP · {Math.round(len)}s</span>
-        <span style={{ ...REG, fontSize: 'var(--fs-8)', color: "rgba(255,255,255,0.5)", letterSpacing: "0.04em" }}>{fmt(start)}–{fmt(start + len)}</span>
+        <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: "rgba(229,225,219,0.5)", textTransform: "uppercase", letterSpacing: "0.1em" }}>AUTOPLAY CLIP · {Math.round(len)}s</span>
+        <span style={{ ...REG, fontSize: 'var(--fs-8)', color: "rgba(229,225,219,0.5)", letterSpacing: "0.04em" }}>{fmt(start)}–{fmt(start + len)}</span>
       </div>
       <div
         ref={trackRef}
@@ -131,13 +131,13 @@ export default function SnippetSelector({ videoUrl, heroFrameTime, onChange, par
         onPointerUp={onUp}
         style={{ position: "relative", height: 18, display: "flex", alignItems: "center", cursor: "pointer", touchAction: "none" }}
       >
-        <div style={{ position: "absolute", left: 0, right: 0, height: 1.5, background: "rgba(255,255,255,0.2)" }} />
+        <div style={{ position: "absolute", left: 0, right: 0, height: 1.5, background: "rgba(229,225,219,0.2)" }} />
         {/* Selected window — red span + two handles */}
         <div style={{ position: "absolute", left: `${leftPct}%`, width: `${widthPct}%`, height: 1.5, background: RED }} />
         <div style={{ position: "absolute", left: `${leftPct}%`, transform: "translateX(-50%)", width: 4, height: 12, background: RED }} />
         <div style={{ position: "absolute", left: `${leftPct + widthPct}%`, transform: "translateX(-50%)", width: 4, height: 12, background: RED }} />
       </div>
-      <p style={{ ...REG, fontSize: 'var(--fs-7)', color: "rgba(255,255,255,0.3)", letterSpacing: "0.04em", margin: "4px 0 0" }}>
+      <p style={{ ...REG, fontSize: 'var(--fs-7)', color: "rgba(229,225,219,0.3)", letterSpacing: "0.04em", margin: "4px 0 0" }}>
         DRAG TO CHOOSE THE LOOPING AUTOPLAY MOMENT · SKIP TO AUTO-PICK
       </p>
     </div>

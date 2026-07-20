@@ -124,7 +124,7 @@ export default function ProfileDataSheet({
   });
 
   const Divider = () => (
-    <div style={{ height: 1, background: '#FF0000' }} />
+    <div style={{ height: 1, background: '#E5E1DB' }} />
   );
 
   const kitRows = [
@@ -157,8 +157,8 @@ export default function ProfileDataSheet({
                 : 'none',
             }}
           >
-            <span style={{ ...SKB, fontSize: 'var(--fs-9)', letterSpacing: '-0.18px', color: '#FFF', textTransform: 'uppercase', lineHeight: 1.4 }}>{label}</span>
-            <span style={{ ...SKB, fontSize: 'var(--fs-9)', letterSpacing: '-0.18px', color: '#FF0000', lineHeight: 1.4 }}>{value}</span>
+            <span style={{ ...SKB, fontSize: 'var(--fs-9)', letterSpacing: '-0.18px', color: '#E5E1DB', textTransform: 'uppercase', lineHeight: 1.4 }}>{label}</span>
+            <span style={{ ...SKB, fontSize: 'var(--fs-9)', letterSpacing: '-0.18px', color: '#E5E1DB', lineHeight: 1.4 }}>{value}</span>
           </div>
         ))}
       </div>
@@ -176,17 +176,17 @@ export default function ProfileDataSheet({
 
         {/* ── HEADER SPACER — profile page elements show through above sheet ── */}
         <div style={{ position: 'relative', height: 161 }}>
-          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 1, background: '#FF0000' }} />
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 1, background: '#E5E1DB' }} />
         </div>
 
         {/* ── BIO ── */}
         {hasBio && (
           <>
             <div style={{ display: 'flex', alignItems: 'center', boxSizing: 'border-box', minHeight: 123, paddingTop: 12, paddingBottom: 12, ...sec(80) }}>
-              <div style={{ width: 184, flexShrink: 0, paddingLeft: 7, ...SKB, fontSize: 40, letterSpacing: '-0.8px', color: '#FFF', textTransform: 'uppercase', lineHeight: 1.12 }}>
+              <div style={{ width: 184, flexShrink: 0, paddingLeft: 7, ...SKB, fontSize: 40, letterSpacing: '-0.8px', color: '#E5E1DB', textTransform: 'uppercase', lineHeight: 1.12 }}>
                 BIO
               </div>
-              <div style={{ flex: 1, paddingRight: 8, ...SKR, fontSize: 'var(--fs-10)', letterSpacing: '-0.2px', color: '#FFF', lineHeight: 1.12, whiteSpace: 'pre-wrap' }}>
+              <div style={{ flex: 1, paddingRight: 8, ...SKR, fontSize: 'var(--fs-10)', letterSpacing: '-0.2px', color: '#E5E1DB', lineHeight: 1.12, whiteSpace: 'pre-wrap' }}>
                 {profile.bio}
               </div>
             </div>
@@ -198,16 +198,16 @@ export default function ProfileDataSheet({
         {hasKit && (
           <>
             <div style={{ display: 'flex', alignItems: 'center', boxSizing: 'border-box', minHeight: 125, paddingTop: 12, paddingBottom: 12, ...sec(160) }}>
-              <div style={{ width: 182, flexShrink: 0, paddingLeft: 7, ...SKB, fontSize: 40, letterSpacing: '-0.8px', color: '#FFF', textTransform: 'uppercase', lineHeight: 1.12 }}>
+              <div style={{ width: 182, flexShrink: 0, paddingLeft: 7, ...SKB, fontSize: 40, letterSpacing: '-0.8px', color: '#E5E1DB', textTransform: 'uppercase', lineHeight: 1.12 }}>
                 KIT
               </div>
               <div style={{ flex: 1, paddingRight: 15 }}>
                 {kitRows.map((row, i) => (
                   <div key={row.label} style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: i < kitRows.length - 1 ? 12 : 0 }}>
-                    <span style={{ ...SKB, fontSize: 'var(--fs-10)', letterSpacing: '-0.2px', color: '#FFF', textTransform: 'uppercase', lineHeight: 1.12 }}>
+                    <span style={{ ...SKB, fontSize: 'var(--fs-10)', letterSpacing: '-0.2px', color: '#E5E1DB', textTransform: 'uppercase', lineHeight: 1.12 }}>
                       {row.label}
                     </span>
-                    <span style={{ ...SKR, fontSize: 'var(--fs-10)', letterSpacing: '-0.2px', color: '#FF0000', textTransform: 'uppercase', lineHeight: 1.12 }}>
+                    <span style={{ ...SKR, fontSize: 'var(--fs-10)', letterSpacing: '-0.2px', color: '#E5E1DB', textTransform: 'uppercase', lineHeight: 1.12 }}>
                       {row.value}
                     </span>
                   </div>
@@ -230,12 +230,12 @@ export default function ProfileDataSheet({
             <>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: '12px 4px', ...sec(180) }}>
                 {loc && (
-                  <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                  <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: 'rgba(229,225,219,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                     ◦ {loc}
                   </span>
                 )}
                 {primary && (
-                  <a href={primary.url} target="_blank" rel="noopener noreferrer" style={{ ...SKB, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em', textDecoration: 'none' }}>
+                  <a href={primary.url} target="_blank" rel="noopener noreferrer" style={{ ...SKB, fontSize: 'var(--fs-8)', color: 'rgba(229,225,219,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em', textDecoration: 'none' }}>
                     ↗ {primary.title || primary.url.replace(/^https?:\/\/(www\.)?/, '').slice(0, 34)}
                   </a>
                 )}
@@ -248,7 +248,7 @@ export default function ProfileDataSheet({
         {hasBadges && (
           <>
             <div style={{ position: 'relative', display: 'flex', alignItems: 'center', boxSizing: 'border-box', minHeight: 150, paddingTop: 12, paddingBottom: 12, ...sec(200) }}>
-              <div style={{ width: 168, flexShrink: 0, paddingLeft: 4, ...SKB, fontSize: 40, letterSpacing: '-2.4px', color: '#FFF', textTransform: 'uppercase', lineHeight: 1.12 }}>
+              <div style={{ width: 168, flexShrink: 0, paddingLeft: 4, ...SKB, fontSize: 40, letterSpacing: '-2.4px', color: '#E5E1DB', textTransform: 'uppercase', lineHeight: 1.12 }}>
                 BADGES
               </div>
               <div style={{ flex: 1, display: 'flex', flexWrap: 'wrap', gap: 18, justifyContent: 'flex-end', paddingRight: 8 }}>
@@ -283,7 +283,7 @@ export default function ProfileDataSheet({
                                  (~13-14px). Scale proportionally at other badge sizes. */
                               minWidth: 22, boxSizing: 'border-box', textAlign: 'center',
                               padding: '0 8px', lineHeight: 1.25,
-                              ...SKB, fontSize: 10, color: '#FFFFFF', fontVariantNumeric: 'tabular-nums',
+                              ...SKB, fontSize: 10, color: '#E5E1DB', fontVariantNumeric: 'tabular-nums',
                             }}>
                               {count}
                             </span>
@@ -291,7 +291,7 @@ export default function ProfileDataSheet({
                         </span>
                       );
                     })()}
-                    <span style={{ ...SKB, fontSize: 'var(--fs-8)', letterSpacing: '0.04em', color: '#FFFFFF', textTransform: 'uppercase', lineHeight: 1.1, textAlign: 'center' }}>
+                    <span style={{ ...SKB, fontSize: 'var(--fs-8)', letterSpacing: '0.04em', color: '#E5E1DB', textTransform: 'uppercase', lineHeight: 1.1, textAlign: 'center' }}>
                       {b.title}
                     </span>
                   </div>
@@ -311,7 +311,7 @@ export default function ProfileDataSheet({
         {hasLinks && (
           <>
             <div style={{ display: 'flex', alignItems: 'center', boxSizing: 'border-box', minHeight: 364, paddingTop: 12, paddingBottom: 12, ...sec(240) }}>
-              <div style={{ width: 175, flexShrink: 0, paddingLeft: 4, ...SKB, fontSize: 40, letterSpacing: '-2.4px', color: '#FFF', textTransform: 'uppercase', lineHeight: 1.12 }}>
+              <div style={{ width: 175, flexShrink: 0, paddingLeft: 4, ...SKB, fontSize: 40, letterSpacing: '-2.4px', color: '#E5E1DB', textTransform: 'uppercase', lineHeight: 1.12 }}>
                 LINKS
               </div>
               <div style={{ flex: 1 }}>
@@ -324,14 +324,14 @@ export default function ProfileDataSheet({
                       onClick={e => { e.stopPropagation(); window.open(link.url, '_blank', 'noopener,noreferrer'); }}
                       style={{ marginBottom: i < slicedLinks.length - 1 ? 15 : 0, cursor: 'pointer' }}
                     >
-                      <div style={{ ...SKB, fontSize: 'var(--fs-10)', letterSpacing: '-0.2px', color: '#FFF', textTransform: 'uppercase', textAlign: 'right', lineHeight: 1.12, marginBottom: 4, width: 185 }}>
+                      <div style={{ ...SKB, fontSize: 'var(--fs-10)', letterSpacing: '-0.2px', color: '#E5E1DB', textTransform: 'uppercase', textAlign: 'right', lineHeight: 1.12, marginBottom: 4, width: 185 }}>
                         {link.title || domain}
                       </div>
                       <div style={{ position: 'relative', width: 185, height: 78, overflow: 'hidden', background: '#111' }}>
                         {thumb
                           ? <img src={thumb} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                           : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                              <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.35)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{domain}</span>
+                              <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: 'rgba(229,225,219,0.35)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{domain}</span>
                             </div>
                         }
                         {link.is_video && (
@@ -353,19 +353,19 @@ export default function ProfileDataSheet({
         {showContact && (
           <>
             <div style={{ display: 'flex', alignItems: 'center', boxSizing: 'border-box', minHeight: 235, paddingTop: 12, paddingBottom: 12, ...sec(320) }}>
-              <div style={{ width: 180, flexShrink: 0, paddingLeft: 4, ...SKB, fontSize: 40, letterSpacing: '-2px', color: '#FFF', textTransform: 'uppercase', lineHeight: 1.12 }}>
+              <div style={{ width: 180, flexShrink: 0, paddingLeft: 4, ...SKB, fontSize: 40, letterSpacing: '-2px', color: '#E5E1DB', textTransform: 'uppercase', lineHeight: 1.12 }}>
                 CONTACT
               </div>
               <div style={{ flex: 1, paddingRight: 8, textAlign: 'right' as const }}>
                 {profile?.contact_email_public && profile?.contact_email && (
                   <div style={{ ...SKB, fontSize: 'var(--fs-10)', letterSpacing: '-0.2px', lineHeight: 1.12, marginBottom: 11 }}>
-                    <span style={{ color: '#FF0000' }}>EMAIL:</span>
-                    <span style={{ color: '#FFF' }}> {profile.contact_email.toUpperCase()}</span>
+                    <span style={{ color: '#E5E1DB' }}>EMAIL:</span>
+                    <span style={{ color: '#E5E1DB' }}> {profile.contact_email.toUpperCase()}</span>
                   </div>
                 )}
                 <div
                   onClick={e => e.stopPropagation()}
-                  style={{ ...SKB, fontSize: 'var(--fs-10)', letterSpacing: '-0.2px', color: '#FFF', textTransform: 'uppercase' as const, lineHeight: 1.12, cursor: 'pointer' }}
+                  style={{ ...SKB, fontSize: 'var(--fs-10)', letterSpacing: '-0.2px', color: '#E5E1DB', textTransform: 'uppercase' as const, lineHeight: 1.12, cursor: 'pointer' }}
                 >
                   DIRECT MESSAGE ON SCOPE
                 </div>
@@ -385,8 +385,8 @@ export default function ProfileDataSheet({
               onClick={(e) => { e.stopPropagation(); if (!followBusy) onUnfollow(); }}
               disabled={followBusy}
               style={{
-                background: 'transparent', border: '1px solid #FF0000', cursor: followBusy ? 'default' : 'pointer',
-                padding: '7px 14px', ...SKB, fontSize: 'var(--fs-10)', letterSpacing: '0.04em', color: '#FF0000', textTransform: 'uppercase', lineHeight: 1.12,
+                background: 'transparent', border: '1px solid #E5E1DB', cursor: followBusy ? 'default' : 'pointer',
+                padding: '7px 14px', ...SKB, fontSize: 'var(--fs-10)', letterSpacing: '0.04em', color: '#E5E1DB', textTransform: 'uppercase', lineHeight: 1.12,
               }}
             >
               UNFOLLOW
@@ -396,7 +396,7 @@ export default function ProfileDataSheet({
             onClick={onClose}
             style={{
               background: 'transparent', border: 'none', cursor: 'pointer', padding: 0,
-              ...SKB, fontSize: 'var(--fs-10)', letterSpacing: '-0.02em', color: '#FFF', textTransform: 'uppercase', lineHeight: 1.12,
+              ...SKB, fontSize: 'var(--fs-10)', letterSpacing: '-0.02em', color: '#E5E1DB', textTransform: 'uppercase', lineHeight: 1.12,
             }}
           >
             BACK
@@ -415,8 +415,8 @@ export default function ProfileDataSheet({
         onClick={() => setActiveBlurb(null)}
         style={{ position: 'fixed', inset: 0, zIndex: 900, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 22 }}
       >
-        <div onClick={(e) => e.stopPropagation()} style={{ position: 'relative', width: '100%', maxWidth: 340, background: '#000', border: '1px solid #FF0000', padding: '18px 18px', animation: 'blurbIn 240ms cubic-bezier(0.16,0.84,0.3,1)' }}>
-          <button onClick={(e) => { e.stopPropagation(); setActiveBlurb(null); }} aria-label="Close" style={{ position: 'absolute', top: 8, right: 10, ...SKB, fontSize: 'var(--fs-15)', lineHeight: 1, color: 'rgba(255,255,255,0.55)', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>×</button>
+        <div onClick={(e) => e.stopPropagation()} style={{ position: 'relative', width: '100%', maxWidth: 340, background: '#000', border: '1px solid #E5E1DB', padding: '18px 18px', animation: 'blurbIn 240ms cubic-bezier(0.16,0.84,0.3,1)' }}>
+          <button onClick={(e) => { e.stopPropagation(); setActiveBlurb(null); }} aria-label="Close" style={{ position: 'absolute', top: 8, right: 10, ...SKB, fontSize: 'var(--fs-15)', lineHeight: 1, color: 'rgba(229,225,219,0.55)', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>×</button>
           <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
             <img
               key={activeBlurb}
@@ -426,8 +426,8 @@ export default function ProfileDataSheet({
               style={{ width: 60, height: 60, objectFit: 'contain', flexShrink: 0, animation: 'focusPull 1.2s cubic-bezier(0.16,0.84,0.3,1) both' }}
             />
             <div style={{ flex: 1, minWidth: 0, paddingRight: 12 }}>
-              <p style={{ ...SKB, fontSize: 'var(--fs-10)', color: '#FF0000', textTransform: 'uppercase', letterSpacing: '0.16em', margin: '0 0 6px' }}>{BADGES[activeBlurb].title}</p>
-              <p style={{ ...SKR, fontSize: 'var(--fs-11)', color: 'rgba(255,255,255,0.70)', lineHeight: 1.45, margin: 0 }}>{BADGE_SHORT_BLURB[activeBlurb]}</p>
+              <p style={{ ...SKB, fontSize: 'var(--fs-10)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.16em', margin: '0 0 6px' }}>{BADGES[activeBlurb].title}</p>
+              <p style={{ ...SKR, fontSize: 'var(--fs-11)', color: 'rgba(229,225,219,0.70)', lineHeight: 1.45, margin: 0 }}>{BADGE_SHORT_BLURB[activeBlurb]}</p>
             </div>
           </div>
 
@@ -435,7 +435,7 @@ export default function ProfileDataSheet({
               (BadgeExplainerSheet) via the parent; falls back to the /badges route. */}
           <button
             onClick={(e) => { e.stopPropagation(); setActiveBlurb(null); if (onExploreBadges) { onClose(); onExploreBadges(); } else { onClose(); router.push('/badges'); } }}
-            style={{ ...SKB, fontSize: 'var(--fs-9)', letterSpacing: '0.12em', color: '#FF0000', textTransform: 'uppercase', background: 'transparent', border: '1px solid #FF0000', cursor: 'pointer', padding: '9px 14px', marginTop: 14, width: '100%' }}
+            style={{ ...SKB, fontSize: 'var(--fs-9)', letterSpacing: '0.12em', color: '#E5E1DB', textTransform: 'uppercase', background: 'transparent', border: '1px solid #E5E1DB', cursor: 'pointer', padding: '9px 14px', marginTop: 14, width: '100%' }}
           >
             EXPLORE SCOPE BADGES →
           </button>
@@ -443,7 +443,7 @@ export default function ProfileDataSheet({
           {activeBlurb === 'firstCut' && economyPreviewEnabled() && profile?.username && (
             <button
               onClick={(e) => { e.stopPropagation(); setActiveBlurb(null); onClose(); router.push(`/first-cut/${profile.username}`); }}
-              style={{ ...SKB, fontSize: 'var(--fs-9)', letterSpacing: '0.12em', color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', background: 'transparent', border: '1px solid rgba(255,255,255,0.25)', cursor: 'pointer', padding: '8px 14px', marginTop: 8, width: '100%' }}
+              style={{ ...SKB, fontSize: 'var(--fs-9)', letterSpacing: '0.12em', color: 'rgba(229,225,219,0.6)', textTransform: 'uppercase', background: 'transparent', border: '1px solid rgba(229,225,219,0.25)', cursor: 'pointer', padding: '8px 14px', marginTop: 8, width: '100%' }}
             >
               VIEW FIRST CUT →
             </button>

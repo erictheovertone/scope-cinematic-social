@@ -83,13 +83,13 @@ export default function NotificationsPanel({ onClose }: Props) {
       {/* Header */}
       <div className="relative flex items-center px-[4px] pt-[12px] pb-[10px]">
         <button onClick={onClose} className="bg-transparent border-none cursor-pointer p-0">
-          <span style={{ ...MONO, fontSize: 'var(--fs-9)', color: "white", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+          <span style={{ ...MONO, fontSize: 'var(--fs-9)', color: "#E5E1DB", textTransform: "uppercase", letterSpacing: "0.06em" }}>
             ← Back
           </span>
         </button>
         <span
           className="absolute left-1/2"
-          style={{ ...MONO, fontSize: 'var(--fs-9)', color: "white", textTransform: "uppercase", letterSpacing: "0.08em", transform: "translateX(-50%)" }}
+          style={{ ...MONO, fontSize: 'var(--fs-9)', color: "#E5E1DB", textTransform: "uppercase", letterSpacing: "0.08em", transform: "translateX(-50%)" }}
         >
           NOTIFICATIONS
         </span>
@@ -103,13 +103,13 @@ export default function NotificationsPanel({ onClose }: Props) {
           </div>
         ) : !user ? (
           <div className="flex items-center justify-center mt-12">
-            <p style={{ ...MONO, fontSize: 'var(--fs-9)', color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+            <p style={{ ...MONO, fontSize: 'var(--fs-9)', color: "rgba(229,225,219,0.4)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
               Sign in to see notifications
             </p>
           </div>
         ) : notifications.length === 0 ? (
           <div className="flex items-center justify-center mt-12">
-            <p style={{ ...MONO, fontSize: 'var(--fs-9)', color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+            <p style={{ ...MONO, fontSize: 'var(--fs-9)', color: "rgba(229,225,219,0.4)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
               No notifications yet
             </p>
           </div>
@@ -129,7 +129,7 @@ export default function NotificationsPanel({ onClose }: Props) {
             >
               {/* Unread marker — small red square, left edge, vertically centered */}
               {!n.is_read && (
-                <div style={{ position: "absolute", left: 5, top: "50%", transform: "translateY(-50%)", width: 4.5, height: 4.5, background: "#FF0000" }} />
+                <div style={{ position: "absolute", left: 5, top: "50%", transform: "translateY(-50%)", width: 4.5, height: 4.5, background: "#E5E1DB" }} />
               )}
 
               {/* Avatar — tappable → actor profile */}
@@ -137,10 +137,10 @@ export default function NotificationsPanel({ onClose }: Props) {
 
               {/* Message + timestamp */}
               <div className="flex-1 min-w-0">
-                <p style={{ ...MONO, fontSize: 'var(--fs-8)', color: "white", textTransform: "uppercase", letterSpacing: "0.04em", lineHeight: 1.4, margin: 0, wordBreak: "break-word" }}>
+                <p style={{ ...MONO, fontSize: 'var(--fs-8)', color: "#E5E1DB", textTransform: "uppercase", letterSpacing: "0.04em", lineHeight: 1.4, margin: 0, wordBreak: "break-word" }}>
                   <NotificationActorMessage handle={n.actor_handle ?? null} type={n.type} onNavigate={goToActor} />
                 </p>
-                <p style={{ ...MONO, fontSize: 'var(--fs-6)', color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.06em", margin: "2px 0 0" }}>
+                <p style={{ ...MONO, fontSize: 'var(--fs-6)', color: "rgba(229,225,219,0.4)", textTransform: "uppercase", letterSpacing: "0.06em", margin: "2px 0 0" }}>
                   {timeAgo(n.created_at)}
                 </p>
               </div>

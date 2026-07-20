@@ -44,8 +44,8 @@ import { resolveLayout } from '@/lib/layoutModel';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
-const HAIR = 'rgba(255,255,255,0.12)';
-const RED = '#f20d0d';
+const HAIR = 'rgba(229,225,219,0.12)';
+const RED = '#E5E1DB';
 
 const SECTIONS = ['edit-profile', 'membership', 'experience', 'privacy', 'legal', 'support'] as const;
 type Section = typeof SECTIONS[number];
@@ -54,8 +54,8 @@ const SECTION_LABELS: Record<Section, string> = {
   privacy: 'PRIVACY & SAFETY', legal: 'LEGAL', support: 'SUPPORT',
 };
 
-const LABEL: React.CSSProperties = { ...SKB, fontSize: 11, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.14em', display: 'block', margin: '0 0 7px' };
-const INPUT: React.CSSProperties = { ...SKR, fontSize: 13, color: '#FFF', background: 'rgba(255,255,255,0.04)', border: `1px solid ${HAIR}`, outline: 'none', padding: '10px 12px', width: '100%', boxSizing: 'border-box' };
+const LABEL: React.CSSProperties = { ...SKB, fontSize: 11, color: 'rgba(229,225,219,0.45)', textTransform: 'uppercase', letterSpacing: '0.14em', display: 'block', margin: '0 0 7px' };
+const INPUT: React.CSSProperties = { ...SKR, fontSize: 13, color: '#E5E1DB', background: 'rgba(229,225,219,0.04)', border: `1px solid ${HAIR}`, outline: 'none', padding: '10px 12px', width: '100%', boxSizing: 'border-box' };
 
 export default function DesktopSettings() {
   const router = useRouter();
@@ -285,9 +285,9 @@ export default function DesktopSettings() {
       onClick={action}
       onMouseEnter={() => setHovered(key ?? label)}
       onMouseLeave={() => setHovered(null)}
-      style={{ display: 'block', width: '100%', textAlign: 'left', cursor: 'pointer', background: hovered === (key ?? label) ? 'rgba(255,255,255,0.045)' : 'transparent', border: 'none', borderBottom: `1px solid ${HAIR}`, padding: '15px 10px', transition: 'background 120ms ease' }}
+      style={{ display: 'block', width: '100%', textAlign: 'left', cursor: 'pointer', background: hovered === (key ?? label) ? 'rgba(229,225,219,0.045)' : 'transparent', border: 'none', borderBottom: `1px solid ${HAIR}`, padding: '15px 10px', transition: 'background 120ms ease' }}
     >
-      <span style={{ ...SKB, fontSize: 12.5, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</span>
+      <span style={{ ...SKB, fontSize: 12.5, color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</span>
     </button>
   );
 
@@ -316,7 +316,7 @@ export default function DesktopSettings() {
               <label style={LABEL}>DISPLAY BIO · SHOWS ON YOUR DESKTOP PROFILE</label>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
                 <input value={shortBio} onChange={(e) => setShortBio(e.target.value.slice(0, 80))} maxLength={80} style={INPUT} />
-                <span style={{ ...SKR, fontSize: 10, color: 'rgba(255,255,255,0.4)', fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>{shortBio.length}/80</span>
+                <span style={{ ...SKR, fontSize: 10, color: 'rgba(229,225,219,0.4)', fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>{shortBio.length}/80</span>
               </div>
             </div>
             <div style={{ marginBottom: 20 }}><label style={LABEL}>LOCATION</label>
@@ -339,14 +339,14 @@ export default function DesktopSettings() {
                       title={unlocked ? line.name : TIER_UNLOCK_LABEL[line.tier as 1 | 2 | 3]}
                       style={{ width: 56, background: 'transparent', border: 'none', cursor: unlocked ? 'pointer' : 'default', padding: 0, opacity: unlocked ? 1 : 0.3 }}
                     >
-                      <span style={{ display: 'block', width: 8, height: 44, margin: '0 auto', background: line.gradient, border: active ? '1px solid #FFF' : '1px solid rgba(255,255,255,0.15)' }} />
-                      <span style={{ ...SKB, fontSize: 8, color: active ? '#FFF' : 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginTop: 5 }}>{line.name}</span>
+                      <span style={{ display: 'block', width: 8, height: 44, margin: '0 auto', background: line.gradient, border: active ? '1px solid #E5E1DB' : '1px solid rgba(229,225,219,0.15)' }} />
+                      <span style={{ ...SKB, fontSize: 8, color: active ? '#E5E1DB' : 'rgba(229,225,219,0.5)', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginTop: 5 }}>{line.name}</span>
                     </button>
                   );
                 })}
               </div>
               {tierFlags.isFoundingMember && (
-                <button onClick={() => setHoloBanner((h) => !h)} style={{ ...SKB, fontSize: 10, color: holoBanner ? '#FFF' : 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em', background: 'transparent', border: `1px solid ${HAIR}`, cursor: 'pointer', padding: '6px 12px', marginTop: 10 }}>
+                <button onClick={() => setHoloBanner((h) => !h)} style={{ ...SKB, fontSize: 10, color: holoBanner ? '#E5E1DB' : 'rgba(229,225,219,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em', background: 'transparent', border: `1px solid ${HAIR}`, cursor: 'pointer', padding: '6px 12px', marginTop: 10 }}>
                   HOLO BANNER · {holoBanner ? 'ON' : 'OFF'}
                 </button>
               )}
@@ -367,7 +367,7 @@ export default function DesktopSettings() {
               <label style={LABEL}>CONTACT</label>
               <div style={{ display: 'flex', gap: 8 }}>
                 <input value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} placeholder="EMAIL" style={{ ...INPUT, flex: 1 }} />
-                <button onClick={() => setContactPublic((p) => !p)} style={{ ...SKB, fontSize: 10, color: contactPublic ? '#FFF' : 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.06em', background: 'transparent', border: `1px solid ${HAIR}`, cursor: 'pointer', padding: '0 12px', flexShrink: 0 }}>
+                <button onClick={() => setContactPublic((p) => !p)} style={{ ...SKB, fontSize: 10, color: contactPublic ? '#E5E1DB' : 'rgba(229,225,219,0.5)', textTransform: 'uppercase', letterSpacing: '0.06em', background: 'transparent', border: `1px solid ${HAIR}`, cursor: 'pointer', padding: '0 12px', flexShrink: 0 }}>
                   {contactPublic ? 'PUBLIC' : 'PRIVATE'}
                 </button>
               </div>
@@ -378,27 +378,27 @@ export default function DesktopSettings() {
               <label style={LABEL}>LINKS</label>
               {links.map((l) => (
                 <div key={l.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: `1px solid ${HAIR}` }}>
-                  <span style={{ ...SKR, fontSize: 12, color: 'rgba(255,255,255,0.7)', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{l.title || l.url}</span>
+                  <span style={{ ...SKR, fontSize: 12, color: 'rgba(229,225,219,0.7)', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{l.title || l.url}</span>
                   <button
                     onClick={async () => { if (user && await setPrimaryLink(user.id, l.id)) setLinks((prev) => prev.map((x) => ({ ...x, is_primary: x.id === l.id } as ProfileLink))); }}
-                    style={{ ...SKB, fontSize: 9, color: (l as { is_primary?: boolean }).is_primary ? RED : 'rgba(255,255,255,0.4)', background: 'transparent', border: 'none', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.06em', flexShrink: 0 }}
+                    style={{ ...SKB, fontSize: 9, color: (l as { is_primary?: boolean }).is_primary ? RED : 'rgba(229,225,219,0.4)', background: 'transparent', border: 'none', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.06em', flexShrink: 0 }}
                   >
                     {(l as { is_primary?: boolean }).is_primary ? 'PRIMARY' : 'SET PRIMARY'}
                   </button>
-                  <button onClick={async () => { await deleteProfileLink(l.id); setLinks((prev) => prev.filter((x) => x.id !== l.id)); }} style={{ ...SKB, fontSize: 13, color: 'rgba(255,255,255,0.35)', background: 'transparent', border: 'none', cursor: 'pointer', flexShrink: 0 }}>✕</button>
+                  <button onClick={async () => { await deleteProfileLink(l.id); setLinks((prev) => prev.filter((x) => x.id !== l.id)); }} style={{ ...SKB, fontSize: 13, color: 'rgba(229,225,219,0.35)', background: 'transparent', border: 'none', cursor: 'pointer', flexShrink: 0 }}>✕</button>
                 </div>
               ))}
               <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
                 <input value={newLinkUrl} onChange={(e) => setNewLinkUrl(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') addLink(); }} placeholder="ADD A LINK (URL)" style={{ ...INPUT, flex: 1 }} />
-                <button onClick={addLink} style={{ ...SKB, fontSize: 11, color: '#FFF', textTransform: 'uppercase', background: 'transparent', border: `1px solid ${HAIR}`, cursor: 'pointer', padding: '0 14px' }}>ADD</button>
+                <button onClick={addLink} style={{ ...SKB, fontSize: 11, color: '#E5E1DB', textTransform: 'uppercase', background: 'transparent', border: `1px solid ${HAIR}`, cursor: 'pointer', padding: '0 14px' }}>ADD</button>
               </div>
             </div>
 
             {/* KIT — NOT BUILT (flagged): the mock's gear field is a product
                 decision (gear lists on profiles), not a settings pass. */}
 
-            <button onClick={save} style={{ display: 'block', width: '100%', background: saveState === 'error' ? RED : '#FFF', border: 'none', cursor: 'pointer', padding: '13px 0' }}>
-              <span style={{ ...SKB, fontSize: 12, color: saveState === 'error' ? '#FFF' : '#000', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+            <button onClick={save} style={{ display: 'block', width: '100%', background: saveState === 'error' ? RED : '#E5E1DB', border: 'none', cursor: 'pointer', padding: '13px 0' }}>
+              <span style={{ ...SKB, fontSize: 12, color: saveState === 'error' ? '#E5E1DB' : '#000', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
                 {saveState === 'saving' ? 'SAVING…' : saveState === 'saved' ? 'SAVED ✓' : saveState === 'error' ? 'SAVE FAILED — RETRY' : 'SAVE CHANGES'}
               </span>
             </button>
@@ -413,14 +413,14 @@ export default function DesktopSettings() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
                 <img src={membership.isPaid ? '/badges/scope-pro-badge-min-design-01.png' : '/free-tier-aperture-logo-red.png'} alt="" style={{ width: 22, height: 22, objectFit: 'contain', flexShrink: 0 }} />
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 3, minWidth: 0 }}>
-                  <span style={{ ...SKB, fontSize: 9, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.15em' }}>MY MEMBERSHIP</span>
-                  <span style={{ ...SKB, fontSize: 13, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  <span style={{ ...SKB, fontSize: 9, color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase', letterSpacing: '0.15em' }}>MY MEMBERSHIP</span>
+                  <span style={{ ...SKB, fontSize: 13, color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {membershipBarLabel(membership)}
                   </span>
                 </div>
               </div>
               {!membership.isPaid && (
-                <button onClick={() => goPro()} style={{ ...SKB, fontSize: 11, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.08em', background: RED, border: 'none', cursor: 'pointer', padding: '10px 20px', flexShrink: 0 }}>GET PRO →</button>
+                <button onClick={() => goPro()} style={{ ...SKB, fontSize: 11, color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.08em', background: RED, border: 'none', cursor: 'pointer', padding: '10px 20px', flexShrink: 0 }}>GET PRO →</button>
               )}
             </div>
 
@@ -429,26 +429,26 @@ export default function DesktopSettings() {
               <div>
                 {membership.cancelsAt ? (
                   <div>
-                    <p style={{ ...SKR, fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, margin: '0 0 12px' }}>
+                    <p style={{ ...SKR, fontSize: 12, color: 'rgba(229,225,219,0.5)', lineHeight: 1.6, margin: '0 0 12px' }}>
                       Your membership is set to cancel — Pro stays active until then.
                     </p>
-                    <button onClick={memResume} disabled={memBusy === 'resume'} style={{ ...SKB, fontSize: 11, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.08em', background: RED, border: 'none', cursor: memBusy ? 'default' : 'pointer', padding: '12px 24px', width: '100%' }}>
+                    <button onClick={memResume} disabled={memBusy === 'resume'} style={{ ...SKB, fontSize: 11, color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.08em', background: RED, border: 'none', cursor: memBusy ? 'default' : 'pointer', padding: '12px 24px', width: '100%' }}>
                       {memBusy === 'resume' ? 'RESUMING…' : 'RESUME MEMBERSHIP'}
                     </button>
                   </div>
                 ) : !memConfirmCancel ? (
-                  <button onClick={() => setMemConfirmCancel(true)} style={{ ...SKB, fontSize: 11, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.08em', background: 'transparent', border: `1px solid ${HAIR}`, cursor: 'pointer', padding: '12px 24px', width: '100%' }}>
+                  <button onClick={() => setMemConfirmCancel(true)} style={{ ...SKB, fontSize: 11, color: 'rgba(229,225,219,0.45)', textTransform: 'uppercase', letterSpacing: '0.08em', background: 'transparent', border: `1px solid ${HAIR}`, cursor: 'pointer', padding: '12px 24px', width: '100%' }}>
                     CANCEL MEMBERSHIP
                   </button>
                 ) : (
-                  <div style={{ border: '1px solid rgba(242,13,13,0.3)', padding: 20 }}>
-                    <p style={{ ...SKB, fontSize: 13, color: '#FFF', textTransform: 'uppercase', margin: '0 0 8px' }}>ARE YOU SURE?</p>
-                    <p style={{ ...SKR, fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, margin: '0 0 18px' }}>
+                  <div style={{ border: '1px solid rgba(229,225,219,0.3)', padding: 20 }}>
+                    <p style={{ ...SKB, fontSize: 13, color: '#E5E1DB', textTransform: 'uppercase', margin: '0 0 8px' }}>ARE YOU SURE?</p>
+                    <p style={{ ...SKR, fontSize: 12, color: 'rgba(229,225,219,0.5)', lineHeight: 1.6, margin: '0 0 18px' }}>
                       You&apos;ll keep Pro until the end of your billing period, then revert to free.
                     </p>
                     <div style={{ display: 'flex', gap: 10 }}>
-                      <button onClick={() => setMemConfirmCancel(false)} style={{ ...SKB, flex: 1, fontSize: 10, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', background: 'transparent', border: `1px solid ${HAIR}`, cursor: 'pointer', padding: '11px 0' }}>KEEP PRO</button>
-                      <button onClick={memCancel} disabled={memBusy === 'cancel'} style={{ ...SKB, flex: 1, fontSize: 10, color: RED, textTransform: 'uppercase', background: 'rgba(242,13,13,0.15)', border: '1px solid rgba(242,13,13,0.4)', cursor: memBusy ? 'default' : 'pointer', padding: '11px 0' }}>
+                      <button onClick={() => setMemConfirmCancel(false)} style={{ ...SKB, flex: 1, fontSize: 10, color: 'rgba(229,225,219,0.6)', textTransform: 'uppercase', background: 'transparent', border: `1px solid ${HAIR}`, cursor: 'pointer', padding: '11px 0' }}>KEEP PRO</button>
+                      <button onClick={memCancel} disabled={memBusy === 'cancel'} style={{ ...SKB, flex: 1, fontSize: 10, color: RED, textTransform: 'uppercase', background: 'rgba(229,225,219,0.15)', border: '1px solid rgba(229,225,219,0.4)', cursor: memBusy ? 'default' : 'pointer', padding: '11px 0' }}>
                         {memBusy === 'cancel' ? 'CANCELLING…' : 'YES, CANCEL'}
                       </button>
                     </div>
@@ -518,7 +518,7 @@ export default function DesktopSettings() {
       <div style={{ display: 'flex', height: '100%', maxWidth: 1100, margin: '0 auto' }}>
         {/* ═══ LEFT — the category list ═══ */}
         <div style={{ width: 250, flexShrink: 0, borderRight: `1px solid ${HAIR}`, padding: '44px 0 40px', display: 'flex', flexDirection: 'column', height: '100%', boxSizing: 'border-box' }}>
-          <p style={{ ...SKB, fontSize: 11, color: 'rgba(255,255,255,0.38)', textTransform: 'uppercase', letterSpacing: '0.22em', margin: '0 0 18px', paddingLeft: 18 }}>SETTINGS</p>
+          <p style={{ ...SKB, fontSize: 11, color: 'rgba(229,225,219,0.38)', textTransform: 'uppercase', letterSpacing: '0.22em', margin: '0 0 18px', paddingLeft: 18 }}>SETTINGS</p>
           {SECTIONS.map((s) => {
             const active = section === s;
             return (
@@ -530,7 +530,7 @@ export default function DesktopSettings() {
                 style={{ position: 'relative', display: 'block', width: '100%', textAlign: 'left', background: 'transparent', border: 'none', cursor: 'pointer', padding: '13px 18px', transition: 'color 120ms ease' }}
               >
                 {active && <span style={{ position: 'absolute', left: 0, top: '50%', transform: 'translateY(-50%)', width: 3, height: 18, background: RED }} />}
-                <span style={{ ...SKB, fontSize: 12.5, textTransform: 'uppercase', letterSpacing: '0.08em', color: active ? RED : hovered === `cat-${s}` ? '#FFF' : 'rgba(255,255,255,0.55)', transition: 'color 120ms ease' }}>
+                <span style={{ ...SKB, fontSize: 12.5, textTransform: 'uppercase', letterSpacing: '0.08em', color: active ? RED : hovered === `cat-${s}` ? '#E5E1DB' : 'rgba(229,225,219,0.55)', transition: 'color 120ms ease' }}>
                   {SECTION_LABELS[s]}
                 </span>
               </button>
@@ -547,7 +547,7 @@ export default function DesktopSettings() {
 
         {/* ═══ RIGHT — the active panel (120ms in-place swap) ═══ */}
         <div ref={panelRef} style={{ flex: 1, padding: '44px 36px 80px', opacity: fade ? 0 : 1, transition: 'opacity 120ms ease', height: '100%', boxSizing: 'border-box', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
-          <h2 style={{ ...SKB, fontSize: 16, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 26px' }}>{SECTION_LABELS[section]}</h2>
+          <h2 style={{ ...SKB, fontSize: 16, color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 26px' }}>{SECTION_LABELS[section]}</h2>
           {panel()}
         </div>
       </div>
@@ -570,15 +570,15 @@ export default function DesktopSettings() {
           <div onClick={() => setMoreFromOpen(false)} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.9)' }} />
           <div style={{ position: 'relative', width: 760, maxHeight: '82vh', display: 'flex', flexDirection: 'column', background: '#000', border: '1px solid #1a1a1a', padding: '32px 34px' }}>
             <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 6 }}>
-              <h2 style={{ ...SKB, fontSize: 16, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>MORE FROM</h2>
-              <span style={{ ...SKB, fontSize: 11, color: moreFrom.length >= MORE_FROM_CAP ? RED : 'rgba(255,255,255,0.5)', letterSpacing: '0.08em' }}>{moreFrom.length}/{MORE_FROM_CAP}</span>
+              <h2 style={{ ...SKB, fontSize: 16, color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>MORE FROM</h2>
+              <span style={{ ...SKB, fontSize: 11, color: moreFrom.length >= MORE_FROM_CAP ? RED : 'rgba(229,225,219,0.5)', letterSpacing: '0.08em' }}>{moreFrom.length}/{MORE_FROM_CAP}</span>
             </div>
-            <p style={{ ...SKR, fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, margin: '0 0 20px' }}>
+            <p style={{ ...SKR, fontSize: 12, color: 'rgba(229,225,219,0.5)', lineHeight: 1.6, margin: '0 0 20px' }}>
               Choose up to {MORE_FROM_CAP} of your posts to feature beneath your work in the desktop lightbox. Tap to select.
             </p>
             <div style={{ flex: 1, overflowY: 'auto', display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 12 }}>
               {myPosts.length === 0 ? (
-                <p style={{ ...SKR, gridColumn: 'span 4', fontSize: 12, color: 'rgba(255,255,255,0.4)', textAlign: 'center', padding: '40px 0' }}>NO POSTS YET</p>
+                <p style={{ ...SKR, gridColumn: 'span 4', fontSize: 12, color: 'rgba(229,225,219,0.4)', textAlign: 'center', padding: '40px 0' }}>NO POSTS YET</p>
               ) : myPosts.map((p) => {
                 const id = String(p.id);
                 const sel = moreFrom.indexOf(id);
@@ -586,14 +586,14 @@ export default function DesktopSettings() {
                 return (
                   <button key={id} onClick={() => toggleMoreFrom(id)} style={{ position: 'relative', aspectRatio: '2.39 / 1', overflow: 'hidden', background: '#0d0d0d', border: sel >= 0 ? `2px solid ${RED}` : `1px solid ${HAIR}`, cursor: 'pointer', padding: 0 }}>
                     {src && <img src={feedImage(src, 320)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', opacity: sel >= 0 ? 1 : 0.7 }} />}
-                    {sel >= 0 && <span style={{ position: 'absolute', top: 5, right: 6, ...SKB, fontSize: 10, color: '#FFF', background: RED, width: 17, height: 17, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}>{sel + 1}</span>}
+                    {sel >= 0 && <span style={{ position: 'absolute', top: 5, right: 6, ...SKB, fontSize: 10, color: '#E5E1DB', background: RED, width: 17, height: 17, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}>{sel + 1}</span>}
                   </button>
                 );
               })}
             </div>
             <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
-              <button onClick={() => setMoreFromOpen(false)} style={{ ...SKB, flex: 1, fontSize: 11, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.08em', background: 'transparent', border: `1px solid ${HAIR}`, cursor: 'pointer', padding: '12px 0' }}>CANCEL</button>
-              <button onClick={() => { void saveMoreFrom(); }} style={{ ...SKB, flex: 1, fontSize: 11, color: '#000', textTransform: 'uppercase', letterSpacing: '0.08em', background: '#FFF', border: 'none', cursor: 'pointer', padding: '12px 0' }}>SAVE</button>
+              <button onClick={() => setMoreFromOpen(false)} style={{ ...SKB, flex: 1, fontSize: 11, color: 'rgba(229,225,219,0.6)', textTransform: 'uppercase', letterSpacing: '0.08em', background: 'transparent', border: `1px solid ${HAIR}`, cursor: 'pointer', padding: '12px 0' }}>CANCEL</button>
+              <button onClick={() => { void saveMoreFrom(); }} style={{ ...SKB, flex: 1, fontSize: 11, color: '#000', textTransform: 'uppercase', letterSpacing: '0.08em', background: '#E5E1DB', border: 'none', cursor: 'pointer', padding: '12px 0' }}>SAVE</button>
             </div>
           </div>
         </div>,

@@ -244,7 +244,7 @@ export default function PublicProfilePage() {
 
   if (loaded && notFound) return (
     <div className="bg-black w-full app-shell screen-min mx-auto flex items-center justify-center">
-      <p style={{ ...SKB, fontSize: 'var(--fs-11)', color: "white" }}>PROFILE NOT FOUND</p>
+      <p style={{ ...SKB, fontSize: 'var(--fs-11)', color: "#E5E1DB" }}>PROFILE NOT FOUND</p>
     </div>
   );
 
@@ -301,19 +301,19 @@ export default function PublicProfilePage() {
           <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', zIndex: 1 }}>
             {profile?.profile_image_url
               ? <img src={feedImage(profile.profile_image_url, 160)} alt={username} style={{ width: 80, height: 80, objectFit: 'cover', display: 'block' }} />
-              : <div style={{ width: 80, height: 80, backgroundColor: '#222', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span style={{ ...SKB, fontSize: 'var(--fs-28)', color: 'white' }}>{username?.[0]?.toUpperCase() ?? '?'}</span></div>
+              : <div style={{ width: 80, height: 80, backgroundColor: '#222', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span style={{ ...SKB, fontSize: 'var(--fs-28)', color: '#E5E1DB' }}>{username?.[0]?.toUpperCase() ?? '?'}</span></div>
             }
           </div>
         </div>
 
         {/* Name */}
         <div style={{ position: 'absolute', left: 126, top: 10 }}>
-          <p style={{ ...SKB, fontSize: 'var(--fs-13)', color: 'white', letterSpacing: '-0.02em', lineHeight: 1.2, margin: 0, textTransform: 'uppercase' }}>{profile?.display_name || username}</p>
+          <p style={{ ...SKB, fontSize: 'var(--fs-13)', color: '#E5E1DB', letterSpacing: '-0.02em', lineHeight: 1.2, margin: 0, textTransform: 'uppercase' }}>{profile?.display_name || username}</p>
         </div>
 
         {/* Handle — 2px smaller than the display name (fontSize 8). */}
         <div style={{ position: 'absolute', left: 126, top: 26 }}>
-          <p style={{ ...SKB, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.6)', letterSpacing: '-0.02em', lineHeight: 1.2, margin: 0, textTransform: 'uppercase' }}>@{username}</p>
+          <p style={{ ...SKB, fontSize: 'var(--fs-8)', color: 'rgba(229,225,219,0.6)', letterSpacing: '-0.02em', lineHeight: 1.2, margin: 0, textTransform: 'uppercase' }}>@{username}</p>
         </div>
 
         {/* Info sheet trigger — hidden while BIO sheet is open so it doesn't bleed over the sheet */}
@@ -333,8 +333,8 @@ export default function PublicProfilePage() {
         >
           <div style={{
             width: 14.6, height: 11.2,
-            border: '0.5px solid #FFFFFF',
-            background: profileDataOpen ? '#FFFFFF' : 'transparent',
+            border: '0.5px solid #E5E1DB',
+            background: profileDataOpen ? '#E5E1DB' : 'transparent',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             boxSizing: 'border-box',
             transition: 'background 200ms ease',
@@ -342,7 +342,7 @@ export default function PublicProfilePage() {
             <span style={{
               fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700,
               fontSize: 'var(--fs-15_7)', letterSpacing: '-0.02em',
-              color: profileDataOpen ? '#000000' : '#FFFFFF',
+              color: profileDataOpen ? '#000000' : '#E5E1DB',
               lineHeight: 1, display: 'block',
               transform: 'translateY(-1px)',
               transition: 'color 200ms ease',
@@ -356,7 +356,7 @@ export default function PublicProfilePage() {
         {user && !isOwnProfile && targetPrivyId && (!followingUser || justFollowed) && (
           // justFollowed holds the button through the red confirm beat, then the
           // standing followed state (no button; UNFOLLOW in the BIO sheet) takes over.
-          <button ref={followBtnRef} onClick={justFollowed ? undefined : handleFollow} disabled={followLoading} style={{ position: 'absolute', ...SKB, fontSize: 'var(--fs-8)', color: 'white', letterSpacing: '-0.18px', background: justFollowed ? '#FF0000' : 'transparent', border: justFollowed ? '1px solid #FF0000' : '1px solid white', padding: '3px 8px', right: 4, top: 60, cursor: followLoading || justFollowed ? 'default' : 'pointer', textTransform: 'uppercase', opacity: profileDataOpen ? 0 : 1, pointerEvents: profileDataOpen ? 'none' : 'auto', transition: 'opacity 200ms ease, background 120ms ease, border-color 120ms ease', animation: justFollowed ? 'follow-pop 180ms ease-out' : 'none' }}>
+          <button ref={followBtnRef} onClick={justFollowed ? undefined : handleFollow} disabled={followLoading} style={{ position: 'absolute', ...SKB, fontSize: 'var(--fs-8)', color: '#E5E1DB', letterSpacing: '-0.18px', background: justFollowed ? '#E5E1DB' : 'transparent', border: justFollowed ? '1px solid #E5E1DB' : '1px solid white', padding: '3px 8px', right: 4, top: 60, cursor: followLoading || justFollowed ? 'default' : 'pointer', textTransform: 'uppercase', opacity: profileDataOpen ? 0 : 1, pointerEvents: profileDataOpen ? 'none' : 'auto', transition: 'opacity 200ms ease, background 120ms ease, border-color 120ms ease', animation: justFollowed ? 'follow-pop 180ms ease-out' : 'none' }}>
             {justFollowed ? 'FOLLOWING' : 'FOLLOW'}
           </button>
         )}
@@ -368,7 +368,7 @@ export default function PublicProfilePage() {
         {user && !isOwnProfile && targetPrivyId && (
           <button
             onClick={() => router.push(`/dm/${encodeURIComponent(username)}`)}
-            style={{ position: 'absolute', ...SKB, fontSize: 'var(--fs-8)', color: 'white', letterSpacing: '-0.18px', background: 'transparent', border: '1px solid rgba(255,255,255,0.5)', padding: '3px 8px', right: 4, top: (!followingUser || justFollowed) ? 84 : 60, cursor: 'pointer', textTransform: 'uppercase', opacity: profileDataOpen ? 0 : 1, pointerEvents: profileDataOpen ? 'none' : 'auto', transition: 'opacity 200ms ease, top 200ms ease' }}
+            style={{ position: 'absolute', ...SKB, fontSize: 'var(--fs-8)', color: '#E5E1DB', letterSpacing: '-0.18px', background: 'transparent', border: '1px solid rgba(229,225,219,0.5)', padding: '3px 8px', right: 4, top: (!followingUser || justFollowed) ? 84 : 60, cursor: 'pointer', textTransform: 'uppercase', opacity: profileDataOpen ? 0 : 1, pointerEvents: profileDataOpen ? 'none' : 'auto', transition: 'opacity 200ms ease, top 200ms ease' }}
           >
             MESSAGE
           </button>
@@ -383,7 +383,7 @@ export default function PublicProfilePage() {
         <div style={{ position: 'fixed', left: flyer.x, top: flyer.y, zIndex: 1300, pointerEvents: 'none' }}>
           <div style={{ animation: 'follow-fly-x 560ms cubic-bezier(0.2,0.7,0.3,1) both', ['--fx' as string]: `${flyer.dx}px` }}>
             <div style={{ animation: 'follow-fly-y 560ms cubic-bezier(0.55,0,0.85,0.55) both', ['--fy' as string]: `${flyer.dy}px` }}>
-              <div style={{ width: 11, height: 11, borderRadius: '50%', background: '#FF0000', boxShadow: '0 0 8px rgba(255,0,0,0.7)', transform: 'translate(-50%, -50%)' }} />
+              <div style={{ width: 11, height: 11, borderRadius: '50%', background: '#E5E1DB', boxShadow: '0 0 8px rgba(229,225,219,0.7)', transform: 'translate(-50%, -50%)' }} />
             </div>
           </div>
         </div>,
@@ -393,7 +393,7 @@ export default function PublicProfilePage() {
         @keyframes follow-fly-x { from { transform: translateX(0); } to { transform: translateX(var(--fx)); } }
         @keyframes follow-fly-y { from { transform: translateY(0) scale(1); opacity: 1; } to { transform: translateY(var(--fy)) scale(0.4); opacity: 0.15; } }
         @keyframes follow-pop { 0% { transform: scale(1); } 40% { transform: scale(1.08); } 100% { transform: scale(1); } }
-        @keyframes i-land-pulse { 0% { transform: scale(1); filter: none; } 40% { transform: scale(1.25); filter: drop-shadow(0 0 6px rgba(255,0,0,0.9)); } 100% { transform: scale(1); filter: none; } }
+        @keyframes i-land-pulse { 0% { transform: scale(1); filter: none; } 40% { transform: scale(1.25); filter: drop-shadow(0 0 6px rgba(229,225,219,0.9)); } 100% { transform: scale(1); filter: none; } }
       `}</style>
 
       {/* Frame icon — appears when header is hidden, tapping snaps header back */}
@@ -448,7 +448,7 @@ export default function PublicProfilePage() {
               onClick={() => setActiveTab('main')}
               style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer' }}
             >
-              <span style={{ ...SKB, fontSize: 'var(--fs-9_5)', color: activeTab === 'main' ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '-0.16px' }}>MAIN</span>
+              <span style={{ ...SKB, fontSize: 'var(--fs-9_5)', color: activeTab === 'main' ? 'rgba(229,225,219,0.8)' : 'rgba(229,225,219,0.4)', textTransform: 'uppercase', letterSpacing: '-0.16px' }}>MAIN</span>
             </button>
           )}
 
@@ -474,7 +474,7 @@ export default function PublicProfilePage() {
             onClick={() => setActiveTab('collected')}
             style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', animation: headerUnsnapping ? 'snapOutRight 0.28s cubic-bezier(0.16,1,0.3,1) 0ms both' : headerSnapped ? 'snapInRight 0.32s cubic-bezier(0.16,1,0.3,1) 165ms both' : 'none' }}
           >
-            <span style={{ ...SKB, fontSize: 'var(--fs-9_5)', color: activeTab === 'collected' ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '-0.16px' }}>COLLECTED</span>
+            <span style={{ ...SKB, fontSize: 'var(--fs-9_5)', color: activeTab === 'collected' ? 'rgba(229,225,219,0.8)' : 'rgba(229,225,219,0.4)', textTransform: 'uppercase', letterSpacing: '-0.16px' }}>COLLECTED</span>
           </button>
         </div>
       </div>
@@ -498,7 +498,7 @@ export default function PublicProfilePage() {
           </div>
         ) : posts.length === 0 ? (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', flex: 1, minHeight: '50vh', paddingTop: 140 }}>
-            <p style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase' }}>NO POSTS YET</p>
+            <p style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase' }}>NO POSTS YET</p>
           </div>
         ) : (
           <div ref={gridScrollRef} className="overflow-y-auto h-full px-[1px]" onScroll={(e) => {
@@ -557,13 +557,13 @@ export default function PublicProfilePage() {
       {/* Decks sheet */}
       <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, height: '70vh', backgroundColor: '#000', borderTop: '1px solid white', zIndex: 60, transform: showDecks ? 'translateY(0)' : 'translateY(100%)', transition: 'transform 300ms ease', display: 'flex', flexDirection: 'column' }}>
         <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px 16px 10px', flexShrink: 0 }}>
-          <div style={{ position: 'absolute', top: 8, left: '50%', transform: 'translateX(-50%)', width: 40, height: 3, backgroundColor: 'rgba(255,255,255,0.3)' }} />
-          <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: 'white', letterSpacing: '0.05em', textTransform: 'uppercase' }}>DECKS</span>
-          <button onClick={() => { setShowDecks(false); setActiveTab('main'); }} style={{ position: 'absolute', right: 16, fontSize: 'var(--fs-18)', color: 'white', background: 'none', border: 'none', cursor: 'pointer' }}>×</button>
+          <div style={{ position: 'absolute', top: 8, left: '50%', transform: 'translateX(-50%)', width: 40, height: 3, backgroundColor: 'rgba(229,225,219,0.3)' }} />
+          <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: '#E5E1DB', letterSpacing: '0.05em', textTransform: 'uppercase' }}>DECKS</span>
+          <button onClick={() => { setShowDecks(false); setActiveTab('main'); }} style={{ position: 'absolute', right: 16, fontSize: 'var(--fs-18)', color: '#E5E1DB', background: 'none', border: 'none', cursor: 'pointer' }}>×</button>
         </div>
         <div style={{ flex: 1, overflowY: 'auto', padding: '0 16px' }}>
           {decksLoading ? <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '50%' }}><FrameLoader /></div>
-          : publicDecks.length === 0 ? <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '50%' }}><span style={{ ...SKB, fontSize: 'var(--fs-11)', color: 'white', textTransform: 'uppercase' }}>NO DECKS YET</span></div>
+          : publicDecks.length === 0 ? <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '50%' }}><span style={{ ...SKB, fontSize: 'var(--fs-11)', color: '#E5E1DB', textTransform: 'uppercase' }}>NO DECKS YET</span></div>
           : publicDecks.map(deck => (
             <div key={deck.id} onClick={() => { setShowDecks(false); router.push(`/profile/${username}/decks/${deck.id}`); }} style={{ marginBottom: 12, cursor: 'pointer' }}>
               <div style={{ width: '100%', aspectRatio: getDeckAspect(deck.grid_layout), overflow: 'hidden', background: '#1a1a1a' }}>
@@ -574,8 +574,8 @@ export default function PublicProfilePage() {
                   ? <img src={feedImage(deck.thumbnail_urls[0], 600)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                   : null}
               </div>
-              <p style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'white', margin: '4px 0 0', textTransform: 'uppercase' }}>{deck.title}</p>
-              <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.5)', margin: '2px 0 0', textTransform: 'uppercase' }}>{deck.item_count} FRAMES</p>
+              <p style={{ ...SKB, fontSize: 'var(--fs-10)', color: '#E5E1DB', margin: '4px 0 0', textTransform: 'uppercase' }}>{deck.title}</p>
+              <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'rgba(229,225,219,0.5)', margin: '2px 0 0', textTransform: 'uppercase' }}>{deck.item_count} FRAMES</p>
             </div>
           ))}
         </div>

@@ -45,12 +45,12 @@ function CreatorCelebration({ onDone }: { onDone: () => void }) {
         <>
           <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 48, background: "linear-gradient(to bottom, rgba(0,0,0,0.95) 0%, transparent 100%)", animation: "fadeIn 0.8s ease forwards" }} />
           <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 48, background: "linear-gradient(to top, rgba(0,0,0,0.95) 0%, transparent 100%)", animation: "fadeIn 0.8s ease forwards" }} />
-          <div style={{ position: "absolute", top: 16, left: 16, right: 16, height: 2, backgroundColor: "rgba(255,255,255,0.15)", animation: "expandWidth 0.8s ease forwards" }} />
-          <div style={{ position: "absolute", bottom: 16, left: 16, right: 16, height: 2, backgroundColor: "rgba(255,255,255,0.15)", animation: "expandWidth 0.8s ease forwards" }} />
-          <div style={{ position: "absolute", top: 24, left: 24, width: 40, height: 40, borderTop: "2px solid #FF0000", borderLeft: "2px solid #FF0000", animation: "cornerReveal 0.4s ease forwards, flicker 4s ease 1s infinite", opacity: 0 }} />
-          <div style={{ position: "absolute", top: 24, right: 24, width: 40, height: 40, borderTop: "2px solid #FF0000", borderRight: "2px solid #FF0000", animation: "cornerReveal 0.4s ease 0.1s forwards, flicker 4s ease 1.2s infinite", opacity: 0 }} />
-          <div style={{ position: "absolute", bottom: 24, left: 24, width: 40, height: 40, borderBottom: "2px solid #FF0000", borderLeft: "2px solid #FF0000", animation: "cornerReveal 0.4s ease 0.2s forwards, flicker 4s ease 1.4s infinite", opacity: 0 }} />
-          <div style={{ position: "absolute", bottom: 24, right: 24, width: 40, height: 40, borderBottom: "2px solid #FF0000", borderRight: "2px solid #FF0000", animation: "cornerReveal 0.4s ease 0.3s forwards, flicker 4s ease 1.6s infinite", opacity: 0 }} />
+          <div style={{ position: "absolute", top: 16, left: 16, right: 16, height: 2, backgroundColor: "rgba(229,225,219,0.15)", animation: "expandWidth 0.8s ease forwards" }} />
+          <div style={{ position: "absolute", bottom: 16, left: 16, right: 16, height: 2, backgroundColor: "rgba(229,225,219,0.15)", animation: "expandWidth 0.8s ease forwards" }} />
+          <div style={{ position: "absolute", top: 24, left: 24, width: 40, height: 40, borderTop: "2px solid #E5E1DB", borderLeft: "2px solid #E5E1DB", animation: "cornerReveal 0.4s ease forwards, flicker 4s ease 1s infinite", opacity: 0 }} />
+          <div style={{ position: "absolute", top: 24, right: 24, width: 40, height: 40, borderTop: "2px solid #E5E1DB", borderRight: "2px solid #E5E1DB", animation: "cornerReveal 0.4s ease 0.1s forwards, flicker 4s ease 1.2s infinite", opacity: 0 }} />
+          <div style={{ position: "absolute", bottom: 24, left: 24, width: 40, height: 40, borderBottom: "2px solid #E5E1DB", borderLeft: "2px solid #E5E1DB", animation: "cornerReveal 0.4s ease 0.2s forwards, flicker 4s ease 1.4s infinite", opacity: 0 }} />
+          <div style={{ position: "absolute", bottom: 24, right: 24, width: 40, height: 40, borderBottom: "2px solid #E5E1DB", borderRight: "2px solid #E5E1DB", animation: "cornerReveal 0.4s ease 0.3s forwards, flicker 4s ease 1.6s infinite", opacity: 0 }} />
         </>
       )}
       <div style={{ perspective: 500, width: 80, height: 80, marginBottom: 32, position: "relative", opacity: phase === "loading" ? 0 : 1, transform: phase === "loading" ? "translateY(20px)" : "translateY(0)", transition: "all 1s cubic-bezier(0.16,1,0.3,1)" }}>
@@ -61,15 +61,15 @@ function CreatorCelebration({ onDone }: { onDone: () => void }) {
         </div>
       </div>
       {phase !== "loading" && (
-        <p style={{ ...BOLD, fontSize: 'var(--fs-24)', color: "white", textTransform: "uppercase", letterSpacing: "-0.02em", margin: "0 0 16px", animation: "fadeUp 0.8s ease forwards" }}>IN-HOUSE CREATOR</p>
+        <p style={{ ...BOLD, fontSize: 'var(--fs-24)', color: "#E5E1DB", textTransform: "uppercase", letterSpacing: "-0.02em", margin: "0 0 16px", animation: "fadeUp 0.8s ease forwards" }}>IN-HOUSE CREATOR</p>
       )}
       {(phase === "text" || phase === "done") && (
-        <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-13)', color: "rgba(255,255,255,0.6)", letterSpacing: "0.1em" }}>
+        <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-13)', color: "rgba(229,225,219,0.6)", letterSpacing: "0.1em" }}>
           {typed}<span style={{ animation: "blink 1s step-end infinite" }}>_</span>
         </p>
       )}
       {phase === "done" && (
-        <p style={{ ...REG, fontSize: 'var(--fs-11)', color: "rgba(255,255,255,0.3)", marginTop: 12, animation: "fadeUp 0.8s ease forwards" }}>Post 10+ times monthly to keep your badge.</p>
+        <p style={{ ...REG, fontSize: 'var(--fs-11)', color: "rgba(229,225,219,0.3)", marginTop: 12, animation: "fadeUp 0.8s ease forwards" }}>Post 10+ times monthly to keep your badge.</p>
       )}
       <Styles />
     </div>
@@ -126,11 +126,11 @@ function Top1kCelebration({ onDone }: { onDone: () => void }) {
         <p style={{ ...BOLD, fontSize: 'var(--fs-22)', color: "#C9A84C", textTransform: "uppercase", letterSpacing: "-0.02em", margin: "0 0 8px", animation: "fadeUp 0.8s ease forwards" }}>TOP 1000 COLLECTOR</p>
       )}
       {(phase === "counter" || phase === "done") && (
-        <p style={{ ...BOLD, fontSize: 48, color: "white", margin: "0 0 4px", animation: "fadeUp 0.5s ease forwards", lineHeight: 1 }}>#{count}</p>
+        <p style={{ ...BOLD, fontSize: 48, color: "#E5E1DB", margin: "0 0 4px", animation: "fadeUp 0.5s ease forwards", lineHeight: 1 }}>#{count}</p>
       )}
       {phase === "done" && (
         <>
-          <p style={{ ...REG, fontSize: 'var(--fs-11)', color: "rgba(255,255,255,0.4)", margin: "4px 0 0", animation: "fadeUp 0.8s ease forwards" }}>Your collector rank on Scope</p>
+          <p style={{ ...REG, fontSize: 'var(--fs-11)', color: "rgba(229,225,219,0.4)", margin: "4px 0 0", animation: "fadeUp 0.8s ease forwards" }}>Your collector rank on Scope</p>
           <p style={{ ...REG, fontSize: 'var(--fs-11)', color: "rgba(201,168,76,0.6)", marginTop: 16, animation: "fadeUp 0.8s ease 0.2s forwards", opacity: 0 }}>Daily distributions begin tomorrow.</p>
         </>
       )}
@@ -192,7 +192,7 @@ function FoundingCelebration({ foundingNumber, onDone }: { foundingNumber?: numb
           width: star.size,
           height: star.size,
           borderRadius: "50%",
-          backgroundColor: "white",
+          backgroundColor: "#E5E1DB",
           opacity: isActive ? star.brightness * 0.9 : 0,
           transition: `opacity ${star.speed * 0.3}s ease ${star.delay * 0.05}s`,
           animation: phase === "vortex" || phase === "burst"
@@ -307,7 +307,7 @@ function FoundingCelebration({ foundingNumber, onDone }: { foundingNumber?: numb
       <div style={{ position: "relative", zIndex: 4, textAlign: "center", padding: "0 32px" }}>
         {(phase === "reveal" || phase === "done") && (
           <>
-            <p style={{ ...BOLD, fontSize: 'var(--fs-11)', color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.3em", margin: "0 0 8px", animation: "fadeUp 0.8s ease forwards" }}>
+            <p style={{ ...BOLD, fontSize: 'var(--fs-11)', color: "rgba(229,225,219,0.4)", textTransform: "uppercase", letterSpacing: "0.3em", margin: "0 0 8px", animation: "fadeUp 0.8s ease forwards" }}>
               FOUNDING MEMBER
             </p>
             <p style={{
@@ -318,17 +318,17 @@ function FoundingCelebration({ foundingNumber, onDone }: { foundingNumber?: numb
             }}>
               #{foundingNumber || 1}
             </p>
-            <p style={{ ...BOLD, fontSize: 'var(--fs-10)', color: "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: "0.2em", margin: "0 0 20px", animation: "fadeUp 0.8s ease 0.2s forwards", opacity: 0 }}>
+            <p style={{ ...BOLD, fontSize: 'var(--fs-10)', color: "rgba(229,225,219,0.3)", textTransform: "uppercase", letterSpacing: "0.2em", margin: "0 0 20px", animation: "fadeUp 0.8s ease 0.2s forwards", opacity: 0 }}>
               OF 500
             </p>
           </>
         )}
         {phase === "done" && (
           <>
-            <p style={{ ...REG, fontSize: 'var(--fs-13)', color: "rgba(255,255,255,0.6)", lineHeight: 1.6, margin: "0 0 8px", animation: "fadeUp 0.8s ease forwards" }}>
+            <p style={{ ...REG, fontSize: 'var(--fs-13)', color: "rgba(229,225,219,0.6)", lineHeight: 1.6, margin: "0 0 8px", animation: "fadeUp 0.8s ease forwards" }}>
               You are one of the first 500 members of Scope.
             </p>
-            <p style={{ ...REG, fontSize: 'var(--fs-11)', color: "rgba(255,255,255,0.3)", animation: "fadeUp 0.8s ease 0.2s forwards", opacity: 0 }}>
+            <p style={{ ...REG, fontSize: 'var(--fs-11)', color: "rgba(229,225,219,0.3)", animation: "fadeUp 0.8s ease 0.2s forwards", opacity: 0 }}>
               Your founding spot is yours as long as you stay.
             </p>
           </>

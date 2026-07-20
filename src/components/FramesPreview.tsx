@@ -51,7 +51,7 @@ export default function FramesPreview({ selectedItems, layoutConfig, previewWidt
                   width: cellW,
                   height: cellH,
                   background: "#1A1A1A",
-                  border: "0.5px solid rgba(255,255,255,0.12)",
+                  border: "0.5px solid rgba(229,225,219,0.12)",
                   overflow: "hidden",
                   flexShrink: 0,
                   boxSizing: "border-box",

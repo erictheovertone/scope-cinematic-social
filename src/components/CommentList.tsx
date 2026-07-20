@@ -179,12 +179,12 @@ function LikeButton({ state, onToggle, cfg }: { state: CommentLikeState; onToggl
       }}
     >
       <svg width={cfg.heart} height={cfg.heart} viewBox="0 0 24 24"
-        fill={liked ? "#FF0000" : "none"}
-        stroke={liked ? "#FF0000" : "rgba(255,255,255,0.5)"} strokeWidth={2}>
+        fill={liked ? "#E5E1DB" : "none"}
+        stroke={liked ? "#E5E1DB" : "rgba(229,225,219,0.5)"} strokeWidth={2}>
         <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.8 1-1.1a5.5 5.5 0 0 0 0-7.8z" />
       </svg>
       {state.count > 0 && (
-        <span style={{ ...SKR, fontSize: scale(cfg.meta, 1), color: liked ? "#FF0000" : "rgba(255,255,255,0.4)", fontVariantNumeric: "tabular-nums", lineHeight: 1 }}>
+        <span style={{ ...SKR, fontSize: scale(cfg.meta, 1), color: liked ? "#E5E1DB" : "rgba(229,225,219,0.4)", fontVariantNumeric: "tabular-nums", lineHeight: 1 }}>
           {state.count}
         </span>
       )}
@@ -278,7 +278,7 @@ function Row({
           {avatarUrl ? (
             <img src={feedImage(avatarUrl, 96)} alt={c.username ?? ""} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
           ) : (
-            <span style={{ ...SKB, fontSize: scale(handleSize, 0.85), color: "white", textTransform: "uppercase", lineHeight: 1 }}>
+            <span style={{ ...SKB, fontSize: scale(handleSize, 0.85), color: "#E5E1DB", textTransform: "uppercase", lineHeight: 1 }}>
               {c.username?.[0] ?? "?"}
             </span>
           )}
@@ -290,11 +290,11 @@ function Row({
           <span
             ref={handleRef}
             onClick={canProfile ? (e) => { e.stopPropagation(); onProfile!(c.username as string); } : undefined}
-            style={{ ...SKB, fontSize: handleSize, color: `rgba(255,255,255,${cfg.hOp})`, marginRight: 5, textTransform: "uppercase", cursor: canProfile ? "pointer" : "default", display: "inline-block" }}
+            style={{ ...SKB, fontSize: handleSize, color: `rgba(229,225,219,${cfg.hOp})`, marginRight: 5, textTransform: "uppercase", cursor: canProfile ? "pointer" : "default", display: "inline-block" }}
           >
             @{c.username}
           </span>
-          <span style={{ ...SKR, fontSize: textSize, color: `rgba(255,255,255,${cfg.tOp})` }}>{c.content}</span>
+          <span style={{ ...SKR, fontSize: textSize, color: `rgba(229,225,219,${cfg.tOp})` }}>{c.content}</span>
         </div>
 
         {/* Meta row — reply link (top-level only) + optional timestamp. */}
@@ -303,13 +303,13 @@ function Row({
             {!isReply && onReply && viewerDid && (
               <button
                 onClick={(e) => { e.stopPropagation(); onReply(c); }}
-                style={{ background: "none", border: "none", padding: 0, cursor: "pointer", ...SKR, fontSize: cfg.meta, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.04em" }}
+                style={{ background: "none", border: "none", padding: 0, cursor: "pointer", ...SKR, fontSize: cfg.meta, color: "rgba(229,225,219,0.4)", textTransform: "uppercase", letterSpacing: "0.04em" }}
               >
                 reply
               </button>
             )}
             {cfg.showTime && c.created_at && (
-              <span style={{ ...SKR, fontSize: cfg.meta, color: "rgba(255,255,255,0.3)" }}>{timeAgo(c.created_at)}</span>
+              <span style={{ ...SKR, fontSize: cfg.meta, color: "rgba(229,225,219,0.3)" }}>{timeAgo(c.created_at)}</span>
             )}
           </div>
         )}
@@ -365,7 +365,7 @@ export default function CommentList({
             {collapsed && (
               <button
                 onClick={() => setExpanded((s) => new Set(s).add(parent.id))}
-                style={{ marginLeft: cfg.indent, marginBottom: 8, background: "none", border: "none", padding: 0, cursor: "pointer", ...SKR, fontSize: cfg.meta, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.04em" }}
+                style={{ marginLeft: cfg.indent, marginBottom: 8, background: "none", border: "none", padding: 0, cursor: "pointer", ...SKR, fontSize: cfg.meta, color: "rgba(229,225,219,0.4)", textTransform: "uppercase", letterSpacing: "0.04em" }}
               >
                 — view {replies.length} replies
               </button>
@@ -500,16 +500,16 @@ export function ReplyComposer({
     <>
       {/* Header + close */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
-        <span style={{ ...SKB, fontSize: 10, color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: "0.12em" }}>
+        <span style={{ ...SKB, fontSize: 10, color: "rgba(229,225,219,0.5)", textTransform: "uppercase", letterSpacing: "0.12em" }}>
           Replying to @{parent.username}
         </span>
-        <button onClick={attemptClose} aria-label="Cancel reply" style={{ background: "none", border: "none", padding: 0, cursor: "pointer", ...SKR, fontSize: 18, color: "rgba(255,255,255,0.55)", lineHeight: 1 }}>✕</button>
+        <button onClick={attemptClose} aria-label="Cancel reply" style={{ background: "none", border: "none", padding: 0, cursor: "pointer", ...SKR, fontSize: 18, color: "rgba(229,225,219,0.55)", lineHeight: 1 }}>✕</button>
       </div>
 
       {/* Parent comment quoted for context (muted, clamped) */}
-      <div style={{ borderLeft: "2px solid rgba(255,255,255,0.14)", paddingLeft: 10 }}>
-        <span style={{ ...SKB, fontSize: "var(--fs-8)", color: "rgba(255,255,255,0.6)", textTransform: "uppercase", marginRight: 5 }}>@{parent.username}</span>
-        <span style={{ ...SKR, fontSize: "var(--fs-8)", color: "rgba(255,255,255,0.4)", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{parent.content}</span>
+      <div style={{ borderLeft: "2px solid rgba(229,225,219,0.14)", paddingLeft: 10 }}>
+        <span style={{ ...SKB, fontSize: "var(--fs-8)", color: "rgba(229,225,219,0.6)", textTransform: "uppercase", marginRight: 5 }}>@{parent.username}</span>
+        <span style={{ ...SKR, fontSize: "var(--fs-8)", color: "rgba(229,225,219,0.4)", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{parent.content}</span>
       </div>
 
       {/* Input */}
@@ -521,18 +521,18 @@ export function ReplyComposer({
         placeholder={`reply to @${parent.username}…`}
         style={{
           width: "100%", background: "transparent", border: "none",
-          borderBottom: "1px solid rgba(255,255,255,0.18)", outline: "none",
-          ...SKR, fontSize: "max(16px, var(--fs-10))", color: "white", padding: "6px 0",
+          borderBottom: "1px solid rgba(229,225,219,0.18)", outline: "none",
+          ...SKR, fontSize: "max(16px, var(--fs-10))", color: "#E5E1DB", padding: "6px 0",
         }}
       />
 
       {/* Discard confirm (dirty state) OR the POST row */}
       {askDiscard ? (
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-          <span style={{ ...SKR, fontSize: "var(--fs-8)", color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: "0.04em" }}>Discard reply?</span>
+          <span style={{ ...SKR, fontSize: "var(--fs-8)", color: "rgba(229,225,219,0.5)", textTransform: "uppercase", letterSpacing: "0.04em" }}>Discard reply?</span>
           <div style={{ display: "flex", gap: 16 }}>
-            <button onClick={() => setAskDiscard(false)} style={{ background: "none", border: "none", padding: 0, cursor: "pointer", ...SKB, fontSize: "var(--fs-9)", color: "rgba(255,255,255,0.55)", textTransform: "uppercase" }}>keep</button>
-            <button onClick={finish} style={{ background: "none", border: "none", padding: 0, cursor: "pointer", ...SKB, fontSize: "var(--fs-9)", color: "#FF0000", textTransform: "uppercase" }}>discard</button>
+            <button onClick={() => setAskDiscard(false)} style={{ background: "none", border: "none", padding: 0, cursor: "pointer", ...SKB, fontSize: "var(--fs-9)", color: "rgba(229,225,219,0.55)", textTransform: "uppercase" }}>keep</button>
+            <button onClick={finish} style={{ background: "none", border: "none", padding: 0, cursor: "pointer", ...SKB, fontSize: "var(--fs-9)", color: "#E5E1DB", textTransform: "uppercase" }}>discard</button>
           </div>
         </div>
       ) : (
@@ -540,7 +540,7 @@ export function ReplyComposer({
           <button
             onClick={submit}
             disabled={!text.trim() || submitting}
-            style={{ background: "none", border: "none", padding: 0, cursor: text.trim() ? "pointer" : "default", ...SKB, fontSize: "var(--fs-10)", color: text.trim() ? "white" : "rgba(255,255,255,0.25)", textTransform: "uppercase", letterSpacing: "0.04em" }}
+            style={{ background: "none", border: "none", padding: 0, cursor: text.trim() ? "pointer" : "default", ...SKB, fontSize: "var(--fs-10)", color: text.trim() ? "#E5E1DB" : "rgba(229,225,219,0.25)", textTransform: "uppercase", letterSpacing: "0.04em" }}
           >
             {submitting ? "posting…" : "post"}
           </button>
@@ -570,8 +570,8 @@ export function ReplyComposer({
           position: "relative", pointerEvents: "auto",
           width: isDesktop ? 480 : "100%", maxWidth: isDesktop ? 480 : "none",
           background: "#0c0c0c",
-          borderTop: isDesktop ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(255,255,255,0.1)",
-          border: isDesktop ? "1px solid rgba(255,255,255,0.1)" : undefined,
+          borderTop: isDesktop ? "1px solid rgba(229,225,219,0.1)" : "1px solid rgba(229,225,219,0.1)",
+          border: isDesktop ? "1px solid rgba(229,225,219,0.1)" : undefined,
           boxShadow: "0 -18px 60px rgba(0,0,0,0.6)",
           padding: isDesktop ? "14px 18px 18px" : "8px 18px calc(18px + env(safe-area-inset-bottom))",
           display: "flex", flexDirection: "column", gap: 12,
@@ -582,7 +582,7 @@ export function ReplyComposer({
         {/* Grabber — drag it down to dismiss (mobile sheet language). */}
         <div
           onPointerDown={onGrab}
-          style={{ alignSelf: "center", width: 36, height: 4, borderRadius: 2, background: "rgba(255,255,255,0.25)", margin: "0 0 6px", cursor: "grab", touchAction: "none" }}
+          style={{ alignSelf: "center", width: 36, height: 4, borderRadius: 2, background: "rgba(229,225,219,0.25)", margin: "0 0 6px", cursor: "grab", touchAction: "none" }}
         />
         {body}
       </div>

@@ -15,7 +15,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { Subcat } from './navModel';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
-const RED = '#FF0000';
+const RED = '#E5E1DB';
 
 // SSR-safe layout effect.
 const useIso = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
@@ -49,7 +49,7 @@ export default function Tier2Subcats({ subcats, active, onSelect }: Tier2Subcats
         gap: overflow ? 18 : 0,
         overflowX: 'auto',
         padding: '12px 16px 10px',
-        borderBottom: '1px solid rgba(255,255,255,0.06)',
+        borderBottom: '1px solid rgba(229,225,219,0.06)',
       }}
     >
       {subcats.map((s) => {
@@ -63,7 +63,7 @@ export default function Tier2Subcats({ subcats, active, onSelect }: Tier2Subcats
               padding: '2px 0', position: 'relative',
             }}
           >
-            <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: on ? 'white' : 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em', whiteSpace: 'nowrap' }}>{s.label}</span>
+            <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: on ? '#E5E1DB' : 'rgba(229,225,219,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em', whiteSpace: 'nowrap' }}>{s.label}</span>
             {on && <div style={{ position: 'absolute', left: 0, right: 0, bottom: -4, height: 2, background: RED }} />}
           </button>
         );

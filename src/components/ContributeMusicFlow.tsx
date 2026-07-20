@@ -23,8 +23,8 @@ import {
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
-const HAIR = "rgba(255,255,255,0.12)";
-const RED = "#FF0000";
+const HAIR = "rgba(229,225,219,0.12)";
+const RED = "#E5E1DB";
 const BATCH_CAP = 12;
 
 type Step = "upload" | "table" | "license" | "done";
@@ -287,10 +287,10 @@ export default function ContributeMusicFlow({ onClose }: { onClose: () => void }
       {/* always-mounted art picker (used from the table step) */}
       <input ref={artInput} type="file" accept="image/*" hidden onChange={(e) => { onArtFile(e.target.files?.[0]); e.target.value = ""; }} />
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-        <span style={{ ...SKB, fontSize: "var(--fs-11)", color: "#FFF", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+        <span style={{ ...SKB, fontSize: "var(--fs-11)", color: "#E5E1DB", textTransform: "uppercase", letterSpacing: "0.1em" }}>
           {step === "done" ? "Submitted" : "Contribute Music"}
         </span>
-        <button onClick={close} aria-label="Close" style={{ background: "none", border: "none", cursor: "pointer", ...SKR, fontSize: 20, color: "rgba(255,255,255,0.55)", lineHeight: 1, padding: 4 }}>✕</button>
+        <button onClick={close} aria-label="Close" style={{ background: "none", border: "none", cursor: "pointer", ...SKR, fontSize: 20, color: "rgba(229,225,219,0.55)", lineHeight: 1, padding: 4 }}>✕</button>
       </div>
 
       {step === "upload" && (
@@ -299,29 +299,29 @@ export default function ContributeMusicFlow({ onClose }: { onClose: () => void }
             onClick={() => rows.length < BATCH_CAP && fileInput.current?.click()}
             onDragOver={(e) => e.preventDefault()}
             onDrop={(e) => { e.preventDefault(); addFiles(e.dataTransfer.files); }}
-            style={{ border: `1px dashed ${HAIR}`, padding: "26px 18px", textAlign: "center", cursor: rows.length < BATCH_CAP ? "pointer" : "default", background: "rgba(255,255,255,0.02)" }}
+            style={{ border: `1px dashed ${HAIR}`, padding: "26px 18px", textAlign: "center", cursor: rows.length < BATCH_CAP ? "pointer" : "default", background: "rgba(229,225,219,0.02)" }}
           >
-            <p style={{ ...SKB, fontSize: "var(--fs-10)", color: "#FFF", margin: "0 0 6px", letterSpacing: "0.06em" }}>DROP AUDIO OR TAP TO CHOOSE</p>
-            <p style={{ ...SKR, fontSize: "var(--fs-8)", color: "rgba(255,255,255,0.4)", margin: 0 }}>MP3 · AAC · WAV — up to 15MB, ~6 min · {rows.length}/{BATCH_CAP}</p>
+            <p style={{ ...SKB, fontSize: "var(--fs-10)", color: "#E5E1DB", margin: "0 0 6px", letterSpacing: "0.06em" }}>DROP AUDIO OR TAP TO CHOOSE</p>
+            <p style={{ ...SKR, fontSize: "var(--fs-8)", color: "rgba(229,225,219,0.4)", margin: 0 }}>MP3 · AAC · WAV — up to 15MB, ~6 min · {rows.length}/{BATCH_CAP}</p>
           </div>
           <input ref={fileInput} type="file" multiple accept="audio/mpeg,audio/aac,audio/mp4,audio/x-m4a,audio/wav,audio/*" hidden onChange={(e) => { addFiles(e.target.files); e.target.value = ""; }} />
 
           {rows.length > 0 && (
             <div style={{ display: "flex", flexDirection: "column", gap: 8, maxHeight: isDesktop ? 300 : "38vh", overflowY: "auto" }}>
               {rows.map((r) => (
-                <div key={r.localId} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", border: `1px solid ${r.status === "failed" ? "rgba(255,0,0,0.4)" : HAIR}` }}>
+                <div key={r.localId} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", border: `1px solid ${r.status === "failed" ? "rgba(229,225,219,0.4)" : HAIR}` }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ ...SKR, fontSize: "var(--fs-8)", color: "#FFF", margin: "0 0 5px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{r.fileName}</p>
+                    <p style={{ ...SKR, fontSize: "var(--fs-8)", color: "#E5E1DB", margin: "0 0 5px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{r.fileName}</p>
                     {r.status === "uploading" && (
-                      <div style={{ height: 3, background: "rgba(255,255,255,0.12)" }}><div style={{ height: "100%", width: `${r.progress}%`, background: RED, transition: "width 120ms linear" }} /></div>
+                      <div style={{ height: 3, background: "rgba(229,225,219,0.12)" }}><div style={{ height: "100%", width: `${r.progress}%`, background: RED, transition: "width 120ms linear" }} /></div>
                     )}
-                    {r.status === "done" && <span style={{ ...SKR, fontSize: "var(--fs-7)", color: "rgba(255,255,255,0.4)" }}>DONE · {fmtDuration(r.duration)}</span>}
+                    {r.status === "done" && <span style={{ ...SKR, fontSize: "var(--fs-7)", color: "rgba(229,225,219,0.4)" }}>DONE · {fmtDuration(r.duration)}</span>}
                     {r.status === "failed" && <span style={{ ...SKR, fontSize: "var(--fs-7)", color: RED }}>FAILED</span>}
                   </div>
                   {r.status === "failed" && (
-                    <button onClick={() => void startUpload(r)} style={{ ...SKB, fontSize: "var(--fs-7)", color: "#FFF", background: "transparent", border: `1px solid ${HAIR}`, cursor: "pointer", padding: "4px 9px", textTransform: "uppercase" }}>Retry</button>
+                    <button onClick={() => void startUpload(r)} style={{ ...SKB, fontSize: "var(--fs-7)", color: "#E5E1DB", background: "transparent", border: `1px solid ${HAIR}`, cursor: "pointer", padding: "4px 9px", textTransform: "uppercase" }}>Retry</button>
                   )}
-                  <button onClick={() => removeRow(r.localId)} aria-label="Remove" style={{ background: "none", border: "none", cursor: "pointer", ...SKR, fontSize: 16, color: "rgba(255,255,255,0.4)", lineHeight: 1, padding: 2 }}>✕</button>
+                  <button onClick={() => removeRow(r.localId)} aria-label="Remove" style={{ background: "none", border: "none", cursor: "pointer", ...SKR, fontSize: 16, color: "rgba(229,225,219,0.4)", lineHeight: 1, padding: 2 }}>✕</button>
                 </div>
               ))}
             </div>
@@ -332,25 +332,25 @@ export default function ContributeMusicFlow({ onClose }: { onClose: () => void }
               <button
                 onClick={() => setStep("table")}
                 disabled={uploading || doneRows.length === 0}
-                style={{ ...SKB, fontSize: "var(--fs-9)", color: (uploading || doneRows.length === 0) ? "rgba(255,255,255,0.25)" : "#FFF", textTransform: "uppercase", letterSpacing: "0.08em", background: "none", border: "none", cursor: (uploading || doneRows.length === 0) ? "default" : "pointer", padding: 0 }}
+                style={{ ...SKB, fontSize: "var(--fs-9)", color: (uploading || doneRows.length === 0) ? "rgba(229,225,219,0.25)" : "#E5E1DB", textTransform: "uppercase", letterSpacing: "0.08em", background: "none", border: "none", cursor: (uploading || doneRows.length === 0) ? "default" : "pointer", padding: 0 }}
               >
                 {uploading ? "Uploading…" : `Details (${doneRows.length}) →`}
               </button>
             </div>
           )}
-          {failedRows.length > 0 && !uploading && <p style={{ ...SKR, fontSize: "var(--fs-7)", color: "rgba(255,255,255,0.4)", margin: 0 }}>Failed files are skipped unless retried.</p>}
+          {failedRows.length > 0 && !uploading && <p style={{ ...SKR, fontSize: "var(--fs-7)", color: "rgba(229,225,219,0.4)", margin: 0 }}>Failed files are skipped unless retried.</p>}
         </>
       )}
 
       {step === "table" && (
         <>
-          <p style={{ ...SKR, fontSize: "var(--fs-8)", color: "rgba(255,255,255,0.4)", margin: 0 }}>Title each track and pick {KEYWORDS_MIN}–{KEYWORDS_MAX} keywords.</p>
+          <p style={{ ...SKR, fontSize: "var(--fs-8)", color: "rgba(229,225,219,0.4)", margin: 0 }}>Title each track and pick {KEYWORDS_MIN}–{KEYWORDS_MAX} keywords.</p>
           <div style={{ display: "flex", flexDirection: "column", gap: 10, maxHeight: isDesktop ? 380 : "50vh", overflowY: "auto" }}>
             {doneRows.map((r) => {
               const open = expanded === r.localId;
               const ok = rowReady(r);
               return (
-                <div key={r.localId} style={{ border: `1px solid ${ok ? HAIR : "rgba(255,0,0,0.35)"}`, padding: "10px 12px" }}>
+                <div key={r.localId} style={{ border: `1px solid ${ok ? HAIR : "rgba(229,225,219,0.35)"}`, padding: "10px 12px" }}>
                   <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
                     {/* art slot — tap to add a cover; shows the generated default until set */}
                     <div style={{ flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
@@ -358,38 +358,38 @@ export default function ContributeMusicFlow({ onClose }: { onClose: () => void }
                         <TrackArt url={r.artUrl} title={r.title} id={r.trackId} size={44} />
                       </button>
                       {doneRows.length > 1 && r.artUrl && (
-                        <button onClick={() => applyArtToAll(r.localId)} style={{ ...SKR, fontSize: 9, color: "rgba(255,255,255,0.4)", background: "none", border: "none", cursor: "pointer", padding: 0, textTransform: "uppercase", letterSpacing: "0.04em" }}>All</button>
+                        <button onClick={() => applyArtToAll(r.localId)} style={{ ...SKR, fontSize: 9, color: "rgba(229,225,219,0.4)", background: "none", border: "none", cursor: "pointer", padding: 0, textTransform: "uppercase", letterSpacing: "0.04em" }}>All</button>
                       )}
                     </div>
                     <input
                       value={r.title}
                       onChange={(e) => patchRow(r.localId, { title: e.target.value.slice(0, TITLE_MAX) })}
                       placeholder="track title"
-                      style={{ flex: 1, minWidth: 0, boxSizing: "border-box", background: "transparent", border: "none", borderBottom: `1px solid rgba(255,255,255,0.18)`, outline: "none", ...SKR, fontSize: "max(16px, var(--fs-9))", color: "#FFF", padding: "4px 0", alignSelf: "center" }}
+                      style={{ flex: 1, minWidth: 0, boxSizing: "border-box", background: "transparent", border: "none", borderBottom: `1px solid rgba(229,225,219,0.18)`, outline: "none", ...SKR, fontSize: "max(16px, var(--fs-9))", color: "#E5E1DB", padding: "4px 0", alignSelf: "center" }}
                     />
                   </div>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginTop: 8 }}>
-                    <span style={{ ...SKR, fontSize: "var(--fs-7)", color: r.keywords.length >= KEYWORDS_MIN ? "rgba(255,255,255,0.5)" : "rgba(255,0,0,0.7)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    <span style={{ ...SKR, fontSize: "var(--fs-7)", color: r.keywords.length >= KEYWORDS_MIN ? "rgba(229,225,219,0.5)" : "rgba(229,225,219,0.7)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                       {r.keywords.length ? r.keywords.join(" · ") : "no keywords yet"} ({r.keywords.length}/{KEYWORDS_MAX})
                     </span>
-                    <button onClick={() => setExpanded(open ? null : r.localId)} style={{ flexShrink: 0, ...SKB, fontSize: "var(--fs-7)", color: "#FFF", background: "transparent", border: `1px solid ${HAIR}`, cursor: "pointer", padding: "4px 9px", textTransform: "uppercase" }}>{open ? "Done" : "Keywords"}</button>
+                    <button onClick={() => setExpanded(open ? null : r.localId)} style={{ flexShrink: 0, ...SKB, fontSize: "var(--fs-7)", color: "#E5E1DB", background: "transparent", border: `1px solid ${HAIR}`, cursor: "pointer", padding: "4px 9px", textTransform: "uppercase" }}>{open ? "Done" : "Keywords"}</button>
                   </div>
                   {open && (
                     <div style={{ marginTop: 10 }}>
                       {MUSIC_TAXONOMY.map((group) => (
                         <div key={group.label} style={{ marginBottom: 10 }}>
-                          <p style={{ ...SKB, fontSize: "var(--fs-7)", color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.16em", margin: "0 0 6px" }}>{group.label}</p>
+                          <p style={{ ...SKB, fontSize: "var(--fs-7)", color: "rgba(229,225,219,0.35)", textTransform: "uppercase", letterSpacing: "0.16em", margin: "0 0 6px" }}>{group.label}</p>
                           <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                             {group.words.map((w) => {
                               const on = r.keywords.includes(w);
                               return (
-                                <button key={w} onClick={() => toggleChip(r.localId, w)} style={{ ...SKR, fontSize: "var(--fs-7)", color: on ? "#000" : "#FFF", background: on ? "#FFF" : "transparent", border: `1px solid ${on ? "#FFF" : HAIR}`, padding: "4px 9px", cursor: "pointer", textTransform: "lowercase" }}>{w}</button>
+                                <button key={w} onClick={() => toggleChip(r.localId, w)} style={{ ...SKR, fontSize: "var(--fs-7)", color: on ? "#000" : "#E5E1DB", background: on ? "#E5E1DB" : "transparent", border: `1px solid ${on ? "#E5E1DB" : HAIR}`, padding: "4px 9px", cursor: "pointer", textTransform: "lowercase" }}>{w}</button>
                               );
                             })}
                           </div>
                         </div>
                       ))}
-                      <button onClick={() => applyKeywordsToAll(r.localId)} style={{ ...SKB, fontSize: "var(--fs-7)", color: "#FFF", background: "transparent", border: `1px solid ${HAIR}`, cursor: "pointer", padding: "6px 12px", textTransform: "uppercase", letterSpacing: "0.06em" }}>Apply keywords to all</button>
+                      <button onClick={() => applyKeywordsToAll(r.localId)} style={{ ...SKB, fontSize: "var(--fs-7)", color: "#E5E1DB", background: "transparent", border: `1px solid ${HAIR}`, cursor: "pointer", padding: "6px 12px", textTransform: "uppercase", letterSpacing: "0.06em" }}>Apply keywords to all</button>
                     </div>
                   )}
                 </div>
@@ -402,11 +402,11 @@ export default function ContributeMusicFlow({ onClose }: { onClose: () => void }
 
       {step === "license" && (
         <>
-          <label style={{ ...SKB, fontSize: "var(--fs-8)", color: "rgba(255,255,255,0.45)", textTransform: "uppercase", letterSpacing: "0.12em" }}>License</label>
-          <p style={{ ...SKR, fontSize: "var(--fs-9)", color: "rgba(255,255,255,0.65)", lineHeight: 1.5, margin: 0 }}>{MUSIC_LICENSE_COPY}</p>
+          <label style={{ ...SKB, fontSize: "var(--fs-8)", color: "rgba(229,225,219,0.45)", textTransform: "uppercase", letterSpacing: "0.12em" }}>License</label>
+          <p style={{ ...SKR, fontSize: "var(--fs-9)", color: "rgba(229,225,219,0.65)", lineHeight: 1.5, margin: 0 }}>{MUSIC_LICENSE_COPY}</p>
           <button onClick={() => setLicensed((v) => !v)} style={{ display: "flex", alignItems: "flex-start", gap: 10, background: "none", border: "none", cursor: "pointer", padding: 0, textAlign: "left" }}>
-            <span style={{ width: 18, height: 18, flexShrink: 0, border: `1px solid ${licensed ? RED : "rgba(255,255,255,0.4)"}`, background: licensed ? RED : "transparent", display: "flex", alignItems: "center", justifyContent: "center", ...SKB, fontSize: 12, color: "#000" }}>{licensed ? "✓" : ""}</span>
-            <span style={{ ...SKR, fontSize: "var(--fs-8)", color: "rgba(255,255,255,0.7)" }}>I own {doneRows.length > 1 ? "these tracks" : "this track"} and agree to the license above.</span>
+            <span style={{ width: 18, height: 18, flexShrink: 0, border: `1px solid ${licensed ? RED : "rgba(229,225,219,0.4)"}`, background: licensed ? RED : "transparent", display: "flex", alignItems: "center", justifyContent: "center", ...SKB, fontSize: 12, color: "#000" }}>{licensed ? "✓" : ""}</span>
+            <span style={{ ...SKR, fontSize: "var(--fs-8)", color: "rgba(229,225,219,0.7)" }}>I own {doneRows.length > 1 ? "these tracks" : "this track"} and agree to the license above.</span>
           </button>
           <StepNav onBack={() => setStep("table")} onNext={submitAll} nextLabel={submitting ? "Submitting…" : `Submit ${doneRows.length}`} nextDisabled={!licensed || submitting} />
         </>
@@ -414,9 +414,9 @@ export default function ContributeMusicFlow({ onClose }: { onClose: () => void }
 
       {step === "done" && (
         <div style={{ padding: "8px 0 6px" }}>
-          <p style={{ ...SKB, fontSize: "var(--fs-11)", color: "#FFF", margin: "0 0 8px", letterSpacing: "0.04em" }}>Submitted for review</p>
-          <p style={{ ...SKR, fontSize: "var(--fs-9)", color: "rgba(255,255,255,0.5)", lineHeight: 1.5, margin: "0 0 20px" }}>You&rsquo;ll be notified when {doneRows.length > 1 ? "they&rsquo;re" : "it&rsquo;s"} approved. Approved contributors earn the COMPOSER badge.</p>
-          <button onClick={close} style={{ ...SKB, width: "100%", fontSize: "var(--fs-10)", color: "#FFF", textTransform: "uppercase", letterSpacing: "0.08em", background: "transparent", border: `1px solid ${HAIR}`, cursor: "pointer", padding: "13px 0" }}>Done</button>
+          <p style={{ ...SKB, fontSize: "var(--fs-11)", color: "#E5E1DB", margin: "0 0 8px", letterSpacing: "0.04em" }}>Submitted for review</p>
+          <p style={{ ...SKR, fontSize: "var(--fs-9)", color: "rgba(229,225,219,0.5)", lineHeight: 1.5, margin: "0 0 20px" }}>You&rsquo;ll be notified when {doneRows.length > 1 ? "they&rsquo;re" : "it&rsquo;s"} approved. Approved contributors earn the COMPOSER badge.</p>
+          <button onClick={close} style={{ ...SKB, width: "100%", fontSize: "var(--fs-10)", color: "#E5E1DB", textTransform: "uppercase", letterSpacing: "0.08em", background: "transparent", border: `1px solid ${HAIR}`, cursor: "pointer", padding: "13px 0" }}>Done</button>
         </div>
       )}
 
@@ -450,8 +450,8 @@ export default function ContributeMusicFlow({ onClose }: { onClose: () => void }
 function StepNav({ onBack, onNext, nextLabel, nextDisabled }: { onBack: () => void; onNext: () => void; nextLabel: string; nextDisabled?: boolean }) {
   return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginTop: 4 }}>
-      <button onClick={onBack} style={{ ...SKB, fontSize: "var(--fs-9)", color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: "0.08em", background: "none", border: "none", cursor: "pointer", padding: 0 }}>← Back</button>
-      <button onClick={onNext} disabled={nextDisabled} style={{ ...SKB, fontSize: "var(--fs-9)", color: nextDisabled ? "rgba(255,255,255,0.25)" : "#FFF", textTransform: "uppercase", letterSpacing: "0.08em", background: "none", border: "none", cursor: nextDisabled ? "default" : "pointer", padding: 0 }}>{nextLabel} →</button>
+      <button onClick={onBack} style={{ ...SKB, fontSize: "var(--fs-9)", color: "rgba(229,225,219,0.5)", textTransform: "uppercase", letterSpacing: "0.08em", background: "none", border: "none", cursor: "pointer", padding: 0 }}>← Back</button>
+      <button onClick={onNext} disabled={nextDisabled} style={{ ...SKB, fontSize: "var(--fs-9)", color: nextDisabled ? "rgba(229,225,219,0.25)" : "#E5E1DB", textTransform: "uppercase", letterSpacing: "0.08em", background: "none", border: "none", cursor: nextDisabled ? "default" : "pointer", padding: 0 }}>{nextLabel} →</button>
     </div>
   );
 }

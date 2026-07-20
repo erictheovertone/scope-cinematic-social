@@ -38,7 +38,7 @@ const MOCK_LAYOUT_ID = 'scope'; // SCOPE 2.39
 const DEV_HARNESS = process.env.NODE_ENV !== 'production';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
-const RED = '#FF0000';
+const RED = '#E5E1DB';
 
 // Maximal AR-locked crop (mirrors CropTool.computeMaxCrop) for the test AR.
 function maxArCrop(orientedAr: number, ratio: number) {

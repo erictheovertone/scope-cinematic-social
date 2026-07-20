@@ -245,22 +245,22 @@ export default function SwapSheet({ visible, onClose, ethBalance, usdcBalance, z
         data-swipe-exclude
         style={{
           position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 1101,
-          background: '#080808', borderTop: '1px solid rgba(255,255,255,0.08)',
+          background: '#080808', borderTop: '1px solid rgba(229,225,219,0.08)',
           transform: visible ? 'translateY(0)' : 'translateY(100%)',
           transition: 'transform 0.4s cubic-bezier(0.32, 0.72, 0, 1)',
           padding: '20px 20px calc(28px + env(safe-area-inset-bottom, 0px))',
         }}
       >
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
-          <div style={{ width: 36, height: 2, backgroundColor: 'rgba(255,255,255,0.12)' }} />
+          <div style={{ width: 36, height: 2, backgroundColor: 'rgba(229,225,219,0.12)' }} />
         </div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-          <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.18em', margin: 0 }}>
+          <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'rgba(229,225,219,0.45)', textTransform: 'uppercase', letterSpacing: '0.18em', margin: 0 }}>
             {cashOut ? 'CASH OUT' : 'SWAP'}
           </p>
           {phase !== 'swapping' && (
             <button onClick={onClose} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 6, margin: -6 }}>
-              <span style={{ ...SKR, fontSize: 'var(--fs-16)', color: 'rgba(255,255,255,0.5)', lineHeight: 1 }}>×</span>
+              <span style={{ ...SKR, fontSize: 'var(--fs-16)', color: 'rgba(229,225,219,0.5)', lineHeight: 1 }}>×</span>
             </button>
           )}
         </div>
@@ -268,8 +268,8 @@ export default function SwapSheet({ visible, onClose, ethBalance, usdcBalance, z
         {phase === 'done' ? (
           <div style={{ textAlign: 'center', padding: '18px 0 6px' }}>
             <p style={{ ...SKB, fontSize: 'var(--fs-14)', color: GREEN, letterSpacing: '0.08em', margin: '0 0 18px' }}>[ {doneLine} ]</p>
-            <button onClick={onClose} style={{ width: '100%', background: 'transparent', border: '1px solid rgba(255,255,255,0.15)', cursor: 'pointer', padding: '12px 0' }}>
-              <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>DONE</span>
+            <button onClick={onClose} style={{ width: '100%', background: 'transparent', border: '1px solid rgba(229,225,219,0.15)', cursor: 'pointer', padding: '12px 0' }}>
+              <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'rgba(229,225,219,0.6)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>DONE</span>
             </button>
           </div>
         ) : (
@@ -285,8 +285,8 @@ export default function SwapSheet({ visible, onClose, ethBalance, usdcBalance, z
                     disabled={phase === 'swapping'}
                     style={{
                       ...SKB, fontSize: 'var(--fs-9)', letterSpacing: '0.08em', padding: '7px 12px', cursor: 'pointer',
-                      background: 'transparent', border: `1px solid ${active ? '#2a2a2a' : 'rgba(255,255,255,0.07)'}`,
-                      color: active ? '#FFFFFF' : 'rgba(255,255,255,0.35)',
+                      background: 'transparent', border: `1px solid ${active ? '#2a2a2a' : 'rgba(229,225,219,0.07)'}`,
+                      color: active ? '#E5E1DB' : 'rgba(229,225,219,0.35)',
                     }}
                   >
                     {a} ⇄ {b}
@@ -299,23 +299,23 @@ export default function SwapSheet({ visible, onClose, ethBalance, usdcBalance, z
             <div style={panel}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.14em' }}>YOU PAY</span>
+                  <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: 'rgba(229,225,219,0.35)', textTransform: 'uppercase', letterSpacing: '0.14em' }}>YOU PAY</span>
                   {/* $ / Ξ entry toggle — offered on the ETH→USDC leg only. */}
                   {sellToken === 'ETH' && buyToken === 'USDC' && spotUsd != null && (
                     <button
                       onClick={() => setUsdMode((m) => { const next = !m; if (next) setPayUsd(payAmount && spotUsd ? (parseFloat(payAmount) * spotUsd).toFixed(2) : ''); return next; })}
-                      style={{ ...SKB, fontSize: 'var(--fs-7)', letterSpacing: '0.08em', color: usdMode ? '#FF0000' : 'rgba(255,255,255,0.45)', background: 'transparent', border: '1px solid rgba(255,255,255,0.15)', cursor: 'pointer', padding: '2px 6px', textTransform: 'uppercase' }}
+                      style={{ ...SKB, fontSize: 'var(--fs-7)', letterSpacing: '0.08em', color: usdMode ? '#E5E1DB' : 'rgba(229,225,219,0.45)', background: 'transparent', border: '1px solid rgba(229,225,219,0.15)', cursor: 'pointer', padding: '2px 6px', textTransform: 'uppercase' }}
                     >
                       {usdMode ? '$ USD' : 'Ξ ETH'}
                     </button>
                   )}
                 </div>
-                <span style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.35)', letterSpacing: '0.06em' }}>
+                <span style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(229,225,219,0.35)', letterSpacing: '0.06em' }}>
                   BALANCE {fmtToken(payBalance, sellToken)} {sellToken}
                 </span>
               </div>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
-                {usdEntry && <span style={{ ...SKB, fontSize: 24, color: 'rgba(255,255,255,0.55)' }}>$</span>}
+                {usdEntry && <span style={{ ...SKB, fontSize: 24, color: 'rgba(229,225,219,0.55)' }}>$</span>}
                 <input
                   inputMode="decimal"
                   value={usdEntry ? payUsd : payAmount}
@@ -325,27 +325,27 @@ export default function SwapSheet({ visible, onClose, ethBalance, usdcBalance, z
                     ? (e) => setPayFromUsd(e.target.value.replace(/[^0-9.]/g, '').replace(/^(\d*\.\d{2})\d+$/, '$1'))
                     : (e) => { const v = e.target.value.replace(/[^0-9.]/g, ''); setPayAmount(sellToken === 'ETH' ? v : v.replace(/^(\d*\.\d{2})\d+$/, '$1')); }}
                   placeholder="0"
-                  style={{ ...SKB, fontSize: 24, color: '#FFF', background: 'transparent', border: 'none', outline: 'none', width: '100%', padding: 0 }}
+                  style={{ ...SKB, fontSize: 24, color: '#E5E1DB', background: 'transparent', border: 'none', outline: 'none', width: '100%', padding: 0 }}
                 />
-                <span style={{ ...SKB, fontSize: 'var(--fs-12)', color: 'rgba(255,255,255,0.7)' }}>{usdEntry ? 'USD' : sellToken}</span>
+                <span style={{ ...SKB, fontSize: 'var(--fs-12)', color: 'rgba(229,225,219,0.7)' }}>{usdEntry ? 'USD' : sellToken}</span>
                 <button
                   // MAX floors at each token's display precision — never rounds UP past balance
                   onClick={() => usdEntry
                     ? setPayFromUsd((Math.floor(maxPay * spotUsd! * 100) / 100).toFixed(2))
                     : setPayAmount(sellToken === 'ETH' ? (Math.floor(maxPay * 1e6) / 1e6).toFixed(6) : (Math.floor(maxPay * 100) / 100).toFixed(2))}
-                  style={{ ...SKB, fontSize: 'var(--fs-9)', color: '#FF0000', background: 'transparent', border: 'none', cursor: 'pointer', letterSpacing: '0.08em', padding: 0 }}
+                  style={{ ...SKB, fontSize: 'var(--fs-9)', color: '#E5E1DB', background: 'transparent', border: 'none', cursor: 'pointer', letterSpacing: '0.08em', padding: 0 }}
                 >
                   MAX
                 </button>
               </div>
               {/* ETH the dollars convert to — small, so the exact wei being swapped is visible. */}
               {usdEntry && (
-                <p style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.4)', margin: '6px 0 0', letterSpacing: '0.04em' }}>
+                <p style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(229,225,219,0.4)', margin: '6px 0 0', letterSpacing: '0.04em' }}>
                   ≈ {validAmount ? fmtToken(payNum, 'ETH') : '0'} ETH · live rate
                 </p>
               )}
               {overMax && (
-                <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: '#FF0000', margin: '8px 0 0', lineHeight: 1.4 }}>
+                <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: '#E5E1DB', margin: '8px 0 0', lineHeight: 1.4 }}>
                   {sellToken === 'ETH'
                     ? `Max ${fmtToken(maxPay, 'ETH')} ETH — the rest is kept for network fees.`
                     : `Max ${fmtToken(maxPay, sellToken)} ${sellToken} — that's your full balance.`}
@@ -356,37 +356,37 @@ export default function SwapSheet({ visible, onClose, ethBalance, usdcBalance, z
             {/* FLIP */}
             <div style={{ display: 'flex', justifyContent: 'center', margin: '10px 0' }}>
               <button onClick={flip} disabled={phase === 'swapping'} style={{ background: '#0a0a0a', border: '1px solid #1f1f1f', cursor: 'pointer', width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <span style={{ fontSize: 'var(--fs-14)', color: '#FF0000', lineHeight: 1 }}>⇅</span>
+                <span style={{ fontSize: 'var(--fs-14)', color: '#E5E1DB', lineHeight: 1 }}>⇅</span>
               </button>
             </div>
 
             {/* YOU RECEIVE */}
             <div style={panel}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.14em' }}>YOU RECEIVE</span>
+                <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: 'rgba(229,225,219,0.35)', textTransform: 'uppercase', letterSpacing: '0.14em' }}>YOU RECEIVE</span>
                 {quoting && <FrameLoader size={11} />}
               </div>
               <p style={{ ...SKB, fontSize: 24, color: GREEN, margin: 0, fontVariantNumeric: 'tabular-nums' }}>
                 {quoteOut != null ? `≈ ${fmtToken(quoteOut, buyToken)}` : '—'}{' '}
-                <span style={{ fontSize: 'var(--fs-12)', color: 'rgba(255,255,255,0.7)' }}>{buyToken}</span>
+                <span style={{ fontSize: 'var(--fs-12)', color: 'rgba(229,225,219,0.7)' }}>{buyToken}</span>
               </p>
             </div>
 
             {/* Info line */}
-            <p style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.3)', margin: '10px 0 0', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+            <p style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(229,225,219,0.3)', margin: '10px 0 0', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
               {rate != null ? (pairToken === 'ZORA' ? `1K ZORA ≈ $${(rate * 1000).toFixed(2)} · ` : `1 ETH ≈ $${rate.toFixed(0)} · `) : ''}
               fee ~0.1%{sellToken === 'ETH' ? ' · gas reserve kept' : ''}
               {needsApproval ? ` · first ${sellToken} swap includes a one-time approval` : ''}
             </p>
 
             {swapError && (
-              <p style={{ ...SKR, fontSize: 'var(--fs-10)', color: '#FF0000', margin: '10px 0 0', lineHeight: 1.4 }}>{swapError}</p>
+              <p style={{ ...SKR, fontSize: 'var(--fs-10)', color: '#E5E1DB', margin: '10px 0 0', lineHeight: 1.4 }}>{swapError}</p>
             )}
 
             {phase === 'swapping' ? (
-              <div style={{ width: '100%', border: '1px solid rgba(255,0,0,0.55)', padding: '13px 0', marginTop: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, minHeight: 46 }}>
+              <div style={{ width: '100%', border: '1px solid rgba(229,225,219,0.55)', padding: '13px 0', marginTop: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, minHeight: 46 }}>
                 <FrameLoader size={23.5} />
-                <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: 'white', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
                   {needsApproval ? `STEP 1 · APPROVING ${sellToken}, THEN SWAPPING…` : cashOut ? 'CASHING OUT…' : 'SWAPPING…'}
                 </span>
               </div>
@@ -394,9 +394,9 @@ export default function SwapSheet({ visible, onClose, ethBalance, usdcBalance, z
               <button
                 onClick={doSwap}
                 disabled={!validAmount || overMax || quoteOut == null}
-                style={{ width: '100%', background: !validAmount || overMax || quoteOut == null ? 'rgba(255,0,0,0.4)' : '#FF0000', border: 'none', cursor: !validAmount || overMax || quoteOut == null ? 'default' : 'pointer', padding: '14px 0', marginTop: 14 }}
+                style={{ width: '100%', background: !validAmount || overMax || quoteOut == null ? 'rgba(229,225,219,0.4)' : '#E5E1DB', border: 'none', cursor: !validAmount || overMax || quoteOut == null ? 'default' : 'pointer', padding: '14px 0', marginTop: 14 }}
               >
-                <span style={{ ...SKB, fontSize: 'var(--fs-12)', color: 'white', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                <span style={{ ...SKB, fontSize: 'var(--fs-12)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                   {cashOut ? 'CONFIRM CASH OUT' : 'CONFIRM SWAP'}
                 </span>
               </button>

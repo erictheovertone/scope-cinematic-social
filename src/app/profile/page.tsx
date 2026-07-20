@@ -460,14 +460,14 @@ const userLayoutId = stableLayoutId;
 
       {/* Name */}
       <div style={{ position: 'absolute', left: 126, top: 'calc(10px + env(safe-area-inset-top, 0px))' }}>
-        <p style={{ ...SKB, fontSize: 'var(--fs-13)', color: 'white', letterSpacing: '-0.02em', lineHeight: 1.2, margin: 0, textTransform: 'uppercase' }}>
+        <p style={{ ...SKB, fontSize: 'var(--fs-13)', color: '#E5E1DB', letterSpacing: '-0.02em', lineHeight: 1.2, margin: 0, textTransform: 'uppercase' }}>
           {userProfile.displayName}
         </p>
       </div>
 
       {/* Handle — 2px smaller than the display name's neighbours (fontSize 8). */}
       <div style={{ position: 'absolute', left: 126, top: 'calc(26px + env(safe-area-inset-top, 0px))' }}>
-        <p style={{ ...SKB, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.6)', letterSpacing: '-0.02em', lineHeight: 1.2, margin: 0, textTransform: 'uppercase' }}>
+        <p style={{ ...SKB, fontSize: 'var(--fs-8)', color: 'rgba(229,225,219,0.6)', letterSpacing: '-0.02em', lineHeight: 1.2, margin: 0, textTransform: 'uppercase' }}>
           {userProfile.username ? `@${userProfile.username}` : ''}
         </p>
       </div>
@@ -489,8 +489,8 @@ const userLayoutId = stableLayoutId;
         <PressPop><span style={{ display: 'flex' }}>
         <div style={{
           width: 14.6, height: 11.2,
-          border: '0.5px solid #FFFFFF',
-          background: profileDataOpen ? '#FFFFFF' : 'transparent',
+          border: '0.5px solid #E5E1DB',
+          background: profileDataOpen ? '#E5E1DB' : 'transparent',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           boxSizing: 'border-box',
           transition: 'background 200ms ease',
@@ -498,7 +498,7 @@ const userLayoutId = stableLayoutId;
           <span style={{
             fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700,
             fontSize: 'var(--fs-15_7)', letterSpacing: '-0.02em',
-            color: profileDataOpen ? '#000000' : '#FFFFFF',
+            color: profileDataOpen ? '#000000' : '#E5E1DB',
             lineHeight: 1, display: 'block',
             transform: 'translateY(-1px)',
             transition: 'color 200ms ease',
@@ -545,7 +545,7 @@ const userLayoutId = stableLayoutId;
               onClick={() => setActiveTab('main')}
               style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer' }}
             >
-              <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-9_5)', color: activeTab === 'main' ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '-0.16px' }}>MAIN</span>
+              <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-9_5)', color: activeTab === 'main' ? 'rgba(229,225,219,0.8)' : 'rgba(229,225,219,0.4)', textTransform: 'uppercase', letterSpacing: '-0.16px' }}>MAIN</span>
             </button>
           )}
 
@@ -571,7 +571,7 @@ const userLayoutId = stableLayoutId;
             onClick={() => setActiveTab('collected')}
             style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', animation: headerUnsnapping ? 'snapOutRight 0.28s cubic-bezier(0.16,1,0.3,1) 0ms both' : headerSnapped ? 'snapInRight 0.32s cubic-bezier(0.16,1,0.3,1) 165ms both' : 'none' }}
           >
-            <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-9_5)', color: activeTab === 'collected' ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '-0.16px' }}>COLLECTED</span>
+            <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-9_5)', color: activeTab === 'collected' ? 'rgba(229,225,219,0.8)' : 'rgba(229,225,219,0.4)', textTransform: 'uppercase', letterSpacing: '-0.16px' }}>COLLECTED</span>
           </button>
         </div>
       </div>
@@ -632,12 +632,12 @@ const userLayoutId = stableLayoutId;
                 }, 600);
               }}
             >
-              <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-11)', color: 'white', margin: 0, lineHeight: '1.4', textTransform: 'uppercase' }}>
+              <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-11)', color: '#E5E1DB', margin: 0, lineHeight: '1.4', textTransform: 'uppercase' }}>
                 Create<br/>your<br/>first<br/>post
               </p>
               <div style={{ position: 'relative', width: '48px', height: '48px', flexShrink: 0, animation: spinning ? 'spin 0.6s cubic-bezier(0.4, 0, 0.2, 1)' : 'none' }}>
-                <div style={{ position: 'absolute', top: '50%', left: 0, right: 0, height: '1px', background: 'white', transform: 'translateY(-50%)' }} />
-                <div style={{ position: 'absolute', left: '50%', top: 0, bottom: 0, width: '1px', background: 'white', transform: 'translateX(-50%)' }} />
+                <div style={{ position: 'absolute', top: '50%', left: 0, right: 0, height: '1px', background: '#E5E1DB', transform: 'translateY(-50%)' }} />
+                <div style={{ position: 'absolute', left: '50%', top: 0, bottom: 0, width: '1px', background: '#E5E1DB', transform: 'translateX(-50%)' }} />
               </div>
             </div>
           ) : (
@@ -791,11 +791,11 @@ const userLayoutId = stableLayoutId;
       >
         {/* Header */}
         <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px 16px 10px', flexShrink: 0 }}>
-          <div style={{ position: 'absolute', top: 8, left: '50%', transform: 'translateX(-50%)', width: 40, height: 3, backgroundColor: 'rgba(255,255,255,0.3)' }} />
-          <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-11)', color: 'white', letterSpacing: '0.05em', textTransform: 'uppercase' }}>DECKS</span>
+          <div style={{ position: 'absolute', top: 8, left: '50%', transform: 'translateX(-50%)', width: 40, height: 3, backgroundColor: 'rgba(229,225,219,0.3)' }} />
+          <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-11)', color: '#E5E1DB', letterSpacing: '0.05em', textTransform: 'uppercase' }}>DECKS</span>
           <button
             onClick={() => { setShowDecks(false); setActiveTab('main'); setShowNewDeckForm(false); setNewDeckTitle(''); setNewDeckDesc(''); }}
-            style={{ position: 'absolute', right: 16, fontSize: 'var(--fs-18)', color: 'white', background: 'none', border: 'none', cursor: 'pointer', lineHeight: 1, padding: 0 }}
+            style={{ position: 'absolute', right: 16, fontSize: 'var(--fs-18)', color: '#E5E1DB', background: 'none', border: 'none', cursor: 'pointer', lineHeight: 1, padding: 0 }}
           >
             ×
           </button>
@@ -809,7 +809,7 @@ const userLayoutId = stableLayoutId;
             </div>
           ) : userDecks.length === 0 ? (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '50%' }}>
-              <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-11)', color: 'white', textTransform: 'uppercase' }}>No decks yet</span>
+              <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-11)', color: '#E5E1DB', textTransform: 'uppercase' }}>No decks yet</span>
             </div>
           ) : (
             userDecks.map(deck => (
@@ -829,8 +829,8 @@ const userLayoutId = stableLayoutId;
                   ) : null}
                 </div>
                 {/* Title + count */}
-                <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-10)', color: 'white', margin: '4px 0 0', textTransform: 'uppercase' }}>{deck.title}</p>
-                <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.5)', margin: '2px 0 0' }}>{deck.item_count} frames</p>
+                <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-10)', color: '#E5E1DB', margin: '4px 0 0', textTransform: 'uppercase' }}>{deck.title}</p>
+                <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: 'var(--fs-9)', color: 'rgba(229,225,219,0.5)', margin: '2px 0 0' }}>{deck.item_count} frames</p>
               </div>
             ))
           )}
@@ -838,11 +838,11 @@ const userLayoutId = stableLayoutId;
 
         {/* NEW DECK footer — own profile only. Bottom padding clears the home
             indicator + the app footer band so the button is never buried at the edge. */}
-        <div style={{ flexShrink: 0, padding: '12px 16px', paddingBottom: 'calc(12px + env(safe-area-inset-bottom, 0px))', borderTop: '1px solid rgba(255,255,255,0.12)' }}>
+        <div style={{ flexShrink: 0, padding: '12px 16px', paddingBottom: 'calc(12px + env(safe-area-inset-bottom, 0px))', borderTop: '1px solid rgba(229,225,219,0.12)' }}>
           {!showNewDeckForm ? (
             <button
               onClick={() => setShowNewDeckForm(true)}
-              style={{ display: 'block', width: '100%', border: '1px solid white', background: 'transparent', color: 'white', fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-11)', textTransform: 'uppercase', padding: '8px', cursor: 'pointer', borderRadius: 0 }}
+              style={{ display: 'block', width: '100%', border: '1px solid white', background: 'transparent', color: '#E5E1DB', fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-11)', textTransform: 'uppercase', padding: '8px', cursor: 'pointer', borderRadius: 0 }}
             >
               ＋ NEW DECK
             </button>
@@ -854,14 +854,14 @@ const userLayoutId = stableLayoutId;
                 placeholder="Deck title"
                 value={newDeckTitle}
                 onChange={e => setNewDeckTitle(e.target.value)}
-                style={{ display: 'block', width: '100%', background: 'transparent', border: '1px solid white', color: 'white', ...SKR, fontSize: 'max(16px, var(--fs-10))', padding: '8px', marginBottom: 8, outline: 'none', boxSizing: 'border-box' }}
+                style={{ display: 'block', width: '100%', background: 'transparent', border: '1px solid white', color: '#E5E1DB', ...SKR, fontSize: 'max(16px, var(--fs-10))', padding: '8px', marginBottom: 8, outline: 'none', boxSizing: 'border-box' }}
               />
               <input
                 type="text"
                 placeholder="Description (optional)"
                 value={newDeckDesc}
                 onChange={e => setNewDeckDesc(e.target.value)}
-                style={{ display: 'block', width: '100%', background: 'transparent', border: '1px solid white', color: 'white', ...SKR, fontSize: 'max(16px, var(--fs-10))', padding: '8px', marginBottom: 8, outline: 'none', boxSizing: 'border-box' }}
+                style={{ display: 'block', width: '100%', background: 'transparent', border: '1px solid white', color: '#E5E1DB', ...SKR, fontSize: 'max(16px, var(--fs-10))', padding: '8px', marginBottom: 8, outline: 'none', boxSizing: 'border-box' }}
               />
               <div style={{ display: 'flex', gap: 8 }}>
                 <button
@@ -881,13 +881,13 @@ const userLayoutId = stableLayoutId;
                     } finally { setCreatingDeck(false); }
                   }}
                   disabled={!newDeckTitle.trim() || creatingDeck}
-                  style={{ flex: 1, border: '1px solid white', background: 'transparent', color: 'white', ...SKR, fontSize: 'var(--fs-10)', padding: '8px', cursor: 'pointer', opacity: newDeckTitle.trim() ? 1 : 0.4, textTransform: 'uppercase' }}
+                  style={{ flex: 1, border: '1px solid white', background: 'transparent', color: '#E5E1DB', ...SKR, fontSize: 'var(--fs-10)', padding: '8px', cursor: 'pointer', opacity: newDeckTitle.trim() ? 1 : 0.4, textTransform: 'uppercase' }}
                 >
                   {creatingDeck ? 'Creating…' : 'CREATE'}
                 </button>
                 <button
                   onClick={() => { setShowNewDeckForm(false); setNewDeckTitle(''); setNewDeckDesc(''); }}
-                  style={{ flex: 1, border: '1px solid rgba(255,255,255,0.4)', background: 'transparent', color: 'rgba(255,255,255,0.6)', ...SKR, fontSize: 'var(--fs-10)', padding: '8px', cursor: 'pointer', textTransform: 'uppercase' }}
+                  style={{ flex: 1, border: '1px solid rgba(229,225,219,0.4)', background: 'transparent', color: 'rgba(229,225,219,0.6)', ...SKR, fontSize: 'var(--fs-10)', padding: '8px', cursor: 'pointer', textTransform: 'uppercase' }}
                 >
                   CANCEL
                 </button>

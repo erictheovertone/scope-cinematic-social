@@ -165,14 +165,14 @@ export default function PfpCropModal({ file, onCancel, onConfirm }: Props) {
       data-swipe-exclude
       style={{ position: 'fixed', inset: 0, zIndex: 700, background: 'rgba(0,0,0,0.94)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 'calc(env(safe-area-inset-top,0px) + 20px) 20px calc(env(safe-area-inset-bottom,0px) + 20px)' }}
     >
-      <p style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.14em', margin: '0 0 18px' }}>DRAG & PINCH TO FRAME</p>
+      <p style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'rgba(229,225,219,0.6)', textTransform: 'uppercase', letterSpacing: '0.14em', margin: '0 0 18px' }}>DRAG & PINCH TO FRAME</p>
 
       {/* Square crop frame — image pans/zooms behind, clipped to the square. */}
       <div
         onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}
         onMouseDown={onMouseDown} onMouseMove={onMouseMove} onMouseUp={onMouseUp} onMouseLeave={onMouseUp}
         onWheel={onWheel}
-        style={{ position: 'relative', width: FRAME, height: FRAME, overflow: 'hidden', touchAction: 'none', cursor: 'grab', background: '#000', border: '1px solid rgba(255,255,255,0.25)' }}
+        style={{ position: 'relative', width: FRAME, height: FRAME, overflow: 'hidden', touchAction: 'none', cursor: 'grab', background: '#000', border: '1px solid rgba(229,225,219,0.25)' }}
       >
         {nat && (
           <img
@@ -187,8 +187,8 @@ export default function PfpCropModal({ file, onCancel, onConfirm }: Props) {
       </div>
 
       <div style={{ display: 'flex', gap: 12, marginTop: 22, width: FRAME }}>
-        <button onClick={cancel} disabled={baking} style={{ ...SKB, flex: 1, fontSize: 'var(--fs-11)', color: '#fff', background: 'transparent', border: '1px solid rgba(255,255,255,0.4)', padding: '12px 0', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.1em' }}>CANCEL</button>
-        <button onClick={confirm} disabled={baking || !nat} style={{ ...SKB, flex: 1, fontSize: 'var(--fs-11)', color: '#fff', background: '#FF0000', border: 'none', padding: '12px 0', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.1em', opacity: baking ? 0.6 : 1 }}>{baking ? 'CROPPING…' : 'USE PHOTO'}</button>
+        <button onClick={cancel} disabled={baking} style={{ ...SKB, flex: 1, fontSize: 'var(--fs-11)', color: '#E5E1DB', background: 'transparent', border: '1px solid rgba(229,225,219,0.4)', padding: '12px 0', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.1em' }}>CANCEL</button>
+        <button onClick={confirm} disabled={baking || !nat} style={{ ...SKB, flex: 1, fontSize: 'var(--fs-11)', color: '#E5E1DB', background: '#E5E1DB', border: 'none', padding: '12px 0', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.1em', opacity: baking ? 0.6 : 1 }}>{baking ? 'CROPPING…' : 'USE PHOTO'}</button>
       </div>
     </div>,
     document.body,

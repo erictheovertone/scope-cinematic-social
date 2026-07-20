@@ -55,7 +55,7 @@ export default function ContactUs() {
         {submitted ? (
           <div className="flex flex-col items-center justify-center h-full">
             <div className="w-16 h-16 bg-green-600 rounded-full flex items-center justify-center mb-6">
-              <svg width="27.5" height="27.5" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+              <svg width="27.5" height="27.5" viewBox="0 0 24 24" fill="none" stroke="#E5E1DB" strokeWidth="2">
                 <polyline points="20,6 9,17 4,12"/>
               </svg>
             </div>
@@ -100,7 +100,7 @@ export default function ContactUs() {
                   value={formData.email}
                   onChange={(e) => handleChange('email', e.target.value)}
                   required
-                  className="w-full bg-[#1A1A1A] border border-[#333333] rounded-lg px-4 py-3 font-['IBM_Plex_Mono'] text-white text-[var(--fs-14)] focus:border-[#FF0000] focus:outline-none"
+                  className="w-full bg-[#1A1A1A] border border-[#333333] rounded-lg px-4 py-3 font-['IBM_Plex_Mono'] text-white text-[var(--fs-14)] focus:border-[#E5E1DB] focus:outline-none"
                   placeholder="your@email.com"
                 />
               </div>
@@ -114,7 +114,7 @@ export default function ContactUs() {
                   value={formData.subject}
                   onChange={(e) => handleChange('subject', e.target.value)}
                   required
-                  className="w-full bg-[#1A1A1A] border border-[#333333] rounded-lg px-4 py-3 font-['IBM_Plex_Mono'] text-white text-[var(--fs-14)] focus:border-[#FF0000] focus:outline-none"
+                  className="w-full bg-[#1A1A1A] border border-[#333333] rounded-lg px-4 py-3 font-['IBM_Plex_Mono'] text-white text-[var(--fs-14)] focus:border-[#E5E1DB] focus:outline-none"
                   placeholder="How can we help?"
                 />
               </div>
@@ -128,14 +128,14 @@ export default function ContactUs() {
                   onChange={(e) => handleChange('message', e.target.value)}
                   required
                   rows={6}
-                  className="w-full bg-[#1A1A1A] border border-[#333333] rounded-lg px-4 py-3 font-['IBM_Plex_Mono'] text-white text-[var(--fs-14)] resize-none focus:border-[#FF0000] focus:outline-none"
+                  className="w-full bg-[#1A1A1A] border border-[#333333] rounded-lg px-4 py-3 font-['IBM_Plex_Mono'] text-white text-[var(--fs-14)] resize-none focus:border-[#E5E1DB] focus:outline-none"
                   placeholder="Tell us more about your issue or question..."
                 />
               </div>
 
               <button
                 type="submit"
-                className="w-full bg-[#FF0000] text-white py-4 rounded-lg font-['IBM_Plex_Mono'] font-medium text-[var(--fs-16)] hover:bg-[#CC0000] transition-colors"
+                className="w-full bg-[#E5E1DB] text-white py-4 rounded-lg font-['IBM_Plex_Mono'] font-medium text-[var(--fs-16)] hover:bg-[#CC0000] transition-colors"
               >
                 Send Message
               </button>

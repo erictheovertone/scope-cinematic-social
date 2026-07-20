@@ -43,7 +43,7 @@ function PopInner({ children }: { children: React.ReactNode }) {
 }
 
 function HomeIcon({ active }: { active: boolean }) {
-  const c = active ? '#FF0000' : 'white';
+  const c = active ? '#E5E1DB' : '#E5E1DB';
   return (
     <svg width="21" height="21" viewBox="0 0 27 27" fill="none">
       <path d="M3.375 10.125L13.5 3.375L23.625 10.125V22.5C23.625 23.0967 23.3879 23.669 22.9597 24.0972C22.5315 24.5254 21.9592 24.7625 21.3625 24.7625H5.6375C5.04076 24.7625 4.46851 24.5254 4.04029 24.0972C3.61207 23.669 3.375 23.0967 3.375 22.5V10.125Z" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -55,7 +55,7 @@ function HomeIcon({ active }: { active: boolean }) {
 function CreateIcon() {
   return (
     <svg width="21" height="21" viewBox="0 0 27 27" fill="none">
-      <path d="M13.5 5.0625V21.9375M5.0625 13.5H21.9375" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M13.5 5.0625V21.9375M5.0625 13.5H21.9375" stroke="#E5E1DB" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   );
 }
@@ -63,8 +63,8 @@ function CreateIcon() {
 function ProfileIcon() {
   return (
     <svg width="21" height="21" viewBox="0 0 27 27" fill="none">
-      <path d="M20.25 23.625V21.375C20.25 20.1815 19.7759 19.037 18.9331 18.1942C18.0903 17.3514 16.9458 16.875 15.75 16.875H11.25C10.0542 16.875 8.90973 17.3514 8.06694 18.1942C7.22414 19.037 6.75 20.1815 6.75 21.375V23.625" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-      <path d="M13.5 12.375C15.9853 12.375 18 10.3603 18 7.875C18 5.38972 15.9853 3.375 13.5 3.375C11.0147 3.375 9 5.38972 9 7.875C9 10.3603 11.0147 12.375 13.5 12.375Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M20.25 23.625V21.375C20.25 20.1815 19.7759 19.037 18.9331 18.1942C18.0903 17.3514 16.9458 16.875 15.75 16.875H11.25C10.0542 16.875 8.90973 17.3514 8.06694 18.1942C7.22414 19.037 6.75 20.1815 6.75 21.375V23.625" stroke="#E5E1DB" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M13.5 12.375C15.9853 12.375 18 10.3603 18 7.875C18 5.38972 15.9853 3.375 13.5 3.375C11.0147 3.375 9 5.38972 9 7.875C9 10.3603 11.0147 12.375 13.5 12.375Z" stroke="#E5E1DB" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   );
 }
@@ -72,14 +72,14 @@ function ProfileIcon() {
 function BellIcon() {
   return (
     <svg width="20.5" height="21" viewBox="0 0 24 25" fill="none">
-      <path d="M18 9A6 6 0 0 0 6 9c0 7-3 9-3 9h18s-3-2-3-9" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-      <path d="M13.73 22a2 2 0 0 1-3.46 0" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M18 9A6 6 0 0 0 6 9c0 7-3 9-3 9h18s-3-2-3-9" stroke="#E5E1DB" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M13.73 22a2 2 0 0 1-3.46 0" stroke="#E5E1DB" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   );
 }
 
 function WalletIcon({ active }: { active?: boolean }) {
-  const c = active ? '#FF0000' : 'white';
+  const c = active ? '#E5E1DB' : '#E5E1DB';
   return (
     <svg width="20.5" height="20.5" viewBox="0 0 26 26" fill="none">
       <path d="M22.75 6.5H3.25C2.42157 6.5 1.75 7.17157 1.75 8V20.5C1.75 21.3284 2.42157 22 3.25 22H22.75C23.5784 22 24.25 21.3284 24.25 20.5V8C24.25 7.17157 23.5784 6.5 22.75 6.5Z" stroke={c} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -94,7 +94,7 @@ function WalletIcon({ active }: { active?: boolean }) {
 // rounded, per the design system). Message glyph (not envelope: envelope reads
 // as email; a bubble reads as direct messages). Turns red when active.
 function DMIcon({ active }: { active?: boolean }) {
-  const c = active ? '#FF0000' : 'white';
+  const c = active ? '#E5E1DB' : '#E5E1DB';
   return (
     <svg width="21" height="21" viewBox="0 0 24 24" fill="none">
       <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke={c} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -116,7 +116,7 @@ interface Props {
 }
 
 function HamburgerIcon({ active }: { active?: boolean }) {
-  const c = active ? '#FF0000' : 'white';
+  const c = active ? '#E5E1DB' : '#E5E1DB';
   return (
     <svg width="21.5" height="21.5" viewBox="0 0 18 18" fill="none">
       <rect x="0" y="3" width="18" height="1.5" fill={c}/>
@@ -196,7 +196,7 @@ export default function BottomToolbar({ page, unreadCount = 0, dmUnread = 0, set
         bottom: 'max(3px, calc(env(safe-area-inset-bottom, 0px) - 12px))',
         height: 38,
         borderRadius: 2,
-        border: '0.5px solid rgba(255,255,255,0.3)',
+        border: '0.5px solid rgba(229,225,219,0.3)',
         zIndex: 50,
         transformOrigin: 'center',
         boxSizing: 'border-box' as const,
@@ -224,7 +224,7 @@ export default function BottomToolbar({ page, unreadCount = 0, dmUnread = 0, set
           <div aria-hidden style={{
             position: 'absolute', bottom: 3, left: `calc((${activeIndex} + 0.5) * 20%)`,
             transform: 'translateX(-50%)', width: 18, height: 0.7, borderRadius: 0,
-            background: '#FF0000', pointerEvents: 'none', zIndex: 0,
+            background: '#E5E1DB', pointerEvents: 'none', zIndex: 0,
             transition: 'left 250ms cubic-bezier(0.34, 1.5, 0.5, 1)',
           }} />
         )}
@@ -275,7 +275,7 @@ export default function BottomToolbar({ page, unreadCount = 0, dmUnread = 0, set
             <PopInner><DMIcon active={page === 'dm'} /></PopInner>
             {dmUnread > 0 && page !== 'dm' && (
               // Unread DM dot — the notification-dot language (small, red, no count).
-              <span aria-label="unread messages" className="absolute" style={{ top: 3, right: 6, width: 7, height: 7, borderRadius: '50%', background: '#FF0000', display: 'block' }} />
+              <span aria-label="unread messages" className="absolute" style={{ top: 3, right: 6, width: 7, height: 7, borderRadius: '50%', background: '#E5E1DB', display: 'block' }} />
             )}
           </Link>
         </PressPop>
@@ -304,8 +304,8 @@ export default function BottomToolbar({ page, unreadCount = 0, dmUnread = 0, set
                 className="absolute"
                 style={{
                   top: 2, right: 1,
-                  background: '#FF0000',
-                  color: 'white',
+                  background: '#E5E1DB',
+                  color: '#E5E1DB',
                   fontFamily: "'SK-Modernist', sans-serif",
                   fontWeight: 700,
                   fontSize: 'var(--fs-8)',

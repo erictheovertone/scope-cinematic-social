@@ -77,14 +77,14 @@ export default function Welcome() {
         />
       </div>
 
-      <div style={{ width: '100%', height: '112px', border: '1px solid rgba(255,255,255,0.5)', position: 'relative' }}>
+      <div style={{ width: '100%', height: '112px', border: '1px solid rgba(229,225,219,0.5)', position: 'relative' }}>
         <button
           onClick={login}
           style={{
             position: 'absolute',
             top: '2px',
             left: '2px',
-            color: 'white',
+            color: '#E5E1DB',
             fontSize: 'var(--fs-12)',
             fontFamily: "'SK-Modernist', sans-serif",
             fontWeight: 700,
@@ -117,7 +117,7 @@ export default function Welcome() {
             position: 'absolute',
             bottom: '2px',
             right: '2px',
-            color: 'white',
+            color: '#E5E1DB',
             fontSize: 'var(--fs-12)',
             fontFamily: "'SK-Modernist', sans-serif",
             fontWeight: 700,

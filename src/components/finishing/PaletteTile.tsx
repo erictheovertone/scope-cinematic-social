@@ -53,14 +53,14 @@ export default function PaletteTile({ look, selected = false, onTap }: { look: S
     >
       <div style={{
         position: 'relative', width: 60, height: 60, overflow: 'hidden',
-        border: `1px solid ${selected ? '#FF0000' : 'rgba(255,255,255,0.18)'}`,
+        border: `1px solid ${selected ? '#E5E1DB' : 'rgba(229,225,219,0.18)'}`,
         // Neutral gradient backdrop so the tile is NEVER a black box, even before
         // a fallback preview finishes baking (or if it fails).
         background: 'linear-gradient(135deg, #1a1a1a 0%, #555 50%, #c9c9c9 100%)',
       }}>
         {src && <img src={src} alt={look.name} draggable={false} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
       </div>
-      <span style={{ ...SKB, fontSize: 'var(--fs-7)', color: selected ? '#FF0000' : 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.06em', maxWidth: 60, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{look.name}</span>
+      <span style={{ ...SKB, fontSize: 'var(--fs-7)', color: selected ? '#E5E1DB' : 'rgba(229,225,219,0.6)', textTransform: 'uppercase', letterSpacing: '0.06em', maxWidth: 60, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{look.name}</span>
     </button>
   );
 }

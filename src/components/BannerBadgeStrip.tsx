@@ -175,7 +175,7 @@ export default function BannerBadgeStrip({
           );
         })}
         {extra > 0 && (
-          <span style={{ position: 'relative', zIndex: 1, ...SKB, fontSize: Math.round(iconSize * 0.5), color: '#FF0000', lineHeight: 1 }}>+{extra}</span>
+          <span style={{ position: 'relative', zIndex: 1, ...SKB, fontSize: Math.round(iconSize * 0.5), color: '#E5E1DB', lineHeight: 1 }}>+{extra}</span>
         )}
       </div>
 

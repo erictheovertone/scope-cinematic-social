@@ -242,7 +242,7 @@ function PostViewerItem({
               style={{ display: "flex", alignItems: "center", gap: 4, cursor: "pointer", opacity: 0.85 }}
             >
               <img src={ownerAvatarUrl || undefined} style={{ width: 14, height: 14, borderRadius: "50%", objectFit: "cover", flexShrink: 0, background: "#333" }} />
-              <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: "white", lineHeight: 1, textTransform: "uppercase" }}>
+              <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: "#E5E1DB", lineHeight: 1, textTransform: "uppercase" }}>
                 @{ownerUsername}
               </span>
             </div>
@@ -251,7 +251,7 @@ function PostViewerItem({
                 matching the feed. Legacy/non-coin posts show none. */}
             {isCoinPost(post as { coin_address?: string | null; token_standard?: string | null }) && (post as { coin_address?: string | null }).coin_address && (
               <span
-                style={{ display: "flex", alignItems: "baseline", gap: 5, fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: 'var(--fs-8)', color: "white", lineHeight: 1, opacity: 0.85, textTransform: "uppercase" }}
+                style={{ display: "flex", alignItems: "baseline", gap: 5, fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: 'var(--fs-8)', color: "#E5E1DB", lineHeight: 1, opacity: 0.85, textTransform: "uppercase" }}
               >
                 {(post as { ticker?: string | null }).ticker && <TickerMark ticker={(post as { ticker?: string }).ticker as string} size={11.5} />}
                 <span>MC: {mc ?? "…"}</span>
@@ -291,10 +291,10 @@ function PostViewerItem({
           >
             <svg width="16.7" height="16.7" viewBox="0 0 24 24" fill="none" style={{ opacity: isLiked ? 1 : 0.7 }}>
               <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
-                fill={isLiked ? "#FF0000" : "none"} stroke={isLiked ? "#FF0000" : "white"} strokeWidth="1.8"
+                fill={isLiked ? "#E5E1DB" : "none"} stroke={isLiked ? "#E5E1DB" : "#E5E1DB"} strokeWidth="1.8"
               />
             </svg>
-            <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: isLiked ? "#FF0000" : "white", opacity: isLiked ? 1 : 0.7 }}>{likes.length}</span>
+            <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: isLiked ? "#E5E1DB" : "#E5E1DB", opacity: isLiked ? 1 : 0.7 }}>{likes.length}</span>
           </button>
           </PressPop>
 
@@ -303,10 +303,10 @@ function PostViewerItem({
             onClick={() => setShowComments(v => !v)}
             style={{ background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 4, padding: 0 }}
           >
-            <svg width="16.7" height="16.7" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" style={{ opacity: 0.7 }}>
+            <svg width="16.7" height="16.7" viewBox="0 0 24 24" fill="none" stroke="#E5E1DB" strokeWidth="1.8" style={{ opacity: 0.7 }}>
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
             </svg>
-            <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: "white", opacity: 0.7 }}>{comments.length}</span>
+            <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: "#E5E1DB", opacity: 0.7 }}>{comments.length}</span>
           </button>
           </PressPop>
 
@@ -317,7 +317,7 @@ function PostViewerItem({
         {/* Right: add to deck · collect */}
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           {deckToast && (
-            <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "#FF0000", textTransform: "uppercase", letterSpacing: "0.04em" }}>Added to {deckToast}</span>
+            <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "#E5E1DB", textTransform: "uppercase", letterSpacing: "0.04em" }}>Added to {deckToast}</span>
           )}
           {/* First Cut counter — the SMALL icon + count, identical to the home
               feed (all scrolls use this treatment; the full ledger row is
@@ -329,7 +329,7 @@ function PostViewerItem({
             onClick={handleCollect}
             style={{
               background: "transparent",
-              border: `1px solid ${showCollectSheet ? "#FF0000" : "rgba(255,255,255,0.7)"}`,
+              border: `1px solid ${showCollectSheet ? "#E5E1DB" : "rgba(229,225,219,0.7)"}`,
               cursor: "pointer",
               padding: "1px 5px",
               lineHeight: 1,
@@ -338,7 +338,7 @@ function PostViewerItem({
               justifyContent: "center",
             }}
           >
-            <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: showCollectSheet ? "#FF0000" : "rgba(255,255,255,0.7)", lineHeight: 1, textTransform: "uppercase" }}>{isUntradeableCoin(post as { coin_address?: string | null; coin_currency?: string | null }) ? "LEGACY" : "COLLECT"}</span>
+            <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: showCollectSheet ? "#E5E1DB" : "rgba(229,225,219,0.7)", lineHeight: 1, textTransform: "uppercase" }}>{isUntradeableCoin(post as { coin_address?: string | null; coin_currency?: string | null }) ? "LEGACY" : "COLLECT"}</span>
           </button>
 
           {isOwnProfile && (
@@ -348,9 +348,9 @@ function PostViewerItem({
                 style={{ background: "transparent", border: "none", cursor: "pointer", padding: "8px", display: "flex", alignItems: "center", justifyContent: "center" }}
               >
                 <svg width="21.5" height="21.5" viewBox="0 0 18 18" fill="none">
-                  <circle cx="3" cy="9" r="1.5" fill="white" opacity="0.7" />
-                  <circle cx="9" cy="9" r="1.5" fill="white" opacity="0.7" />
-                  <circle cx="15" cy="9" r="1.5" fill="white" opacity="0.7" />
+                  <circle cx="3" cy="9" r="1.5" fill="#E5E1DB" opacity="0.7" />
+                  <circle cx="9" cy="9" r="1.5" fill="#E5E1DB" opacity="0.7" />
+                  <circle cx="15" cy="9" r="1.5" fill="#E5E1DB" opacity="0.7" />
                 </svg>
               </button>
 
@@ -369,14 +369,14 @@ function PostViewerItem({
                       zIndex: 121,
                       minWidth: 132,
                       background: "#0a0a0a",
-                      border: "1px solid rgba(255,255,255,0.12)",
+                      border: "1px solid rgba(229,225,219,0.12)",
                     }}
                   >
                     <button
                       onClick={() => { setMenuOpen(false); setShowDeckPicker(true); }}
-                      style={{ display: "block", width: "100%", textAlign: "left", background: "transparent", border: "none", borderBottom: "1px solid rgba(255,255,255,0.08)", cursor: "pointer", padding: "11px 14px" }}
+                      style={{ display: "block", width: "100%", textAlign: "left", background: "transparent", border: "none", borderBottom: "1px solid rgba(229,225,219,0.08)", cursor: "pointer", padding: "11px 14px" }}
                     >
-                      <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "white", textTransform: "uppercase", letterSpacing: "0.06em" }}>ADD TO DECK</span>
+                      <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "#E5E1DB", textTransform: "uppercase", letterSpacing: "0.06em" }}>ADD TO DECK</span>
                     </button>
                     {/* Coin-pending: offer the idempotent "Create coin" retry.
                         Excludes legacy 1155-minted posts — those remain
@@ -385,16 +385,16 @@ function PostViewerItem({
                     {!isCoinPost(post as { coin_address?: string | null; token_standard?: string | null }) && !(post as { is_minted?: boolean }).is_minted && (
                       <button
                         onClick={() => { setMenuOpen(false); setShowCreateCoin(true); }}
-                        style={{ display: "block", width: "100%", textAlign: "left", background: "transparent", border: "none", borderBottom: "1px solid rgba(255,255,255,0.08)", cursor: "pointer", padding: "11px 14px" }}
+                        style={{ display: "block", width: "100%", textAlign: "left", background: "transparent", border: "none", borderBottom: "1px solid rgba(229,225,219,0.08)", cursor: "pointer", padding: "11px 14px" }}
                       >
-                        <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "#FF0000", textTransform: "uppercase", letterSpacing: "0.06em" }}>CREATE COIN</span>
+                        <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "#E5E1DB", textTransform: "uppercase", letterSpacing: "0.06em" }}>CREATE COIN</span>
                       </button>
                     )}
                     <button
                       onClick={() => { setMenuOpen(false); onDeletePress?.(post.id); }}
                       style={{ display: "block", width: "100%", textAlign: "left", background: "transparent", border: "none", cursor: "pointer", padding: "11px 14px" }}
                     >
-                      <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "#FF0000", textTransform: "uppercase", letterSpacing: "0.06em" }}>DELETE</span>
+                      <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "#E5E1DB", textTransform: "uppercase", letterSpacing: "0.06em" }}>DELETE</span>
                     </button>
                   </div>
                 </>
@@ -430,7 +430,7 @@ function PostViewerItem({
       {/* ── CAPTION — marginTop: 3, marginBottom: 16 (separator) ── */}
       <div style={{ padding: "0 4px", marginTop: 2, marginBottom: 51 /* 31 + 20 air — tune with FEED_POST_GAP_PX */ }}>
         {post.caption ? (
-          <p style={{ ...SKR, fontSize: 'var(--fs-10)', color: "white", margin: 0, lineHeight: 1.4 }}>
+          <p style={{ ...SKR, fontSize: 'var(--fs-10)', color: "#E5E1DB", margin: 0, lineHeight: 1.4 }}>
             {post.caption}
           </p>
         ) : null}
@@ -439,7 +439,7 @@ function PostViewerItem({
         {showComments && (
           <div style={{ marginTop: 8 }}>
             {comments.length === 0 ? (
-              <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: "rgba(255,255,255,0.25)", margin: 0, textTransform: "uppercase" }}>NO COMMENTS YET</p>
+              <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: "rgba(229,225,219,0.25)", margin: 0, textTransform: "uppercase" }}>NO COMMENTS YET</p>
             ) : (
               <CommentList
                 comments={comments}
@@ -452,7 +452,7 @@ function PostViewerItem({
               />
             )}
             {user && (
-              <div style={{ display: "flex", gap: 8, alignItems: "center", borderTop: "1px solid rgba(255,255,255,0.07)", paddingTop: 8, marginTop: 4 }}>
+              <div style={{ display: "flex", gap: 8, alignItems: "center", borderTop: "1px solid rgba(229,225,219,0.07)", paddingTop: 8, marginTop: 4 }}>
                 <input
                   ref={commentInputRef}
                   className="pm-input"
@@ -461,12 +461,12 @@ function PostViewerItem({
                   onChange={e => setNewComment(e.target.value)}
                   onKeyDown={e => e.key === "Enter" && handleAddComment()}
                   placeholder="add a comment..."
-                  style={{ flex: 1, background: "transparent", border: "none", borderBottom: "1px solid rgba(255,255,255,0.15)", outline: "none", ...SKR, fontSize: 'max(16px, var(--fs-9))', color: "white", padding: "2px 0" }}
+                  style={{ flex: 1, background: "transparent", border: "none", borderBottom: "1px solid rgba(229,225,219,0.15)", outline: "none", ...SKR, fontSize: 'max(16px, var(--fs-9))', color: "#E5E1DB", padding: "2px 0" }}
                 />
                 <button
                   onClick={handleAddComment}
                   disabled={loading || !newComment.trim()}
-                  style={{ background: "transparent", border: "none", cursor: newComment.trim() ? "pointer" : "default", ...SKB, fontSize: 'var(--fs-9)', color: newComment.trim() ? "white" : "rgba(255,255,255,0.2)", padding: 0, textTransform: "uppercase" }}
+                  style={{ background: "transparent", border: "none", cursor: newComment.trim() ? "pointer" : "default", ...SKB, fontSize: 'var(--fs-9)', color: newComment.trim() ? "#E5E1DB" : "rgba(229,225,219,0.2)", padding: 0, textTransform: "uppercase" }}
                 >
                   POST
                 </button>
@@ -639,16 +639,16 @@ export default function ProfilePostViewer({
       }}
     >
       {/* Scoped placeholder style */}
-      <style>{`.pm-input::placeholder { color: rgba(255,255,255,0.35); }`}</style>
+      <style>{`.pm-input::placeholder { color: rgba(229,225,219,0.35); }`}</style>
 
       {/* Back bar — BACK (left) · Scope logomark (center, static, never scrolls with
           content) · THEATRE eye (right, enters theatre for this profile's posts). */}
-      <div style={{ flexShrink: 0, height: 44, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+      <div style={{ flexShrink: 0, height: 44, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", borderBottom: "1px solid rgba(229,225,219,0.06)" }}>
         <button onClick={handleClose} style={{ background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 7, padding: 0 }}>
           <svg width="16.5" height="16.5" viewBox="0 0 13 13" fill="none">
-            <path d="M8.5 1.5L3.5 6.5l5 5" stroke="white" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M8.5 1.5L3.5 6.5l5 5" stroke="#E5E1DB" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-          <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "white", letterSpacing: "-0.1px", textTransform: "uppercase" }}>BACK</span>
+          <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "#E5E1DB", letterSpacing: "-0.1px", textTransform: "uppercase" }}>BACK</span>
         </button>
         <img src="/logomark-plain-white.png" alt="Scope" style={{ height: 14, width: "auto", objectFit: "contain", display: "block", opacity: 0.9 }} />
         <button onClick={() => { enteredViaRotation.current = false; openTheatre(); }} aria-label="Theatre" style={{ background: "transparent", border: "none", cursor: "pointer", padding: 0, display: "flex", alignItems: "center" }}>

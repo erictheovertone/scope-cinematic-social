@@ -35,11 +35,11 @@ export interface ChannelConfig {
 }
 
 export const CHANNELS: ChannelConfig[] = [
-  { key: 'luma', label: 'LUMA', pro: false, xLabel: 'INPUT', yLabel: 'OUTPUT', neutral: 'diagonal', wrap: false, line: '#FF0000' },
+  { key: 'luma', label: 'LUMA', pro: false, xLabel: 'INPUT', yLabel: 'OUTPUT', neutral: 'diagonal', wrap: false, line: '#E5E1DB' },
   { key: 'r',    label: 'R',    pro: true,  xLabel: 'INPUT', yLabel: 'OUTPUT', neutral: 'diagonal', wrap: false, line: '#FF5252' },
   { key: 'g',    label: 'G',    pro: true,  xLabel: 'INPUT', yLabel: 'OUTPUT', neutral: 'diagonal', wrap: false, line: '#3DDC6B' },
   { key: 'b',    label: 'B',    pro: true,  xLabel: 'INPUT', yLabel: 'OUTPUT', neutral: 'diagonal', wrap: false, line: '#4D8DFF' },
-  { key: 'hue',  label: 'HUE',  pro: true,  xLabel: 'HUE',   yLabel: 'SAT',    neutral: 'flat',     wrap: true,  line: '#FF0000' },
+  { key: 'hue',  label: 'HUE',  pro: true,  xLabel: 'HUE',   yLabel: 'SAT',    neutral: 'flat',     wrap: true,  line: '#E5E1DB' },
 ];
 
 export const channelConfig = (c: CurveChannel): ChannelConfig =>

@@ -19,24 +19,24 @@ export default function BadgesStubPage() {
       <div style={{ maxWidth: '30rem', margin: '0 auto', padding: '16px 20px 60px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '4px 0 20px' }}>
           <button onClick={() => router.back()} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-            <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'white', letterSpacing: '0.1em', textTransform: 'uppercase' }}>← BACK</span>
+            <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: '#E5E1DB', letterSpacing: '0.1em', textTransform: 'uppercase' }}>← BACK</span>
           </button>
-          <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#FF0000', marginLeft: 'auto' }} />
+          <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#E5E1DB', marginLeft: 'auto' }} />
         </div>
 
-        <p style={{ ...SKB, fontSize: 'var(--fs-22)', color: 'white', letterSpacing: '-0.02em', textTransform: 'uppercase', margin: '0 0 6px' }}>SCOPE BADGES</p>
-        <p style={{ ...SKR, fontSize: 'var(--fs-11)', color: 'rgba(255,255,255,0.4)', lineHeight: 1.5, margin: '0 0 28px' }}>
+        <p style={{ ...SKB, fontSize: 'var(--fs-22)', color: '#E5E1DB', letterSpacing: '-0.02em', textTransform: 'uppercase', margin: '0 0 6px' }}>SCOPE BADGES</p>
+        <p style={{ ...SKR, fontSize: 'var(--fs-11)', color: 'rgba(229,225,219,0.4)', lineHeight: 1.5, margin: '0 0 28px' }}>
           The full tier list lands in Piece 6. Here&rsquo;s the short version for now.
         </p>
 
         {RARITY_ORDER.map((key) => {
           const b = BADGES[key];
           return (
-            <div key={key} style={{ display: 'flex', gap: 14, alignItems: 'flex-start', padding: '14px 0', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+            <div key={key} style={{ display: 'flex', gap: 14, alignItems: 'flex-start', padding: '14px 0', borderTop: '1px solid rgba(229,225,219,0.1)' }}>
               <img src={b.bannerSrc ?? b.src} alt={b.title} style={{ width: 38, height: 38, objectFit: 'contain', flexShrink: 0 }} />
               <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ ...SKB, fontSize: 'var(--fs-11)', color: '#FF0000', letterSpacing: '0.1em', textTransform: 'uppercase', margin: '0 0 5px' }}>{b.title}</p>
-                <p style={{ ...SKR, fontSize: 'var(--fs-10_5)', color: 'rgba(255,255,255,0.6)', lineHeight: 1.45, margin: 0 }}>{BADGE_SHORT_BLURB[key]}</p>
+                <p style={{ ...SKB, fontSize: 'var(--fs-11)', color: '#E5E1DB', letterSpacing: '0.1em', textTransform: 'uppercase', margin: '0 0 5px' }}>{b.title}</p>
+                <p style={{ ...SKR, fontSize: 'var(--fs-10_5)', color: 'rgba(229,225,219,0.6)', lineHeight: 1.45, margin: 0 }}>{BADGE_SHORT_BLURB[key]}</p>
               </div>
             </div>
           );

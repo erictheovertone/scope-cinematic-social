@@ -47,11 +47,11 @@ export default function FollowListModal({ type, privyUserId, onClose }: Props) {
           onClick={onClose}
           className="bg-transparent border-none cursor-pointer p-0"
         >
-          <span style={{ ...SKR, fontSize: 'var(--fs-9)', color: "white", letterSpacing: "-0.18px" }}>
+          <span style={{ ...SKR, fontSize: 'var(--fs-9)', color: "#E5E1DB", letterSpacing: "-0.18px" }}>
             ← Back
           </span>
         </button>
-        <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "white", letterSpacing: "-0.18px" }}>
+        <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "#E5E1DB", letterSpacing: "-0.18px" }}>
           {type === "followers" ? "Followers" : "Following"}
         </span>
       </div>
@@ -63,7 +63,7 @@ export default function FollowListModal({ type, privyUserId, onClose }: Props) {
             <FrameLoader />
           </div>
         ) : profiles.length === 0 ? (
-          <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: "rgba(255,255,255,0.4)", marginTop: 24 }}>
+          <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: "rgba(229,225,219,0.4)", marginTop: 24 }}>
             {type === "followers" ? "No followers yet" : "Not following anyone yet"}
           </p>
         ) : (
@@ -84,12 +84,12 @@ export default function FollowListModal({ type, privyUserId, onClose }: Props) {
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: "white" }}>
+                  <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: "#E5E1DB" }}>
                     {p.username?.[0]?.toUpperCase() ?? "?"}
                   </span>
                 )}
               </div>
-              <span style={{ ...SKR, fontSize: 'var(--fs-9)', color: "white", letterSpacing: "-0.18px" }}>
+              <span style={{ ...SKR, fontSize: 'var(--fs-9)', color: "#E5E1DB", letterSpacing: "-0.18px" }}>
                 @{p.username}
               </span>
             </button>

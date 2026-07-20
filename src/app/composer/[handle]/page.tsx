@@ -19,8 +19,8 @@ import { backfillPeaks } from "@/lib/waveform";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
-const HAIR = "rgba(255,255,255,0.12)";
-const RED = "#FF0000";
+const HAIR = "rgba(229,225,219,0.12)";
+const RED = "#E5E1DB";
 
 interface Track {
   id: string;
@@ -156,7 +156,7 @@ export default function ComposerDiscographyPage() {
   const empty = tracks !== null && tracks.length === 0;
 
   return (
-    <div style={{ minHeight: "100vh", background: "#000", color: "#FFF" }}>
+    <div style={{ minHeight: "100vh", background: "#000", color: "#E5E1DB" }}>
       <audio ref={audioRef} onEnded={() => { setPlaying(null); setProgress(0); }} onTimeUpdate={() => { const a = audioRef.current; if (a && a.duration && isFinite(a.duration)) setProgress(a.currentTime / a.duration); }} />
 
       {/* ── BANNER — album-art-style blurred underlay + sharp portrait ─────────
@@ -169,15 +169,15 @@ export default function ComposerDiscographyPage() {
             <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.35), rgba(0,0,0,0.9))" }} />
           </>
         )}
-        <button onClick={() => history.back()} style={{ position: "relative", ...SKR, fontSize: 12, color: "rgba(255,255,255,0.55)", background: "none", border: "none", cursor: "pointer", padding: 0, marginBottom: 18 }}>← Back</button>
+        <button onClick={() => history.back()} style={{ position: "relative", ...SKR, fontSize: 12, color: "rgba(229,225,219,0.55)", background: "none", border: "none", cursor: "pointer", padding: 0, marginBottom: 18 }}>← Back</button>
         <div style={{ position: "relative", display: "flex", gap: 16, alignItems: "flex-start" }}>
           <div style={{ width: 84, height: 84, flexShrink: 0, overflow: "hidden", background: "#222" }}>
             {profile?.profile_image_url && <img src={feedImage(profile.profile_image_url, 200)} alt={handle} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />}
           </div>
           <div style={{ minWidth: 0, flex: 1 }}>
             <p style={{ ...SKB, fontSize: 11, color: RED, textTransform: "uppercase", letterSpacing: "0.22em", margin: "2px 0 6px" }}>COMPOSER</p>
-            <p style={{ ...SKB, fontSize: 20, color: "#FFF", margin: "0 0 2px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{profile?.display_name || handle}</p>
-            <button onClick={() => router.push(`/profile/${handle}`)} style={{ ...SKR, fontSize: 12, color: "rgba(255,255,255,0.5)", background: "none", border: "none", cursor: "pointer", padding: 0 }}>@{handle}</button>
+            <p style={{ ...SKB, fontSize: 20, color: "#E5E1DB", margin: "0 0 2px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{profile?.display_name || handle}</p>
+            <button onClick={() => router.push(`/profile/${handle}`)} style={{ ...SKR, fontSize: 12, color: "rgba(229,225,219,0.5)", background: "none", border: "none", cursor: "pointer", padding: 0 }}>@{handle}</button>
           </div>
         </div>
 
@@ -193,33 +193,33 @@ export default function ComposerDiscographyPage() {
 
       {/* ── TRACKLIST ─────────────────────────────────────────────────────────── */}
       <div style={{ maxWidth: 720, margin: "0 auto", padding: "4px 20px 60px" }}>
-        {tracks === null && <p style={{ ...SKR, fontSize: 13, color: "rgba(255,255,255,0.4)", padding: "20px 0" }}>Loading…</p>}
-        {empty && <p style={{ ...SKR, fontSize: 13, color: "rgba(255,255,255,0.4)", padding: "20px 0" }}>No discography yet.</p>}
+        {tracks === null && <p style={{ ...SKR, fontSize: 13, color: "rgba(229,225,219,0.4)", padding: "20px 0" }}>Loading…</p>}
+        {empty && <p style={{ ...SKR, fontSize: 13, color: "rgba(229,225,219,0.4)", padding: "20px 0" }}>No discography yet.</p>}
 
         {tracks?.map((t) => {
           const isPlaying = playing === t.id;
           const inN = inPostsByTrack.get(t.id) ?? 0;
           return (
-            <div key={t.id} style={{ display: "flex", alignItems: "center", gap: 13, padding: "14px 0", borderBottom: `1px solid rgba(255,255,255,0.07)` }}>
+            <div key={t.id} style={{ display: "flex", alignItems: "center", gap: 13, padding: "14px 0", borderBottom: `1px solid rgba(229,225,219,0.07)` }}>
               <TrackArt url={t.artwork_url} title={t.title} id={t.id} size={46} />
               <button onClick={() => togglePlay(t)} aria-label={isPlaying ? "Pause" : "Play"} style={{ flexShrink: 0, width: 34, height: 34, borderRadius: "50%", border: `1px solid ${HAIR}`, background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>
                 {isPlaying
-                  ? <svg width="12" height="12" viewBox="0 0 24 24" fill="#FFF"><rect x="6" y="5" width="4" height="14" /><rect x="14" y="5" width="4" height="14" /></svg>
-                  : <svg width="12" height="12" viewBox="0 0 24 24" fill="#FFF"><path d="M7 5v14l12-7z" /></svg>}
+                  ? <svg width="12" height="12" viewBox="0 0 24 24" fill="#E5E1DB"><rect x="6" y="5" width="4" height="14" /><rect x="14" y="5" width="4" height="14" /></svg>
+                  : <svg width="12" height="12" viewBox="0 0 24 24" fill="#E5E1DB"><path d="M7 5v14l12-7z" /></svg>}
               </button>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-                  <span style={{ ...SKB, fontSize: 14, color: "#FFF", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t.title}</span>
-                  <span style={{ ...SKR, fontSize: 11, color: "rgba(255,255,255,0.4)", flexShrink: 0 }}>{fmt(t.duration_seconds)}</span>
+                  <span style={{ ...SKB, fontSize: 14, color: "#E5E1DB", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t.title}</span>
+                  <span style={{ ...SKR, fontSize: 11, color: "rgba(229,225,219,0.4)", flexShrink: 0 }}>{fmt(t.duration_seconds)}</span>
                 </div>
                 <div style={{ margin: "6px 0 5px" }}>
                   <Waveform peaks={t.waveform_peaks} progress={isPlaying ? progress : 0} onSeek={(pct) => seekTrack(t, pct)} height={34} />
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                   {t.keywords.slice(0, 4).map((k) => (
-                    <span key={k} style={{ ...SKR, fontSize: 10.5, color: "rgba(255,255,255,0.4)", border: `1px solid ${HAIR}`, padding: "2px 7px" }}>{k}</span>
+                    <span key={k} style={{ ...SKR, fontSize: 10.5, color: "rgba(229,225,219,0.4)", border: `1px solid ${HAIR}`, padding: "2px 7px" }}>{k}</span>
                   ))}
-                  {inN > 0 && <span style={{ ...SKR, fontSize: 10.5, color: "rgba(255,255,255,0.3)" }}>in {inN} {inN === 1 ? "post" : "posts"}</span>}
+                  {inN > 0 && <span style={{ ...SKR, fontSize: 10.5, color: "rgba(229,225,219,0.3)" }}>in {inN} {inN === 1 ? "post" : "posts"}</span>}
                 </div>
               </div>
             </div>
@@ -232,7 +232,7 @@ export default function ComposerDiscographyPage() {
         <div style={{ maxWidth: 720, margin: "0 auto", padding: "0 20px 80px", display: "flex", flexDirection: "column", gap: 14, alignItems: "flex-start" }}>
           {/* Interim: until M3's standalone library surface ships, the bracket line
               opens the contribution flow. Report: swap to the library route in M3. */}
-          <button onClick={() => setShowContribute(true)} style={{ ...SKB, fontSize: 12, color: "rgba(255,255,255,0.55)", textTransform: "uppercase", letterSpacing: "0.16em", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+          <button onClick={() => setShowContribute(true)} style={{ ...SKB, fontSize: 12, color: "rgba(229,225,219,0.55)", textTransform: "uppercase", letterSpacing: "0.16em", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
             [ SCOPE ORIGINAL MUSIC LIBRARY ]
           </button>
           {viewerIsComposer === false && !viewerIsOwner && (
@@ -251,8 +251,8 @@ export default function ComposerDiscographyPage() {
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <p style={{ ...SKB, fontSize: 17, color: "#FFF", margin: "0 0 3px", fontVariantNumeric: "tabular-nums" }}>{value}</p>
-      <p style={{ ...SKR, fontSize: 10, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.1em", margin: 0 }}>{label}</p>
+      <p style={{ ...SKB, fontSize: 17, color: "#E5E1DB", margin: "0 0 3px", fontVariantNumeric: "tabular-nums" }}>{value}</p>
+      <p style={{ ...SKR, fontSize: 10, color: "rgba(229,225,219,0.4)", textTransform: "uppercase", letterSpacing: "0.1em", margin: 0 }}>{label}</p>
     </div>
   );
 }

@@ -41,8 +41,8 @@ export default function Invite() {
       {/* Content */}
       <div className="flex-1 px-6 py-8">
         <div className="text-center mb-8">
-          <div className="w-20 h-20 bg-[#FF0000] rounded-full mx-auto mb-6 flex items-center justify-center">
-            <svg width="35.5" height="35.5" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.5">
+          <div className="w-20 h-20 bg-[#E5E1DB] rounded-full mx-auto mb-6 flex items-center justify-center">
+            <svg width="35.5" height="35.5" viewBox="0 0 24 24" fill="none" stroke="#E5E1DB" strokeWidth="1.5">
               <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
               <circle cx="9" cy="7" r="4"/>
               <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
@@ -63,7 +63,7 @@ export default function Invite() {
         {!inviteLink ? (
           <button
             onClick={generateInviteLink}
-            className="w-full bg-[#FF0000] text-white py-4 rounded-lg font-['IBM_Plex_Mono'] font-medium text-[var(--fs-16)] hover:bg-[#CC0000] transition-colors mb-6"
+            className="w-full bg-[#E5E1DB] text-white py-4 rounded-lg font-['IBM_Plex_Mono'] font-medium text-[var(--fs-16)] hover:bg-[#CC0000] transition-colors mb-6"
           >
             Generate Invite Link
           </button>
@@ -108,15 +108,15 @@ export default function Invite() {
           </p>
           <ul className="space-y-2">
             <li className="font-['IBM_Plex_Mono'] font-normal text-[#888888] text-[var(--fs-11)] flex items-start">
-              <span className="text-[#FF0000] mr-2">•</span>
+              <span className="text-[#E5E1DB] mr-2">•</span>
               Share your unique invite link with friends
             </li>
             <li className="font-['IBM_Plex_Mono'] font-normal text-[#888888] text-[var(--fs-11)] flex items-start">
-              <span className="text-[#FF0000] mr-2">•</span>
+              <span className="text-[#E5E1DB] mr-2">•</span>
               They'll be directed to sign up for Scope
             </li>
             <li className="font-['IBM_Plex_Mono'] font-normal text-[#888888] text-[var(--fs-11)] flex items-start">
-              <span className="text-[#FF0000] mr-2">•</span>
+              <span className="text-[#E5E1DB] mr-2">•</span>
               You'll both get connected automatically
             </li>
           </ul>

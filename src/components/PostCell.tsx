@@ -71,7 +71,7 @@ export default function PostCell({ post, layoutId, index, onClick, showSoundTogg
           Sits above media (z7) so it reads over any frame; purely decorative. */}
       {post.is_pinned && (
         <div style={{ position: 'absolute', top: 4, right: 4, zIndex: 7, pointerEvents: 'none', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.75))' }}>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="#FFFFFF" aria-hidden="true">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="#E5E1DB" aria-hidden="true">
             <path d="M16 9V4h1c.55 0 1-.45 1-1s-.45-1-1-1H7c-.55 0-1 .45-1 1s.45 1 1 1h1v5c0 1.66-1.34 3-3 3v2h5.97v7l1 1 1-1v-7H19v-2c-1.66 0-3-1.34-3-3z" />
           </svg>
         </div>
@@ -122,8 +122,8 @@ export default function PostCell({ post, layoutId, index, onClick, showSoundTogg
       {/* LEGACY pairing tag — a small, quiet mark so an untradeable (ETH-paired)
           coin reads as such before the collect sheet is opened. */}
       {isUntradeableCoin(post) && (
-        <div style={{ position: 'absolute', bottom: 6, left: 6, zIndex: 6, pointerEvents: 'none', background: 'rgba(0,0,0,0.72)', border: '1px solid rgba(255,0,0,0.5)', padding: '2px 5px' }}>
-          <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-6_5)', letterSpacing: '0.14em', color: '#FF0000', textTransform: 'uppercase' }}>LEGACY</span>
+        <div style={{ position: 'absolute', bottom: 6, left: 6, zIndex: 6, pointerEvents: 'none', background: 'rgba(0,0,0,0.72)', border: '1px solid rgba(229,225,219,0.5)', padding: '2px 5px' }}>
+          <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-6_5)', letterSpacing: '0.14em', color: '#E5E1DB', textTransform: 'uppercase' }}>LEGACY</span>
         </div>
       )}
 
@@ -133,8 +133,8 @@ export default function PostCell({ post, layoutId, index, onClick, showSoundTogg
           {([['top','left'],['top','right'],['bottom','left'],['bottom','right']] as const).map(([v, h]) => (
             <span key={v + h} style={{
               position: 'absolute', [v]: 4, [h]: 4, width: 10, height: 10,
-              [`border${v[0].toUpperCase() + v.slice(1)}` as 'borderTop']: '1.5px solid #FF0000',
-              [`border${h[0].toUpperCase() + h.slice(1)}` as 'borderLeft']: '1.5px solid #FF0000',
+              [`border${v[0].toUpperCase() + v.slice(1)}` as 'borderTop']: '1.5px solid #E5E1DB',
+              [`border${h[0].toUpperCase() + h.slice(1)}` as 'borderLeft']: '1.5px solid #E5E1DB',
             }} />
           ))}
           <style>{`@keyframes tile-develop { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }`}</style>

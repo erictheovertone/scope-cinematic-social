@@ -18,7 +18,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
-const RED = "#FF0000";
+const RED = "#E5E1DB";
 const EASE = "cubic-bezier(0.16,0.84,0.3,1)";
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 

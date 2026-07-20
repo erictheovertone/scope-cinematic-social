@@ -40,7 +40,7 @@ const tiers = [
     img: '/free-tier-aperture-logo-red.png',
     size: 40,
     label: 'FREE TIER',
-    color: '#FF0000',
+    color: '#E5E1DB',
     title: 'FREE TIER',
     description: 'Every Scope account starts here. 25 posts, full collecting, minted on Base from day one.',
     sub: 'FREE · 25 POST LIMIT',
@@ -50,7 +50,7 @@ const tiers = [
     img: '/badges/in-house-badge-min-design-01.png',
     size: 40,
     label: 'IN-HOUSE CREATOR',
-    color: 'rgba(255,255,255,0.6)',
+    color: 'rgba(229,225,219,0.6)',
     title: 'IN-HOUSE CREATOR',
     description: "Earned by creators who use Scope's built-in tools. Post 10+ times per month with the in-app toolkit to qualify. Cannot be bought.",
     sub: '10+ TOOL POSTS / MONTH · AUTO-AWARDED',
@@ -60,7 +60,7 @@ const tiers = [
     img: '/badges/scope-pro-badge-min-design-01.png',
     size: 44,
     label: 'SCOPE PRO',
-    color: '#FF0000',
+    color: '#E5E1DB',
     title: 'SCOPE PRO',
     description: 'Unlimited posts, decks, and analytics. Debited from your wallet or via card. Your red aperture badge ships immediately.',
     sub: '$5 / MONTH · $50 / YEAR',
@@ -257,7 +257,7 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
         // bottom-sheet (85vh) for the list.
         top: detailKey ? 0 : undefined,
         backgroundColor: '#080808',
-        borderTop: '1px solid rgba(255,255,255,0.08)',
+        borderTop: '1px solid rgba(229,225,219,0.08)',
         zIndex: 401,
         transform: visible ? 'translateY(0)' : 'translateY(100%)',
         transition: 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)',
@@ -277,7 +277,7 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
           return (
             <div>
               <button onClick={() => setDetailKey(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-                <span style={{ ...BOLD, fontSize: 'var(--fs-10)', color: 'rgba(255,255,255,0.5)', letterSpacing: '0.1em' }}>← BACK</span>
+                <span style={{ ...BOLD, fontSize: 'var(--fs-10)', color: 'rgba(229,225,219,0.5)', letterSpacing: '0.1em' }}>← BACK</span>
               </button>
 
               {/* Badge hero */}
@@ -287,24 +287,24 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
                   <img className="badge-hero-logo" src={d.img} alt={d.label} style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block', position: 'relative', animation: 'focusPull 2s cubic-bezier(0.16, 0.84, 0.3, 1) both' }} />
                 </div>
                 <p style={{ ...BOLD, fontSize: 'var(--fs-18)', color: d.color, textTransform: 'uppercase', letterSpacing: '-0.02em', margin: '0 0 12px', textAlign: 'center' }}>{d.label}</p>
-                <p style={{ ...REG, fontSize: 'var(--fs-13)', color: 'rgba(255,255,255,0.6)', textAlign: 'center', lineHeight: 1.6, margin: 0, maxWidth: 280 }}>{d.tagline}</p>
+                <p style={{ ...REG, fontSize: 'var(--fs-13)', color: 'rgba(229,225,219,0.6)', textAlign: 'center', lineHeight: 1.6, margin: 0, maxWidth: 280 }}>{d.tagline}</p>
               </div>
 
               {/* Divider */}
-              <div style={{ height: 1, backgroundColor: 'rgba(255,255,255,0.06)', margin: '0 0 32px' }} />
+              <div style={{ height: 1, backgroundColor: 'rgba(229,225,219,0.06)', margin: '0 0 32px' }} />
 
               {/* Sections — the original written copy */}
               {d.sections.map((section, i) => (
                 <div key={i} style={{ padding: '0 0 32px' }}>
                   <p style={{ ...BOLD, fontSize: 'var(--fs-9)', color: d.color, textTransform: 'uppercase', letterSpacing: '0.15em', margin: '0 0 10px' }}>{section.title}</p>
-                  <p style={{ ...REG, fontSize: 'var(--fs-13)', color: 'rgba(255,255,255,0.75)', lineHeight: 1.4, margin: 0 }}>{section.body}</p>
-                  {i < d.sections.length - 1 && <div style={{ height: 1, backgroundColor: 'rgba(255,255,255,0.05)', marginTop: 28 }} />}
+                  <p style={{ ...REG, fontSize: 'var(--fs-13)', color: 'rgba(229,225,219,0.75)', lineHeight: 1.4, margin: 0 }}>{section.body}</p>
+                  {i < d.sections.length - 1 && <div style={{ height: 1, backgroundColor: 'rgba(229,225,219,0.05)', marginTop: 28 }} />}
                 </div>
               ))}
 
               {(detailKey === 'free' || detailKey === 'pro') && (
-                <button onClick={onJoinPress} style={{ width: '100%', background: '#FF0000', border: 'none', cursor: 'pointer', padding: '14px 0' }}>
-                  <span style={{ ...BOLD, fontSize: 'var(--fs-12)', color: 'white', textTransform: 'uppercase', letterSpacing: '0.08em' }}>BECOME A SCOPE MEMBER</span>
+                <button onClick={onJoinPress} style={{ width: '100%', background: '#E5E1DB', border: 'none', cursor: 'pointer', padding: '14px 0' }}>
+                  <span style={{ ...BOLD, fontSize: 'var(--fs-12)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.08em' }}>BECOME A SCOPE MEMBER</span>
                 </button>
               )}
             </div>
@@ -317,12 +317,12 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
         {/* Status rows */}
         {/* Row 1 — Membership. Icon = the member's actual tier logo (min-design):
             Scope Pro badge when Pro, the Free mark otherwise (CHANGE 3). */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid rgba(229,225,219,0.08)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <img src={vIsPaid ? '/badges/scope-pro-badge-min-design-01.png' : '/free-tier-aperture-logo-red.png'} alt="" style={{ width: 16, height: 16, objectFit: 'contain' }} />
             <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <span style={{ ...BOLD, fontSize: 'var(--fs-7)', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.15em' }}>MY MEMBERSHIP</span>
-              <span style={{ ...BOLD, fontSize: 'var(--fs-9)', color: '#FFFFFF', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+              <span style={{ ...BOLD, fontSize: 'var(--fs-7)', color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase', letterSpacing: '0.15em' }}>MY MEMBERSHIP</span>
+              <span style={{ ...BOLD, fontSize: 'var(--fs-9)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                 {membershipBarLabel({ isPaid: vIsPaid, paidUntil: vPaidUntil, cancelsAt: vCancelsAt })}
               </span>
             </div>
@@ -331,7 +331,7 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
             onClick={vIsPaid ? handleManage : onJoinPress}
             style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}
           >
-            <span style={{ ...BOLD, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+            <span style={{ ...BOLD, fontSize: 'var(--fs-8)', color: 'rgba(229,225,219,0.5)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
               {vIsPaid ? 'MANAGE →' : 'UPGRADE →'}
             </span>
           </button>
@@ -353,8 +353,8 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
           }).filter((b) => b.key !== 'free'); // the Free baseline isn't an "earned" badge
           if (earned.length === 0) return null;
           return (
-            <div style={{ padding: '14px 0 18px', borderBottom: '1px solid rgba(255,255,255,0.08)', marginBottom: 20 }}>
-              <span style={{ ...BOLD, fontSize: 'var(--fs-7)', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.15em', display: 'block', marginBottom: 14 }}>BADGES EARNED</span>
+            <div style={{ padding: '14px 0 18px', borderBottom: '1px solid rgba(229,225,219,0.08)', marginBottom: 20 }}>
+              <span style={{ ...BOLD, fontSize: 'var(--fs-7)', color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase', letterSpacing: '0.15em', display: 'block', marginBottom: 14 }}>BADGES EARNED</span>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 18 }}>
                 {earned.map((b, i) => (
                   <div key={b.key} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, width: 52 }}>
@@ -370,7 +370,7 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
                       alt={b.title}
                       style={{ width: 42.5, height: b.framedSrc ? 'auto' : 42.5, objectFit: 'contain', display: 'block', animation: 'focusPull 2s cubic-bezier(0.16,0.84,0.3,1) both', animationDelay: `${i * 100}ms` }} /* 34 × 1.25 — Eric's +25% */
                     />
-                    <span style={{ ...BOLD, fontSize: 'var(--fs-8)', letterSpacing: '0.04em', color: '#FFF', textTransform: 'uppercase', lineHeight: 1.1, textAlign: 'center' }}>{b.title}</span>
+                    <span style={{ ...BOLD, fontSize: 'var(--fs-8)', letterSpacing: '0.04em', color: '#E5E1DB', textTransform: 'uppercase', lineHeight: 1.1, textAlign: 'center' }}>{b.title}</span>
                   </div>
                 ))}
               </div>
@@ -398,7 +398,7 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
                     above (no 3D/glow; the new flat assets don't suit a round coin). */}
                 <img src={tier.img} alt={tier.label} style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block', animation: visible ? `badgeGlowPulse 400ms ease-out ${i * 45 + 150}ms both` : undefined }} />
                 {tierEarned(tier.key, vTiers, vIsPaid, vComposerTrackCount) && (
-                  <div style={{ position: 'absolute', top: -3, right: -3, width: 6, height: 6, borderRadius: '50%', backgroundColor: '#FF0000', zIndex: 2 }} />
+                  <div style={{ position: 'absolute', top: -3, right: -3, width: 6, height: 6, borderRadius: '50%', backgroundColor: '#E5E1DB', zIndex: 2 }} />
                 )}
               </div>
               <div style={{ flex: 1 }}>
@@ -407,36 +407,36 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
                   {/* Real earned status per the viewer's flags — every tier they
                       hold reads YOURS; the rest read NOT YET YOURS. */}
                   {tierEarned(tier.key, vTiers, vIsPaid, vComposerTrackCount) ? (
-                    <span style={{ ...BOLD, fontSize: 'var(--fs-7)', color: '#FF0000', letterSpacing: '0.12em', border: '1px solid rgba(255,0,0,0.55)', padding: '1px 4px' }}>YOURS</span>
+                    <span style={{ ...BOLD, fontSize: 'var(--fs-7)', color: '#E5E1DB', letterSpacing: '0.12em', border: '1px solid rgba(229,225,219,0.55)', padding: '1px 4px' }}>YOURS</span>
                   ) : (
-                    <span style={{ ...BOLD, fontSize: 'var(--fs-7)', color: 'rgba(255,255,255,0.3)', letterSpacing: '0.12em' }}>NOT YET YOURS</span>
+                    <span style={{ ...BOLD, fontSize: 'var(--fs-7)', color: 'rgba(229,225,219,0.3)', letterSpacing: '0.12em' }}>NOT YET YOURS</span>
                   )}
                 </p>
-                <p style={{ ...REG, fontSize: 'var(--fs-11)', color: 'rgba(255,255,255,0.65)', lineHeight: 1.3, margin: '0 0 6px' }}>
+                <p style={{ ...REG, fontSize: 'var(--fs-11)', color: 'rgba(229,225,219,0.65)', lineHeight: 1.3, margin: '0 0 6px' }}>
                   {tier.description}
                 </p>
                 {/* PRO (not paid) keeps the inline buy CTA; earned-badge earn
                     paths are conveyed by the single descriptor (round 2 prune). */}
                 {tier.key === 'pro' && !vIsPaid && (
                   <button onClick={(e) => { e.stopPropagation(); onJoinPress(); }} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '0 0 6px', display: 'block' }}>
-                    <span style={{ ...BOLD, fontSize: 'var(--fs-9)', color: '#FF0000', textTransform: 'uppercase', letterSpacing: '0.1em' }}>GET PRO →</span>
+                    <span style={{ ...BOLD, fontSize: 'var(--fs-9)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.1em' }}>GET PRO →</span>
                   </button>
                 )}
                 <button
                   onClick={() => setDetailKey(tier.key)}
                   style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px 0 0', display: 'inline-block' }}
                 >
-                  <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-8)', color: 'white', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+                  <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-8)', color: '#E5E1DB', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
                     LEARN MORE →
                   </span>
                 </button>
-                <p style={{ ...BOLD, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>
+                <p style={{ ...BOLD, fontSize: 'var(--fs-8)', color: 'rgba(229,225,219,0.25)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>
                   {tier.sub}
                 </p>
               </div>
             </div>
             {i < tiers.length - 1 && (
-              <div style={{ height: 1, backgroundColor: 'rgba(255,255,255,0.05)', marginBottom: 24 }} />
+              <div style={{ height: 1, backgroundColor: 'rgba(229,225,219,0.05)', marginBottom: 24 }} />
             )}
           </div>
         ))}
@@ -444,17 +444,17 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
         {/* CTA */}
         <button
           onClick={onJoinPress}
-          style={{ width: '100%', background: '#FF0000', border: 'none', cursor: 'pointer', padding: '14px 0', marginTop: 8 }}
+          style={{ width: '100%', background: '#E5E1DB', border: 'none', cursor: 'pointer', padding: '14px 0', marginTop: 8 }}
         >
-          <span style={{ ...BOLD, fontSize: 'var(--fs-12)', color: 'white', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+          <span style={{ ...BOLD, fontSize: 'var(--fs-12)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
             BECOME A SCOPE MEMBER
           </span>
         </button>
         <button
           onClick={onClose}
-          style={{ width: '100%', background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', cursor: 'pointer', padding: '12px 0', marginTop: 8 }}
+          style={{ width: '100%', background: 'transparent', border: '1px solid rgba(229,225,219,0.12)', cursor: 'pointer', padding: '12px 0', marginTop: 8 }}
         >
-          <span style={{ ...BOLD, fontSize: 'var(--fs-10)', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+          <span style={{ ...BOLD, fontSize: 'var(--fs-10)', color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
             CLOSE
           </span>
         </button>

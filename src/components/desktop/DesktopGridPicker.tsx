@@ -17,7 +17,7 @@ import {
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
-const RED = '#f20d0d';
+const RED = '#E5E1DB';
 
 type Step = 'aspect' | 'count' | 'commit';
 
@@ -101,9 +101,9 @@ export default function DesktopGridPicker({
     <div data-swipe-exclude style={{ position: 'fixed', inset: 0, zIndex: 700, background: '#000', overflowY: 'auto' }}>
       {/* chrome: echo top-right, exit top-left, back between steps */}
       <div style={{ position: 'absolute', top: 22, left: 26, display: 'flex', gap: 22 }}>
-        <button onClick={onClose} style={{ ...SKR, fontSize: 12, color: 'rgba(255,255,255,0.55)', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>× EXIT</button>
+        <button onClick={onClose} style={{ ...SKR, fontSize: 12, color: 'rgba(229,225,219,0.55)', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>× EXIT</button>
         {step !== 'aspect' && (
-          <button onClick={() => setStep(step === 'commit' ? 'count' : 'aspect')} style={{ ...SKR, fontSize: 12, color: 'rgba(255,255,255,0.55)', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>← BACK</button>
+          <button onClick={() => setStep(step === 'commit' ? 'count' : 'aspect')} style={{ ...SKR, fontSize: 12, color: 'rgba(229,225,219,0.55)', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>← BACK</button>
         )}
       </div>
       {echo && (
@@ -112,7 +112,7 @@ export default function DesktopGridPicker({
 
       <div style={{ maxWidth: 900, margin: '0 auto', padding: '64px 40px 80px', textAlign: 'center' }}>
         <CornerBrackets>
-          <h1 style={{ ...SKB, fontSize: 72, color: '#FFF', textTransform: 'uppercase', letterSpacing: '-0.01em', margin: 0, lineHeight: 1 }}>{title}</h1>
+          <h1 style={{ ...SKB, fontSize: 72, color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '-0.01em', margin: 0, lineHeight: 1 }}>{title}</h1>
         </CornerBrackets>
 
         {/* ── STEP 1: ASPECT — outlined frames at true ratio ── */}
@@ -124,8 +124,8 @@ export default function DesktopGridPicker({
                 onClick={() => { setAspect(c.id as DesktopAspect); setStep('count'); }}
                 style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, opacity: reduced ? 1 : undefined }}
               >
-                <span style={{ display: 'block', width: 300, aspectRatio: `${c.ratio}`, border: `1px solid ${aspect === c.id ? RED : 'rgba(255,255,255,0.35)'}`, transition: 'border-color 140ms ease' }} />
-                <span style={{ ...SKB, fontSize: 12, color: aspect === c.id ? RED : 'rgba(255,255,255,0.65)', textTransform: 'uppercase', letterSpacing: '0.12em', display: 'block', marginTop: 8 }}>
+                <span style={{ display: 'block', width: 300, aspectRatio: `${c.ratio}`, border: `1px solid ${aspect === c.id ? RED : 'rgba(229,225,219,0.35)'}`, transition: 'border-color 140ms ease' }} />
+                <span style={{ ...SKB, fontSize: 12, color: aspect === c.id ? RED : 'rgba(229,225,219,0.65)', textTransform: 'uppercase', letterSpacing: '0.12em', display: 'block', marginTop: 8 }}>
                   {c.label} · AR {c.ratioLabel}
                 </span>
               </button>
@@ -144,10 +144,10 @@ export default function DesktopGridPicker({
               >
                 <span style={{ display: 'grid', gridTemplateColumns: `repeat(${n}, 1fr)`, gap: 5 }}>
                   {Array.from({ length: n }).map((_, i) => (
-                    <span key={i} style={{ display: 'block', aspectRatio: `${chip.ratio}`, border: `1px solid ${count === n ? RED : 'rgba(255,255,255,0.35)'}`, transition: 'border-color 140ms ease' }} />
+                    <span key={i} style={{ display: 'block', aspectRatio: `${chip.ratio}`, border: `1px solid ${count === n ? RED : 'rgba(229,225,219,0.35)'}`, transition: 'border-color 140ms ease' }} />
                   ))}
                 </span>
-                <span style={{ ...SKB, fontSize: 12, color: count === n ? RED : 'rgba(255,255,255,0.65)', textTransform: 'uppercase', letterSpacing: '0.12em', display: 'block', marginTop: 8 }}>
+                <span style={{ ...SKB, fontSize: 12, color: count === n ? RED : 'rgba(229,225,219,0.65)', textTransform: 'uppercase', letterSpacing: '0.12em', display: 'block', marginTop: 8 }}>
                   {n}-ACROSS
                 </span>
               </button>
@@ -163,7 +163,7 @@ export default function DesktopGridPicker({
                 <span key={i} style={{ display: 'block', aspectRatio: `${chip.ratio}`, border: `1px solid ${RED}` }} />
               ))}
             </div>
-            <p style={{ ...SKR, fontSize: 11, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '34px 0 0' }}>
+            <p style={{ ...SKR, fontSize: 11, color: 'rgba(229,225,219,0.45)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '34px 0 0' }}>
               Your mobile layout stays as it is.
             </p>
             {saveError && (
@@ -174,7 +174,7 @@ export default function DesktopGridPicker({
             <button
               onClick={confirm}
               disabled={saving}
-              style={{ ...SKB, fontSize: 13, color: '#000', textTransform: 'uppercase', letterSpacing: '0.12em', background: '#FFF', border: 'none', cursor: 'pointer', padding: '14px 54px', marginTop: 22, opacity: saving ? 0.6 : 1 }}
+              style={{ ...SKB, fontSize: 13, color: '#000', textTransform: 'uppercase', letterSpacing: '0.12em', background: '#E5E1DB', border: 'none', cursor: 'pointer', padding: '14px 54px', marginTop: 22, opacity: saving ? 0.6 : 1 }}
             >
               {saving ? 'SAVING…' : saveError ? 'RETRY' : 'CONFIRM'}
             </button>

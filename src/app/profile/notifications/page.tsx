@@ -168,7 +168,7 @@ export default function NotificationsPage() {
   // family): thin muted border, dark fill, white number. Absent at zero.
   const CountChip = ({ n }: { n: number }) =>
     n > 0 ? (
-      <span style={{ ...SKB, fontSize: 9, color: '#FFF', background: '#0b0b0b', border: '1px solid rgba(255,255,255,0.28)', padding: '1px 5px', marginLeft: 7, fontVariantNumeric: 'tabular-nums', lineHeight: 1.3, verticalAlign: 'baseline' }}>
+      <span style={{ ...SKB, fontSize: 9, color: '#E5E1DB', background: '#0b0b0b', border: '1px solid rgba(229,225,219,0.28)', padding: '1px 5px', marginLeft: 7, fontVariantNumeric: 'tabular-nums', lineHeight: 1.3, verticalAlign: 'baseline' }}>
         {n}
       </span>
     ) : null;
@@ -188,7 +188,7 @@ export default function NotificationsPage() {
     >
       {/* Unread marker — small red square, left edge, vertically centered */}
       {!n.is_read && (
-        <div style={{ position: "absolute", left: 5, top: "50%", transform: "translateY(-50%)", width: 4.5, height: 4.5, background: "#FF0000" }} />
+        <div style={{ position: "absolute", left: 5, top: "50%", transform: "translateY(-50%)", width: 4.5, height: 4.5, background: "#E5E1DB" }} />
       )}
 
       {/* Avatar — tappable → actor profile */}
@@ -197,10 +197,10 @@ export default function NotificationsPage() {
       {/* Message (+3px per the pass: fs-11 → fs-14; timestamp fs-8 → fs-9 to
           keep the pair proportioned) */}
       <div className="flex-1 min-w-0">
-        <p style={{ ...SKR, fontSize: 'var(--fs-14)', color: "white", letterSpacing: "-0.16px", lineHeight: 1.4, margin: 0, wordBreak: "break-word" }}>
+        <p style={{ ...SKR, fontSize: 'var(--fs-14)', color: "#E5E1DB", letterSpacing: "-0.16px", lineHeight: 1.4, margin: 0, wordBreak: "break-word" }}>
           <NotificationActorMessage handle={n.actor_handle ?? null} type={n.type} onNavigate={goToActor} />
         </p>
-        <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: "rgba(255,255,255,0.4)", letterSpacing: "-0.1px", margin: "2px 0 0" }}>
+        <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: "rgba(229,225,219,0.4)", letterSpacing: "-0.1px", margin: "2px 0 0" }}>
           {timeAgo(n.created_at)}
         </p>
       </div>
@@ -220,7 +220,7 @@ export default function NotificationsPage() {
     <div style={{ width: '50%', flexShrink: 0 }}>
       {list.length === 0 ? (
         <div className="flex items-center justify-center mt-12">
-          <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: "rgba(255,255,255,0.4)" }}>{emptyLabel}</p>
+          <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: "rgba(229,225,219,0.4)" }}>{emptyLabel}</p>
         </div>
       ) : (
         list.map(renderRow)
@@ -237,30 +237,30 @@ export default function NotificationsPage() {
           onClick={() => router.back()}
           className="bg-transparent border-none cursor-pointer p-0"
         >
-          <span style={{ ...SKR, fontSize: 'var(--fs-9)', color: "white", letterSpacing: "-0.18px" }}>
+          <span style={{ ...SKR, fontSize: 'var(--fs-9)', color: "#E5E1DB", letterSpacing: "-0.18px" }}>
             ← Back
           </span>
         </button>
         <span
           className="absolute left-1/2"
-          style={{ ...SKB, fontSize: 'var(--fs-9)', color: "white", letterSpacing: "-0.18px", transform: "translateX(-50%)" }}
+          style={{ ...SKB, fontSize: 'var(--fs-9)', color: "#E5E1DB", letterSpacing: "-0.18px", transform: "translateX(-50%)" }}
         >
           NOTIFICATIONS
         </span>
       </div>
 
       {/* SOCIAL / MARKET toggle — with framed unread counts (absent at zero). */}
-      <div style={{ display: "flex", borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
+      <div style={{ display: "flex", borderBottom: "1px solid rgba(229,225,219,0.1)" }}>
         {(["social", "economic"] as const).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
             style={{
               flex: 1, background: "transparent", border: "none",
-              borderBottom: `1px solid ${tab === t ? "#FF0000" : "transparent"}`,
+              borderBottom: `1px solid ${tab === t ? "#E5E1DB" : "transparent"}`,
               cursor: "pointer", padding: "9px 0",
               ...SKB, fontSize: 'var(--fs-9)', letterSpacing: "0.12em",
-              color: tab === t ? "#FFF" : "rgba(255,255,255,0.4)", textTransform: "uppercase",
+              color: tab === t ? "#E5E1DB" : "rgba(229,225,219,0.4)", textTransform: "uppercase",
             }}
           >
             {t === "social" ? "SOCIAL" : "MARKET"}
@@ -279,7 +279,7 @@ export default function NotificationsPage() {
           </div>
         ) : !user ? (
           <div className="flex items-center justify-center mt-12">
-            <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: "rgba(255,255,255,0.4)" }}>
+            <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: "rgba(229,225,219,0.4)" }}>
               Sign in to see notifications
             </p>
           </div>

@@ -12,7 +12,7 @@
 //
 // Self-fetching: takes coinAddress + postId and owns its own ledger read + whip,
 // so a single <FirstCutLedger/> is the whole counter. Design system: black,
-// #FF0000 (impact only), grey at rest, SK-Modernist Bold, sharp corners.
+// #E5E1DB (impact only), grey at rest, SK-Modernist Bold, sharp corners.
 
 import { useState, useEffect, useRef } from 'react';
 import { feedImage } from "@/lib/mediaUrl";
@@ -84,7 +84,7 @@ export default function FirstCutLedger({
             alt=""
             style={{ width: 18, height: 18, objectFit: 'contain', display: 'block', ...(pulse ? { animation: 'fcMarkPop 0.5s cubic-bezier(0.16,0.84,0.3,1) both' } : null) }}
           />
-          <span style={{ ...SKB, fontSize: 'var(--fs-11)', letterSpacing: '0.18em', color: '#FFF', textTransform: 'uppercase' }}>First Cut</span>
+          <span style={{ ...SKB, fontSize: 'var(--fs-11)', letterSpacing: '0.18em', color: '#E5E1DB', textTransform: 'uppercase' }}>First Cut</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span
@@ -92,7 +92,7 @@ export default function FirstCutLedger({
             style={{
               // GREY at rest (ordinary metadata). Red is the impact-only flash:
               // fcTickUp flips the colour for a beat, then settles back to this grey.
-              ...SKB, fontSize: 'var(--fs-11)', letterSpacing: '0.08em', color: 'rgba(255,255,255,0.6)', lineHeight: 1, display: 'inline-block',
+              ...SKB, fontSize: 'var(--fs-11)', letterSpacing: '0.08em', color: 'rgba(229,225,219,0.6)', lineHeight: 1, display: 'inline-block',
               ...(pulse ? { animation: 'fcTickUp 0.5s cubic-bezier(0.16,0.84,0.3,1) both' } : null),
             }}
           >
@@ -100,7 +100,7 @@ export default function FirstCutLedger({
           </span>
           {/* caret — points right collapsed, down expanded */}
           <svg
-            width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"
+            width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(229,225,219,0.5)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"
             style={{ transform: expanded ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.25s cubic-bezier(0.16,0.84,0.3,1)', flexShrink: 0 }}
           >
             <polyline points="9 6 15 12 9 18" />
@@ -114,7 +114,7 @@ export default function FirstCutLedger({
           {filled === 0 && (
             <div
               className="fc-slot"
-              style={{ ...SKR, fontSize: 'var(--fs-10)', color: '#FF0000', letterSpacing: '0.16em', textTransform: 'uppercase', padding: '2px 0 10px', animation: 'fcSlotRipple 0.32s cubic-bezier(0.16,0.84,0.3,1) both' }}
+              style={{ ...SKR, fontSize: 'var(--fs-10)', color: '#E5E1DB', letterSpacing: '0.16em', textTransform: 'uppercase', padding: '2px 0 10px', animation: 'fcSlotRipple 0.32s cubic-bezier(0.16,0.84,0.3,1) both' }}
             >
               Be the first
             </div>
@@ -128,7 +128,7 @@ export default function FirstCutLedger({
                 className="fc-slot"
                 style={{
                   display: 'flex', alignItems: 'center', gap: 10, padding: '6px 0',
-                  borderTop: '0.5px solid rgba(255,255,255,0.08)',
+                  borderTop: '0.5px solid rgba(229,225,219,0.08)',
                   cursor: h?.username && onHolderTap ? 'pointer' : 'default',
                   opacity: h ? 1 : 0.4,
                   // ripple-down — each slot offset slightly after the previous
@@ -137,7 +137,7 @@ export default function FirstCutLedger({
                 }}
               >
                 {/* rank number */}
-                <span style={{ ...SKB, fontSize: 'var(--fs-10)', width: 16, color: h ? '#FF0000' : 'rgba(255,255,255,0.5)', letterSpacing: '0.02em' }}>
+                <span style={{ ...SKB, fontSize: 'var(--fs-10)', width: 16, color: h ? '#E5E1DB' : 'rgba(229,225,219,0.5)', letterSpacing: '0.02em' }}>
                   {rank}
                 </span>
                 {/* PFP (filled) or outline circle (open) */}
@@ -146,15 +146,15 @@ export default function FirstCutLedger({
                     ? <img src={feedImage(h.avatarUrl, 96)} alt="" style={{ width: 22, height: 22, objectFit: 'cover', display: 'block', flexShrink: 0 }} />
                     : <div style={{ width: 22, height: 22, background: '#1a1a1a', flexShrink: 0 }} />
                 ) : (
-                  <div style={{ width: 22, height: 22, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.25)', flexShrink: 0 }} />
+                  <div style={{ width: 22, height: 22, borderRadius: '50%', border: '1px solid rgba(229,225,219,0.25)', flexShrink: 0 }} />
                 )}
                 {/* handle (filled) or OPEN (empty) */}
                 {h ? (
-                  <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: '#FFF', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: '#E5E1DB', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     @{h.username ?? '—'}
                   </span>
                 ) : (
-                  <span style={{ ...SKR, fontSize: 'var(--fs-9)', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)' }}>
+                  <span style={{ ...SKR, fontSize: 'var(--fs-9)', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(229,225,219,0.35)' }}>
                     Open
                   </span>
                 )}
@@ -173,7 +173,7 @@ export default function FirstCutLedger({
           style={{
             position: 'fixed', left: fly.cx, top: fly.cy, width: 22, height: 22, objectFit: 'contain',
             zIndex: 650, pointerEvents: 'none',
-            filter: 'drop-shadow(0 0 9px rgba(255,0,0,0.65))',
+            filter: 'drop-shadow(0 0 9px rgba(229,225,219,0.65))',
             ['--fc-sx' as string]: `${fly.sx}px`,
             ['--fc-sy' as string]: `${fly.sy}px`,
             ['--fc-ss' as string]: `${fly.ss}`,

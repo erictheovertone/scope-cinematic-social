@@ -24,7 +24,7 @@ export default function DeckThumbnail({ imageUrls, title }: Props) {
     return (
       <div style={wrap}>
         <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <span style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.2)' }}>{title ?? ''}</span>
+          <span style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(229,225,219,0.2)' }}>{title ?? ''}</span>
         </div>
       </div>
     );

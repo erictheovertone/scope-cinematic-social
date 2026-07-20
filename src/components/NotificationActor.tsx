@@ -52,7 +52,7 @@ export function NotificationActorAvatar({ handle, avatar, size = 24, onNavigate 
       {avatar ? (
         <img src={feedImage(avatar, 96)} alt={handle ?? ""} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
       ) : (
-        <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "white" }}>
+        <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "#E5E1DB" }}>
           {handle?.[0]?.toUpperCase() ?? "?"}
         </span>
       )}
@@ -74,7 +74,7 @@ export function NotificationActorMessage({ handle, type, onNavigate }: ActorMess
       {handle ? (
         <span
           onClick={(e) => { e.stopPropagation(); onNavigate(handle); }}
-          style={{ cursor: "pointer", color: "#FF0000" }}
+          style={{ cursor: "pointer", color: "#E5E1DB" }}
         >
           @{handle}
         </span>

@@ -218,7 +218,7 @@ export default function CollectSheet({ post, visible, onClose }: CollectSheetPro
           right: 0,
           height: "70vh",
           backgroundColor: "#111111",
-          borderTop: "1px solid rgba(255,255,255,0.12)",
+          borderTop: "1px solid rgba(229,225,219,0.12)",
           zIndex: 301,
           display: "flex",
           flexDirection: "column",
@@ -238,7 +238,7 @@ export default function CollectSheet({ post, visible, onClose }: CollectSheetPro
             touchAction: "manipulation",
           }}
         >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" style={{ filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.8))" }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E5E1DB" strokeWidth="2" strokeLinecap="round" style={{ filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.8))" }}>
             <line x1="5" y1="5" x2="19" y2="19" />
             <line x1="19" y1="5" x2="5" y2="19" />
           </svg>
@@ -255,15 +255,15 @@ export default function CollectSheet({ post, visible, onClose }: CollectSheetPro
         )}
 
         <div style={{ display: "flex", justifyContent: "center", paddingTop: 8, flexShrink: 0 }}>
-          <div style={{ width: 40, height: 2, backgroundColor: "rgba(255,255,255,0.2)" }} />
+          <div style={{ width: 40, height: 2, backgroundColor: "rgba(229,225,219,0.2)" }} />
         </div>
 
         <div style={{ padding: "8px 16px 0", flexShrink: 0 }}>
-          <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: "white", opacity: 0.6, margin: 0 }}>
+          <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: "#E5E1DB", opacity: 0.6, margin: 0 }}>
             @{post.username}
           </p>
           {post.caption && (
-            <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: "white", opacity: 0.5, margin: "2px 0 0", overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>
+            <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: "#E5E1DB", opacity: 0.5, margin: "2px 0 0", overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>
               {post.caption}
             </p>
           )}
@@ -278,13 +278,13 @@ export default function CollectSheet({ post, visible, onClose }: CollectSheetPro
                 style={{
                   flex: 1,
                   background: "transparent",
-                  border: `1px solid ${mode === m ? "white" : "rgba(255,255,255,0.15)"}`,
+                  border: `1px solid ${mode === m ? "#E5E1DB" : "rgba(229,225,219,0.15)"}`,
                   cursor: "pointer",
                   padding: "8px 0",
                   fontFamily: "'SK-Modernist', sans-serif",
                   fontWeight: 700,
                   fontSize: 'var(--fs-10)',
-                  color: mode === m ? "white" : "rgba(255,255,255,0.4)",
+                  color: mode === m ? "#E5E1DB" : "rgba(229,225,219,0.4)",
                   letterSpacing: "0.08em",
                 }}
               >
@@ -297,31 +297,31 @@ export default function CollectSheet({ post, visible, onClose }: CollectSheetPro
         <div style={{ flex: 1, overflowY: "auto" }}>
           {notMinted ? (
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: 80 }}>
-              <p style={{ ...SKR, fontSize: 'var(--fs-10)', color: "rgba(255,255,255,0.4)", margin: 0, textAlign: "center" }}>
+              <p style={{ ...SKR, fontSize: 'var(--fs-10)', color: "rgba(229,225,219,0.4)", margin: 0, textAlign: "center" }}>
                 Not yet available to collect
               </p>
             </div>
           ) : (
             <>
-              <p style={{ ...SKB, fontSize: 'var(--fs-10)', color: "white", opacity: 0.4, margin: 0, padding: "12px 16px 0", letterSpacing: "0.08em" }}>
+              <p style={{ ...SKB, fontSize: 'var(--fs-10)', color: "#E5E1DB", opacity: 0.4, margin: 0, padding: "12px 16px 0", letterSpacing: "0.08em" }}>
                 {mode === "buy" ? "BUY" : `SELL · YOU HOLD ${holderBalance.toString()}`}
               </p>
 
               <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", padding: "6px 16px 0" }}>
                 <div>
-                  <p style={{ ...SKB, fontSize: 'var(--fs-32)', color: "white", margin: 0, lineHeight: 1 }}>
+                  <p style={{ ...SKB, fontSize: 'var(--fs-32)', color: "#E5E1DB", margin: 0, lineHeight: 1 }}>
                     {priceLoading ? "..." : (totalEth ?? "—")}
                   </p>
-                  <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: "white", opacity: 0.5, margin: "4px 0 0" }}>
+                  <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: "#E5E1DB", opacity: 0.5, margin: "4px 0 0" }}>
                     ≈ ${priceLoading ? "..." : (totalUsd ?? "—")} · live rate
                   </p>
                 </div>
-                <div style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "rgba(255,255,255,0.1)", padding: "4px 8px", marginTop: 4 }}>
+                <div style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "rgba(229,225,219,0.1)", padding: "4px 8px", marginTop: 4 }}>
                   <svg width="13.5" height="13.5" viewBox="0 0 24 24" fill="none">
-                    <path d="M11.944 17.97L4.58 13.62 11.943 24l7.37-10.38-7.372 4.35z" fill="white" />
-                    <path d="M12.056 0L4.69 12.223l7.365 4.354 7.365-4.35L12.056 0z" fill="white" opacity="0.7" />
+                    <path d="M11.944 17.97L4.58 13.62 11.943 24l7.37-10.38-7.372 4.35z" fill="#E5E1DB" />
+                    <path d="M12.056 0L4.69 12.223l7.365 4.354 7.365-4.35L12.056 0z" fill="#E5E1DB" opacity="0.7" />
                   </svg>
-                  <span style={{ ...SKR, fontSize: 'var(--fs-10)', color: "white" }}>ETH · BASE</span>
+                  <span style={{ ...SKR, fontSize: 'var(--fs-10)', color: "#E5E1DB" }}>ETH · BASE</span>
                 </div>
               </div>
 
@@ -336,13 +336,13 @@ export default function CollectSheet({ post, visible, onClose }: CollectSheetPro
                       style={{
                         flex: 1,
                         background: "transparent",
-                        border: `1px solid ${overBalance ? "rgba(255,255,255,0.08)" : selectedQty === qty ? "white" : "rgba(255,255,255,0.2)"}`,
+                        border: `1px solid ${overBalance ? "rgba(229,225,219,0.08)" : selectedQty === qty ? "#E5E1DB" : "rgba(229,225,219,0.2)"}`,
                         cursor: overBalance ? "not-allowed" : "pointer",
                         padding: "5px 2px",
                         fontFamily: "'SK-Modernist', sans-serif",
                         fontWeight: 400,
                         fontSize: 'var(--fs-8)',
-                        color: overBalance ? "rgba(255,255,255,0.2)" : "white",
+                        color: overBalance ? "rgba(229,225,219,0.2)" : "#E5E1DB",
                         opacity: selectedQty === qty && !overBalance ? 1 : 0.6,
                         lineHeight: 1.5,
                         whiteSpace: "pre-line",
@@ -355,14 +355,14 @@ export default function CollectSheet({ post, visible, onClose }: CollectSheetPro
               </div>
 
               <div style={{ padding: "12px 16px 0" }}>
-                <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: "white", opacity: 0.5, margin: 0 }}>PRICE / TOKEN</p>
-                <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: "white", margin: "2px 0 0" }}>
+                <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: "#E5E1DB", opacity: 0.5, margin: 0 }}>PRICE / TOKEN</p>
+                <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: "#E5E1DB", margin: "2px 0 0" }}>
                   {priceLoading ? "..." : pricePerTokenEth != null ? `${pricePerTokenEth.toFixed(6)} ETH` : "—"}
                 </p>
               </div>
 
               {mode === "sell" && (
-                <p style={{ ...SKR, fontSize: 'var(--fs-8)', color: "rgba(255,255,255,0.35)", margin: "10px 16px 0", lineHeight: 1.5 }}>
+                <p style={{ ...SKR, fontSize: 'var(--fs-8)', color: "rgba(229,225,219,0.35)", margin: "10px 16px 0", lineHeight: 1.5 }}>
                   SELL burns your token and routes through secondary markets.
                 </p>
               )}
@@ -372,7 +372,7 @@ export default function CollectSheet({ post, visible, onClose }: CollectSheetPro
 
         <div style={{ flexShrink: 0, padding: "12px 16px 32px", display: "flex", flexDirection: "column", gap: 8 }}>
           {txStatus === "confirming" && (
-            <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: "rgba(255,255,255,0.5)", margin: 0, textAlign: "center" }}>
+            <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: "rgba(229,225,219,0.5)", margin: 0, textAlign: "center" }}>
               CONFIRMING TRANSACTION...
             </p>
           )}
@@ -384,14 +384,14 @@ export default function CollectSheet({ post, visible, onClose }: CollectSheetPro
                   const w = wallets.find(w => w.walletClientType === "privy");
                   if (w && (w as any).fund) (w as any).fund();
                 }}
-                style={{ width: "100%", background: "transparent", border: "1px solid #FF0000", cursor: "pointer", padding: "10px 0" }}
+                style={{ width: "100%", background: "transparent", border: "1px solid #E5E1DB", cursor: "pointer", padding: "10px 0" }}
               >
-                <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: "#FF0000", letterSpacing: "0.06em" }}>
+                <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: "#E5E1DB", letterSpacing: "0.06em" }}>
                   INSUFFICIENT FUNDS · TAP TO FUND WALLET
                 </span>
               </button>
             ) : (
-              <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: "#FF0000", margin: 0, textAlign: "center", lineHeight: 1.4 }}>
+              <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: "#E5E1DB", margin: 0, textAlign: "center", lineHeight: 1.4 }}>
                 {txError.slice(0, 80)}
               </p>
             )
@@ -403,13 +403,13 @@ export default function CollectSheet({ post, visible, onClose }: CollectSheetPro
               disabled={!canAct || sellQtyExceedsBalance}
               style={{
                 width: "100%",
-                background: txStatus === "success" || !canAct || sellQtyExceedsBalance ? "rgba(255,0,0,0.3)" : "#FF0000",
+                background: txStatus === "success" || !canAct || sellQtyExceedsBalance ? "rgba(229,225,219,0.3)" : "#E5E1DB",
                 border: "none",
                 cursor: canAct && !sellQtyExceedsBalance ? "pointer" : "default",
                 padding: "14px 0",
               }}
             >
-              <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: "white", letterSpacing: "0.06em" }}>
+              <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: "#E5E1DB", letterSpacing: "0.06em" }}>
                 {working
                   ? mode === "buy" ? "BUYING..." : "SELLING..."
                   : txStatus === "success"
@@ -427,9 +427,9 @@ export default function CollectSheet({ post, visible, onClose }: CollectSheetPro
                 const w = wallets.find(w => w.walletClientType === "privy");
                 if (w && (w as any).fund) (w as any).fund();
               }}
-              style={{ width: "100%", background: "transparent", border: "1px solid rgba(255,255,255,0.15)", cursor: "pointer", padding: "10px 0" }}
+              style={{ width: "100%", background: "transparent", border: "1px solid rgba(229,225,219,0.15)", cursor: "pointer", padding: "10px 0" }}
             >
-              <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: "rgba(255,255,255,0.5)", letterSpacing: "0.06em" }}>FUND WALLET</span>
+              <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: "rgba(229,225,219,0.5)", letterSpacing: "0.06em" }}>FUND WALLET</span>
             </button>
           )}
         </div>

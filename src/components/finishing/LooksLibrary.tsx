@@ -18,7 +18,7 @@ import { LOOKS, LOOK_BUCKETS, looksByBucket, type LookDef } from './looksCatalog
 import { ensureLut, applyLutToImageData } from '@/lib/editor/lut';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
-const RED = '#FF0000';
+const RED = '#E5E1DB';
 const THUMB = 60;
 
 type Source = HTMLImageElement | HTMLVideoElement | null;
@@ -109,7 +109,7 @@ export default function LooksLibrary({
         if (looks.length === 0) return null;
         return (
           <div key={bucket}>
-            <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>{bucket}</span>
+            <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: 'rgba(229,225,219,0.45)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>{bucket}</span>
             <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingTop: 8 }}>
               {bi === 0 && (
                 <LookTile name="ORIGINAL" url={snapUrl} selected={!activeLookId} locked={false} onTap={onClear} />
@@ -137,7 +137,7 @@ export default function LooksLibrary({
 function LookTile({ name, url, selected, locked, onTap, dust = null, dustDelay = 0 }: { name: string; url: string | null; selected: boolean; locked: boolean; onTap: () => void; dust?: 'hold' | 'play' | null; dustDelay?: number }) {
   return (
     <button onClick={onTap} style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>
-      <div style={{ position: 'relative', width: 60, height: 60, overflow: 'hidden', border: `1px solid ${selected ? RED : 'rgba(255,255,255,0.18)'}`, background: '#111' }}>
+      <div style={{ position: 'relative', width: 60, height: 60, overflow: 'hidden', border: `1px solid ${selected ? RED : 'rgba(229,225,219,0.18)'}`, background: '#111' }}>
         {url && <img src={url} alt={name} draggable={false} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
         {(locked || dust) && (
           <span className={dust === 'play' ? 'pro-dust-play' : undefined} style={{ position: 'absolute', top: 3, right: 3, lineHeight: 0, animationDelay: dust === 'play' ? `${dustDelay}ms` : undefined }}>
@@ -145,7 +145,7 @@ function LookTile({ name, url, selected, locked, onTap, dust = null, dustDelay =
           </span>
         )}
       </div>
-      <span style={{ ...SKB, fontSize: 'var(--fs-7)', color: selected ? RED : 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.06em', maxWidth: 60, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</span>
+      <span style={{ ...SKB, fontSize: 'var(--fs-7)', color: selected ? RED : 'rgba(229,225,219,0.6)', textTransform: 'uppercase', letterSpacing: '0.06em', maxWidth: 60, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</span>
     </button>
   );
 }

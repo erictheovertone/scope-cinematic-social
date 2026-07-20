@@ -13,10 +13,10 @@ import { motion, useReducedMotion } from 'framer-motion';
 import { getInbox } from '@/lib/dm';
 
 const RAIL_W = 71;
-const ACTIVE_BAR = '#f20d0d';
-const ACTIVE_GRAD = 'linear-gradient(225deg, rgba(242,13,13,0.12) 18%, rgba(203,195,195,0.12) 105%)';
+const ACTIVE_BAR = '#E5E1DB';
+const ACTIVE_GRAD = 'linear-gradient(225deg, rgba(229,225,219,0.12) 18%, rgba(203,195,195,0.12) 105%)';
 
-const st = { stroke: 'rgba(255,255,255,0.85)', strokeWidth: 1.5, fill: 'none' as const, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
+const st = { stroke: 'rgba(229,225,219,0.85)', strokeWidth: 1.5, fill: 'none' as const, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
 
 // BOTTOM-UP order (Eric): HOME bottommost → PROFILE → WALLET → SETTINGS →
 // CREATE → NOTIFICATIONS topmost. Rendered top-to-bottom = reversed.
@@ -88,7 +88,7 @@ export default function DesktopRail() {
       aria-label="Primary"
       style={{
         position: 'fixed', left: 0, top: 0, bottom: 0, width: RAIL_W, zIndex: 80,
-        background: '#000', borderRight: '0.25px solid rgba(255,255,255,0.35)',
+        background: '#000', borderRight: '0.25px solid rgba(229,225,219,0.35)',
         display: 'flex', flexDirection: 'column', alignItems: 'center',
       }}
     >
@@ -129,7 +129,7 @@ export default function DesktopRail() {
                 {ic.glyph}
                 {ic.key === 'dm' && dmUnread > 0 && (
                   // Framed-count badge (the notifications-tab language) on the DM icon.
-                  <span style={{ position: 'absolute', top: -6, right: -9, minWidth: 15, boxSizing: 'border-box', textAlign: 'center', padding: '0 4px', lineHeight: 1.5, background: '#0b0b0b', border: '1px solid rgba(255,255,255,0.28)', fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 9, color: '#FFF', fontVariantNumeric: 'tabular-nums' }}>
+                  <span style={{ position: 'absolute', top: -6, right: -9, minWidth: 15, boxSizing: 'border-box', textAlign: 'center', padding: '0 4px', lineHeight: 1.5, background: '#0b0b0b', border: '1px solid rgba(229,225,219,0.28)', fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 9, color: '#E5E1DB', fontVariantNumeric: 'tabular-nums' }}>
                     {dmUnread > 99 ? '99+' : dmUnread}
                   </span>
                 )}

@@ -14,7 +14,7 @@ import ToolIcon from '../ToolIcon';
 import type { EditTool, Mode } from './navModel';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
-const RED = '#FF0000';
+const RED = '#E5E1DB';
 
 const ROW: React.CSSProperties = { display: 'flex', gap: 10, overflowX: 'auto', padding: '12px 14px 14px', alignItems: 'flex-start' };
 // Theatre-only leaner rail: tighter padding, no boxed tiles, no FREE/PRO line.
@@ -73,14 +73,14 @@ export default function Tier3Items({ mode, editItems, toolTouched, toolEnabled, 
                   cursor: enabled ? 'pointer' : 'default', padding: '4px 8px',
                   opacity: enabled ? 1 : 0.4,
                   display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5,
-                  minWidth: 54, color: touched ? RED : 'white',
+                  minWidth: 54, color: touched ? RED : '#E5E1DB',
                 }}
               >
                 {(locked || (t.pro && lockDust)) ? (
                   <span className={lockDust === 'play' ? 'pro-dust-play' : undefined} style={{ display: 'inline-flex', animationDelay: lockDust === 'play' ? `${editItems.indexOf(t) * 60}ms` : undefined }}><LockGlyph /></span>
                 ) : t.pro && <span style={{ position: 'absolute', top: 0, right: 2, width: 5, height: 5, background: RED }} />}
                 <ToolIcon toolKey={t.key} size={21.5} />
-                <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: touched ? RED : 'white', textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>{t.label}</span>
+                <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: touched ? RED : '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>{t.label}</span>
               </button>
             );
           }
@@ -92,11 +92,11 @@ export default function Tier3Items({ mode, editItems, toolTouched, toolEnabled, 
               disabled={!enabled}
               style={{
                 position: 'relative', flexShrink: 0, background: 'transparent',
-                border: `1px solid ${touched ? RED : 'rgba(255,255,255,0.18)'}`,
+                border: `1px solid ${touched ? RED : 'rgba(229,225,219,0.18)'}`,
                 cursor: enabled ? 'pointer' : 'default', padding: '10px 12px 9px',
                 opacity: enabled ? 1 : 0.4,
                 display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
-                minWidth: 72, color: touched ? RED : 'white',
+                minWidth: 72, color: touched ? RED : '#E5E1DB',
               }}
             >
               {/* Pro marker — lock glyph when locked (free user), else a small red dot */}
@@ -104,10 +104,10 @@ export default function Tier3Items({ mode, editItems, toolTouched, toolEnabled, 
                 <span className={lockDust === 'play' ? 'pro-dust-play' : undefined} style={{ display: 'inline-flex', animationDelay: lockDust === 'play' ? `${editItems.indexOf(t) * 60}ms` : undefined }}><LockGlyph /></span>
               ) : t.pro && <span style={{ position: 'absolute', top: 5, right: 5, width: 5, height: 5, background: RED }} />}
               <ToolIcon toolKey={t.key} size={25.5} />
-              <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: touched ? RED : 'white', textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>{t.label}</span>
+              <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: touched ? RED : '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>{t.label}</span>
               <span style={{
                 ...SKB, fontSize: 'var(--fs-7)', textTransform: 'uppercase', letterSpacing: '0.1em', whiteSpace: 'nowrap',
-                color: !enabled ? RED : 'rgba(255,255,255,0.3)',
+                color: !enabled ? RED : 'rgba(229,225,219,0.3)',
               }}>{sub}</span>
             </button>
           );
@@ -121,10 +121,10 @@ export default function Tier3Items({ mode, editItems, toolTouched, toolEnabled, 
     <div style={ROW}>
       {Array.from({ length: 4 }).map((_, i) => (
         <div key={i} style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, opacity: 0.4 }}>
-          <div style={{ width: 64, height: 64, border: '1px solid rgba(255,255,255,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ width: 64, height: 64, border: '1px solid rgba(229,225,219,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <span style={{ ...SKB, fontSize: 'var(--fs-7)', color: RED, textTransform: 'uppercase', letterSpacing: '0.1em' }}>SOON</span>
           </div>
-          <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>—</span>
+          <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>—</span>
         </div>
       ))}
     </div>
@@ -133,7 +133,7 @@ export default function Tier3Items({ mode, editItems, toolTouched, toolEnabled, 
 
 function EmptyNote() {
   return (
-    <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.1em', padding: '18px 0' }}>
+    <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'rgba(229,225,219,0.3)', textTransform: 'uppercase', letterSpacing: '0.1em', padding: '18px 0' }}>
       NOTHING HERE YET
     </span>
   );

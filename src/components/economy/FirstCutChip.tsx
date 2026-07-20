@@ -74,7 +74,7 @@ export default function FirstCutChip({ coinAddress, postId }: { coinAddress: str
             // red. Red is the impact-only flash (fcTickUp flips the colour for a
             // beat, then settles back to this grey).
             ...SKB, fontSize: 'var(--fs-8)', letterSpacing: '0.04em', lineHeight: 1, display: 'inline-block',
-            color: 'rgba(255,255,255,0.6)',
+            color: 'rgba(229,225,219,0.6)',
             ...(pulse ? { animation: 'fcTickUp 0.5s cubic-bezier(0.16,0.84,0.3,1) both' } : null),
           }}
         >
@@ -91,7 +91,7 @@ export default function FirstCutChip({ coinAddress, postId }: { coinAddress: str
           style={{
             position: 'fixed', left: fly.cx, top: fly.cy, width: 22, height: 22, objectFit: 'contain',
             zIndex: 650, pointerEvents: 'none',
-            filter: 'drop-shadow(0 0 9px rgba(255,0,0,0.65))',
+            filter: 'drop-shadow(0 0 9px rgba(229,225,219,0.65))',
             // dynamic start offset/scale for the keyframe
             ['--fc-sx' as string]: `${fly.sx}px`,
             ['--fc-sy' as string]: `${fly.sy}px`,

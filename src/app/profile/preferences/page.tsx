@@ -200,21 +200,21 @@ export default function Preferences() {
       <div style={{ position: 'relative', display: 'flex', alignItems: 'center', padding: '14px 16px', paddingTop: 'calc(14px + env(safe-area-inset-top, 0px))' }}>
         <button
           onClick={() => router.back()}
-          style={{ ...MONO, fontSize: 'var(--fs-11)', color: 'white', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textTransform: 'uppercase', letterSpacing: '0.06em' }}
+          style={{ ...MONO, fontSize: 'var(--fs-11)', color: '#E5E1DB', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textTransform: 'uppercase', letterSpacing: '0.06em' }}
         >
           ← Back
         </button>
-        <span style={{ ...MONO, fontSize: 'var(--fs-15)', color: 'white', position: 'absolute', left: '50%', transform: 'translateX(-50%)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+        <span style={{ ...MONO, fontSize: 'var(--fs-15)', color: '#E5E1DB', position: 'absolute', left: '50%', transform: 'translateX(-50%)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
           SETTINGS
         </span>
       </div>
 
-      <div style={{ height: 1, backgroundColor: 'rgba(255,255,255,0.12)' }} />
+      <div style={{ height: 1, backgroundColor: 'rgba(229,225,219,0.12)' }} />
 
       {/* Grouped sections — small tracked muted labels, hairline-separated rows */}
       {sections.map((sec) => (
         <div key={sec.title}>
-          <p style={{ ...MONO, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.38)', textTransform: 'uppercase', letterSpacing: '0.2em', margin: '26px 20px 6px' }}>
+          <p style={{ ...MONO, fontSize: 'var(--fs-8)', color: 'rgba(229,225,219,0.38)', textTransform: 'uppercase', letterSpacing: '0.2em', margin: '26px 20px 6px' }}>
             {sec.title}
           </p>
           {sec.rows.map((item) => (
@@ -226,11 +226,11 @@ export default function Preferences() {
                   border: 'none', cursor: 'pointer', padding: '18px 20px', textAlign: 'left',
                 }}
               >
-                <span style={{ ...MONO, fontSize: 'var(--fs-11)', color: photoError && item.label === photoLabel ? '#FF0000' : 'white', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                <span style={{ ...MONO, fontSize: 'var(--fs-11)', color: photoError && item.label === photoLabel ? '#E5E1DB' : '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                   {item.label}
                 </span>
               </button>
-              <div style={{ height: 1, backgroundColor: 'rgba(255,255,255,0.12)', margin: '0 20px' }} />
+              <div style={{ height: 1, backgroundColor: 'rgba(229,225,219,0.12)', margin: '0 20px' }} />
             </div>
           ))}
         </div>
@@ -241,7 +241,7 @@ export default function Preferences() {
         onClick={handleLogout}
         style={{ display: 'block', width: '100%', background: 'transparent', border: 'none', cursor: 'pointer', padding: '34px 20px 46px', textAlign: 'left' }}
       >
-        <span style={{ ...MONO, fontSize: 'var(--fs-11)', color: '#FF0000', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Log Out</span>
+        <span style={{ ...MONO, fontSize: 'var(--fs-11)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Log Out</span>
       </button>
 
       <input ref={photoInputRef} type="file" accept="image/*" onChange={handlePhotoChange} style={{ display: 'none' }} />

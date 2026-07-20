@@ -410,7 +410,7 @@ export default function Home() {
             <h1 style={{
               fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700,
               fontSize: 'clamp(31px, 10.15vw, 42px)', lineHeight: 0.95,
-              letterSpacing: '-0.06em', color: '#FFFFFF', textTransform: 'uppercase',
+              letterSpacing: '-0.06em', color: '#E5E1DB', textTransform: 'uppercase',
               margin: '2px 12px 0 6px',
             }}>
               Discover
@@ -434,7 +434,7 @@ export default function Home() {
           {hasMore && posts.length > 0 && (
             <div ref={sentinelRef} style={{ height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               {loadingMore && (
-                <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.35)', letterSpacing: '0.14em', textTransform: 'uppercase' }}>LOADING…</span>
+                <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: 'var(--fs-9)', color: 'rgba(229,225,219,0.35)', letterSpacing: '0.14em', textTransform: 'uppercase' }}>LOADING…</span>
               )}
             </div>
           )}

@@ -17,8 +17,8 @@ import ContributeMusicFlow from "@/components/ContributeMusicFlow";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
-const HAIR = "rgba(255,255,255,0.12)";
-const RED = "#FF0000";
+const HAIR = "rgba(229,225,219,0.12)";
+const RED = "#E5E1DB";
 
 export default function TrackSheet({ trackId, onClose }: { trackId: string; onClose: () => void }) {
   const isDesktop = useIsDesktop();
@@ -56,21 +56,21 @@ export default function TrackSheet({ trackId, onClose }: { trackId: string; onCl
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
       <audio ref={audioRef} onEnded={() => { setPlaying(false); setProgress(0); }} onTimeUpdate={() => { const a = audioRef.current; if (a && a.duration && isFinite(a.duration)) setProgress(a.currentTime / a.duration); }} />
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <span style={{ ...SKB, fontSize: 10, color: "rgba(255,255,255,0.45)", textTransform: "uppercase", letterSpacing: "0.14em" }}>Featured track</span>
-        <button onClick={close} aria-label="Close" style={{ background: "none", border: "none", cursor: "pointer", ...SKR, fontSize: 20, color: "rgba(255,255,255,0.55)", lineHeight: 1, padding: 4 }}>✕</button>
+        <span style={{ ...SKB, fontSize: 10, color: "rgba(229,225,219,0.45)", textTransform: "uppercase", letterSpacing: "0.14em" }}>Featured track</span>
+        <button onClick={close} aria-label="Close" style={{ background: "none", border: "none", cursor: "pointer", ...SKR, fontSize: 20, color: "rgba(229,225,219,0.55)", lineHeight: 1, padding: 4 }}>✕</button>
       </div>
 
       {/* art anchor + title/composer */}
       <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
         <TrackArt url={track?.artwork_url} title={track?.title} id={trackId} size={84} />
         <div style={{ minWidth: 0, flex: 1 }}>
-          <p style={{ ...SKB, fontSize: 17, color: "#FFF", margin: "2px 0 8px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{track?.title ?? "…"}</p>
+          <p style={{ ...SKB, fontSize: 17, color: "#E5E1DB", margin: "2px 0 8px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{track?.title ?? "…"}</p>
           {track?.composer_handle && (
             <button onClick={() => go(`/composer/${track.composer_handle}`)} style={{ display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", cursor: "pointer", padding: 0 }}>
               <span style={{ width: 22, height: 22, borderRadius: "50%", overflow: "hidden", background: "#2a2a2a", flexShrink: 0, display: "block" }}>
                 {track.composer_avatar && <img src={feedImage(track.composer_avatar, 96)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />}
               </span>
-              <span style={{ ...SKR, fontSize: 12, color: "rgba(255,255,255,0.65)" }}>@{track.composer_handle}</span>
+              <span style={{ ...SKR, fontSize: 12, color: "rgba(229,225,219,0.65)" }}>@{track.composer_handle}</span>
             </button>
           )}
         </div>
@@ -80,8 +80,8 @@ export default function TrackSheet({ trackId, onClose }: { trackId: string; onCl
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
         <button onClick={togglePlay} aria-label={playing ? "Pause" : "Play"} style={{ flexShrink: 0, width: 36, height: 36, borderRadius: "50%", border: `1px solid ${HAIR}`, background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>
           {playing
-            ? <svg width="12" height="12" viewBox="0 0 24 24" fill="#FFF"><rect x="6" y="5" width="4" height="14" /><rect x="14" y="5" width="4" height="14" /></svg>
-            : <svg width="12" height="12" viewBox="0 0 24 24" fill="#FFF"><path d="M7 5v14l12-7z" /></svg>}
+            ? <svg width="12" height="12" viewBox="0 0 24 24" fill="#E5E1DB"><rect x="6" y="5" width="4" height="14" /><rect x="14" y="5" width="4" height="14" /></svg>
+            : <svg width="12" height="12" viewBox="0 0 24 24" fill="#E5E1DB"><path d="M7 5v14l12-7z" /></svg>}
         </button>
         <div style={{ flex: 1 }}><Waveform peaks={track?.waveform_peaks} progress={playing ? progress : 0} onSeek={seek} height={54} /></div>
       </div>
@@ -90,17 +90,17 @@ export default function TrackSheet({ trackId, onClose }: { trackId: string; onCl
       {track?.keywords?.length ? (
         <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
           {track.keywords.map((k) => (
-            <span key={k} style={{ ...SKR, fontSize: 11, color: "rgba(255,255,255,0.5)", border: `1px solid ${HAIR}`, padding: "3px 8px" }}>{k}</span>
+            <span key={k} style={{ ...SKR, fontSize: 11, color: "rgba(229,225,219,0.5)", border: `1px solid ${HAIR}`, padding: "3px 8px" }}>{k}</span>
           ))}
         </div>
       ) : null}
 
       {/* doors */}
       <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 2 }}>
-        <button onClick={() => setShowContribute(true)} style={{ ...SKB, fontSize: 11, color: RED, textTransform: "uppercase", letterSpacing: "0.06em", background: "none", border: `1px solid rgba(255,0,0,0.4)`, cursor: "pointer", padding: "12px 0", lineHeight: 1.4 }}>
+        <button onClick={() => setShowContribute(true)} style={{ ...SKB, fontSize: 11, color: RED, textTransform: "uppercase", letterSpacing: "0.06em", background: "none", border: `1px solid rgba(229,225,219,0.4)`, cursor: "pointer", padding: "12px 0", lineHeight: 1.4 }}>
           Contribute to the Scope Original Music Library — wear the Composer badge
         </button>
-        <button onClick={() => go("/library")} style={{ ...SKB, fontSize: 11, color: "rgba(255,255,255,0.7)", textTransform: "uppercase", letterSpacing: "0.1em", background: "none", border: `1px solid ${HAIR}`, cursor: "pointer", padding: "11px 0" }}>
+        <button onClick={() => go("/library")} style={{ ...SKB, fontSize: 11, color: "rgba(229,225,219,0.7)", textTransform: "uppercase", letterSpacing: "0.1em", background: "none", border: `1px solid ${HAIR}`, cursor: "pointer", padding: "11px 0" }}>
           Browse the library
         </button>
       </div>

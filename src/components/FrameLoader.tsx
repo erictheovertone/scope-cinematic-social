@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 
 /**
  * FrameLoader — the viewfinder corner-bracket loader that replaces the old red
- * bouncing ball everywhere. Four red `#FF0000` L-shaped corner brackets form an
+ * bouncing ball everywhere. Four red `#E5E1DB` L-shaped corner brackets form an
  * aperture frame (sides not drawn). Two tiers:
  *
  *   • SWIFT (default): the four brackets snap in from just outside their corners
@@ -27,7 +27,7 @@ interface FrameLoaderProps {
   pulseAfter?: number;
 }
 
-const RED = "#FF0000";
+const RED = "#E5E1DB";
 const SCOPE_AR = 2.39; // the namesake cinematic ratio — the frame is wide, not square
 
 export default function FrameLoader({ variant = "inline", size, pulseAfter = 350 }: FrameLoaderProps) {

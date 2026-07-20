@@ -18,7 +18,7 @@
 import { useRef } from 'react';
 import { buildCurveLUT, identityCurve, type CurvePoint, type ChannelConfig } from '@/lib/editor/curveEngine';
 
-const RED = '#FF0000';
+const RED = '#E5E1DB';
 const GW = 300, GH = 220, P = 12;
 const plotW = GW - 2 * P, plotH = GH - 2 * P;
 const HIT = 20;
@@ -173,14 +173,14 @@ export default function CurveGraph({ points, onChange, config }: CurveGraphProps
       onPointerUp={onPointerUp}
       onPointerLeave={onPointerUp}
     >
-      <rect x={P} y={P} width={plotW} height={plotH} fill="none" stroke="rgba(255,255,255,0.18)" strokeWidth={1} />
+      <rect x={P} y={P} width={plotW} height={plotH} fill="none" stroke="rgba(229,225,219,0.18)" strokeWidth={1} />
       {[1 / 3, 2 / 3].map((f) => (
         <g key={f}>
-          <line x1={toPx(f)} y1={P} x2={toPx(f)} y2={GH - P} stroke="rgba(255,255,255,0.10)" strokeWidth={1} />
-          <line x1={P} y1={toPy(f)} x2={GW - P} y2={toPy(f)} stroke="rgba(255,255,255,0.10)" strokeWidth={1} />
+          <line x1={toPx(f)} y1={P} x2={toPx(f)} y2={GH - P} stroke="rgba(229,225,219,0.10)" strokeWidth={1} />
+          <line x1={P} y1={toPy(f)} x2={GW - P} y2={toPy(f)} stroke="rgba(229,225,219,0.10)" strokeWidth={1} />
         </g>
       ))}
-      <line x1={ref.x1} y1={ref.y1} x2={ref.x2} y2={ref.y2} stroke="rgba(255,255,255,0.25)" strokeWidth={1} strokeDasharray="3 3" />
+      <line x1={ref.x1} y1={ref.y1} x2={ref.x2} y2={ref.y2} stroke="rgba(229,225,219,0.25)" strokeWidth={1} strokeDasharray="3 3" />
       <path d={path} fill="none" stroke={config.line} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
       {sorted.map((p, i) => (
         <circle key={i} cx={toPx(p.x)} cy={toPy(p.y)} r={5} fill="#000" stroke={RED} strokeWidth={2} />

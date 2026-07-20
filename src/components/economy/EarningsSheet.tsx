@@ -163,22 +163,22 @@ export default function EarningsSheet({ data, onClose }: Props) {
         onDragEnd={(_, info) => { if (info.offset.y > 110 || info.velocity.y > 600) onClose(); }}
         style={{
           position: 'absolute', bottom: 0, left: 0, right: 0,
-          background: '#080808', borderTop: '1px solid rgba(255,255,255,0.08)',
+          background: '#080808', borderTop: '1px solid rgba(229,225,219,0.08)',
           padding: '20px 20px calc(28px + env(safe-area-inset-bottom, 0px))',
         }}
       >
         {/* Handle */}
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 18 }}>
-          <div style={{ width: 36, height: 2, backgroundColor: 'rgba(255,255,255,0.12)' }} />
+          <div style={{ width: 36, height: 2, backgroundColor: 'rgba(229,225,219,0.12)' }} />
         </div>
 
         {/* Header row */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
-          <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.18em', margin: 0 }}>
+          <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'rgba(229,225,219,0.45)', textTransform: 'uppercase', letterSpacing: '0.18em', margin: 0 }}>
             SCOPE EARNINGS
           </p>
           <button onClick={onClose} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 6, margin: -6 }}>
-            <span style={{ ...SKR, fontSize: 'var(--fs-16)', color: 'rgba(255,255,255,0.5)', lineHeight: 1 }}>×</span>
+            <span style={{ ...SKR, fontSize: 'var(--fs-16)', color: 'rgba(229,225,219,0.5)', lineHeight: 1 }}>×</span>
           </button>
         </div>
 
@@ -192,7 +192,7 @@ export default function EarningsSheet({ data, onClose }: Props) {
             <p style={{ ...SKB, fontSize: 40, color: GREEN, margin: 0, lineHeight: 1, fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em' }}>
               ${(allTime * e).toFixed(2)}
             </p>
-            <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.16em' }}>ALL TIME</span>
+            <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: 'rgba(229,225,219,0.35)', textTransform: 'uppercase', letterSpacing: '0.16em' }}>ALL TIME</span>
           </div>
           {!empty && (
             <p style={{ ...SKB, fontSize: 'var(--fs-11)', color: GREEN, margin: '8px 0 0', opacity: 0.85 }}>
@@ -217,7 +217,7 @@ export default function EarningsSheet({ data, onClose }: Props) {
           }}
         >
           {empty ? (
-            <p style={{ ...SKR, fontSize: 'var(--fs-11)', color: 'rgba(255,255,255,0.5)', textAlign: 'center', lineHeight: 1.6, margin: '26px 8px' }}>
+            <p style={{ ...SKR, fontSize: 'var(--fs-11)', color: 'rgba(229,225,219,0.5)', textAlign: 'center', lineHeight: 1.6, margin: '26px 8px' }}>
               Your creator earnings will build here with every collect.
             </p>
           ) : (
@@ -225,8 +225,8 @@ export default function EarningsSheet({ data, onClose }: Props) {
               {/* key remounts the chart per range → each slice draws itself */}
               <EarningsChart key={range} series={series} drawMs={entered ? 250 : 750} reduced={reduced} />
               <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6, padding: '0 2px' }}>
-                <span style={{ ...SKB, fontSize: 'var(--fs-7)', color: 'rgba(255,255,255,0.3)', letterSpacing: '0.14em', textTransform: 'uppercase' }}>{leftLabel}</span>
-                <span style={{ ...SKB, fontSize: 'var(--fs-7)', color: 'rgba(255,255,255,0.3)', letterSpacing: '0.14em', textTransform: 'uppercase' }}>TODAY</span>
+                <span style={{ ...SKB, fontSize: 'var(--fs-7)', color: 'rgba(229,225,219,0.3)', letterSpacing: '0.14em', textTransform: 'uppercase' }}>{leftLabel}</span>
+                <span style={{ ...SKB, fontSize: 'var(--fs-7)', color: 'rgba(229,225,219,0.3)', letterSpacing: '0.14em', textTransform: 'uppercase' }}>TODAY</span>
               </div>
             </>
           )}
@@ -242,8 +242,8 @@ export default function EarningsSheet({ data, onClose }: Props) {
                 style={{
                   ...SKB, fontSize: 'var(--fs-9)', letterSpacing: '0.1em',
                   padding: '7px 14px', cursor: 'pointer', background: 'transparent',
-                  border: `1px solid ${range === r.key ? '#2a2a2a' : 'rgba(255,255,255,0.07)'}`,
-                  color: range === r.key ? '#FFFFFF' : 'rgba(255,255,255,0.35)',
+                  border: `1px solid ${range === r.key ? '#2a2a2a' : 'rgba(229,225,219,0.07)'}`,
+                  color: range === r.key ? '#E5E1DB' : 'rgba(229,225,219,0.35)',
                 }}
               >
                 {r.key}
@@ -253,7 +253,7 @@ export default function EarningsSheet({ data, onClose }: Props) {
         )}
 
         {/* Footnote */}
-        <p style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.28)', lineHeight: 1.6, margin: '16px 0 0', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+        <p style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(229,225,219,0.28)', lineHeight: 1.6, margin: '16px 0 0', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
           creator fees from every collect &amp; trade of your work · not included in total balance
         </p>
 
@@ -265,7 +265,7 @@ export default function EarningsSheet({ data, onClose }: Props) {
           onPointerLeave={() => setHowPressed(false)}
           style={{
             ...SKB, display: 'block', background: 'transparent', border: 'none', padding: '10px 0 0', cursor: 'pointer',
-            fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.65)', textTransform: 'uppercase', letterSpacing: '0.16em',
+            fontSize: 'var(--fs-9)', color: 'rgba(229,225,219,0.65)', textTransform: 'uppercase', letterSpacing: '0.16em',
             opacity: howPressed ? 0.7 : 1, transform: howPressed ? 'scale(0.96)' : 'scale(1)',
             transition: 'transform 120ms ease, opacity 120ms ease',
           }}

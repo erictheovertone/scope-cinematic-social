@@ -20,7 +20,7 @@ const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fon
 
 const INPUT: React.CSSProperties = {
   display: 'block', width: '100%', background: 'transparent',
-  border: '1px solid rgba(255,255,255,0.2)', color: 'white',
+  border: '1px solid rgba(229,225,219,0.2)', color: '#E5E1DB',
   fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400,
   fontSize: 'max(16px, var(--fs-12))', /* iOS zoom floor */ padding: '10px 12px', outline: 'none',
   boxSizing: 'border-box',
@@ -28,20 +28,20 @@ const INPUT: React.CSSProperties = {
 
 const LABEL: React.CSSProperties = {
   ...SKB, fontSize: 'var(--fs-9)', letterSpacing: '0.12em',
-  color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase',
+  color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase',
   display: 'block', marginBottom: 6,
 };
 
 const BTN: React.CSSProperties = {
   width: '100%', padding: '12px 0',
-  background: 'transparent', border: '1px solid rgba(255,255,255,0.3)',
-  color: 'white', cursor: 'pointer',
+  background: 'transparent', border: '1px solid rgba(229,225,219,0.3)',
+  color: '#E5E1DB', cursor: 'pointer',
   ...SKB, fontSize: 'var(--fs-10)', letterSpacing: '0.1em', textTransform: 'uppercase',
 };
 
-const DIVIDER = () => <div style={{ height: 1, background: '#FF0000', margin: '28px -20px 20px' }} />;
+const DIVIDER = () => <div style={{ height: 1, background: '#E5E1DB', margin: '28px -20px 20px' }} />;
 const SECTION = ({ label }: { label: string }) => (
-  <p style={{ ...SKB, fontSize: 'var(--fs-9)', letterSpacing: '0.15em', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', margin: '0 0 16px' }}>{label}</p>
+  <p style={{ ...SKB, fontSize: 'var(--fs-9)', letterSpacing: '0.15em', color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase', margin: '0 0 16px' }}>{label}</p>
 );
 
 export default function EditProfilePage() {
@@ -297,14 +297,14 @@ export default function EditProfilePage() {
     <div className="bg-black" style={{ position: 'fixed', inset: 0, overflowY: 'auto' }}>
 
       {isDirty && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 200, background: '#000', borderBottom: '1px solid rgba(255,255,255,0.15)', padding: '10px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.4)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>UNSAVED CHANGES</span>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 200, background: '#000', borderBottom: '1px solid rgba(229,225,219,0.15)', padding: '10px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'rgba(229,225,219,0.4)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>UNSAVED CHANGES</span>
           <button
             onClick={handleSaveAll}
             disabled={floatingSaving}
-            style={{ background: '#FF0000', border: 'none', cursor: floatingSaving ? 'default' : 'pointer', padding: '8px 18px' }}
+            style={{ background: '#E5E1DB', border: 'none', cursor: floatingSaving ? 'default' : 'pointer', padding: '8px 18px' }}
           >
-            <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'white', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+            <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: '#E5E1DB', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
               {floatingSaving ? 'SAVING…' : 'SAVE'}
             </span>
           </button>
@@ -316,12 +316,12 @@ export default function EditProfilePage() {
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', padding: '16px 0 20px', position: 'relative' }}>
           <button onClick={() => router.back()} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-            <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'white', letterSpacing: '0.1em', textTransform: 'uppercase' }}>← BACK</span>
+            <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: '#E5E1DB', letterSpacing: '0.1em', textTransform: 'uppercase' }}>← BACK</span>
           </button>
-          <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'white', position: 'absolute', left: '50%', transform: 'translateX(-50%)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>EDIT PROFILE</span>
+          <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: '#E5E1DB', position: 'absolute', left: '50%', transform: 'translateX(-50%)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>EDIT PROFILE</span>
         </div>
 
-        <div style={{ height: 1, background: '#FF0000', margin: '0 -20px 24px' }} />
+        <div style={{ height: 1, background: '#E5E1DB', margin: '0 -20px 24px' }} />
 
         {/* PROFILE BASICS */}
         <SECTION label="PROFILE" />
@@ -331,7 +331,7 @@ export default function EditProfilePage() {
           <div style={{ width: 56, height: 56, flexShrink: 0, overflow: 'hidden', background: '#222', cursor: 'pointer' }} onClick={() => photoInputRef.current?.click()}>
             {profileImageUrl
               ? <img src={feedImage(profileImageUrl, 160)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-              : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span style={{ ...SKB, fontSize: 'var(--fs-22)', color: 'white' }}>{(displayName || username || '?')[0].toUpperCase()}</span></div>
+              : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span style={{ ...SKB, fontSize: 'var(--fs-22)', color: '#E5E1DB' }}>{(displayName || username || '?')[0].toUpperCase()}</span></div>
             }
           </div>
           <button
@@ -378,7 +378,7 @@ export default function EditProfilePage() {
               placeholder="ONE QUIET LINE"
               style={{ ...INPUT, width: '100%' }}
             />
-            <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: 'var(--fs-7)', color: 'rgba(255,255,255,0.4)', fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>{shortBio.length}/80</span>
+            <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: 'var(--fs-7)', color: 'rgba(229,225,219,0.4)', fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>{shortBio.length}/80</span>
           </div>
         </div>
 
@@ -394,11 +394,11 @@ export default function EditProfilePage() {
           />
         </div>
 
-        {profileError && <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: '#FF0000', margin: '0 0 10px', letterSpacing: '0.06em' }}>{profileError}</p>}
+        {profileError && <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: '#E5E1DB', margin: '0 0 10px', letterSpacing: '0.06em' }}>{profileError}</p>}
         <button
           onClick={handleSaveProfile}
           disabled={savingProfile}
-          style={{ ...BTN, marginBottom: 4, border: profileSaved ? '1px solid #FF0000' : BTN.border }}
+          style={{ ...BTN, marginBottom: 4, border: profileSaved ? '1px solid #E5E1DB' : BTN.border }}
         >
           {savingProfile ? 'SAVING...' : profileSaved ? 'SAVED ✓' : 'SAVE PROFILE'}
         </button>
@@ -423,16 +423,16 @@ export default function EditProfilePage() {
                 style={{ background: 'transparent', border: 'none', padding: 0, cursor: unlocked ? 'pointer' : 'default', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, opacity: unlocked ? 1 : 0.32 }}
               >
                 {/* THICK swatch — gradient preview (the real divider is 0.5px). */}
-                <div style={{ width: 20, height: 60, background: line.gradient, border: selected ? '1.5px solid #FF0000' : '1px solid rgba(255,255,255,0.18)', boxSizing: 'border-box' }} />
-                <span style={{ ...SKB, fontSize: 'var(--fs-7_5)', letterSpacing: '0.05em', color: selected ? '#FF0000' : 'rgba(255,255,255,0.7)', textTransform: 'uppercase' }}>{line.name}</span>
+                <div style={{ width: 20, height: 60, background: line.gradient, border: selected ? '1.5px solid #E5E1DB' : '1px solid rgba(229,225,219,0.18)', boxSizing: 'border-box' }} />
+                <span style={{ ...SKB, fontSize: 'var(--fs-7_5)', letterSpacing: '0.05em', color: selected ? '#E5E1DB' : 'rgba(229,225,219,0.7)', textTransform: 'uppercase' }}>{line.name}</span>
                 {!unlocked && line.tier > 0 && (
-                  <span style={{ ...SKR, fontSize: 'var(--fs-6)', letterSpacing: '0.08em', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase' }}>{TIER_UNLOCK_LABEL[line.tier as 1 | 2 | 3]}</span>
+                  <span style={{ ...SKR, fontSize: 'var(--fs-6)', letterSpacing: '0.08em', color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase' }}>{TIER_UNLOCK_LABEL[line.tier as 1 | 2 | 3]}</span>
                 )}
               </button>
             );
           })}
         </div>
-        <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.35)', lineHeight: 1.5, margin: '0 0 4px' }}>
+        <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: 'rgba(229,225,219,0.35)', lineHeight: 1.5, margin: '0 0 4px' }}>
           The line between your badges and your photo. Default is invisible — climb tiers to unlock colours.
         </p>
 
@@ -440,18 +440,18 @@ export default function EditProfilePage() {
             fill for the badge backdrop. Default OFF. Persists on SAVE. */}
         {lineFlags.isFoundingMember && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 18 }}>
-            <div style={{ width: 20, height: 60, position: 'relative', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.18)', boxSizing: 'border-box', background: '#000', flexShrink: 0 }}>
+            <div style={{ width: 20, height: 60, position: 'relative', overflow: 'hidden', border: '1px solid rgba(229,225,219,0.18)', boxSizing: 'border-box', background: '#000', flexShrink: 0 }}>
               {holoBanner && (
                 <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(160deg, #FF0DBF 0%, #991F77 22%, #7F2366 38%, #FF9AD0 55%, #B14FD6 72%, #FF0DBF 100%)', backgroundSize: '100% 300%', opacity: 0.6, animation: 'holoDrift 14s ease-in-out infinite' }} />
               )}
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <p style={{ ...LABEL, marginBottom: 4 }}>HOLO BANNER</p>
-              <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.35)', lineHeight: 1.4, margin: 0 }}>Augmented only — an iridescent backdrop for the founding 500.</p>
+              <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: 'rgba(229,225,219,0.35)', lineHeight: 1.4, margin: 0 }}>Augmented only — an iridescent backdrop for the founding 500.</p>
             </div>
             <button
               onClick={() => { setHoloBanner(v => !v); setIsDirty(true); }}
-              style={{ ...SKB, fontSize: 'var(--fs-9)', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '8px 14px', cursor: 'pointer', flexShrink: 0, background: holoBanner ? '#FF0000' : 'transparent', color: holoBanner ? '#fff' : 'rgba(255,255,255,0.6)', border: holoBanner ? 'none' : '1px solid rgba(255,255,255,0.3)' }}
+              style={{ ...SKB, fontSize: 'var(--fs-9)', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '8px 14px', cursor: 'pointer', flexShrink: 0, background: holoBanner ? '#E5E1DB' : 'transparent', color: holoBanner ? '#E5E1DB' : 'rgba(229,225,219,0.6)', border: holoBanner ? 'none' : '1px solid rgba(229,225,219,0.3)' }}
             >
               {holoBanner ? 'ON' : 'OFF'}
             </button>
@@ -475,11 +475,11 @@ export default function EditProfilePage() {
           <input style={INPUT} value={kitTool} onChange={e => { setKitTool(e.target.value); setIsDirty(true); }} placeholder="e.g. Lightroom, DaVinci" />
         </div>
 
-        {kitError && <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: '#FF0000', margin: '0 0 10px', letterSpacing: '0.06em' }}>{kitError}</p>}
+        {kitError && <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: '#E5E1DB', margin: '0 0 10px', letterSpacing: '0.06em' }}>{kitError}</p>}
         <button
           onClick={handleSaveKit}
           disabled={savingKit}
-          style={{ ...BTN, marginBottom: 4, border: kitSaved ? '1px solid #FF0000' : BTN.border }}
+          style={{ ...BTN, marginBottom: 4, border: kitSaved ? '1px solid #E5E1DB' : BTN.border }}
         >
           {savingKit ? 'SAVING...' : kitSaved ? 'SAVED ✓' : 'SAVE KIT'}
         </button>
@@ -496,10 +496,10 @@ export default function EditProfilePage() {
               return (
                 <div key={link.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'white', margin: '0 0 2px', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    <p style={{ ...SKB, fontSize: 'var(--fs-10)', color: '#E5E1DB', margin: '0 0 2px', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {link.title || domain}
                     </p>
-                    <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.4)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: 'rgba(229,225,219,0.4)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {domain}
                     </p>
                   </div>
@@ -512,13 +512,13 @@ export default function EditProfilePage() {
                         setLinks((prev) => prev.map((l) => ({ ...l, is_primary: l.id === link.id } as typeof l)));
                       }
                     }}
-                    style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '0 0 0 10px', ...SKB, fontSize: 'var(--fs-8)', color: (link as { is_primary?: boolean }).is_primary ? '#FF0000' : 'rgba(255,255,255,0.35)', letterSpacing: '0.06em', flexShrink: 0, textTransform: 'uppercase' }}
+                    style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '0 0 0 10px', ...SKB, fontSize: 'var(--fs-8)', color: (link as { is_primary?: boolean }).is_primary ? '#E5E1DB' : 'rgba(229,225,219,0.35)', letterSpacing: '0.06em', flexShrink: 0, textTransform: 'uppercase' }}
                   >
                     {(link as { is_primary?: boolean }).is_primary ? 'PRIMARY' : 'SET PRIMARY'}
                   </button>
                   <button
                     onClick={() => handleDeleteLink(link.id)}
-                    style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '0 0 0 14px', ...SKB, fontSize: 'var(--fs-16)', color: 'rgba(255,255,255,0.35)', lineHeight: 1, flexShrink: 0 }}
+                    style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '0 0 0 14px', ...SKB, fontSize: 'var(--fs-16)', color: 'rgba(229,225,219,0.35)', lineHeight: 1, flexShrink: 0 }}
                   >
                     ×
                   </button>
@@ -544,12 +544,12 @@ export default function EditProfilePage() {
               onChange={e => setNewLinkTitle(e.target.value)}
               placeholder="Title (optional)"
             />
-            {linkError && <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: '#FF0000', margin: '0 0 8px', letterSpacing: '0.06em' }}>{linkError}</p>}
+            {linkError && <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: '#E5E1DB', margin: '0 0 8px', letterSpacing: '0.06em' }}>{linkError}</p>}
             <div style={{ display: 'flex', gap: 8 }}>
               <button onClick={handleAddLink} disabled={!newLinkUrl.trim() || addingLink} style={{ ...BTN, flex: 1, opacity: newLinkUrl.trim() ? 1 : 0.4 }}>
                 {addingLink ? 'ADDING...' : 'ADD'}
               </button>
-              <button onClick={() => { setShowAddLink(false); setNewLinkUrl(''); setNewLinkTitle(''); setLinkError(null); }} style={{ ...BTN, flex: 1, border: '1px solid rgba(255,255,255,0.15)' }}>
+              <button onClick={() => { setShowAddLink(false); setNewLinkUrl(''); setNewLinkTitle(''); setLinkError(null); }} style={{ ...BTN, flex: 1, border: '1px solid rgba(229,225,219,0.15)' }}>
                 CANCEL
               </button>
             </div>
@@ -561,7 +561,7 @@ export default function EditProfilePage() {
         )}
 
         <a href="/profile/links" style={{ display: 'block', marginTop: 8, marginBottom: 4 }}>
-          <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: 'rgba(255,255,255,0.6)', letterSpacing: '0.06em' }}>Advanced link settings ↗</span>
+          <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: 'rgba(229,225,219,0.6)', letterSpacing: '0.06em' }}>Advanced link settings ↗</span>
         </a>
 
         <DIVIDER />
@@ -575,18 +575,18 @@ export default function EditProfilePage() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 18 }}>
           <button
             onClick={() => { setContactPublic(v => !v); setIsDirty(true); }}
-            style={{ width: 32, height: 18, background: contactPublic ? '#FF0000' : 'rgba(255,255,255,0.15)', border: 'none', cursor: 'pointer', position: 'relative', flexShrink: 0, transition: 'background 0.2s' }}
+            style={{ width: 32, height: 18, background: contactPublic ? '#E5E1DB' : 'rgba(229,225,219,0.15)', border: 'none', cursor: 'pointer', position: 'relative', flexShrink: 0, transition: 'background 0.2s' }}
           >
-            <div style={{ position: 'absolute', top: 3, left: contactPublic ? 16 : 3, width: 12, height: 12, background: 'white', transition: 'left 0.2s' }} />
+            <div style={{ position: 'absolute', top: 3, left: contactPublic ? 16 : 3, width: 12, height: 12, background: '#E5E1DB', transition: 'left 0.2s' }} />
           </button>
-          <span style={{ ...SKR, fontSize: 'var(--fs-10)', color: 'rgba(255,255,255,0.6)' }}>Show publicly on profile</span>
+          <span style={{ ...SKR, fontSize: 'var(--fs-10)', color: 'rgba(229,225,219,0.6)' }}>Show publicly on profile</span>
         </div>
 
-        {contactError && <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: '#FF0000', margin: '0 0 10px', letterSpacing: '0.06em' }}>{contactError}</p>}
+        {contactError && <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: '#E5E1DB', margin: '0 0 10px', letterSpacing: '0.06em' }}>{contactError}</p>}
         <button
           onClick={handleSaveContact}
           disabled={savingContact}
-          style={{ ...BTN, marginBottom: 4, border: contactSaved ? '1px solid #FF0000' : BTN.border }}
+          style={{ ...BTN, marginBottom: 4, border: contactSaved ? '1px solid #E5E1DB' : BTN.border }}
         >
           {savingContact ? 'SAVING...' : contactSaved ? 'SAVED ✓' : 'SAVE CONTACT'}
         </button>

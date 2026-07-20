@@ -91,7 +91,7 @@ export default function UpsellSheet({
         .su-panel{position:relative;width:312px;max-width:100%;background:#000;padding:30px 26px 22px;animation:su-panelIn .34s cubic-bezier(.16,.84,.3,1) both;font-family:'SK-Modernist','Helvetica Neue',Arial,sans-serif}
         @keyframes su-panelIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
         .su-bracket{position:absolute;width:18px;height:18px;animation:su-focus .5s cubic-bezier(.16,.84,.3,1) both;animation-delay:.12s}
-        .su-bracket::before,.su-bracket::after{content:"";position:absolute;background:#FF0000}
+        .su-bracket::before,.su-bracket::after{content:"";position:absolute;background:#E5E1DB}
         .su-bracket::before{height:1.5px;width:18px}.su-bracket::after{width:1.5px;height:18px}
         .su-tl{top:-1px;left:-1px}.su-tl::before{top:0;left:0}.su-tl::after{top:0;left:0}
         .su-tr{top:-1px;right:-1px}.su-tr::before{top:0;right:0}.su-tr::after{top:0;right:0}
@@ -107,24 +107,24 @@ export default function UpsellSheet({
         @keyframes pro-spin{from{transform:rotateY(0)}to{transform:rotateY(360deg)}}
         @keyframes pro-glow{0%,100%{filter:drop-shadow(0 0 3px rgba(242,237,228,.25))}50%{filter:drop-shadow(0 0 16px rgba(242,237,228,.75))}}
         @media (prefers-reduced-motion: reduce){.su-badge-flip{animation:none;filter:drop-shadow(0 0 3px rgba(242,237,228,.25))}}
-        .su-label{color:#fff;font-weight:700;font-size:10px;letter-spacing:.18em;text-transform:uppercase}
-        .su-headline{color:#fff;font-weight:700;font-size:25px;line-height:1.05;letter-spacing:-.02em;text-transform:uppercase;margin:0 0 18px;animation:su-rise .3s ease both;animation-delay:.15s}
+        .su-label{color:#E5E1DB;font-weight:700;font-size:10px;letter-spacing:.18em;text-transform:uppercase}
+        .su-headline{color:#E5E1DB;font-weight:700;font-size:25px;line-height:1.05;letter-spacing:-.02em;text-transform:uppercase;margin:0 0 18px;animation:su-rise .3s ease both;animation-delay:.15s}
         .su-meter{margin-bottom:16px;animation:su-rise .3s ease both;animation-delay:.20s}
-        .su-track{height:3px;background:rgba(255,255,255,.12);position:relative;overflow:hidden}
-        .su-fill{position:absolute;left:0;top:0;height:100%;width:0;background:#FF0000;animation:su-fill .55s cubic-bezier(.16,.84,.3,1) both;animation-delay:.30s}
+        .su-track{height:3px;background:rgba(229,225,219,.12);position:relative;overflow:hidden}
+        .su-fill{position:absolute;left:0;top:0;height:100%;width:0;background:#E5E1DB;animation:su-fill .55s cubic-bezier(.16,.84,.3,1) both;animation-delay:.30s}
         @keyframes su-fill{from{width:0}to{width:100%}}
-        .su-count{margin-top:7px;color:rgba(255,255,255,.45);font-weight:700;font-size:9px;letter-spacing:.14em;text-transform:uppercase}
-        .su-body{color:rgba(255,255,255,.70);font-weight:400;font-size:12px;line-height:1.5;letter-spacing:-.01em;margin:0 0 20px;animation:su-rise .3s ease both;animation-delay:.24s}
-        .su-divider{height:1px;background:rgba(255,255,255,.12);margin-bottom:16px;animation:su-rise .3s ease both;animation-delay:.27s}
+        .su-count{margin-top:7px;color:rgba(229,225,219,.45);font-weight:700;font-size:9px;letter-spacing:.14em;text-transform:uppercase}
+        .su-body{color:rgba(229,225,219,.70);font-weight:400;font-size:12px;line-height:1.5;letter-spacing:-.01em;margin:0 0 20px;animation:su-rise .3s ease both;animation-delay:.24s}
+        .su-divider{height:1px;background:rgba(229,225,219,.12);margin-bottom:16px;animation:su-rise .3s ease both;animation-delay:.27s}
         .su-features{list-style:none;margin:0 0 22px;padding:0}
-        .su-features li{display:flex;align-items:center;gap:9px;padding:5px 0;color:rgba(255,255,255,.70);font-weight:700;font-size:10px;letter-spacing:.06em;text-transform:uppercase;animation:su-rise .3s ease both}
+        .su-features li{display:flex;align-items:center;gap:9px;padding:5px 0;color:rgba(229,225,219,.70);font-weight:700;font-size:10px;letter-spacing:.06em;text-transform:uppercase;animation:su-rise .3s ease both}
         .su-features li:nth-child(1){animation-delay:.29s}.su-features li:nth-child(2){animation-delay:.32s}.su-features li:nth-child(3){animation-delay:.35s}.su-features li:nth-child(4){animation-delay:.38s}
-        .su-tick{width:9px;height:9px;flex-shrink:0;border:1px solid rgba(255,255,255,.25)}
-        .su-features li.su-on{color:#FF0000}.su-features li.su-on .su-tick{border-color:#FF0000;background:#FF0000}
-        .su-cta{width:100%;height:46px;background:#FF0000;border:none;cursor:pointer;color:#000;font-family:inherit;font-weight:700;font-size:13px;letter-spacing:.10em;text-transform:uppercase;animation:su-rise .3s ease both;animation-delay:.40s;transition:opacity .15s ease}
+        .su-tick{width:9px;height:9px;flex-shrink:0;border:1px solid rgba(229,225,219,.25)}
+        .su-features li.su-on{color:#E5E1DB}.su-features li.su-on .su-tick{border-color:#E5E1DB;background:#E5E1DB}
+        .su-cta{width:100%;height:46px;background:#E5E1DB;border:none;cursor:pointer;color:#000;font-family:inherit;font-weight:700;font-size:13px;letter-spacing:.10em;text-transform:uppercase;animation:su-rise .3s ease both;animation-delay:.40s;transition:opacity .15s ease}
         .su-cta:hover{opacity:.85}
-        .su-cta2{width:100%;margin-top:6px;padding:12px;background:none;border:none;cursor:pointer;color:rgba(255,255,255,.45);font-family:inherit;font-weight:700;font-size:10px;letter-spacing:.12em;text-transform:uppercase;animation:su-rise .3s ease both;animation-delay:.43s;transition:color .15s ease}
-        .su-cta2:hover{color:#fff}
+        .su-cta2{width:100%;margin-top:6px;padding:12px;background:none;border:none;cursor:pointer;color:rgba(229,225,219,.45);font-family:inherit;font-weight:700;font-size:10px;letter-spacing:.12em;text-transform:uppercase;animation:su-rise .3s ease both;animation-delay:.43s;transition:color .15s ease}
+        .su-cta2:hover{color:#E5E1DB}
         @keyframes su-rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
       `}</style>
     </div>

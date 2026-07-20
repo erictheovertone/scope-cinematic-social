@@ -185,9 +185,9 @@ function MobileDMThread({ username }: { username: string }) {
   return (
     <div style={{ height: '100dvh', display: 'flex', flexDirection: 'column', background: '#000' }}>
       {/* HEADER — back, avatar + @handle (tap → profile). */}
-      <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 10, padding: 'calc(12px + env(safe-area-inset-top, 0px)) 14px 10px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+      <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 10, padding: 'calc(12px + env(safe-area-inset-top, 0px)) 14px 10px', borderBottom: '1px solid rgba(229,225,219,0.08)' }}>
         <button onClick={() => router.back()} aria-label="Back" className="tappable" style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4, lineHeight: 0, flexShrink: 0 }}>
-          <svg width="16.5" height="16.5" viewBox="0 0 24 24" fill="none" stroke="#FFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
+          <svg width="16.5" height="16.5" viewBox="0 0 24 24" fill="none" stroke="#E5E1DB" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
         </button>
         <button
           onClick={() => other?.handle && router.push(`/profile/${encodeURIComponent(other.handle)}`)}
@@ -197,21 +197,21 @@ function MobileDMThread({ username }: { username: string }) {
           <div style={{ width: 30, height: 30, borderRadius: '50%', background: '#222', flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             {other?.avatar
               ? <img src={feedImage(other.avatar, 96)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              : <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: '#FFF' }}>{other?.handle?.[0]?.toUpperCase() ?? '?'}</span>}
+              : <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: '#E5E1DB' }}>{other?.handle?.[0]?.toUpperCase() ?? '?'}</span>}
           </div>
-          <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>@{other?.handle ?? username}</span>
+          <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>@{other?.handle ?? username}</span>
         </button>
       </div>
 
       {/* MESSAGES */}
       <div ref={scrollRef} onScroll={onScroll} style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch', padding: '14px 14px 8px', display: 'flex', flexDirection: 'column' }}>
         {loading ? (
-          <div style={{ margin: 'auto' }}><span style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>LOADING…</span></div>
+          <div style={{ margin: 'auto' }}><span style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>LOADING…</span></div>
         ) : notFound ? (
-          <div style={{ margin: 'auto', textAlign: 'center' }}><span style={{ ...SKR, fontSize: 'var(--fs-10)', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>User not found</span></div>
+          <div style={{ margin: 'auto', textAlign: 'center' }}><span style={{ ...SKR, fontSize: 'var(--fs-10)', color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>User not found</span></div>
         ) : items.length === 0 ? (
           <div style={{ margin: 'auto', textAlign: 'center', padding: '0 30px' }}>
-            <span style={{ ...SKR, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.08em', lineHeight: 1.6 }}>
+            <span style={{ ...SKR, fontSize: 'var(--fs-9)', color: 'rgba(229,225,219,0.35)', textTransform: 'uppercase', letterSpacing: '0.08em', lineHeight: 1.6 }}>
               No messages yet — say hello.
             </span>
           </div>
@@ -223,7 +223,7 @@ function MobileDMThread({ username }: { username: string }) {
               <div key={it.key}>
                 {showTime && (
                   <div style={{ textAlign: 'center', margin: '10px 0 8px' }}>
-                    <span style={{ ...SKR, fontSize: 'var(--fs-7)', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{dmTimeAgo(it.iso)}</span>
+                    <span style={{ ...SKR, fontSize: 'var(--fs-7)', color: 'rgba(229,225,219,0.3)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{dmTimeAgo(it.iso)}</span>
                   </div>
                 )}
                 <div style={{ display: 'flex', justifyContent: it.mine ? 'flex-end' : 'flex-start', marginBottom: 4 }}>
@@ -232,14 +232,14 @@ function MobileDMThread({ username }: { username: string }) {
                     style={{
                       maxWidth: '76%', padding: '8px 11px', borderRadius: 2,
                       background: it.mine ? '#242424' : '#0e0e0e',
-                      border: it.status === 'failed' ? '1px solid #FF0000' : '1px solid rgba(255,255,255,0.06)',
+                      border: it.status === 'failed' ? '1px solid #E5E1DB' : '1px solid rgba(229,225,219,0.06)',
                       cursor: it.status === 'failed' ? 'pointer' : 'default',
                       opacity: it.status === 'sending' ? 0.55 : 1,
                     }}
                   >
-                    <span style={{ ...SKR, fontSize: 'var(--fs-10)', color: '#FFF', lineHeight: 1.4, whiteSpace: 'pre-wrap', wordBreak: 'break-word', display: 'block' }}>{it.body}</span>
+                    <span style={{ ...SKR, fontSize: 'var(--fs-10)', color: '#E5E1DB', lineHeight: 1.4, whiteSpace: 'pre-wrap', wordBreak: 'break-word', display: 'block' }}>{it.body}</span>
                     {it.status === 'failed' && (
-                      <span style={{ ...SKB, fontSize: 'var(--fs-7)', color: '#FF0000', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginTop: 3 }}>Failed — tap to retry</span>
+                      <span style={{ ...SKB, fontSize: 'var(--fs-7)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginTop: 3 }}>Failed — tap to retry</span>
                     )}
                   </div>
                 </div>
@@ -251,7 +251,7 @@ function MobileDMThread({ username }: { username: string }) {
       </div>
 
       {/* COMPOSER — owns the bottom (pill hidden). ≥16px font = the iOS zoom floor. */}
-      <div style={{ flexShrink: 0, display: 'flex', alignItems: 'flex-end', gap: 8, padding: '10px 12px calc(10px + env(safe-area-inset-bottom, 0px))', borderTop: '1px solid rgba(255,255,255,0.08)', background: '#000' }}>
+      <div style={{ flexShrink: 0, display: 'flex', alignItems: 'flex-end', gap: 8, padding: '10px 12px calc(10px + env(safe-area-inset-bottom, 0px))', borderTop: '1px solid rgba(229,225,219,0.08)', background: '#000' }}>
         <textarea
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
@@ -261,8 +261,8 @@ function MobileDMThread({ username }: { username: string }) {
           maxLength={2000}
           disabled={notFound}
           style={{
-            flex: 1, resize: 'none', maxHeight: 120, ...SKR, fontSize: 16, color: '#FFF',
-            background: '#111', border: '1px solid rgba(255,255,255,0.14)', borderRadius: 2,
+            flex: 1, resize: 'none', maxHeight: 120, ...SKR, fontSize: 16, color: '#E5E1DB',
+            background: '#111', border: '1px solid rgba(229,225,219,0.14)', borderRadius: 2,
             outline: 'none', padding: '9px 11px', lineHeight: 1.35,
           }}
         />
@@ -271,7 +271,7 @@ function MobileDMThread({ username }: { username: string }) {
           disabled={!draft.trim() || notFound}
           className="tappable"
           style={{
-            ...SKB, fontSize: 'var(--fs-9)', color: draft.trim() ? '#FF0000' : 'rgba(255,255,255,0.3)',
+            ...SKB, fontSize: 'var(--fs-9)', color: draft.trim() ? '#E5E1DB' : 'rgba(229,225,219,0.3)',
             background: 'transparent', border: 'none', cursor: draft.trim() ? 'pointer' : 'default',
             textTransform: 'uppercase', letterSpacing: '0.1em', padding: '10px 6px', flexShrink: 0,
           }}

@@ -654,7 +654,7 @@ export default function WalletPage() {
     <div
       ref={containerRef}
       className="bg-black"
-      style={{ position: "fixed", inset: 0, overflowY: "auto", color: "white", ...(skinOverlay ? { width: 375, right: "auto" } : {}) }}
+      style={{ position: "fixed", inset: 0, overflowY: "auto", color: "#E5E1DB", ...(skinOverlay ? { width: 375, right: "auto" } : {}) }}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
@@ -673,10 +673,10 @@ export default function WalletPage() {
       {toast && (
         <div style={{
           position: "fixed", top: 20, left: "50%", transform: "translateX(-50%)",
-          background: "#111", border: "1px solid rgba(255,255,255,0.15)",
+          background: "#111", border: "1px solid rgba(229,225,219,0.15)",
           padding: "8px 16px", zIndex: 999,
         }}>
-          <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: "white", textTransform: "uppercase" }}>{toast}</span>
+          <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: "#E5E1DB", textTransform: "uppercase" }}>{toast}</span>
         </div>
       )}
 
@@ -707,12 +707,12 @@ export default function WalletPage() {
           style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-38%)", background: "transparent", border: "none", cursor: "pointer", padding: 6 }}
         >
           <span style={{ position: "relative", display: "block", width: 18, height: 18 }}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(229,225,219,0.8)" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
               <path d="M10 5a2 2 0 1 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3h-16a4 4 0 0 0 2 -3v-3a7 7 0 0 1 4 -6" />
               <path d="M9 17v1a3 3 0 0 0 6 0v-1" />
             </svg>
             {marketUnread && (
-              <span style={{ position: "absolute", top: -1, right: -1, width: 6, height: 6, borderRadius: "50%", background: "#FF0000" }} />
+              <span style={{ position: "absolute", top: -1, right: -1, width: 6, height: 6, borderRadius: "50%", background: "#E5E1DB" }} />
             )}
           </span>
         </button>
@@ -728,7 +728,7 @@ export default function WalletPage() {
       <div style={{ position: "relative", margin: "26px 10px 0 12px", borderRadius: 3, textAlign: "center", aspectRatio: "353 / 188", padding: "3.68% 0 0", overflow: "hidden" }}>
         {/* Baked card chrome — Eric's tuned gradient fill + stroke (no CSS border) */}
         <img src="/wallet-redux/balance-card-chrome.png" alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }} />
-        <p style={{ ...SKB, position: "relative", fontSize: 11.5, color: "white", opacity: 0.54, margin: "0 0 1.7%", textTransform: "uppercase", letterSpacing: "1px" }}>
+        <p style={{ ...SKB, position: "relative", fontSize: 11.5, color: "#E5E1DB", opacity: 0.54, margin: "0 0 1.7%", textTransform: "uppercase", letterSpacing: "1px" }}>
           TOTAL BALANCE
         </p>
         <div style={{ position: "relative" }}>
@@ -738,50 +738,50 @@ export default function WalletPage() {
               key={fundPulse.id}
               style={{
                 ...SKB, position: "absolute", left: 0, right: 0, top: -16,
-                fontSize: 12.5, color: "#FF0000", letterSpacing: "0.08em",
+                fontSize: 12.5, color: "#E5E1DB", letterSpacing: "0.08em",
                 animation: "fundPulse 2.6s ease-out forwards", pointerEvents: "none",
               }}
             >
               [ +${fundPulse.usd.toFixed(2)} ]
             </span>
           )}
-          <p style={{ ...SKB, fontSize: 40, color: "white", margin: 0, lineHeight: 1.39, letterSpacing: "-1.2px", fontVariantNumeric: "tabular-nums" }}>
+          <p style={{ ...SKB, fontSize: 40, color: "#E5E1DB", margin: 0, lineHeight: 1.39, letterSpacing: "-1.2px", fontVariantNumeric: "tabular-nums" }}>
             {loading && animatedTotal == null ? "..." : animatedTotal != null ? `$${animatedTotal.toFixed(2)}` : "$—"}
           </p>
         </div>
         {/* Red FLASH under the total — a light streak dissipating at both ends */}
-        <div style={{ position: "relative", width: "33.7%", height: 1, background: "linear-gradient(90deg, transparent 0%, #FF0000 50%, transparent 100%)", margin: "2.83% auto 7.4%" }} />
+        <div style={{ position: "relative", width: "33.7%", height: 1, background: "linear-gradient(90deg, transparent 0%, #E5E1DB 50%, transparent 100%)", margin: "2.83% auto 7.4%" }} />
         {/* Stat row — 34px vertical hairline dividers between the three stats */}
         <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
           <div onClick={() => setActiveTab("balances")} style={{ cursor: "pointer", flex: 1 }}>
-            <p style={{ ...SKB, fontSize: 11.5, color: "rgba(255,255,255,0.65)", textTransform: "uppercase", letterSpacing: "-0.1px", margin: "0 0 5px" }}>
+            <p style={{ ...SKB, fontSize: 11.5, color: "rgba(229,225,219,0.65)", textTransform: "uppercase", letterSpacing: "-0.1px", margin: "0 0 5px" }}>
               AVAILABLE
             </p>
-            <p style={{ ...SKB, fontSize: 13.5, color: "#FFFFFF", margin: 0, fontVariantNumeric: "tabular-nums" }}>
+            <p style={{ ...SKB, fontSize: 13.5, color: "#E5E1DB", margin: 0, fontVariantNumeric: "tabular-nums" }}>
               {animatedAvailable != null ? `$${animatedAvailable.toFixed(2)}` : "$—"}
             </p>
           </div>
-          <div style={{ width: 1, height: 34, background: "rgba(255,255,255,0.14)" }} />
+          <div style={{ width: 1, height: 34, background: "rgba(229,225,219,0.14)" }} />
           <div onClick={() => setActiveTab("holdings")} style={{ cursor: "pointer", flex: 1 }}>
-            <p style={{ ...SKB, fontSize: 11.5, color: "rgba(255,255,255,0.65)", textTransform: "uppercase", letterSpacing: "-0.1px", margin: "0 0 5px" }}>
+            <p style={{ ...SKB, fontSize: 11.5, color: "rgba(229,225,219,0.65)", textTransform: "uppercase", letterSpacing: "-0.1px", margin: "0 0 5px" }}>
               HOLDINGS
             </p>
-            <p style={{ ...SKB, fontSize: 13.5, color: "#FF0000", margin: 0, fontVariantNumeric: "tabular-nums" }}>
+            <p style={{ ...SKB, fontSize: 13.5, color: "#E5E1DB", margin: 0, fontVariantNumeric: "tabular-nums" }}>
               {holdingsUsd != null ? `$${holdingsUsd.toFixed(2)}` : "…"}
             </p>
           </div>
-          <div style={{ width: 1, height: 34, background: "rgba(255,255,255,0.14)" }} />
+          <div style={{ width: 1, height: 34, background: "rgba(229,225,219,0.14)" }} />
           {/* SCOPE EARNINGS — value WHITE per 957:565 (sheet greens unchanged);
               the whole stat is one tap target → the detail sheet. */}
           <div onClick={() => { if (earnings) setEarnOpen(true); }} style={{ cursor: "pointer", flex: 1.08 }}>
-            <p style={{ ...SKB, fontSize: 11.5, color: "rgba(255,255,255,0.65)", textTransform: "uppercase", letterSpacing: "-0.1px", margin: "0 0 5px" }}>
+            <p style={{ ...SKB, fontSize: 11.5, color: "rgba(229,225,219,0.65)", textTransform: "uppercase", letterSpacing: "-0.1px", margin: "0 0 5px" }}>
               SCOPE EARNINGS
             </p>
             {/* value WHITE per 957:565; ⓘ (13px circle + i) rides the value line */}
-            <p style={{ ...SKB, fontSize: 13.5, color: "#FFFFFF", margin: 0, fontVariantNumeric: "tabular-nums", display: "flex", alignItems: "center", justifyContent: "center", gap: 5 }}>
+            <p style={{ ...SKB, fontSize: 13.5, color: "#E5E1DB", margin: 0, fontVariantNumeric: "tabular-nums", display: "flex", alignItems: "center", justifyContent: "center", gap: 5 }}>
               {animatedEarned != null ? `$${animatedEarned.toFixed(2)}` : "$—"}
               <span style={{ position: "relative", width: 13, height: 13, display: "inline-block", backgroundImage: "url(/wallet-redux/info-circle.svg)", backgroundSize: "13px 13px" }}>
-                <span style={{ ...SKB, position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9.7, color: "white", opacity: 0.52, textTransform: "none", letterSpacing: 0 }}>i</span>
+                <span style={{ ...SKB, position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9.7, color: "#E5E1DB", opacity: 0.52, textTransform: "none", letterSpacing: 0 }}>i</span>
               </span>
             </p>
           </div>
@@ -821,8 +821,8 @@ export default function WalletPage() {
               )}
             </span>
             <span style={{ position: "relative", display: "flex", flexDirection: "column", gap: 2 }}>
-              <span style={{ ...SKB, fontSize: 11.5, color: "white", textTransform: "uppercase", letterSpacing: "0.02em" }}>{card.label}</span>
-              <span style={{ ...SKR, fontSize: 9.7, color: "rgba(255,255,255,0.68)", letterSpacing: "-0.082px" }}>{card.sub}</span>
+              <span style={{ ...SKB, fontSize: 11.5, color: "#E5E1DB", textTransform: "uppercase", letterSpacing: "0.02em" }}>{card.label}</span>
+              <span style={{ ...SKR, fontSize: 9.7, color: "rgba(229,225,219,0.68)", letterSpacing: "-0.082px" }}>{card.sub}</span>
             </span>
           </button>
         ))}
@@ -841,15 +841,15 @@ export default function WalletPage() {
             <img src="/wallet-redux/scan-wallet-address-icon.png" alt="" style={{ width: 22, height: "auto", flexShrink: 0 }} />
             {/* Two lines: label over the FULL live address (never truncated) */}
             <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ ...SKB, fontSize: 10.5, color: "white", opacity: 0.37, textTransform: "uppercase", letterSpacing: "0.02em", margin: 0, lineHeight: 1.2 }}>DIRECT DEPOSIT</p>
-              <p style={{ ...SKR, fontSize: 10.5, color: "white", opacity: 0.65, margin: "1px 0 0", lineHeight: 1.2, whiteSpace: "nowrap" }}>
+              <p style={{ ...SKB, fontSize: 10.5, color: "#E5E1DB", opacity: 0.37, textTransform: "uppercase", letterSpacing: "0.02em", margin: 0, lineHeight: 1.2 }}>DIRECT DEPOSIT</p>
+              <p style={{ ...SKR, fontSize: 10.5, color: "#E5E1DB", opacity: 0.65, margin: "1px 0 0", lineHeight: 1.2, whiteSpace: "nowrap" }}>
                 {walletAddress}
               </p>
             </div>
             {/* copy glyph — two 7px squares, 0.25px borders, 3px offset */}
             <span style={{ position: "relative", width: 11, height: 11, flexShrink: 0, display: "block" }}>
-              <span style={{ position: "absolute", top: 0, left: 0, width: 7, height: 7, border: "0.25px solid rgba(255,255,255,0.54)" }} />
-              <span style={{ position: "absolute", top: 3, left: 3, width: 7, height: 7, border: "0.25px solid rgba(255,255,255,0.54)" }} />
+              <span style={{ position: "absolute", top: 0, left: 0, width: 7, height: 7, border: "0.25px solid rgba(229,225,219,0.54)" }} />
+              <span style={{ position: "absolute", top: 3, left: 3, width: 7, height: 7, border: "0.25px solid rgba(229,225,219,0.54)" }} />
             </span>
           </div>
         </div>
@@ -859,7 +859,7 @@ export default function WalletPage() {
           REAL pane (PORTFOLIO + COLLECTED detail); the ⓘ header stat keeps
           opening the summary sheet. Active = the short 45px hairline over the
           full-width hairline. */}
-      <div style={{ display: "flex", justifyContent: "space-between", margin: "24px 13px 0", borderBottom: "1px solid rgba(255,255,255,0.12)" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", margin: "24px 13px 0", borderBottom: "1px solid rgba(229,225,219,0.12)" }}>
         {(["balances", "holdings", "earnings", "activity"] as const).map(tab => {
           const active = activeTab === tab;
           return (
@@ -869,14 +869,14 @@ export default function WalletPage() {
               style={{
                 ...SKR, fontSize: 10.5, background: "none", border: "none",
                 cursor: "pointer", padding: "6px 0 5px", position: "relative",
-                color: "white", textTransform: "uppercase", letterSpacing: "-0.09px",
+                color: "#E5E1DB", textTransform: "uppercase", letterSpacing: "-0.09px",
                 opacity: active ? 1 : 0.65,
               }}
             >
               {tab.toUpperCase()}
               {/* active = the short 45px shine, anchored to the tab's left edge */}
               {active && (
-                <span style={{ position: "absolute", bottom: -1, left: 0, width: 45, height: 1, background: "linear-gradient(90deg, #FF0000 0%, #FFFFFF 55%, #FF0000 100%)" }} />
+                <span style={{ position: "absolute", bottom: -1, left: 0, width: 45, height: 1, background: "linear-gradient(90deg, #E5E1DB 0%, #E5E1DB 55%, #E5E1DB 100%)" }} />
               )}
             </button>
           );
@@ -902,39 +902,39 @@ export default function WalletPage() {
             borderImageSlice: "12 fill", borderImageRepeat: "stretch",
           }}>
             {/* ETH row */}
-            <div style={{ position: "relative", display: "flex", alignItems: "center", height: 45, borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+            <div style={{ position: "relative", display: "flex", alignItems: "center", height: 45, borderBottom: "1px solid rgba(229,225,219,0.08)" }}>
               <span style={{ position: "relative", width: 30, height: 30, flexShrink: 0, marginRight: 11 }}>
                 <img src="/wallet-redux/eth-token-circle.svg" alt="" style={{ position: "absolute", inset: 0, width: 30, height: 30 }} />
                 <img src="/wallet-redux/eth-logo.png" alt="" style={{ position: "absolute", left: "50%", top: "50%", transform: "translate(-50%,-50%)", width: 13, height: "auto" }} />
               </span>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ ...SKR, fontSize: 13.5, color: "white", margin: 0 }}>ETH</p>
-                <p style={{ ...SKR, fontSize: 10.5, color: "white", opacity: 0.37, margin: "1px 0 0" }}>
+                <p style={{ ...SKR, fontSize: 13.5, color: "#E5E1DB", margin: 0 }}>ETH</p>
+                <p style={{ ...SKR, fontSize: 10.5, color: "#E5E1DB", opacity: 0.37, margin: "1px 0 0" }}>
                   {loading && ethBalance == null ? "..." : `${parseFloat(ethBalance ?? "0").toFixed(4)} ETH`}
                 </p>
               </div>
-              <p style={{ ...SKR, fontSize: 13.5, color: "white", margin: 0, fontVariantNumeric: "tabular-nums" }}>
+              <p style={{ ...SKR, fontSize: 13.5, color: "#E5E1DB", margin: 0, fontVariantNumeric: "tabular-nums" }}>
                 {loading && ethUsd == null ? "..." : ethUsd != null ? `$${ethUsd}` : "$—"}
               </p>
-              <span style={{ fontFamily: "Batang, serif", fontSize: 14.5, color: "white", opacity: 0.75, marginLeft: 10 }}>›</span>
+              <span style={{ fontFamily: "Batang, serif", fontSize: 14.5, color: "#E5E1DB", opacity: 0.75, marginLeft: 10 }}>›</span>
             </div>
 
             {/* USDC row */}
-            <div style={{ position: "relative", display: "flex", alignItems: "center", height: 50, borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+            <div style={{ position: "relative", display: "flex", alignItems: "center", height: 50, borderBottom: "1px solid rgba(229,225,219,0.08)" }}>
               <span style={{ position: "relative", width: 30, height: 30, flexShrink: 0, marginRight: 11 }}>
                 <img src="/wallet-redux/usdc-token-circle.svg" alt="" style={{ position: "absolute", inset: 0, width: 30, height: 30 }} />
-                <span style={{ ...SKB, position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14.5, color: "white" }}>$</span>
+                <span style={{ ...SKB, position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14.5, color: "#E5E1DB" }}>$</span>
               </span>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ ...SKR, fontSize: 13.5, color: "white", margin: 0 }}>USDC</p>
-                <p style={{ ...SKR, fontSize: 10.5, color: "white", opacity: 0.37, margin: "1px 0 0" }}>
+                <p style={{ ...SKR, fontSize: 13.5, color: "#E5E1DB", margin: 0 }}>USDC</p>
+                <p style={{ ...SKR, fontSize: 10.5, color: "#E5E1DB", opacity: 0.37, margin: "1px 0 0" }}>
                   {loading && usdcBalance == null ? "..." : `${parseFloat(usdcBalance ?? "0").toFixed(2)} USDC`}
                 </p>
               </div>
-              <p style={{ ...SKR, fontSize: 13.5, color: "white", margin: 0, fontVariantNumeric: "tabular-nums" }}>
+              <p style={{ ...SKR, fontSize: 13.5, color: "#E5E1DB", margin: 0, fontVariantNumeric: "tabular-nums" }}>
                 {loading && usdcUsd == null ? "..." : `$${usdcUsd ?? "0.00"}`}
               </p>
-              <span style={{ fontFamily: "Batang, serif", fontSize: 14.5, color: "white", opacity: 0.75, marginLeft: 10 }}>›</span>
+              <span style={{ fontFamily: "Batang, serif", fontSize: 14.5, color: "#E5E1DB", opacity: 0.75, marginLeft: 10 }}>›</span>
             </div>
 
             {/* CREATOR EARNINGS — the ZORA balance, earnings-language framing:
@@ -944,7 +944,7 @@ export default function WalletPage() {
               <div
                 // floor to 0.01 — toFixed(4) ROUNDED (up) past the balance → overMax blocked the swap
                 onClick={() => { setSwapInitial({ sell: "ZORA", buy: "USDC", amount: (Math.floor(parseFloat(zoraBalance) * 100) / 100).toFixed(2), cashOut: true }); setShowSwap(true); }}
-                style={{ position: "relative", display: "flex", alignItems: "center", height: 50, borderBottom: "1px solid rgba(255,255,255,0.08)", cursor: "pointer" }}
+                style={{ position: "relative", display: "flex", alignItems: "center", height: 50, borderBottom: "1px solid rgba(229,225,219,0.08)", cursor: "pointer" }}
               >
                 {/* The earnings badge — same 30px slot as the ETH/USDC circles.
                     (Presentation only: the asset stays ZORA in send/activity.) */}
@@ -952,37 +952,37 @@ export default function WalletPage() {
                   <img src="/scope-earnings-icon.png" alt="" style={{ width: 30, height: "auto", display: "block" }} />
                 </span>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ ...SKR, fontSize: 13.5, color: "white", margin: 0, textTransform: "uppercase", letterSpacing: "0.02em" }}>Creator Earnings</p>
-                  <p style={{ ...SKR, fontSize: 10.5, color: "white", opacity: 0.37, margin: "1px 0 0" }}>
+                  <p style={{ ...SKR, fontSize: 13.5, color: "#E5E1DB", margin: 0, textTransform: "uppercase", letterSpacing: "0.02em" }}>Creator Earnings</p>
+                  <p style={{ ...SKR, fontSize: 10.5, color: "#E5E1DB", opacity: 0.37, margin: "1px 0 0" }}>
                     {parseFloat(zoraBalance) >= 1000 ? Math.round(parseFloat(zoraBalance)).toLocaleString() : parseFloat(zoraBalance).toFixed(2)} ZORA
                   </p>
                 </div>
-                <p style={{ ...SKR, fontSize: 13.5, color: "white", margin: 0, fontVariantNumeric: "tabular-nums" }}>
+                <p style={{ ...SKR, fontSize: 13.5, color: "#E5E1DB", margin: 0, fontVariantNumeric: "tabular-nums" }}>
                   {zoraUsd != null ? `$${zoraUsd.toFixed(2)}` : "$—"}
                 </p>
-                <span style={{ fontFamily: "Batang, serif", fontSize: 14.5, color: "white", opacity: 0.75, marginLeft: 10 }}>›</span>
+                <span style={{ fontFamily: "Batang, serif", fontSize: 14.5, color: "#E5E1DB", opacity: 0.75, marginLeft: 10 }}>›</span>
               </div>
             )}
 
             {/* Imported ERC-20 rows — same shape as ETH/USDC; balance-only when
                 no price source resolves (USD deliberately out of scope). */}
             {importedAssets.map((a) => (
-              <div key={a.address} style={{ position: "relative", display: "flex", alignItems: "center", height: 50, borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-                <span style={{ position: "relative", width: 30, height: 30, flexShrink: 0, marginRight: 11, borderRadius: "50%", background: "#141414", border: "0.5px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <span style={{ ...SKB, fontSize: 13.5, color: "white", opacity: 0.8 }}>{a.symbol.slice(0, 1)}</span>
+              <div key={a.address} style={{ position: "relative", display: "flex", alignItems: "center", height: 50, borderBottom: "1px solid rgba(229,225,219,0.08)" }}>
+                <span style={{ position: "relative", width: 30, height: 30, flexShrink: 0, marginRight: 11, borderRadius: "50%", background: "#141414", border: "0.5px solid rgba(229,225,219,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <span style={{ ...SKB, fontSize: 13.5, color: "#E5E1DB", opacity: 0.8 }}>{a.symbol.slice(0, 1)}</span>
                 </span>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ ...SKR, fontSize: 13.5, color: "white", margin: 0 }}>{a.symbol}</p>
-                  <p style={{ ...SKR, fontSize: 10.5, color: "white", opacity: 0.37, margin: "1px 0 0" }}>
+                  <p style={{ ...SKR, fontSize: 13.5, color: "#E5E1DB", margin: 0 }}>{a.symbol}</p>
+                  <p style={{ ...SKR, fontSize: 10.5, color: "#E5E1DB", opacity: 0.37, margin: "1px 0 0" }}>
                     {a.balance != null ? `${a.balance} ${a.symbol}` : "…"}
                   </p>
                 </div>
-                <p style={{ ...SKR, fontSize: 12, color: "rgba(255,255,255,0.37)", margin: 0 }}>$—</p>
-                <span style={{ fontFamily: "Batang, serif", fontSize: 14.5, color: "white", opacity: 0.75, marginLeft: 10 }}>›</span>
+                <p style={{ ...SKR, fontSize: 12, color: "rgba(229,225,219,0.37)", margin: 0 }}>$—</p>
+                <span style={{ fontFamily: "Batang, serif", fontSize: 14.5, color: "#E5E1DB", opacity: 0.75, marginLeft: 10 }}>›</span>
               </div>
             ))}
             {/* Empty asset slots (the frame's reserved rows) */}
-            {importedAssets.length === 0 && <div style={{ height: 50, borderBottom: "1px solid rgba(255,255,255,0.08)" }} />}
+            {importedAssets.length === 0 && <div style={{ height: 50, borderBottom: "1px solid rgba(229,225,219,0.08)" }} />}
             {importedAssets.length <= 1 && <div style={{ height: 44 }} />}
           </div>
           {/* + ADD / IMPORT — real action: press-pop → the import sheet */}
@@ -993,7 +993,7 @@ export default function WalletPage() {
             onPointerLeave={() => setAddPressed(false)}
             style={{
               ...SKR, display: "block", width: "100%", background: "transparent", border: "none", padding: 0,
-              fontSize: 10.5, color: "white", opacity: addPressed ? 0.75 : 0.4, textAlign: "center",
+              fontSize: 10.5, color: "#E5E1DB", opacity: addPressed ? 0.75 : 0.4, textAlign: "center",
               margin: "18px 0 0", textTransform: "uppercase", letterSpacing: "0.04em", cursor: "pointer",
               transform: addPressed ? "scale(0.95)" : "scale(1)", transition: "transform 120ms ease, opacity 120ms ease",
             }}
@@ -1008,20 +1008,20 @@ export default function WalletPage() {
         {activeTab === "holdings" && (
           holdings === null ? (
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "30vh" }}>
-              <p style={{ ...SKB, fontSize: 'var(--fs-10)', color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em" }}>LOADING…</p>
+              <p style={{ ...SKB, fontSize: 'var(--fs-10)', color: "rgba(229,225,219,0.4)", textTransform: "uppercase", letterSpacing: "0.08em" }}>LOADING…</p>
             </div>
           ) : holdings.length === 0 ? (
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "30vh" }}>
-              <p style={{ ...SKB, fontSize: 'var(--fs-11)', color: "white", opacity: 0.5, textAlign: "center", lineHeight: 1.6, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+              <p style={{ ...SKB, fontSize: 'var(--fs-11)', color: "#E5E1DB", opacity: 0.5, textAlign: "center", lineHeight: 1.6, textTransform: "uppercase", letterSpacing: "0.06em" }}>
                 No coin holdings yet
               </p>
             </div>
           ) : (
             <div>
               {/* Total holdings value — austere, dollars. "+" marks unpriced pools. */}
-              <div style={{ borderBottom: "1px solid #FF0000", padding: "4px 0 14px", marginBottom: 14 }}>
-                <p style={{ ...SKB, fontSize: 'var(--fs-7)', color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.16em", margin: "0 0 6px" }}>HOLDINGS VALUE</p>
-                <p style={{ ...SKB, fontSize: 'var(--fs-26)', color: "#FF0000", margin: 0, fontVariantNumeric: "tabular-nums" }}>
+              <div style={{ borderBottom: "1px solid #E5E1DB", padding: "4px 0 14px", marginBottom: 14 }}>
+                <p style={{ ...SKB, fontSize: 'var(--fs-7)', color: "rgba(229,225,219,0.4)", textTransform: "uppercase", letterSpacing: "0.16em", margin: "0 0 6px" }}>HOLDINGS VALUE</p>
+                <p style={{ ...SKB, fontSize: 'var(--fs-26)', color: "#E5E1DB", margin: 0, fontVariantNumeric: "tabular-nums" }}>
                   ${holdings.reduce((s, h) => s + h.valueUsd, 0).toFixed(2)}
                 </p>
               </div>
@@ -1029,18 +1029,18 @@ export default function WalletPage() {
                 <div
                   key={h.postId}
                   onClick={() => setOpenHolding(h)}
-                  style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 0", borderBottom: "1px solid rgba(255,255,255,0.07)", cursor: "pointer" }}
+                  style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 0", borderBottom: "1px solid rgba(229,225,219,0.07)", cursor: "pointer" }}
                 >
                   {h.thumbUrl
                     ? <img src={h.thumbUrl} alt="" style={{ width: 44, height: 30, objectFit: "cover", flexShrink: 0, background: "#111" }} />
                     : <div style={{ width: 44, height: 30, background: "#111", flexShrink: 0 }} />}
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    {h.ticker ? <TickerMark ticker={h.ticker} size={13.5} /> : <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: "rgba(255,255,255,0.4)" }}>—</span>}
-                    <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: "rgba(255,255,255,0.45)", margin: "3px 0 0", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                    {h.ticker ? <TickerMark ticker={h.ticker} size={13.5} /> : <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: "rgba(229,225,219,0.4)" }}>—</span>}
+                    <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: "rgba(229,225,219,0.45)", margin: "3px 0 0", textTransform: "uppercase", letterSpacing: "0.06em" }}>
                       {h.pieces.toLocaleString()} {h.pieces === 1 ? "FRAGMENT" : "FRAGMENTS"}
                     </p>
                   </div>
-                  <span style={{ ...SKB, fontSize: 'var(--fs-13)', color: "white", fontVariantNumeric: "tabular-nums" }}>
+                  <span style={{ ...SKB, fontSize: 'var(--fs-13)', color: "#E5E1DB", fontVariantNumeric: "tabular-nums" }}>
                     {`$${h.valueUsd.toFixed(2)}`}
                   </span>
                 </div>
@@ -1106,11 +1106,11 @@ export default function WalletPage() {
           const held = new Map((holdings ?? []).map((h) => [h.postId, h]));
           const catHeader = (label: string, total: string, open: boolean, onTap: () => void, sub?: string) => (
             <button onClick={onTap} style={{ display: 'flex', width: '100%', alignItems: 'baseline', justifyContent: 'space-between', background: 'transparent', border: 'none', cursor: 'pointer', padding: '14px 2px 12px' }}>
-              <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</span>
+              <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</span>
               <span style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-                {sub && <span style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{sub}</span>}
+                {sub && <span style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(229,225,219,0.45)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{sub}</span>}
                 <span style={{ ...SKB, fontSize: 'var(--fs-13)', color: green, fontVariantNumeric: 'tabular-nums' }}>{total}</span>
-                <span style={{ ...SKR, fontSize: 'var(--fs-10)', color: 'rgba(255,255,255,0.4)' }}>{open ? '−' : '+'}</span>
+                <span style={{ ...SKR, fontSize: 'var(--fs-10)', color: 'rgba(229,225,219,0.4)' }}>{open ? '−' : '+'}</span>
               </span>
             </button>
           );
@@ -1120,16 +1120,16 @@ export default function WalletPage() {
             <div>
               {/* ── PORTFOLIO — creator fees, per post ── */}
               {catHeader('PORTFOLIO', portfolioTotal != null ? `$${portfolioTotal.toFixed(2)}` : '…', openCat === 'portfolio', () => setOpenCat(openCat === 'portfolio' ? null : 'portfolio'), 'CREATOR FEES')}
-              <div style={{ height: 1, background: 'rgba(255,255,255,0.12)' }} />
+              <div style={{ height: 1, background: 'rgba(229,225,219,0.12)' }} />
               {openCat === 'portfolio' && (
                 byPost.length === 0 ? (
-                  <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.06em', padding: '12px 2px' }}>
+                  <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase', letterSpacing: '0.06em', padding: '12px 2px' }}>
                     {earnings ? 'NO CREATOR FEES YET — FEES ACCRUE ON EVERY COLLECT & TRADE OF YOUR WORK' : 'LOADING…'}
                   </p>
                 ) : byPost.map((p) => (
                   <div key={p.postId} style={rowStyle}>
                     {p.thumb ? <img src={feedImage(p.thumb, 96)} alt="" style={thumbStyle} /> : <div style={thumbStyle} />}
-                    <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: '#FFF', textTransform: 'uppercase', flex: 1 }}>{p.ticker ? `[ ${p.ticker} ]` : '—'}</span>
+                    <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: '#E5E1DB', textTransform: 'uppercase', flex: 1 }}>{p.ticker ? `[ ${p.ticker} ]` : '—'}</span>
                     <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: green, fontVariantNumeric: 'tabular-nums' }}>${p.usd.toFixed(2)}</span>
                   </div>
                 ))
@@ -1137,17 +1137,17 @@ export default function WalletPage() {
 
               {/* ── COLLECTED — First Cut rewards, per FC-held post ── */}
               {catHeader('COLLECTED', fcRewards ? `$${fcRewards.totalUsd.toFixed(2)}` : '…', openCat === 'collected', () => setOpenCat(openCat === 'collected' ? null : 'collected'), fcRewards && fcRewards.unpaidUsd > 0.005 ? `$${fcRewards.unpaidUsd.toFixed(2)} PENDING` : 'FIRST CUT REWARDS')}
-              <div style={{ height: 1, background: 'rgba(255,255,255,0.12)' }} />
+              <div style={{ height: 1, background: 'rgba(229,225,219,0.12)' }} />
               {openCat === 'collected' && (
                 !fcRewards || fcRewards.posts.length === 0 ? (
-                  <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.06em', padding: '12px 2px' }}>
+                  <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase', letterSpacing: '0.06em', padding: '12px 2px' }}>
                     {fcRewards ? 'NO FIRST CUT REWARDS YET — HOLD A FIRST CUT AND EARN FROM EVERY TRADE' : 'LOADING…'}
                   </p>
                 ) : (
                   <>
                     {fcRewards.unpaidUsd > 0.005 && (
                       /* copy DRAFT — Eric approves before ship */
-                      <p style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.06em', padding: '10px 2px 0' }}>
+                      <p style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(229,225,219,0.45)', textTransform: 'uppercase', letterSpacing: '0.06em', padding: '10px 2px 0' }}>
                         ${fcRewards.unpaidUsd.toFixed(2)} ACCRUED · PAYS OUT WEEKLY
                       </p>
                     )}
@@ -1157,16 +1157,16 @@ export default function WalletPage() {
                         <div key={p.postId} style={rowStyle}>
                           {p.thumb ? <img src={feedImage(p.thumb, 96)} alt="" style={thumbStyle} /> : <div style={thumbStyle} />}
                           <div style={{ flex: 1, minWidth: 0 }}>
-                            <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: '#FFF', textTransform: 'uppercase', display: 'block' }}>{p.ticker ? `[ ${p.ticker} ]` : '—'}</span>
-                            <span style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                            <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: '#E5E1DB', textTransform: 'uppercase', display: 'block' }}>{p.ticker ? `[ ${p.ticker} ]` : '—'}</span>
+                            <span style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(229,225,219,0.45)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                               {pos ? `POSITION $${pos.valueUsd.toFixed(2)}` : 'POSITION EXITED'}
                             </span>
                           </div>
                           <div style={{ textAlign: 'right' }}>
                             {/* PAID portion in money-green; a muted pending sub-line
                                 when unpaid accruals exist on this post. */}
-                            <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: p.accruedUsd - p.unpaidUsd > 0.005 ? green : 'rgba(255,255,255,0.75)', fontVariantNumeric: 'tabular-nums', display: 'block' }}>${p.accruedUsd.toFixed(2)}</span>
-                            {p.unpaidUsd > 0.005 && <span style={{ ...SKR, fontSize: 'var(--fs-7)', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', fontVariantNumeric: 'tabular-nums' }}>· ${p.unpaidUsd.toFixed(2)} PENDING</span>}
+                            <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: p.accruedUsd - p.unpaidUsd > 0.005 ? green : 'rgba(229,225,219,0.75)', fontVariantNumeric: 'tabular-nums', display: 'block' }}>${p.accruedUsd.toFixed(2)}</span>
+                            {p.unpaidUsd > 0.005 && <span style={{ ...SKR, fontSize: 'var(--fs-7)', color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase', fontVariantNumeric: 'tabular-nums' }}>· ${p.unpaidUsd.toFixed(2)} PENDING</span>}
                           </div>
                         </div>
                       );
@@ -1181,19 +1181,19 @@ export default function WalletPage() {
         {activeTab === "activity" && (
           <div>
             {txLoading && activityRows.length === 0 ? (
-              <p style={{ ...SKB, fontSize: 'var(--fs-10)', color: "white", opacity: 0.4, textAlign: "center", marginTop: 40, textTransform: "uppercase" }}>Loading…</p>
+              <p style={{ ...SKB, fontSize: 'var(--fs-10)', color: "#E5E1DB", opacity: 0.4, textAlign: "center", marginTop: 40, textTransform: "uppercase" }}>Loading…</p>
             ) : txFailed && activityRows.length === 0 ? (
               /* HONEST FAILURE — a rate-limited read is not an empty history. */
               <button
                 onClick={() => loadActivity(true)}
-                style={{ display: "block", width: "100%", background: "transparent", border: "1px solid rgba(255,0,0,0.55)", cursor: "pointer", padding: "13px 0", marginTop: 40 }}
+                style={{ display: "block", width: "100%", background: "transparent", border: "1px solid rgba(229,225,219,0.55)", cursor: "pointer", padding: "13px 0", marginTop: 40 }}
               >
-                <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: "#FF0000", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: "#E5E1DB", textTransform: "uppercase", letterSpacing: "0.08em" }}>
                   Couldn&rsquo;t load activity — tap to retry
                 </span>
               </button>
             ) : activityRows.length === 0 ? (
-              <p style={{ ...SKB, fontSize: 'var(--fs-10)', color: "white", opacity: 0.4, textAlign: "center", marginTop: 40, textTransform: "uppercase" }}>No transactions yet</p>
+              <p style={{ ...SKB, fontSize: 'var(--fs-10)', color: "#E5E1DB", opacity: 0.4, textAlign: "center", marginTop: 40, textTransform: "uppercase" }}>No transactions yet</p>
             ) : (
               activityRows.map((row, i) => {
                 const frag = row.fragments != null && row.fragments > 0 ? row.fragments.toLocaleString() : '';
@@ -1207,11 +1207,11 @@ export default function WalletPage() {
 
                 // Directional icon circle: tint + glyph + color by action.
                 const cfg = ({
-                  buy:     { tint: 'rgba(255,0,0,0.10)',     glyph: '↓', color: '#ff4d4d' },
+                  buy:     { tint: 'rgba(229,225,219,0.10)',     glyph: '↓', color: '#ff4d4d' },
                   sell:    { tint: 'rgba(74,222,128,0.10)',  glyph: '↑', color: '#4ade80' },
-                  mint:    { tint: 'rgba(255,255,255,0.06)', glyph: '✦', color: '#888888' },
+                  mint:    { tint: 'rgba(229,225,219,0.06)', glyph: '✦', color: '#888888' },
                   receive: { tint: 'rgba(74,222,128,0.10)',  glyph: '↓', color: '#4ade80' },
-                  send:    { tint: 'rgba(255,0,0,0.10)',     glyph: '↑', color: '#ff4d4d' },
+                  send:    { tint: 'rgba(229,225,219,0.10)',     glyph: '↑', color: '#ff4d4d' },
                 } as const)[row.kind];
 
                 // Hero verb + amount (white); ticker rendered red via TickerMark.
@@ -1235,7 +1235,7 @@ export default function WalletPage() {
                 const rightText = row.kind === 'mint'
                   ? 'CREATED'
                   : rightVal ? `${positive ? '+' : '−'}${rightVal}` : '';
-                const rightColor = row.kind === 'mint' ? '#5a5a5a' : positive ? '#4ade80' : '#ffffff';
+                const rightColor = row.kind === 'mint' ? '#5a5a5a' : positive ? '#4ade80' : '#E5E1DB';
 
                 return (
                   <div
@@ -1249,11 +1249,11 @@ export default function WalletPage() {
 
                     {/* MIDDLE — hero line + muted sub line */}
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ ...SKB, fontSize: 15, color: "#ffffff", margin: 0, lineHeight: 1.25, textTransform: "uppercase", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      <p style={{ ...SKB, fontSize: 15, color: "#E5E1DB", margin: 0, lineHeight: 1.25, textTransform: "uppercase", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                         {heroText}
                         {showTicker && row.ticker && (
                           <span style={{ marginLeft: 10 }}>
-                            <TickerMark ticker={row.ticker} size={17} color="#FF0000" />
+                            <TickerMark ticker={row.ticker} size={17} color="#E5E1DB" />
                           </span>
                         )}
                       </p>
@@ -1288,7 +1288,7 @@ export default function WalletPage() {
         <div
           style={{
             position: "fixed", bottom: 0, left: 0, right: 0, height: "60vh",
-            backgroundColor: "#0a0a0a", borderTop: "1px solid rgba(255,255,255,0.1)",
+            backgroundColor: "#0a0a0a", borderTop: "1px solid rgba(229,225,219,0.1)",
             zIndex: 301, display: "flex", flexDirection: "column",
             transform: showSend ? "translateY(0)" : "translateY(100%)",
             transition: "transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)",
@@ -1296,51 +1296,51 @@ export default function WalletPage() {
         >
           {/* Header */}
           <div style={{ flexShrink: 0, position: "relative", display: "flex", alignItems: "center", justifyContent: "center", padding: "10px 16px 8px" }}>
-            <div style={{ position: "absolute", top: 8, left: "50%", transform: "translateX(-50%)", width: 40, height: 2, backgroundColor: "rgba(255,255,255,0.2)" }} />
-            <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: "white", marginTop: 8, textTransform: "uppercase", letterSpacing: "0.06em" }}>SEND</span>
+            <div style={{ position: "absolute", top: 8, left: "50%", transform: "translateX(-50%)", width: 40, height: 2, backgroundColor: "rgba(229,225,219,0.2)" }} />
+            <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: "#E5E1DB", marginTop: 8, textTransform: "uppercase", letterSpacing: "0.06em" }}>SEND</span>
             <button
               onClick={() => setShowSend(false)}
-              style={{ position: "absolute", right: 16, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "white", fontSize: 'var(--fs-18)', lineHeight: 1, padding: 0, marginTop: 4 }}
+              style={{ position: "absolute", right: 16, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "#E5E1DB", fontSize: 'var(--fs-18)', lineHeight: 1, padding: 0, marginTop: 4 }}
             >×</button>
           </div>
-          <div style={{ height: 1, background: "rgba(255,255,255,0.08)" }} />
+          <div style={{ height: 1, background: "rgba(229,225,219,0.08)" }} />
 
           <div style={{ flex: 1, overflowY: "auto", padding: "16px" }}>
             {sendStep === "sent" ? (
               /* TERMINAL — bracket state, then the sheet resolves itself. */
               <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: 180 }}>
-                <span style={{ ...SKB, fontSize: 'var(--fs-14)', color: "#FF0000", textTransform: "uppercase", letterSpacing: "0.12em" }}>{sentLabel}</span>
+                <span style={{ ...SKB, fontSize: 'var(--fs-14)', color: "#E5E1DB", textTransform: "uppercase", letterSpacing: "0.12em" }}>{sentLabel}</span>
               </div>
             ) : sendStep === "sending" ? (
               <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, minHeight: 180 }}>
                 <FrameLoader size={23.5} />
-                <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: "white", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+                <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: "#E5E1DB", textTransform: "uppercase", letterSpacing: "0.1em" }}>
                   SENDING · ${isFinite(sendUsdNum) ? sendUsdNum.toFixed(2) : ""}…
                 </span>
               </div>
             ) : sendStep === "review" ? (
               /* THE REVIEW STEP — the sanctioned two-step (irreversible act). */
               <>
-                <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: "rgba(255,255,255,0.5)", margin: "0 0 6px", textTransform: "uppercase", letterSpacing: "0.12em" }}>REVIEW — SENDING</p>
-                <p style={{ ...SKB, fontSize: 'var(--fs-22)', color: "white", margin: "0 0 2px", fontVariantNumeric: "tabular-nums" }}>${sendUsdNum.toFixed(2)}</p>
-                <p style={{ ...SKR, fontSize: 'var(--fs-10)', color: "rgba(255,255,255,0.5)", margin: "0 0 16px" }}>
+                <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: "rgba(229,225,219,0.5)", margin: "0 0 6px", textTransform: "uppercase", letterSpacing: "0.12em" }}>REVIEW — SENDING</p>
+                <p style={{ ...SKB, fontSize: 'var(--fs-22)', color: "#E5E1DB", margin: "0 0 2px", fontVariantNumeric: "tabular-nums" }}>${sendUsdNum.toFixed(2)}</p>
+                <p style={{ ...SKR, fontSize: 'var(--fs-10)', color: "rgba(229,225,219,0.5)", margin: "0 0 16px" }}>
                   = {sendToken === "USDC" ? `${sendUsdNum.toFixed(2)} USDC` : `${(sendNativeNum ?? 0).toFixed(6)} ETH`}
                 </p>
-                <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: "rgba(255,255,255,0.5)", margin: "0 0 6px", textTransform: "uppercase", letterSpacing: "0.12em" }}>TO</p>
-                <p style={{ ...SKR, fontSize: 'var(--fs-11)', color: "white", margin: "0 0 16px", wordBreak: "break-all", lineHeight: 1.5 }}>{(() => { try { return getAddress(sendTo.trim()); } catch { return sendTo; } })()}</p>
-                <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: "rgba(255,255,255,0.45)", margin: "0 0 14px", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: "rgba(229,225,219,0.5)", margin: "0 0 6px", textTransform: "uppercase", letterSpacing: "0.12em" }}>TO</p>
+                <p style={{ ...SKR, fontSize: 'var(--fs-11)', color: "#E5E1DB", margin: "0 0 16px", wordBreak: "break-all", lineHeight: 1.5 }}>{(() => { try { return getAddress(sendTo.trim()); } catch { return sendTo; } })()}</p>
+                <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: "rgba(229,225,219,0.45)", margin: "0 0 14px", textTransform: "uppercase", letterSpacing: "0.06em" }}>
                   EST. GAS {sendGasUsd != null ? `$${sendGasUsd.toFixed(4)}` : "$—"}
                 </p>
-                <div style={{ border: "1px solid rgba(255,0,0,0.55)", padding: "10px 12px", marginBottom: 16 }}>
-                  <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: "#FF0000", textTransform: "uppercase", letterSpacing: "0.08em", margin: 0, lineHeight: 1.5 }}>
+                <div style={{ border: "1px solid rgba(229,225,219,0.55)", padding: "10px 12px", marginBottom: 16 }}>
+                  <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: "#E5E1DB", textTransform: "uppercase", letterSpacing: "0.08em", margin: 0, lineHeight: 1.5 }}>
                     BASE NETWORK ONLY — funds sent to addresses on other networks are unrecoverable.
                   </p>
                 </div>
-                {sendError && <p style={{ ...SKR, fontSize: 'var(--fs-10)', color: "#FF0000", margin: "0 0 12px", lineHeight: 1.4 }}>{sendError}</p>}
-                <button onClick={doSend} style={{ ...SKB, fontSize: 'var(--fs-11)', color: "white", background: "#FF0000", border: "none", cursor: "pointer", padding: "13px", width: "100%", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>
+                {sendError && <p style={{ ...SKR, fontSize: 'var(--fs-10)', color: "#E5E1DB", margin: "0 0 12px", lineHeight: 1.4 }}>{sendError}</p>}
+                <button onClick={doSend} style={{ ...SKB, fontSize: 'var(--fs-11)', color: "#E5E1DB", background: "#E5E1DB", border: "none", cursor: "pointer", padding: "13px", width: "100%", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>
                   SEND · ${sendUsdNum.toFixed(2)}
                 </button>
-                <button onClick={() => { setSendStep("input"); setSendError(null); }} style={{ ...SKB, fontSize: 'var(--fs-10)', color: "rgba(255,255,255,0.5)", background: "transparent", border: "1px solid rgba(255,255,255,0.15)", cursor: "pointer", padding: "11px", width: "100%", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                <button onClick={() => { setSendStep("input"); setSendError(null); }} style={{ ...SKB, fontSize: 'var(--fs-10)', color: "rgba(229,225,219,0.5)", background: "transparent", border: "1px solid rgba(229,225,219,0.15)", cursor: "pointer", padding: "11px", width: "100%", textTransform: "uppercase", letterSpacing: "0.08em" }}>
                   BACK
                 </button>
               </>
@@ -1354,58 +1354,58 @@ export default function WalletPage() {
                       onClick={() => { setSendToken(t); setSendError(null); }}
                       style={{
                         ...SKB, fontSize: 'var(--fs-10)', background: "transparent",
-                        border: `1px solid ${sendToken === t ? "white" : "rgba(255,255,255,0.3)"}`,
-                        color: "white", opacity: sendToken === t ? 1 : 0.4,
+                        border: `1px solid ${sendToken === t ? "#E5E1DB" : "rgba(229,225,219,0.3)"}`,
+                        color: "#E5E1DB", opacity: sendToken === t ? 1 : 0.4,
                         cursor: "pointer", padding: "6px 16px", textTransform: "uppercase", letterSpacing: "0.06em",
                       }}
                     >{t}</button>
                   ))}
                 </div>
 
-                <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: "white", opacity: 0.5, margin: "0 0 6px", textTransform: "uppercase", letterSpacing: "0.06em" }}>TO</p>
+                <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: "#E5E1DB", opacity: 0.5, margin: "0 0 6px", textTransform: "uppercase", letterSpacing: "0.06em" }}>TO</p>
                 <input
                   type="text"
                   value={sendTo}
                   onChange={e => { setSendTo(e.target.value); setSendError(null); }}
                   placeholder="0x… wallet address (Base)"
                   style={{
-                    ...SKR, fontSize: 'max(16px, var(--fs-11))', color: "white", background: "transparent",
-                    border: "none", borderBottom: "1px solid rgba(255,255,255,0.3)",
+                    ...SKR, fontSize: 'max(16px, var(--fs-11))', color: "#E5E1DB", background: "transparent",
+                    border: "none", borderBottom: "1px solid rgba(229,225,219,0.3)",
                     outline: "none", width: "100%", padding: "4px 0", marginBottom: 20,
                     boxSizing: "border-box",
                   }}
                 />
 
-                <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: "white", opacity: 0.5, margin: "0 0 6px", textTransform: "uppercase", letterSpacing: "0.06em" }}>AMOUNT · DOLLARS</p>
+                <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: "#E5E1DB", opacity: 0.5, margin: "0 0 6px", textTransform: "uppercase", letterSpacing: "0.06em" }}>AMOUNT · DOLLARS</p>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
-                  <span style={{ ...SKB, fontSize: 'var(--fs-14)', color: sendAmount ? "white" : "rgba(255,255,255,0.3)" }}>$</span>
+                  <span style={{ ...SKB, fontSize: 'var(--fs-14)', color: sendAmount ? "#E5E1DB" : "rgba(229,225,219,0.3)" }}>$</span>
                   <input
                     inputMode="decimal"
                     value={sendAmount}
                     onChange={e => { setSendAmount(e.target.value.replace(/[^0-9.]/g, "")); setSendError(null); }}
                     placeholder="0.00"
                     style={{
-                      ...SKB, fontSize: 'max(16px, var(--fs-14))', color: "white", background: "transparent",
-                      border: "none", borderBottom: "1px solid rgba(255,255,255,0.3)",
+                      ...SKB, fontSize: 'max(16px, var(--fs-14))', color: "#E5E1DB", background: "transparent",
+                      border: "none", borderBottom: "1px solid rgba(229,225,219,0.3)",
                       outline: "none", flex: 1, padding: "4px 0", fontVariantNumeric: "tabular-nums",
                     }}
                   />
-                  <button onClick={sendMax} style={{ ...SKB, fontSize: 'var(--fs-9)', color: "white", background: "transparent", border: "1px solid rgba(255,255,255,0.3)", cursor: "pointer", padding: "5px 10px", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                  <button onClick={sendMax} style={{ ...SKB, fontSize: 'var(--fs-9)', color: "#E5E1DB", background: "transparent", border: "1px solid rgba(229,225,219,0.3)", cursor: "pointer", padding: "5px 10px", textTransform: "uppercase", letterSpacing: "0.08em" }}>
                     MAX
                   </button>
                 </div>
-                <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: "white", opacity: 0.5, margin: "0 0 20px", textTransform: "uppercase" }}>
+                <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: "#E5E1DB", opacity: 0.5, margin: "0 0 20px", textTransform: "uppercase" }}>
                   Available: {sendToken === "ETH"
                     ? `${parseFloat(ethBalance ?? "0").toFixed(4)} ETH${ethUsd != null ? ` ($${ethUsd})` : ""}`
                     : `${parseFloat(usdcBalance ?? "0").toFixed(2)} USDC`}
                 </p>
 
-                {sendError && <p style={{ ...SKR, fontSize: 'var(--fs-10)', color: "#FF0000", margin: "0 0 12px", lineHeight: 1.4 }}>{sendError}</p>}
+                {sendError && <p style={{ ...SKR, fontSize: 'var(--fs-10)', color: "#E5E1DB", margin: "0 0 12px", lineHeight: 1.4 }}>{sendError}</p>}
 
                 <button
                   onClick={goReview}
                   style={{
-                    ...SKB, fontSize: 'var(--fs-11)', color: "white", background: "transparent",
+                    ...SKB, fontSize: 'var(--fs-11)', color: "#E5E1DB", background: "transparent",
                     border: "1px solid white", cursor: "pointer", padding: "12px",
                     width: "100%", textTransform: "uppercase", letterSpacing: "0.06em",
                   }}

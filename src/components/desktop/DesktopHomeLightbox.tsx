@@ -125,7 +125,7 @@ export default function DesktopHomeLightbox({
   const strip = tab === 'following' ? posts.filter((p) => followedIds.has(String(p.user_id))) : posts;
 
   const tabBtn = (label: string, key: 'foryou' | 'following') => (
-    <button onClick={() => setTab(key)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '0 0 4px', ...SKB, fontSize: 13, textTransform: 'uppercase', letterSpacing: '0.06em', color: tab === key ? '#FFF' : 'rgba(255,255,255,0.4)', borderBottom: tab === key ? '2px solid #f20d0d' : '2px solid transparent' }}>{label}</button>
+    <button onClick={() => setTab(key)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '0 0 4px', ...SKB, fontSize: 13, textTransform: 'uppercase', letterSpacing: '0.06em', color: tab === key ? '#E5E1DB' : 'rgba(229,225,219,0.4)', borderBottom: tab === key ? '2px solid #E5E1DB' : '2px solid transparent' }}>{label}</button>
   );
 
   // ── MORE FROM row (bounded; each caption = creator avatar + @handle LINK + MC).
@@ -135,12 +135,12 @@ export default function DesktopHomeLightbox({
   const moreFromRow = moreFrom.length > 0 ? (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '0 0 10px' }}>
-        <p style={{ ...SKB, fontSize: 10, color: '#FFF', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>
-          MORE FROM <span style={{ color: 'rgba(255,255,255,0.55)' }}>@{creatorHandle}</span>
+        <p style={{ ...SKB, fontSize: 10, color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>
+          MORE FROM <span style={{ color: 'rgba(229,225,219,0.55)' }}>@{creatorHandle}</span>
         </p>
         {moreFrom.length > 4 && (
           <button onClick={() => mfScroll.current?.scrollBy({ left: 240, behavior: 'smooth' })} aria-label="Scan more" style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4, lineHeight: 0 }}>
-            <svg width="9" height="16" viewBox="0 0 10 22" fill="none"><path d="M1 1L8.6 11L1 21" stroke="rgba(255,255,255,0.6)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            <svg width="9" height="16" viewBox="0 0 10 22" fill="none"><path d="M1 1L8.6 11L1 21" stroke="rgba(229,225,219,0.6)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
           </button>
         )}
       </div>
@@ -154,10 +154,10 @@ export default function DesktopHomeLightbox({
               {/* creator avatar + @handle — LINKS to the profile (global button:hover brightens) */}
               <span role="link" onClick={goProfile} style={{ display: 'flex', alignItems: 'center', gap: 5, minWidth: 0, cursor: 'pointer' }}>
                 {creatorAvatar ? <img src={feedImage(creatorAvatar, 96)} alt="" style={{ width: 14, height: 14, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} /> : <span style={{ width: 14, height: 14, borderRadius: '50%', background: '#2a2a2a', flexShrink: 0 }} />}
-                <span style={{ ...SKB, fontSize: 10, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>@{creatorHandle}</span>
+                <span style={{ ...SKB, fontSize: 10, color: 'rgba(229,225,219,0.6)', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>@{creatorHandle}</span>
               </span>
               {/* Unminted (no coin) → quiet dash, never a fake MC. */}
-              <span style={{ ...SKB, fontSize: 9.5, color: 'rgba(255,255,255,0.55)', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>{p.coin_address ? `MC ${mfMc.get(String(p.id)) ?? '…'}` : '—'}</span>
+              <span style={{ ...SKB, fontSize: 9.5, color: 'rgba(229,225,219,0.55)', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>{p.coin_address ? `MC ${mfMc.get(String(p.id)) ?? '…'}` : '—'}</span>
             </div>
           </div>
         ))}
@@ -174,33 +174,33 @@ export default function DesktopHomeLightbox({
 
         {/* ── FEED heading (page-title, 40px) + FOR YOU / FOLLOWING tabs (frame ~y38) ── */}
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 20, marginBottom: 12 }}>
-          <span style={{ ...SKB, fontSize: 40, lineHeight: 1, color: '#FFF', textTransform: 'uppercase', letterSpacing: '-0.02em', marginRight: 10 }}>FEED</span>
+          <span style={{ ...SKB, fontSize: 40, lineHeight: 1, color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '-0.02em', marginRight: 10 }}>FEED</span>
           {tabBtn('FOR YOU', 'foryou')}
           {tabBtn('FOLLOWING', 'following')}
           {/* search chrome + the ONE control: × close takes the old "?" position. */}
           <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ width: 123, height: 30, border: '0.5px solid rgba(255,255,255,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 10px' }}>
-              <span style={{ ...SKB, fontSize: 10, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>SEARCH</span>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3" strokeLinecap="round"/></svg>
+            <div style={{ width: 123, height: 30, border: '0.5px solid rgba(229,225,219,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 10px' }}>
+              <span style={{ ...SKB, fontSize: 10, color: 'rgba(229,225,219,0.5)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>SEARCH</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(229,225,219,0.5)" strokeWidth="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3" strokeLinecap="round"/></svg>
             </div>
-            <button onClick={onClose} aria-label="Close" style={{ width: 31, height: 30, border: '0.5px solid rgba(255,255,255,0.3)', background: 'transparent', cursor: 'pointer', ...SKR, fontSize: 15, color: 'rgba(255,255,255,0.6)', lineHeight: 1 }}>✕</button>
+            <button onClick={onClose} aria-label="Close" style={{ width: 31, height: 30, border: '0.5px solid rgba(229,225,219,0.3)', background: 'transparent', cursor: 'pointer', ...SKR, fontSize: 15, color: 'rgba(229,225,219,0.6)', lineHeight: 1 }}>✕</button>
           </div>
         </div>
 
         {/* ── TOP STRIP — the tab's posts, horizontal scroll, quiet handles ── */}
         <div ref={stripRef} style={{ display: 'flex', gap: 9, overflowX: 'auto', paddingBottom: 8, marginBottom: 6, scrollbarWidth: 'none' }}>
           {strip.length === 0 ? (
-            <p style={{ ...SKR, fontSize: 11, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.1em', padding: '40px 0' }}>{tab === 'following' ? 'NO POSTS FROM ACCOUNTS YOU FOLLOW' : 'NOTHING HERE YET'}</p>
+            <p style={{ ...SKR, fontSize: 11, color: 'rgba(229,225,219,0.35)', textTransform: 'uppercase', letterSpacing: '0.1em', padding: '40px 0' }}>{tab === 'following' ? 'NO POSTS FROM ACCOUNTS YOU FOLLOW' : 'NOTHING HERE YET'}</p>
           ) : strip.map((p) => {
             const isActive = String(p.id) === String(active?.id);
             return (
               <button key={String(p.id)} data-active={isActive ? '' : undefined} onClick={() => jumpTo(p)} aria-label={`Post by @${String(p.username ?? '')}`}
                 style={{ flexShrink: 0, width: 164, background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, opacity: isActive ? 1 : 0.6, transition: 'opacity 160ms ease' }}>
-                <div style={{ width: '100%', aspectRatio: '2.39 / 1', overflow: 'hidden', background: '#0d0d0d', outline: isActive ? '1px solid rgba(242,13,13,0.7)' : 'none' }}>
+                <div style={{ width: '100%', aspectRatio: '2.39 / 1', overflow: 'hidden', background: '#0d0d0d', outline: isActive ? '1px solid rgba(229,225,219,0.7)' : 'none' }}>
                   {thumbOf(p) && <img src={feedImage(thumbOf(p), 340)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
                 </div>
                 {/* handle hugs the thumbnail (~5px), left-justified */}
-                <p style={{ ...SKB, fontSize: 9, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '5px 0 0', textAlign: 'left', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>@{String(p.username ?? '')}</p>
+                <p style={{ ...SKB, fontSize: 9, color: 'rgba(229,225,219,0.5)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '5px 0 0', textAlign: 'left', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>@{String(p.username ?? '')}</p>
               </button>
             );
           })}

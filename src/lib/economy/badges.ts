@@ -40,15 +40,20 @@ export interface BadgeMeta {
 // bannerSrc = the /badges min-design set (the header strip, Piece 1). composer +
 // srh art also live in /badges and render generically once their earning logic
 // + keys land (BannerBadgeStrip takes any {src} list — nothing hardcoded).
+// REBRAND Brief 1 · Stage 5 — ONE badge set used globally (the old standard-vs-
+// backdropped split is dead). src = bannerSrc = framedSrc all point at the single
+// new asset per key (served from the canonical asset folder). free has NO new art →
+// keeps its old asset (FLAGGED). The count/label chrome + sizes are untouched.
+const NEW = '/design-updates-071526/new-badges';
 export const BADGES: Record<BadgeKey, BadgeMeta> = {
-  augmented: { key: 'augmented', src: '/augmented-member-founding-500-aperture.png', title: 'AUGMENTED', color: '#ff0080',            bannerSrc: '/badges/augmented-badge-min-design-01.png', framedSrc: '/badges/framed-badges/augmented-badge-min-design-01-framed.png' },
-  firstCut:  { key: 'firstCut',  src: '/first-cut-badge-green.png',                  title: 'FIRST CUT', color: '#00E08A',            bannerSrc: '/badges/first-cut-badge-min-design-01.png', framedSrc: '/badges/framed-badges/first-cut-badge-min-design-01-framed.png' },
-  top1k:     { key: 'top1k',     src: '/top-1k-collector-aperture-gold.png',         title: 'TOP 1K',    color: '#C9A84C',            bannerSrc: '/badges/collector-badge-min-design-01.png', framedSrc: '/badges/framed-badges/collector-badge-min-design-01-framed.png' },
-  srh:       { key: 'srh',       src: '/badges/srh-badge-min-design-01.png',         title: 'SRH',       color: '#C9A84C',            bannerSrc: '/badges/srh-badge-min-design-01.png', framedSrc: '/badges/framed-badges/srh-badge-min-design-01-framed.png' },
-  composer:  { key: 'composer',  src: '/badges/composer-badge-min-design-01.png',    title: 'COMPOSER',  color: '#7FB2FF',            bannerSrc: '/badges/composer-badge-min-design-01.png', framedSrc: '/badges/framed-badges/composer-badge-min-design-01-framed.png' },
-  pro:       { key: 'pro',       src: '/scope-pro-icon-aperture.png',                title: 'SCOPE PRO', color: '#FF0000',            bannerSrc: '/badges/scope-pro-badge-min-design-01.png', framedSrc: '/badges/framed-badges/scope-pro-badge-min-design-01-framed.png' },
-  inHouse:   { key: 'inHouse',   src: '/in-house-creator-logo-grey.png',             title: 'IN-HOUSE',  color: 'rgba(255,255,255,0.6)', bannerSrc: '/badges/in-house-badge-min-design-01.png', framedSrc: '/badges/framed-badges/in-house-badge-min-design-01-framed.png' },
-  free:      { key: 'free',      src: '/free-tier-aperture-logo-red.png',            title: 'FREE TIER', color: '#FF0000' },
+  augmented: { key: 'augmented', src: `${NEW}/augmented.png`,  title: 'AUGMENTED', color: '#ff0080',            bannerSrc: `${NEW}/augmented.png`,  framedSrc: `${NEW}/augmented.png` },
+  firstCut:  { key: 'firstCut',  src: `${NEW}/first-cut.png`,  title: 'FIRST CUT', color: '#00E08A',            bannerSrc: `${NEW}/first-cut.png`,  framedSrc: `${NEW}/first-cut.png` },
+  top1k:     { key: 'top1k',     src: `${NEW}/collector.png`,  title: 'TOP 1K',    color: '#C9A84C',            bannerSrc: `${NEW}/collector.png`,  framedSrc: `${NEW}/collector.png` },
+  srh:       { key: 'srh',       src: `${NEW}/srh.png`,        title: 'SRH',       color: '#C9A84C',            bannerSrc: `${NEW}/srh.png`,        framedSrc: `${NEW}/srh.png` },
+  composer:  { key: 'composer',  src: `${NEW}/composer.png`,   title: 'COMPOSER',  color: '#7FB2FF',            bannerSrc: `${NEW}/composer.png`,   framedSrc: `${NEW}/composer.png` },
+  pro:       { key: 'pro',       src: `${NEW}/scope-pro.png`,  title: 'SCOPE PRO', color: '#E5E1DB',            bannerSrc: `${NEW}/scope-pro.png`,  framedSrc: `${NEW}/scope-pro.png` },
+  inHouse:   { key: 'inHouse',   src: `${NEW}/in-house.png`,   title: 'IN-HOUSE',  color: 'rgba(229,225,219,0.6)', bannerSrc: `${NEW}/in-house.png`,   framedSrc: `${NEW}/in-house.png` },
+  free:      { key: 'free',      src: '/free-tier-aperture-logo-red.png',            title: 'FREE TIER', color: '#E5E1DB' },
 };
 
 /** Rarity order for the stack/section. */

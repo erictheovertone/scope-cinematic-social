@@ -109,15 +109,15 @@ export default function DataPage() {
               <div className="space-y-4">
                 <div className="flex justify-between items-center p-4 bg-[#1A1A1A] border border-[#333333] rounded-lg">
                   <span className="font-['IBM_Plex_Mono'] text-white text-[var(--fs-14)]">Total Posts</span>
-                  <span className="font-['IBM_Plex_Mono'] font-medium text-[#FF0000] text-[var(--fs-14)]">{userData.totalPosts}</span>
+                  <span className="font-['IBM_Plex_Mono'] font-medium text-[#E5E1DB] text-[var(--fs-14)]">{userData.totalPosts}</span>
                 </div>
                 <div className="flex justify-between items-center p-4 bg-[#1A1A1A] border border-[#333333] rounded-lg">
                   <span className="font-['IBM_Plex_Mono'] text-white text-[var(--fs-14)]">Total Likes Given</span>
-                  <span className="font-['IBM_Plex_Mono'] font-medium text-[#FF0000] text-[var(--fs-14)]">{userData.totalLikes}</span>
+                  <span className="font-['IBM_Plex_Mono'] font-medium text-[#E5E1DB] text-[var(--fs-14)]">{userData.totalLikes}</span>
                 </div>
                 <div className="flex justify-between items-center p-4 bg-[#1A1A1A] border border-[#333333] rounded-lg">
                   <span className="font-['IBM_Plex_Mono'] text-white text-[var(--fs-14)]">Total Comments</span>
-                  <span className="font-['IBM_Plex_Mono'] font-medium text-[#FF0000] text-[var(--fs-14)]">{userData.totalComments}</span>
+                  <span className="font-['IBM_Plex_Mono'] font-medium text-[#E5E1DB] text-[var(--fs-14)]">{userData.totalComments}</span>
                 </div>
               </div>
             </div>

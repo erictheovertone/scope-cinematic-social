@@ -62,7 +62,7 @@ function ThreeDotsIcon() {
   return (
     <div style={{ display: "flex", gap: 3, alignItems: "center" }}>
       {[0,1,2].map(i => (
-        <div key={i} style={{ width: 3, height: 3, background: "#FFFFFF", borderRadius: "50%" }} />
+        <div key={i} style={{ width: 3, height: 3, background: "#E5E1DB", borderRadius: "50%" }} />
       ))}
     </div>
   );
@@ -71,10 +71,10 @@ function ThreeDotsIcon() {
 function DataRow({ label, value }: { label: string; value: string }) {
   return (
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, lineHeight: 1.4, marginBottom: 4 }}>
-      <span style={{ ...SKB, fontSize: 'var(--fs-10)', letterSpacing: "-0.2px", color: "#FF0000", textTransform: "uppercase", flexShrink: 0, whiteSpace: "nowrap" }}>
+      <span style={{ ...SKB, fontSize: 'var(--fs-10)', letterSpacing: "-0.2px", color: "#E5E1DB", textTransform: "uppercase", flexShrink: 0, whiteSpace: "nowrap" }}>
         {label}
       </span>
-      <span style={{ ...SKB, fontSize: 'var(--fs-10)', letterSpacing: "-0.2px", color: "#FFFFFF", textTransform: "uppercase", textAlign: "right" }}>
+      <span style={{ ...SKB, fontSize: 'var(--fs-10)', letterSpacing: "-0.2px", color: "#E5E1DB", textTransform: "uppercase", textAlign: "right" }}>
         {value}
       </span>
     </div>
@@ -107,7 +107,7 @@ function DeckCellOverlay({
 }: {
   layout: typeof DECK_LAYOUTS[0]; selected: boolean; width: number; height: number; isFirst: boolean;
 }) {
-  const border = selected ? "1px solid #FF0000" : "1px solid #ffffff";
+  const border = selected ? "1px solid #E5E1DB" : "1px solid #E5E1DB";
   const ratioLS = layout.ratioLabel === "4:3" ? "2.17px" : "1.33px";
   return (
     <div style={{ position: "relative", width, height, border, background: "transparent", flexShrink: 0, overflow: "visible" }}>
@@ -117,12 +117,12 @@ function DeckCellOverlay({
             {layout.label}
           </span>
           <div style={{ position: "absolute", top: 19, left: 6, display: "flex", alignItems: "center" }}>
-            <span style={{ fontFamily: "'Sk-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-7)', color: "#ffffff", letterSpacing: "-0.14px" }}>{"AR     "}</span>
-            <span style={{ fontFamily: "'Sk-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-7)', color: "#FF0000", letterSpacing: ratioLS, marginLeft: 4 }}>{layout.ratioLabel}</span>
+            <span style={{ fontFamily: "'Sk-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-7)', color: "#E5E1DB", letterSpacing: "-0.14px" }}>{"AR     "}</span>
+            <span style={{ fontFamily: "'Sk-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-7)', color: "#E5E1DB", letterSpacing: ratioLS, marginLeft: 4 }}>{layout.ratioLabel}</span>
           </div>
           {layout.resolution && (() => {
             const [lp, rp] = layout.resolution.split("x");
-            const ts: React.CSSProperties = { fontFamily: "'Sk-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-7)', color: "rgba(255,255,255,0.5)", letterSpacing: "22px", whiteSpace: "nowrap", lineHeight: 1 };
+            const ts: React.CSSProperties = { fontFamily: "'Sk-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-7)', color: "rgba(229,225,219,0.5)", letterSpacing: "22px", whiteSpace: "nowrap", lineHeight: 1 };
             return (
               <div style={{ position: "absolute", top: "50%", transform: "translateY(-50%)", left: 7, width: 371, display: "flex", alignItems: "center", overflow: "visible" }}>
                 <span style={{ ...ts, flex: 1, textAlign: "right" }}>{lp}</span>
@@ -143,7 +143,7 @@ function DeckLayoutSection({
   layout: typeof DECK_LAYOUTS[0]; selected: boolean; onSelect: () => void;
 }) {
   const cells = deckCellDimensions(layout);
-  const border = selected ? "1px solid #FF0000" : "1px solid #ffffff";
+  const border = selected ? "1px solid #E5E1DB" : "1px solid #E5E1DB";
 
   if (layout.id === "collage") {
     return (
@@ -157,8 +157,8 @@ function DeckLayoutSection({
                     {layout.label}
                   </span>
                   <div style={{ position: "absolute", top: 18, left: 6, display: "flex", alignItems: "center" }}>
-                    <span style={{ fontFamily: "'Sk-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-7)', color: "#ffffff", letterSpacing: "-0.14px" }}>{"AR     "}</span>
-                    <span style={{ fontFamily: "'Sk-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-7)', color: "#FF0000", letterSpacing: "1.33px", marginLeft: 4 }}>mixed</span>
+                    <span style={{ fontFamily: "'Sk-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-7)', color: "#E5E1DB", letterSpacing: "-0.14px" }}>{"AR     "}</span>
+                    <span style={{ fontFamily: "'Sk-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-7)', color: "#E5E1DB", letterSpacing: "1.33px", marginLeft: 4 }}>mixed</span>
                   </div>
                 </>
               )}
@@ -444,7 +444,7 @@ export default function DeckDetailPage() {
   if (!deck) {
     return (
       <div className="bg-black w-full app-shell min-h-[100dvh] mx-auto flex items-center justify-center">
-        <p style={{ ...SKB, fontSize: 'var(--fs-10)', color: "white" }}>Deck not found</p>
+        <p style={{ ...SKB, fontSize: 'var(--fs-10)', color: "#E5E1DB" }}>Deck not found</p>
       </div>
     );
   }
@@ -521,7 +521,7 @@ export default function DeckDetailPage() {
         <div style={{ display: "flex", flexDirection: "column", justifyContent: "flex-start", height: "100%", paddingTop: 2, paddingLeft: 6 }}>
           <p
             style={{
-              ...SKB, fontSize: 'var(--fs-14)', letterSpacing: "-0.02em", color: "#FFFFFF",
+              ...SKB, fontSize: 'var(--fs-14)', letterSpacing: "-0.02em", color: "#E5E1DB",
               textTransform: "uppercase", margin: 0,
             }}
           >
@@ -540,7 +540,7 @@ export default function DeckDetailPage() {
             }}
           >
             <svg width="19.5" height="19.5" viewBox="0 0 16 16" fill="none">
-              <path d="M8 2 L8 14 M2 8 L14 8" stroke="#FFFFFF" strokeWidth="1.5" />
+              <path d="M8 2 L8 14 M2 8 L14 8" stroke="#E5E1DB" strokeWidth="1.5" />
             </svg>
           </button>
         </div>
@@ -586,7 +586,7 @@ export default function DeckDetailPage() {
               transitionDelay: menuOpen ? "120ms" : "0ms",
             }}
           >
-            <span style={{ ...SKB, fontSize: 'var(--fs-11)', letterSpacing: "-0.02em", color: "#FFFFFF", textTransform: "uppercase" }}>BACK</span>
+            <span style={{ ...SKB, fontSize: 'var(--fs-11)', letterSpacing: "-0.02em", color: "#E5E1DB", textTransform: "uppercase" }}>BACK</span>
           </button>
 
           {/* EDIT — owner only */}
@@ -601,7 +601,7 @@ export default function DeckDetailPage() {
                 transitionDelay: menuOpen ? "80ms" : "40ms",
               }}
             >
-              <span style={{ ...SKB, fontSize: 'var(--fs-11)', letterSpacing: "-0.02em", color: "#FFFFFF", textTransform: "uppercase" }}>EDIT</span>
+              <span style={{ ...SKB, fontSize: 'var(--fs-11)', letterSpacing: "-0.02em", color: "#E5E1DB", textTransform: "uppercase" }}>EDIT</span>
             </button>
           )}
 
@@ -609,7 +609,7 @@ export default function DeckDetailPage() {
           <button
             onClick={handleFramesClick}
             style={{
-              background: "#FFFFFF", border: "none", cursor: "pointer",
+              background: "#E5E1DB", border: "none", cursor: "pointer",
               padding: "0 6px", height: 14,
               display: "flex", alignItems: "center",
               opacity: menuOpen ? 1 : 0,
@@ -692,10 +692,10 @@ export default function DeckDetailPage() {
               }}
               className="ripple-row"
             >
-              <p style={{ ...SKB, fontSize: 'var(--fs-10)', letterSpacing: "-0.2px", color: "#FF0000", textTransform: "uppercase", margin: "0 0 8px" }}>
+              <p style={{ ...SKB, fontSize: 'var(--fs-10)', letterSpacing: "-0.2px", color: "#E5E1DB", textTransform: "uppercase", margin: "0 0 8px" }}>
                 DECK DESCRIPTION
               </p>
-              <p style={{ ...SKB, fontSize: 'var(--fs-10)', letterSpacing: "-0.2px", lineHeight: 1.4, color: "#FFFFFF", textTransform: "uppercase", margin: 0 }}>
+              <p style={{ ...SKB, fontSize: 'var(--fs-10)', letterSpacing: "-0.2px", lineHeight: 1.4, color: "#E5E1DB", textTransform: "uppercase", margin: 0 }}>
                 {deck.description}
               </p>
             </div>
@@ -718,13 +718,13 @@ export default function DeckDetailPage() {
                 style={{
                   width: 62, height: 22,
                   background: "transparent",
-                  border: "1px solid #FFFFFF",
+                  border: "1px solid #E5E1DB",
                   cursor: "pointer",
                   display: "flex", alignItems: "center", justifyContent: "center",
                   padding: 0,
                 }}
               >
-                <span style={{ ...SKB, fontSize: 'var(--fs-11)', letterSpacing: "-0.22px", color: "#FFFFFF", textTransform: "uppercase" }}>
+                <span style={{ ...SKB, fontSize: 'var(--fs-11)', letterSpacing: "-0.22px", color: "#E5E1DB", textTransform: "uppercase" }}>
                   EDIT DECK
                 </span>
               </button>
@@ -733,7 +733,7 @@ export default function DeckDetailPage() {
                 onClick={closeInfo}
                 style={{ background: "transparent", border: "none", cursor: "pointer", padding: 0 }}
               >
-                <span style={{ ...SKB, fontSize: 'var(--fs-10)', letterSpacing: "-0.2px", color: "#FFFFFF", textTransform: "uppercase" }}>
+                <span style={{ ...SKB, fontSize: 'var(--fs-10)', letterSpacing: "-0.2px", color: "#E5E1DB", textTransform: "uppercase" }}>
                   COLLECT
                 </span>
               </button>
@@ -746,7 +746,7 @@ export default function DeckDetailPage() {
 
       {theatreToast && (
         <div style={{ position: "fixed", top: 64, left: "50%", transform: "translateX(-50%)", zIndex: 200, background: "rgba(0,0,0,0.85)", padding: "8px 16px", pointerEvents: "none" }}>
-          <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "white", letterSpacing: "0.08em", textTransform: "uppercase" }}>Theatre Mode coming soon</span>
+          <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "#E5E1DB", letterSpacing: "0.08em", textTransform: "uppercase" }}>Theatre Mode coming soon</span>
         </div>
       )}
 
@@ -754,7 +754,7 @@ export default function DeckDetailPage() {
 
       {deck.items.length === 0 ? (
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: 180 }}>
-          <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: "rgba(255,255,255,0.4)" }}>
+          <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: "rgba(229,225,219,0.4)" }}>
             {isOwner ? "No frames yet — tap + to open menu" : "No frames yet"}
           </p>
         </div>
@@ -785,9 +785,9 @@ export default function DeckDetailPage() {
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
-              style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.35)", cursor: uploading ? "default" : "pointer", padding: "5px 12px", opacity: uploading ? 0.5 : 1 }}
+              style={{ background: "transparent", border: "1px solid rgba(229,225,219,0.35)", cursor: uploading ? "default" : "pointer", padding: "5px 12px", opacity: uploading ? 0.5 : 1 }}
             >
-              <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: "white" }}>
+              <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: "#E5E1DB" }}>
                 {uploading ? "UPLOADING…" : "+ ADD"}
               </span>
             </button>
@@ -796,7 +796,7 @@ export default function DeckDetailPage() {
             {uploading && uploadProgress && (
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <FrameLoader variant="inline" size={29.5} />
-                <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: "rgba(255,255,255,0.7)", letterSpacing: "0.06em" }}>
+                <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: "rgba(229,225,219,0.7)", letterSpacing: "0.06em" }}>
                   {uploadProgress.done} / {uploadProgress.total}
                 </span>
               </div>
@@ -806,14 +806,14 @@ export default function DeckDetailPage() {
           {/* Partial-failure — name the count, offer a retry of just the failures */}
           {!uploading && failedUploads.length > 0 && (
             <div style={{ display: "flex", alignItems: "center", gap: 12, paddingTop: 12 }}>
-              <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: "#FF0000", letterSpacing: "0.04em" }}>
+              <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: "#E5E1DB", letterSpacing: "0.04em" }}>
                 {failedUploads.length} FILE{failedUploads.length > 1 ? "S" : ""} FAILED
               </span>
               <button
                 onClick={retryFailedUploads}
-                style={{ background: "transparent", border: "1px solid #FF0000", cursor: "pointer", padding: "4px 10px" }}
+                style={{ background: "transparent", border: "1px solid #E5E1DB", cursor: "pointer", padding: "4px 10px" }}
               >
-                <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: "#FF0000" }}>RETRY</span>
+                <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: "#E5E1DB" }}>RETRY</span>
               </button>
             </div>
           )}
@@ -868,9 +868,9 @@ export default function DeckDetailPage() {
             style={{ position: "fixed", top: 16, left: 16, zIndex: 132, background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 6, padding: 0 }}
           >
             <svg width="15.5" height="15.5" viewBox="0 0 13 13" fill="none">
-              <path d="M8.5 1.5L3.5 6.5l5 5" stroke="white" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M8.5 1.5L3.5 6.5l5 5" stroke="#E5E1DB" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-            <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "white" }}>back</span>
+            <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "#E5E1DB" }}>back</span>
           </button>
         </>
       )}
@@ -895,14 +895,14 @@ export default function DeckDetailPage() {
                 boxSizing: "border-box",
               }}
             >
-              <span style={{ ...SKB, fontSize: 'var(--fs-14)', letterSpacing: "0.02em", color: "#FFFFFF", textTransform: "uppercase" }}>
+              <span style={{ ...SKB, fontSize: 'var(--fs-14)', letterSpacing: "0.02em", color: "#E5E1DB", textTransform: "uppercase" }}>
                 EDIT DECK
               </span>
               <button
                 onClick={() => setShowEditDialog(false)}
                 style={{ background: "transparent", border: "none", cursor: "pointer", padding: 0 }}
               >
-                <span style={{ ...SKB, fontSize: 'var(--fs-11)', letterSpacing: "0.1em", color: "#FF0000", textTransform: "uppercase" }}>
+                <span style={{ ...SKB, fontSize: 'var(--fs-11)', letterSpacing: "0.1em", color: "#E5E1DB", textTransform: "uppercase" }}>
                   DONE
                 </span>
               </button>
@@ -914,10 +914,10 @@ export default function DeckDetailPage() {
           <div style={{ maxWidth: '30rem', margin: "0 auto", width: "100%" }}>
 
             {/* Settings fields — always visible */}
-            <div style={{ padding: "16px 16px 0", borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
+            <div style={{ padding: "16px 16px 0", borderBottom: "1px solid rgba(229,225,219,0.1)" }}>
 
               {/* Deck name */}
-              <p style={{ ...SKB, fontSize: 'var(--fs-9)', letterSpacing: "0.15em", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", margin: "0 0 6px" }}>
+              <p style={{ ...SKB, fontSize: 'var(--fs-9)', letterSpacing: "0.15em", color: "rgba(229,225,219,0.4)", textTransform: "uppercase", margin: "0 0 6px" }}>
                 DECK NAME
               </p>
               <input
@@ -927,14 +927,14 @@ export default function DeckDetailPage() {
                 placeholder="Deck name"
                 style={{
                   display: "block", width: "100%", background: "#1A1A1A",
-                  border: "1px solid rgba(255,255,255,0.12)", outline: "none",
-                  ...SKB, fontSize: 'max(16px, var(--fs-14))', color: "white", textTransform: "uppercase",
+                  border: "1px solid rgba(229,225,219,0.12)", outline: "none",
+                  ...SKB, fontSize: 'max(16px, var(--fs-14))', color: "#E5E1DB", textTransform: "uppercase",
                   padding: "10px 12px", marginBottom: 16, boxSizing: "border-box",
                 }}
               />
 
               {/* Description */}
-              <p style={{ ...SKB, fontSize: 'var(--fs-9)', letterSpacing: "0.15em", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", margin: "0 0 6px" }}>
+              <p style={{ ...SKB, fontSize: 'var(--fs-9)', letterSpacing: "0.15em", color: "rgba(229,225,219,0.4)", textTransform: "uppercase", margin: "0 0 6px" }}>
                 DESCRIPTION
               </p>
               <textarea
@@ -944,14 +944,14 @@ export default function DeckDetailPage() {
                 rows={3}
                 style={{
                   display: "block", width: "100%", background: "#1A1A1A",
-                  border: "1px solid rgba(255,255,255,0.12)", outline: "none",
-                  ...SKR, fontSize: 'max(16px, var(--fs-13))', color: "white", lineHeight: 1.5,
+                  border: "1px solid rgba(229,225,219,0.12)", outline: "none",
+                  ...SKR, fontSize: 'max(16px, var(--fs-13))', color: "#E5E1DB", lineHeight: 1.5,
                   padding: "10px 12px", marginBottom: 16, boxSizing: "border-box", resize: "none",
                 }}
               />
 
               {/* Camera */}
-              <p style={{ ...SKB, fontSize: 'var(--fs-9)', letterSpacing: "0.15em", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", margin: "0 0 6px" }}>
+              <p style={{ ...SKB, fontSize: 'var(--fs-9)', letterSpacing: "0.15em", color: "rgba(229,225,219,0.4)", textTransform: "uppercase", margin: "0 0 6px" }}>
                 CAMERA
               </p>
               <input
@@ -962,14 +962,14 @@ export default function DeckDetailPage() {
                 maxLength={60}
                 style={{
                   display: "block", width: "100%", background: "#1A1A1A",
-                  border: "1px solid rgba(255,255,255,0.12)", outline: "none",
-                  ...SKR, fontSize: 'max(16px, var(--fs-13))', color: "white",
+                  border: "1px solid rgba(229,225,219,0.12)", outline: "none",
+                  ...SKR, fontSize: 'max(16px, var(--fs-13))', color: "#E5E1DB",
                   padding: "10px 12px", marginBottom: 16, boxSizing: "border-box",
                 }}
               />
 
               {/* Lens */}
-              <p style={{ ...SKB, fontSize: 'var(--fs-9)', letterSpacing: "0.15em", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", margin: "0 0 6px" }}>
+              <p style={{ ...SKB, fontSize: 'var(--fs-9)', letterSpacing: "0.15em", color: "rgba(229,225,219,0.4)", textTransform: "uppercase", margin: "0 0 6px" }}>
                 LENS
               </p>
               <input
@@ -980,14 +980,14 @@ export default function DeckDetailPage() {
                 maxLength={60}
                 style={{
                   display: "block", width: "100%", background: "#1A1A1A",
-                  border: "1px solid rgba(255,255,255,0.12)", outline: "none",
-                  ...SKR, fontSize: 'max(16px, var(--fs-13))', color: "white",
+                  border: "1px solid rgba(229,225,219,0.12)", outline: "none",
+                  ...SKR, fontSize: 'max(16px, var(--fs-13))', color: "#E5E1DB",
                   padding: "10px 12px", marginBottom: 16, boxSizing: "border-box",
                 }}
               />
 
               {/* Additional notes */}
-              <p style={{ ...SKB, fontSize: 'var(--fs-9)', letterSpacing: "0.15em", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", margin: "0 0 6px" }}>
+              <p style={{ ...SKB, fontSize: 'var(--fs-9)', letterSpacing: "0.15em", color: "rgba(229,225,219,0.4)", textTransform: "uppercase", margin: "0 0 6px" }}>
                 ADDITIONAL NOTES
               </p>
               <textarea
@@ -997,14 +997,14 @@ export default function DeckDetailPage() {
                 rows={3}
                 style={{
                   display: "block", width: "100%", background: "#1A1A1A",
-                  border: "1px solid rgba(255,255,255,0.12)", outline: "none",
-                  ...SKR, fontSize: 'max(16px, var(--fs-13))', color: "white", lineHeight: 1.5,
+                  border: "1px solid rgba(229,225,219,0.12)", outline: "none",
+                  ...SKR, fontSize: 'max(16px, var(--fs-13))', color: "#E5E1DB", lineHeight: 1.5,
                   padding: "10px 12px", marginBottom: 16, boxSizing: "border-box", resize: "none",
                 }}
               />
 
               {/* Layout */}
-              <p style={{ ...SKB, fontSize: 'var(--fs-9)', letterSpacing: "0.15em", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", margin: "0 0 10px" }}>
+              <p style={{ ...SKB, fontSize: 'var(--fs-9)', letterSpacing: "0.15em", color: "rgba(229,225,219,0.4)", textTransform: "uppercase", margin: "0 0 10px" }}>
                 LAYOUT
               </p>
               <div style={{ margin: "0 -16px 16px", display: "flex", flexDirection: "column", gap: 4 }}>
@@ -1023,13 +1023,13 @@ export default function DeckDetailPage() {
                 onClick={handleSaveEdit}
                 disabled={!editTitle.trim() || saving}
                 style={{
-                  width: "100%", padding: "14px 0", background: "#FF0000",
+                  width: "100%", padding: "14px 0", background: "#E5E1DB",
                   border: "none", cursor: editTitle.trim() && !saving ? "pointer" : "default",
                   opacity: editTitle.trim() ? 1 : 0.5,
                   marginBottom: 20,
                 }}
               >
-                <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: "white", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+                <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: "#E5E1DB", textTransform: "uppercase", letterSpacing: "0.1em" }}>
                   {saving ? "SAVING…" : "SAVE CHANGES"}
                 </span>
               </button>
@@ -1039,7 +1039,7 @@ export default function DeckDetailPage() {
             <div style={{ padding: "4px 2px 0" }}>
               {deck.items.length === 0 ? (
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: 160 }}>
-                  <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: "rgba(255,255,255,0.4)" }}>No frames yet</p>
+                  <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: "rgba(229,225,219,0.4)" }}>No frames yet</p>
                 </div>
               ) : (
                 <div className={`grid ${getColCount(layoutId)} gap-[1px]`}>
@@ -1066,7 +1066,7 @@ export default function DeckDetailPage() {
                         }}
                       >
                         <svg width="15.5" height="15.5" viewBox="0 0 12 12" fill="none">
-                          <path d="M1 1L11 11M11 1L1 11" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
+                          <path d="M1 1L11 11M11 1L1 11" stroke="#E5E1DB" strokeWidth="1.5" strokeLinecap="round" />
                         </svg>
                       </button>
                     </div>
@@ -1078,7 +1078,7 @@ export default function DeckDetailPage() {
             {/* Remove toast inside dialog */}
             {removeToast && (
               <div style={{ padding: "12px 16px" }}>
-                <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "rgba(255,255,255,0.5)", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+                <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "rgba(229,225,219,0.5)", letterSpacing: "0.06em", textTransform: "uppercase" }}>
                   REMOVED FROM DECK
                 </span>
               </div>

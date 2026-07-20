@@ -5,7 +5,7 @@
 // AND the in-flow check verifies this buy earned First Cut for the coin. ~1.8s:
 // the badge mark punches in, a red ring flares past, "FIRST CUT" snaps up, then
 // it all clears. ADDITIVE — it overlays the collect sheet's own success state,
-// never blocks or replaces it. On-brand: pure black scrim, #FF0000, SK-Modernist,
+// never blocks or replaces it. On-brand: pure black scrim, #E5E1DB, SK-Modernist,
 // sharp corners. Fires ONLY for the buy that actually earned it (the caller
 // gates on earned && firstTime).
 
@@ -60,7 +60,7 @@ export default function FirstCutFlourish({
         className="fc-glow"
         style={{
           position: 'absolute', width: 380, height: 380, borderRadius: '50%', pointerEvents: 'none',
-          background: 'radial-gradient(circle, rgba(255,0,0,0.55) 0%, rgba(255,0,0,0.28) 28%, rgba(255,0,0,0.08) 50%, rgba(255,0,0,0) 70%)',
+          background: 'radial-gradient(circle, rgba(229,225,219,0.55) 0%, rgba(229,225,219,0.28) 28%, rgba(229,225,219,0.08) 50%, rgba(229,225,219,0) 70%)',
           animation: `fcGlow ${DUR} ease both`,
         }}
       />
@@ -70,7 +70,7 @@ export default function FirstCutFlourish({
           className="fc-ring"
           style={{
             position: 'absolute', width: 96, height: 96,
-            border: '1.5px solid #FF0000', borderRadius: '50%',
+            border: '1.5px solid #E5E1DB', borderRadius: '50%',
             animation: 'fcRing 1.1s cubic-bezier(0.16,0.84,0.3,1) both',
           }}
         />
@@ -81,21 +81,21 @@ export default function FirstCutFlourish({
           alt="First Cut"
           style={{
             width: 72, height: 72, objectFit: 'contain', display: 'block',
-            filter: 'drop-shadow(0 0 12px rgba(255,0,0,0.55))',
+            filter: 'drop-shadow(0 0 12px rgba(229,225,219,0.55))',
             animation: `fcMark ${DUR} cubic-bezier(0.16,0.84,0.3,1) both`,
           }}
         />
       </div>
       <div
         className="fc-label"
-        style={{ ...SKB, marginTop: 18, fontSize: 'var(--fs-15)', letterSpacing: '0.24em', color: '#FFFFFF', textTransform: 'uppercase', animation: `fcLabel ${DUR} ease both` }}
+        style={{ ...SKB, marginTop: 18, fontSize: 'var(--fs-15)', letterSpacing: '0.24em', color: '#E5E1DB', textTransform: 'uppercase', animation: `fcLabel ${DUR} ease both` }}
       >
         First Cut
       </div>
       {rank != null && (
         <div
           className="fc-label"
-          style={{ ...SKB, marginTop: 6, fontSize: 'var(--fs-8)', letterSpacing: '0.3em', color: '#FF0000', textTransform: 'uppercase', animation: `fcLabel ${DUR} ease both`, animationDelay: '0.08s' }}
+          style={{ ...SKB, marginTop: 6, fontSize: 'var(--fs-8)', letterSpacing: '0.3em', color: '#E5E1DB', textTransform: 'uppercase', animation: `fcLabel ${DUR} ease both`, animationDelay: '0.08s' }}
         >
           Founding Nº {rank}
         </div>
