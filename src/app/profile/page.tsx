@@ -218,7 +218,15 @@ const userLayoutId = stableLayoutId;
     }, 500);
   };
   const headerOpacity = Math.max(0, 1 - gridScrollY / 80);
-  const tabRowOffset = Math.min(gridScrollY, 118);
+  // Brief 2.2c — the header composition self-sizes (flow); its MEASURED content height
+  // drives everything below (tab-row anchor, grid spacers) so overlaps are impossible
+  // by construction — no stale magic heights.
+  const headerRef = useRef<HTMLDivElement>(null);
+  const [headerH, setHeaderH] = useState(120); // measured (excl. safe-area); default ≈ old
+  const tabAnchor = headerH + 8;               // tab-row rest top, below the divider
+  const tabCap = tabAnchor - 2;                // pins when the tab reaches top:2
+  const gridSpacer = tabAnchor + 20;           // reserves header + tab in the scroll flow
+  const tabRowOffset = Math.min(gridScrollY, tabCap);
   const gridScrollRef = useRef<HTMLDivElement>(null);
   const rafPendingRef = useRef(false);
 
@@ -388,6 +396,16 @@ const userLayoutId = stableLayoutId;
     const avail = Math.min(vw, 480) - 145; // name left ~100 + right reserve to the BIO zone
     if (row.scrollWidth > avail && nameSize > 14) setNameSize((s) => Math.max(14, s - 1));
   }, [nameSize, firstName, lastName, isPaidMember]);
+  // Measure the header composition (flow content) → drives tab anchor + grid spacers.
+  useLayoutEffect(() => {
+    const el = headerRef.current;
+    if (!el) return;
+    const measure = () => setHeaderH(el.offsetHeight);
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   // ── DESKTOP SEAM (Brief 1): ≥1024 renders the desktop profile — its own
   // component tree, zero responsive CSS threaded into this mobile page. ──
@@ -399,7 +417,7 @@ const userLayoutId = stableLayoutId;
 
   return (
     <div className="relative">{/* Non-scrolling viewport root — fixed chrome (footer + snapped frame) is lifted OUT below as SIBLINGS of the scroller, so on iOS standalone it anchors to the VIEWPORT, not the .screen-min scroll container (which floated the footer above the screen bottom). */}
-    <div className="bg-black relative w-full app-shell screen-min mx-auto pb-[60px]">
+    <div className="bg-black relative w-full app-shell screen-min mx-auto pb-[60px]" style={{ background: 'var(--canvas)' }}>{/* Brief 2.2c note 1 — page canvas #050505, killing the residual #000 behind the banner */}
       <OnboardingModal
         onComplete={() => {
           if (user?.id && shouldShowA2HS(user.id)) {
@@ -428,105 +446,103 @@ const userLayoutId = stableLayoutId;
         zIndex: 5, pointerEvents: 'none',
       }} />
 
-      {/* Header */}
+      {/* ══ HEADER — Brief 2.2c scorched-earth rebuild. ONE flow composition whose
+          HEIGHT DERIVES FROM CONTENT (headerRef measured → tab row + grid spacers
+          follow). Canvas = --canvas (#050505); the residual #000 is killed. */}
       <div
         onClick={profileDataOpen ? () => setProfileDataOpen(false) : undefined}
         style={{
           position: 'relative',
-          height: 141,
-          background: '#000',
+          background: 'var(--canvas)',
           paddingTop: 'env(safe-area-inset-top, 0px)',
-          boxSizing: 'content-box',
           opacity: profileDataOpen ? 1 : Math.max(0, 1 - gridScrollY / 20),
           pointerEvents: (profileDataOpen || gridScrollY < 20) ? 'auto' : 'none',
           transition: 'opacity 0.25s ease',
           zIndex: profileDataOpen ? 200 : 10,
         }}
       >
+        {/* MEASURED content (excludes safe-area padding above). */}
+        <div ref={headerRef} style={{ position: 'relative', paddingBottom: 8 }}>
 
-      {/* Badge backdrop strip — PIECE 1. Sits to the LEFT of the PFP with a
-          0.5px divider between (default hairline; Piece 2 colours it). Same
-          component on own + public. Renders the user's earned badges generically
-          (min-design icons, fixed 16px, symmetric for any count). */}
-      {/* Badges — RELOCATED (Brief 1a · node 1:9): compact cluster top-right, under
-          the bio zone (the PFP-side strip + its backdrop are retired). The exact
-          vertical offset here is a device NUDGE item per the brief. */}
-      <div style={{ position: 'absolute', right: 12, top: 'calc(26px + env(safe-area-inset-top, 0px))', zIndex: 3 }}>
-        <BadgeCluster
-          badges={resolveBadges({ isFoundingMember, isTopCollector, isScreeningRoomHolder, isPaidMember, isInHouseCreator, firstCutCount, composerTrackCount })
-            .filter((b) => b.bannerSrc)
-            .map((b) => ({ key: b.key, src: (b.framedSrc ?? b.bannerSrc) as string, title: b.title }))}
-          onOpen={() => setShowBadgeSheet(true)}
-        />
-      </div>
+          {/* Badge cluster — top-right, under BIO. Shifted +15px down (Brief 2.2c).
+              Absolute overlay (shorter than the stats column → doesn't drive height). */}
+          <div style={{ position: 'absolute', right: 12, top: 41, zIndex: 3 }}>
+            <BadgeCluster
+              badges={resolveBadges({ isFoundingMember, isTopCollector, isScreeningRoomHolder, isPaidMember, isInHouseCreator, firstCutCount, composerTrackCount })
+                .filter((b) => b.bannerSrc)
+                .map((b) => ({ key: b.key, src: (b.framedSrc ?? b.bannerSrc) as string, title: b.title }))}
+              onOpen={() => setShowBadgeSheet(true)}
+            />
+          </div>
 
-      {/* PFP — 86×86 top-left; frame border → --avatar-frame (Brief 2.2b: half the old
-          --hairline-strong, ~15%). */}
-      <div style={{ position: 'absolute', left: 8, top: 'calc(7px + env(safe-area-inset-top, 0px))', width: 86, height: 86, border: '1px solid var(--avatar-frame)', boxSizing: 'border-box', overflow: 'hidden', zIndex: 1 }}>
-        {userProfile.profileImage ? (
-          <img src={feedImage(userProfile.profileImage, 172)} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-        ) : (
-          <div style={{ width: '100%', height: '100%', backgroundColor: '#222' }} />
-        )}
-      </div>
+          {/* BIO control — top-right; opens the profile data sheet. ≥44px hit. */}
+          <button
+            onClick={() => setProfileDataOpen(true)}
+            style={{ position: 'absolute', top: -4, right: 6, background: 'transparent', border: 'none', cursor: 'pointer', padding: '11px 12px', opacity: profileDataOpen ? 0 : 1, pointerEvents: profileDataOpen ? 'none' : 'auto', transition: 'opacity 200ms ease', zIndex: 6 }}
+            aria-label="View profile info"
+          >
+            <PressPop><span className="soften-ui" style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 15.5, letterSpacing: 'var(--track-body)', color: 'var(--ink-100)', display: 'block' }}>BIO</span></PressPop>
+          </button>
 
-      {/* Name + handle + stats — Brief 2.2b. The block shrinks to the RENDERED NAME
-          WIDTH; that outer edge is the SHARED alignment line: the handle right-aligns
-          to it (backfilling toward the PFP) and all three stat values right-align to
-          it. Labels stay left. Name never truncates — it steps 19→14px to fit (see the
-          nameSize effect). */}
-      <div style={{ position: 'absolute', left: 100, top: 'calc(6px + env(safe-area-inset-top, 0px))', display: 'inline-flex', flexDirection: 'column', alignItems: 'stretch', zIndex: 2 }}>
-        {/* name row — first · gap · last · PRO. No nowrap-ellipsis; font fits it. */}
-        <div ref={nameRowRef} style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'flex-start', whiteSpace: 'nowrap' }}>
-          <span className="soften-ui" style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: nameSize, letterSpacing: 'var(--track-display)', color: 'var(--ink-100)', textTransform: 'uppercase', flexShrink: 0 }}>{firstName}</span>
-          {lastName && (
-            <>
-              <span aria-hidden style={{ flexShrink: 0, width: 'min(2.5vw, 10px)' }} />
-              <span className="soften-ui" style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: nameSize, letterSpacing: 'var(--track-display)', color: 'var(--ink-100)', textTransform: 'uppercase', flexShrink: 0 }}>{lastName}</span>
-            </>
-          )}
-          {isPaidMember && <span style={{ fontFamily: 'var(--font-black)', fontWeight: 900, fontSize: 9.7, color: 'rgba(229,225,219,0.64)', letterSpacing: 'var(--track-wide)', alignSelf: 'flex-start', transform: 'translateY(1px)', flexShrink: 0, marginLeft: 5 }}>PRO</span>}
-        </div>
-        {/* handle — right-aligned to the name's right edge, backfilling toward the PFP */}
-        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'flex-end', gap: 3, opacity: 0.64, marginTop: 4, minWidth: 0 }}>
-          <span style={{ fontFamily: 'var(--font-light)', fontWeight: 400, fontSize: 9, color: 'var(--ink-100)', letterSpacing: 'var(--track-wide)', flexShrink: 0 }}>[ at ]</span>
-          <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 11, color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: 'var(--track-body)', whiteSpace: 'nowrap' }}>{userProfile.username}</span>
-        </div>
-        {/* stats — values flush-right to the name's right edge; labels left */}
-        <div style={{ marginTop: 12 }}>
-          {([
-            { label: 'Followers', value: analytics.followers.toLocaleString(), gap: false },
-            { label: 'Collectors', value: analytics.collectors.toLocaleString(), gap: false },
-            { label: 'Market Cap', value: analytics.portfolioMc > 0 ? `$${analytics.portfolioMc.toLocaleString()}` : '—', gap: true },
-          ] as const).map((row) => (
-            <div key={row.label} style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 14, marginTop: row.gap ? 6 : 2 }}>
-              <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 11.2, color: 'rgba(229,225,219,0.71)', letterSpacing: 'var(--track-body)', whiteSpace: 'nowrap' }}>{row.label}</span>
-              <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 11.5, color: 'rgba(229,225,219,0.71)', letterSpacing: 'var(--track-body)', whiteSpace: 'nowrap', textAlign: 'right' }}>{row.value}</span>
+          {/* PFP + text column (flow flex). align-items:stretch → the PFP height ==
+              the text-column height, so its BOTTOM sits on the divider (note 2). */}
+          <div style={{ display: 'flex', alignItems: 'stretch', gap: 6, padding: '7px 0 0 8px' }}>
+            <div style={{ width: 86, flexShrink: 0, border: '1px solid var(--avatar-frame)', boxSizing: 'border-box', overflow: 'hidden' }}>
+              {userProfile.profileImage ? (
+                <img src={feedImage(userProfile.profileImage, 172)} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              ) : (
+                <div style={{ width: '100%', height: '100%', backgroundColor: '#222' }} />
+              )}
             </div>
-          ))}
+
+            <div style={{ flex: 1, minWidth: 0, paddingRight: 8 }}>
+              {/* name+handle+stats — shrinks to the RENDERED NAME WIDTH; that outer edge
+                  is the shared alignment line (handle right end · values right edge). */}
+              <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'stretch', alignSelf: 'flex-start', position: 'relative', maxWidth: '100%' }}>
+                {/* name row — first · gap · last ONLY (PRO excluded → it never affects
+                    the name's right edge or the alignment math, note 6/7). Full render,
+                    no ellipsis; nameSize steps 19→14 to fit. */}
+                <div ref={nameRowRef} style={{ display: 'flex', alignItems: 'baseline', whiteSpace: 'nowrap' }}>
+                  <span className="soften-ui" style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: nameSize, letterSpacing: 'var(--track-display)', color: 'var(--ink-100)', textTransform: 'uppercase', flexShrink: 0 }}>{firstName}</span>
+                  {lastName && (
+                    <>
+                      <span aria-hidden style={{ flexShrink: 0, width: 'min(2.5vw, 10px)' }} />
+                      <span className="soften-ui" style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: nameSize, letterSpacing: 'var(--track-display)', color: 'var(--ink-100)', textTransform: 'uppercase', flexShrink: 0 }}>{lastName}</span>
+                    </>
+                  )}
+                </div>
+                {/* PRO — INDEPENDENT chip, absolute just beyond the name's last letter
+                    (left:100% of the name block). ONLY for pro members; never in the
+                    name flex or its width. */}
+                {isPaidMember && (
+                  <span style={{ position: 'absolute', left: '100%', top: 1, marginLeft: 5, whiteSpace: 'nowrap', fontFamily: 'var(--font-black)', fontWeight: 900, fontSize: 9.7, color: 'rgba(229,225,219,0.64)', letterSpacing: 'var(--track-wide)' }}>PRO</span>
+                )}
+                {/* handle — right-aligned to the name's last letter; tighter + smaller (note 4/6) */}
+                <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'flex-end', gap: 3, opacity: 0.64, marginTop: 2 }}>
+                  <span style={{ fontFamily: 'var(--font-light)', fontWeight: 400, fontSize: 8, color: 'var(--ink-100)', letterSpacing: 'var(--track-wide)', flexShrink: 0 }}>[ at ]</span>
+                  <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 10.5, color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: 'var(--track-body)', whiteSpace: 'nowrap' }}>{userProfile.username}</span>
+                </div>
+                {/* stats — labels left · values flush-right to the name's right edge */}
+                <div style={{ marginTop: 12 }}>
+                  {([
+                    { label: 'Followers', value: analytics.followers.toLocaleString(), gap: false },
+                    { label: 'Collectors', value: analytics.collectors.toLocaleString(), gap: false },
+                    { label: 'Market Cap', value: analytics.portfolioMc > 0 ? `$${analytics.portfolioMc.toLocaleString()}` : '—', gap: true },
+                  ] as const).map((row) => (
+                    <div key={row.label} style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 14, marginTop: row.gap ? 6 : 2 }}>
+                      <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 11.2, color: 'rgba(229,225,219,0.71)', letterSpacing: 'var(--track-body)', whiteSpace: 'nowrap' }}>{row.label}</span>
+                      <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 11.5, color: 'rgba(229,225,219,0.71)', letterSpacing: 'var(--track-body)', whiteSpace: 'nowrap', textAlign: 'right' }}>{row.value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              {/* Divider — in flow after the stats block; spans the text column to the
+                  right margin (note: stats-left → right margin). PFP bottom lands here. */}
+              <div style={{ height: 1, background: 'var(--hairline)', margin: '8px 0 0' }} />
+            </div>
+          </div>
+
         </div>
-      </div>
-
-      {/* Stats hairline — runs to the right margin (~8px inset). */}
-      <div style={{ position: 'absolute', left: 102, right: 8, top: 'calc(112px + env(safe-area-inset-top, 0px))', height: 1, background: 'var(--hairline)', zIndex: 2 }} />
-
-      {/* BIO control — top-right; opens the profile data / bio sheet (behavior
-          unchanged, only re-labelled from the old "i" square). ≥44px hit. */}
-      <button
-        onClick={() => setProfileDataOpen(true)}
-        style={{
-          position: 'absolute', top: 'calc(-6px + env(safe-area-inset-top, 0px))', right: 6,
-          background: 'transparent', border: 'none', cursor: 'pointer', padding: '11px 12px',
-          opacity: profileDataOpen ? 0 : 1,
-          pointerEvents: profileDataOpen ? 'none' : 'auto',
-          transition: 'opacity 200ms ease',
-          zIndex: 6,
-        }}
-        aria-label="View profile info"
-      >
-        <PressPop><span className="soften-ui" style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 15.5, letterSpacing: 'var(--track-body)', color: 'var(--ink-100)', display: 'block' }}>BIO</span></PressPop>
-      </button>
-
       </div>{/* end header */}
 
       {/* Snapped frame icon — LIFTED out of this scroller to sibling level (see end of return)
@@ -534,12 +550,12 @@ const userLayoutId = stableLayoutId;
 
       {/* Tab row — absolute until scrolled past 101px, then fixed. When snapped, always fixed + aligned with frame icon. */}
       <div style={{
-        position: (headerSnapped || headerUnsnapping || gridScrollY > 118) ? 'fixed' : 'absolute',
-        top: (headerSnapped || headerUnsnapping) ? 'env(safe-area-inset-top, 0px)' : gridScrollY > 118 ? 'calc(2px + env(safe-area-inset-top, 0px))' : `calc(${120 - tabRowOffset}px + env(safe-area-inset-top, 0px))`,
-        left: (headerSnapped || headerUnsnapping || gridScrollY > 118) ? '50%' : 0,
-        right: (headerSnapped || headerUnsnapping || gridScrollY > 118) ? 'auto' : 0,
-        transform: (headerSnapped || headerUnsnapping || gridScrollY > 118) ? 'translateX(-50%)' : 'none',
-        width: (headerSnapped || headerUnsnapping || gridScrollY > 118) ? '100%' : 'auto',
+        position: (headerSnapped || headerUnsnapping || gridScrollY > tabCap) ? 'fixed' : 'absolute',
+        top: (headerSnapped || headerUnsnapping) ? 'env(safe-area-inset-top, 0px)' : gridScrollY > tabCap ? 'calc(2px + env(safe-area-inset-top, 0px))' : `calc(${tabAnchor - tabRowOffset}px + env(safe-area-inset-top, 0px))`,
+        left: (headerSnapped || headerUnsnapping || gridScrollY > tabCap) ? '50%' : 0,
+        right: (headerSnapped || headerUnsnapping || gridScrollY > tabCap) ? 'auto' : 0,
+        transform: (headerSnapped || headerUnsnapping || gridScrollY > tabCap) ? 'translateX(-50%)' : 'none',
+        width: (headerSnapped || headerUnsnapping || gridScrollY > tabCap) ? '100%' : 'auto',
         maxWidth: '30rem',
         zIndex: 40,
         background: (headerSnapped || headerUnsnapping)
@@ -615,7 +631,7 @@ const userLayoutId = stableLayoutId;
             });
           }}
         >
-          <div style={{ height: 'calc(140px + env(safe-area-inset-top, 0px))' }} />
+          <div style={{ height: `calc(${gridSpacer}px + env(safe-area-inset-top, 0px))` }} />
           <CollectedGrid userId={supabaseUserId} isOwn />
         </div>
       )}
@@ -635,7 +651,7 @@ const userLayoutId = stableLayoutId;
                 minHeight: '50vh',
                 cursor: 'pointer',
                 gap: '16px',
-                paddingTop: 'calc(140px + env(safe-area-inset-top, 0px))',
+                paddingTop: `calc(${gridSpacer}px + env(safe-area-inset-top, 0px))`,
               }}
               onClick={() => {
                 setSpinning(true);
@@ -676,7 +692,7 @@ const userLayoutId = stableLayoutId;
                 });
               }}
             >
-              <div style={{ height: 'calc(140px + env(safe-area-inset-top, 0px))', flexShrink: 0 }} />
+              <div style={{ height: `calc(${gridSpacer}px + env(safe-area-inset-top, 0px))`, flexShrink: 0 }} />
               {(() => {
                 const openPost = (post: any, index: number) => {
                   const isVid = post.media_type === 'video' ||

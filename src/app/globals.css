@@ -49,6 +49,11 @@
 .soften-ui      { filter: blur(var(--text-soften-ui)) !important; }
 [data-no-soften], [data-no-soften] * { filter: none !important; }
 html.no-soften { --text-soften-display: 0px; --text-soften-ui: 0px; }
+/* Brief 2.2c — DEVICE-TRUTH round 2: iPhone (≥2dppx) renders the blur heavier, so
+   halve again on hi-DPR; 1x screens keep 0.15/0.1. Body/micro/labels stay 0. */
+@media (min-resolution: 2dppx) {
+  :root { --text-soften-display: 0.07px; --text-soften-ui: 0.05px; }
+}
 
 /* ── Standalone PWA: LOCK THE DOCUMENT ROOT ───────────────────────────────────
    Installed (standalone) iOS has no browser chrome, so the body itself rubber-bands
