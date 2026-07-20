@@ -315,7 +315,7 @@ export default function ProfileDataSheet({
         {/* ── SHEET HEADER (Brief 2.4a) — opaque, in-scroll identity block: PFP +
             name + handle + expanded 3-group stats (node 141:733's Haas header). ── */}
         <div style={{ position: 'relative', padding: '13px 12px 8px', minHeight: 104 }}>
-          <div style={{ position: 'absolute', left: 6, top: 13, width: 86, height: 86, border: '1px solid var(--hairline-strong)', boxSizing: 'border-box', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', left: 6, top: 13, width: 86, height: 86, border: '1px solid var(--avatar-frame)', boxSizing: 'border-box', overflow: 'hidden' }}>
             {pfpUrl
               ? <img src={feedImage(pfpUrl, 172)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
               : <div style={{ width: '100%', height: '100%', background: '#222' }} />}

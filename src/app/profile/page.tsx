@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useLayoutEffect } from "react";
 import DesktopProfile from '@/components/desktop/DesktopProfile';
 import { useIsDesktop } from '@/lib/useIsDesktop';
 import { feedImage } from "@/lib/mediaUrl";
@@ -218,7 +218,7 @@ const userLayoutId = stableLayoutId;
     }, 500);
   };
   const headerOpacity = Math.max(0, 1 - gridScrollY / 80);
-  const tabRowOffset = Math.min(gridScrollY, 101);
+  const tabRowOffset = Math.min(gridScrollY, 118);
   const gridScrollRef = useRef<HTMLDivElement>(null);
   const rafPendingRef = useRef(false);
 
@@ -369,6 +369,26 @@ const userLayoutId = stableLayoutId;
     if (headerSnapped && !headerUnsnapping && (gridScrollY > snapScrollYRef.current + 30 || gridScrollY < 20)) setHeaderSnapped(false);
   }, [gridScrollY, headerSnapped, headerUnsnapping]);
 
+  // Name split + step-down state. Declared BEFORE the desktop early return so hook
+  // order is stable across the mobile/desktop branch (rules of hooks).
+  // Brief 2.2 — split the display name into first + rest.
+  const nameParts = (userProfile.displayName || '').trim().split(/\s+/).filter(Boolean);
+  const firstName = nameParts[0] || '';
+  const lastName = nameParts.slice(1).join(' ');
+  // Brief 2.2b — NAME NEVER TRUNCATES. Render full at 19px; if it would exceed the
+  // available width (PFP→BIO zone), STEP the font DOWN (19→min 14px) until it fits on
+  // one line. No ellipsis at any size. Measured from the rendered name row width.
+  const nameRowRef = useRef<HTMLDivElement>(null);
+  const [nameSize, setNameSize] = useState(19);
+  useLayoutEffect(() => { setNameSize(19); }, [firstName, lastName, isPaidMember]);
+  useLayoutEffect(() => {
+    const row = nameRowRef.current;
+    if (!row) return;
+    const vw = typeof window !== 'undefined' ? window.innerWidth : 375;
+    const avail = Math.min(vw, 480) - 145; // name left ~100 + right reserve to the BIO zone
+    if (row.scrollWidth > avail && nameSize > 14) setNameSize((s) => Math.max(14, s - 1));
+  }, [nameSize, firstName, lastName, isPaidMember]);
+
   // ── DESKTOP SEAM (Brief 1): ≥1024 renders the desktop profile — its own
   // component tree, zero responsive CSS threaded into this mobile page. ──
   if (isDesktop) {
@@ -376,13 +396,6 @@ const userLayoutId = stableLayoutId;
       ? <DesktopProfile userId={supabaseUserId} privyId={user.id} isOwn />
       : <div className="bg-black" style={{ position: 'fixed', inset: 0 }} />;
   }
-
-  // Brief 2.2 (node 1:9 / 36:3) — split the display name into first + rest so the
-  // header can render a compressible inter-word gap (flex/grid, NOT literal spaces)
-  // that survives long names like GABRIELLE BROWN on one line.
-  const nameParts = (userProfile.displayName || '').trim().split(/\s+/).filter(Boolean);
-  const firstName = nameParts[0] || '';
-  const lastName = nameParts.slice(1).join(' ');
 
   return (
     <div className="relative">{/* Non-scrolling viewport root — fixed chrome (footer + snapped frame) is lifted OUT below as SIBLINGS of the scroller, so on iOS standalone it anchors to the VIEWPORT, not the .screen-min scroll container (which floated the footer above the screen bottom). */}
@@ -420,7 +433,7 @@ const userLayoutId = stableLayoutId;
         onClick={profileDataOpen ? () => setProfileDataOpen(false) : undefined}
         style={{
           position: 'relative',
-          height: 124,
+          height: 141,
           background: '#000',
           paddingTop: 'env(safe-area-inset-top, 0px)',
           boxSizing: 'content-box',
@@ -447,8 +460,9 @@ const userLayoutId = stableLayoutId;
         />
       </div>
 
-      {/* PFP — 86×86 top-left, house ivory frame (node 1:9: x8 y7). */}
-      <div style={{ position: 'absolute', left: 8, top: 'calc(7px + env(safe-area-inset-top, 0px))', width: 86, height: 86, border: '1px solid var(--hairline-strong)', boxSizing: 'border-box', overflow: 'hidden', zIndex: 1 }}>
+      {/* PFP — 86×86 top-left; frame border → --avatar-frame (Brief 2.2b: half the old
+          --hairline-strong, ~15%). */}
+      <div style={{ position: 'absolute', left: 8, top: 'calc(7px + env(safe-area-inset-top, 0px))', width: 86, height: 86, border: '1px solid var(--avatar-frame)', boxSizing: 'border-box', overflow: 'hidden', zIndex: 1 }}>
         {userProfile.profileImage ? (
           <img src={feedImage(userProfile.profileImage, 172)} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
         ) : (
@@ -456,45 +470,45 @@ const userLayoutId = stableLayoutId;
         )}
       </div>
 
-      {/* Name + handle + stats — Brief 2.2a: ONE left-anchored shrink-block. minWidth
-          pins the base so the stats value column's right edge ≈ x198, and it GROWS
-          with the name (D4 ruling — value column tracks the name block's right edge,
-          36:3). Inter-word gap is capped (~2.5vw, max 10px) and compresses before the
-          last name ellipsizes. Handle is centered under the full name block. */}
-      <div style={{ position: 'absolute', left: 100, top: 'calc(6px + env(safe-area-inset-top, 0px))', minWidth: 98, maxWidth: 'calc(100% - 158px)', display: 'inline-flex', flexDirection: 'column', alignItems: 'stretch', zIndex: 2 }}>
-        {/* name row — first · capped gap · last · PRO */}
-        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'flex-start', minWidth: 0 }}>
-          <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 16, letterSpacing: 'var(--track-display)', color: 'var(--ink-100)', textTransform: 'uppercase', whiteSpace: 'nowrap', flexShrink: 0 }}>{firstName}</span>
+      {/* Name + handle + stats — Brief 2.2b. The block shrinks to the RENDERED NAME
+          WIDTH; that outer edge is the SHARED alignment line: the handle right-aligns
+          to it (backfilling toward the PFP) and all three stat values right-align to
+          it. Labels stay left. Name never truncates — it steps 19→14px to fit (see the
+          nameSize effect). */}
+      <div style={{ position: 'absolute', left: 100, top: 'calc(6px + env(safe-area-inset-top, 0px))', display: 'inline-flex', flexDirection: 'column', alignItems: 'stretch', zIndex: 2 }}>
+        {/* name row — first · gap · last · PRO. No nowrap-ellipsis; font fits it. */}
+        <div ref={nameRowRef} style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'flex-start', whiteSpace: 'nowrap' }}>
+          <span className="soften-ui" style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: nameSize, letterSpacing: 'var(--track-display)', color: 'var(--ink-100)', textTransform: 'uppercase', flexShrink: 0 }}>{firstName}</span>
           {lastName && (
             <>
-              <span aria-hidden style={{ flexGrow: 0, flexShrink: 1, flexBasis: 'min(2.5vw, 10px)', minWidth: 3 }} />
-              <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 16, letterSpacing: 'var(--track-display)', color: 'var(--ink-100)', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flexShrink: 1 }}>{lastName}</span>
+              <span aria-hidden style={{ flexShrink: 0, width: 'min(2.5vw, 10px)' }} />
+              <span className="soften-ui" style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: nameSize, letterSpacing: 'var(--track-display)', color: 'var(--ink-100)', textTransform: 'uppercase', flexShrink: 0 }}>{lastName}</span>
             </>
           )}
-          {isPaidMember && <span style={{ fontFamily: 'var(--font-black)', fontWeight: 900, fontSize: 6.7, color: 'rgba(229,225,219,0.64)', letterSpacing: 'var(--track-wide)', alignSelf: 'flex-start', transform: 'translateY(1px)', flexShrink: 0, marginLeft: 4 }}>PRO</span>}
+          {isPaidMember && <span style={{ fontFamily: 'var(--font-black)', fontWeight: 900, fontSize: 9.7, color: 'rgba(229,225,219,0.64)', letterSpacing: 'var(--track-wide)', alignSelf: 'flex-start', transform: 'translateY(1px)', flexShrink: 0, marginLeft: 5 }}>PRO</span>}
         </div>
-        {/* handle — centered under the name block, unit 64% */}
-        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: 3, opacity: 0.64, marginTop: 3, minWidth: 0 }}>
-          <span style={{ fontFamily: 'var(--font-light)', fontWeight: 400, fontSize: 6, color: 'var(--ink-100)', letterSpacing: 'var(--track-wide)', flexShrink: 0 }}>[ at ]</span>
-          <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 8, color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: 'var(--track-body)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{userProfile.username}</span>
+        {/* handle — right-aligned to the name's right edge, backfilling toward the PFP */}
+        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'flex-end', gap: 3, opacity: 0.64, marginTop: 4, minWidth: 0 }}>
+          <span style={{ fontFamily: 'var(--font-light)', fontWeight: 400, fontSize: 9, color: 'var(--ink-100)', letterSpacing: 'var(--track-wide)', flexShrink: 0 }}>[ at ]</span>
+          <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 11, color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: 'var(--track-body)', whiteSpace: 'nowrap' }}>{userProfile.username}</span>
         </div>
-        {/* stats — values flush-right to the block's right edge (tracks the name) */}
+        {/* stats — values flush-right to the name's right edge; labels left */}
         <div style={{ marginTop: 12 }}>
           {([
             { label: 'Followers', value: analytics.followers.toLocaleString(), gap: false },
             { label: 'Collectors', value: analytics.collectors.toLocaleString(), gap: false },
             { label: 'Market Cap', value: analytics.portfolioMc > 0 ? `$${analytics.portfolioMc.toLocaleString()}` : '—', gap: true },
           ] as const).map((row) => (
-            <div key={row.label} style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 12, marginTop: row.gap ? 6 : 1.5 }}>
-              <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 8.2, color: 'rgba(229,225,219,0.71)', letterSpacing: 'var(--track-body)', whiteSpace: 'nowrap' }}>{row.label}</span>
-              <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 8.5, color: 'rgba(229,225,219,0.71)', letterSpacing: 'var(--track-body)', whiteSpace: 'nowrap', textAlign: 'right' }}>{row.value}</span>
+            <div key={row.label} style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 14, marginTop: row.gap ? 6 : 2 }}>
+              <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 11.2, color: 'rgba(229,225,219,0.71)', letterSpacing: 'var(--track-body)', whiteSpace: 'nowrap' }}>{row.label}</span>
+              <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 11.5, color: 'rgba(229,225,219,0.71)', letterSpacing: 'var(--track-body)', whiteSpace: 'nowrap', textAlign: 'right' }}>{row.value}</span>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Stats hairline — extends to the right margin (~8px inset), frame y93. */}
-      <div style={{ position: 'absolute', left: 102, right: 8, top: 'calc(92px + env(safe-area-inset-top, 0px))', height: 1, background: 'var(--hairline)', zIndex: 2 }} />
+      {/* Stats hairline — runs to the right margin (~8px inset). */}
+      <div style={{ position: 'absolute', left: 102, right: 8, top: 'calc(112px + env(safe-area-inset-top, 0px))', height: 1, background: 'var(--hairline)', zIndex: 2 }} />
 
       {/* BIO control — top-right; opens the profile data / bio sheet (behavior
           unchanged, only re-labelled from the old "i" square). ≥44px hit. */}
@@ -510,7 +524,7 @@ const userLayoutId = stableLayoutId;
         }}
         aria-label="View profile info"
       >
-        <PressPop><span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 12.5, letterSpacing: 'var(--track-body)', color: 'var(--ink-100)', display: 'block' }}>BIO</span></PressPop>
+        <PressPop><span className="soften-ui" style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 15.5, letterSpacing: 'var(--track-body)', color: 'var(--ink-100)', display: 'block' }}>BIO</span></PressPop>
       </button>
 
       </div>{/* end header */}
@@ -520,12 +534,12 @@ const userLayoutId = stableLayoutId;
 
       {/* Tab row — absolute until scrolled past 101px, then fixed. When snapped, always fixed + aligned with frame icon. */}
       <div style={{
-        position: (headerSnapped || headerUnsnapping || gridScrollY > 101) ? 'fixed' : 'absolute',
-        top: (headerSnapped || headerUnsnapping) ? 'env(safe-area-inset-top, 0px)' : gridScrollY > 101 ? 'calc(2px + env(safe-area-inset-top, 0px))' : `calc(${103 - tabRowOffset}px + env(safe-area-inset-top, 0px))`,
-        left: (headerSnapped || headerUnsnapping || gridScrollY > 101) ? '50%' : 0,
-        right: (headerSnapped || headerUnsnapping || gridScrollY > 101) ? 'auto' : 0,
-        transform: (headerSnapped || headerUnsnapping || gridScrollY > 101) ? 'translateX(-50%)' : 'none',
-        width: (headerSnapped || headerUnsnapping || gridScrollY > 101) ? '100%' : 'auto',
+        position: (headerSnapped || headerUnsnapping || gridScrollY > 118) ? 'fixed' : 'absolute',
+        top: (headerSnapped || headerUnsnapping) ? 'env(safe-area-inset-top, 0px)' : gridScrollY > 118 ? 'calc(2px + env(safe-area-inset-top, 0px))' : `calc(${120 - tabRowOffset}px + env(safe-area-inset-top, 0px))`,
+        left: (headerSnapped || headerUnsnapping || gridScrollY > 118) ? '50%' : 0,
+        right: (headerSnapped || headerUnsnapping || gridScrollY > 118) ? 'auto' : 0,
+        transform: (headerSnapped || headerUnsnapping || gridScrollY > 118) ? 'translateX(-50%)' : 'none',
+        width: (headerSnapped || headerUnsnapping || gridScrollY > 118) ? '100%' : 'auto',
         maxWidth: '30rem',
         zIndex: 40,
         background: (headerSnapped || headerUnsnapping)

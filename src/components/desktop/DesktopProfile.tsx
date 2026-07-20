@@ -229,7 +229,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
         <div style={{ position: 'relative', height: 205, boxSizing: 'border-box' }}>
           {/* PFP — 168×168, house ivory frame (frame x92 y14). The old Pro-only
               side accent is not in this frame → removed (flagged). */}
-          <div style={{ position: 'absolute', left: 0, top: 14, width: 168, height: 168, border: '1px solid var(--hairline-strong)', boxSizing: 'border-box', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', left: 0, top: 14, width: 168, height: 168, border: '1px solid var(--avatar-frame)', boxSizing: 'border-box', overflow: 'hidden' }}>
             {pfp ? (
               <img src={feedImage(pfp, 400)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
             ) : <div style={{ width: '100%', height: '100%', background: '#141414' }} />}

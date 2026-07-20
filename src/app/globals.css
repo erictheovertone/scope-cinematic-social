@@ -37,26 +37,18 @@
   }
 }
 
-/* ── FILMIC FONT-BLUR (Brief 1 · Stage 4) — sub-pixel soften on chrome text ────
-   ONE swappable mechanism. ON by default across the type carriers (span/p/headings/
-   label — where the SKB/SKR consts live), so coverage tracks the type system. The
-   base 0.4px covers 12–20px; opt into .soften-micro (≤11px) / .soften-display (>20px)
-   per node. EXCLUSIONS: inputs + anything under [data-no-soften] (user media) get
-   NO blur. Kill-switch: <html class="no-soften"> zeroes all three tokens for instant
-   device A/B. (Perf on long feeds + occasional icon-in-span blur are the flagged
-   device risks — measure before the text-shadow fallback.) */
-span, p, h1, h2, h3, h4, h5, h6, label {
-  filter: blur(var(--text-soften-base));
-}
-.soften-micro   { filter: blur(var(--text-soften-micro)) !important; }
+/* ── FILMIC FONT-BLUR (Brief 1, corrected in Brief 2.2b) ──────────────────────
+   Brief 2.2b — soften correction. The old global span/p/heading/label blur
+   DOUBLE-APPLIED on nested text (parent filter + child filter), which iOS rendered
+   FAR heavier than devtools. Removed. Blur is now OPT-IN at the text element ONLY
+   (single application by construction — never on a container that wraps more text):
+     .soften-display → 0.15px  (page + section titles)
+     .soften-ui      → 0.1px   (subheadings, buttons, tab labels)
+   Body / captions / micro / stats / labels / inputs = 0 (no class). */
 .soften-display { filter: blur(var(--text-soften-display)) !important; }
-input, textarea, select,
-[data-no-soften], [data-no-soften] span, [data-no-soften] p,
-[data-no-soften] h1, [data-no-soften] h2, [data-no-soften] h3,
-[data-no-soften] h4, [data-no-soften] h5, [data-no-soften] h6, [data-no-soften] label {
-  filter: none !important;
-}
-html.no-soften { --text-soften-micro: 0px; --text-soften-base: 0px; --text-soften-display: 0px; }
+.soften-ui      { filter: blur(var(--text-soften-ui)) !important; }
+[data-no-soften], [data-no-soften] * { filter: none !important; }
+html.no-soften { --text-soften-display: 0px; --text-soften-ui: 0px; }
 
 /* ── Standalone PWA: LOCK THE DOCUMENT ROOT ───────────────────────────────────
    Installed (standalone) iOS has no browser chrome, so the body itself rubber-bands
@@ -119,13 +111,14 @@ html, body {
   /* Hairlines (ivory-alpha; widths unchanged elsewhere). */
   --hairline: rgba(229,225,219,0.22);
   --hairline-strong: rgba(229,225,219,0.30);
+  /* Brief 2.2b — shared avatar/PFP frame border (half the old --hairline-strong). */
+  --avatar-frame: rgba(229,225,219,0.15);
   /* The ONLY red permitted in the app — muted/desaturated, destructive+error ONLY
      (delete affordances, error text). Never an accent/active/economics color. */
   --danger: #931212;
-  /* Filmic font-blur (Stage 4). */
-  --text-soften-micro: 0.3px;
-  --text-soften-base: 0.4px;
-  --text-soften-display: 0.5px;
+  /* Filmic font-blur (Brief 2.2b policy — opt-in only, no container/nesting). */
+  --text-soften-display: 0.15px;
+  --text-soften-ui: 0.1px;
 
   /* Global UI bump — one lever for every tokenized size. Raise/lower app-wide type
      in one place; var(--fs-N) references never change. (Icon sizes use --icon-bump
