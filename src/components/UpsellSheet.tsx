@@ -58,7 +58,7 @@ export default function UpsellSheet({
 
         <div className="su-eyebrow">
           <span className="su-badge">
-            <img src="/badges/scope-pro-badge-min-design-01.png" alt="Scope Pro" className="su-badge-flip" />
+            <img src="/design-updates-071526/new-badges/scope-pro.png" alt="Scope Pro" className="su-badge-flip" />
           </span>
           <span className="su-label">SCOPE PRO</span>
         </div>

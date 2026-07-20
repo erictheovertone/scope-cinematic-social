@@ -686,7 +686,7 @@ function ProgramDetail({
         )}
 
         {heroError && (
-          <p style={{ ...SKR, fontSize: 'var(--fs-8)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 10px' }}>{heroError}</p>
+          <p style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'var(--danger)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 10px' }}>{heroError}</p>
         )}
         {isOwn && heroSold && items.length > 0 && (
           /* HERO SOLD — the banner already falls back; this is the owner nudge. */

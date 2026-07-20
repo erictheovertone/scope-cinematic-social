@@ -148,7 +148,7 @@ export default function AccountSettings() {
         </div>
 
         {error && (
-          <p style={{ ...MONO, fontSize: 'var(--fs-11)', color: '#E5E1DB', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{error}</p>
+          <p style={{ ...MONO, fontSize: 'var(--fs-11)', color: 'var(--danger)', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{error}</p>
         )}
 
         <button

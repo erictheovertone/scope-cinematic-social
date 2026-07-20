@@ -411,7 +411,7 @@ export default function DesktopSettings() {
                 Reflects RENEWS / CANCELS <date> inline; GET PRO for non-members. */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '16px 18px', border: `1px solid ${HAIR}`, marginBottom: membership.isPaid ? 18 : 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
-                <img src={membership.isPaid ? '/badges/scope-pro-badge-min-design-01.png' : '/free-tier-aperture-logo-red.png'} alt="" style={{ width: 22, height: 22, objectFit: 'contain', flexShrink: 0 }} />
+                <img src={membership.isPaid ? '/design-updates-071526/new-badges/scope-pro.png' : '/free-tier-aperture-logo-red.png'} alt="" style={{ width: 22, height: 22, objectFit: 'contain', flexShrink: 0 }} />
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 3, minWidth: 0 }}>
                   <span style={{ ...SKB, fontSize: 9, color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase', letterSpacing: '0.15em' }}>MY MEMBERSHIP</span>
                   <span style={{ ...SKB, fontSize: 13, color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>

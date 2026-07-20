@@ -101,7 +101,7 @@ export default function DeletePostSheet({ visible, postId, userId, onClose, onDe
           disabled={deleting}
           style={{
             width: '100%',
-            background: deleting ? 'rgba(229,225,219,0.3)' : '#E5E1DB',
+            background: deleting ? 'rgba(147,18,18,0.45)' : 'var(--danger)',
             border: 'none',
             cursor: deleting ? 'default' : 'pointer',
             padding: '14px 0',

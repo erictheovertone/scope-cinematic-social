@@ -89,7 +89,7 @@ export default function ImportAssetSheet({ visible, onClose, userUuid, onAdded }
           />
         </div>
         {error && (
-          <p style={{ ...SKR, fontSize: 'var(--fs-10)', color: '#E5E1DB', margin: '10px 0 0', lineHeight: 1.4 }}>{error}</p>
+          <p style={{ ...SKR, fontSize: 'var(--fs-10)', color: 'var(--danger)', margin: '10px 0 0', lineHeight: 1.4 }}>{error}</p>
         )}
 
         {busy ? (

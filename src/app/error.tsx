@@ -44,8 +44,8 @@ export default function Error({
         gap: 16,
       }}
     >
-      <div style={{ width: 15, height: 15, borderRadius: '50%', background: '#E5E1DB' }} />
-      <p style={{ fontSize: 'var(--fs-13)', letterSpacing: '0.14em', textTransform: 'uppercase', margin: 0 }}>
+      <div style={{ width: 15, height: 15, borderRadius: '50%', background: '#931212' }} />
+      <p style={{ fontSize: 'var(--fs-13)', letterSpacing: '0.14em', textTransform: 'uppercase', margin: 0, color: '#931212' }}>
         This screen broke
       </p>
       <p style={{ fontSize: 'var(--fs-11)', lineHeight: 1.6, color: 'rgba(229,225,219,0.55)', maxWidth: 320, margin: 0 }}>

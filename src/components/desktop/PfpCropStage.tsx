@@ -119,7 +119,7 @@ export default function PfpCropStage({
 
         {error ? (
           <div style={{ width: CROP, padding: '40px 0', textAlign: 'center' }}>
-            <p style={{ ...SKR, fontSize: 11, color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{error}</p>
+            <p style={{ ...SKR, fontSize: 11, color: 'var(--danger)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{error}</p>
           </div>
         ) : (
           <div

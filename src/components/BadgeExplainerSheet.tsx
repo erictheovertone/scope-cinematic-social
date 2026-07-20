@@ -57,7 +57,7 @@ const tiers = [
   },
   {
     key: 'pro',
-    img: '/badges/scope-pro-badge-min-design-01.png',
+    img: '/design-updates-071526/new-badges/scope-pro.png',
     size: 44,
     label: 'SCOPE PRO',
     color: '#E5E1DB',
@@ -67,7 +67,7 @@ const tiers = [
   },
   {
     key: 'top1k',
-    img: '/badges/collector-badge-min-design-01.png',
+    img: '/design-updates-071526/new-badges/collector.png',
     size: 44,
     label: 'TOP 1000 COLLECTOR',
     color: '#C9A84C',
@@ -134,7 +134,7 @@ function tierEarned(key: string, t: BadgeExplainerSheetProps['userTiers'], isPai
 }
 
 function getCurrentBadge(userTiers: BadgeExplainerSheetProps['userTiers']) {
-  if (userTiers.isFoundingMember) return { key: 'founding', label: 'FOUNDING 500', image: '/augmented-member-founding-500-aperture.png' };
+  if (userTiers.isFoundingMember) return { key: 'founding', label: 'FOUNDING 500', image: '/design-updates-071526/new-badges/augmented.png' };
   if (userTiers.isTopCollector)   return { key: 'top1k',    label: 'TOP 1K COLLECTOR', image: '/top-1k-collector-aperture-gold.png' };
   if (userTiers.isPaidMember)     return { key: 'pro',      label: 'SCOPE PRO', image: '/scope-pro-icon-aperture.png' };
   if (userTiers.isInHouseCreator) return { key: 'creator',  label: 'IN-HOUSE CREATOR', image: '/in-house-creator-logo-grey.png' };
@@ -319,7 +319,7 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
             Scope Pro badge when Pro, the Free mark otherwise (CHANGE 3). */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid rgba(229,225,219,0.08)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <img src={vIsPaid ? '/badges/scope-pro-badge-min-design-01.png' : '/free-tier-aperture-logo-red.png'} alt="" style={{ width: 16, height: 16, objectFit: 'contain' }} />
+            <img src={vIsPaid ? '/design-updates-071526/new-badges/scope-pro.png' : '/free-tier-aperture-logo-red.png'} alt="" style={{ width: 16, height: 16, objectFit: 'contain' }} />
             <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               <span style={{ ...BOLD, fontSize: 'var(--fs-7)', color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase', letterSpacing: '0.15em' }}>MY MEMBERSHIP</span>
               <span style={{ ...BOLD, fontSize: 'var(--fs-9)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.08em' }}>

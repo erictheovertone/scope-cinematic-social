@@ -239,7 +239,7 @@ function MobileDMThread({ username }: { username: string }) {
                   >
                     <span style={{ ...SKR, fontSize: 'var(--fs-10)', color: '#E5E1DB', lineHeight: 1.4, whiteSpace: 'pre-wrap', wordBreak: 'break-word', display: 'block' }}>{it.body}</span>
                     {it.status === 'failed' && (
-                      <span style={{ ...SKB, fontSize: 'var(--fs-7)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginTop: 3 }}>Failed — tap to retry</span>
+                      <span style={{ ...SKB, fontSize: 'var(--fs-7)', color: 'var(--danger)', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginTop: 3 }}>Failed — tap to retry</span>
                     )}
                   </div>
                 </div>

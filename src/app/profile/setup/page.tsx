@@ -210,7 +210,7 @@ export default function ProfileSetup() {
       </div>
       {usernameError && (
         <div style={{ position: 'absolute', left: 38, top: 378 }}>
-          <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '-0.18px' }}>{usernameError}</span>
+          <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'var(--danger)', textTransform: 'uppercase', letterSpacing: '-0.18px' }}>{usernameError}</span>
         </div>
       )}
 
@@ -239,14 +239,14 @@ export default function ProfileSetup() {
       {/* Image upload error */}
       {imageUploadError && (
         <div style={{ position: 'absolute', left: 38, top: 556 }}>
-          <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '-0.18px' }}>{imageUploadError}</span>
+          <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'var(--danger)', textTransform: 'uppercase', letterSpacing: '-0.18px' }}>{imageUploadError}</span>
         </div>
       )}
 
       {/* General error */}
       {error && (
         <div style={{ position: 'absolute', left: 38, top: 572, width: 298 }}>
-          <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '-0.18px' }}>{error}</span>
+          <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'var(--danger)', textTransform: 'uppercase', letterSpacing: '-0.18px' }}>{error}</span>
         </div>
       )}
 

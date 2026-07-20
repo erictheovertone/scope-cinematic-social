@@ -28,7 +28,7 @@ import { resolveLayout, legacyLayoutId } from "@/lib/layoutModel";
 import { getScopeLimitType } from "@/lib/limits";
 import { useUpsell } from "@/components/UpsellProvider";
 import FrameLoader from "@/components/FrameLoader";
-import BannerBadgeStrip from "@/components/BannerBadgeStrip";
+import BadgeCluster from "@/components/BadgeCluster";
 import { resolveBadges } from "@/lib/economy/badges";
 import { dividerBackground } from "@/lib/economy/dividerLines";
 import { useEconomy } from "@/components/EconomyProvider";
@@ -428,17 +428,15 @@ const userLayoutId = stableLayoutId;
           0.5px divider between (default hairline; Piece 2 colours it). Same
           component on own + public. Renders the user's earned badges generically
           (min-design icons, fixed 16px, symmetric for any count). */}
-      <div style={{ position: 'absolute', left: 8, top: 'calc(10px + env(safe-area-inset-top, 0px))', zIndex: 3 }}>
-        <BannerBadgeStrip
-          height={80}
-          dividerColor={dividerBackground(dividerLine)}
-          holo={holoBanner && isFoundingMember}
+      {/* Badges — RELOCATED (Brief 1a · node 1:9): compact cluster top-right, under
+          the bio zone (the PFP-side strip + its backdrop are retired). The exact
+          vertical offset here is a device NUDGE item per the brief. */}
+      <div style={{ position: 'absolute', right: 12, top: 'calc(48px + env(safe-area-inset-top, 0px))', zIndex: 3 }}>
+        <BadgeCluster
           badges={resolveBadges({ isFoundingMember, isTopCollector, isScreeningRoomHolder, isPaidMember, isInHouseCreator, firstCutCount, composerTrackCount })
             .filter((b) => b.bannerSrc)
             .map((b) => ({ key: b.key, src: (b.framedSrc ?? b.bannerSrc) as string, title: b.title }))}
-          pullKey={firstCutPull}
-          arriveKeys={arriveKeys}
-          onPress={(key) => { if (key === 'composer' && composerTrackCount > 0 && userProfile.username) router.push(`/composer/${userProfile.username}`); else setShowBadgeSheet(true); }}
+          onOpen={() => setShowBadgeSheet(true)}
         />
       </div>
 
@@ -455,7 +453,7 @@ const userLayoutId = stableLayoutId;
 
         {/* Legacy badge UI removed (clean slate) — the BadgeStack coins, the
             right-edge membership stripes, and the unlock flare are replaced by
-            the BannerBadgeStrip (left of the PFP) + Piece 2's divider colour. */}
+            the badge cluster + Piece 2's divider colour. */}
       </div>
 
       {/* Name */}

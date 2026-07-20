@@ -1240,7 +1240,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
   const renderEditStep = () => (
     <div className="h-full flex flex-col">
       <div className="flex items-center justify-between p-4" style={{ paddingTop: 'calc(1rem + env(safe-area-inset-top, 0px))' }}>
-        <button onClick={() => setStep('media')} className="text-white text-lg">←</button>
+        <button onClick={() => setStep('media')} className="text-[#E5E1DB] text-lg">←</button>
         <h2 style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-14)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.04em', margin: 0 }}>Edit & Post</h2>
         <button
           onClick={() => { setStep('deck'); loadDecksForStep(); }}
@@ -1415,7 +1415,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
     return (
       <div className="h-full flex flex-col">
         <div className="flex items-center justify-between p-4 border-b border-[#1a1a1a]" style={{ paddingTop: 'calc(1rem + env(safe-area-inset-top, 0px))' }}>
-          <button onClick={() => setStep('edit')} className="text-white text-lg">←</button>
+          <button onClick={() => setStep('edit')} className="text-[#E5E1DB] text-lg">←</button>
           <span style={{ ...MONO_S, fontSize: 'var(--fs-11)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Add to a deck?</span>
           <button
             onClick={() => handlePost(null)}
@@ -1513,7 +1513,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
 
         <div className="border-t border-[#1a1a1a] p-4">
           {postError && (
-            <p style={{ ...MONO_S, fontSize: 'var(--fs-10)', color: '#E5E1DB', marginBottom: 10 }}>{postError}</p>
+            <p style={{ ...MONO_S, fontSize: 'var(--fs-10)', color: 'var(--danger)', marginBottom: 10 }}>{postError}</p>
           )}
           <div style={{ display: 'flex', gap: 8 }}>
             <button

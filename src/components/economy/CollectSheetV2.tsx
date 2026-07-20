@@ -621,7 +621,7 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
                 </div>
 
                 {tradeError && (
-                  <p style={{ ...SKR, fontSize: 'var(--fs-10)', color: '#E5E1DB', margin: '0 0 10px', lineHeight: 1.4 }}>{tradeError}</p>
+                  <p style={{ ...SKR, fontSize: 'var(--fs-10)', color: 'var(--danger)', margin: '0 0 10px', lineHeight: 1.4 }}>{tradeError}</p>
                 )}
                 {busy ? (
                   /* THE WHEEL — pressed button transformed into narration. */
@@ -752,7 +752,7 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
                     )}
 
                     {tradeError && (
-                      <p style={{ ...SKR, fontSize: 'var(--fs-10)', color: '#E5E1DB', margin: '0 0 10px', lineHeight: 1.4 }}>{tradeError}</p>
+                      <p style={{ ...SKR, fontSize: 'var(--fs-10)', color: 'var(--danger)', margin: '0 0 10px', lineHeight: 1.4 }}>{tradeError}</p>
                     )}
                     {busy ? (
                       /* THE WHEEL — pressed button transformed into narration. */

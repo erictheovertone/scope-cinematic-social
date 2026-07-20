@@ -15,7 +15,7 @@ export function PostsGrid({ posts, layout, className = '' }: GridLayoutProps) {
         className="w-full h-full object-cover"
       />
       <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-opacity duration-200">
-        <div className="absolute bottom-0 left-0 right-0 p-4 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+        <div className="absolute bottom-0 left-0 right-0 p-4 text-[#E5E1DB] opacity-0 group-hover:opacity-100 transition-opacity duration-200">
           <h3 className="font-mono text-sm font-bold">{post.title}</h3>
           <p className="font-mono text-xs text-gray-300 mt-1">{post.caption}</p>
         </div>

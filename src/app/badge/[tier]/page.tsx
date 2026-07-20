@@ -56,7 +56,7 @@ export const TIER_DETAILS: Record<string, {
     ],
   },
   pro: {
-    img: '/badges/scope-pro-badge-min-design-01.png',
+    img: '/design-updates-071526/new-badges/scope-pro.png',
     size: 64,
     label: 'SCOPE PRO',
     color: '#E5E1DB',
@@ -77,7 +77,7 @@ export const TIER_DETAILS: Record<string, {
     ],
   },
   top1k: {
-    img: '/badges/collector-badge-min-design-01.png',
+    img: '/design-updates-071526/new-badges/collector.png',
     size: 64,
     label: 'TOP 1000 COLLECTOR',
     color: '#C9A84C',

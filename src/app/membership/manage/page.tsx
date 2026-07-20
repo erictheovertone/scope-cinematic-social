@@ -121,7 +121,7 @@ export default function ManageMembershipPage() {
       {/* Current plan */}
       <div style={{ padding: '24px 16px', borderBottom: '1px solid rgba(229,225,219,0.08)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-          <img src="/badges/scope-pro-badge-min-design-01.png" alt="Scope Pro" style={{ width: 40, height: 40, objectFit: 'contain' }} />
+          <img src="/design-updates-071526/new-badges/scope-pro.png" alt="Scope Pro" style={{ width: 40, height: 40, objectFit: 'contain' }} />
           <div>
             <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 4px' }}>CURRENT PLAN</p>
             <p style={{ ...SKB, fontSize: 'var(--fs-18)', color: '#E5E1DB', textTransform: 'uppercase', margin: 0 }}>SCOPE PRO</p>
@@ -175,7 +175,7 @@ export default function ManageMembershipPage() {
               </span>
             </button>
             {cancelError && (
-              <p style={{ ...SKR, fontSize: 'var(--fs-11)', color: '#E5E1DB', lineHeight: 1.5, margin: '14px 0 0' }}>{cancelError}</p>
+              <p style={{ ...SKR, fontSize: 'var(--fs-11)', color: 'var(--danger)', lineHeight: 1.5, margin: '14px 0 0' }}>{cancelError}</p>
             )}
           </div>
         ) : !showCancelConfirm ? (
@@ -209,7 +209,7 @@ export default function ManageMembershipPage() {
               </button>
             </div>
             {cancelError && (
-              <p style={{ ...SKR, fontSize: 'var(--fs-11)', color: '#E5E1DB', lineHeight: 1.5, margin: '14px 0 0' }}>{cancelError}</p>
+              <p style={{ ...SKR, fontSize: 'var(--fs-11)', color: 'var(--danger)', lineHeight: 1.5, margin: '14px 0 0' }}>{cancelError}</p>
             )}
           </div>
         )}

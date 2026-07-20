@@ -317,7 +317,7 @@ export default function MembershipSheet({ visible, onClose, onSuccess, isPaidMem
             .ms-pro-badge{width:100%;height:100%;display:block;object-fit:contain;transform-style:preserve-3d;animation:pro-spin 7s linear infinite,pro-glow 3.6s ease-in-out -0.9s infinite}
             @media (prefers-reduced-motion: reduce){.ms-pro-badge{animation:none;filter:drop-shadow(0 0 3px rgba(242,237,228,.25))}}
           `}</style>
-          <img src="/badges/scope-pro-badge-min-design-01.png" alt="Scope Pro" className="ms-pro-badge" />
+          <img src="/design-updates-071526/new-badges/scope-pro.png" alt="Scope Pro" className="ms-pro-badge" />
         </div>
       </div>
 

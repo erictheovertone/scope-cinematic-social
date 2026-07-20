@@ -38,11 +38,11 @@ export default function HiddenPosts() {
       <div className="flex items-center justify-between p-6 border-b border-[#333333]">
         <button 
           onClick={() => router.back()} 
-          className="text-white text-lg"
+          className="text-[#E5E1DB] text-lg"
         >
           ←
         </button>
-        <h1 className="font-['IBM_Plex_Mono'] font-medium text-white text-[var(--fs-18)]">
+        <h1 className="font-['IBM_Plex_Mono'] font-medium text-[#E5E1DB] text-[var(--fs-18)]">
           Hidden Posts
         </h1>
         <div className="w-6" />
@@ -81,7 +81,7 @@ export default function HiddenPosts() {
                   </div>
                   
                   <div className="flex-1">
-                    <p className="font-['IBM_Plex_Mono'] font-medium text-white text-[var(--fs-14)] mb-2">
+                    <p className="font-['IBM_Plex_Mono'] font-medium text-[#E5E1DB] text-[var(--fs-14)] mb-2">
                       {post.caption}
                     </p>
                     
@@ -97,7 +97,7 @@ export default function HiddenPosts() {
                     <div className="flex space-x-3">
                       <button
                         onClick={() => unhidePost(post.id)}
-                        className="bg-[#333333] text-white px-4 py-2 rounded-lg font-['IBM_Plex_Mono'] text-[var(--fs-12)] hover:bg-[#444444] transition-colors"
+                        className="bg-[#333333] text-[#E5E1DB] px-4 py-2 rounded-lg font-['IBM_Plex_Mono'] text-[var(--fs-12)] hover:bg-[#444444] transition-colors"
                       >
                         Unhide
                       </button>
@@ -119,7 +119,7 @@ export default function HiddenPosts() {
       {/* Info */}
       <div className="border-t border-[#333333] p-6">
         <div className="bg-[#1A1A1A] border border-[#333333] rounded-lg p-4">
-          <p className="font-['IBM_Plex_Mono'] font-medium text-white text-[var(--fs-12)] mb-2">
+          <p className="font-['IBM_Plex_Mono'] font-medium text-[#E5E1DB] text-[var(--fs-12)] mb-2">
             About Hidden Posts:
           </p>
           <ul className="space-y-1">

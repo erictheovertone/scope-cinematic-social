@@ -300,34 +300,25 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
             </button>
           </div>
 
-          {/* ═══ BADGES (right side) ═══ */}
+          {/* ═══ BADGES — RELOCATED (Brief 1a · node 38:88): landscape cards in the
+              header right zone, below MESSAGE/BIO. The PFP-side strip + the old
+              backdrop-card treatment are RETIRED — the new assets are the whole
+              badge. FC/SRH counts now live in the sheet only. */}
           <div style={{ position: 'absolute', right: 0, top: 92 }}>
-            <button onClick={() => setBadgesOpen(true)} style={{ ...SKB, fontSize: 13, color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.14em', margin: '0 0 10px', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, display: 'block' }}>BADGES</button>
-            <div style={{ display: 'flex', gap: 8 }}>
-              {badges.slice(0, badges.length > 5 ? 4 : 5).map((b) => {
-                const count = b.key === 'firstCut' ? Math.max(1, fcCount) : b.key === 'srh' ? srhCount : null;
-                return (
-                  <div key={b.key} className="tappable" onClick={() => b.key === 'composer' ? router.push(`/composer/${handle}`) : setBadgesOpen(true)} style={{ position: 'relative', width: 78, height: 99, cursor: 'pointer' }}>
-                    <img src="/badges/desktop-profile-badge-backdrop-v1.png" alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', display: 'block' }} />
-                    {/* UNFRAMED (desktop): the min-design no-background set — the backdrop
-                        card IS the frame (frame-in-frame was redundant); mobile keeps framed. */}
-                    <img src={(b.bannerSrc ?? b.src) as string} alt={b.title} style={{ position: 'absolute', left: '50%', top: 12, transform: 'translateX(-50%)', width: 40, height: 40, objectFit: 'contain' }} />
-                    {count != null && (
-                      <span style={{ position: 'absolute', left: '50%', top: 52, transform: 'translateX(-50%)', background: '#0b0b0b', border: '1px solid transparent', borderRadius: 4.5, minWidth: 20, boxSizing: 'border-box', textAlign: 'center', padding: '0 7px', lineHeight: 1.25, ...SKB, fontSize: 9, color: '#E5E1DB', fontVariantNumeric: 'tabular-nums', backgroundImage: 'linear-gradient(#0b0b0b, #0b0b0b), linear-gradient(180deg, #8f3a3a, #5d2020)', backgroundOrigin: 'border-box', backgroundClip: 'padding-box, border-box' }}>
-                        {count}
-                      </span>
-                    )}
-                    <span style={{ position: 'absolute', left: 0, right: 0, bottom: 10, textAlign: 'center', ...SKB, fontSize: 10, color: 'rgba(229,225,219,0.7)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                      {b.key === 'top1k' ? 'COLLECTOR' : b.title}
-                    </span>
-                  </div>
-                );
-              })}
-              {badges.length > 5 && (
-                <button onClick={() => setBadgesOpen(true)} style={{ position: 'relative', width: 78, height: 99, background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>
-                  <img src="/badges/desktop-profile-badge-backdrop-v1.png" alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', display: 'block' }} />
-                  <span style={{ position: 'relative', ...SKB, fontSize: 11, color: 'rgba(229,225,219,0.46)', textTransform: 'uppercase' }}>+{badges.length - 4} MORE</span>
-                </button>
+            <button onClick={() => setBadgesOpen(true)} style={{ ...SKB, fontSize: 15, color: 'rgba(229,225,219,0.76)', letterSpacing: 'var(--track-display)', margin: '0 0 10px', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, display: 'block' }}>Badges</button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              {badges.slice(0, 4).map((b, i) => (
+                <img
+                  key={b.key}
+                  className="tappable"
+                  onClick={() => b.key === 'composer' ? router.push(`/composer/${handle}`) : setBadgesOpen(true)}
+                  src={(b.bannerSrc ?? b.src) as string}
+                  alt={b.title}
+                  style={{ height: 27, width: 'auto', objectFit: 'contain', display: 'block', opacity: 0.7 + (i % 3) * 0.03, cursor: 'pointer' }}
+                />
+              ))}
+              {badges.length > 4 && (
+                <button onClick={() => setBadgesOpen(true)} style={{ ...SKB, fontWeight: 900, fontSize: 15, color: 'rgba(229,225,219,0.76)', letterSpacing: 'var(--track-display)', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, marginLeft: 2 }}>+{badges.length - 4}</button>
               )}
             </div>
           </div>

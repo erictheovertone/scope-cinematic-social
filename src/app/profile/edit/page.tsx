@@ -394,7 +394,7 @@ export default function EditProfilePage() {
           />
         </div>
 
-        {profileError && <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: '#E5E1DB', margin: '0 0 10px', letterSpacing: '0.06em' }}>{profileError}</p>}
+        {profileError && <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'var(--danger)', margin: '0 0 10px', letterSpacing: '0.06em' }}>{profileError}</p>}
         <button
           onClick={handleSaveProfile}
           disabled={savingProfile}
@@ -475,7 +475,7 @@ export default function EditProfilePage() {
           <input style={INPUT} value={kitTool} onChange={e => { setKitTool(e.target.value); setIsDirty(true); }} placeholder="e.g. Lightroom, DaVinci" />
         </div>
 
-        {kitError && <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: '#E5E1DB', margin: '0 0 10px', letterSpacing: '0.06em' }}>{kitError}</p>}
+        {kitError && <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'var(--danger)', margin: '0 0 10px', letterSpacing: '0.06em' }}>{kitError}</p>}
         <button
           onClick={handleSaveKit}
           disabled={savingKit}
@@ -544,7 +544,7 @@ export default function EditProfilePage() {
               onChange={e => setNewLinkTitle(e.target.value)}
               placeholder="Title (optional)"
             />
-            {linkError && <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: '#E5E1DB', margin: '0 0 8px', letterSpacing: '0.06em' }}>{linkError}</p>}
+            {linkError && <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'var(--danger)', margin: '0 0 8px', letterSpacing: '0.06em' }}>{linkError}</p>}
             <div style={{ display: 'flex', gap: 8 }}>
               <button onClick={handleAddLink} disabled={!newLinkUrl.trim() || addingLink} style={{ ...BTN, flex: 1, opacity: newLinkUrl.trim() ? 1 : 0.4 }}>
                 {addingLink ? 'ADDING...' : 'ADD'}
@@ -582,7 +582,7 @@ export default function EditProfilePage() {
           <span style={{ ...SKR, fontSize: 'var(--fs-10)', color: 'rgba(229,225,219,0.6)' }}>Show publicly on profile</span>
         </div>
 
-        {contactError && <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: '#E5E1DB', margin: '0 0 10px', letterSpacing: '0.06em' }}>{contactError}</p>}
+        {contactError && <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'var(--danger)', margin: '0 0 10px', letterSpacing: '0.06em' }}>{contactError}</p>}
         <button
           onClick={handleSaveContact}
           disabled={savingContact}

@@ -28,11 +28,11 @@ export default function Invite() {
       <div className="flex items-center justify-between p-6 border-b border-[#333333]">
         <button 
           onClick={() => router.back()} 
-          className="text-white text-lg"
+          className="text-[#E5E1DB] text-lg"
         >
           ←
         </button>
-        <h1 className="font-['IBM_Plex_Mono'] font-medium text-white text-[var(--fs-18)]">
+        <h1 className="font-['IBM_Plex_Mono'] font-medium text-[#E5E1DB] text-[var(--fs-18)]">
           Invite Friends
         </h1>
         <div className="w-6" />
@@ -50,7 +50,7 @@ export default function Invite() {
             </svg>
           </div>
           
-          <h2 className="font-['IBM_Plex_Mono'] font-medium text-white text-[var(--fs-20)] mb-4">
+          <h2 className="font-['IBM_Plex_Mono'] font-medium text-[#E5E1DB] text-[var(--fs-20)] mb-4">
             Share Scope
           </h2>
           
@@ -63,7 +63,7 @@ export default function Invite() {
         {!inviteLink ? (
           <button
             onClick={generateInviteLink}
-            className="w-full bg-[#E5E1DB] text-white py-4 rounded-lg font-['IBM_Plex_Mono'] font-medium text-[var(--fs-16)] hover:bg-[#CC0000] transition-colors mb-6"
+            className="w-full bg-[#E5E1DB] text-[#E5E1DB] py-4 rounded-lg font-['IBM_Plex_Mono'] font-medium text-[var(--fs-16)] hover:bg-[#CC0000] transition-colors mb-6"
           >
             Generate Invite Link
           </button>
@@ -71,7 +71,7 @@ export default function Invite() {
           <div className="space-y-4">
             {/* Invite Link Display */}
             <div className="bg-[#1A1A1A] border border-[#333333] rounded-lg p-4">
-              <p className="font-['IBM_Plex_Mono'] font-medium text-white text-[var(--fs-12)] mb-2">
+              <p className="font-['IBM_Plex_Mono'] font-medium text-[#E5E1DB] text-[var(--fs-12)] mb-2">
                 Your Invite Link:
               </p>
               <p className="font-['IBM_Plex_Mono'] font-normal text-[#888888] text-[var(--fs-11)] break-all">
@@ -84,8 +84,8 @@ export default function Invite() {
               onClick={copyToClipboard}
               className={`w-full py-4 rounded-lg font-['IBM_Plex_Mono'] font-medium text-[var(--fs-16)] transition-colors ${
                 copied 
-                  ? 'bg-green-600 text-white' 
-                  : 'bg-[#333333] text-white hover:bg-[#444444]'
+                  ? 'bg-green-600 text-[#E5E1DB]' 
+                  : 'bg-[#333333] text-[#E5E1DB] hover:bg-[#444444]'
               }`}
             >
               {copied ? 'Copied!' : 'Copy Link'}
@@ -103,7 +103,7 @@ export default function Invite() {
 
         {/* Info */}
         <div className="mt-12 p-4 bg-[#1A1A1A] border border-[#333333] rounded-lg">
-          <p className="font-['IBM_Plex_Mono'] font-medium text-white text-[var(--fs-12)] mb-2">
+          <p className="font-['IBM_Plex_Mono'] font-medium text-[#E5E1DB] text-[var(--fs-12)] mb-2">
             How it works:
           </p>
           <ul className="space-y-2">

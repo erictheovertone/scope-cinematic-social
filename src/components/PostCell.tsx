@@ -61,10 +61,13 @@ export default function PostCell({ post, layoutId, index, onClick, showSoundTogg
           asset ships. */}
       {fcMark && (
         <img
-          src="/badges/first-cut-insignia-collected-view.png"
+          /* Brief 1a: swapped off the retired red insignia to the new First Cut asset
+             (fit-preserving). The corner-insignia treatment vs the new landscape card
+             is FLAGGED for the hero briefs — asset swapped, treatment not restyled. */
+          src="/design-updates-071526/new-badges/first-cut.png"
           alt=""
           onError={(e) => { e.currentTarget.style.display = 'none'; }}
-          style={{ position: 'absolute', top: 3, right: 3, width: '6%', minWidth: 12, height: 'auto', zIndex: 6, pointerEvents: 'none' }} /* ratified size: 6% of cell width, 12px floor */
+          style={{ position: 'absolute', top: 3, right: 3, width: '9%', minWidth: 16, height: 'auto', zIndex: 6, pointerEvents: 'none' }} /* landscape asset → slightly wider footprint */
         />
       )}
       {/* Pinned indicator — small white push-pin, top-right of the thumbnail.

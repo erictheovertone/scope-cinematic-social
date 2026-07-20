@@ -380,7 +380,7 @@ export default function SwapSheet({ visible, onClose, ethBalance, usdcBalance, z
             </p>
 
             {swapError && (
-              <p style={{ ...SKR, fontSize: 'var(--fs-10)', color: '#E5E1DB', margin: '10px 0 0', lineHeight: 1.4 }}>{swapError}</p>
+              <p style={{ ...SKR, fontSize: 'var(--fs-10)', color: 'var(--danger)', margin: '10px 0 0', lineHeight: 1.4 }}>{swapError}</p>
             )}
 
             {phase === 'swapping' ? (

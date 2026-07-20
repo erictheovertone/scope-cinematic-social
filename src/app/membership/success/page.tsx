@@ -118,8 +118,8 @@ function Top1kCelebration({ onDone }: { onDone: () => void }) {
       <div style={{ perspective: 500, width: 88, height: 88, marginBottom: 24, position: "relative", opacity: phase === "loading" ? 0 : 1, transform: phase === "loading" ? "translateY(40px)" : "translateY(0)", transition: "all 1s cubic-bezier(0.16,1,0.3,1)" }}>
         <div style={{ position: "absolute", inset: -24, borderRadius: "50%", background: "radial-gradient(circle, rgba(201,168,76,0.5) 0%, transparent 70%)", animation: "glowPulse 2s ease-in-out infinite" }} />
         <div style={{ width: 88, height: 88, transformStyle: "preserve-3d", animation: "coinFlip 5s ease-in-out infinite", position: "relative" }}>
-          <img src="/badges/collector-badge-min-design-01.png" style={{ width: 88, height: 88, position: "absolute", backfaceVisibility: "hidden", filter: "drop-shadow(0 0 20px rgba(201,168,76,1))", borderRadius: "50%" }} />
-          <img src="/badges/collector-badge-min-design-01.png" style={{ width: 88, height: 88, position: "absolute", backfaceVisibility: "hidden", transform: "rotateY(180deg)", filter: "drop-shadow(0 0 20px rgba(201,168,76,1))", borderRadius: "50%" }} />
+          <img src="/design-updates-071526/new-badges/collector.png" style={{ width: 88, height: 88, position: "absolute", backfaceVisibility: "hidden", filter: "drop-shadow(0 0 20px rgba(201,168,76,1))", borderRadius: "50%" }} />
+          <img src="/design-updates-071526/new-badges/collector.png" style={{ width: 88, height: 88, position: "absolute", backfaceVisibility: "hidden", transform: "rotateY(180deg)", filter: "drop-shadow(0 0 20px rgba(201,168,76,1))", borderRadius: "50%" }} />
         </div>
       </div>
       {phase !== "loading" && (
@@ -298,8 +298,8 @@ function FoundingCelebration({ foundingNumber, onDone }: { foundingNumber?: numb
           transformStyle: "preserve-3d",
           animation: "coinFlip 6s ease-in-out infinite",
         }}>
-          <img src="/augmented-member-founding-500-aperture.png" style={{ width: 96, height: 96, position: "absolute", backfaceVisibility: "hidden", filter: "drop-shadow(0 0 24px rgba(255,0,128,1)) drop-shadow(0 0 48px rgba(204,0,255,0.5))", borderRadius: "50%" }} />
-          <img src="/augmented-member-founding-500-aperture.png" style={{ width: 96, height: 96, position: "absolute", backfaceVisibility: "hidden", transform: "rotateY(180deg)", filter: "drop-shadow(0 0 24px rgba(0,207,255,1)) drop-shadow(0 0 48px rgba(255,225,0,0.5))", borderRadius: "50%" }} />
+          <img src="/design-updates-071526/new-badges/augmented.png" style={{ width: 96, height: 96, position: "absolute", backfaceVisibility: "hidden", filter: "drop-shadow(0 0 24px rgba(255,0,128,1)) drop-shadow(0 0 48px rgba(204,0,255,0.5))", borderRadius: "50%" }} />
+          <img src="/design-updates-071526/new-badges/augmented.png" style={{ width: 96, height: 96, position: "absolute", backfaceVisibility: "hidden", transform: "rotateY(180deg)", filter: "drop-shadow(0 0 24px rgba(0,207,255,1)) drop-shadow(0 0 48px rgba(255,225,0,0.5))", borderRadius: "50%" }} />
         </div>
       </div>
 
@@ -408,7 +408,7 @@ export default function MembershipSuccess() {
       {tier === "top1k" && (
         <VideoCelebration
           videoSrc="/badges/top-1k-celebration-animation.mp4"
-          badgeSrc="/badges/collector-badge-min-design-01.png"
+          badgeSrc="/design-updates-071526/new-badges/collector.png"
           onDone={handleDone}
           renderFallback={(d) => <Top1kCelebration onDone={d} />}
         />
@@ -417,7 +417,7 @@ export default function MembershipSuccess() {
       {tier === "pro" && (
         <VideoCelebration
           videoSrc="/badges/welcome-scope-pro-animation.mp4"
-          badgeSrc="/badges/scope-pro-badge-min-design-01.png"
+          badgeSrc="/design-updates-071526/new-badges/scope-pro.png"
           onDone={handleDone}
           renderFallback={(d) => <ProCelebration onDone={d} />}
         />

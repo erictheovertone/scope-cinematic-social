@@ -134,13 +134,13 @@ export default function ProfileMenu({ isOpen, onClose }: ProfileMenuProps) {
       <div className="fixed top-[160px] right-[15px] bg-[#1A1A1A] border border-[#333333] rounded-lg shadow-lg z-[101] w-[200px]">
         {/* Invite Link Popup */}
         {showInviteLink && (
-          <div className="absolute -top-[60px] left-0 right-0 bg-[#E5E1DB] text-white p-2 rounded-lg text-center">
+          <div className="absolute -top-[60px] left-0 right-0 bg-[#E5E1DB] text-[#E5E1DB] p-2 rounded-lg text-center">
             <p className="font-['IBM_Plex_Mono'] text-[var(--fs-10)]">
               Invite link copied!
             </p>
             <button 
               onClick={() => setShowInviteLink(false)}
-              className="absolute top-1 right-2 text-white text-xs"
+              className="absolute top-1 right-2 text-[#E5E1DB] text-xs"
             >
               ×
             </button>
@@ -155,7 +155,7 @@ export default function ProfileMenu({ isOpen, onClose }: ProfileMenuProps) {
                   href={item.href}
                   onClick={onClose}
                   className={`flex items-center px-4 py-3 hover:bg-[#333333] transition-colors ${
-                    item.danger ? 'text-[#E5E1DB]' : 'text-white'
+                    item.danger ? 'text-[#E5E1DB]' : 'text-[#E5E1DB]'
                   }`}
                 >
                   <span className="mr-3">{item.icon}</span>
@@ -170,7 +170,7 @@ export default function ProfileMenu({ isOpen, onClose }: ProfileMenuProps) {
                     if (item.label !== '+Invite') onClose();
                   }}
                   className={`w-full flex items-center px-4 py-3 hover:bg-[#333333] transition-colors text-left ${
-                    item.danger ? 'text-[#E5E1DB]' : 'text-white'
+                    item.danger ? 'text-[#E5E1DB]' : 'text-[#E5E1DB]'
                   }`}
                 >
                   <span className="mr-3">{item.icon}</span>

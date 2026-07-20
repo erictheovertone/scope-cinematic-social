@@ -24,7 +24,7 @@ import PostCell from "@/components/PostCell";
 import { getColCount } from "@/lib/aspectRatio";
 import { resolveLayout, legacyLayoutId } from "@/lib/layoutModel";
 import FrameLoader from "@/components/FrameLoader";
-import BannerBadgeStrip from "@/components/BannerBadgeStrip";
+import BadgeCluster from "@/components/BadgeCluster";
 import { resolveBadges } from "@/lib/economy/badges";
 import { dividerBackground } from "@/lib/economy/dividerLines";
 import { useEconomy } from "@/components/EconomyProvider";
@@ -281,15 +281,15 @@ export default function PublicProfilePage() {
         {/* Badge backdrop strip — PIECE 1. Left of the PFP with a 0.5px divider
             between (default hairline; Piece 2 colours it). SAME component as the
             own profile. Renders earned badges generically (16px, symmetric). */}
-        <div style={{ position: 'absolute', left: 8, top: 10, zIndex: 3 }}>
-          <BannerBadgeStrip
-            height={80}
-            dividerColor={dividerBackground((profile as any)?.divider_line)}
-            holo={!!(profile as any)?.holo_banner && isFoundingMember}
+        {/* Badges — RELOCATED (Brief 1a · node 1:9): compact cluster top-right,
+            under the bio zone. Retires the PFP-side strip + backdrop. Vertical
+            offset is a device NUDGE item. */}
+        <div style={{ position: 'absolute', right: 12, top: 'calc(48px + env(safe-area-inset-top, 0px))', zIndex: 3 }}>
+          <BadgeCluster
             badges={resolveBadges({ isFoundingMember, isTopCollector, isScreeningRoomHolder, isPaidMember, isInHouseCreator, firstCutCount, composerTrackCount })
               .filter((b) => b.bannerSrc)
               .map((b) => ({ key: b.key, src: (b.framedSrc ?? b.bannerSrc) as string, title: b.title }))}
-            onPress={(key) => { if (key === 'composer' && composerTrackCount > 0 && profile?.username) router.push(`/composer/${profile.username}`); else setShowBadgeSheet(true); }}
+            onOpen={() => setShowBadgeSheet(true)}
           />
         </div>
 
@@ -297,7 +297,7 @@ export default function PublicProfilePage() {
         <div style={{ position: 'absolute', top: 10, left: 36, width: 80, height: 80 }}>
           {/* Legacy badge UI removed (clean slate) — holo/gold PFP borders, the
               right-edge membership stripes, and the BadgeStack coins are replaced
-              by the BannerBadgeStrip + Piece 2's divider colour. */}
+              by the badge cluster + Piece 2's divider colour. */}
           <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', zIndex: 1 }}>
             {profile?.profile_image_url
               ? <img src={feedImage(profile.profile_image_url, 160)} alt={username} style={{ width: 80, height: 80, objectFit: 'cover', display: 'block' }} />

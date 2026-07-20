@@ -119,6 +119,9 @@ html, body {
   /* Hairlines (ivory-alpha; widths unchanged elsewhere). */
   --hairline: rgba(229,225,219,0.22);
   --hairline-strong: rgba(229,225,219,0.30);
+  /* The ONLY red permitted in the app — muted/desaturated, destructive+error ONLY
+     (delete affordances, error text). Never an accent/active/economics color. */
+  --danger: #931212;
   /* Filmic font-blur (Stage 4). */
   --text-soften-micro: 0.3px;
   --text-soften-base: 0.4px;

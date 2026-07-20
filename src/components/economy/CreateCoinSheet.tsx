@@ -166,7 +166,7 @@ export default function CreateCoinSheet({
               </div>
             </div>
 
-            {error && <p style={{ ...SKR, fontSize: 'var(--fs-10)', color: '#E5E1DB', margin: '0 0 12px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{error}</p>}
+            {error && <p style={{ ...SKR, fontSize: 'var(--fs-10)', color: 'var(--danger)', margin: '0 0 12px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{error}</p>}
 
             {working ? (
               /* THE WHEEL — pressed button transformed into live narration. */

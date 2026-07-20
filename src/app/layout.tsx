@@ -34,7 +34,7 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="Scope" />
       </head>
-      <body className="bg-black text-white font-mono antialiased" suppressHydrationWarning>
+      <body className="bg-black text-[#E5E1DB] font-mono antialiased" suppressHydrationWarning>
         <Providers>{children}</Providers>
       </body>
     </html>
