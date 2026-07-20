@@ -377,6 +377,13 @@ const userLayoutId = stableLayoutId;
       : <div className="bg-black" style={{ position: 'fixed', inset: 0 }} />;
   }
 
+  // Brief 2.2 (node 1:9 / 36:3) — split the display name into first + rest so the
+  // header can render a compressible inter-word gap (flex/grid, NOT literal spaces)
+  // that survives long names like GABRIELLE BROWN on one line.
+  const nameParts = (userProfile.displayName || '').trim().split(/\s+/).filter(Boolean);
+  const firstName = nameParts[0] || '';
+  const lastName = nameParts.slice(1).join(' ');
+
   return (
     <div className="relative">{/* Non-scrolling viewport root — fixed chrome (footer + snapped frame) is lifted OUT below as SIBLINGS of the scroller, so on iOS standalone it anchors to the VIEWPORT, not the .screen-min scroll container (which floated the footer above the screen bottom). */}
     <div className="bg-black relative w-full app-shell screen-min mx-auto pb-[60px]">
@@ -431,7 +438,7 @@ const userLayoutId = stableLayoutId;
       {/* Badges — RELOCATED (Brief 1a · node 1:9): compact cluster top-right, under
           the bio zone (the PFP-side strip + its backdrop are retired). The exact
           vertical offset here is a device NUDGE item per the brief. */}
-      <div style={{ position: 'absolute', right: 12, top: 'calc(48px + env(safe-area-inset-top, 0px))', zIndex: 3 }}>
+      <div style={{ position: 'absolute', right: 12, top: 'calc(26px + env(safe-area-inset-top, 0px))', zIndex: 3 }}>
         <BadgeCluster
           badges={resolveBadges({ isFoundingMember, isTopCollector, isScreeningRoomHolder, isPaidMember, isInHouseCreator, firstCutCount, composerTrackCount })
             .filter((b) => b.bannerSrc)
@@ -440,69 +447,60 @@ const userLayoutId = stableLayoutId;
         />
       </div>
 
-      {/* PFP container — right of the 27px strip (cluster left-edge aligns with MAIN). */}
-      <div style={{ position: 'absolute', left: 36, top: 'calc(10px + env(safe-area-inset-top, 0px))', width: 80, height: 80 }}>
+      {/* PFP — 86×86 top-left, house ivory frame (node 1:9: x8 y7). */}
+      <div style={{ position: 'absolute', left: 8, top: 'calc(7px + env(safe-area-inset-top, 0px))', width: 86, height: 86, border: '1px solid var(--hairline-strong)', boxSizing: 'border-box', overflow: 'hidden', zIndex: 1 }}>
+        {userProfile.profileImage ? (
+          <img src={feedImage(userProfile.profileImage, 172)} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+        ) : (
+          <div style={{ width: '100%', height: '100%', backgroundColor: '#222' }} />
+        )}
+      </div>
 
-        <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', zIndex: 1 }}>
-          {userProfile.profileImage ? (
-            <img src={feedImage(userProfile.profileImage, 160)} alt="Profile" style={{ width: 80, height: 80, objectFit: 'cover', display: 'block' }} />
-          ) : (
-            <div style={{ width: 80, height: 80, backgroundColor: '#222' }} />
-          )}
+      {/* Name + PRO + handle — a 2-col grid (col1 = first name, col3 = last + handle)
+          so the handle tracks under the last name and the inter-word gap compresses
+          on long names (col2 = minmax(6px,34px)). Gap is grid columns, not spaces. */}
+      <div style={{ position: 'absolute', left: 100, top: 'calc(6px + env(safe-area-inset-top, 0px))', right: 58, display: 'grid', gridTemplateColumns: 'auto minmax(6px, 34px) 1fr', alignItems: 'baseline', rowGap: 5 }}>
+        <span style={{ gridColumn: 1, gridRow: 1, fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 16, letterSpacing: 'var(--track-display)', color: 'var(--ink-100)', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{firstName}</span>
+        <span style={{ gridColumn: lastName ? 3 : 1, gridRow: 1, display: 'inline-flex', alignItems: 'baseline', gap: 4, minWidth: 0 }}>
+          {lastName && <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 16, letterSpacing: 'var(--track-display)', color: 'var(--ink-100)', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{lastName}</span>}
+          {isPaidMember && <span style={{ fontFamily: 'var(--font-black)', fontWeight: 900, fontSize: 6.7, color: 'rgba(229,225,219,0.64)', letterSpacing: 'var(--track-wide)', alignSelf: 'flex-start', transform: 'translateY(1px)', flexShrink: 0 }}>PRO</span>}
+        </span>
+        <span style={{ gridColumn: lastName ? '2 / span 2' : 1, gridRow: 2, display: 'inline-flex', alignItems: 'baseline', gap: 3, opacity: 0.64, minWidth: 0 }}>
+          <span style={{ fontFamily: 'var(--font-light)', fontWeight: 400, fontSize: 6, color: 'var(--ink-100)', letterSpacing: 'var(--track-wide)' }}>[ at ]</span>
+          <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 8, color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: 'var(--track-body)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{userProfile.username}</span>
+        </span>
+      </div>
+
+      {/* Stats — labels left (x102), values right-aligned in their own column; a
+          267px hairline closes the block. Dash rule: no market cap without minted
+          work (portfolioMc <= 0). */}
+      <div style={{ position: 'absolute', left: 102, top: 'calc(50px + env(safe-area-inset-top, 0px))', width: 96, zIndex: 2 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', columnGap: 12, rowGap: 1.5 }}>
+          <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 8.2, color: 'rgba(229,225,219,0.71)', letterSpacing: 'var(--track-body)', whiteSpace: 'nowrap' }}>Followers</span>
+          <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 8.5, color: 'rgba(229,225,219,0.71)', letterSpacing: 'var(--track-body)', textAlign: 'right', whiteSpace: 'nowrap' }}>{analytics.followers.toLocaleString()}</span>
+          <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 8.2, color: 'rgba(229,225,219,0.71)', letterSpacing: 'var(--track-body)', whiteSpace: 'nowrap' }}>Collectors</span>
+          <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 8.5, color: 'rgba(229,225,219,0.71)', letterSpacing: 'var(--track-body)', textAlign: 'right', whiteSpace: 'nowrap' }}>{analytics.collectors.toLocaleString()}</span>
+          <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 8.2, color: 'rgba(229,225,219,0.71)', letterSpacing: 'var(--track-body)', whiteSpace: 'nowrap', marginTop: 6 }}>Market Cap</span>
+          <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 8.5, color: 'rgba(229,225,219,0.71)', letterSpacing: 'var(--track-body)', textAlign: 'right', whiteSpace: 'nowrap', marginTop: 6 }}>{analytics.portfolioMc > 0 ? `$${analytics.portfolioMc.toLocaleString()}` : '—'}</span>
         </div>
-
-        {/* Legacy badge UI removed (clean slate) — the BadgeStack coins, the
-            right-edge membership stripes, and the unlock flare are replaced by
-            the badge cluster + Piece 2's divider colour. */}
+        <div style={{ width: 267, height: 1, background: 'var(--hairline)', marginTop: 6 }} />
       </div>
 
-      {/* Name */}
-      <div style={{ position: 'absolute', left: 126, top: 'calc(10px + env(safe-area-inset-top, 0px))' }}>
-        <p style={{ ...SKB, fontSize: 'var(--fs-13)', color: '#E5E1DB', letterSpacing: '-0.02em', lineHeight: 1.2, margin: 0, textTransform: 'uppercase' }}>
-          {userProfile.displayName}
-        </p>
-      </div>
-
-      {/* Handle — 2px smaller than the display name's neighbours (fontSize 8). */}
-      <div style={{ position: 'absolute', left: 126, top: 'calc(26px + env(safe-area-inset-top, 0px))' }}>
-        <p style={{ ...SKB, fontSize: 'var(--fs-8)', color: 'rgba(229,225,219,0.6)', letterSpacing: '-0.02em', lineHeight: 1.2, margin: 0, textTransform: 'uppercase' }}>
-          {userProfile.username ? `@${userProfile.username}` : ''}
-        </p>
-      </div>
-
-      {/* Info sheet trigger — pop on the INNER icon only; the button + its hit area
-          never scale (house rule from Brief 3). */}
+      {/* BIO control — top-right; opens the profile data / bio sheet (behavior
+          unchanged, only re-labelled from the old "i" square). ≥44px hit. */}
       <button
         onClick={() => setProfileDataOpen(true)}
         style={{
-          position: 'absolute', top: 'env(safe-area-inset-top, 0px)', right: 0,
-          background: 'transparent', border: 'none', cursor: 'pointer', padding: 7,
-          display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end',
+          position: 'absolute', top: 'calc(-6px + env(safe-area-inset-top, 0px))', right: 6,
+          background: 'transparent', border: 'none', cursor: 'pointer', padding: '11px 12px',
           opacity: profileDataOpen ? 0 : 1,
           pointerEvents: profileDataOpen ? 'none' : 'auto',
           transition: 'opacity 200ms ease',
+          zIndex: 6,
         }}
         aria-label="View profile info"
       >
-        <PressPop><span style={{ display: 'flex' }}>
-        <div style={{
-          width: 14.6, height: 11.2,
-          border: '0.5px solid #E5E1DB',
-          background: profileDataOpen ? '#E5E1DB' : 'transparent',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          boxSizing: 'border-box',
-          transition: 'background 200ms ease',
-        }}>
-          <span style={{
-            fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700,
-            fontSize: 'var(--fs-15_7)', letterSpacing: '-0.02em',
-            color: profileDataOpen ? '#000000' : '#E5E1DB',
-            lineHeight: 1, display: 'block',
-            transform: 'translateY(-1px)',
-            transition: 'color 200ms ease',
-          }}>i</span>
-        </div>
-        </span></PressPop>
+        <PressPop><span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 12.5, letterSpacing: 'var(--track-body)', color: 'var(--ink-100)', display: 'block' }}>BIO</span></PressPop>
       </button>
 
       </div>{/* end header */}
@@ -530,7 +528,11 @@ const userLayoutId = stableLayoutId;
         pointerEvents: (headerSnapped || gridScrollY < 20) ? 'auto' : 'none',
       }}>
         <div key={snapAnimKey} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 8px', height: 20 }}>
-          {/* First slot: frame icon when snapped or unsnapping (dismiss), MAIN text when at top */}
+          {/* Brief 2.2 (node 1:9) — three text tabs MAIN · COLLECTED · DECKS. 75 Bold
+              10.5px, --track-display; active = ink-100, inactive ~57% (opacity only,
+              no red marker). Theatre eye retired here (frame shows 3 tabs); theatre
+              is still entered by rotation in ProfilePostViewer + the lightbox path. */}
+          {/* First slot: logomark (dismiss) when snapped, MAIN text when at top */}
           {(headerSnapped || headerUnsnapping) ? (
             <button
               onClick={dismissSnapMenu}
@@ -543,33 +545,22 @@ const userLayoutId = stableLayoutId;
               onClick={() => setActiveTab('main')}
               style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer' }}
             >
-              <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-9_5)', color: activeTab === 'main' ? 'rgba(229,225,219,0.8)' : 'rgba(229,225,219,0.4)', textTransform: 'uppercase', letterSpacing: '-0.16px' }}>MAIN</span>
+              <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 10.5, letterSpacing: 'var(--track-display)', color: activeTab === 'main' ? 'var(--ink-100)' : 'rgba(229,225,219,0.57)', textTransform: 'uppercase' }}>MAIN</span>
             </button>
           )}
 
           <button
-            onClick={() => { setActiveTab('decks'); setShowDecks(true); }}
-            style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', position: 'relative', left: (headerSnapped || headerUnsnapping) ? -8 : 5, animation: headerUnsnapping ? 'snapOutUp 0.28s cubic-bezier(0.16,1,0.3,1) 110ms both' : headerSnapped ? 'snapInUp 0.32s cubic-bezier(0.16,1,0.3,1) 55ms both' : 'none' }}
-          >
-            <img src="/decks-logo-new-lg.png" style={{ height: 10.5, width: 'auto', display: 'block', opacity: activeTab === 'decks' ? 1 : 0.4, filter: activeTab === 'decks' ? 'invert(27%) sepia(100%) saturate(7000%) hue-rotate(0deg) brightness(100%) contrast(100%)' : 'none' }} alt="Decks" />
-          </button>
-
-          <button
-            onClick={() => setActiveTab('theatre')}
-            style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', animation: headerUnsnapping ? 'snapOutUp 0.28s cubic-bezier(0.16,1,0.3,1) 55ms both' : headerSnapped ? 'snapInUp 0.32s cubic-bezier(0.16,1,0.3,1) 110ms both' : 'none' }}
-          >
-            <img
-              src="/theatre-mode-eye-solo.png"
-              style={{ height: 18.1, width: 'auto', display: 'block', opacity: activeTab === 'theatre' ? 1 : 0.4, position: 'relative', left: (headerSnapped || headerUnsnapping) ? 0 : 10 }}
-              alt="Theatre"
-            />
-          </button>
-
-          <button
             onClick={() => setActiveTab('collected')}
-            style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', animation: headerUnsnapping ? 'snapOutRight 0.28s cubic-bezier(0.16,1,0.3,1) 0ms both' : headerSnapped ? 'snapInRight 0.32s cubic-bezier(0.16,1,0.3,1) 165ms both' : 'none' }}
+            style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', animation: headerUnsnapping ? 'snapOutUp 0.28s cubic-bezier(0.16,1,0.3,1) 55ms both' : headerSnapped ? 'snapInUp 0.32s cubic-bezier(0.16,1,0.3,1) 55ms both' : 'none' }}
           >
-            <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-9_5)', color: activeTab === 'collected' ? 'rgba(229,225,219,0.8)' : 'rgba(229,225,219,0.4)', textTransform: 'uppercase', letterSpacing: '-0.16px' }}>COLLECTED</span>
+            <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 10.5, letterSpacing: 'var(--track-display)', color: activeTab === 'collected' ? 'var(--ink-100)' : 'rgba(229,225,219,0.57)', textTransform: 'uppercase' }}>COLLECTED</span>
+          </button>
+
+          <button
+            onClick={() => { setActiveTab('decks'); setShowDecks(true); }}
+            style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', animation: headerUnsnapping ? 'snapOutRight 0.28s cubic-bezier(0.16,1,0.3,1) 0ms both' : headerSnapped ? 'snapInRight 0.32s cubic-bezier(0.16,1,0.3,1) 110ms both' : 'none' }}
+          >
+            <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 10.5, letterSpacing: 'var(--track-display)', color: activeTab === 'decks' ? 'var(--ink-100)' : 'rgba(229,225,219,0.57)', textTransform: 'uppercase' }}>DECKS</span>
           </button>
         </div>
       </div>
@@ -630,12 +621,21 @@ const userLayoutId = stableLayoutId;
                 }, 600);
               }}
             >
-              <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-11)', color: '#E5E1DB', margin: 0, lineHeight: '1.4', textTransform: 'uppercase' }}>
-                Create<br/>your<br/>first<br/>post
-              </p>
-              <div style={{ position: 'relative', width: '48px', height: '48px', flexShrink: 0, animation: spinning ? 'spin 0.6s cubic-bezier(0.4, 0, 0.2, 1)' : 'none' }}>
-                <div style={{ position: 'absolute', top: '50%', left: 0, right: 0, height: '1px', background: '#E5E1DB', transform: 'translateY(-50%)' }} />
-                <div style={{ position: 'absolute', left: '50%', top: 0, bottom: 0, width: '1px', background: '#E5E1DB', transform: 'translateX(-50%)' }} />
+              {/* Brief 2.2 (node 142:873) — house ghost CTA: 301×23, radius 3,
+                  fill rgba(217,217,217,0.07), 0.25px hairline border. The outer div
+                  still owns the spin→create tap (behavior unchanged); the plus keeps
+                  its spin. */}
+              <div style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                width: 301, maxWidth: '82%', height: 23, borderRadius: 3,
+                background: 'rgba(217,217,217,0.07)', border: '0.25px solid var(--hairline)',
+                padding: '0 12px', boxSizing: 'border-box',
+              }}>
+                <span style={{ position: 'relative', width: 11, height: 12, flexShrink: 0, display: 'inline-block', animation: spinning ? 'spin 0.6s cubic-bezier(0.4, 0, 0.2, 1)' : 'none' }}>
+                  <span style={{ position: 'absolute', top: '50%', left: 0, right: 0, height: '1px', background: 'var(--ink-100)', transform: 'translateY(-50%)' }} />
+                  <span style={{ position: 'absolute', left: '50%', top: 0, bottom: 0, width: '1px', background: 'var(--ink-100)', transform: 'translateX(-50%)' }} />
+                </span>
+                <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 10.5, letterSpacing: 'var(--track-display)', color: 'var(--ink-100)', textTransform: 'uppercase' }}>Create your first post</span>
               </div>
             </div>
           ) : (
