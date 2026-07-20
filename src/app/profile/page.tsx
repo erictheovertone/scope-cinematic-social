@@ -456,35 +456,45 @@ const userLayoutId = stableLayoutId;
         )}
       </div>
 
-      {/* Name + PRO + handle — a 2-col grid (col1 = first name, col3 = last + handle)
-          so the handle tracks under the last name and the inter-word gap compresses
-          on long names (col2 = minmax(6px,34px)). Gap is grid columns, not spaces. */}
-      <div style={{ position: 'absolute', left: 100, top: 'calc(6px + env(safe-area-inset-top, 0px))', right: 58, display: 'grid', gridTemplateColumns: 'auto minmax(6px, 34px) 1fr', alignItems: 'baseline', rowGap: 5 }}>
-        <span style={{ gridColumn: 1, gridRow: 1, fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 16, letterSpacing: 'var(--track-display)', color: 'var(--ink-100)', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{firstName}</span>
-        <span style={{ gridColumn: lastName ? 3 : 1, gridRow: 1, display: 'inline-flex', alignItems: 'baseline', gap: 4, minWidth: 0 }}>
-          {lastName && <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 16, letterSpacing: 'var(--track-display)', color: 'var(--ink-100)', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{lastName}</span>}
-          {isPaidMember && <span style={{ fontFamily: 'var(--font-black)', fontWeight: 900, fontSize: 6.7, color: 'rgba(229,225,219,0.64)', letterSpacing: 'var(--track-wide)', alignSelf: 'flex-start', transform: 'translateY(1px)', flexShrink: 0 }}>PRO</span>}
-        </span>
-        <span style={{ gridColumn: lastName ? '2 / span 2' : 1, gridRow: 2, display: 'inline-flex', alignItems: 'baseline', gap: 3, opacity: 0.64, minWidth: 0 }}>
-          <span style={{ fontFamily: 'var(--font-light)', fontWeight: 400, fontSize: 6, color: 'var(--ink-100)', letterSpacing: 'var(--track-wide)' }}>[ at ]</span>
+      {/* Name + handle + stats — Brief 2.2a: ONE left-anchored shrink-block. minWidth
+          pins the base so the stats value column's right edge ≈ x198, and it GROWS
+          with the name (D4 ruling — value column tracks the name block's right edge,
+          36:3). Inter-word gap is capped (~2.5vw, max 10px) and compresses before the
+          last name ellipsizes. Handle is centered under the full name block. */}
+      <div style={{ position: 'absolute', left: 100, top: 'calc(6px + env(safe-area-inset-top, 0px))', minWidth: 98, maxWidth: 'calc(100% - 158px)', display: 'inline-flex', flexDirection: 'column', alignItems: 'stretch', zIndex: 2 }}>
+        {/* name row — first · capped gap · last · PRO */}
+        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'flex-start', minWidth: 0 }}>
+          <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 16, letterSpacing: 'var(--track-display)', color: 'var(--ink-100)', textTransform: 'uppercase', whiteSpace: 'nowrap', flexShrink: 0 }}>{firstName}</span>
+          {lastName && (
+            <>
+              <span aria-hidden style={{ flexGrow: 0, flexShrink: 1, flexBasis: 'min(2.5vw, 10px)', minWidth: 3 }} />
+              <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 16, letterSpacing: 'var(--track-display)', color: 'var(--ink-100)', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flexShrink: 1 }}>{lastName}</span>
+            </>
+          )}
+          {isPaidMember && <span style={{ fontFamily: 'var(--font-black)', fontWeight: 900, fontSize: 6.7, color: 'rgba(229,225,219,0.64)', letterSpacing: 'var(--track-wide)', alignSelf: 'flex-start', transform: 'translateY(1px)', flexShrink: 0, marginLeft: 4 }}>PRO</span>}
+        </div>
+        {/* handle — centered under the name block, unit 64% */}
+        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: 3, opacity: 0.64, marginTop: 3, minWidth: 0 }}>
+          <span style={{ fontFamily: 'var(--font-light)', fontWeight: 400, fontSize: 6, color: 'var(--ink-100)', letterSpacing: 'var(--track-wide)', flexShrink: 0 }}>[ at ]</span>
           <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 8, color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: 'var(--track-body)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{userProfile.username}</span>
-        </span>
+        </div>
+        {/* stats — values flush-right to the block's right edge (tracks the name) */}
+        <div style={{ marginTop: 12 }}>
+          {([
+            { label: 'Followers', value: analytics.followers.toLocaleString(), gap: false },
+            { label: 'Collectors', value: analytics.collectors.toLocaleString(), gap: false },
+            { label: 'Market Cap', value: analytics.portfolioMc > 0 ? `$${analytics.portfolioMc.toLocaleString()}` : '—', gap: true },
+          ] as const).map((row) => (
+            <div key={row.label} style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 12, marginTop: row.gap ? 6 : 1.5 }}>
+              <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 8.2, color: 'rgba(229,225,219,0.71)', letterSpacing: 'var(--track-body)', whiteSpace: 'nowrap' }}>{row.label}</span>
+              <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 8.5, color: 'rgba(229,225,219,0.71)', letterSpacing: 'var(--track-body)', whiteSpace: 'nowrap', textAlign: 'right' }}>{row.value}</span>
+            </div>
+          ))}
+        </div>
       </div>
 
-      {/* Stats — labels left (x102), values right-aligned in their own column; a
-          267px hairline closes the block. Dash rule: no market cap without minted
-          work (portfolioMc <= 0). */}
-      <div style={{ position: 'absolute', left: 102, top: 'calc(50px + env(safe-area-inset-top, 0px))', width: 96, zIndex: 2 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', columnGap: 12, rowGap: 1.5 }}>
-          <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 8.2, color: 'rgba(229,225,219,0.71)', letterSpacing: 'var(--track-body)', whiteSpace: 'nowrap' }}>Followers</span>
-          <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 8.5, color: 'rgba(229,225,219,0.71)', letterSpacing: 'var(--track-body)', textAlign: 'right', whiteSpace: 'nowrap' }}>{analytics.followers.toLocaleString()}</span>
-          <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 8.2, color: 'rgba(229,225,219,0.71)', letterSpacing: 'var(--track-body)', whiteSpace: 'nowrap' }}>Collectors</span>
-          <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 8.5, color: 'rgba(229,225,219,0.71)', letterSpacing: 'var(--track-body)', textAlign: 'right', whiteSpace: 'nowrap' }}>{analytics.collectors.toLocaleString()}</span>
-          <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 8.2, color: 'rgba(229,225,219,0.71)', letterSpacing: 'var(--track-body)', whiteSpace: 'nowrap', marginTop: 6 }}>Market Cap</span>
-          <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 8.5, color: 'rgba(229,225,219,0.71)', letterSpacing: 'var(--track-body)', textAlign: 'right', whiteSpace: 'nowrap', marginTop: 6 }}>{analytics.portfolioMc > 0 ? `$${analytics.portfolioMc.toLocaleString()}` : '—'}</span>
-        </div>
-        <div style={{ width: 267, height: 1, background: 'var(--hairline)', marginTop: 6 }} />
-      </div>
+      {/* Stats hairline — extends to the right margin (~8px inset), frame y93. */}
+      <div style={{ position: 'absolute', left: 102, right: 8, top: 'calc(92px + env(safe-area-inset-top, 0px))', height: 1, background: 'var(--hairline)', zIndex: 2 }} />
 
       {/* BIO control — top-right; opens the profile data / bio sheet (behavior
           unchanged, only re-labelled from the old "i" square). ≥44px hit. */}

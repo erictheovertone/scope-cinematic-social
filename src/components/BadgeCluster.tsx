@@ -22,13 +22,15 @@ export default function BadgeCluster({
       className="tappable"
       style={{ background: "none", border: "none", padding: 10, margin: -10, cursor: "pointer", display: "block" }} // padding→≥44px hit, margin cancels layout push
     >
-      <span style={{ display: "flex", flexWrap: "wrap", gap: 3, maxWidth: 68, justifyContent: "flex-end", rowGap: 3 }}>
-        {badges.slice(0, 10).map((b, i) => (
+      {/* Brief 2.2a: wrapping grid, 3 icons per row (→ 2 rows at 6 badges),
+          right-aligned, icons ~13.5px, per-icon opacity in the 62–71% band. */}
+      <span style={{ display: "grid", gridTemplateColumns: "repeat(3, auto)", columnGap: 5, rowGap: 5, justifyContent: "end", justifyItems: "end" }}>
+        {badges.slice(0, 6).map((b, i) => (
           <img
             key={b.key}
             src={b.src}
             alt={b.title ?? b.key}
-            style={{ height: 9, width: "auto", objectFit: "contain", display: "block", opacity: 0.57 + (i % 4) * 0.06 }}
+            style={{ height: 13.5, width: "auto", objectFit: "contain", display: "block", opacity: 0.62 + (i % 3) * 0.045 }}
           />
         ))}
       </span>
