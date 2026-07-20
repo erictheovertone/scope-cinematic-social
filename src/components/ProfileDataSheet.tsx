@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Fragment } from "react";
 import { createPortal } from "react-dom";
 import type { ProfileLink } from "@/lib/userService";
 import { isProMember } from "@/lib/userService";
 import { BADGES, resolveBadges, BADGE_SHORT_BLURB, type BadgeKey } from "@/lib/economy/badges";
 import { economyPreviewEnabled } from "@/lib/economy/flag";
+import { LedgerCard } from "@/components/Ledger";
 import { useRouter } from "next/navigation";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
@@ -84,17 +85,22 @@ export default function ProfileDataSheet({
     return () => cancelAnimationFrame(r);
   }, [isOpen]);
 
+  // Body-level takeover flag (Brief 2.4) → BottomToolbar hides the footer pill while
+  // the bio sheet is up. Same mechanism the comments/music takeovers use (a body
+  // dataset flag + a broadcast event), NOT an observer. `had` guards a nested
+  // takeover from clearing the flag out from under a parent.
+  useEffect(() => {
+    if (!isOpen) return;
+    const had = document.documentElement.dataset.suiteOpen;
+    document.documentElement.dataset.suiteOpen = "1";
+    window.dispatchEvent(new CustomEvent("scope:takeover-change"));
+    return () => {
+      if (!had) delete document.documentElement.dataset.suiteOpen;
+      window.dispatchEvent(new CustomEvent("scope:takeover-change"));
+    };
+  }, [isOpen]);
+
   if (!isOpen) return null;
-
-  const fmt = (n: number) => n.toLocaleString();
-
-  const stats: [string, string][] = [
-    ['FOLLOWERS',    fmt(followers)],
-    ['FOLLOWING',    fmt(following)],
-    ['COLLECTORS',   fmt(collectors)],
-    ['TOTAL POSTS',  fmt(totalPosts)],
-    ['PORTFOLIO MC', `$${fmt(portfolioMc)}`],
-  ];
 
   const hasBio = !!profile?.bio;
   const hasKit = !!(profile?.kit_camera || profile?.kit_lens || profile?.kit_favorite_tool);
@@ -123,9 +129,16 @@ export default function ProfileDataSheet({
       : 'none',
   });
 
-  const Divider = () => (
-    <div style={{ height: 1, background: '#E5E1DB' }} />
-  );
+  // Full-width hairline between sections (frame reads as a faint rule, not solid ivory).
+  const Divider = () => <div style={{ height: 1, background: 'var(--hairline)' }} />;
+
+  // Left-anchored section title — 75 Bold 24px, ink-100, display soften, Title Case.
+  const titleStyle: React.CSSProperties = {
+    width: 168, flexShrink: 0, paddingLeft: 6,
+    fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 24,
+    letterSpacing: 'var(--track-display)', color: 'var(--ink-100)', lineHeight: 1.05,
+  };
+  const sectionPad: React.CSSProperties = { display: 'flex', boxSizing: 'border-box', padding: '16px 8px 18px' };
 
   const kitRows = [
     { label: 'CAMERA:', value: profile?.kit_camera },
@@ -135,271 +148,156 @@ export default function ProfileDataSheet({
 
   const slicedLinks = links.slice(0, 3);
 
-  return (
-    <>
-    {/* Stats overlay — fixed at zIndex 300 so it paints above the frozen profile header (zIndex 200) */}
-    <div style={{ position: 'fixed', inset: 0, zIndex: 300, pointerEvents: 'none' }}>
-      <div style={{ maxWidth: '30rem', margin: '0 auto', position: 'relative', height: '100%' }}>
-        {stats.map(([label, value], i) => (
-          <div
-            key={label}
-            style={{
-              position: 'absolute',
-              top: 7 + i * 13,
-              left: 255,
-              right: 6,
-              display: 'flex',
-              justifyContent: 'space-between',
-              opacity: sectionsVisible ? 1 : 0,
-              transform: sectionsVisible ? 'translateY(0)' : 'translateY(-8px)',
-              transition: sectionsVisible
-                ? `opacity 220ms cubic-bezier(0.16,1,0.3,1) ${i * 50}ms, transform 220ms cubic-bezier(0.16,1,0.3,1) ${i * 50}ms`
-                : 'none',
-            }}
+  // Editorial spine — build ONLY sections that have data; dividers render BETWEEN
+  // them below, so an absent section leaves no orphan rule (empty-state collapse).
+  const sectionNodes: React.ReactNode[] = [];
+
+  if (hasBio) sectionNodes.push(
+    <div key="bio" style={{ ...sectionPad, ...sec(80) }}>
+      <div className="soften-display" style={titleStyle}>Bio</div>
+      <div style={{ flex: 1, fontFamily: 'var(--font-body)', fontWeight: 400, fontSize: 10, color: 'rgba(229,225,219,0.8)', lineHeight: 1.12, letterSpacing: 'var(--track-body)', whiteSpace: 'pre-wrap' }}>
+        {profile.bio}
+      </div>
+    </div>
+  );
+
+  // BADGES — as TRACKED TEXT LABELS (not images) per node 141:733. Only held badges
+  // render; a tap opens the existing badge-explainer blurb. (FLAGGED in report: this
+  // diverges from image-badges used elsewhere.)
+  if (hasBadges) sectionNodes.push(
+    <div key="badges" style={{ ...sectionPad, ...sec(140) }}>
+      <div className="soften-display" style={titleStyle}>Badges</div>
+      <div style={{ flex: 1, display: 'flex', flexWrap: 'wrap', columnGap: 16, rowGap: 10, alignContent: 'flex-start' }}>
+        {badges.map((b) => (
+          <span
+            key={b.key}
+            onClick={(e) => { e.stopPropagation(); setActiveBlurb(b.key); }}
+            style={{ fontFamily: 'var(--font-body)', fontWeight: 400, fontSize: 7, letterSpacing: '0.14em', color: 'rgba(229,225,219,0.34)', textTransform: 'uppercase', whiteSpace: 'nowrap', cursor: 'pointer', padding: '5px 0' }}
           >
-            <span style={{ ...SKB, fontSize: 'var(--fs-9)', letterSpacing: '-0.18px', color: '#E5E1DB', textTransform: 'uppercase', lineHeight: 1.4 }}>{label}</span>
-            <span style={{ ...SKB, fontSize: 'var(--fs-9)', letterSpacing: '-0.18px', color: '#E5E1DB', lineHeight: 1.4 }}>{value}</span>
+            {b.title}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+
+  // KIT — ledger label/value rows. The old 2×4 KIT-icon display is NOT in this frame
+  // (its component is FLAGGED for deprecation review, not deleted).
+  if (hasKit) sectionNodes.push(
+    <div key="kit" style={{ ...sectionPad, ...sec(200) }}>
+      <div className="soften-display" style={titleStyle}>Kit</div>
+      <div style={{ flex: 1 }}>
+        {kitRows.map((row, i) => (
+          <div key={row.label} style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 12, marginBottom: i < kitRows.length - 1 ? 10 : 0 }}>
+            <span style={{ fontFamily: 'var(--font-body)', fontWeight: 400, fontSize: 10, color: 'rgba(229,225,219,0.53)', letterSpacing: 'var(--track-body)', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{row.label}</span>
+            <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 10, color: 'rgba(229,225,219,0.79)', letterSpacing: 'var(--track-body)', textTransform: 'uppercase', textAlign: 'right' }}>{row.value}</span>
           </div>
         ))}
       </div>
     </div>
+  );
+
+  // LINKS — right-aligned label over a 185×78 preview thumbnail. No thumbnail →
+  // ledger-card placeholder (existing preview paths only; no new fetch pipeline).
+  if (hasLinks) sectionNodes.push(
+    <div key="links" style={{ ...sectionPad, ...sec(260) }}>
+      <div className="soften-display" style={titleStyle}>Links</div>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 16 }}>
+        {slicedLinks.map((link) => {
+          const thumb = getLinkThumb(link);
+          const domain = getDomain(link.url);
+          return (
+            <div key={link.id} onClick={(e) => { e.stopPropagation(); window.open(link.url, '_blank', 'noopener,noreferrer'); }} style={{ width: 185, cursor: 'pointer' }}>
+              <div style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 10, color: 'rgba(229,225,219,0.65)', letterSpacing: 'var(--track-body)', textAlign: 'right', marginBottom: 5 }}>
+                {link.title || domain}
+              </div>
+              {thumb ? (
+                <div style={{ position: 'relative', width: 185, height: 78, overflow: 'hidden', borderRadius: 4, background: '#111' }}>
+                  <img src={thumb} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                  {link.is_video && (
+                    <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.35)' }}>
+                      <div style={{ width: 0, height: 0, borderLeft: '12px solid white', borderTop: '7px solid transparent', borderBottom: '7px solid transparent' }} />
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <LedgerCard variant="border" radius={6} style={{ width: 185, height: 78, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 9, color: 'rgba(229,225,219,0.35)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{domain}</span>
+                </LedgerCard>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  // CONTACT — email (public only) + DIRECT MESSAGE ON SCOPE → existing DM thread route.
+  if (showContact) sectionNodes.push(
+    <div key="contact" style={{ ...sectionPad, ...sec(320) }}>
+      <div className="soften-display" style={titleStyle}>Contact</div>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 11, textAlign: 'right' as const }}>
+        {profile?.contact_email_public && profile?.contact_email && (
+          <div>
+            <span style={{ fontFamily: 'var(--font-body)', fontWeight: 400, fontSize: 10, color: 'rgba(229,225,219,0.31)', letterSpacing: 'var(--track-body)', textTransform: 'uppercase' }}>EMAIL </span>
+            <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 10, color: 'var(--ink-100)', letterSpacing: 'var(--track-body)', textTransform: 'uppercase' }}>{profile.contact_email.toUpperCase()}</span>
+          </div>
+        )}
+        {profile?.username && (
+          <div
+            onClick={(e) => { e.stopPropagation(); onClose(); router.push('/dm/' + profile.username); }}
+            style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 10, color: 'var(--ink-100)', letterSpacing: 'var(--track-body)', textTransform: 'uppercase', cursor: 'pointer' }}
+          >
+            DIRECT MESSAGE ON SCOPE
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  return (
+    <>
+    {/* Full-viewport takeover over the profile. The scrim is the OWN scroll container
+        (.bio-sheet-scroll → overscroll-behavior: contain traps the scroll here, no
+        chaining to the profile beneath). Profile shows faintly through at 0.95. */}
     <div
+      className="bio-sheet-scroll"
       onClick={() => { if (activeBlurb) { setActiveBlurb(null); return; } onClose(); }}
       style={{
         position: 'fixed', inset: 0, zIndex: 100,
-        background: `rgba(0,0,0,${bgVisible ? 0.95 : 0})`,
+        background: `rgba(5,5,5,${bgVisible ? 0.95 : 0})`,
         transition: 'background 200ms ease',
-        overflowY: 'auto',
+        overflowY: 'auto', overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch',
       }}
     >
-      <div style={{ maxWidth: '30rem', margin: '0 auto', paddingBottom: 60 }}>
+      <div style={{ maxWidth: '30rem', margin: '0 auto', paddingBottom: 70 }}>
+        {/* Top spacer — the (disregarded) profile identity shows through the scrim. */}
+        <div style={{ height: 137 }} />
 
-        {/* ── HEADER SPACER — profile page elements show through above sheet ── */}
-        <div style={{ position: 'relative', height: 161 }}>
-          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 1, background: '#E5E1DB' }} />
-        </div>
+        {sectionNodes.map((node, i) => (
+          <Fragment key={i}>
+            {i > 0 && <Divider />}
+            {node}
+          </Fragment>
+        ))}
 
-        {/* ── BIO ── */}
-        {hasBio && (
-          <>
-            <div style={{ display: 'flex', alignItems: 'center', boxSizing: 'border-box', minHeight: 123, paddingTop: 12, paddingBottom: 12, ...sec(80) }}>
-              <div style={{ width: 184, flexShrink: 0, paddingLeft: 7, ...SKB, fontSize: 40, letterSpacing: '-0.8px', color: '#E5E1DB', textTransform: 'uppercase', lineHeight: 1.12 }}>
-                BIO
-              </div>
-              <div style={{ flex: 1, paddingRight: 8, ...SKR, fontSize: 'var(--fs-10)', letterSpacing: '-0.2px', color: '#E5E1DB', lineHeight: 1.12, whiteSpace: 'pre-wrap' }}>
-                {profile.bio}
-              </div>
-            </div>
-            <Divider />
-          </>
-        )}
-
-        {/* ── KIT ── */}
-        {hasKit && (
-          <>
-            <div style={{ display: 'flex', alignItems: 'center', boxSizing: 'border-box', minHeight: 125, paddingTop: 12, paddingBottom: 12, ...sec(160) }}>
-              <div style={{ width: 182, flexShrink: 0, paddingLeft: 7, ...SKB, fontSize: 40, letterSpacing: '-0.8px', color: '#E5E1DB', textTransform: 'uppercase', lineHeight: 1.12 }}>
-                KIT
-              </div>
-              <div style={{ flex: 1, paddingRight: 15 }}>
-                {kitRows.map((row, i) => (
-                  <div key={row.label} style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: i < kitRows.length - 1 ? 12 : 0 }}>
-                    <span style={{ ...SKB, fontSize: 'var(--fs-10)', letterSpacing: '-0.2px', color: '#E5E1DB', textTransform: 'uppercase', lineHeight: 1.12 }}>
-                      {row.label}
-                    </span>
-                    <span style={{ ...SKR, fontSize: 'var(--fs-10)', letterSpacing: '-0.2px', color: '#E5E1DB', textTransform: 'uppercase', lineHeight: 1.12 }}>
-                      {row.value}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <Divider />
-          </>
-        )}
-
-        {/* ── BADGES ── (Scope_Economy.docx §4b / Figma 3593-440)
-            3D-rotating coins, titles directly beneath, tap → blurb pop-up. */}
-        {/* ── META — location + the primary link (quiet rows, the sheet's own
-            language). Renders only when set; JOINED stays desktop-only. ── */}
-        {(() => {
-          const loc = (profile as Record<string, unknown> | null)?.location as string | undefined;
-          const primary = links?.find((l) => (l as { is_primary?: boolean }).is_primary);
-          if (!loc && !primary) return null;
-          return (
-            <>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: '12px 4px', ...sec(180) }}>
-                {loc && (
-                  <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: 'rgba(229,225,219,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                    ◦ {loc}
-                  </span>
-                )}
-                {primary && (
-                  <a href={primary.url} target="_blank" rel="noopener noreferrer" style={{ ...SKB, fontSize: 'var(--fs-8)', color: 'rgba(229,225,219,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em', textDecoration: 'none' }}>
-                    ↗ {primary.title || primary.url.replace(/^https?:\/\/(www\.)?/, '').slice(0, 34)}
-                  </a>
-                )}
-              </div>
-              <Divider />
-            </>
-          );
-        })()}
-
-        {hasBadges && (
-          <>
-            <div style={{ position: 'relative', display: 'flex', alignItems: 'center', boxSizing: 'border-box', minHeight: 150, paddingTop: 12, paddingBottom: 12, ...sec(200) }}>
-              <div style={{ width: 168, flexShrink: 0, paddingLeft: 4, ...SKB, fontSize: 40, letterSpacing: '-2.4px', color: '#E5E1DB', textTransform: 'uppercase', lineHeight: 1.12 }}>
-                BADGES
-              </div>
-              <div style={{ flex: 1, display: 'flex', flexWrap: 'wrap', gap: 18, justifyContent: 'flex-end', paddingRight: 8 }}>
-                {badges.map((b) => (
-                  <div
-                    key={b.key}
-                    onClick={(e) => { e.stopPropagation(); setActiveBlurb(b.key); }}
-                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 17, cursor: 'pointer', width: 52 }} /* pill protrudes 12px + 5px breathing — uniform on ALL badges so titles never stagger */
-                  >
-                    {/* FRAMED design-refresh card, ~50px, ratio-locked (the frames
-                        aren't square — width leads, height follows the asset).
-                        Falls back to the flat min-design icon (pro has no framed
-                        asset yet). COUNT PILL (FC/SRH): a rounded tag half-on the
-                        frame's bottom edge — dark fill, muted brand-red border,
-                        shows the count whenever the badge shows (including 1). */}
-                    {(() => {
-                      const count = b.key === 'firstCut' ? Math.max(1, firstCutCount)
-                        : b.key === 'srh' ? Math.max(1, Number((profile as Record<string, unknown> | null)?.srh_count ?? 0) || 1)
-                        : null;
-                      return (
-                        <span style={{ position: 'relative', display: 'inline-block' }}>
-                          <img src={b.framedSrc ?? b.bannerSrc ?? b.src} alt={b.title} style={{ width: 50, height: 'auto', objectFit: 'contain', display: 'block' }} />
-                          {count != null && (
-                            <span style={{
-                              position: 'absolute', bottom: -12, left: '50%', transform: 'translateX(-50%)', /* covers only 2px of the frame */
-                              /* Gradient stroke (subtle, #7a2e2e family) — padding-box/border-box
-                                 double background keeps the rounded corners. */
-                              background: 'linear-gradient(#0b0b0b, #0b0b0b) padding-box, linear-gradient(180deg, #8f3a3a, #5d2020) border-box',
-                              border: '1px solid transparent', borderRadius: 4.5,
-                              /* WIDE tag (ratified spec): min-width 22 + 8px side padding —
-                                 a single digit reads ~2.5:1 wide; height stays compact
-                                 (~13-14px). Scale proportionally at other badge sizes. */
-                              minWidth: 22, boxSizing: 'border-box', textAlign: 'center',
-                              padding: '0 8px', lineHeight: 1.25,
-                              ...SKB, fontSize: 10, color: '#E5E1DB', fontVariantNumeric: 'tabular-nums',
-                            }}>
-                              {count}
-                            </span>
-                          )}
-                        </span>
-                      );
-                    })()}
-                    <span style={{ ...SKB, fontSize: 'var(--fs-8)', letterSpacing: '0.04em', color: '#E5E1DB', textTransform: 'uppercase', lineHeight: 1.1, textAlign: 'center' }}>
-                      {b.title}
-                    </span>
-                  </div>
-                ))}
-              </div>
-
-              {/* Blurb pop-up is portaled to the document root (see end of file) so
-                  it sits ABOVE everything — it used to live here inside the sheet's
-                  zIndex:100 container, beneath the zIndex:300 stats overlay, which
-                  made it unreadable AND its buttons unreliable. */}
-            </div>
-            <Divider />
-          </>
-        )}
-
-        {/* ── LINKS ── */}
-        {hasLinks && (
-          <>
-            <div style={{ display: 'flex', alignItems: 'center', boxSizing: 'border-box', minHeight: 364, paddingTop: 12, paddingBottom: 12, ...sec(240) }}>
-              <div style={{ width: 175, flexShrink: 0, paddingLeft: 4, ...SKB, fontSize: 40, letterSpacing: '-2.4px', color: '#E5E1DB', textTransform: 'uppercase', lineHeight: 1.12 }}>
-                LINKS
-              </div>
-              <div style={{ flex: 1 }}>
-                {slicedLinks.map((link, i) => {
-                  const thumb = getLinkThumb(link);
-                  const domain = getDomain(link.url);
-                  return (
-                    <div
-                      key={link.id}
-                      onClick={e => { e.stopPropagation(); window.open(link.url, '_blank', 'noopener,noreferrer'); }}
-                      style={{ marginBottom: i < slicedLinks.length - 1 ? 15 : 0, cursor: 'pointer' }}
-                    >
-                      <div style={{ ...SKB, fontSize: 'var(--fs-10)', letterSpacing: '-0.2px', color: '#E5E1DB', textTransform: 'uppercase', textAlign: 'right', lineHeight: 1.12, marginBottom: 4, width: 185 }}>
-                        {link.title || domain}
-                      </div>
-                      <div style={{ position: 'relative', width: 185, height: 78, overflow: 'hidden', background: '#111' }}>
-                        {thumb
-                          ? <img src={thumb} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                          : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                              <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: 'rgba(229,225,219,0.35)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{domain}</span>
-                            </div>
-                        }
-                        {link.is_video && (
-                          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: thumb ? 'rgba(0,0,0,0.35)' : 'transparent' }}>
-                            <div style={{ width: 0, height: 0, borderLeft: '12px solid white', borderTop: '7px solid transparent', borderBottom: '7px solid transparent' }} />
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-            <Divider />
-          </>
-        )}
-
-        {/* ── CONTACT ── */}
-        {showContact && (
-          <>
-            <div style={{ display: 'flex', alignItems: 'center', boxSizing: 'border-box', minHeight: 235, paddingTop: 12, paddingBottom: 12, ...sec(320) }}>
-              <div style={{ width: 180, flexShrink: 0, paddingLeft: 4, ...SKB, fontSize: 40, letterSpacing: '-2px', color: '#E5E1DB', textTransform: 'uppercase', lineHeight: 1.12 }}>
-                CONTACT
-              </div>
-              <div style={{ flex: 1, paddingRight: 8, textAlign: 'right' as const }}>
-                {profile?.contact_email_public && profile?.contact_email && (
-                  <div style={{ ...SKB, fontSize: 'var(--fs-10)', letterSpacing: '-0.2px', lineHeight: 1.12, marginBottom: 11 }}>
-                    <span style={{ color: '#E5E1DB' }}>EMAIL:</span>
-                    <span style={{ color: '#E5E1DB' }}> {profile.contact_email.toUpperCase()}</span>
-                  </div>
-                )}
-                <div
-                  onClick={e => e.stopPropagation()}
-                  style={{ ...SKB, fontSize: 'var(--fs-10)', letterSpacing: '-0.2px', color: '#E5E1DB', textTransform: 'uppercase' as const, lineHeight: 1.12, cursor: 'pointer' }}
-                >
-                  DIRECT MESSAGE ON SCOPE
-                </div>
-              </div>
-            </div>
-            <Divider />
-          </>
-        )}
-
-        {/* ── BACK (+ UNFOLLOW for a followed profile) ──
-            UNFOLLOW lives here, not on the main public profile (which only shows
-            FOLLOW). State is driven by the parent, so it stays in sync with the
-            page's FOLLOW button — unfollowing here flips both. */}
-        <div style={{ display: 'flex', justifyContent: isFollowing && !isOwnProfile && onUnfollow ? 'space-between' : 'flex-end', alignItems: 'center', padding: '20px 8px 0', ...sec(400) }}>
+        {/* Return (+ UNFOLLOW for a followed profile — existing affordance kept). */}
+        <div style={{ display: 'flex', justifyContent: isFollowing && !isOwnProfile && onUnfollow ? 'space-between' : 'flex-end', alignItems: 'center', padding: '24px 8px 0', ...sec(400) }}>
           {isFollowing && !isOwnProfile && onUnfollow && (
             <button
               onClick={(e) => { e.stopPropagation(); if (!followBusy) onUnfollow(); }}
               disabled={followBusy}
-              style={{
-                background: 'transparent', border: '1px solid #E5E1DB', cursor: followBusy ? 'default' : 'pointer',
-                padding: '7px 14px', ...SKB, fontSize: 'var(--fs-10)', letterSpacing: '0.04em', color: '#E5E1DB', textTransform: 'uppercase', lineHeight: 1.12,
-              }}
+              style={{ background: 'transparent', border: '1px solid var(--hairline-strong)', cursor: followBusy ? 'default' : 'pointer', padding: '7px 14px', fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 'var(--fs-10)', letterSpacing: '0.04em', color: 'rgba(229,225,219,0.7)', textTransform: 'uppercase' }}
             >
               UNFOLLOW
             </button>
           )}
           <button
-            onClick={onClose}
-            style={{
-              background: 'transparent', border: 'none', cursor: 'pointer', padding: 0,
-              ...SKB, fontSize: 'var(--fs-10)', letterSpacing: '-0.02em', color: '#E5E1DB', textTransform: 'uppercase', lineHeight: 1.12,
-            }}
+            onClick={(e) => { e.stopPropagation(); onClose(); }}
+            aria-label="Close bio sheet"
+            style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '10px 4px', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 20, letterSpacing: 'var(--track-display)', color: 'rgba(229,225,219,0.67)', lineHeight: 1 }}
           >
-            BACK
+            Return
           </button>
         </div>
 
