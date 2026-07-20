@@ -17,7 +17,6 @@ import { getAspectRatio } from '@/lib/aspectRatio';
 import { feedImage } from '@/lib/mediaUrl';
 import GradedVideo from '@/components/finishing/GradedVideo';
 import CollectSheetGate from '@/components/economy/CollectSheetGate';
-import TickerMark from '@/components/economy/TickerMark';
 import CommentList, { useCommentLikes, ReplyComposer, type UIComment } from '@/components/CommentList';
 import { replyToComment } from '@/lib/commentInteractions';
 
@@ -33,10 +32,10 @@ const usd = (n: number) => (n >= 1000 ? `$${Math.round(n).toLocaleString()}` : `
 function Chevron({ dir }: { dir: 1 | -1 }) {
   return (
     <svg
-      width="10" height="22" viewBox="0 0 10 22" fill="none"
-      style={{ display: 'block', transform: dir === -1 ? 'scaleX(-1)' : undefined }}
+      width="11" height="24" viewBox="0 0 11 24" fill="none"
+      style={{ display: 'block', transform: dir === -1 ? 'scaleX(-1)' : undefined, filter: 'blur(0.3px)' }}
     >
-      <path d="M1 1L8.6 11L1 21" stroke="#E5E1DB" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M1 1L9.4 12L1 23" stroke="#E5E1DB" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -221,11 +220,12 @@ export default function DesktopPostView({
               <span style={{ border: `1px solid ${HAIR}`, borderRadius: 3, padding: '2px 5px', display: 'inline-flex' }}>
                 <img src="/badges/first-cut-badge-min-design-01.png" alt="" style={{ width: 13, height: 13, objectFit: 'contain', display: 'block' }} />
               </span>
-              <span style={{ ...SKB, fontSize: 11, color: fcCount > 0 ? '#E5E1DB' : 'rgba(229,225,219,0.6)', fontVariantNumeric: 'tabular-nums' }}>{fcCount} / 10</span>
+              {/* numerals 95 Black per frame */}
+              <span style={{ fontFamily: 'var(--font-black)', fontWeight: 900, fontSize: 11.5, color: fcCount > 0 ? '#E5E1DB' : 'rgba(229,225,219,0.6)', fontVariantNumeric: 'tabular-nums', letterSpacing: '0.02em' }}>{fcCount} / 10</span>
             </span>
           )}
           {coinAddr && (
-            <button onClick={() => setCollectOpen(true)} style={{ marginLeft: 'auto', ...SKB, fontSize: 11, letterSpacing: '0.1em', color: '#E5E1DB', textTransform: 'uppercase', width: 82, height: 22, border: '1.2px solid #525252', background: 'transparent', cursor: 'pointer', lineHeight: 1 }}>
+            <button onClick={() => setCollectOpen(true)} style={{ marginLeft: 'auto', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 13.5, letterSpacing: 'var(--track-display)', color: 'rgba(229,225,219,0.7)', textTransform: 'uppercase' }}>
               COLLECT
             </button>
           )}
@@ -244,10 +244,10 @@ export default function DesktopPostView({
 
         {/* caption + location·date */}
         {typeof post?.caption === 'string' && post.caption && (
-          <p style={{ ...SKR, fontSize: 12, color: 'rgba(229,225,219,0.5)', lineHeight: 1.5, margin: lightbox ? '10px 0 0' : '12px 0 0', maxWidth: 381 }}>{post.caption}</p>
+          <p style={{ ...SKR, fontSize: 12, color: 'rgba(229,225,219,0.5)', lineHeight: 1.07, letterSpacing: 'var(--track-body)', margin: lightbox ? '10px 0 0' : '12px 0 0', maxWidth: 440 }}>{post.caption}</p>
         )}
         {(location || (lightbox && !!post?.created_at)) && (
-          <p style={{ ...SKB, fontSize: 8, color: 'rgba(229,225,219,0.45)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '10px 0 0', display: 'flex', alignItems: 'center', gap: 5 }}>
+          <p style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 8, color: 'rgba(229,225,219,0.5)', textTransform: 'uppercase', letterSpacing: 'var(--track-body)', margin: '10px 0 0', display: 'flex', alignItems: 'center', gap: 5 }}>
             {location && <><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="rgba(229,225,219,0.45)" strokeWidth="1.8"><path d="M12 21s-6.5-5.4-6.5-10.5A6.5 6.5 0 0 1 12 4a6.5 6.5 0 0 1 6.5 6.5C18.5 15.6 12 21 12 21z" /><circle cx="12" cy="10.5" r="2.2" /></svg>{location}</>}
             {!!location && lightbox && !!post?.created_at && <span style={{ opacity: 0.5 }}>·</span>}
             {lightbox && !!post?.created_at && <span>{new Date(post.created_at as string).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>}
@@ -256,48 +256,53 @@ export default function DesktopPostView({
         {belowLeft && <div style={{ marginTop: lightbox ? 'auto' : undefined, paddingTop: 14 }}>{belowLeft}</div>}
       </div>
 
-      {/* ═══ RIGHT PANEL (309×573, #030303) ═══ */}
-      <div style={{ width: 309, flexShrink: 0, height: lightbox ? 600 : 573, marginTop: lightbox ? 0 : -25, background: '#030303', border: '0.25px solid rgba(229,225,219,0.27)', display: 'flex', flexDirection: 'column' }}>
-        {/* header strip: ticker · MC · collectors */}
-        {/* three zones distributed across the panel width, hairlines between */}
-        <div style={{ display: 'flex', alignItems: 'center', padding: '12px 0' }}>
-          {/* Unminted posts (no coin) carry NO market — quiet dash, never $0.00/0. */}
-          <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
-            {coinAddr && (post?.ticker as string) ? <TickerMark ticker={post.ticker as string} size={11} /> : <span style={{ ...SKB, fontSize: 11, color: 'rgba(229,225,219,0.35)' }}>—</span>}
-          </div>
-          <div style={{ width: 1, height: 28, background: HAIR }} />
-          <div style={{ flex: 1, textAlign: 'center' }}>
-            <p style={{ ...SKB, fontSize: 8, color: 'rgba(229,225,219,0.45)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>MC</p>
-            <p style={{ ...SKB, fontSize: 11, color: '#E5E1DB', margin: '2px 0 0', fontVariantNumeric: 'tabular-nums' }}>{coinAddr ? (market ? usd(market.mcUsd) : '…') : '—'}</p>
-          </div>
-          <div style={{ width: 1, height: 28, background: HAIR }} />
-          <div style={{ flex: 1, textAlign: 'center' }}>
-            <p style={{ ...SKB, fontSize: 8, color: 'rgba(229,225,219,0.45)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>COLLECTORS</p>
-            <p style={{ ...SKB, fontSize: 11, color: '#E5E1DB', margin: '2px 0 0', fontVariantNumeric: 'tabular-nums' }}>{coinAddr ? (market?.holders ?? '…') : '—'}</p>
+      {/* ═══ RIGHT PANEL (node 69:196 — 309×573, transparent, softened hairline
+          border, no radius) ═══ */}
+      <div style={{ position: 'relative', width: 309, flexShrink: 0, height: lightbox ? 600 : 573, marginTop: lightbox ? 0 : -25, background: 'transparent', display: 'flex', flexDirection: 'column' }}>
+        {/* Border layer — 0.25px ivory, ~30%, softened 0.9px (ledger-recipe kin, no radius). */}
+        <div aria-hidden style={{ position: 'absolute', inset: 0, border: '0.25px solid #E5E1DB', opacity: 0.3, filter: 'blur(0.9px)', pointerEvents: 'none' }} />
+
+        {/* Ticker header — [ TICKER ] left · MC + COLLECTORS right. Dash rule for
+            unminted (no coin) across ticker + both values. */}
+        <div style={{ position: 'relative', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '15px 12px 11px' }}>
+          <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 11, letterSpacing: 'var(--track-wide)', color: 'rgba(229,225,219,0.8)', marginTop: 6 }}>
+            {coinAddr && (post?.ticker as string) ? `[ ${String(post.ticker).toUpperCase()} ]` : '[ — ]'}
+          </span>
+          <div style={{ display: 'flex', gap: 22 }}>
+            <div>
+              <p style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 10, color: 'rgba(229,225,219,0.46)', textTransform: 'uppercase', letterSpacing: 'var(--track-body)', margin: 0 }}>MC</p>
+              <p style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 11, color: 'rgba(229,225,219,0.67)', margin: '3px 0 0', fontVariantNumeric: 'tabular-nums' }}>{coinAddr ? (market ? usd(market.mcUsd) : '…') : '—'}</p>
+            </div>
+            <div>
+              <p style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 10, color: 'rgba(229,225,219,0.46)', textTransform: 'uppercase', letterSpacing: 'var(--track-body)', margin: 0 }}>COLLECTORS</p>
+              <p style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 11, color: 'rgba(229,225,219,0.67)', margin: '3px 0 0', fontVariantNumeric: 'tabular-nums' }}>{coinAddr ? (market?.holders ?? '…') : '—'}</p>
+            </div>
           </div>
         </div>
-        <div style={{ height: 1, background: HAIR }} />
+        <div style={{ position: 'relative', height: 1, background: HAIR }} />
 
-        {/* scrollable body: leaderboard + comments */}
-        <div style={{ flex: 1, overflowY: 'auto' }}>
+        {/* scrollable body: First Cut + comments */}
+        <div style={{ position: 'relative', flex: 1, overflowY: 'auto' }}>
           {coinAddr && (
             <div style={{ padding: '12px 12px 6px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
                 <span style={{ border: `1px solid ${HAIR}`, borderRadius: 4, width: 28, height: 22, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
                   <img src="/badges/first-cut-badge-min-design-01.png" alt="" style={{ width: 14, height: 14, objectFit: 'contain' }} />
                 </span>
-                <span style={{ ...SKB, fontSize: 11, color: 'rgba(229,225,219,0.5)', textTransform: 'uppercase', letterSpacing: '0.06em', lineHeight: 1.25, flex: 1 }}>FIRST CUT<br />LEADERBOARD</span>
-                <span style={{ ...SKB, fontSize: 11, color: fcCount > 0 ? '#E5E1DB' : 'rgba(229,225,219,0.5)', fontVariantNumeric: 'tabular-nums' }}>{fcCount} / 10</span>
+                <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 13, color: 'rgba(229,225,219,0.5)', textTransform: 'uppercase', letterSpacing: 'var(--track-body)', flex: 1 }}>FIRST CUT</span>
+                <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 11, color: fcCount > 0 ? 'rgba(229,225,219,0.7)' : 'rgba(229,225,219,0.5)', fontVariantNumeric: 'tabular-nums' }}>{fcCount} / 10</span>
               </div>
-              <div style={{ margin: '10px 0 0' }}>
+              {/* ranked list — rank · avatar · @handle. Per-holder PRICE is FLAGGED
+                  out: the FC ledger carries no price field (adding it = FC-logic). */}
+              <div style={{ margin: '12px 0 0' }}>
                 {(fcHolders ?? []).map((h) => (
-                  <div key={h.rank} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 0' }}>
-                    <span style={{ ...SKB, fontSize: 11, color: 'rgba(229,225,219,0.5)', width: 18, fontVariantNumeric: 'tabular-nums' }}>{String(h.rank).padStart(2, '0')}</span>
+                  <button key={h.rank} onClick={() => h.username && router.push('/profile/' + h.username)} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '6px 0', width: '100%', background: 'none', border: 'none', cursor: h.username ? 'pointer' : 'default', textAlign: 'left' }}>
+                    <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 11, color: 'rgba(229,225,219,0.5)', width: 18, fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>{String(h.rank).padStart(2, '0')}</span>
                     {h.avatarUrl ? (
-                      <img src={feedImage(h.avatarUrl, 48)} alt="" style={{ width: 12, height: 12, borderRadius: '50%', objectFit: 'cover' }} />
-                    ) : <span style={{ width: 12, height: 12, borderRadius: '50%', background: '#2a2a2a', display: 'inline-block' }} />}
-                    <span style={{ ...SKB, fontSize: 10, color: 'rgba(229,225,219,0.65)', textTransform: 'uppercase', flex: 1 }}>@{h.username ?? '—'}</span>
-                  </div>
+                      <img src={feedImage(h.avatarUrl, 48)} alt="" style={{ width: 12, height: 12, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+                    ) : <span style={{ width: 12, height: 12, borderRadius: '50%', background: '#2a2a2a', display: 'inline-block', flexShrink: 0 }} />}
+                    <span style={{ fontFamily: 'var(--font-body)', fontWeight: 400, fontSize: 10, color: 'rgba(229,225,219,0.44)', textTransform: 'uppercase', letterSpacing: 'var(--track-wide)', flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>@ {h.username ?? '—'}</span>
+                  </button>
                 ))}
                 {fcHolders && fcHolders.length === 0 && (
                   <p style={{ ...SKR, fontSize: 10, color: 'rgba(229,225,219,0.35)', textTransform: 'uppercase', margin: '4px 0 0' }}>ALL 10 SLOTS OPEN</p>
@@ -307,9 +312,10 @@ export default function DesktopPostView({
           )}
           <div style={{ height: 1, background: HAIR, margin: '6px 0' }} />
 
-          {/* COMMENTS */}
+          {/* COMMENTS — retheme + relayout of the presentation; CommentList engine
+              (likes, one-level replies) unchanged. */}
           <div style={{ padding: '6px 12px 12px' }}>
-            <p style={{ ...SKB, fontSize: 11, color: 'rgba(229,225,219,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 8px' }}>COMMENTS ( {comments.length} )</p>
+            <p style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 11, color: 'rgba(229,225,219,0.5)', textTransform: 'uppercase', letterSpacing: 'var(--track-body)', margin: '0 0 8px' }}>COMMENTS ( {comments.length} )</p>
             <CommentList
               comments={comments as UIComment[]}
               variant="desktop"
@@ -324,22 +330,22 @@ export default function DesktopPostView({
           </div>
         </div>
 
-        {/* ADD A COMMENT */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', borderTop: `1px solid ${HAIR}` }}>
-          {viewer?.avatar ? (
-            <img src={feedImage(viewer.avatar, 96)} alt="" style={{ width: 14, height: 14, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
-          ) : (
-            <span style={{ width: 14, height: 14, borderRadius: '50%', background: '#2a2a2a', flexShrink: 0 }} />
-          )}
-          <input
-            ref={commentInputRef}
-            value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') submitComment(); e.stopPropagation(); }}
-            placeholder="ADD A COMMENT"
-            style={{ ...SKR, flex: 1, fontSize: 10, color: '#E5E1DB', background: 'rgba(75,75,75,0.17)', border: 'none', outline: 'none', padding: '7px 9px', letterSpacing: '0.02em' }} /* NO text-transform — comments type & render as typed */
-          />
-          <button onClick={submitComment} aria-label="Send" style={{ background: 'transparent', border: 'none', cursor: 'pointer', ...SKB, fontSize: 11, color: 'rgba(229,225,219,0.7)', padding: 4 }}>↑</button>
+        {/* COMPOSER — ivory ~5% fill strip, no border (node 69:196). Input font-size
+            kept at 13px (desktop sanity — the frame's 8px placeholder is display-only). */}
+        <div style={{ position: 'relative', padding: '8px 12px 12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(229,225,219,0.05)', padding: '0 8px' }}>
+            <input
+              ref={commentInputRef}
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') submitComment(); e.stopPropagation(); }}
+              placeholder="Add a comment..."
+              style={{ ...SKR, flex: 1, fontSize: 13, color: '#E5E1DB', background: 'transparent', border: 'none', outline: 'none', padding: '8px 2px', letterSpacing: 'var(--track-body)' }}
+            />
+            <button onClick={submitComment} aria-label="Send" style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4, lineHeight: 0 }}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(229,225,219,0.7)" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" /></svg>
+            </button>
+          </div>
         </div>
         {replyingTo && (
           <ReplyComposer
