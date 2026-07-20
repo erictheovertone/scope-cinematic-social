@@ -6,6 +6,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { getAllPosts, FEED_PAGE_SIZE } from "@/lib/postsService";
 import PostItem from "@/components/PostItem";
+import GrainLayer from "@/components/GrainLayer";
 import PostModal from "@/components/PostModal";
 import MirageView from "@/components/MirageView";
 import TheatreMode from "@/components/TheatreMode";
@@ -384,6 +385,10 @@ export default function Home() {
           zIndex: 1,
         }}
       >
+        {/* Grain (Brief 1b) — mounted INSIDE the fixed feed scroller (load-bearing
+            context): a body-level layer can't interleave the scroller's trapped z.
+            Fixed → viewport-pinned (doesn't scroll); media promoted above it. */}
+        <GrainLayer position="fixed" />
         {/* Clearance for the floating frosted PILL: bottom 15px + safe-inset, height 38
             → its top is ~53px + inset up. Reserve enough scroll space that the last post
             can rise fully ABOVE the pill (mid-scroll content still flows under the glass). */}

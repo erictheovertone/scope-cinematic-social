@@ -33,9 +33,12 @@ interface PostCellProps {
   index: number;
   onClick?: () => void;
   showSoundToggle?: boolean;
+  /** Brief 1b: lift the whole cell (media + its overlays) above a surface grain
+      layer (--z-media). Opt-in; default off leaves the cell unchanged. */
+  promote?: boolean;
 }
 
-export default function PostCell({ post, layoutId, index, onClick, showSoundToggle = false, fcMark = false }: PostCellProps) {
+export default function PostCell({ post, layoutId, index, onClick, showSoundToggle = false, fcMark = false, promote = false }: PostCellProps) {
   const ratio = getAspectRatio(layoutId, index);
   const padding = ratioPadding(ratio);
   // The minting tile narrates: while this post's coin is being created the
@@ -52,6 +55,7 @@ export default function PostCell({ post, layoutId, index, onClick, showSoundTogg
         cursor: onClick ? 'pointer' : 'default',
         backgroundColor: '#222',
         overflow: 'hidden',
+        ...(promote ? { zIndex: 'var(--z-media)' as React.CSSProperties['zIndex'] } : {}),
       }}
       onClick={onClick}
     >

@@ -8,6 +8,7 @@ import { feedImage } from "@/lib/mediaUrl";
 import { BADGES, resolveBadges, BADGE_SHORT_BLURB, BADGE_DISPLAY_NAME, type BadgeKey } from "@/lib/economy/badges";
 import { economyPreviewEnabled } from "@/lib/economy/flag";
 import { LedgerCard } from "@/components/Ledger";
+import GrainLayer from "@/components/GrainLayer";
 import { useRouter } from "next/navigation";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
@@ -132,6 +133,12 @@ export default function ProfileDataSheet({
       ? `opacity 220ms cubic-bezier(0.16,1,0.3,1) ${delay}ms, transform 220ms cubic-bezier(0.16,1,0.3,1) ${delay}ms`
       : 'none',
   });
+  // Brief 1b: opacity-only entrance (NO transform → no stacking context) for the
+  // Links section, so its thumbnails can promote above the sheet grain.
+  const secFlat = (delay: number): React.CSSProperties => ({
+    opacity: sectionsVisible ? 1 : 0,
+    transition: sectionsVisible ? `opacity 220ms cubic-bezier(0.16,1,0.3,1) ${delay}ms` : 'none',
+  });
 
   // Full-width hairline between sections (frame reads as a faint rule, not solid ivory).
   const Divider = () => <div style={{ height: 1, background: 'var(--hairline)' }} />;
@@ -234,7 +241,7 @@ export default function ProfileDataSheet({
   // LINKS — right-aligned label over a 185×78 preview thumbnail. No thumbnail →
   // ledger-card placeholder (existing preview paths only; no new fetch pipeline).
   if (hasLinks) sectionNodes.push(
-    <div key="links" style={{ ...sectionPad, ...sec(260) }}>
+    <div key="links" style={{ ...sectionPad, ...secFlat(260) }}>
       <div className="soften-display" style={titleStyle}>Links</div>
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 16 }}>
         {slicedLinks.map((link) => {
@@ -246,7 +253,7 @@ export default function ProfileDataSheet({
                 {link.title || domain}
               </div>
               {thumb ? (
-                <div style={{ position: 'relative', width: 185, height: 78, overflow: 'hidden', borderRadius: 4, background: '#111' }}>
+                <div style={{ position: 'relative', width: 185, height: 78, overflow: 'hidden', borderRadius: 4, background: '#111', zIndex: 'var(--z-media)' as React.CSSProperties['zIndex'] }}>
                   <img src={thumb} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                   {link.is_video && (
                     <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.35)' }}>
@@ -304,6 +311,9 @@ export default function ProfileDataSheet({
         overflowY: 'auto', overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch',
       }}
     >
+      {/* Grain (Brief 1b) — this takeover escapes the page grain (its own z100
+          context), so it mounts its own. Sheet chrome grained; link thumbs promoted. */}
+      <GrainLayer position="fixed" />
       <div style={{ maxWidth: '30rem', margin: '0 auto', paddingBottom: 70 }}>
         {/* ── SHEET HEADER (Brief 2.4a) — opaque, in-scroll identity block: PFP +
             name + handle + expanded 3-group stats (node 141:733's Haas header). ── */}

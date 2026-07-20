@@ -18,6 +18,7 @@ import { feedImage } from '@/lib/mediaUrl';
 import GradedVideo from '@/components/finishing/GradedVideo';
 import CollectSheetGate from '@/components/economy/CollectSheetGate';
 import CommentList, { useCommentLikes, ReplyComposer, type UIComment } from '@/components/CommentList';
+import GrainLayer from '@/components/GrainLayer';
 import { replyToComment } from '@/lib/commentInteractions';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
@@ -152,7 +153,11 @@ export default function DesktopPostView({
   // width (3C's media-anchoring moved them between ratios, under the cursor).
 
   return (
-    <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', paddingBottom: lightbox ? 0 : 80, marginTop: 0 }}> {/* frame seat ~y299 (measured 319 at mt12 — the last 20 trimmed here + the 3-box row) */}
+    <div style={{ position: 'relative', display: 'flex', gap: 12, alignItems: 'flex-start', paddingBottom: lightbox ? 0 : 80, marginTop: 0 }}> {/* frame seat ~y299 (measured 319 at mt12 — the last 20 trimmed here + the 3-box row) */}
+      {/* Grain (Brief 1b) — surface-local: the stage is a Framer layoutId transform
+          context (load-bearing), so a page grain can't interleave it. Grain absolute
+          over the post-view; the stage promotes above it, panel/controls stay under. */}
+      <GrainLayer position="absolute" />
       {/* ═══ LEFT: the stage + below-media rows ═══ */}
       {/* FRAME GEOMETRY (round 3): narrow ~20px ARROW POCKETS hugging the media
           (frame x86/x1083 vs stage x103/1077); stage right edge ~30px from the
@@ -180,7 +185,7 @@ export default function DesktopPostView({
               morph target. Each post sits at its own ratio within. 2.39 lets the
               common scope/pana posts FILL the width so the media hugs the arrows
               (the #8 binding-dimension fix — a 2.75 box pillarboxed them small). */}
-          <motion.div layoutId={`dpost-${postId}`} transition={{ layout: { duration: 0.18, ease: 'easeOut' } }} style={{ width: '100%', aspectRatio: '2.39 / 1', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+          <motion.div layoutId={`dpost-${postId}`} transition={{ layout: { duration: 0.18, ease: 'easeOut' } }} style={{ position: 'relative', zIndex: 'var(--z-media)' as React.CSSProperties['zIndex'], width: '100%', aspectRatio: '2.39 / 1', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
             <div style={{ ...(ar >= 2.39 ? { width: '100%' } : { height: '100%' }), aspectRatio: `${ar}`, overflow: 'hidden', background: '#0a0a0a' }}>
               {isVideo ? (
                 <GradedVideo

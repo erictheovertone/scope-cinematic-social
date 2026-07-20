@@ -58,6 +58,9 @@ input, textarea, select,
 }
 html.no-soften { --text-soften-micro: 0px; --text-soften-base: 0px; --text-soften-display: 0px; }
 
+/* Grain kill switch (Brief 1b) — device A/B, same pattern as no-soften. */
+html.no-grain .grain-layer { display: none !important; }
+
 /* ── Standalone PWA: LOCK THE DOCUMENT ROOT ───────────────────────────────────
    Installed (standalone) iOS has no browser chrome, so the body itself rubber-bands
    and drags the whole web view (the home feed's symptom). Lock html/body so the page
@@ -93,6 +96,14 @@ html, body {
    (desktop display type). Decimal names use `_`. */
 :root {
   --bp-desktop: 1024px;
+
+  /* ── Z-TOKEN SCALE (Brief 1b — the grain law) ──────────────────────────────
+     Within any surface stacking context: chrome < grain < media. Spaced for
+     insertion. Values clear in-surface chrome (header ~200, wallet ~301) so the
+     grain covers it; media wrappers promote above the grain. No magic z numbers. */
+  --z-chrome: 400;
+  --z-grain: 500;
+  --z-media: 600;
 
   /* ── REBRAND FOUNDATION (Brief 1) ──────────────────────────────────────────
      Semantic font tokens (all resolve to Haas; weight applied by the consumer). */
