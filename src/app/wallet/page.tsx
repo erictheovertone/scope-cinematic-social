@@ -656,7 +656,7 @@ export default function WalletPage() {
     <div
       ref={containerRef}
       className="bg-black"
-      style={{ position: "fixed", inset: 0, overflowY: "auto", color: "#E5E1DB", ...(skinOverlay ? { width: 375, right: "auto" } : {}) }}
+      style={{ position: "fixed", inset: 0, overflowY: "auto", color: "#E5E1DB", background: "#050505", isolation: "isolate", ...(skinOverlay ? { width: 375, right: "auto" } : {}) }}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >

@@ -153,7 +153,7 @@ export default function DesktopPostView({
   // width (3C's media-anchoring moved them between ratios, under the cursor).
 
   return (
-    <div style={{ position: 'relative', display: 'flex', gap: 12, alignItems: 'flex-start', paddingBottom: lightbox ? 0 : 80, marginTop: 0 }}> {/* frame seat ~y299 (measured 319 at mt12 — the last 20 trimmed here + the 3-box row) */}
+    <div style={{ position: 'relative', isolation: 'isolate', background: '#050505', display: 'flex', gap: 12, alignItems: 'flex-start', paddingBottom: lightbox ? 0 : 80, marginTop: 0 }}> {/* frame seat ~y299 (measured 319 at mt12 — the last 20 trimmed here + the 3-box row). Brief 1b-3: #050505 + isolation → local blend group for the grain (no fixed children here). */}
       {/* Grain (Brief 1b) — surface-local: the stage is a Framer layoutId transform
           context (load-bearing), so a page grain can't interleave it. Grain absolute
           over the post-view; the stage promotes above it, panel/controls stay under. */}

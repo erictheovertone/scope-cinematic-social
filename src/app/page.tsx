@@ -383,6 +383,13 @@ export default function Home() {
           // any residual sub-pixel child overflow so there's nothing to pan sideways.
           overflowX: 'hidden',
           zIndex: 1,
+          // Brief 1b-3: paint the #050505 canvas HERE (was transparent → the grain's
+          // mix-blend-overlay had no local backdrop over the card gaps and rendered as
+          // a flat gray sheet). isolation:isolate makes grain + chrome + canvas one
+          // blend group (feedRef is already a fixed/z1 context, so this is explicit,
+          // not a new context — no fixed-child/z change).
+          background: '#050505',
+          isolation: 'isolate',
         }}
       >
         {/* Grain (Brief 1b) — mounted INSIDE the fixed feed scroller (load-bearing
