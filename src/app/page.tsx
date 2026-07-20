@@ -6,7 +6,6 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { getAllPosts, FEED_PAGE_SIZE } from "@/lib/postsService";
 import PostItem from "@/components/PostItem";
-import GrainLayer from "@/components/GrainLayer";
 import PostModal from "@/components/PostModal";
 import MirageView from "@/components/MirageView";
 import TheatreMode from "@/components/TheatreMode";
@@ -383,19 +382,8 @@ export default function Home() {
           // any residual sub-pixel child overflow so there's nothing to pan sideways.
           overflowX: 'hidden',
           zIndex: 1,
-          // Brief 1b-3: paint the #050505 canvas HERE (was transparent → the grain's
-          // mix-blend-overlay had no local backdrop over the card gaps and rendered as
-          // a flat gray sheet). isolation:isolate makes grain + chrome + canvas one
-          // blend group (feedRef is already a fixed/z1 context, so this is explicit,
-          // not a new context — no fixed-child/z change).
-          background: '#050505',
-          isolation: 'isolate',
         }}
       >
-        {/* Grain (Brief 1b) — mounted INSIDE the fixed feed scroller (load-bearing
-            context): a body-level layer can't interleave the scroller's trapped z.
-            Fixed → viewport-pinned (doesn't scroll); media promoted above it. */}
-        <GrainLayer position="fixed" />
         {/* Clearance for the floating frosted PILL: bottom 15px + safe-inset, height 38
             → its top is ~53px + inset up. Reserve enough scroll space that the last post
             can rise fully ABOVE the pill (mid-scroll content still flows under the glass). */}

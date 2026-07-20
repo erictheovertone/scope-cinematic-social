@@ -8,7 +8,6 @@ import { feedImage } from "@/lib/mediaUrl";
 import { BADGES, resolveBadges, BADGE_SHORT_BLURB, BADGE_DISPLAY_NAME, type BadgeKey } from "@/lib/economy/badges";
 import { economyPreviewEnabled } from "@/lib/economy/flag";
 import { LedgerCard } from "@/components/Ledger";
-import GrainLayer from "@/components/GrainLayer";
 import { useRouter } from "next/navigation";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
@@ -133,8 +132,9 @@ export default function ProfileDataSheet({
       ? `opacity 220ms cubic-bezier(0.16,1,0.3,1) ${delay}ms, transform 220ms cubic-bezier(0.16,1,0.3,1) ${delay}ms`
       : 'none',
   });
-  // Brief 1b: opacity-only entrance (NO transform → no stacking context) for the
-  // Links section, so its thumbnails can promote above the sheet grain.
+  // Opacity-only entrance for the Links section (no transform). Originally added
+  // for grain (avoided a stacking context); RETAINED after grain removal (Brief
+  // 1b-X) — it's simply a cleaner entrance and reverting re-risks the sheet for no gain.
   const secFlat = (delay: number): React.CSSProperties => ({
     opacity: sectionsVisible ? 1 : 0,
     transition: sectionsVisible ? `opacity 220ms cubic-bezier(0.16,1,0.3,1) ${delay}ms` : 'none',
@@ -253,7 +253,7 @@ export default function ProfileDataSheet({
                 {link.title || domain}
               </div>
               {thumb ? (
-                <div style={{ position: 'relative', width: 185, height: 78, overflow: 'hidden', borderRadius: 4, background: '#111', zIndex: 'var(--z-media)' as React.CSSProperties['zIndex'] }}>
+                <div style={{ position: 'relative', width: 185, height: 78, overflow: 'hidden', borderRadius: 4, background: '#111' }}>
                   <img src={thumb} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                   {link.is_video && (
                     <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.35)' }}>
@@ -311,9 +311,6 @@ export default function ProfileDataSheet({
         overflowY: 'auto', overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch',
       }}
     >
-      {/* Grain (Brief 1b) — this takeover escapes the page grain (its own z100
-          context), so it mounts its own. Sheet chrome grained; link thumbs promoted. */}
-      <GrainLayer position="fixed" />
       <div style={{ maxWidth: '30rem', margin: '0 auto', paddingBottom: 70 }}>
         {/* ── SHEET HEADER (Brief 2.4a) — opaque, in-scroll identity block: PFP +
             name + handle + expanded 3-group stats (node 141:733's Haas header). ── */}

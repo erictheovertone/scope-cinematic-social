@@ -22,7 +22,6 @@ import { getEarnings, sumAll, type EarningsData } from "@/lib/economy/earnings";
 import { feedImage } from "@/lib/mediaUrl";
 import EarningsSheet from "@/components/economy/EarningsSheet";
 import { LedgerCard, DottedLeader } from "@/components/Ledger";
-import GrainLayer from "@/components/GrainLayer";
 import SwapSheet, { type SwapInitial } from "@/components/SwapSheet";
 import ImportAssetSheet from "@/components/ImportAssetSheet";
 import { getUserAssets, readAssetBalance, type UserAsset } from "@/lib/userAssets";
@@ -656,13 +655,10 @@ export default function WalletPage() {
     <div
       ref={containerRef}
       className="bg-black"
-      style={{ position: "fixed", inset: 0, overflowY: "auto", color: "#E5E1DB", background: "#050505", isolation: "isolate", ...(skinOverlay ? { width: 375, right: "auto" } : {}) }}
+      style={{ position: "fixed", inset: 0, overflowY: "auto", color: "#E5E1DB", ...(skinOverlay ? { width: 375, right: "auto" } : {}) }}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      {/* Grain (Brief 1b) — mounted inside the fixed wallet scroller. No user media
-          on this surface → nothing to promote; grain sits over all wallet chrome. */}
-      <GrainLayer position="fixed" />
       {/* PIXEL-QA skin overlay — dev-only (?skin=1), 375 reference, 50%.
           Left-anchored (with the root pinned to 375 in skin mode) so alignment
           holds regardless of the actual viewport width. */}

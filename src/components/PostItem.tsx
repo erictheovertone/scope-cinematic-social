@@ -358,10 +358,7 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
       {card ? metadataRow : metadataRowMobile}
       {/* Media: card is edge-of-card as before; !card insets 5px so the image
           aligns to the frame's content column (x=7 on 375: 2px container + 5px). */}
-      {/* Brief 1b: mobile media rides ABOVE the feed grain (--z-media). Desktop
-          (card) is unpromoted — its grain isn't wired here. Byline/action/caption
-          stay below the grain (grained). */}
-      <div style={card ? undefined : { padding: '0 5px', position: 'relative', zIndex: 'var(--z-media)' }}>
+      <div style={card ? undefined : { padding: '0 5px' }}>
       {is43 ? (
         <PillarboxFrame
           onClick={openLightbox}

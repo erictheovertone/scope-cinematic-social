@@ -9,7 +9,6 @@ import { usePrivy } from "@privy-io/react-auth";
 import { getUserByPrivyId, getProfile, getFollowerCount, getFollowingCount, getUserDecks, createDeck, getProfileLinks, isProMember, type Deck, type ProfileLink } from "@/lib/userService";
 import ProfileDataSheet from "@/components/ProfileDataSheet";
 import PressPop from "@/components/PressPop";
-import GrainLayer from "@/components/GrainLayer";
 import { getUserPosts } from '@/lib/postsService';
 import CreatePostFlow from "@/components/CreatePostFlow";
 import FollowListModal from "@/components/FollowListModal";
@@ -387,14 +386,7 @@ const userLayoutId = stableLayoutId;
 
   return (
     <div className="relative">{/* Non-scrolling viewport root — fixed chrome (footer + snapped frame) is lifted OUT below as SIBLINGS of the scroller, so on iOS standalone it anchors to the VIEWPORT, not the .screen-min scroll container (which floated the footer above the screen bottom). */}
-    <div className="bg-black relative w-full app-shell screen-min mx-auto pb-[60px]" style={{ background: '#050505' }}>
-      {/* Grain (Brief 1b) — profile chain is CLEAN, so a viewport-fixed layer at the
-          root works; grid cells promote above it (--z-media). Header/tabs stay under.
-          Brief 1b-3: app-shell paints #050505 (was bg-black #000) so the grain has a
-          real element to blend against in the body group. isolation WITHHELD here —
-          the app-shell is not already a stacking context, and isolating it would
-          restack the pinned tabs / promoted cells / inline bio sheet (landmine). */}
-      <GrainLayer position="fixed" />
+    <div className="bg-black relative w-full app-shell screen-min mx-auto pb-[60px]">
       <OnboardingModal
         onComplete={() => {
           if (user?.id && shouldShowA2HS(user.id)) {
@@ -701,7 +693,6 @@ const userLayoutId = stableLayoutId;
                             layoutId={post.layout_id || 'scope'}
                             index={index}
                             onClick={() => openPost(post, index)}
-                            promote
                           />
                         </div>
                       ))}
@@ -718,7 +709,6 @@ const userLayoutId = stableLayoutId;
                         layoutId={userLayoutId}
                         index={index}
                         onClick={() => openPost(post, index)}
-                        promote
                       />
                     ))}
                   </div>
