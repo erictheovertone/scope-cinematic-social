@@ -566,7 +566,7 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
                     placeholder="0"
                     value={buyUsd}
                     onChange={(e) => setBuyUsd(e.target.value.replace(/[^0-9.]/g, ''))}
-                    style={{ ...SKB, fontSize: 'var(--fs-34)', color: '#E5E1DB', background: 'transparent', border: 'none', outline: 'none', width: '100%', padding: 0, fontVariantNumeric: 'tabular-nums' }}
+                    style={{ ...SKB, fontSize: 'max(16px, var(--fs-34))', color: '#E5E1DB', WebkitTextFillColor: '#E5E1DB', caretColor: '#E5E1DB', background: 'transparent', WebkitAppearance: 'none', appearance: 'none', border: 'none', outline: 'none', width: '100%', padding: 0, fontVariantNumeric: 'tabular-nums' }}
                   />
                 </div>
 
@@ -682,7 +682,7 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
                         placeholder="0"
                         value={sellPieces || ''}
                         onChange={(e) => { setConfirmEndFirstCut(false); setSellPieces(Math.min(held, Math.max(0, parseInt(e.target.value.replace(/[^0-9]/g, '') || '0', 10)))); }}
-                        style={{ ...SKB, fontSize: 'var(--fs-30)', color: '#E5E1DB', background: 'transparent', border: 'none', outline: 'none', width: '100%', padding: 0, fontVariantNumeric: 'tabular-nums' }}
+                        style={{ ...SKB, fontSize: 'max(16px, var(--fs-30))', color: '#E5E1DB', WebkitTextFillColor: '#E5E1DB', caretColor: '#E5E1DB', background: 'transparent', WebkitAppearance: 'none', appearance: 'none', border: 'none', outline: 'none', width: '100%', padding: 0, fontVariantNumeric: 'tabular-nums' }}
                       />
                       <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em', whiteSpace: 'nowrap' }}>FRAGMENTS</span>
                     </div>

@@ -689,6 +689,20 @@ input, textarea, select {
   font-size: max(16px, 1em);
 }
 
+/* Brief F2 — iOS paints -webkit-autofill inputs with a WHITE background + its own
+   text-fill, which on our dark sheets rendered the amount fields solid white (ivory
+   text on white = invisible). Force a dark backdrop over the autofill paint via the
+   inset box-shadow trick, and keep the text/caret ivory. */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #E5E1DB;
+  -webkit-box-shadow: 0 0 0 1000px #050505 inset;
+  box-shadow: 0 0 0 1000px #050505 inset;
+  caret-color: #E5E1DB;
+  transition: background-color 100000s ease-in-out 0s;
+}
+
 /* ── DESKTOP INTERACTION LANGUAGE (≥1024) — hover invites, press confirms ──────
    THE FEEL PASS. Mobile's punchier rounds never came back to desktop; this wakes
    it up. HOVER is now DIFFERENTIATED by class (not one flat brightness):

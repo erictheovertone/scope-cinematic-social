@@ -136,6 +136,14 @@ export default function MintPromptSheet({ visible, onMint, onSkip, onCoinSkipped
         transform: visible ? 'translateY(0)' : 'translateY(100%)',
         transition: 'transform 0.4s cubic-bezier(0.32, 0.72, 0, 1)',
         padding: '28px 24px 48px',
+        // Brief F2 — the sheet is bottom-anchored and content-sized; without a scroll
+        // container the top (media/headline) scrolled off-screen and "more info"
+        // wedged it. Own the scroll: cap the height and scroll internally, trapped
+        // here (overscroll-behavior:contain) so it never chains to the locked body.
+        maxHeight: 'min(88vh, calc(100dvh - 20px))',
+        overflowY: 'auto',
+        overscrollBehavior: 'contain',
+        WebkitOverflowScrolling: 'touch',
       }}>
         {/* Handle */}
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24 }}>
