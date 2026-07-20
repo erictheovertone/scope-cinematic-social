@@ -907,6 +907,7 @@ const userLayoutId = stableLayoutId;
         totalPosts={analytics.totalPosts}
         collectors={analytics.collectors}
         portfolioMc={analytics.portfolioMc}
+        decks={userDecks.length}
         firstCutCount={firstCutCount}
       />
 

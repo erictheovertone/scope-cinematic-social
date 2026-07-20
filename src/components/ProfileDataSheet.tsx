@@ -4,7 +4,8 @@ import { useState, useEffect, Fragment } from "react";
 import { createPortal } from "react-dom";
 import type { ProfileLink } from "@/lib/userService";
 import { isProMember } from "@/lib/userService";
-import { BADGES, resolveBadges, BADGE_SHORT_BLURB, type BadgeKey } from "@/lib/economy/badges";
+import { feedImage } from "@/lib/mediaUrl";
+import { BADGES, resolveBadges, BADGE_SHORT_BLURB, BADGE_DISPLAY_NAME, type BadgeKey } from "@/lib/economy/badges";
 import { economyPreviewEnabled } from "@/lib/economy/flag";
 import { LedgerCard } from "@/components/Ledger";
 import { useRouter } from "next/navigation";
@@ -23,6 +24,9 @@ interface Props {
   totalPosts: number;
   collectors?: number;
   portfolioMc?: number;
+  /** Deck count for the sheet's stats (Brief 2.4a). Plumbed from the caller's
+      loaded decks list; 0/absent → shows 0. */
+  decks?: number;
   /** First Cut count for this profile — read via the economy boundary upstream
       and passed down (preview-gated). 0/absent → no First Cut coin. */
   firstCutCount?: number;
@@ -60,7 +64,7 @@ function getDomain(url: string): string {
 
 export default function ProfileDataSheet({
   isOpen, onClose, profile, links, isOwnProfile,
-  followers, following, totalPosts, collectors = 0, portfolioMc = 0,
+  followers, following, totalPosts, collectors = 0, portfolioMc = 0, decks = 0,
   firstCutCount = 0, onExploreBadges,
   isFollowing = false, followBusy = false, onUnfollow,
 }: Props) {
@@ -148,6 +152,33 @@ export default function ProfileDataSheet({
 
   const slicedLinks = links.slice(0, 3);
 
+  // ── Sheet header data (Brief 2.4a) — the Haas header IS part of the sheet ──────
+  const displayName = String(profile?.display_name ?? '');
+  const nameParts = displayName.trim().split(/\s+/).filter(Boolean);
+  const firstName = nameParts[0] ?? '';
+  const lastName = nameParts.slice(1).join(' ');
+  const handle = String(profile?.username ?? '');
+  const isPro = profile ? isProMember(profile) : false;
+  const pfpUrl = profile?.profile_image_url ? String(profile.profile_image_url) : null;
+  const metaLoc = profile?.location ? String(profile.location) : '';
+  const metaPrimary = links?.find((l) => (l as { is_primary?: boolean }).is_primary) ?? null;
+  const mcDisplay = portfolioMc > 0 ? `$${portfolioMc.toLocaleString()}` : '—'; // dash rule
+  // Three stat column groups (label/value). Programs omitted — no such data field.
+  const statGroups: { label: string; value: string }[][] = [
+    [
+      { label: 'Followers', value: followers.toLocaleString() },
+      { label: 'Collectors', value: collectors.toLocaleString() },
+      { label: 'Market Cap', value: mcDisplay },
+    ],
+    [
+      { label: 'Following', value: following.toLocaleString() },
+      { label: 'Total Posts', value: totalPosts.toLocaleString() },
+    ],
+    [
+      { label: 'Decks', value: decks.toLocaleString() },
+    ],
+  ];
+
   // Editorial spine — build ONLY sections that have data; dividers render BETWEEN
   // them below, so an absent section leaves no orphan rule (empty-state collapse).
   const sectionNodes: React.ReactNode[] = [];
@@ -161,21 +192,24 @@ export default function ProfileDataSheet({
     </div>
   );
 
-  // BADGES — as TRACKED TEXT LABELS (not images) per node 141:733. Only held badges
-  // render; a tap opens the existing badge-explainer blurb. (FLAGGED in report: this
-  // diverges from image-badges used elsewhere.)
+  // BADGES — IMAGE CARDS (Brief 2.4a, per Eric's reference): hairline-framed
+  // container + the new badge art (native aspect, no distortion) + the DISPLAY name
+  // beneath. Up to 3 per row, wrapping. Held badges only; tap → blurb (unchanged).
   if (hasBadges) sectionNodes.push(
     <div key="badges" style={{ ...sectionPad, ...sec(140) }}>
       <div className="soften-display" style={titleStyle}>Badges</div>
-      <div style={{ flex: 1, display: 'flex', flexWrap: 'wrap', columnGap: 16, rowGap: 10, alignContent: 'flex-start' }}>
+      <div style={{ flex: 1, display: 'flex', flexWrap: 'wrap', gap: 10, alignContent: 'flex-start' }}>
         {badges.map((b) => (
-          <span
+          <button
             key={b.key}
             onClick={(e) => { e.stopPropagation(); setActiveBlurb(b.key); }}
-            style={{ fontFamily: 'var(--font-body)', fontWeight: 400, fontSize: 7, letterSpacing: '0.14em', color: 'rgba(229,225,219,0.34)', textTransform: 'uppercase', whiteSpace: 'nowrap', cursor: 'pointer', padding: '5px 0' }}
+            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, width: 'calc((100% - 20px) / 3)', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
           >
-            {b.title}
-          </span>
+            <span style={{ width: '100%', height: 46, borderRadius: 9, border: '0.5px solid rgba(229,225,219,0.3)', background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+              <img src={(b.framedSrc ?? b.bannerSrc ?? b.src) as string} alt={BADGE_DISPLAY_NAME[b.key]} style={{ maxWidth: '78%', maxHeight: '64%', width: 'auto', height: 'auto', objectFit: 'contain', display: 'block' }} />
+            </span>
+            <span style={{ fontFamily: 'var(--font-body)', fontWeight: 400, fontSize: 7.5, letterSpacing: '0.12em', color: 'rgba(229,225,219,0.46)', textTransform: 'uppercase', textAlign: 'center', lineHeight: 1.1 }}>{BADGE_DISPLAY_NAME[b.key]}</span>
+          </button>
         ))}
       </div>
     </div>
@@ -271,8 +305,68 @@ export default function ProfileDataSheet({
       }}
     >
       <div style={{ maxWidth: '30rem', margin: '0 auto', paddingBottom: 70 }}>
-        {/* Top spacer — the (disregarded) profile identity shows through the scrim. */}
-        <div style={{ height: 137 }} />
+        {/* ── SHEET HEADER (Brief 2.4a) — opaque, in-scroll identity block: PFP +
+            name + handle + expanded 3-group stats (node 141:733's Haas header). ── */}
+        <div style={{ position: 'relative', padding: '13px 12px 8px', minHeight: 104 }}>
+          <div style={{ position: 'absolute', left: 6, top: 13, width: 86, height: 86, border: '1px solid var(--hairline-strong)', boxSizing: 'border-box', overflow: 'hidden' }}>
+            {pfpUrl
+              ? <img src={feedImage(pfpUrl, 172)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              : <div style={{ width: '100%', height: '100%', background: '#222' }} />}
+          </div>
+          <div style={{ marginLeft: 92 }}>
+            {/* Name (wide first/last gap) + PRO, with the handle centered beneath. */}
+            <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center' }}>
+              <div style={{ display: 'inline-flex', alignItems: 'baseline', gap: 28 }}>
+                <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 16, letterSpacing: 'var(--track-display)', color: 'var(--ink-100)', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{firstName}</span>
+                {(lastName || isPro) && (
+                  <span style={{ display: 'inline-flex', alignItems: 'baseline', gap: 5 }}>
+                    {lastName && <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 16, letterSpacing: 'var(--track-display)', color: 'var(--ink-100)', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{lastName}</span>}
+                    {isPro && <span style={{ fontFamily: 'var(--font-black)', fontWeight: 900, fontSize: 6.7, color: 'rgba(229,225,219,0.64)', letterSpacing: 'var(--track-wide)', alignSelf: 'flex-start', transform: 'translateY(1px)' }}>PRO</span>}
+                  </span>
+                )}
+              </div>
+              <div style={{ display: 'inline-flex', alignItems: 'baseline', gap: 3, opacity: 0.64, marginTop: 3 }}>
+                <span style={{ fontFamily: 'var(--font-light)', fontWeight: 400, fontSize: 8, color: 'var(--ink-100)', letterSpacing: 'var(--track-wide)' }}>[ at ]</span>
+                <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 10, color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: 'var(--track-body)' }}>{handle}</span>
+              </div>
+            </div>
+            {/* Expanded stats — 3 groups, vertical hairline separators between. */}
+            <div style={{ display: 'flex', alignItems: 'stretch', marginTop: 14 }}>
+              {statGroups.map((group, gi) => (
+                <div key={gi} style={{ display: 'flex', alignItems: 'stretch' }}>
+                  {gi > 0 && <div style={{ width: 1, background: 'var(--hairline)', margin: '0 7px', alignSelf: 'stretch' }} />}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    {group.map((row) => (
+                      <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+                        <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 8.2, color: 'rgba(229,225,219,0.71)', letterSpacing: 'var(--track-body)', whiteSpace: 'nowrap' }}>{row.label}</span>
+                        <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 8.5, color: 'rgba(229,225,219,0.71)', letterSpacing: 'var(--track-body)', whiteSpace: 'nowrap', textAlign: 'right' }}>{row.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* ── META LINE — location · primary link (desktop meta language, scaled).
+            Renders nothing when both are absent (no orphan spacing). ── */}
+        {(metaLoc || metaPrimary) && (
+          <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 18, padding: '0 12px 6px' }}>
+            {metaLoc && (
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 10, color: 'rgba(229,225,219,0.58)', textTransform: 'uppercase', letterSpacing: 'var(--track-body)' }}>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(229,225,219,0.58)" strokeWidth="1.6"><path d="M12 21s-6.5-5.4-6.5-10.5A6.5 6.5 0 0 1 12 4a6.5 6.5 0 0 1 6.5 6.5C18.5 15.6 12 21 12 21z" /><circle cx="12" cy="10.5" r="2.2" /></svg>
+                {metaLoc}
+              </span>
+            )}
+            {metaPrimary && (
+              <a href={metaPrimary.url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 10, color: 'rgba(229,225,219,0.58)', textTransform: 'uppercase', letterSpacing: 'var(--track-body)', textDecoration: 'none' }}>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(229,225,219,0.58)" strokeWidth="1.6"><path d="M10 14l7-7M13 5h6v6M11 6H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5" /></svg>
+                {metaPrimary.title || getDomain(metaPrimary.url)}
+              </a>
+            )}
+          </div>
+        )}
 
         {sectionNodes.map((node, i) => (
           <Fragment key={i}>
@@ -324,7 +418,7 @@ export default function ProfileDataSheet({
               style={{ width: 60, height: 60, objectFit: 'contain', flexShrink: 0, animation: 'focusPull 1.2s cubic-bezier(0.16,0.84,0.3,1) both' }}
             />
             <div style={{ flex: 1, minWidth: 0, paddingRight: 12 }}>
-              <p style={{ ...SKB, fontSize: 'var(--fs-10)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.16em', margin: '0 0 6px' }}>{BADGES[activeBlurb].title}</p>
+              <p style={{ ...SKB, fontSize: 'var(--fs-10)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.16em', margin: '0 0 6px' }}>{BADGE_DISPLAY_NAME[activeBlurb]}</p>
               <p style={{ ...SKR, fontSize: 'var(--fs-11)', color: 'rgba(229,225,219,0.70)', lineHeight: 1.45, margin: 0 }}>{BADGE_SHORT_BLURB[activeBlurb]}</p>
             </div>
           </div>

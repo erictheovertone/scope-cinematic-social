@@ -56,6 +56,21 @@ export const BADGES: Record<BadgeKey, BadgeMeta> = {
   free:      { key: 'free',      src: '/free-tier-aperture-logo-red.png',            title: 'FREE TIER', color: '#E5E1DB' },
 };
 
+// ── Display names (Brief 2.4a) — the USER-FACING label layer ──────────────────
+// Registry `title` stays for internal/legacy use; these are what surfaces should
+// show going forward (e.g. top1k reads as COLLECTOR, not TOP 1K). Shared: any badge
+// UI rendering a name should read through BADGE_DISPLAY_NAME.
+export const BADGE_DISPLAY_NAME: Record<BadgeKey, string> = {
+  augmented: 'AUGMENTED',
+  firstCut: 'FIRST CUT',
+  top1k: 'COLLECTOR',
+  srh: 'SRH',
+  composer: 'COMPOSER',
+  pro: 'SCOPE PRO',
+  inHouse: 'IN HOUSE',
+  free: BADGES.free.title,
+};
+
 /** Rarity order for the stack/section. */
 export const RARITY_ORDER: BadgeKey[] = ['augmented', 'firstCut', 'top1k', 'srh', 'composer', 'pro', 'inHouse'];
 

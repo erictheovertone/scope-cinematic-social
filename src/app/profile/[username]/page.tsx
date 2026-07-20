@@ -599,6 +599,7 @@ export default function PublicProfilePage() {
         totalPosts={posts.length}
         collectors={0}
         portfolioMc={profile?.portfolio_mc || 0}
+        decks={publicDecks.length}
         firstCutCount={firstCutCount}
         isFollowing={!!followingUser}
         followBusy={followLoading}
