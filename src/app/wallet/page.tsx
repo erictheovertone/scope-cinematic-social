@@ -713,22 +713,9 @@ export default function WalletPage() {
             </span>
           </button>
         )}
-        <div style={{ position: "absolute", top: 4, right: 6, display: "flex", alignItems: "center", gap: 2 }}>
-          <button
-            onClick={() => router.push("/profile/notifications?tab=market")}
-            aria-label="Market notifications"
-            style={{ background: "transparent", border: "none", cursor: "pointer", padding: 6 }}
-          >
-            <span style={{ position: "relative", display: "block", width: 18, height: 18 }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(229,225,219,0.8)" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
-                <path d="M10 5a2 2 0 1 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3h-16a4 4 0 0 0 2 -3v-3a7 7 0 0 1 4 -6" />
-                <path d="M9 17v1a3 3 0 0 0 6 0v-1" />
-              </svg>
-              {marketUnread && (
-                <span style={{ position: "absolute", top: -1, right: -1, width: 6, height: 6, borderRadius: "50%", background: "#E5E1DB" }} />
-              )}
-            </span>
-          </button>
+        {/* Brief 2.3a (N0c): logomark-only — the bell trigger is removed here; the
+            /profile/notifications?tab=market route is unchanged, reached elsewhere. */}
+        <div style={{ position: "absolute", top: 4, right: 6, display: "flex", alignItems: "center" }}>
           <Link
             href="/"
             aria-label="Home"
@@ -770,30 +757,32 @@ export default function WalletPage() {
             </span>
           )}
           <p style={{ margin: "8px 0 0", lineHeight: 1, whiteSpace: "nowrap" }}>
-            <span style={{ fontFamily: "var(--font-medium)", fontWeight: 500, fontSize: 36, color: "var(--ink-100)", letterSpacing: "-1.8px" }}>$</span>
+            <span style={{ fontFamily: "var(--font-medium)", fontWeight: 500, fontSize: 36, color: "var(--ink-100)", letterSpacing: "-1.8px", marginRight: "0.12em" }}>$</span>
             <span style={{ fontFamily: "var(--font-medium)", fontWeight: 500, fontSize: 36, color: "var(--ink-100)", letterSpacing: "-1.8px", fontVariantNumeric: "tabular-nums" }}>
               {loading && animatedTotal == null ? "…" : animatedTotal != null ? animatedTotal.toFixed(2) : "—"}
             </span>
           </p>
           <div style={{ width: 107, height: 1, background: "var(--hairline)", margin: "12px auto 0" }} />
-          <div style={{ margin: "14px 0 0", display: "flex", flexDirection: "column", gap: 9 }}>
+          {/* Brief 2.3a: row pitch ~37px (gap 24 + ~13px row) — spacing grows below the
+              hairline; the amount block above keeps its position. */}
+          <div style={{ margin: "18px 0 0", display: "flex", flexDirection: "column", gap: 24 }}>
             {([
               { label: "Available", value: animatedAvailable, info: false, onClick: () => setActiveTab("balances") },
               { label: "Holdings", value: holdingsUsd, info: false, onClick: () => setActiveTab("holdings") },
               { label: "Earnings", value: animatedEarned, info: true, onClick: () => { if (earnings) setEarnOpen(true); } },
             ] as const).map((row) => (
               <div key={row.label} onClick={row.onClick} style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
-                <span style={{ display: "inline-flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
+                <span style={{ display: "inline-flex", alignItems: "baseline", gap: 4, flexShrink: 0 }}>
                   <span style={{ fontFamily: "var(--font-medium)", fontWeight: 500, fontSize: 11.8, color: "rgba(229,225,219,0.75)", letterSpacing: "var(--track-body)", whiteSpace: "nowrap" }}>{row.label}</span>
                   {row.info && (
-                    <span aria-hidden style={{ width: 8, height: 8, border: "0.5px solid rgba(229,225,219,0.5)", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <span aria-hidden style={{ width: 8, height: 8, border: "0.5px solid rgba(229,225,219,0.5)", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, alignSelf: "flex-start", transform: "translateY(-2px)" }}>
                       <span style={{ fontFamily: "var(--font-medium)", fontWeight: 500, fontSize: 6, lineHeight: 1, color: "rgba(229,225,219,0.6)" }}>i</span>
                     </span>
                   )}
                 </span>
                 <DottedLeader />
                 <span style={{ display: "inline-flex", alignItems: "baseline", flexShrink: 0 }}>
-                  <span style={{ fontFamily: "var(--font-medium)", fontWeight: 500, fontSize: 13, color: "rgba(229,225,219,0.79)" }}>$</span>
+                  <span style={{ fontFamily: "var(--font-medium)", fontWeight: 500, fontSize: 13, color: "rgba(229,225,219,0.79)", marginRight: "0.14em" }}>$</span>
                   <span style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 13, color: "rgba(229,225,219,0.79)", fontVariantNumeric: "tabular-nums" }}>{row.value != null ? row.value.toFixed(2) : "—"}</span>
                 </span>
               </div>
@@ -848,26 +837,30 @@ export default function WalletPage() {
           Active = 4px dot at the left + --ink-100; inactive ~67%, no dot. The dot
           slot is always reserved (transparent when inactive) so switching doesn't
           shift the labels. EARNINGS pane + the info sheet behavior are unchanged. */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", margin: "22px 12px 0", padding: "0 2px" }}>
-        {(["balances", "holdings", "earnings", "activity"] as const).map(tab => {
-          const active = activeTab === tab;
-          return (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              style={{ background: "none", border: "none", cursor: "pointer", padding: "6px 0", display: "inline-flex", alignItems: "center", gap: 5 }}
-            >
-              <span style={{ width: 4, height: 4, borderRadius: "50%", background: active ? "var(--ink-100)" : "transparent", flexShrink: 0 }} />
-              <span style={{ fontFamily: "var(--font-medium)", fontWeight: 500, fontSize: 12, letterSpacing: "var(--track-body)", color: active ? "var(--ink-100)" : "rgba(229,225,219,0.67)" }}>
-                {tab.charAt(0).toUpperCase() + tab.slice(1)}
-              </span>
-            </button>
-          );
-        })}
+      {/* Brief 2.3a: faint full-width rounded band (node 38:75, 355×32) around the
+          row; gap actions→segment ~42px. Row content unchanged. */}
+      <div style={{ margin: "42px 10px 0", background: "rgba(229,225,219,0.035)", borderRadius: 6, padding: "0 4px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0 2px" }}>
+          {(["balances", "holdings", "earnings", "activity"] as const).map(tab => {
+            const active = activeTab === tab;
+            return (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                style={{ background: "none", border: "none", cursor: "pointer", padding: "9px 0", display: "inline-flex", alignItems: "center", gap: 5 }}
+              >
+                <span style={{ width: 4, height: 4, borderRadius: "50%", background: active ? "var(--ink-100)" : "transparent", flexShrink: 0 }} />
+                <span style={{ fontFamily: "var(--font-medium)", fontWeight: 500, fontSize: 12, letterSpacing: "var(--track-body)", color: active ? "var(--ink-100)" : "rgba(229,225,219,0.67)" }}>
+                  {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      {/* Tab content */}
-      <div style={{ padding: "13px 10px 16px 13px" }}>
+      {/* Tab content — gap segment→panel ~28px */}
+      <div style={{ padding: "28px 10px 16px 13px" }}>
 
         {/* BALANCES — the TOKEN PANEL: 352×190, GREY border (not red). Row
             hairlines at 45/95/145 inside (skin y521/571/621); two empty asset
@@ -879,13 +872,15 @@ export default function WalletPage() {
               10px 55 Roman wide-tracked · fiat value right-aligned ($ + 75 Bold).
               Full-width ivory-4% highlight on hover/press (.ledger-row). Padding is
               vertical-only so the highlight strip runs edge-to-edge. */}
-          <LedgerCard variant="border" radius={10} style={{ padding: "6px 0 8px" }}>
+          {/* Brief 2.3a: token rows at ~62px pitch with hairline separators + the new
+              MONOCHROME 30px icon set (token-icons/, red Zora chip retired); fiat "$ N"
+              spacing. Empty ruled rows fill the panel to ledger-paper; the ADD/IMPORT
+              action is the FINAL ruled row (item 8 interim). Empty-row mechanism is
+              LOCAL to the wallet (not in LedgerCard — it's a token-panel treatment). */}
+          <LedgerCard variant="border" radius={10} style={{ padding: "0" }}>
             {/* ETH row */}
-            <div className="ledger-row" style={{ position: "relative", display: "flex", alignItems: "center", height: 52, padding: "0 14px", boxSizing: "border-box" }}>
-              <span style={{ position: "relative", width: 30, height: 30, flexShrink: 0, marginRight: 12 }}>
-                <img src="/wallet-redux/eth-token-circle.svg" alt="" style={{ position: "absolute", inset: 0, width: 30, height: 30 }} />
-                <img src="/wallet-redux/eth-logo.png" alt="" style={{ position: "absolute", left: "50%", top: "50%", transform: "translate(-50%,-50%)", width: 13, height: "auto" }} />
-              </span>
+            <div className="ledger-row" style={{ position: "relative", display: "flex", alignItems: "center", height: 62, padding: "0 14px", boxSizing: "border-box", borderBottom: "1px solid var(--hairline)" }}>
+              <img src="/design-updates-071526/token-icons/ethereum.png" alt="" style={{ width: 30, height: 30, objectFit: "contain", display: "block", flexShrink: 0, marginRight: 12 }} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <p style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 12, color: "rgba(229,225,219,0.74)", margin: 0, letterSpacing: "var(--track-body)" }}>ETHEREUM</p>
                 <p style={{ fontFamily: "var(--font-body)", fontWeight: 400, fontSize: 10, color: "rgba(229,225,219,0.74)", letterSpacing: "1.1px", margin: "2px 0 0" }}>
@@ -893,17 +888,14 @@ export default function WalletPage() {
                 </p>
               </div>
               <span style={{ display: "inline-flex", alignItems: "baseline", flexShrink: 0 }}>
-                <span style={{ fontFamily: "var(--font-medium)", fontWeight: 500, fontSize: 13, color: "rgba(229,225,219,0.9)" }}>$</span>
+                <span style={{ fontFamily: "var(--font-medium)", fontWeight: 500, fontSize: 13, color: "rgba(229,225,219,0.9)", marginRight: "0.14em" }}>$</span>
                 <span style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 13, color: "rgba(229,225,219,0.9)", fontVariantNumeric: "tabular-nums" }}>{loading && ethUsd == null ? "…" : ethUsd ?? "—"}</span>
               </span>
             </div>
 
             {/* USDC row */}
-            <div className="ledger-row" style={{ position: "relative", display: "flex", alignItems: "center", height: 52, padding: "0 14px", boxSizing: "border-box" }}>
-              <span style={{ position: "relative", width: 30, height: 30, flexShrink: 0, marginRight: 12 }}>
-                <img src="/wallet-redux/usdc-token-circle.svg" alt="" style={{ position: "absolute", inset: 0, width: 30, height: 30 }} />
-                <span style={{ fontFamily: "var(--font-black)", fontWeight: 900, position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14.5, color: "#E5E1DB" }}>$</span>
-              </span>
+            <div className="ledger-row" style={{ position: "relative", display: "flex", alignItems: "center", height: 62, padding: "0 14px", boxSizing: "border-box", borderBottom: "1px solid var(--hairline)" }}>
+              <img src="/design-updates-071526/token-icons/usdc.png" alt="" style={{ width: 30, height: 30, objectFit: "contain", display: "block", flexShrink: 0, marginRight: 12 }} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <p style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 12, color: "rgba(229,225,219,0.74)", margin: 0, letterSpacing: "var(--track-body)" }}>USDC</p>
                 <p style={{ fontFamily: "var(--font-body)", fontWeight: 400, fontSize: 10, color: "rgba(229,225,219,0.74)", letterSpacing: "1.1px", margin: "2px 0 0" }}>
@@ -911,7 +903,7 @@ export default function WalletPage() {
                 </p>
               </div>
               <span style={{ display: "inline-flex", alignItems: "baseline", flexShrink: 0 }}>
-                <span style={{ fontFamily: "var(--font-medium)", fontWeight: 500, fontSize: 13, color: "rgba(229,225,219,0.9)" }}>$</span>
+                <span style={{ fontFamily: "var(--font-medium)", fontWeight: 500, fontSize: 13, color: "rgba(229,225,219,0.9)", marginRight: "0.14em" }}>$</span>
                 <span style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 13, color: "rgba(229,225,219,0.9)", fontVariantNumeric: "tabular-nums" }}>{loading && usdcUsd == null ? "…" : usdcUsd ?? "0.00"}</span>
               </span>
             </div>
@@ -923,11 +915,9 @@ export default function WalletPage() {
                 className="ledger-row"
                 // floor to 0.01 — toFixed(4) ROUNDED (up) past the balance → overMax blocked the swap
                 onClick={() => { setSwapInitial({ sell: "ZORA", buy: "USDC", amount: (Math.floor(parseFloat(zoraBalance) * 100) / 100).toFixed(2), cashOut: true }); setShowSwap(true); }}
-                style={{ position: "relative", display: "flex", alignItems: "center", height: 52, padding: "0 14px", boxSizing: "border-box", cursor: "pointer" }}
+                style={{ position: "relative", display: "flex", alignItems: "center", height: 62, padding: "0 14px", boxSizing: "border-box", borderBottom: "1px solid var(--hairline)", cursor: "pointer" }}
               >
-                <span style={{ position: "relative", width: 30, height: 30, flexShrink: 0, marginRight: 12, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <img src="/scope-earnings-icon.png" alt="" style={{ width: 30, height: "auto", display: "block" }} />
-                </span>
+                <img src="/design-updates-071526/token-icons/creator.png" alt="" style={{ width: 30, height: 30, objectFit: "contain", display: "block", flexShrink: 0, marginRight: 12 }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 12, color: "rgba(229,225,219,0.74)", margin: 0, letterSpacing: "var(--track-body)" }}>CREATOR</p>
                   <p style={{ fontFamily: "var(--font-body)", fontWeight: 400, fontSize: 10, color: "rgba(229,225,219,0.74)", letterSpacing: "1.1px", margin: "2px 0 0" }}>
@@ -935,7 +925,7 @@ export default function WalletPage() {
                   </p>
                 </div>
                 <span style={{ display: "inline-flex", alignItems: "baseline", flexShrink: 0 }}>
-                  <span style={{ fontFamily: "var(--font-medium)", fontWeight: 500, fontSize: 13, color: "rgba(229,225,219,0.9)" }}>$</span>
+                  <span style={{ fontFamily: "var(--font-medium)", fontWeight: 500, fontSize: 13, color: "rgba(229,225,219,0.9)", marginRight: "0.14em" }}>$</span>
                   <span style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 13, color: "rgba(229,225,219,0.9)", fontVariantNumeric: "tabular-nums" }}>{zoraUsd != null ? zoraUsd.toFixed(2) : "—"}</span>
                 </span>
               </div>
@@ -943,8 +933,8 @@ export default function WalletPage() {
 
             {/* Imported ERC-20 rows — same shape; balance-only when unpriced. */}
             {importedAssets.map((a) => (
-              <div key={a.address} className="ledger-row" style={{ position: "relative", display: "flex", alignItems: "center", height: 52, padding: "0 14px", boxSizing: "border-box" }}>
-                <span style={{ position: "relative", width: 30, height: 30, flexShrink: 0, marginRight: 12, borderRadius: "50%", background: "#141414", border: "0.5px solid rgba(229,225,219,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <div key={a.address} className="ledger-row" style={{ position: "relative", display: "flex", alignItems: "center", height: 62, padding: "0 14px", boxSizing: "border-box", borderBottom: "1px solid var(--hairline)" }}>
+                <span style={{ width: 30, height: 30, flexShrink: 0, marginRight: 12, borderRadius: "50%", background: "#141414", border: "0.5px solid rgba(229,225,219,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                   <span style={{ ...SKB, fontSize: 13.5, color: "#E5E1DB", opacity: 0.8 }}>{a.symbol.slice(0, 1)}</span>
                 </span>
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -956,22 +946,27 @@ export default function WalletPage() {
                 <span style={{ fontFamily: "var(--font-body)", fontWeight: 400, fontSize: 12, color: "rgba(229,225,219,0.37)", flexShrink: 0 }}>$—</span>
               </div>
             ))}
+
+            {/* Empty ledger rows — the panel reads as ruled paper (item 2). */}
+            {[0, 1].map((i) => (
+              <div key={`empty-${i}`} style={{ height: 62, borderBottom: "1px solid var(--hairline)" }} />
+            ))}
+
+            {/* + ADD / IMPORT — the FINAL ruled row (item 8, interim). Quiet 10px
+                65 Medium ~45%; press-pop → the import sheet. Behavior unchanged. */}
+            <button
+              onClick={() => setShowImport(true)}
+              onPointerDown={() => setAddPressed(true)}
+              onPointerUp={() => setAddPressed(false)}
+              onPointerLeave={() => setAddPressed(false)}
+              className="ledger-row"
+              style={{ display: "flex", alignItems: "center", width: "100%", height: 62, padding: "0 14px", boxSizing: "border-box", background: "transparent", border: "none", cursor: "pointer", textAlign: "left" }}
+            >
+              <span style={{ fontFamily: "var(--font-medium)", fontWeight: 500, fontSize: 10, color: "rgba(229,225,219,0.45)", letterSpacing: "var(--track-body)", textTransform: "uppercase", opacity: addPressed ? 0.75 : 1 }}>
+                + ADD / IMPORT ASSET
+              </span>
+            </button>
           </LedgerCard>
-          {/* + ADD / IMPORT — real action: press-pop → the import sheet */}
-          <button
-            onClick={() => setShowImport(true)}
-            onPointerDown={() => setAddPressed(true)}
-            onPointerUp={() => setAddPressed(false)}
-            onPointerLeave={() => setAddPressed(false)}
-            style={{
-              ...SKR, display: "block", width: "100%", background: "transparent", border: "none", padding: 0,
-              fontSize: 10.5, color: "#E5E1DB", opacity: addPressed ? 0.75 : 0.4, textAlign: "center",
-              margin: "18px 0 0", textTransform: "uppercase", letterSpacing: "0.04em", cursor: "pointer",
-              transform: addPressed ? "scale(0.95)" : "scale(1)", transition: "transform 120ms ease, opacity 120ms ease",
-            }}
-          >
-            + ADD / IMPORT ASSET
-          </button>
           </>
         )}
 
