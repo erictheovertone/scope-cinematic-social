@@ -313,7 +313,7 @@ export default function Home() {
           }}
         >
           {/* The logomark IS the menu trigger (replaces the corner-bracket frame). */}
-          <img src="/logomark-plain-white.png" alt="" style={{ width: 41, height: 26, objectFit: 'contain', display: 'block' }} />
+          <img src="/design-updates-071526/scope-logomark-offwhite.png" alt="" style={{ width: 39, height: 'auto', objectFit: 'contain', display: 'block', filter: 'blur(0.35px)' }} />
         </button>,
         document.body,
       )}
@@ -395,26 +395,26 @@ export default function Home() {
               feed owns the viewport edge-to-edge exactly as before. The
               floating trigger (portaled) is gated OFF until this block is gone
               → exactly ONE logomark at rest. */}
+          {/* Brief 2.1 (node 37:65): Discover title LEFT + logomark RIGHT on one row
+              (frame: title x10/y16, logomark x326/y11). Both open VIEWING MODES —
+              trigger relocates into the row, behavior unchanged. */}
           <div style={{ paddingTop: 'calc(6px + env(safe-area-inset-top, 0px))' }}>
-            {/* The logomark — same visual position/size as the floating trigger,
-                same action (opens VIEWING MODES). */}
-            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '0 10px' }}>
+              <h1 className="soften-display" style={{
+                fontFamily: 'var(--font-display)', fontWeight: 700,
+                fontSize: 32, lineHeight: 1, letterSpacing: 'var(--track-display)',
+                color: 'var(--ink-100)', margin: '4px 0 0',
+              }}>
+                Discover
+              </h1>
               <button
                 onClick={() => setMenuOpen(v => !v)}
                 aria-label="Open viewing modes"
-                style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '9px 10px', lineHeight: 0, filter: 'drop-shadow(0 0 8px rgba(0,0,0,0.9))' }}
+                style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 9, margin: -3, lineHeight: 0, filter: 'drop-shadow(0 0 8px rgba(0,0,0,0.9))' }}
               >
-                <img src="/logomark-plain-white.png" alt="" style={{ width: 41, height: 26, objectFit: 'contain', display: 'block' }} />
+                <img src="/design-updates-071526/scope-logomark-offwhite.png" alt="" style={{ width: 39, height: 'auto', objectFit: 'contain', display: 'block', filter: 'blur(0.35px)' }} />
               </button>
             </div>
-            <h1 style={{
-              fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700,
-              fontSize: 'clamp(31px, 10.15vw, 42px)', lineHeight: 0.95,
-              letterSpacing: '-0.06em', color: '#E5E1DB', textTransform: 'uppercase',
-              margin: '2px 12px 0 6px',
-            }}>
-              Discover
-            </h1>
             {/* BREATHING SPACE — the one tunable (Eric eyeballs on device). */}
             <div style={{ height: LANDING_BREATHING_PX }} />
           </div>

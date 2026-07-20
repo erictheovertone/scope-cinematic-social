@@ -20,7 +20,7 @@ import { useEconomy } from "@/components/EconomyProvider";
 import TickerMark from "@/components/economy/TickerMark";
 
 // Post-to-post breathing room (was 32) — THE tunable; Eric eyeballs on device.
-const FEED_POST_GAP_PX = 52;
+const FEED_POST_GAP_PX = 42; // Brief 2.1 (node 37:65): frame caption→next-byline whitespace ≈42px
 import MediaRenderer from "@/components/MediaRenderer";
 import GradedVideo from "@/components/finishing/GradedVideo";
 import CommentList, { useCommentLikes, ReplyComposer, type UIComment } from "@/components/CommentList";
@@ -281,6 +281,38 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
     </div>
   );
 
+  // ── Brief 2.1 (node 37:65) — the DISCOVER mobile byline (only when !card) ──────
+  // avatar 13×13 house ivory frame · [ at ] HANDLE (brackets 6px --font-light→55,
+  // handle 8px 65 Medium, unit ~55%) · right: MC 8.5px 34% + $value 8.5px 71%.
+  // Dash rule: unminted posts render NO MC/economics.
+  const metadataRowMobile = (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 7, padding: '0 5px' }}>
+      <button
+        className="tappable"
+        onClick={(e) => { e.stopPropagation(); router.push('/profile/' + post.username); }}
+        style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'none', border: 'none', padding: 0, cursor: 'pointer', minWidth: 0 }}
+      >
+        <span style={{ width: 13, height: 13, flexShrink: 0, border: '0.75px solid rgba(229,225,219,0.5)', overflow: 'hidden', display: 'block', background: '#222' }}>
+          {post.profile_image_url && <img src={feedImage(post.profile_image_url, 96)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
+        </span>
+        <span style={{ display: 'inline-flex', alignItems: 'baseline', gap: 3, opacity: 0.55, minWidth: 0 }}>
+          <span style={{ fontFamily: 'var(--font-light)', fontWeight: 400, fontSize: 6, color: 'var(--ink-100)', letterSpacing: 'var(--track-wide)' }}>[ at ]</span>
+          <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 8, color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: 'var(--track-body)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{post.username}</span>
+        </span>
+        <MusicTitleChip post={post as { music_track_id?: string | null }} />
+      </button>
+      {post.token_standard === 'coin' && post.coin_address ? (
+        <span style={{ display: 'inline-flex', alignItems: 'baseline', gap: 4, flexShrink: 0 }}>
+          <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 8.5, color: 'rgba(229,225,219,0.34)', letterSpacing: 'var(--track-body)' }}>MC</span>
+          <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 8.5, color: 'rgba(229,225,219,0.71)', letterSpacing: 'var(--track-body)' }}>{mc ?? '…'}</span>
+        </span>
+      ) : (
+        /* dash rule — unminted posts carry NO economics; a single dash holds the slot. */
+        <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 8.5, color: 'rgba(229,225,219,0.34)', letterSpacing: 'var(--track-body)', flexShrink: 0 }}>—</span>
+      )}
+    </div>
+  );
+
   const mediaContent = post.media_type === 'video' ? (
     // Feed video → GradedVideo. gridMode = the same direct in-view trigger the grid
     // uses (the coordinator round-trip didn't fire playback here). The feed shows
@@ -321,7 +353,12 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
     <div className="feed-card" style={{ marginBottom: card ? 0 : FEED_POST_GAP_PX, ...(card ? { background: '#030303', border: '1px solid rgba(229,225,219,0.22)', borderRadius: 3, padding: '10px 10px 12px', boxSizing: 'border-box' } : {}) }}>
 
       {/* ── Metadata above the frame; the media below is clean ── */}
-      {metadataRow}
+      {/* card (desktop feed) keeps the original byline byte-for-byte; the mobile
+          home feed (!card) renders the Brief 2.1 Discover byline. */}
+      {card ? metadataRow : metadataRowMobile}
+      {/* Media: card is edge-of-card as before; !card insets 5px so the image
+          aligns to the frame's content column (x=7 on 375: 2px container + 5px). */}
+      <div style={card ? undefined : { padding: '0 5px' }}>
       {is43 ? (
         <PillarboxFrame
           onClick={openLightbox}
@@ -347,8 +384,11 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
           <MusicWaveButton post={post as { music_track_id?: string | null; music_mode?: string | null; music_start_seconds?: number | null; media_type?: string | null }} />
         </div>
       )}
+      </div>
 
       {/* ── Below-image row: like · comment · COLLECT ── */}
+      {/* card (desktop) keeps the original action row; !card = Brief 2.1 mobile row. */}
+      {card ? (
       <div style={{ display: "flex", alignItems: "center", padding: "5px 2px 0", gap: 12 }}>
         <PressPop>
         <button
@@ -400,12 +440,60 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
           </button>
         </div>
       </div>
+      ) : (
+      <div style={{ display: "flex", alignItems: "center", padding: "6px 5px 0", gap: 11 }}>
+        <PressPop>
+        <button
+          className="tap-target-x6"
+          onClick={handleLike}
+          disabled={loading || !user}
+          style={{ background: "transparent", border: "none", cursor: user ? "pointer" : "default", display: "flex", alignItems: "center", gap: 4, padding: 0, color: isLiked ? "#E5E1DB" : "rgba(229,225,219,0.6)" }}
+        >
+          <svg width="14.5" height="14.5" viewBox="0 0 24 24" fill={isLiked ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+          </svg>
+          <span style={{ ...SKR, fontSize: 8.5, color: "inherit", letterSpacing: 'var(--track-body)' }}>{likes.length}</span>
+        </button>
+        </PressPop>
+
+        <PressPop>
+        <button
+          className="tap-target-x6"
+          onClick={(e) => { e.stopPropagation(); toggleComments(); }}
+          style={{ background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 4, padding: 0, color: "rgba(229,225,219,0.6)" }}
+        >
+          <svg width="14.5" height="14.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+          </svg>
+          <span style={{ ...SKR, fontSize: 8.5, color: "inherit", letterSpacing: 'var(--track-body)' }}>{comments.length}</span>
+        </button>
+        </PressPop>
+
+        {/* Right cluster — FC count (coin posts) LEFT of COLLECT. FirstCutChip is a
+            shared component (out of blast radius): the frame's "5 | 10" two-numeral
+            format is FLAGGED for a nudge, not restyled here. */}
+        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 9 }}>
+          {post.token_standard === 'coin' && post.coin_address && (
+            <FirstCutChip coinAddress={post.coin_address} postId={post.id} />
+          )}
+          <button
+            className="tap-target-x6"
+            onClick={(e) => { e.stopPropagation(); setShowCollectSheet(true); }}
+            style={{ background: "transparent", border: "none", cursor: "pointer", padding: 0, lineHeight: 1 }}
+          >
+            <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 10.5, letterSpacing: 'var(--track-display)', color: showCollectSheet ? "#E5E1DB" : "rgba(229,225,219,0.7)", lineHeight: 1 }}>COLLECT</span>
+          </button>
+        </div>
+      </div>
+      )}
 
       {post.caption && (
-        <div style={{ margin: "5px 2px 0" }}>
+        <div style={{ margin: card ? "5px 2px 0" : "7px 5px 0", maxWidth: card ? undefined : 158 }}>
           <p
             ref={captionRef}
-            style={{ ...SKR, fontSize: 'var(--fs-11)', color: "#E5E1DB", letterSpacing: "-0.1px", lineHeight: 1.5, margin: 0,
+            style={{ ...SKR, ...(card
+              ? { fontSize: 'var(--fs-11)', color: "#E5E1DB", letterSpacing: "-0.1px", lineHeight: 1.5 }
+              : { fontSize: 8.5, color: "rgba(229,225,219,0.75)", letterSpacing: 'var(--track-body)', lineHeight: 1.16 }), margin: 0,
               ...(clampCaption ? ({ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' } as React.CSSProperties) : {}) }}
           >
             {post.caption}
