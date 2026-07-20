@@ -797,3 +797,9 @@ input, textarea, select {
   40%  { filter: drop-shadow(0 0 7px rgba(229,225,219,0.85)) drop-shadow(0 0 3px rgba(229,225,219,0.6)); }
   100% { filter: none; }
 }
+
+/* Ledger row highlight (Brief 2.3) — full-width ivory 4% strip on hover/press.
+   Shared recipe alongside <LedgerCard>/<DottedLeader>; used by wallet token rows. */
+.ledger-row { transition: background 120ms ease; }
+.ledger-row:hover,
+.ledger-row:active { background: rgba(229, 225, 219, 0.04); }

@@ -21,6 +21,7 @@ import { getUserByPrivyId } from "@/lib/userService";
 import { getEarnings, sumAll, type EarningsData } from "@/lib/economy/earnings";
 import { feedImage } from "@/lib/mediaUrl";
 import EarningsSheet from "@/components/economy/EarningsSheet";
+import { LedgerCard, DottedLeader } from "@/components/Ledger";
 import SwapSheet, { type SwapInitial } from "@/components/SwapSheet";
 import ImportAssetSheet from "@/components/ImportAssetSheet";
 import { getUserAssets, readAssetBalance, type UserAsset } from "@/lib/userAssets";
@@ -685,37 +686,61 @@ export default function WalletPage() {
           red dot = unread MARKET notifications; tap → MARKET tab deep-link. */}
       {/* padding keeps total header height ~53 with the 44px tap target, so the
           balance card stays seated at y79 */}
-      <div style={{ position: "relative", padding: "5px 16px 4px" }}>
-        {/* Logomark → home feed (the footer's Link pattern); ~44px tap target. */}
-        <Link
-          href="/"
-          aria-label="Home"
-          onPointerDown={() => setLogoPressed(true)}
-          onPointerUp={() => setLogoPressed(false)}
-          onPointerLeave={() => setLogoPressed(false)}
-          style={{
-            display: "flex", alignItems: "center", justifyContent: "center",
-            width: 64, height: 44, margin: "0 auto", textDecoration: "none", outline: "none",
-            transform: logoPressed ? "scale(0.92)" : "scale(1)", opacity: logoPressed ? 0.75 : 1,
-            transition: "transform 120ms ease, opacity 120ms ease",
-          }}
-        >
-          <img src="/logomark-plain-white.png" alt="Scope" style={{ width: 41, height: 26, objectFit: "contain", display: "block" }} />
-        </Link>
-        <button
-          onClick={() => router.push("/profile/notifications?tab=market")}
-          style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-38%)", background: "transparent", border: "none", cursor: "pointer", padding: 6 }}
-        >
-          <span style={{ position: "relative", display: "block", width: 18, height: 18 }}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(229,225,219,0.8)" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
-              <path d="M10 5a2 2 0 1 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3h-16a4 4 0 0 0 2 -3v-3a7 7 0 0 1 4 -6" />
-              <path d="M9 17v1a3 3 0 0 0 6 0v-1" />
-            </svg>
-            {marketUnread && (
-              <span style={{ position: "absolute", top: -1, right: -1, width: 6, height: 6, borderRadius: "50%", background: "#E5E1DB" }} />
-            )}
-          </span>
-        </button>
+      {/* Chrome (node 37:123): title top-left, truncated address + copy under it,
+          logomark top-right (return-home). Bell kept beside the logomark so the
+          market-notifications entry isn't stranded (frame shows only the mark). */}
+      <div style={{ position: "relative", padding: "10px 10px 6px" }}>
+        <h1 className="soften-display" style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 32, lineHeight: 1, letterSpacing: "var(--track-display)", color: "var(--ink-100)", margin: 0 }}>
+          Wallet
+        </h1>
+        {walletAddress && (
+          <button
+            onClick={() => navigator.clipboard.writeText(walletAddress).then(() => showToast("Address copied"))}
+            aria-label="Copy wallet address"
+            style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "none", border: "none", padding: "5px 0 0", margin: 0, cursor: "pointer" }}
+          >
+            <span style={{ fontFamily: "var(--font-medium)", fontWeight: 500, fontSize: 9.8, letterSpacing: "var(--track-body)", color: "rgba(229,225,219,0.5)" }}>
+              {walletAddress.slice(0, 5)}<span style={{ letterSpacing: "0.18em" }}>...</span>{walletAddress.slice(-5)}
+            </span>
+            {/* double-square copy glyph (hairline) */}
+            <span style={{ position: "relative", width: 11, height: 11, flexShrink: 0, display: "block" }}>
+              <span style={{ position: "absolute", top: 0, left: 0, width: 7, height: 7, border: "0.5px solid rgba(229,225,219,0.5)" }} />
+              <span style={{ position: "absolute", top: 3, left: 3, width: 7, height: 7, border: "0.5px solid rgba(229,225,219,0.5)" }} />
+            </span>
+          </button>
+        )}
+        <div style={{ position: "absolute", top: 4, right: 6, display: "flex", alignItems: "center", gap: 2 }}>
+          <button
+            onClick={() => router.push("/profile/notifications?tab=market")}
+            aria-label="Market notifications"
+            style={{ background: "transparent", border: "none", cursor: "pointer", padding: 6 }}
+          >
+            <span style={{ position: "relative", display: "block", width: 18, height: 18 }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(229,225,219,0.8)" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M10 5a2 2 0 1 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3h-16a4 4 0 0 0 2 -3v-3a7 7 0 0 1 4 -6" />
+                <path d="M9 17v1a3 3 0 0 0 6 0v-1" />
+              </svg>
+              {marketUnread && (
+                <span style={{ position: "absolute", top: -1, right: -1, width: 6, height: 6, borderRadius: "50%", background: "#E5E1DB" }} />
+              )}
+            </span>
+          </button>
+          <Link
+            href="/"
+            aria-label="Home"
+            onPointerDown={() => setLogoPressed(true)}
+            onPointerUp={() => setLogoPressed(false)}
+            onPointerLeave={() => setLogoPressed(false)}
+            style={{
+              display: "flex", alignItems: "center", justifyContent: "center",
+              padding: "9px 6px", textDecoration: "none", outline: "none",
+              transform: logoPressed ? "scale(0.92)" : "scale(1)", opacity: logoPressed ? 0.75 : 1,
+              transition: "transform 120ms ease, opacity 120ms ease",
+            }}
+          >
+            <img src="/design-updates-071526/scope-logomark-offwhite.png" alt="Scope" style={{ width: 39, height: "auto", objectFit: "contain", display: "block", filter: "blur(0.35px)" }} />
+          </Link>
+        </div>
       </div>
 
       {/* ══ WALLET REDUX chrome (Figma 962:886 + 957:565) — chrome only ══ */}
@@ -725,159 +750,113 @@ export default function WalletPage() {
           EARNINGS is historical cumulative and NEVER part of TOTAL. */}
       {/* ASPECT-LOCKED to the asset (353/188) so the chrome PNG scales uniformly
           at any width; interior spacing is %-of-width so content scales with it. */}
-      <div style={{ position: "relative", margin: "26px 10px 0 12px", borderRadius: 3, textAlign: "center", aspectRatio: "353 / 188", padding: "3.68% 0 0", overflow: "hidden" }}>
-        {/* Baked card chrome — Eric's tuned gradient fill + stroke (no CSS border) */}
-        <img src="/wallet-redux/balance-card-chrome.png" alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }} />
-        <p style={{ ...SKB, position: "relative", fontSize: 11.5, color: "#E5E1DB", opacity: 0.54, margin: "0 0 1.7%", textTransform: "uppercase", letterSpacing: "1px" }}>
-          TOTAL BALANCE
-        </p>
-        <div style={{ position: "relative" }}>
-          {/* Incoming-funds mark — lands above TOTAL, then lifts away */}
+      {/* TOTAL BALANCE — ledger card (border variant). Hero amount is a MUST-BE-SEEN
+          element (full opacity). Three dotted-leader rows draw from the SAME verified
+          balance values as before (animatedAvailable / holdingsUsd / animatedEarned).
+          RECEIPT-TRUE: presentation only — no fetch/refresh touched. */}
+      <LedgerCard variant="border" radius={10} style={{ width: 236, maxWidth: "92%", margin: "22px auto 0", padding: "16px 22px 20px", boxSizing: "border-box" }}>
+        <div style={{ position: "relative", textAlign: "center" }}>
+          <p style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 14, color: "rgba(229,225,219,0.6)", margin: 0, letterSpacing: "var(--track-body)" }}>
+            Total Balance
+          </p>
+          {/* Incoming-funds mark — lands above the amount, then lifts away */}
           {fundPulse && (
-            <span
-              key={fundPulse.id}
-              style={{
-                ...SKB, position: "absolute", left: 0, right: 0, top: -16,
-                fontSize: 12.5, color: "#E5E1DB", letterSpacing: "0.08em",
-                animation: "fundPulse 2.6s ease-out forwards", pointerEvents: "none",
-              }}
-            >
+            <span key={fundPulse.id} style={{ ...SKB, position: "absolute", left: 0, right: 0, top: 8, fontSize: 12.5, color: "#E5E1DB", letterSpacing: "0.08em", animation: "fundPulse 2.6s ease-out forwards", pointerEvents: "none" }}>
               [ +${fundPulse.usd.toFixed(2)} ]
             </span>
           )}
-          <p style={{ ...SKB, fontSize: 40, color: "#E5E1DB", margin: 0, lineHeight: 1.39, letterSpacing: "-1.2px", fontVariantNumeric: "tabular-nums" }}>
-            {loading && animatedTotal == null ? "..." : animatedTotal != null ? `$${animatedTotal.toFixed(2)}` : "$—"}
+          <p style={{ margin: "8px 0 0", lineHeight: 1, whiteSpace: "nowrap" }}>
+            <span style={{ fontFamily: "var(--font-medium)", fontWeight: 500, fontSize: 36, color: "var(--ink-100)", letterSpacing: "-1.8px" }}>$</span>
+            <span style={{ fontFamily: "var(--font-medium)", fontWeight: 500, fontSize: 36, color: "var(--ink-100)", letterSpacing: "-1.8px", fontVariantNumeric: "tabular-nums" }}>
+              {loading && animatedTotal == null ? "…" : animatedTotal != null ? animatedTotal.toFixed(2) : "—"}
+            </span>
           </p>
-        </div>
-        {/* Red FLASH under the total — a light streak dissipating at both ends */}
-        <div style={{ position: "relative", width: "33.7%", height: 1, background: "linear-gradient(90deg, transparent 0%, #E5E1DB 50%, transparent 100%)", margin: "2.83% auto 7.4%" }} />
-        {/* Stat row — 34px vertical hairline dividers between the three stats */}
-        <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <div onClick={() => setActiveTab("balances")} style={{ cursor: "pointer", flex: 1 }}>
-            <p style={{ ...SKB, fontSize: 11.5, color: "rgba(229,225,219,0.65)", textTransform: "uppercase", letterSpacing: "-0.1px", margin: "0 0 5px" }}>
-              AVAILABLE
-            </p>
-            <p style={{ ...SKB, fontSize: 13.5, color: "#E5E1DB", margin: 0, fontVariantNumeric: "tabular-nums" }}>
-              {animatedAvailable != null ? `$${animatedAvailable.toFixed(2)}` : "$—"}
-            </p>
-          </div>
-          <div style={{ width: 1, height: 34, background: "rgba(229,225,219,0.14)" }} />
-          <div onClick={() => setActiveTab("holdings")} style={{ cursor: "pointer", flex: 1 }}>
-            <p style={{ ...SKB, fontSize: 11.5, color: "rgba(229,225,219,0.65)", textTransform: "uppercase", letterSpacing: "-0.1px", margin: "0 0 5px" }}>
-              HOLDINGS
-            </p>
-            <p style={{ ...SKB, fontSize: 13.5, color: "#E5E1DB", margin: 0, fontVariantNumeric: "tabular-nums" }}>
-              {holdingsUsd != null ? `$${holdingsUsd.toFixed(2)}` : "…"}
-            </p>
-          </div>
-          <div style={{ width: 1, height: 34, background: "rgba(229,225,219,0.14)" }} />
-          {/* SCOPE EARNINGS — value WHITE per 957:565 (sheet greens unchanged);
-              the whole stat is one tap target → the detail sheet. */}
-          <div onClick={() => { if (earnings) setEarnOpen(true); }} style={{ cursor: "pointer", flex: 1.08 }}>
-            <p style={{ ...SKB, fontSize: 11.5, color: "rgba(229,225,219,0.65)", textTransform: "uppercase", letterSpacing: "-0.1px", margin: "0 0 5px" }}>
-              SCOPE EARNINGS
-            </p>
-            {/* value WHITE per 957:565; ⓘ (13px circle + i) rides the value line */}
-            <p style={{ ...SKB, fontSize: 13.5, color: "#E5E1DB", margin: 0, fontVariantNumeric: "tabular-nums", display: "flex", alignItems: "center", justifyContent: "center", gap: 5 }}>
-              {animatedEarned != null ? `$${animatedEarned.toFixed(2)}` : "$—"}
-              <span style={{ position: "relative", width: 13, height: 13, display: "inline-block", backgroundImage: "url(/wallet-redux/info-circle.svg)", backgroundSize: "13px 13px" }}>
-                <span style={{ ...SKB, position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9.7, color: "#E5E1DB", opacity: 0.52, textTransform: "none", letterSpacing: 0 }}>i</span>
-              </span>
-            </p>
+          <div style={{ width: 107, height: 1, background: "var(--hairline)", margin: "12px auto 0" }} />
+          <div style={{ margin: "14px 0 0", display: "flex", flexDirection: "column", gap: 9 }}>
+            {([
+              { label: "Available", value: animatedAvailable, info: false, onClick: () => setActiveTab("balances") },
+              { label: "Holdings", value: holdingsUsd, info: false, onClick: () => setActiveTab("holdings") },
+              { label: "Earnings", value: animatedEarned, info: true, onClick: () => { if (earnings) setEarnOpen(true); } },
+            ] as const).map((row) => (
+              <div key={row.label} onClick={row.onClick} style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
+                  <span style={{ fontFamily: "var(--font-medium)", fontWeight: 500, fontSize: 11.8, color: "rgba(229,225,219,0.75)", letterSpacing: "var(--track-body)", whiteSpace: "nowrap" }}>{row.label}</span>
+                  {row.info && (
+                    <span aria-hidden style={{ width: 8, height: 8, border: "0.5px solid rgba(229,225,219,0.5)", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <span style={{ fontFamily: "var(--font-medium)", fontWeight: 500, fontSize: 6, lineHeight: 1, color: "rgba(229,225,219,0.6)" }}>i</span>
+                    </span>
+                  )}
+                </span>
+                <DottedLeader />
+                <span style={{ display: "inline-flex", alignItems: "baseline", flexShrink: 0 }}>
+                  <span style={{ fontFamily: "var(--font-medium)", fontWeight: 500, fontSize: 13, color: "rgba(229,225,219,0.79)" }}>$</span>
+                  <span style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 13, color: "rgba(229,225,219,0.79)", fontVariantNumeric: "tabular-nums" }}>{row.value != null ? row.value.toFixed(2) : "—"}</span>
+                </span>
+              </div>
+            ))}
           </div>
         </div>
-      </div>
+      </LedgerCard>
 
-      {/* ACTION CARDS — 111×83 @ y280 (x 13/133/254): DEPOSIT / SWAP / SEND.
-          Same actions as before, re-skinned only. */}
-      <div style={{ display: "flex", gap: 10, margin: "13px 10px 0 13px" }}>
-        {/* Arrow assets are drawn pointing RIGHT — rotations give each card its
-            direction: DEPOSIT ↓ (into wallet), SEND ↗ (out), SWAP = opposing pair. */}
+      {/* ACTION CARDS — DEPOSIT · SWAP · SEND, ledger gradient variant (node 37:123).
+          Thin-stroke arrow glyphs: down / swap-pair / up-right. Tap behaviors
+          (fundWallet / swap sheet / send sheet) unchanged. The full-address copy now
+          lives in the header, so the old DIRECT DEPOSIT bar is retired. */}
+      <div style={{ display: "flex", gap: 10, margin: "18px 10px 0" }}>
         {([
-          { label: "DEPOSIT", sub: "Add funds to your wallet", arrows: [{ src: "/wallet-redux/arrow-deposit.svg", rot: "rotate(90deg)" }], onClick: () => walletAddress && fundWallet(walletAddress, { chain: base }) },
-          { label: "SWAP", sub: "USDC ⇄ ETH", arrows: [{ src: "/wallet-redux/arrow-swap-a.svg", rot: "none" }, { src: "/wallet-redux/arrow-swap-b.svg", rot: "rotate(180deg)" }], onClick: () => setShowSwap(true) },
-          { label: "SEND", sub: "Send to any address", arrows: [{ src: "/wallet-redux/arrow-send.svg", rot: "rotate(-45deg)" }], onClick: () => setShowSend(true) },
+          { label: "DEPOSIT", sub: "Add funds to your wallet", onClick: () => walletAddress && fundWallet(walletAddress, { chain: base }) },
+          { label: "SWAP", sub: "Convert money on scope", onClick: () => setShowSwap(true) },
+          { label: "SEND", sub: "Send to any address", onClick: () => setShowSend(true) },
         ] as const).map((card) => (
-          <button
+          <LedgerCard
             key={card.label}
+            variant="gradient"
+            radius={6}
+            role="button"
+            tabIndex={0}
             onClick={card.onClick}
-            style={{
-              position: "relative", flex: 1, aspectRatio: "111 / 83", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 5,
-              background: "transparent", border: "none", borderRadius: 3, cursor: "pointer", padding: 0, overflow: "hidden",
-            }}
+            style={{ flex: 1, aspectRatio: "112 / 105", cursor: "pointer", display: "flex", flexDirection: "column", padding: "12px 11px 12px", boxSizing: "border-box", overflow: "hidden" }}
           >
-            {/* Baked card chrome (fill + stroke in the PNG) */}
-            <img src="/wallet-redux/action-card-chrome.png" alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }} />
-            {/* icon: 26px red-glow circle + the arrow overlay (swap = the pair) */}
-            <span style={{ position: "relative", width: 26, height: 26, display: "block" }}>
-              <img src="/wallet-redux/icon-glow-circle.svg" alt="" style={{ position: "absolute", inset: 0, width: 26, height: 26 }} />
-              {card.arrows.length === 1 ? (
-                <img src={card.arrows[0].src} alt="" style={{ position: "absolute", left: "50%", top: "50%", width: 14, height: 8.2, transform: `translate(-50%,-50%) ${card.arrows[0].rot}` }} />
-              ) : (
-                <>
-                  <img src={card.arrows[0].src} alt="" style={{ position: "absolute", left: "50%", top: 6.5, transform: "translateX(-50%)", width: 13, height: 7.5 }} />
-                  <img src={card.arrows[1].src} alt="" style={{ position: "absolute", left: "50%", bottom: 6.5, transform: "translateX(-50%) rotate(180deg)", width: 13, height: 7.5 }} />
-                </>
+            <span style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 14, letterSpacing: "var(--track-display)", color: "rgba(229,225,219,0.67)", textTransform: "uppercase" }}>{card.label}</span>
+            <span style={{ fontFamily: "var(--font-medium)", fontWeight: 500, fontSize: 9.5, color: "rgba(229,225,219,0.43)", letterSpacing: "var(--track-body)", marginTop: 3, lineHeight: 1.2 }}>{card.sub}</span>
+            <span style={{ marginTop: "auto", display: "flex" }}>
+              {card.label === "DEPOSIT" && (
+                <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="rgba(229,225,219,0.82)" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <line x1="11" y1="3" x2="11" y2="18" /><path d="M5 12 L11 18 L17 12" />
+                </svg>
+              )}
+              {card.label === "SWAP" && (
+                <svg width="26" height="18" viewBox="0 0 26 18" fill="none" stroke="rgba(229,225,219,0.82)" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <path d="M3 6 H21 M17 2 L21 6 L17 10" /><path d="M23 12 H5 M9 8 L5 12 L9 16" />
+                </svg>
+              )}
+              {card.label === "SEND" && (
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="rgba(229,225,219,0.82)" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <line x1="4" y1="16" x2="15" y2="5" /><path d="M6 5 H15 V14" />
+                </svg>
               )}
             </span>
-            <span style={{ position: "relative", display: "flex", flexDirection: "column", gap: 2 }}>
-              <span style={{ ...SKB, fontSize: 11.5, color: "#E5E1DB", textTransform: "uppercase", letterSpacing: "0.02em" }}>{card.label}</span>
-              <span style={{ ...SKR, fontSize: 9.7, color: "rgba(229,225,219,0.68)", letterSpacing: "-0.082px" }}>{card.sub}</span>
-            </span>
-          </button>
+          </LedgerCard>
         ))}
       </div>
 
-      {/* DIRECT DEPOSIT bar — 352×40 @ (13,376): scan glyph, label, FULL live
-          address, copy glyph (two squares), 23px circle. Tap = copy (existing). */}
-      {walletAddress && (
-        <div
-          onClick={() => navigator.clipboard.writeText(walletAddress).then(() => showToast("Address copied"))}
-          style={{ position: "relative", margin: "13px 10px 0 13px", aspectRatio: "352 / 40", borderRadius: 3, cursor: "pointer", overflow: "hidden" }}
-        >
-          {/* Baked bar chrome */}
-          <img src="/wallet-redux/direct-deposit-chrome.png" alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }} />
-          <div style={{ position: "relative", display: "flex", alignItems: "center", gap: 8, height: "100%", padding: "0 11px" }}>
-            <img src="/wallet-redux/scan-wallet-address-icon.png" alt="" style={{ width: 22, height: "auto", flexShrink: 0 }} />
-            {/* Two lines: label over the FULL live address (never truncated) */}
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ ...SKB, fontSize: 10.5, color: "#E5E1DB", opacity: 0.37, textTransform: "uppercase", letterSpacing: "0.02em", margin: 0, lineHeight: 1.2 }}>DIRECT DEPOSIT</p>
-              <p style={{ ...SKR, fontSize: 10.5, color: "#E5E1DB", opacity: 0.65, margin: "1px 0 0", lineHeight: 1.2, whiteSpace: "nowrap" }}>
-                {walletAddress}
-              </p>
-            </div>
-            {/* copy glyph — two 7px squares, 0.25px borders, 3px offset */}
-            <span style={{ position: "relative", width: 11, height: 11, flexShrink: 0, display: "block" }}>
-              <span style={{ position: "absolute", top: 0, left: 0, width: 7, height: 7, border: "0.25px solid rgba(229,225,219,0.54)" }} />
-              <span style={{ position: "absolute", top: 3, left: 3, width: 7, height: 7, border: "0.25px solid rgba(229,225,219,0.54)" }} />
-            </span>
-          </div>
-        </div>
-      )}
-
-      {/* TABS — BALANCES / HOLDINGS / EARNINGS / ACTIVITY. EARNINGS is now a
-          REAL pane (PORTFOLIO + COLLECTED detail); the ⓘ header stat keeps
-          opening the summary sheet. Active = the short 45px hairline over the
-          full-width hairline. */}
-      <div style={{ display: "flex", justifyContent: "space-between", margin: "24px 13px 0", borderBottom: "1px solid rgba(229,225,219,0.12)" }}>
+      {/* SEGMENT ROW — Balances · Holdings · Earnings · Activity (node 37:123).
+          Active = 4px dot at the left + --ink-100; inactive ~67%, no dot. The dot
+          slot is always reserved (transparent when inactive) so switching doesn't
+          shift the labels. EARNINGS pane + the info sheet behavior are unchanged. */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", margin: "22px 12px 0", padding: "0 2px" }}>
         {(["balances", "holdings", "earnings", "activity"] as const).map(tab => {
           const active = activeTab === tab;
           return (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              style={{
-                ...SKR, fontSize: 10.5, background: "none", border: "none",
-                cursor: "pointer", padding: "6px 0 5px", position: "relative",
-                color: "#E5E1DB", textTransform: "uppercase", letterSpacing: "-0.09px",
-                opacity: active ? 1 : 0.65,
-              }}
+              style={{ background: "none", border: "none", cursor: "pointer", padding: "6px 0", display: "inline-flex", alignItems: "center", gap: 5 }}
             >
-              {tab.toUpperCase()}
-              {/* active = the short 45px shine, anchored to the tab's left edge */}
-              {active && (
-                <span style={{ position: "absolute", bottom: -1, left: 0, width: 45, height: 1, background: "linear-gradient(90deg, #E5E1DB 0%, #E5E1DB 55%, #E5E1DB 100%)" }} />
-              )}
+              <span style={{ width: 4, height: 4, borderRadius: "50%", background: active ? "var(--ink-100)" : "transparent", flexShrink: 0 }} />
+              <span style={{ fontFamily: "var(--font-medium)", fontWeight: 500, fontSize: 12, letterSpacing: "var(--track-body)", color: active ? "var(--ink-100)" : "rgba(229,225,219,0.67)" }}>
+                {tab.charAt(0).toUpperCase() + tab.slice(1)}
+              </span>
             </button>
           );
         })}
@@ -891,100 +870,89 @@ export default function WalletPage() {
             slots below USDC; ADD/IMPORT rides BELOW the panel. */}
         {activeTab === "balances" && (
           <>
-          {/* CONTENT-DRIVEN height (imported assets add rows) → border-image
-              9-slice: 12px corners of the @3x PNG stay 1:1 (crisp, round), edges
-              and the filled center stretch — rows grow without warping chrome.
-              (An aspect lock here would crop or distort once rows exceed 190.) */}
-          <div style={{
-            position: "relative", padding: "0 14px", minHeight: 190,
-            borderStyle: "solid", borderWidth: 4, borderColor: "transparent",
-            borderImageSource: "url(/wallet-redux/token-panel-chrome.png)",
-            borderImageSlice: "12 fill", borderImageRepeat: "stretch",
-          }}>
+          {/* BALANCES — ledger card (border variant, node 37:123). Rows retinted to
+              the ledger language: 30px coin icon · ticker 75 Bold 12px · amount line
+              10px 55 Roman wide-tracked · fiat value right-aligned ($ + 75 Bold).
+              Full-width ivory-4% highlight on hover/press (.ledger-row). Padding is
+              vertical-only so the highlight strip runs edge-to-edge. */}
+          <LedgerCard variant="border" radius={10} style={{ padding: "6px 0 8px" }}>
             {/* ETH row */}
-            <div style={{ position: "relative", display: "flex", alignItems: "center", height: 45, borderBottom: "1px solid rgba(229,225,219,0.08)" }}>
-              <span style={{ position: "relative", width: 30, height: 30, flexShrink: 0, marginRight: 11 }}>
+            <div className="ledger-row" style={{ position: "relative", display: "flex", alignItems: "center", height: 52, padding: "0 14px", boxSizing: "border-box" }}>
+              <span style={{ position: "relative", width: 30, height: 30, flexShrink: 0, marginRight: 12 }}>
                 <img src="/wallet-redux/eth-token-circle.svg" alt="" style={{ position: "absolute", inset: 0, width: 30, height: 30 }} />
                 <img src="/wallet-redux/eth-logo.png" alt="" style={{ position: "absolute", left: "50%", top: "50%", transform: "translate(-50%,-50%)", width: 13, height: "auto" }} />
               </span>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ ...SKR, fontSize: 13.5, color: "#E5E1DB", margin: 0 }}>ETH</p>
-                <p style={{ ...SKR, fontSize: 10.5, color: "#E5E1DB", opacity: 0.37, margin: "1px 0 0" }}>
-                  {loading && ethBalance == null ? "..." : `${parseFloat(ethBalance ?? "0").toFixed(4)} ETH`}
+                <p style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 12, color: "rgba(229,225,219,0.74)", margin: 0, letterSpacing: "var(--track-body)" }}>ETHEREUM</p>
+                <p style={{ fontFamily: "var(--font-body)", fontWeight: 400, fontSize: 10, color: "rgba(229,225,219,0.74)", letterSpacing: "1.1px", margin: "2px 0 0" }}>
+                  {loading && ethBalance == null ? "…" : `${parseFloat(ethBalance ?? "0").toFixed(4)} ETH`}
                 </p>
               </div>
-              <p style={{ ...SKR, fontSize: 13.5, color: "#E5E1DB", margin: 0, fontVariantNumeric: "tabular-nums" }}>
-                {loading && ethUsd == null ? "..." : ethUsd != null ? `$${ethUsd}` : "$—"}
-              </p>
-              <span style={{ fontFamily: "Batang, serif", fontSize: 14.5, color: "#E5E1DB", opacity: 0.75, marginLeft: 10 }}>›</span>
+              <span style={{ display: "inline-flex", alignItems: "baseline", flexShrink: 0 }}>
+                <span style={{ fontFamily: "var(--font-medium)", fontWeight: 500, fontSize: 13, color: "rgba(229,225,219,0.9)" }}>$</span>
+                <span style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 13, color: "rgba(229,225,219,0.9)", fontVariantNumeric: "tabular-nums" }}>{loading && ethUsd == null ? "…" : ethUsd ?? "—"}</span>
+              </span>
             </div>
 
             {/* USDC row */}
-            <div style={{ position: "relative", display: "flex", alignItems: "center", height: 50, borderBottom: "1px solid rgba(229,225,219,0.08)" }}>
-              <span style={{ position: "relative", width: 30, height: 30, flexShrink: 0, marginRight: 11 }}>
+            <div className="ledger-row" style={{ position: "relative", display: "flex", alignItems: "center", height: 52, padding: "0 14px", boxSizing: "border-box" }}>
+              <span style={{ position: "relative", width: 30, height: 30, flexShrink: 0, marginRight: 12 }}>
                 <img src="/wallet-redux/usdc-token-circle.svg" alt="" style={{ position: "absolute", inset: 0, width: 30, height: 30 }} />
-                <span style={{ ...SKB, position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14.5, color: "#E5E1DB" }}>$</span>
+                <span style={{ fontFamily: "var(--font-black)", fontWeight: 900, position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14.5, color: "#E5E1DB" }}>$</span>
               </span>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ ...SKR, fontSize: 13.5, color: "#E5E1DB", margin: 0 }}>USDC</p>
-                <p style={{ ...SKR, fontSize: 10.5, color: "#E5E1DB", opacity: 0.37, margin: "1px 0 0" }}>
-                  {loading && usdcBalance == null ? "..." : `${parseFloat(usdcBalance ?? "0").toFixed(2)} USDC`}
+                <p style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 12, color: "rgba(229,225,219,0.74)", margin: 0, letterSpacing: "var(--track-body)" }}>USDC</p>
+                <p style={{ fontFamily: "var(--font-body)", fontWeight: 400, fontSize: 10, color: "rgba(229,225,219,0.74)", letterSpacing: "1.1px", margin: "2px 0 0" }}>
+                  {loading && usdcBalance == null ? "…" : `${parseFloat(usdcBalance ?? "0").toFixed(2)} USDC`}
                 </p>
               </div>
-              <p style={{ ...SKR, fontSize: 13.5, color: "#E5E1DB", margin: 0, fontVariantNumeric: "tabular-nums" }}>
-                {loading && usdcUsd == null ? "..." : `$${usdcUsd ?? "0.00"}`}
-              </p>
-              <span style={{ fontFamily: "Batang, serif", fontSize: 14.5, color: "#E5E1DB", opacity: 0.75, marginLeft: 10 }}>›</span>
+              <span style={{ display: "inline-flex", alignItems: "baseline", flexShrink: 0 }}>
+                <span style={{ fontFamily: "var(--font-medium)", fontWeight: 500, fontSize: 13, color: "rgba(229,225,219,0.9)" }}>$</span>
+                <span style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 13, color: "rgba(229,225,219,0.9)", fontVariantNumeric: "tabular-nums" }}>{loading && usdcUsd == null ? "…" : usdcUsd ?? "0.00"}</span>
+              </span>
             </div>
 
-            {/* CREATOR EARNINGS — the ZORA balance, earnings-language framing:
-                USD hero (real full-balance cash-out quote), "N ZORA" honest sub.
-                One tap → prefilled ZORA→USDC CASH OUT. Hidden until earned. */}
+            {/* CREATOR — the ZORA balance (creator-earnings framing). One tap →
+                prefilled ZORA→USDC CASH OUT. Hidden until earned. */}
             {zoraBalance != null && parseFloat(zoraBalance) > 0 && (
               <div
+                className="ledger-row"
                 // floor to 0.01 — toFixed(4) ROUNDED (up) past the balance → overMax blocked the swap
                 onClick={() => { setSwapInitial({ sell: "ZORA", buy: "USDC", amount: (Math.floor(parseFloat(zoraBalance) * 100) / 100).toFixed(2), cashOut: true }); setShowSwap(true); }}
-                style={{ position: "relative", display: "flex", alignItems: "center", height: 50, borderBottom: "1px solid rgba(229,225,219,0.08)", cursor: "pointer" }}
+                style={{ position: "relative", display: "flex", alignItems: "center", height: 52, padding: "0 14px", boxSizing: "border-box", cursor: "pointer" }}
               >
-                {/* The earnings badge — same 30px slot as the ETH/USDC circles.
-                    (Presentation only: the asset stays ZORA in send/activity.) */}
-                <span style={{ position: "relative", width: 30, height: 30, flexShrink: 0, marginRight: 11, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <span style={{ position: "relative", width: 30, height: 30, flexShrink: 0, marginRight: 12, display: "flex", alignItems: "center", justifyContent: "center" }}>
                   <img src="/scope-earnings-icon.png" alt="" style={{ width: 30, height: "auto", display: "block" }} />
                 </span>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ ...SKR, fontSize: 13.5, color: "#E5E1DB", margin: 0, textTransform: "uppercase", letterSpacing: "0.02em" }}>Creator Earnings</p>
-                  <p style={{ ...SKR, fontSize: 10.5, color: "#E5E1DB", opacity: 0.37, margin: "1px 0 0" }}>
+                  <p style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 12, color: "rgba(229,225,219,0.74)", margin: 0, letterSpacing: "var(--track-body)" }}>CREATOR</p>
+                  <p style={{ fontFamily: "var(--font-body)", fontWeight: 400, fontSize: 10, color: "rgba(229,225,219,0.74)", letterSpacing: "1.1px", margin: "2px 0 0" }}>
                     {parseFloat(zoraBalance) >= 1000 ? Math.round(parseFloat(zoraBalance)).toLocaleString() : parseFloat(zoraBalance).toFixed(2)} ZORA
                   </p>
                 </div>
-                <p style={{ ...SKR, fontSize: 13.5, color: "#E5E1DB", margin: 0, fontVariantNumeric: "tabular-nums" }}>
-                  {zoraUsd != null ? `$${zoraUsd.toFixed(2)}` : "$—"}
-                </p>
-                <span style={{ fontFamily: "Batang, serif", fontSize: 14.5, color: "#E5E1DB", opacity: 0.75, marginLeft: 10 }}>›</span>
+                <span style={{ display: "inline-flex", alignItems: "baseline", flexShrink: 0 }}>
+                  <span style={{ fontFamily: "var(--font-medium)", fontWeight: 500, fontSize: 13, color: "rgba(229,225,219,0.9)" }}>$</span>
+                  <span style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 13, color: "rgba(229,225,219,0.9)", fontVariantNumeric: "tabular-nums" }}>{zoraUsd != null ? zoraUsd.toFixed(2) : "—"}</span>
+                </span>
               </div>
             )}
 
-            {/* Imported ERC-20 rows — same shape as ETH/USDC; balance-only when
-                no price source resolves (USD deliberately out of scope). */}
+            {/* Imported ERC-20 rows — same shape; balance-only when unpriced. */}
             {importedAssets.map((a) => (
-              <div key={a.address} style={{ position: "relative", display: "flex", alignItems: "center", height: 50, borderBottom: "1px solid rgba(229,225,219,0.08)" }}>
-                <span style={{ position: "relative", width: 30, height: 30, flexShrink: 0, marginRight: 11, borderRadius: "50%", background: "#141414", border: "0.5px solid rgba(229,225,219,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <div key={a.address} className="ledger-row" style={{ position: "relative", display: "flex", alignItems: "center", height: 52, padding: "0 14px", boxSizing: "border-box" }}>
+                <span style={{ position: "relative", width: 30, height: 30, flexShrink: 0, marginRight: 12, borderRadius: "50%", background: "#141414", border: "0.5px solid rgba(229,225,219,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                   <span style={{ ...SKB, fontSize: 13.5, color: "#E5E1DB", opacity: 0.8 }}>{a.symbol.slice(0, 1)}</span>
                 </span>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ ...SKR, fontSize: 13.5, color: "#E5E1DB", margin: 0 }}>{a.symbol}</p>
-                  <p style={{ ...SKR, fontSize: 10.5, color: "#E5E1DB", opacity: 0.37, margin: "1px 0 0" }}>
+                  <p style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 12, color: "rgba(229,225,219,0.74)", margin: 0, letterSpacing: "var(--track-body)" }}>{a.symbol}</p>
+                  <p style={{ fontFamily: "var(--font-body)", fontWeight: 400, fontSize: 10, color: "rgba(229,225,219,0.74)", letterSpacing: "1.1px", margin: "2px 0 0" }}>
                     {a.balance != null ? `${a.balance} ${a.symbol}` : "…"}
                   </p>
                 </div>
-                <p style={{ ...SKR, fontSize: 12, color: "rgba(229,225,219,0.37)", margin: 0 }}>$—</p>
-                <span style={{ fontFamily: "Batang, serif", fontSize: 14.5, color: "#E5E1DB", opacity: 0.75, marginLeft: 10 }}>›</span>
+                <span style={{ fontFamily: "var(--font-body)", fontWeight: 400, fontSize: 12, color: "rgba(229,225,219,0.37)", flexShrink: 0 }}>$—</span>
               </div>
             ))}
-            {/* Empty asset slots (the frame's reserved rows) */}
-            {importedAssets.length === 0 && <div style={{ height: 50, borderBottom: "1px solid rgba(229,225,219,0.08)" }} />}
-            {importedAssets.length <= 1 && <div style={{ height: 44 }} />}
-          </div>
+          </LedgerCard>
           {/* + ADD / IMPORT — real action: press-pop → the import sheet */}
           <button
             onClick={() => setShowImport(true)}
