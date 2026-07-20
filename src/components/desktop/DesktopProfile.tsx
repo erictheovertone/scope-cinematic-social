@@ -26,6 +26,7 @@ import CollectedGrid from '@/components/economy/CollectedGrid';
 import TheatreMode from '@/components/TheatreMode';
 import GradedVideo from '@/components/finishing/GradedVideo';
 import DesktopPostView from '@/components/desktop/DesktopPostView';
+import FilmstripIndicator from '@/components/FilmstripIndicator';
 import { resolveLayout, ratioForAspect, type AspectId } from '@/lib/layoutModel';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useRef } from 'react';
@@ -34,7 +35,6 @@ const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fon
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
 const SKL: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 300 };
 const HAIR = 'rgba(229,225,219,0.14)';
-const RED = '#E5E1DB';
 
 // DM button: rendered DISABLED behind this flag (Eric decides on sight —
 // flip to false to hide entirely). DMs are their own upcoming build.
@@ -140,7 +140,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
         const { supabase } = await import('@/lib/supabase/client');
         // JOINED = users.created_at (no schema change)
         const { data: u } = await supabase.from('users').select('created_at').eq('id', userId).maybeSingle();
-        if (u?.created_at) setJoined(new Date(u.created_at).getFullYear().toString());
+        if (u?.created_at) setJoined(new Date(u.created_at).toLocaleString('en-US', { month: 'short', year: 'numeric' }).toUpperCase());
         // COLLECTORS — distinct collectors of this user's work (the same
         // receipt-true collect events the analytics number counts; one query,
         // no per-coin holder amplification).
@@ -153,6 +153,10 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
   }, [userId, privyId, economy]);
 
   const name = String(profile?.display_name ?? '');
+  // Brief 2.5 — first/last split for the wide inter-word name gap (flex, not spaces).
+  const nameParts = name.trim().split(/\s+/).filter(Boolean);
+  const firstName = nameParts[0] ?? '';
+  const lastName = nameParts.slice(1).join(' ');
   const handle = String(profile?.username ?? '');
   // DESKTOP BIO = profiles.short_bio ONLY (minimal by design; the full
   // mobile bio never renders here — absent when unset).
@@ -221,61 +225,72 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
     <div ref={scrollerRef} className="bg-black" style={{ position: 'fixed', inset: 0, left: 71, overflowY: 'auto' }}>
       <div style={scaleWrap}>
 
-        {/* ═══ HEADER ZONE ═══ */}
-        <div style={{ position: 'relative', paddingTop: 36, minHeight: 237, boxSizing: 'border-box' }}> {/* badges (~205) + ~30px air to the divider (Eric: +15) */}
-          {/* Pro dividing line — the mobile PFP-side accent, desktop-proportioned
-              (Pro only, same conditional). */}
-          {/* The frame's x96 hairline TOUCHES the PFP's left edge (183px, exactly
-              the PFP height). SHIPPED: Pro-conditional red accent (round 2 item
-              6); the frame reads as the Pro treatment — if a base hairline for
-              all users is intended, that's a one-line change (flagged). */}
-          {profile && isProMember(profile as { is_paid_member?: boolean; paid_member_until?: string | null }) && (
-            <div style={{ position: 'absolute', left: 0, top: 23, width: 1.5, height: 146, zIndex: 2, background: 'linear-gradient(180deg, rgba(229,225,219,0.9), rgba(229,225,219,0.25))' }} />
-          )}
-          {/* PFP — hairline-framed. The header NEVER changes in post-scroll
-              (the frame's compressed header was overruled — path deleted). */}
-          <div style={{ position: 'absolute', left: 0, top: 23, width: 150, height: 146, border: `1px solid ${HAIR}`, overflow: 'hidden' }}>
+        {/* ═══ HEADER ZONE (node 38:88 — header band ends at the y205 hairline) ═══ */}
+        <div style={{ position: 'relative', height: 205, boxSizing: 'border-box' }}>
+          {/* PFP — 168×168, house ivory frame (frame x92 y14). The old Pro-only
+              side accent is not in this frame → removed (flagged). */}
+          <div style={{ position: 'absolute', left: 0, top: 14, width: 168, height: 168, border: '1px solid var(--hairline-strong)', boxSizing: 'border-box', overflow: 'hidden' }}>
             {pfp ? (
               <img src={feedImage(pfp, 400)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
             ) : <div style={{ width: '100%', height: '100%', background: '#141414' }} />}
           </div>
 
-          {/* Text block ANCHORED to the PFP: name cap-height starts at the PFP's
-              top line (frame: PFP y25/name y33 — top 27 ≈ cap at 33 after the
-              ascender gap). Frame rhythm: handle tight beneath (~25px pitch). */}
-          <div style={{ position: 'absolute', left: 177, top: 17, right: 0 }}>
-            <p style={{ ...SKB, fontSize: 24, color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '-0.02em', margin: 0, lineHeight: 1 }}>{name}</p>
-            <p style={{ ...SKB, fontSize: 12, color: 'rgba(229,225,219,0.5)', textTransform: 'uppercase', margin: '4.6px 0 0' }}>{handle ? `@${handle}` : ''}</p>
-            {bio && <p style={{ ...SKR, fontSize: 13, color: 'rgba(229,225,219,0.5)', lineHeight: 1.5, margin: '10px 0 0', maxWidth: 320 }}>{bio}</p>}
+          {/* Text block — name x288 (frame). 2-col grid gives the wide first/last
+              gap (flex, not spaces) + the handle tracking under the first-name-end. */}
+          <div style={{ position: 'absolute', left: 196, top: 13, right: 250 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'auto minmax(10px, 40px) 1fr', alignItems: 'baseline', rowGap: 6 }}>
+              <span style={{ gridColumn: 1, gridRow: 1, fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 21, letterSpacing: 'var(--track-display)', color: 'var(--ink-100)', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{firstName}</span>
+              <span style={{ gridColumn: lastName ? 3 : 1, gridRow: 1, display: 'inline-flex', alignItems: 'baseline', gap: 5, minWidth: 0 }}>
+                {lastName && <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 21, letterSpacing: 'var(--track-display)', color: 'var(--ink-100)', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{lastName}</span>}
+                {profile && isProMember(profile as { is_paid_member?: boolean; paid_member_until?: string | null }) && (
+                  <span style={{ fontFamily: 'var(--font-black)', fontWeight: 900, fontSize: 6.7, color: 'rgba(229,225,219,0.64)', letterSpacing: 'var(--track-wide)', alignSelf: 'flex-start', transform: 'translateY(2px)', flexShrink: 0 }}>PRO</span>
+                )}
+              </span>
+              <span style={{ gridColumn: lastName ? '2 / span 2' : 1, gridRow: 2, display: 'inline-flex', alignItems: 'baseline', gap: 4, opacity: 0.64, minWidth: 0 }}>
+                <span style={{ fontFamily: 'var(--font-light)', fontWeight: 400, fontSize: 8, color: 'var(--ink-100)', letterSpacing: 'var(--track-wide)' }}>[ at ]</span>
+                <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 10, color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: 'var(--track-body)', whiteSpace: 'nowrap' }}>{handle}</span>
+              </span>
+            </div>
 
-            {/* META ROW — location · primary link · joined (frame ~y140) */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 22, margin: '26px 0 0' }}>
+            {/* Bio — single line (frame y71) */}
+            {bio && <p style={{ fontFamily: 'var(--font-body)', fontWeight: 400, fontSize: 13, color: 'rgba(229,225,219,0.5)', lineHeight: 1.07, margin: '20px 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 600 }}>{bio}</p>}
+
+            {/* META ROW — location · website · JOINED (frame y95). 10px, values 75
+                Bold, JOINED prefix 55 Roman, all ~58%. Absent fields omitted. */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 22, margin: '14px 0 0' }}>
               {location && (
-                <span style={{ ...SKB, fontSize: 9, color: 'rgba(229,225,219,0.5)', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(229,225,219,0.5)" strokeWidth="1.6"><path d="M12 21s-6.5-5.4-6.5-10.5A6.5 6.5 0 0 1 12 4a6.5 6.5 0 0 1 6.5 6.5C18.5 15.6 12 21 12 21z" /><circle cx="12" cy="10.5" r="2.2" /></svg>
+                <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 10, color: 'rgba(229,225,219,0.58)', textTransform: 'uppercase', letterSpacing: 'var(--track-body)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(229,225,219,0.58)" strokeWidth="1.6"><path d="M12 21s-6.5-5.4-6.5-10.5A6.5 6.5 0 0 1 12 4a6.5 6.5 0 0 1 6.5 6.5C18.5 15.6 12 21 12 21z" /><circle cx="12" cy="10.5" r="2.2" /></svg>
                   {location}
                 </span>
               )}
               {primaryLink && (
-                <a href={primaryLink.url} target="_blank" rel="noopener noreferrer" style={{ ...SKB, fontSize: 9, color: 'rgba(229,225,219,0.5)', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'inline-flex', alignItems: 'center', gap: 6, textDecoration: 'none' }}>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(229,225,219,0.5)" strokeWidth="1.6"><path d="M10 14l7-7M13 5h6v6M11 6H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5" /></svg>
+                <a href={primaryLink.url} target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 10, color: 'rgba(229,225,219,0.58)', textTransform: 'uppercase', letterSpacing: 'var(--track-body)', display: 'inline-flex', alignItems: 'center', gap: 6, textDecoration: 'none' }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(229,225,219,0.58)" strokeWidth="1.6"><path d="M10 14l7-7M13 5h6v6M11 6H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5" /></svg>
                   {primaryLink.title || primaryLink.url.replace(/^https?:\/\/(www\.)?/, '').slice(0, 28)}
                 </a>
               )}
               {joined && (
-                <span style={{ ...SKB, fontSize: 9, color: 'rgba(229,225,219,0.5)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>JOINED {joined}</span>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, textTransform: 'uppercase' }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(229,225,219,0.58)" strokeWidth="1.6"><rect x="3.5" y="5" width="17" height="16" rx="1.5" /><path d="M3.5 9h17M8 3v4M16 3v4" /></svg>
+                  <span style={{ fontFamily: 'var(--font-body)', fontWeight: 400, fontSize: 10, color: 'rgba(229,225,219,0.58)', letterSpacing: 'var(--track-body)' }}>JOINED </span>
+                  <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 10, color: 'rgba(229,225,219,0.58)', letterSpacing: 'var(--track-body)' }}>{joined}</span>
+                </span>
               )}
             </div>
-            <div style={{ height: 1, width: 496, maxWidth: '100%', background: HAIR, margin: '22px 0 0' }} /> {/* the line belongs to the stats row's top */}
 
-            {/* STATS ROW — values over red labels, 33px hairline dividers */}
-            <div style={{ display: 'flex', alignItems: 'stretch', margin: '6px 0 0' }}>
+            {/* Hairline under bio/meta (frame y129, ~425px) */}
+            <div style={{ height: 1, width: 425, maxWidth: '100%', background: 'var(--hairline)', margin: '13px 0 0' }} />
+
+            {/* STATS band (frame y156–185) — value over label, 23px hairline
+                separators. Labels Title Case per frame. */}
+            <div style={{ display: 'flex', alignItems: 'stretch', margin: '14px 0 0' }}>
               {stats.map(([label, value], i) => (
                 <div key={label} style={{ display: 'flex', alignItems: 'stretch' }}>
-                  {i > 0 && <div style={{ width: 1, height: 33, background: HAIR, margin: '4px 22px 0' }} />}
+                  {i > 0 && <div style={{ width: 1, height: 23, background: 'var(--hairline)', margin: '2px 26px 0' }} />}
                   <div>
-                    <p style={{ ...SKB, fontSize: 12, color: '#E5E1DB', margin: 0, fontVariantNumeric: 'tabular-nums' }}>{value}</p>
-                    <p style={{ ...SKB, fontSize: 9, color: 'rgba(229,225,219,0.7)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '4px 0 0' }}>{label}</p>
+                    <p style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 14, color: 'rgba(229,225,219,0.85)', margin: 0, fontVariantNumeric: 'tabular-nums' }}>{value}</p>
+                    <p style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 12, color: 'rgba(229,225,219,0.58)', letterSpacing: 'var(--track-body)', margin: '4px 0 0' }}>{label.charAt(0) + label.slice(1).toLowerCase()}</p>
                   </div>
                 </div>
               ))}
@@ -283,30 +298,22 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
 
           </div>
 
-          {/* TOP-RIGHT cluster — MESSAGE (public) then the ⓘ box, 10px gap.
-              Own profile: ⓘ alone (editing lives in Settings). */}
-          <div style={{ position: 'absolute', right: 0, top: 17, display: 'flex', alignItems: 'center', gap: 10 }}> {/* tops level with the name */}
+          {/* TOP-RIGHT — MESSAGE (other-user only) + BIO (frame y11–34). */}
+          <div style={{ position: 'absolute', right: 0, top: 8, display: 'flex', alignItems: 'center', gap: 20 }}>
             {!isOwn && SHOW_MESSAGE_BUTTON && (
-              /* Public profiles only (own = correctly absent). Full-white per the
-                 frame; tap → the DM surface with this user's thread active. */
-              <button onClick={() => router.push(`/dm/${encodeURIComponent(handle)}`)} aria-label={`Message @${handle}`} style={{ ...SKB, fontSize: 11, color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.06em', width: 123, height: 33, borderRadius: 4, border: '0.5px solid rgba(229,225,219,0.3)', background: 'transparent', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}>
-                {/* red dot kept as a live accent (the DM status colour). */}
-                <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#E5E1DB', display: 'inline-block' }} />
+              <button onClick={() => router.push(`/dm/${encodeURIComponent(handle)}`)} aria-label={`Message @${handle}`} style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 12, color: 'rgba(229,225,219,0.74)', textTransform: 'uppercase', letterSpacing: 'var(--track-body)', width: 123, height: 33, borderRadius: 4, border: '0.5px solid rgba(229,225,219,0.3)', background: 'transparent', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
                 MESSAGE
               </button>
             )}
-            <button onClick={() => setInfoOpen(true)} aria-label="Profile info" style={{ width: 34, height: 33, borderRadius: 4, border: '0.5px solid rgba(229,225,219,0.3)', background: 'transparent', cursor: 'pointer', ...SKB, fontSize: 13, color: '#E5E1DB' }}>
-              <span>i</span> {/* upright — the frame's rotation was an authoring artifact */}
+            <button onClick={() => setInfoOpen(true)} aria-label="Profile info" style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 15.5, letterSpacing: 'var(--track-body)', color: 'var(--ink-100)' }}>
+              BIO
             </button>
           </div>
 
-          {/* ═══ BADGES — RELOCATED (Brief 1a · node 38:88): landscape cards in the
-              header right zone, below MESSAGE/BIO. The PFP-side strip + the old
-              backdrop-card treatment are RETIRED — the new assets are the whole
-              badge. FC/SRH counts now live in the sheet only. */}
-          <div style={{ position: 'absolute', right: 0, top: 92 }}>
-            <button onClick={() => setBadgesOpen(true)} style={{ ...SKB, fontSize: 15, color: 'rgba(229,225,219,0.76)', letterSpacing: 'var(--track-display)', margin: '0 0 10px', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, display: 'block' }}>Badges</button>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {/* ═══ BADGES (Brief 1a, integrated as-is) — right zone, frame y135–190. */}
+          <div style={{ position: 'absolute', right: 0, top: 121, textAlign: 'right' }}>
+            <button onClick={() => setBadgesOpen(true)} style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 15, color: 'rgba(229,225,219,0.76)', letterSpacing: 'var(--track-body)', margin: '0 0 10px', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, display: 'block', marginLeft: 'auto' }}>Badges</button>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8 }}>
               {badges.slice(0, 4).map((b, i) => (
                 <img
                   key={b.key}
@@ -318,7 +325,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
                 />
               ))}
               {badges.length > 4 && (
-                <button onClick={() => setBadgesOpen(true)} style={{ ...SKB, fontWeight: 900, fontSize: 15, color: 'rgba(229,225,219,0.76)', letterSpacing: 'var(--track-display)', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, marginLeft: 2 }}>+{badges.length - 4}</button>
+                <button onClick={() => setBadgesOpen(true)} style={{ fontFamily: 'var(--font-black)', fontWeight: 900, fontSize: 15, color: 'rgba(229,225,219,0.76)', letterSpacing: 'var(--track-display)', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, marginLeft: 2 }}>+{badges.length - 4}</button>
               )}
             </div>
           </div>
@@ -326,22 +333,25 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
 
         <div style={{ height: 1, background: HAIR, margin: '0 -100vw 0 -100vw', paddingLeft: '100vw', paddingRight: '100vw' }} />
 
-        {/* ═══ TAB ROW (y285) ═══ */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 52, padding: '18px 0 12px' }}>
+        {/* ═══ TAB ROW (frame y228) — Portfolio · Collected · Decks · Theatre.
+            75 Bold 13px --track-display, active ink-100 / inactive 50%. Active
+            indicator = the FILMSTRIP motif (three hairline cells) under the label;
+            reserved 8px keeps inactive labels from jumping. Theatre opens theatre
+            mode (an action, not a persistent tab → never carries the strip). */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 80, padding: '20px 0 14px' }}>
           {(['portfolio', 'collected', 'decks'] as Tab[]).map((t) => {
             const active = tab === t;
             return (
-              <button key={t} onClick={() => setTab(t)} style={{ position: 'relative', background: 'transparent', border: 'none', cursor: 'pointer', padding: '0 0 8px', ...SKB, fontSize: 10.5, letterSpacing: '0.1em', textTransform: 'uppercase', color: active ? '#E5E1DB' : 'rgba(229,225,219,0.5)' }}>
-                {t.toUpperCase()}
-                {active && <span style={{ position: 'absolute', left: 0, bottom: 0, width: 45, height: 1, background: `linear-gradient(90deg, ${RED} 0%, #E5E1DB 55%, ${RED} 100%)` }} />}
+              <button key={t} onClick={() => setTab(t)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 8, background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>
+                <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 13, letterSpacing: 'var(--track-display)', color: active ? 'var(--ink-100)' : 'rgba(229,225,219,0.5)' }}>{t.charAt(0).toUpperCase() + t.slice(1)}</span>
+                {active ? <FilmstripIndicator /> : <span style={{ height: 8, display: 'block' }} />}
               </button>
             );
           })}
-          {/* THEATRE eye — the FOURTH tab-row element (frame ~x487), even spacing */}
-          <button onClick={() => setTheatreOpen(true)} aria-label="Theatre mode" style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 2, lineHeight: 0 }}>
-            <img src="/theatre-mode-eye-framed-v2.png" alt="" style={{ height: 22, width: 'auto', display: 'block', opacity: 0.92 }} />
+          <button onClick={() => setTheatreOpen(true)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 8, background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>
+            <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 13, letterSpacing: 'var(--track-display)', color: 'rgba(229,225,219,0.5)' }}>Theatre</span>
+            <span style={{ height: 8, display: 'block' }} />
           </button>
-          {/* grid-mode icon slot (frame x487) — BRIEF 2 (post-scroll mode); unbuilt */}
         </div>
 
         {/* ═══ CONTENT ═══ */}
