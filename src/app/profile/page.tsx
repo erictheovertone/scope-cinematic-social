@@ -222,10 +222,16 @@ const userLayoutId = stableLayoutId;
   // drives everything below (tab-row anchor, grid spacers) so overlaps are impossible
   // by construction — no stale magic heights.
   const headerRef = useRef<HTMLDivElement>(null);
+  const textColRef = useRef<HTMLDivElement>(null); // Brief 2.2d — drives the SQUARE PFP
   const [headerH, setHeaderH] = useState(120); // measured (excl. safe-area); default ≈ old
+  const [pfpSize, setPfpSize] = useState(86);  // = text-column height → PFP side (square)
+  const TAB_ROW_H = 42;                         // rest padded height (paddingTop 10 + 20 + 12)
   const tabAnchor = headerH + 8;               // tab-row rest top, below the divider
   const tabCap = tabAnchor - 2;                // pins when the tab reaches top:2
-  const gridSpacer = tabAnchor + 20;           // reserves header + tab in the scroll flow
+  // Brief 2.2d fix: reserve the tab's FULL padded height (was +20 = the INNER height →
+  // 22px overlap). Constant (not measured) because the tab's padding shrinks when
+  // snapped — measuring it would feed the spacer and jump the scroll. +6 = small gap.
+  const gridSpacer = tabAnchor + TAB_ROW_H + 6;
   const tabRowOffset = Math.min(gridScrollY, tabCap);
   const gridScrollRef = useRef<HTMLDivElement>(null);
   const rafPendingRef = useRef(false);
@@ -396,14 +402,19 @@ const userLayoutId = stableLayoutId;
     const avail = Math.min(vw, 480) - 145; // name left ~100 + right reserve to the BIO zone
     if (row.scrollWidth > avail && nameSize > 14) setNameSize((s) => Math.max(14, s - 1));
   }, [nameSize, firstName, lastName, isPaidMember]);
-  // Measure the header composition (flow content) → drives tab anchor + grid spacers.
+  // Measure the header composition → drives the tab anchor, grid spacers, and the
+  // SQUARE PFP side (= text-column height) + the tab's full height (Brief 2.2d).
   useLayoutEffect(() => {
     const el = headerRef.current;
     if (!el) return;
-    const measure = () => setHeaderH(el.offsetHeight);
+    const measure = () => {
+      setHeaderH(el.offsetHeight);
+      if (textColRef.current) setPfpSize(textColRef.current.offsetHeight);
+    };
     measure();
     const ro = new ResizeObserver(measure);
     ro.observe(el);
+    if (textColRef.current) ro.observe(textColRef.current);
     return () => ro.disconnect();
   }, []);
 
@@ -484,18 +495,20 @@ const userLayoutId = stableLayoutId;
             <PressPop><span className="soften-ui" style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 15.5, letterSpacing: 'var(--track-body)', color: 'var(--ink-100)', display: 'block' }}>BIO</span></PressPop>
           </button>
 
-          {/* PFP + text column (flow flex). align-items:stretch → the PFP height ==
-              the text-column height, so its BOTTOM sits on the divider (note 2). */}
-          <div style={{ display: 'flex', alignItems: 'stretch', gap: 6, padding: '7px 0 0 8px' }}>
-            <div style={{ width: 86, flexShrink: 0, border: '1px solid var(--avatar-frame)', boxSizing: 'border-box', overflow: 'hidden' }}>
+          {/* PFP + text column (flow flex, top-aligned). Brief 2.2d: PFP is SQUARE by
+              construction — ONE driving value (pfpSize = text-column height) applied as
+              BOTH width and height; the text column starts after it + gap and yields
+              right as the PFP widens. Its bottom still lands on the divider. */}
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, padding: '7px 0 0 8px' }}>
+            <div style={{ width: pfpSize, height: pfpSize, flexShrink: 0, border: '1px solid var(--avatar-frame)', boxSizing: 'border-box', overflow: 'hidden' }}>
               {userProfile.profileImage ? (
-                <img src={feedImage(userProfile.profileImage, 172)} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                <img src={feedImage(userProfile.profileImage, 172)} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', display: 'block' }} />
               ) : (
                 <div style={{ width: '100%', height: '100%', backgroundColor: '#222' }} />
               )}
             </div>
 
-            <div style={{ flex: 1, minWidth: 0, paddingRight: 8 }}>
+            <div ref={textColRef} style={{ flex: 1, minWidth: 0, paddingRight: 8 }}>
               {/* name+handle+stats — shrinks to the RENDERED NAME WIDTH; that outer edge
                   is the shared alignment line (handle right end · values right edge). */}
               <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'stretch', alignSelf: 'flex-start', position: 'relative', maxWidth: '100%' }}>
@@ -515,7 +528,7 @@ const userLayoutId = stableLayoutId;
                     (left:100% of the name block). ONLY for pro members; never in the
                     name flex or its width. */}
                 {isPaidMember && (
-                  <span style={{ position: 'absolute', left: '100%', top: 1, marginLeft: 5, whiteSpace: 'nowrap', fontFamily: 'var(--font-black)', fontWeight: 900, fontSize: 9.7, color: 'rgba(229,225,219,0.64)', letterSpacing: 'var(--track-wide)' }}>PRO</span>
+                  <span style={{ position: 'absolute', left: '100%', top: 1, marginLeft: 5, whiteSpace: 'nowrap', fontFamily: 'var(--font-black)', fontWeight: 900, fontSize: 4.85, color: 'rgba(229,225,219,0.64)', letterSpacing: 'var(--track-wide)' }}>PRO</span>
                 )}
                 {/* handle — right-aligned to the name's last letter; tighter + smaller (note 4/6) */}
                 <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'flex-end', gap: 3, opacity: 0.64, marginTop: 2 }}>
@@ -548,7 +561,9 @@ const userLayoutId = stableLayoutId;
       {/* Snapped frame icon — LIFTED out of this scroller to sibling level (see end of return)
           so it anchors to the viewport, not the scroll container. */}
 
-      {/* Tab row — absolute until scrolled past 101px, then fixed. When snapped, always fixed + aligned with frame icon. */}
+      {/* Tab row — absolute until scrolled past the header, then fixed. When snapped,
+          always fixed. Brief 2.2d: the grid spacer now reserves the tab's FULL padded
+          height (TAB_ROW_H) so the first grid row clears it (no more 22px overlap). */}
       <div style={{
         position: (headerSnapped || headerUnsnapping || gridScrollY > tabCap) ? 'fixed' : 'absolute',
         top: (headerSnapped || headerUnsnapping) ? 'env(safe-area-inset-top, 0px)' : gridScrollY > tabCap ? 'calc(2px + env(safe-area-inset-top, 0px))' : `calc(${tabAnchor - tabRowOffset}px + env(safe-area-inset-top, 0px))`,
