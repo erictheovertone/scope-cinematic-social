@@ -808,19 +808,22 @@ export default function WalletPage() {
           >
             <span style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 14, letterSpacing: "var(--track-display)", color: "rgba(229,225,219,0.67)", textTransform: "uppercase" }}>{card.label}</span>
             <span style={{ fontFamily: "var(--font-medium)", fontWeight: 500, fontSize: 9.5, color: "rgba(229,225,219,0.43)", letterSpacing: "var(--track-body)", marginTop: 3, lineHeight: 1.2 }}>{card.sub}</span>
-            <span style={{ marginTop: "auto", display: "flex" }}>
+            {/* Brief W2 §4 — arrows CENTERED in the lower zone (justifyContent center, was
+                left-tucked) + ~25% larger + house-family stroke (1 → 1.3, reads consistent
+                with the BottomToolbar icon weight at this enlarged size). */}
+            <span style={{ marginTop: "auto", display: "flex", justifyContent: "center" }}>
               {card.label === "DEPOSIT" && (
-                <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="rgba(229,225,219,0.82)" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <svg width="28" height="28" viewBox="0 0 22 22" fill="none" stroke="rgba(229,225,219,0.82)" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                   <line x1="11" y1="3" x2="11" y2="18" /><path d="M5 12 L11 18 L17 12" />
                 </svg>
               )}
               {card.label === "SWAP" && (
-                <svg width="26" height="18" viewBox="0 0 26 18" fill="none" stroke="rgba(229,225,219,0.82)" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <svg width="33" height="23" viewBox="0 0 26 18" fill="none" stroke="rgba(229,225,219,0.82)" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                   <path d="M3 6 H21 M17 2 L21 6 L17 10" /><path d="M23 12 H5 M9 8 L5 12 L9 16" />
                 </svg>
               )}
               {card.label === "SEND" && (
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="rgba(229,225,219,0.82)" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <svg width="25" height="25" viewBox="0 0 20 20" fill="none" stroke="rgba(229,225,219,0.82)" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                   <line x1="4" y1="16" x2="15" y2="5" /><path d="M6 5 H15 V14" />
                 </svg>
               )}
