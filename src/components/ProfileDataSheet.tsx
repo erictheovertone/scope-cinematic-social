@@ -30,6 +30,14 @@ interface Props {
   /** First Cut count for this profile — read via the economy boundary upstream
       and passed down (preview-gated). 0/absent → no First Cut coin. */
   firstCutCount?: number;
+  /** Brief W8 §2 — the SAME resolved held-badges list the profile badge cluster uses
+      (one source of truth). The sheet no longer re-derives via resolveBadges (that fork
+      dropped COMPOSER, whose count was never plumbed here). */
+  badges?: ReturnType<typeof resolveBadges>;
+  /** Brief W8 §1 — the page profile header's MEASURED height (ProfileHeader onMeasure /
+      headerH). When the sheet is open the page header sits at z200 ABOVE this z100 sheet;
+      a top spacer of this height clears all sheet content from under that banner. */
+  bannerClearH?: number;
   /** Opens the full "Badges on Scope" tier list (the blurb's EXPLORE button).
       Wired by the profile page to close this sheet + open BadgeExplainerSheet. */
   onExploreBadges?: () => void;
@@ -66,6 +74,7 @@ export default function ProfileDataSheet({
   isOpen, onClose, profile, links, isOwnProfile,
   followers, following, totalPosts, collectors = 0, portfolioMc = 0, decks = 0,
   firstCutCount = 0, onExploreBadges,
+  badges = [], bannerClearH = 0,
   isFollowing = false, followBusy = false, onUnfollow,
 }: Props) {
   const router = useRouter();
@@ -111,18 +120,10 @@ export default function ProfileDataSheet({
   const hasLinks = links.length > 0;
   const showContact = !!profile;
 
-  // Earned badges for the BADGES section, rarity-ordered. Membership badges are
-  // real/ungated; First Cut only appears when the gated count is passed down.
-  const badges = profile
-    ? resolveBadges({
-        isFoundingMember: !!profile.is_founding_member,
-        isTopCollector: !!profile.is_top_collector,
-        isScreeningRoomHolder: !!profile.is_screening_room_holder,
-        isPaidMember: isProMember(profile),
-        isInHouseCreator: !!profile.is_in_house_creator,
-        firstCutCount,
-      })
-    : [];
+  // Brief W8 §2 — badges come from the `badges` prop (the profile page's cluster list, one
+  // source of truth). The old internal resolveBadges fork is retired: it omitted
+  // composerTrackCount (never plumbed), silently dropping COMPOSER while the cluster showed
+  // it. Now cluster + sheet CANNOT diverge.
   const hasBadges = badges.length > 0;
 
   const sec = (delay: number): React.CSSProperties => ({
@@ -312,6 +313,11 @@ export default function ProfileDataSheet({
       }}
     >
       <div style={{ maxWidth: '30rem', margin: '0 auto', paddingBottom: 70 }}>
+        {/* Brief W8 §1 — clear the page profile-header banner (jumps to z200 while the sheet
+            is open, ABOVE this z100 sheet). Spacer is bound to the header's MEASURED height
+            (bannerClearH = ProfileHeader onMeasure), so W4-style header changes can't re-bury
+            the sheet. +8 = a small gap below the banner. */}
+        <div aria-hidden style={{ height: `calc(${bannerClearH + 8}px + env(safe-area-inset-top, 0px))`, flexShrink: 0 }} />
         {/* ── SHEET HEADER (Brief 2.4a) — opaque, in-scroll identity block: PFP +
             name + handle + expanded 3-group stats (node 141:733's Haas header). ── */}
         <div style={{ position: 'relative', padding: '13px 12px 8px', minHeight: 104 }}>

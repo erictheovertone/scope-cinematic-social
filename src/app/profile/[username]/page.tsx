@@ -270,6 +270,9 @@ export default function PublicProfilePage() {
       : <div className="bg-black" style={{ position: 'fixed', inset: 0 }} />;
   }
 
+  // Brief W8 §2 — ONE resolved held-badges list shared by the cluster + the bio sheet.
+  const resolvedBadges = resolveBadges({ isFoundingMember, isTopCollector, isScreeningRoomHolder, isPaidMember, isInHouseCreator, firstCutCount, composerTrackCount });
+
   return (
     <div className="bg-black relative w-full app-shell screen-min mx-auto pb-[60px]" style={{ background: 'var(--canvas)' }}>{/* Brief F6 — canvas #050505 (matches own) */}
 
@@ -296,7 +299,7 @@ export default function PublicProfilePage() {
           profileImage={profile?.profile_image_url}
           isPaidMember={isPaidMember}
           analytics={{ followers: followerCount, collectors: 0, portfolioMc: profile?.portfolio_mc || 0 }}
-          badges={resolveBadges({ isFoundingMember, isTopCollector, isScreeningRoomHolder, isPaidMember, isInHouseCreator, firstCutCount, composerTrackCount })
+          badges={resolvedBadges
             .filter((b) => b.bannerSrc)
             .map((b) => ({ key: b.key, src: (b.framedSrc ?? b.bannerSrc) as string, title: b.title }))}
           onOpenBadges={() => setShowBadgeSheet(true)}
@@ -545,6 +548,8 @@ export default function PublicProfilePage() {
         portfolioMc={profile?.portfolio_mc || 0}
         decks={publicDecks.length}
         firstCutCount={firstCutCount}
+        badges={resolvedBadges}
+        bannerClearH={headerH}
         isFollowing={!!followingUser}
         followBusy={followLoading}
         onUnfollow={handleFollow}

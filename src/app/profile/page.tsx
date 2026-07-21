@@ -396,6 +396,11 @@ const userLayoutId = stableLayoutId;
       : <div className="bg-black" style={{ position: 'fixed', inset: 0 }} />;
   }
 
+  // Brief W8 §2 — ONE resolved held-badges list; the cluster (ProfileHeader) and the bio
+  // sheet both consume it, so they can never diverge (COMPOSER was dropping in the sheet
+  // because it re-derived without composerTrackCount).
+  const resolvedBadges = resolveBadges({ isFoundingMember, isTopCollector, isScreeningRoomHolder, isPaidMember, isInHouseCreator, firstCutCount, composerTrackCount });
+
   return (
     <div className="relative">{/* Non-scrolling viewport root — fixed chrome (footer + snapped frame) is lifted OUT below as SIBLINGS of the scroller, so on iOS standalone it anchors to the VIEWPORT, not the .screen-min scroll container (which floated the footer above the screen bottom). */}
     <div className="bg-black relative w-full app-shell screen-min mx-auto" style={{ background: 'var(--canvas)', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>{/* Brief 2.2c note 1 — page canvas #050505. Brief W2 §3 — was pb-[60px] pill-clearance → safe-bottom only, so grid content scrolls under the pill glass. */}
@@ -451,7 +456,7 @@ const userLayoutId = stableLayoutId;
           profileImage={userProfile.profileImage}
           isPaidMember={isPaidMember}
           analytics={{ followers: analytics.followers, collectors: analytics.collectors, portfolioMc: analytics.portfolioMc }}
-          badges={resolveBadges({ isFoundingMember, isTopCollector, isScreeningRoomHolder, isPaidMember, isInHouseCreator, firstCutCount, composerTrackCount })
+          badges={resolvedBadges
             .filter((b) => b.bannerSrc)
             .map((b) => ({ key: b.key, src: (b.framedSrc ?? b.bannerSrc) as string, title: b.title }))}
           onOpenBadges={() => setShowBadgeSheet(true)}
@@ -851,6 +856,8 @@ const userLayoutId = stableLayoutId;
         portfolioMc={analytics.portfolioMc}
         decks={userDecks.length}
         firstCutCount={firstCutCount}
+        badges={resolvedBadges}
+        bannerClearH={headerH}
       />
 
       <BadgeExplainerSheet
