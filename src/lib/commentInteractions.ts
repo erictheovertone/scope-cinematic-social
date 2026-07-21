@@ -60,18 +60,28 @@ export const likeComment = async (
   }
 
   // Fire-and-forget notification to the comment's author.
+  // NOTE (F5-6a2): comment_like notifications have NEVER landed while the sibling
+  // `reply` path lands fine. The two inserts are column-identical, so the defect is a
+  // runtime VALUE/constraint the fire-and-forget swallow hid. TEMPORARY instrumentation
+  // added at BOTH failure surfaces (comment lookup + the insert's returned error, which
+  // Supabase returns rather than throws) so a single repro names the culprit. Remove/
+  // downgrade the [comment_like notif] logs once the fix is confirmed. The IIFE stays
+  // detached — logging only; the like itself is never blocked.
   ;(async () => {
     try {
-      const { data: comment } = await supabase
+      const { data: comment, error: lookupErr } = await supabase
         .from('comments').select('user_id, post_id, content').eq('id', commentId).single();
-      if (!comment) return;
+      if (lookupErr || !comment) {
+        console.error('[comment_like notif] comment lookup failed', { commentId, lookupErr });
+        return;
+      }
       const authorDid = comment.user_id;               // already a DID
       if (!authorDid || authorDid === userId) return;  // skip self
       const { data: post } = await supabase
         .from('posts').select('media_urls, poster_url, thumbnail_url, media_type').eq('id', comment.post_id).single();
       const { data: senderProfile } = await supabase
         .from('profiles').select('profile_image_url').eq('username', username).single();
-      await supabase.from('notifications').insert({
+      const { error: notifErr } = await supabase.from('notifications').insert({
         recipient_id: authorDid,
         sender_id: userId,
         sender_username: username,
@@ -82,8 +92,9 @@ export const likeComment = async (
         message: `@${username} liked your comment`,
         is_read: false,
       });
+      if (notifErr) console.error('[comment_like notif] insert failed', { notifErr, recipient_id: authorDid, post_id: comment.post_id });
     } catch (e) {
-      console.error('Comment-like notification exception:', e);
+      console.error('[comment_like notif] exception', e);
     }
   })();
 
