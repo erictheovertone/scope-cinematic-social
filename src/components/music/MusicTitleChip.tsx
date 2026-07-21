@@ -2,11 +2,15 @@
 // Tapping opens the TrackSheet. Renders NOTHING when the post has no music (the
 // dash-rule cousin — zero music chrome on music-less posts).
 //
-// Brief W3 §3 — OVERFLOW-ONLY MARQUEE (opt-in via `marquee`, mobile song row only):
-// when the full title is wider than the row it scrolls horizontally (IG-style,
-// duplicate-span translateX loop, seamless, ~20px/s, linear); short titles sit
-// static exactly as F3 shipped. prefers-reduced-motion → static + ellipsis (the F3
-// reduced state). Desktop card usage (no `marquee`) is unchanged.
+// Brief W6 — the char cap and the marquee are now ONE system: WIDTH is the cap.
+// The full title always renders; the clip is a FIXED-WIDTH window (overflow:hidden
+// + edge-fade mask). If the full title is wider than the window it marquees (W3
+// duplicate-span loop, automatic, after a ~1s settle); if it fits it sits static
+// with no fade. The overflow check re-runs after document.fonts.ready + on resize
+// so a font-load race can't false-negative. Reduced-motion → static + CSS ellipsis
+// (clamped by the window, NOT a sliced string). Desktop card (no `marquee`) is
+// unchanged. Previously (W3) the clip was flex:1 in a content-sized button → it grew
+// to the full title, so scrollWidth never exceeded clientWidth and it never marqueed.
 "use client";
 
 import { useState, useRef, useLayoutEffect } from "react";
@@ -18,12 +22,14 @@ const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fon
 // Soft fade at the clip edges so marquee entry/exit reads soft, not chopped.
 const EDGE_FADE =
   "linear-gradient(to right, transparent 0, #000 12px, #000 calc(100% - 12px), transparent 100%)";
-const MARQUEE_GAP = 28; // px between the two title copies (the seamless-wrap gap)
-const MARQUEE_PXPS = 20; // ~20px/s scroll speed
+const MARQUEE_GAP = 28;         // px between the two title copies (the seamless-wrap gap)
+const MARQUEE_PXPS = 20;        // ~20px/s scroll speed
+const MARQUEE_WINDOW_PX = 175;  // fixed visible window (≈ the old F3 28-char width); the cap
+const MARQUEE_DELAY_S = 1;      // settle before the scroll starts
 
 export default function MusicTitleChip({
   post, color = "rgba(229,225,219,0.6)",
-  uppercase = true, fontSize = "var(--fs-7)", weight = 700, glyphW = 13, glyphH = 10, maxChars,
+  uppercase = true, fontSize = "var(--fs-7)", weight = 700, glyphW = 13, glyphH = 10,
   marquee = false,
 }: {
   post: { music_track_id?: string | null };
@@ -34,26 +40,22 @@ export default function MusicTitleChip({
   weight?: number;
   glyphW?: number;
   glyphH?: number;
-  /** Hard char cap (title-length truncation) — ellipsis appended. Used static and as
-   *  the reduced-motion fallback when marquee is on. */
-  maxChars?: number;
-  /** Brief W3 §3 — enable the overflow-only horizontal marquee (mobile song row). */
+  /** Brief W3/W6 — overflow-only horizontal marquee within a fixed window (mobile song row). */
   marquee?: boolean;
 }) {
   const trackId = post.music_track_id ?? null;
   const track = useTrackForPost(trackId);
   const [open, setOpen] = useState(false);
 
-  // Marquee measurement: an always-present hidden measurer holds the single title's
-  // natural width; cyclePx>0 → the title overflows the clip → animate. (offsetWidth
-  // of a nowrap span vs the clip's clientWidth — the scrollWidth>clientWidth check.)
+  // Overflow measurement: an always-present hidden measurer holds the single title's
+  // natural width; cyclePx>0 → title wider than the fixed window → animate. Re-runs on
+  // fonts.ready + resize + a ResizeObserver so no font-load / layout race false-negatives.
   const clipRef = useRef<HTMLSpanElement>(null);
   const measureRef = useRef<HTMLSpanElement>(null);
   const [cyclePx, setCyclePx] = useState(0);
   const reducedRef = useRef(false);
 
   const title = track?.title ?? "MUSIC";
-  const display = maxChars && title.length > maxChars ? title.slice(0, maxChars - 1).trimEnd() + "…" : title;
 
   const titleStyle: React.CSSProperties = {
     fontFamily: weight >= 700 ? SKB.fontFamily : "var(--font-body)",
@@ -67,13 +69,24 @@ export default function MusicTitleChip({
 
   useLayoutEffect(() => {
     if (!marquee) return;
-    const reduced = typeof window !== "undefined" && !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-    reducedRef.current = reduced;
-    const clip = clipRef.current, meas = measureRef.current;
-    if (!clip || !meas) { setCyclePx(0); return; }
-    // +1px tolerance for sub-pixel rounding; reduced-motion never marquees.
-    const overflows = meas.offsetWidth > clip.clientWidth + 1;
-    setCyclePx(overflows && !reduced ? meas.offsetWidth + MARQUEE_GAP : 0);
+    const check = () => {
+      const reduced = typeof window !== "undefined" && !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+      reducedRef.current = reduced;
+      const clip = clipRef.current, meas = measureRef.current;
+      if (!clip || !meas) return;
+      // full-title width vs the fixed window (clip clientWidth). +1px sub-pixel tolerance.
+      const overflows = meas.offsetWidth > clip.clientWidth + 1;
+      setCyclePx(overflows && !reduced ? meas.offsetWidth + MARQUEE_GAP : 0);
+    };
+    check();
+    const ro = new ResizeObserver(check);
+    if (clipRef.current) ro.observe(clipRef.current);
+    window.addEventListener("resize", check);
+    let cancelled = false;
+    if (typeof document !== "undefined" && document.fonts?.ready) {
+      document.fonts.ready.then(() => { if (!cancelled) check(); }).catch(() => {});
+    }
+    return () => { cancelled = true; ro.disconnect(); window.removeEventListener("resize", check); };
   }, [marquee, title, fontSize, weight, uppercase]);
 
   if (!trackId) return null;
@@ -96,21 +109,25 @@ export default function MusicTitleChip({
         {marquee ? (
           <span
             ref={clipRef}
-            style={{ display: "block", flex: "1 1 auto", minWidth: 0, overflow: "hidden", position: "relative", ...(marqueeActive ? { maskImage: EDGE_FADE, WebkitMaskImage: EDGE_FADE } : {}) }}
+            // FIXED-WIDTH WINDOW: flex 0 1 auto + maxWidth → width = min(title, window).
+            // A title wider than the window is clipped here and overflows → marquee.
+            style={{ display: "block", flex: "0 1 auto", maxWidth: MARQUEE_WINDOW_PX, minWidth: 0, overflow: "hidden", position: "relative", ...(marqueeActive ? { maskImage: EDGE_FADE, WebkitMaskImage: EDGE_FADE } : {}) }}
           >
             {/* always-present hidden measurer (single title, natural width) */}
             <span ref={measureRef} aria-hidden style={{ ...titleStyle, position: "absolute", left: 0, top: 0, visibility: "hidden", pointerEvents: "none" }}>{title}</span>
             {marqueeActive ? (
-              <span style={{ display: "inline-flex", willChange: "transform", animation: `songMarquee ${durationS}s linear infinite` }}>
+              <span style={{ display: "inline-flex", willChange: "transform", animation: `songMarquee ${durationS}s linear ${MARQUEE_DELAY_S}s infinite` }}>
                 <span style={{ ...titleStyle, paddingRight: MARQUEE_GAP }}>{title}</span>
                 <span aria-hidden style={{ ...titleStyle, paddingRight: MARQUEE_GAP }}>{title}</span>
               </span>
             ) : (
-              <span style={{ ...titleStyle, display: "block", overflow: "hidden", textOverflow: "ellipsis" }}>{reducedRef.current ? display : title}</span>
+              // Static / reduced-motion: FULL title, CSS-clamped by the window (ellipsis only
+              // shows when it can't fit — i.e. the reduced-motion overflow case). No slice.
+              <span style={{ ...titleStyle, display: "block", overflow: "hidden", textOverflow: "ellipsis" }}>{title}</span>
             )}
           </span>
         ) : (
-          <span style={{ ...titleStyle, overflow: "hidden", textOverflow: "ellipsis" }}>{display}</span>
+          <span style={{ ...titleStyle, overflow: "hidden", textOverflow: "ellipsis" }}>{title}</span>
         )}
       </button>
       {open && trackId && <TrackSheet trackId={trackId} onClose={() => setOpen(false)} />}

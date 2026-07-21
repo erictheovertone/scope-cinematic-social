@@ -310,7 +310,7 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
               wave glyph, capped 28 chars/one line; renders ONLY when a track is
               attached (no reserved space otherwise). Resolves via the module-cached
               useTrackForPost — no new per-card fetch. */}
-          <MusicTitleChip post={post as { music_track_id?: string | null }} uppercase={false} fontSize={11} weight={400} color="rgba(229,225,219,0.55)" glyphW={12} glyphH={9} maxChars={28} marquee />
+          <MusicTitleChip post={post as { music_track_id?: string | null }} uppercase={false} fontSize={11} weight={400} color="rgba(229,225,219,0.55)" glyphW={12} glyphH={9} marquee />
         </div>
       </div>
       {post.token_standard === 'coin' && post.coin_address ? (
