@@ -17,6 +17,7 @@ import { getInbox, dmTimeAgo, type InboxConversation } from '@/lib/dm';
 import { feedImage } from '@/lib/mediaUrl';
 import { useIsDesktop } from '@/lib/useIsDesktop';
 import DesktopDM from '@/components/desktop/DesktopDM';
+import { useTitleDebugTap } from '@/components/ViewportDebug';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -34,6 +35,7 @@ function MobileDMInbox() {
   const router = useRouter();
   const [convs, setConvs] = useState<InboxConversation[] | null>(null);
   const [logoPressed, setLogoPressed] = useState(false); // Brief W9 — return-home logomark press-pop (matches Wallet)
+  const debugTap = useTitleDebugTap(); // Brief W2-1c — 5 rapid title taps toggle the viewport overlay
 
   const load = useCallback(() => {
     if (!user?.id) return;
@@ -60,7 +62,7 @@ function MobileDMInbox() {
           the F1 chrome rule, return-home logomark top-right (the Wallet/Discover house
           pattern; the inbox had nothing top-right before), ~24px to the first row. */}
       <div style={{ position: 'relative', padding: 'calc(10px + var(--safe-top)) 10px 24px' }}>
-        <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 32, lineHeight: 1, letterSpacing: 'var(--track-display)', color: 'var(--ink-100)', margin: 0 }}>
+        <h1 onClick={debugTap} style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 32, lineHeight: 1, letterSpacing: 'var(--track-display)', color: 'var(--ink-100)', margin: 0 }}>
           Messages
         </h1>
         <div style={{ position: 'absolute', top: 'calc(4px + var(--safe-top))', right: 6, display: 'flex', alignItems: 'center' }}>

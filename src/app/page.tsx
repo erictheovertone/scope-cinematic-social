@@ -13,6 +13,7 @@ import ViewingModesMenu from "@/components/ViewingModesMenu";
 import { useIsDesktop } from "@/lib/useIsDesktop";
 import DesktopHome from "@/components/desktop/DesktopHome";
 import { AnimatePresence } from "framer-motion";
+import { useTitleDebugTap } from "@/components/ViewportDebug";
 
 type FeedState = "normal" | "exiting" | "entering";
 
@@ -38,6 +39,7 @@ export default function Home() {
   // the floating logomark trigger while it's up (it's a body-portal at z50 that would
   // otherwise paint over the sheet). Same flag the pill listens to.
   const [takeover, setTakeover] = useState(false);
+  const debugTap = useTitleDebugTap(); // Brief W2-1c — 5 rapid Discover-title taps toggle the viewport overlay
   useEffect(() => {
     const sync = () => setTakeover(!!document.documentElement.dataset.suiteOpen);
     sync();
@@ -410,7 +412,7 @@ export default function Home() {
               trigger relocates into the row, behavior unchanged. */}
           <div style={{ paddingTop: 'calc(6px + env(safe-area-inset-top, 0px))' }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '0 10px' }}>
-              <h1 style={{
+              <h1 onClick={debugTap} style={{
                 fontFamily: 'var(--font-display)', fontWeight: 700,
                 fontSize: 36, lineHeight: 1, letterSpacing: 'var(--track-display)',
                 color: 'var(--ink-100)', margin: '4px 0 0',

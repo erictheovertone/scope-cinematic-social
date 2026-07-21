@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import DesktopWallet from '@/components/desktop/DesktopWallet';
 import { useIsDesktop } from '@/lib/useIsDesktop';
+import { useTitleDebugTap } from '@/components/ViewportDebug';
 import { usePrivy, useFundWallet, useWallets } from "@privy-io/react-auth";
 import { base } from "viem/chains";
 import { createWalletClient, custom, getAddress, parseEther, encodeFunctionData } from "viem";
@@ -83,6 +84,7 @@ export default function WalletPage() {
   const [showImport, setShowImport] = useState(false);
   const [addPressed, setAddPressed] = useState(false);
   const [logoPressed, setLogoPressed] = useState(false);
+  const debugTap = useTitleDebugTap(); // Brief W2-1c — 5 rapid title taps toggle the viewport overlay
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState("");
   // Incoming-funds acknowledgment: { id } restarts the [ +$X ] pulse animation.
@@ -690,7 +692,7 @@ export default function WalletPage() {
           logomark top-right (return-home). Bell kept beside the logomark so the
           market-notifications entry isn't stranded (frame shows only the mark). */}
       <div style={{ position: "relative", padding: "calc(10px + var(--safe-top)) 10px 6px" }}>
-        <h1 style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 32, lineHeight: 1, letterSpacing: "var(--track-display)", color: "var(--ink-100)", margin: 0 }}>
+        <h1 onClick={debugTap} style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 32, lineHeight: 1, letterSpacing: "var(--track-display)", color: "var(--ink-100)", margin: 0 }}>
           Wallet
         </h1>
         {walletAddress && (

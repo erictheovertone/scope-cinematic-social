@@ -10,9 +10,35 @@
 //   build != the just-shipped commit → delivery problem (deploy/cache), not CSS.
 // Reads window.location.search directly (no useSearchParams → no Suspense need).
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 const BUILD_SHA = process.env.NEXT_PUBLIC_BUILD_SHA || 'dev';
+const LS_KEY = 'scope:debug-viewport';
+const CHANGE_EVT = 'scope:debug-viewport-change';
+
+// PWA-reachable toggle (Brief W2-1c): ?debug=viewport can't be typed in standalone, so
+// flip a persisted localStorage flag too. Attach useTitleDebugTap() to a page title —
+// 5 rapid taps toggles it. The query flag still works (OR'd in).
+export function toggleViewportDebug() {
+  try {
+    const cur = localStorage.getItem(LS_KEY) === '1';
+    if (cur) localStorage.removeItem(LS_KEY);
+    else localStorage.setItem(LS_KEY, '1');
+  } catch { /* ignore */ }
+  window.dispatchEvent(new CustomEvent(CHANGE_EVT));
+}
+
+/** onClick handler that toggles the overlay after 5 taps within 600ms of each other. */
+export function useTitleDebugTap() {
+  const st = useRef({ count: 0, last: 0 });
+  return () => {
+    const now = Date.now();
+    const s = st.current;
+    s.count = now - s.last < 600 ? s.count + 1 : 1;
+    s.last = now;
+    if (s.count >= 5) { s.count = 0; toggleViewportDebug(); }
+  };
+}
 
 function h(el: Element | null): number | null {
   if (!el) return null;
@@ -24,10 +50,26 @@ export default function ViewportDebug() {
   const [on, setOn] = useState(false);
   const [, setTick] = useState(0);
 
+  // Gate: query flag OR persisted localStorage flag. Re-sync on the title-tap toggle
+  // event + cross-tab storage events.
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    if (!/(?:^|[?&])debug=viewport(?:&|$)/.test(window.location.search)) return;
-    setOn(true);
+    const compute = () => {
+      const q = /(?:^|[?&])debug=viewport(?:&|$)/.test(window.location.search);
+      let ls = false;
+      try { ls = localStorage.getItem(LS_KEY) === '1'; } catch { /* ignore */ }
+      return q || ls;
+    };
+    const sync = () => setOn(compute());
+    sync();
+    window.addEventListener(CHANGE_EVT, sync);
+    window.addEventListener('storage', sync);
+    return () => { window.removeEventListener(CHANGE_EVT, sync); window.removeEventListener('storage', sync); };
+  }, []);
+
+  // Live-refresh listeners only while the overlay is on.
+  useEffect(() => {
+    if (!on) return;
     const bump = () => setTick((t) => t + 1);
     window.addEventListener('resize', bump);
     window.visualViewport?.addEventListener('resize', bump);
@@ -39,7 +81,7 @@ export default function ViewportDebug() {
       window.visualViewport?.removeEventListener('scroll', bump);
       window.clearInterval(id);
     };
-  }, []);
+  }, [on]);
 
   if (!on) return null;
 
