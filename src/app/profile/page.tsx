@@ -398,7 +398,7 @@ const userLayoutId = stableLayoutId;
 
   return (
     <div className="relative">{/* Non-scrolling viewport root — fixed chrome (footer + snapped frame) is lifted OUT below as SIBLINGS of the scroller, so on iOS standalone it anchors to the VIEWPORT, not the .screen-min scroll container (which floated the footer above the screen bottom). */}
-    <div className="bg-black relative w-full app-shell screen-min mx-auto pb-[60px]" style={{ background: 'var(--canvas)' }}>{/* Brief 2.2c note 1 — page canvas #050505, killing the residual #000 behind the banner */}
+    <div className="bg-black relative w-full app-shell screen-min mx-auto" style={{ background: 'var(--canvas)', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>{/* Brief 2.2c note 1 — page canvas #050505. Brief W2 §3 — was pb-[60px] pill-clearance → safe-bottom only, so grid content scrolls under the pill glass. */}
       <OnboardingModal
         onComplete={() => {
           if (user?.id && shouldShowA2HS(user.id)) {

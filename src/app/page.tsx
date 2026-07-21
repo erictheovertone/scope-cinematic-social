@@ -397,7 +397,7 @@ export default function Home() {
         {/* Clearance for the floating frosted PILL: bottom 15px + safe-inset, height 38
             → its top is ~53px + inset up. Reserve enough scroll space that the last post
             can rise fully ABOVE the pill (mid-scroll content still flows under the glass). */}
-        <div style={{ paddingBottom: 'calc(72px + env(safe-area-inset-bottom, 0px))' }}>
+        <div style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>{/* Brief W2 §3 — safe-bottom only (was +72px pill-clearance): content now scrolls UNDER the pill so the glass has something to blur at rest, not just mid-scroll. */}
           {/* ── LANDING BLOCK — IN the scroll flow (the profile-view push):
               scrolling physically pushes mark + DISCOVER + breathing space out
               1:1; back-to-top restores it the same way. It carries the top
