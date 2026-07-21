@@ -1,6 +1,16 @@
 import type { NextConfig } from "next";
+import { execSync } from "node:child_process";
+
+// Brief W2-1b — build stamp baked at build time so the ?debug=viewport overlay can prove
+// WHICH build the device runs (stale-deploy / PWA-cache check). Vercel sets
+// VERCEL_GIT_COMMIT_SHA; local builds fall back to the git short hash.
+const BUILD_SHA = (
+  process.env.VERCEL_GIT_COMMIT_SHA ||
+  (() => { try { return execSync("git rev-parse --short HEAD").toString().trim(); } catch { return "local"; } })()
+).slice(0, 7);
 
 const nextConfig: NextConfig = {
+  env: { NEXT_PUBLIC_BUILD_SHA: BUILD_SHA },
   typescript: {
     ignoreBuildErrors: true,
   },

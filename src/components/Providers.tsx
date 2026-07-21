@@ -12,6 +12,7 @@ import SlideShell from '@/components/SlideShell';
 import SwipeNav from '@/components/SwipeNav';
 import RecapHost from '@/components/RecapHost';
 import ImageRenditionFallback from '@/components/ImageRenditionFallback';
+import ViewportDebug from '@/components/ViewportDebug';
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -27,6 +28,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
             <SwipeNav />
             <PostLightboxHost />
             <RecapHost />
+            <ViewportDebug />{/* Brief W2-1b — inert unless ?debug=viewport */}
           </UpsellProvider>
         </TxNarratorProvider>
       </EconomyProvider>
