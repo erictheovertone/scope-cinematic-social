@@ -74,7 +74,9 @@ export function NotificationActorMessage({ handle, type, onNavigate }: ActorMess
       {handle ? (
         <span
           onClick={(e) => { e.stopPropagation(); onNavigate(handle); }}
-          style={{ cursor: "pointer", color: "#E5E1DB" }}
+          /* Brief F5 §6b — handle restyle: −3px (fs-14 message → fs-11), 65 Medium
+             (--font-medium / 500), 60% ink. Distinguishes the actor from the action. */
+          style={{ cursor: "pointer", fontFamily: "var(--font-medium)", fontWeight: 500, fontSize: "var(--fs-11)", color: "rgba(229,225,219,0.6)" }}
         >
           @{handle}
         </span>
