@@ -1192,8 +1192,9 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
         )}
 
         {selectedMedia.length === 0 ? (
-          /* Empty state — content on black, no container chrome. Red-gradient-border
-             CHOOSE FROM LIBRARY (transparent fill; border 135deg #E5E1DB→#7a0505, 1.5px). */
+          /* Empty state — content on black, no container chrome. Ivory-gradient-border
+             CHOOSE FROM LIBRARY (transparent fill; border 135deg #E5E1DB→ivory 50%,
+             1.5px). Brief F5 §2: recolored off the oxblood #7a0505 red straggler. */
           <div className="flex-1 flex flex-col items-center justify-center">
             <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-11)', color: 'rgba(229,225,219,0.55)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8, textAlign: 'center' }}>
               Select a photo or video from your library
@@ -1204,7 +1205,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
             <button
               onClick={() => fileInputRef.current?.click()}
               className="tappable"
-              style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-12)', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#E5E1DB', border: '1.5px solid transparent', background: 'linear-gradient(#000, #000) padding-box, linear-gradient(135deg, #E5E1DB, #7a0505) border-box', padding: '14px 28px', cursor: 'pointer' }}
+              style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-12)', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#E5E1DB', border: '1.5px solid transparent', background: 'linear-gradient(#000, #000) padding-box, linear-gradient(135deg, #E5E1DB, rgba(229,225,219,0.5)) border-box', padding: '14px 28px', cursor: 'pointer' }}
             >
               Choose from Library
             </button>
