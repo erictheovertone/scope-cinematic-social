@@ -462,7 +462,7 @@ const userLayoutId = stableLayoutId;
               style={{ position: 'absolute', top: -4, right: 6, background: 'transparent', border: 'none', cursor: 'pointer', padding: '11px 12px', opacity: profileDataOpen ? 0 : 1, pointerEvents: profileDataOpen ? 'none' : 'auto', transition: 'opacity 200ms ease', zIndex: 6 }}
               aria-label="View profile info"
             >
-              <PressPop><span className="soften-ui" style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 15.5, letterSpacing: 'var(--track-body)', color: 'var(--ink-100)', display: 'block' }}>BIO</span></PressPop>
+              <PressPop><span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 15.5, letterSpacing: 'var(--track-body)', color: 'var(--ink-100)', display: 'block' }}>BIO</span></PressPop>
             </button>
           }
         />

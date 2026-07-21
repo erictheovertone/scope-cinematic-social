@@ -690,7 +690,7 @@ export default function WalletPage() {
           logomark top-right (return-home). Bell kept beside the logomark so the
           market-notifications entry isn't stranded (frame shows only the mark). */}
       <div style={{ position: "relative", padding: "calc(10px + var(--safe-top)) 10px 6px" }}>
-        <h1 className="soften-display" style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 32, lineHeight: 1, letterSpacing: "var(--track-display)", color: "var(--ink-100)", margin: 0 }}>
+        <h1 style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 32, lineHeight: 1, letterSpacing: "var(--track-display)", color: "var(--ink-100)", margin: 0 }}>
           Wallet
         </h1>
         {walletAddress && (

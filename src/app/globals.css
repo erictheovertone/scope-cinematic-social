@@ -37,33 +37,14 @@
   }
 }
 
-/* ── FILMIC FONT-BLUR (Brief 1, corrected in Brief 2.2b) ──────────────────────
-   Brief 2.2b — soften correction. The old global span/p/heading/label blur
-   DOUBLE-APPLIED on nested text (parent filter + child filter), which iOS rendered
-   FAR heavier than devtools. Removed. Blur is now OPT-IN at the text element ONLY
-   (single application by construction — never on a container that wraps more text):
-     .soften-display → 0.15px  (page + section titles)
-     .soften-ui      → 0.1px   (subheadings, buttons, tab labels)
-   Body / captions / micro / stats / labels / inputs = 0 (no class). */
-.soften-display { filter: blur(var(--text-soften-display)) !important; }
-.soften-ui      { filter: blur(var(--text-soften-ui)) !important; }
-[data-no-soften], [data-no-soften] * { filter: none !important; }
-html.no-soften { --text-soften-display: 0px; --text-soften-ui: 0px; }
-/* Brief 2.2c — DEVICE-TRUTH round 2: iPhone (≥2dppx) renders the blur heavier, so
-   halve again on hi-DPR; 1x screens keep 0.15/0.1. Body/micro/labels stay 0. */
-@media (min-resolution: 2dppx) {
-  :root { --text-soften-display: 0.07px; --text-soften-ui: 0.05px; }
-}
-/* Brief W2 §5 — BLUR FLOOR (mobile). Below ~0.05px the filter rounds to imperceptible even
-   at 3× (0.15 device px), so the real choice is 0.05 or zero. Coarse-pointer (mobile) drops
-   the display/headings tier to the 0.05 floor and the UI/buttons tier to 0 (body is already
-   0). Placed AFTER the 2dppx block so it wins on a touch phone (which matches BOTH queries),
-   while a fine-pointer Retina desktop keeps 0.07/0.05 and 1x desktop keeps 0.15/0.1.
-   ONE-LINE FLIP if Eric still reads it heavy at 0.05: set --text-soften-display to 0px here
-   → mobile fully off, desktop-only soften. */
-@media (pointer: coarse) {
-  :root { --text-soften-display: 0.05px; --text-soften-ui: 0px; }
-}
+/* ── FILMIC FONT-BLUR — RETIRED app-wide (Brief W5 §3) ────────────────────────
+   The text-soften system never resolved correctly on device (DPR gap: devtools 1×
+   vs iPhone 3×), so Eric retired it. All soften tokens, the .soften-display /
+   .soften-ui utilities, the html.no-soften + [data-no-soften] kill switches, and the
+   W2 DPR / coarse-pointer media scaffolding are GONE — every text element now renders
+   crisp on all platforms, one consistent rendering. Non-text blur is unaffected
+   (backdrop glass, image background blurs, entrance keyframes, decorative border-glows,
+   the logomark's 0.35px edge-soften). */
 
 /* ── Standalone PWA: LOCK THE DOCUMENT ROOT ───────────────────────────────────
    Installed (standalone) iOS has no browser chrome, so the body itself rubber-bands
@@ -143,9 +124,7 @@ html, body {
   /* The ONLY red permitted in the app — muted/desaturated, destructive+error ONLY
      (delete affordances, error text). Never an accent/active/economics color. */
   --danger: #931212;
-  /* Filmic font-blur (Brief 2.2b policy — opt-in only, no container/nesting). */
-  --text-soften-display: 0.15px;
-  --text-soften-ui: 0.1px;
+  /* (Brief W5 §3 — --text-soften-* tokens retired; text renders crisp everywhere.) */
 
   /* Global UI bump — one lever for every tokenized size. Raise/lower app-wide type
      in one place; var(--fs-N) references never change. (Icon sizes use --icon-bump

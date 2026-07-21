@@ -116,11 +116,11 @@ export default function ProfileHeader({
             {/* name row — first · gap · last ONLY (PRO excluded). Full render, no
                 ellipsis; nameSize steps 19→14 to fit. */}
             <div ref={nameRowRef} style={{ display: "flex", alignItems: "baseline", whiteSpace: "nowrap" }}>
-              <span className="soften-ui" style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: nameSize, letterSpacing: "var(--track-display)", color: "var(--ink-100)", textTransform: "uppercase", flexShrink: 0, lineHeight: 1 }}>{firstName}</span>
+              <span style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: nameSize, letterSpacing: "var(--track-display)", color: "var(--ink-100)", textTransform: "uppercase", flexShrink: 0, lineHeight: 1 }}>{firstName}</span>
               {lastName && (
                 <>
                   <span aria-hidden style={{ flexShrink: 0, width: "min(2.5vw, 10px)" }} />
-                  <span className="soften-ui" style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: nameSize, letterSpacing: "var(--track-display)", color: "var(--ink-100)", textTransform: "uppercase", flexShrink: 0, lineHeight: 1 }}>{lastName}</span>
+                  <span style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: nameSize, letterSpacing: "var(--track-display)", color: "var(--ink-100)", textTransform: "uppercase", flexShrink: 0, lineHeight: 1 }}>{lastName}</span>
                 </>
               )}
             </div>
@@ -130,22 +130,24 @@ export default function ProfileHeader({
               <span style={{ position: "absolute", left: "100%", top: 1, marginLeft: 5, whiteSpace: "nowrap", fontFamily: "var(--font-black)", fontWeight: 900, fontSize: 4.85, color: "rgba(229,225,219,0.64)", letterSpacing: "var(--track-wide)" }}>PRO</span>
             )}
             {/* handle — right-aligned to the name's last letter; tight + smaller */}
-            <div style={{ display: "flex", alignItems: "baseline", justifyContent: "flex-end", gap: 3, opacity: 0.64, marginTop: 1 }}>
+            <div style={{ display: "flex", alignItems: "baseline", justifyContent: "flex-end", gap: 3, opacity: 0.51, marginTop: 1 }}>{/* Brief W5 §2 — handle unit 0.64 → 0.51 (×0.8) */}
               <span style={{ fontFamily: "var(--font-light)", fontWeight: 400, fontSize: 8, color: "var(--ink-100)", letterSpacing: "var(--track-wide)", flexShrink: 0 }}>[ at ]</span>
               <span style={{ fontFamily: "var(--font-medium)", fontWeight: 500, fontSize: 10.5, color: "var(--ink-100)", textTransform: "uppercase", letterSpacing: "var(--track-body)", whiteSpace: "nowrap" }}>{username}</span>
             </div>
             {/* stats — labels left · values flush-right to the name's right edge.
                 Brief W4: tighter vertical rhythm per frame (rows ~y49/57/73, divider ~y88):
-                lineHeight 1 + compressed row margins; Market Cap keeps its small gap. */}
-            <div style={{ marginTop: 9 }}>
+                lineHeight 1 + compressed row margins; Market Cap keeps its small gap.
+                Brief W5 §1: +12px breathing room ABOVE the block (9 → 21); row pitch,
+                divider, and everything below (via measured headerH) shift down 12px. */}
+            <div style={{ marginTop: 21 }}>
               {([
                 { label: "Followers", value: analytics.followers.toLocaleString(), gap: false },
                 { label: "Collectors", value: analytics.collectors.toLocaleString(), gap: false },
                 { label: "Market Cap", value: analytics.portfolioMc > 0 ? `$${analytics.portfolioMc.toLocaleString()}` : "—", gap: true },
               ] as const).map((row) => (
                 <div key={row.label} style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 14, marginTop: row.gap ? 4 : 0 }}>
-                  <span style={{ fontFamily: "var(--font-medium)", fontWeight: 500, fontSize: 11.2, color: "rgba(229,225,219,0.71)", letterSpacing: "var(--track-body)", whiteSpace: "nowrap", lineHeight: 1 }}>{row.label}</span>
-                  <span style={{ fontFamily: "var(--font-medium)", fontWeight: 500, fontSize: 11.5, color: "rgba(229,225,219,0.71)", letterSpacing: "var(--track-body)", whiteSpace: "nowrap", textAlign: "right", lineHeight: 1 }}>{row.value}</span>
+                  <span style={{ fontFamily: "var(--font-medium)", fontWeight: 500, fontSize: 11.2, color: "rgba(229,225,219,0.57)", letterSpacing: "var(--track-body)", whiteSpace: "nowrap", lineHeight: 1 }}>{row.label}</span>
+                  <span style={{ fontFamily: "var(--font-medium)", fontWeight: 500, fontSize: 11.5, color: "rgba(229,225,219,0.57)", letterSpacing: "var(--track-body)", whiteSpace: "nowrap", textAlign: "right", lineHeight: 1 }}>{row.value}</span>
                 </div>
               ))}
             </div>

@@ -410,7 +410,7 @@ export default function Home() {
               trigger relocates into the row, behavior unchanged. */}
           <div style={{ paddingTop: 'calc(6px + env(safe-area-inset-top, 0px))' }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '0 10px' }}>
-              <h1 className="soften-display" style={{
+              <h1 style={{
                 fontFamily: 'var(--font-display)', fontWeight: 700,
                 fontSize: 36, lineHeight: 1, letterSpacing: 'var(--track-display)',
                 color: 'var(--ink-100)', margin: '4px 0 0',

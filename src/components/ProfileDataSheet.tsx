@@ -192,7 +192,7 @@ export default function ProfileDataSheet({
 
   if (hasBio) sectionNodes.push(
     <div key="bio" style={{ ...sectionPad, ...sec(80) }}>
-      <div className="soften-display" style={titleStyle}>Bio</div>
+      <div style={titleStyle}>Bio</div>
       <div style={{ flex: 1, fontFamily: 'var(--font-body)', fontWeight: 400, fontSize: 10, color: 'rgba(229,225,219,0.8)', lineHeight: 1.12, letterSpacing: 'var(--track-body)', whiteSpace: 'pre-wrap' }}>
         {profile.bio}
       </div>
@@ -204,7 +204,7 @@ export default function ProfileDataSheet({
   // beneath. Up to 3 per row, wrapping. Held badges only; tap → blurb (unchanged).
   if (hasBadges) sectionNodes.push(
     <div key="badges" style={{ ...sectionPad, ...sec(140) }}>
-      <div className="soften-display" style={titleStyle}>Badges</div>
+      <div style={titleStyle}>Badges</div>
       <div style={{ flex: 1, display: 'flex', flexWrap: 'wrap', gap: 10, alignContent: 'flex-start' }}>
         {badges.map((b) => (
           <button
@@ -226,7 +226,7 @@ export default function ProfileDataSheet({
   // (its component is FLAGGED for deprecation review, not deleted).
   if (hasKit) sectionNodes.push(
     <div key="kit" style={{ ...sectionPad, ...sec(200) }}>
-      <div className="soften-display" style={titleStyle}>Kit</div>
+      <div style={titleStyle}>Kit</div>
       <div style={{ flex: 1 }}>
         {kitRows.map((row, i) => (
           <div key={row.label} style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 12, marginBottom: i < kitRows.length - 1 ? 10 : 0 }}>
@@ -242,7 +242,7 @@ export default function ProfileDataSheet({
   // ledger-card placeholder (existing preview paths only; no new fetch pipeline).
   if (hasLinks) sectionNodes.push(
     <div key="links" style={{ ...sectionPad, ...secFlat(260) }}>
-      <div className="soften-display" style={titleStyle}>Links</div>
+      <div style={titleStyle}>Links</div>
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 16 }}>
         {slicedLinks.map((link) => {
           const thumb = getLinkThumb(link);
@@ -276,7 +276,7 @@ export default function ProfileDataSheet({
   // CONTACT — email (public only) + DIRECT MESSAGE ON SCOPE → existing DM thread route.
   if (showContact) sectionNodes.push(
     <div key="contact" style={{ ...sectionPad, ...sec(320) }}>
-      <div className="soften-display" style={titleStyle}>Contact</div>
+      <div style={titleStyle}>Contact</div>
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 11, textAlign: 'right' as const }}>
         {profile?.contact_email_public && profile?.contact_email && (
           <div>
