@@ -54,6 +54,16 @@ html.no-soften { --text-soften-display: 0px; --text-soften-ui: 0px; }
 @media (min-resolution: 2dppx) {
   :root { --text-soften-display: 0.07px; --text-soften-ui: 0.05px; }
 }
+/* Brief W2 §5 — BLUR FLOOR (mobile). Below ~0.05px the filter rounds to imperceptible even
+   at 3× (0.15 device px), so the real choice is 0.05 or zero. Coarse-pointer (mobile) drops
+   the display/headings tier to the 0.05 floor and the UI/buttons tier to 0 (body is already
+   0). Placed AFTER the 2dppx block so it wins on a touch phone (which matches BOTH queries),
+   while a fine-pointer Retina desktop keeps 0.07/0.05 and 1x desktop keeps 0.15/0.1.
+   ONE-LINE FLIP if Eric still reads it heavy at 0.05: set --text-soften-display to 0px here
+   → mobile fully off, desktop-only soften. */
+@media (pointer: coarse) {
+  :root { --text-soften-display: 0.05px; --text-soften-ui: 0px; }
+}
 
 /* ── Standalone PWA: LOCK THE DOCUMENT ROOT ───────────────────────────────────
    Installed (standalone) iOS has no browser chrome, so the body itself rubber-bands
