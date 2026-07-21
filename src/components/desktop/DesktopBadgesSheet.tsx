@@ -126,11 +126,21 @@ export default function DesktopBadgesSheet({
           const state = badgeState(k, flags); // 'held' | 'buyable' | 'locked'
           const src = b.bannerSrc ?? b.src;
           const chip = state === 'held' ? { t: 'HELD', c: '#00E08A' } : state === 'buyable' ? { t: 'AVAILABLE', c: '#E5E1DB' } : { t: 'LOCKED', c: 'rgba(229,225,219,0.4)' };
+          // Brief F7 §4 — FRAME-FREEZE FIX: fill-mode was `both`, whose BACKWARDS fill
+          // pinned each not-yet-started row to badgeRippleIn's from{opacity:0} — a
+          // stalled/offscreen entrance left the lower ~1/3 of cards frozen invisible
+          // ("stops 2/3 up"). `forwards` keeps the to{} end-state hold (ripple intact)
+          // but never pre-hides a row, so all frames reach the sheet bottom. Keyframe is
+          // shared with mobile BadgeExplainerSheet → fixed at the USAGE, not @keyframes.
           return (
-            <div key={k} style={{ display: 'flex', alignItems: 'flex-start', gap: 16, padding: '16px 0', borderBottom: `1px solid ${HAIR}`, opacity: state === 'held' ? 1 : 0.72, animation: reduced ? 'none' : `badgeRippleIn 300ms ease-out ${ri * 45}ms both` }}>
+            <div key={k} style={{ display: 'flex', alignItems: 'flex-start', gap: 16, padding: '16px 0', borderBottom: `1px solid ${HAIR}`, opacity: state === 'held' ? 1 : 0.72, animation: reduced ? 'none' : `badgeRippleIn 300ms ease-out ${ri * 45}ms forwards` }}>
               <span style={{ position: 'relative', width: 48, height: 48, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 {/* glow chases the ripple's leading edge (row delay + ~150ms) */}
-                <img src={src} alt={b.title} style={{ width: 44, height: 44, objectFit: 'contain', display: 'block', filter: state === 'held' ? 'none' : 'grayscale(1)', opacity: state === 'held' ? 1 : 0.85, animation: reduced ? 'none' : `badgeGlowPulse 400ms ease-out ${ri * 45 + 150}ms both` }} />
+                {/* Brief F7 §4 — drop the `both` fill on the glow too: with `both` its
+                    100%{filter:none} frame overrode the inline grayscale on locked badges.
+                    No fill-mode → the pulse plays, then the icon reverts to its inline
+                    filter (grayscale for locked). */}
+                <img src={src} alt={b.title} style={{ width: 44, height: 44, objectFit: 'contain', display: 'block', filter: state === 'held' ? 'none' : 'grayscale(1)', opacity: state === 'held' ? 1 : 0.85, animation: reduced ? 'none' : `badgeGlowPulse 400ms ease-out ${ri * 45 + 150}ms` }} />
               </span>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>

@@ -819,6 +819,23 @@ input:-webkit-autofill:focus {
   100% { filter: none; }
 }
 
+/* ── Brief F7 §3 — DESKTOP MASONRY HOVER GROW — SANCTIONED HOUSE-RULE EXCEPTION ──
+   The house rule is "artwork never scales on hover." Eric explicitly OVERRODE it for
+   the desktop home masonry ONLY. This is the one and only place artwork may scale — do
+   NOT extend it to profile grids, mobile, or the lightbox strips, and do NOT "fix" it
+   away in a future pass.
+   PopIcon principle: only the INNER media wrapper transforms — the cell's layout box,
+   1px border, and hit geometry never change (the aspect box's overflow:hidden crops the
+   growth; neighbours never reflow). Scale ONLY — no opacity/brightness (never alter the
+   appearance of others' work). The class is applied solely via PostItem's `hoverGrow`
+   prop, which only DesktopHome passes. */
+.masonry-media-scale { transition: transform 200ms ease-out; }
+.feed-card:hover .masonry-media-scale { transform: scale(1.02); }
+@media (prefers-reduced-motion: reduce) {
+  .masonry-media-scale { transition: none; }
+  .feed-card:hover .masonry-media-scale { transform: none; }
+}
+
 /* Ledger row highlight (Brief 2.3) — full-width ivory 4% strip on hover/press.
    Shared recipe alongside <LedgerCard>/<DottedLeader>; used by wallet token rows. */
 .ledger-row { transition: background 120ms ease; }

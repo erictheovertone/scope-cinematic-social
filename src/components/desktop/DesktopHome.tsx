@@ -146,6 +146,7 @@ export default function DesktopHome() {
                       onImageClick={() => setView(i)}
                       card
                       clampCaption
+                      hoverGrow
                     />
                   ) : null))}
                 </div>

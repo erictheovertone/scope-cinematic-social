@@ -80,12 +80,17 @@ interface PostItemProps {
   /** Above-the-fold cell (first 2–3 in the feed) → eager + high fetch priority so the
    *  first paint is instant. Below the fold stays lazy. */
   priority?: boolean;
+  /** Brief F7 §3 — SANCTIONED house-rule exception (Eric's call): desktop home masonry
+   *  ONLY. Grows the inner media wrapper to scale(1.02) on cell hover (PopIcon: layout
+   *  box / border / hit geometry never change). Passed exclusively by DesktopHome so the
+   *  scale exists NOWHERE else (profile grids reuse `card` but never pass this). */
+  hoverGrow?: boolean;
 }
 
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 
-function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, clampCaption, priority }: PostItemProps) {
+function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, clampCaption, priority, hoverGrow }: PostItemProps) {
   const router = useRouter();
   const { user } = usePrivy();
   const [likes, setLikes] = useState<any[]>([]);
@@ -357,12 +362,12 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
   );
 
   return (
-    <div className="feed-card" style={{ marginBottom: card ? 0 : FEED_POST_GAP_PX, ...(card ? { background: '#030303', border: '1px solid rgba(229,225,219,0.22)', borderRadius: 3, padding: '10px 10px 12px', boxSizing: 'border-box' } : {}) }}>
+    <div className="feed-card" onClick={card ? openLightbox : undefined} style={{ marginBottom: card ? 0 : FEED_POST_GAP_PX, ...(card ? { background: '#030303', border: '1px solid rgba(229,225,219,0.22)', borderRadius: 3, padding: '10px 10px 12px', boxSizing: 'border-box', cursor: onImageClick ? 'pointer' : undefined } : {}) }}>{/* Brief F7 §2 — desktop masonry: the whole bordered cell opens the lightbox, incl. the padding ring between artwork and border. Interactive zones (byline links, action row) stopPropagation below so they keep their own behaviour. */}
 
       {/* ── Metadata above the frame; the media below is clean ── */}
       {/* card (desktop feed) keeps the original byline byte-for-byte; the mobile
           home feed (!card) renders the Brief 2.1 Discover byline. */}
-      {card ? metadataRow : metadataRowMobile}
+      {card ? <div onClick={(e) => e.stopPropagation()}>{metadataRow}</div> : metadataRowMobile}
       {/* Media: card is edge-of-card as before; !card insets 5px so the image
           aligns to the frame's content column (x=7 on 375: 2px container + 5px). */}
       <div style={card ? undefined : { padding: '0 5px' }}>
@@ -385,7 +390,7 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
             backgroundColor: '#222',
           }}
         >
-          <div style={{ position: 'absolute', inset: 0 }}>
+          <div className={hoverGrow ? 'masonry-media-scale' : undefined} style={{ position: 'absolute', inset: 0 }}>
             {mediaContent}
           </div>
           <MusicWaveButton post={post as { music_track_id?: string | null; music_mode?: string | null; music_start_seconds?: number | null; media_type?: string | null }} />
@@ -396,7 +401,7 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
       {/* ── Below-image row: like · comment · COLLECT ── */}
       {/* card (desktop) keeps the original action row; !card = Brief 2.1 mobile row. */}
       {card ? (
-      <div style={{ display: "flex", alignItems: "center", padding: "5px 2px 0", gap: 12 }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ display: "flex", alignItems: "center", padding: "5px 2px 0", gap: 12 }}>
         <PressPop>
         <button
           className="tap-target-x6"
@@ -590,5 +595,5 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
 // a comment toggle re-renders only the two affected cards.
 export default memo(
   PostItem,
-  (prev, next) => prev.post === next.post && prev.commentsOpen === next.commentsOpen && prev.card === next.card && prev.clampCaption === next.clampCaption,
+  (prev, next) => prev.post === next.post && prev.commentsOpen === next.commentsOpen && prev.card === next.card && prev.clampCaption === next.clampCaption && prev.hoverGrow === next.hoverGrow,
 );

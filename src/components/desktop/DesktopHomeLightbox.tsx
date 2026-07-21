@@ -25,6 +25,17 @@ const thumbOf = (p: P): string =>
   (p.poster_url as string) || (p.thumbnail_url as string) || ((p.media_urls as string[])?.[0] ?? '');
 const usd = (n: number) => (n >= 1000 ? `$${Math.round(n).toLocaleString()}` : `$${n.toFixed(2)}`);
 
+// Brief F7 §1 — video posts in the horizontal strips get a small ivory PLAY glyph,
+// top-right of the thumbnail. Media-type flag = post.media_type === 'video' (same field
+// the masonry uses); images get nothing. The parent thumb box must be position:relative.
+const isVideoPost = (p: P): boolean => p.media_type === 'video';
+const StripPlayGlyph = () => (
+  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden
+    style={{ position: 'absolute', top: 8, right: 8, opacity: 0.7, filter: 'drop-shadow(0 0 4px rgba(5,5,5,0.5))', pointerEvents: 'none' }}>
+    <path d="M4.5 3 L11 7 L4.5 11 Z" stroke="#E5E1DB" strokeWidth="1.2" strokeLinejoin="round" strokeLinecap="round" fill="none" />
+  </svg>
+);
+
 export default function DesktopHomeLightbox({
   posts, index, onClose,
 }: {
@@ -147,8 +158,9 @@ export default function DesktopHomeLightbox({
       <div ref={mfScroll} style={{ display: 'flex', gap: 12, overflowX: 'auto', scrollbarWidth: 'none' }}>
         {moreFrom.map((p) => (
           <div key={String(p.id)} onClick={() => jumpTo(p)} style={{ flexShrink: 0, width: 208, cursor: 'pointer' }}>
-            <div style={{ width: '100%', aspectRatio: '2.75 / 1', overflow: 'hidden', background: '#0d0d0d' }}>
+            <div style={{ position: 'relative', width: '100%', aspectRatio: '2.75 / 1', overflow: 'hidden', background: '#0d0d0d' }}>
               {thumbOf(p) && <img src={feedImage(thumbOf(p), 480)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
+              {isVideoPost(p) && <StripPlayGlyph />}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, margin: '7px 0 0' }}>
               {/* creator avatar + @handle — LINKS to the profile (global button:hover brightens) */}
@@ -196,8 +208,9 @@ export default function DesktopHomeLightbox({
             return (
               <button key={String(p.id)} data-active={isActive ? '' : undefined} onClick={() => jumpTo(p)} aria-label={`Post by @${String(p.username ?? '')}`}
                 style={{ flexShrink: 0, width: 164, background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, opacity: isActive ? 1 : 0.6, transition: 'opacity 160ms ease' }}>
-                <div style={{ width: '100%', aspectRatio: '2.39 / 1', overflow: 'hidden', background: '#0d0d0d', outline: isActive ? '1px solid rgba(229,225,219,0.7)' : 'none' }}>
+                <div style={{ position: 'relative', width: '100%', aspectRatio: '2.39 / 1', overflow: 'hidden', background: '#0d0d0d', outline: isActive ? '1px solid rgba(229,225,219,0.7)' : 'none' }}>
                   {thumbOf(p) && <img src={feedImage(thumbOf(p), 340)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
+                  {isVideoPost(p) && <StripPlayGlyph />}
                 </div>
                 {/* handle hugs the thumbnail (~5px), left-justified */}
                 <p style={{ ...SKB, fontSize: 9, color: 'rgba(229,225,219,0.5)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '5px 0 0', textAlign: 'left', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>@{String(p.username ?? '')}</p>
