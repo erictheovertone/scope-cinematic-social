@@ -38,7 +38,7 @@ const HIDDEN = [
 
 export default function AppShell() {
   const pathname = usePathname();
-  const { user } = usePrivy();
+  const { user, ready, authenticated } = usePrivy();
   const [unreadCount, setUnreadCount] = useState(0);
   const [dmUnread, setDmUnread] = useState(0);
   const isDesktop = useIsDesktop();
@@ -90,8 +90,14 @@ export default function AppShell() {
       .catch(() => {});
   }, [user?.id, pathname]);
 
-  // Before mount: always render 3 icons (home, create, wallet) — no pathname logic
-  if (!mounted) return null;
+  // Brief F5 §3 — COLD-LOAD FLASH gate. Render NO route chrome (pill / rail) until
+  // Privy auth state is KNOWN (`ready`) and the user is authenticated. Before this,
+  // the pill leaked over the black canvas on a cold load and the unauthenticated →
+  // /welcome redirect window flashed the footer. Gating RENDER only — usePrivy() is
+  // called unconditionally above, so the auth check itself is not delayed (no added
+  // latency for authed loads; they just see black-without-pill for the pre-ready beat,
+  // exactly as page.tsx already paints). Unauthenticated → welcome shows no chrome.
+  if (!mounted || !ready || !authenticated) return null;
 
   // DESKTOP: the 71px rail is the global chrome on EVERY desktop surface
   // (it stands itself down during takeovers via the same attribute) — the
