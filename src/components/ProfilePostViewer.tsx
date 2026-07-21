@@ -235,18 +235,22 @@ function PostViewerItem({
         // Metadata ROW — lifted OFF the media onto the black above it (matches
         // the feed's treatment): handle left, ticker+MC right; media stays clean.
         const metadataRow = (
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8, padding: "0 2px" }}>
-            <div
-              className="tappable"
-              onClick={(e) => { e.stopPropagation(); onNavigateToProfile(); }}
-              style={{ display: "flex", alignItems: "center", gap: 4, cursor: "pointer", opacity: 0.85 }}
-            >
-              <img src={ownerAvatarUrl || undefined} style={{ width: 14, height: 14, borderRadius: "50%", objectFit: "cover", flexShrink: 0, background: "#333" }} />
-              <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: "#E5E1DB", lineHeight: 1, textTransform: "uppercase" }}>
-                @{ownerUsername}
-              </span>
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 8, padding: "0 2px" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
+              <div
+                className="tappable"
+                onClick={(e) => { e.stopPropagation(); onNavigateToProfile(); }}
+                style={{ display: "flex", alignItems: "center", gap: 4, cursor: "pointer", opacity: 0.85 }}
+              >
+                <img src={ownerAvatarUrl || undefined} style={{ width: 14, height: 14, borderRadius: "50%", objectFit: "cover", flexShrink: 0, background: "#333" }} />
+                <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: "#E5E1DB", lineHeight: 1, textTransform: "uppercase" }}>
+                  @{ownerUsername}
+                </span>
+              </div>
+              {/* Brief W7 §2b/c — song title UNDER the handle, marquee, sentence case. Shared
+                  viewer → covers BOTH own + public profile post-scroll in one mount. */}
+              <MusicTitleChip post={post as { music_track_id?: string | null }} marquee uppercase={false} fontSize={11} weight={400} color="rgba(229,225,219,0.55)" glyphW={12} glyphH={9} windowPx={200} />
             </div>
-            <MusicTitleChip post={post as { music_track_id?: string | null }} />
             {/* Market chrome — coin posts only (ticker + real MC via the boundary),
                 matching the feed. Legacy/non-coin posts show none. */}
             {isCoinPost(post as { coin_address?: string | null; token_standard?: string | null }) && (post as { coin_address?: string | null }).coin_address && (

@@ -262,19 +262,23 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
   // Metadata ROW — lifted OFF the media onto the black above it (layout nudge):
   // handle left, ticker+MC right, same type styles; the media stays clean.
   const metadataRow = (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, padding: '0 2px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-        {post.profile_image_url && (
-          <img src={feedImage(post.profile_image_url, 96)} style={{ width: '14px', height: '14px', borderRadius: '50%', objectFit: 'cover' }} />
-        )}
-        <span
-          className="tappable"
-          onClick={(e) => { e.stopPropagation(); router.push('/profile/' + post.username); }}
-          style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-8)', color: '#E5E1DB', cursor: 'pointer', textTransform: 'uppercase', display: 'inline-block' }}
-        >
-          @{post.username}
-        </span>
-        <MusicTitleChip post={post as { music_track_id?: string | null }} />
+    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 8, padding: '0 2px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+          {post.profile_image_url && (
+            <img src={feedImage(post.profile_image_url, 96)} style={{ width: '14px', height: '14px', borderRadius: '50%', objectFit: 'cover' }} />
+          )}
+          <span
+            className="tappable"
+            onClick={(e) => { e.stopPropagation(); router.push('/profile/' + post.username); }}
+            style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-8)', color: '#E5E1DB', cursor: 'pointer', textTransform: 'uppercase', display: 'inline-block' }}
+          >
+            @{post.username}
+          </span>
+        </div>
+        {/* Brief W7 §2a — song title UNDER the handle (mirrors mobile feed), marquee, sentence case.
+            Chrome zone (byline), NOT the media wrapper → never scales with hoverGrow. */}
+        <MusicTitleChip post={post as { music_track_id?: string | null }} marquee uppercase={false} fontSize={11} weight={400} color="rgba(229,225,219,0.55)" glyphW={12} glyphH={9} windowPx={240} />
       </div>
       {/* Market chrome — coin posts only; legacy 1155 tiles show none. */}
       {post.token_standard === 'coin' && post.coin_address && (
