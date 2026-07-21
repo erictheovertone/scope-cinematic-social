@@ -413,8 +413,10 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
       }}>
         {/* × dismiss — the app's sheet close (matches the earnings/swap sheets'
             top-right ×). Backdrop tap keeps working; nothing else moves. */}
-        <button onClick={onClose} aria-label="Close" style={{ position: 'absolute', top: 10, right: 12, zIndex: 5, background: 'transparent', border: 'none', cursor: 'pointer', padding: 6 }}>
-          <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: 'var(--fs-16)', color: 'rgba(229,225,219,0.5)', lineHeight: 1 }}>×</span>
+        {/* Brief F3: X doubled (fs-16→32px) + opacity 0.5→0.85 (more visible); padding
+            keeps the hit ≥44px. */}
+        <button onClick={onClose} aria-label="Close" style={{ position: 'absolute', top: 8, right: 10, zIndex: 5, background: 'transparent', border: 'none', cursor: 'pointer', padding: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 0 }}>
+          <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: 32, color: 'rgba(229,225,219,0.85)', lineHeight: 1 }}>×</span>
         </button>
 
         {/* Banner ONLY for mock data — real coin reads (live) carry no banner. */}

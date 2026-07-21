@@ -285,30 +285,37 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
   // avatar 13×13 house ivory frame · [ at ] HANDLE (brackets 6px --font-light→55,
   // handle 8px 65 Medium, unit ~55%) · right: MC 8.5px 34% + $value 8.5px 71%.
   // Dash rule: unminted posts render NO MC/economics.
+  // Brief F3: byline block = avatar · [ handle line, then SONG line ] (IG placement);
+  // handle unit opacity 55%→66%; feed-local +4px scale (avatar 13→17, brackets 6→10,
+  // handle 8→12, MC/value/dash 8.5→12.5).
   const metadataRowMobile = (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 7, padding: '0 5px' }}>
-      <button
-        className="tappable"
-        onClick={(e) => { e.stopPropagation(); router.push('/profile/' + post.username); }}
-        style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'none', border: 'none', padding: 0, cursor: 'pointer', minWidth: 0 }}
-      >
-        <span style={{ width: 13, height: 13, flexShrink: 0, border: '0.75px solid rgba(229,225,219,0.5)', overflow: 'hidden', display: 'block', background: '#222' }}>
-          {post.profile_image_url && <img src={feedImage(post.profile_image_url, 96)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
-        </span>
-        <span style={{ display: 'inline-flex', alignItems: 'baseline', gap: 3, opacity: 0.55, minWidth: 0 }}>
-          <span style={{ fontFamily: 'var(--font-light)', fontWeight: 400, fontSize: 6, color: 'var(--ink-100)', letterSpacing: 'var(--track-wide)' }}>[ at ]</span>
-          <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 8, color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: 'var(--track-body)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{post.username}</span>
-        </span>
-        <MusicTitleChip post={post as { music_track_id?: string | null }} />
-      </button>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 7, minWidth: 0 }}>
+        <button className="tappable" onClick={(e) => { e.stopPropagation(); router.push('/profile/' + post.username); }} style={{ display: 'block', flexShrink: 0, background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
+          <span style={{ width: 17, height: 17, flexShrink: 0, border: '0.75px solid rgba(229,225,219,0.5)', overflow: 'hidden', display: 'block', background: '#222' }}>
+            {post.profile_image_url && <img src={feedImage(post.profile_image_url, 96)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
+          </span>
+        </button>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 1, minWidth: 0, alignItems: 'flex-start' }}>
+          <button className="tappable" onClick={(e) => { e.stopPropagation(); router.push('/profile/' + post.username); }} style={{ display: 'inline-flex', alignItems: 'baseline', gap: 4, opacity: 0.66, background: 'none', border: 'none', padding: 0, cursor: 'pointer', minWidth: 0, maxWidth: '100%' }}>
+            <span style={{ fontFamily: 'var(--font-light)', fontWeight: 400, fontSize: 10, color: 'var(--ink-100)', letterSpacing: 'var(--track-wide)', flexShrink: 0 }}>[ at ]</span>
+            <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 12, color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: 'var(--track-body)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{post.username}</span>
+          </button>
+          {/* SONG ROW — track title AS STORED (sentence case), 55 Roman ~11px ~55%,
+              wave glyph, capped 28 chars/one line; renders ONLY when a track is
+              attached (no reserved space otherwise). Resolves via the module-cached
+              useTrackForPost — no new per-card fetch. */}
+          <MusicTitleChip post={post as { music_track_id?: string | null }} uppercase={false} fontSize={11} weight={400} color="rgba(229,225,219,0.55)" glyphW={12} glyphH={9} maxChars={28} />
+        </div>
+      </div>
       {post.token_standard === 'coin' && post.coin_address ? (
         <span style={{ display: 'inline-flex', alignItems: 'baseline', gap: 4, flexShrink: 0 }}>
-          <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 8.5, color: 'rgba(229,225,219,0.34)', letterSpacing: 'var(--track-body)' }}>MC</span>
-          <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 8.5, color: 'rgba(229,225,219,0.71)', letterSpacing: 'var(--track-body)' }}>{mc ?? '…'}</span>
+          <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 12.5, color: 'rgba(229,225,219,0.34)', letterSpacing: 'var(--track-body)' }}>MC</span>
+          <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 12.5, color: 'rgba(229,225,219,0.71)', letterSpacing: 'var(--track-body)' }}>{mc ?? '…'}</span>
         </span>
       ) : (
         /* dash rule — unminted posts carry NO economics; a single dash holds the slot. */
-        <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 8.5, color: 'rgba(229,225,219,0.34)', letterSpacing: 'var(--track-body)', flexShrink: 0 }}>—</span>
+        <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 12.5, color: 'rgba(229,225,219,0.34)', letterSpacing: 'var(--track-body)', flexShrink: 0 }}>—</span>
       )}
     </div>
   );
@@ -449,10 +456,10 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
           disabled={loading || !user}
           style={{ background: "transparent", border: "none", cursor: user ? "pointer" : "default", display: "flex", alignItems: "center", gap: 4, padding: 0, color: isLiked ? "#E5E1DB" : "rgba(229,225,219,0.6)" }}
         >
-          <svg width="14.5" height="14.5" viewBox="0 0 24 24" fill={isLiked ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill={isLiked ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
           </svg>
-          <span style={{ ...SKR, fontSize: 8.5, color: "inherit", letterSpacing: 'var(--track-body)' }}>{likes.length}</span>
+          <span style={{ ...SKR, fontSize: 12.5, color: "inherit", letterSpacing: 'var(--track-body)' }}>{likes.length}</span>
         </button>
         </PressPop>
 
@@ -462,10 +469,10 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
           onClick={(e) => { e.stopPropagation(); toggleComments(); }}
           style={{ background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 4, padding: 0, color: "rgba(229,225,219,0.6)" }}
         >
-          <svg width="14.5" height="14.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
           </svg>
-          <span style={{ ...SKR, fontSize: 8.5, color: "inherit", letterSpacing: 'var(--track-body)' }}>{comments.length}</span>
+          <span style={{ ...SKR, fontSize: 12.5, color: "inherit", letterSpacing: 'var(--track-body)' }}>{comments.length}</span>
         </button>
         </PressPop>
 
@@ -481,7 +488,7 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
             onClick={(e) => { e.stopPropagation(); setShowCollectSheet(true); }}
             style={{ background: "transparent", border: "none", cursor: "pointer", padding: 0, lineHeight: 1 }}
           >
-            <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 10.5, letterSpacing: 'var(--track-display)', color: showCollectSheet ? "#E5E1DB" : "rgba(229,225,219,0.7)", lineHeight: 1 }}>COLLECT</span>
+            <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 14.5, letterSpacing: 'var(--track-display)', color: showCollectSheet ? "#E5E1DB" : "rgba(229,225,219,0.7)", lineHeight: 1 }}>COLLECT</span>
           </button>
         </div>
       </div>
@@ -493,7 +500,7 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
             ref={captionRef}
             style={{ ...SKR, ...(card
               ? { fontSize: 'var(--fs-11)', color: "#E5E1DB", letterSpacing: "-0.1px", lineHeight: 1.5 }
-              : { fontSize: 8.5, color: "rgba(229,225,219,0.75)", letterSpacing: 'var(--track-body)', lineHeight: 1.16 }), margin: 0,
+              : { fontSize: 12.5, color: "rgba(229,225,219,0.75)", letterSpacing: 'var(--track-body)', lineHeight: 1.16 }), margin: 0,
               ...(clampCaption ? ({ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' } as React.CSSProperties) : {}) }}
           >
             {post.caption}

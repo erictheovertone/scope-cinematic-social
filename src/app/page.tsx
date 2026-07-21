@@ -34,6 +34,16 @@ export default function Home() {
   // trigger so exactly ONE logomark exists at rest (the in-flow one).
   const [pastLanding, setPastLanding] = useState(false);
   const [showFrame, setShowFrame] = useState(true);
+  // Brief F3 — a takeover (collect sheet, etc.) raises the body suiteOpen flag; hide
+  // the floating logomark trigger while it's up (it's a body-portal at z50 that would
+  // otherwise paint over the sheet). Same flag the pill listens to.
+  const [takeover, setTakeover] = useState(false);
+  useEffect(() => {
+    const sync = () => setTakeover(!!document.documentElement.dataset.suiteOpen);
+    sync();
+    window.addEventListener('scope:takeover-change', sync);
+    return () => window.removeEventListener('scope:takeover-change', sync);
+  }, []);
   const [feedState, setFeedState] = useState<FeedState>("normal");
   // Inline comments are one-at-a-time: only one feed post's section is open.
   const [openCommentsPostId, setOpenCommentsPostId] = useState<string | null>(null);
@@ -304,10 +314,10 @@ export default function Home() {
             cursor: 'pointer',
             padding: '9px 6px', // ≈44px tap target around the 41×26 mark
             lineHeight: 0,
-            opacity: menuOpen || !showFrame || !pastLanding ? 0 : triggerPressed ? 0.75 : 1,
-            transform: `${menuOpen || !showFrame || !pastLanding ? 'translateY(-12px)' : 'translateY(0)'}${triggerPressed ? ' scale(0.92)' : ''}`,
+            opacity: menuOpen || !showFrame || !pastLanding || takeover ? 0 : triggerPressed ? 0.75 : 1,
+            transform: `${menuOpen || !showFrame || !pastLanding || takeover ? 'translateY(-12px)' : 'translateY(0)'}${triggerPressed ? ' scale(0.92)' : ''}`,
             transition: 'opacity 0.25s cubic-bezier(0.16,0.84,0.3,1), transform 0.25s cubic-bezier(0.16,0.84,0.3,1)',
-            pointerEvents: menuOpen || !showFrame || !pastLanding ? 'none' : 'auto',
+            pointerEvents: menuOpen || !showFrame || !pastLanding || takeover ? 'none' : 'auto',
             filter: 'drop-shadow(0 0 8px rgba(0,0,0,0.9)) drop-shadow(0 2px 12px rgba(0,0,0,0.75))',
             zIndex: 50, // above feed (z20), below the menu overlay (z60)
           }}
@@ -402,7 +412,7 @@ export default function Home() {
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '0 10px' }}>
               <h1 className="soften-display" style={{
                 fontFamily: 'var(--font-display)', fontWeight: 700,
-                fontSize: 32, lineHeight: 1, letterSpacing: 'var(--track-display)',
+                fontSize: 36, lineHeight: 1, letterSpacing: 'var(--track-display)',
                 color: 'var(--ink-100)', margin: '4px 0 0',
               }}>
                 Discover
