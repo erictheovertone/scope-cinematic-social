@@ -11,6 +11,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { usePrivy } from '@privy-io/react-auth';
 import { getInbox, dmTimeAgo, type InboxConversation } from '@/lib/dm';
 import { feedImage } from '@/lib/mediaUrl';
@@ -32,6 +33,7 @@ function MobileDMInbox() {
   const { user } = usePrivy();
   const router = useRouter();
   const [convs, setConvs] = useState<InboxConversation[] | null>(null);
+  const [logoPressed, setLogoPressed] = useState(false); // Brief W9 — return-home logomark press-pop (matches Wallet)
 
   const load = useCallback(() => {
     if (!user?.id) return;
@@ -53,9 +55,26 @@ function MobileDMInbox() {
 
   return (
     <main style={{ minHeight: '100dvh', background: '#000', paddingBottom: 'calc(72px + env(safe-area-inset-bottom, 0px))' }}>
-      {/* Header — the app's tracked page language. */}
-      <div style={{ padding: 'calc(16px + env(safe-area-inset-top, 0px)) 20px 14px' }}>
-        <h1 style={{ ...SKB, fontSize: 'var(--fs-13)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.16em', margin: 0 }}>Messages</h1>
+      {/* Header — Brief W9: page-title treatment matching Wallet (32px / 75 Bold /
+          --track-display / --ink-100 / sentence case), ~10px left inset + --safe-top per
+          the F1 chrome rule, return-home logomark top-right (the Wallet/Discover house
+          pattern; the inbox had nothing top-right before), ~24px to the first row. */}
+      <div style={{ position: 'relative', padding: 'calc(10px + var(--safe-top)) 10px 24px' }}>
+        <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 32, lineHeight: 1, letterSpacing: 'var(--track-display)', color: 'var(--ink-100)', margin: 0 }}>
+          Messages
+        </h1>
+        <div style={{ position: 'absolute', top: 'calc(4px + var(--safe-top))', right: 6, display: 'flex', alignItems: 'center' }}>
+          <Link
+            href="/"
+            aria-label="Home"
+            onPointerDown={() => setLogoPressed(true)}
+            onPointerUp={() => setLogoPressed(false)}
+            onPointerLeave={() => setLogoPressed(false)}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '9px 6px', textDecoration: 'none', outline: 'none', transform: logoPressed ? 'scale(0.92)' : 'scale(1)', opacity: logoPressed ? 0.75 : 1, transition: 'transform 120ms ease, opacity 120ms ease' }}
+          >
+            <img src="/design-updates-071526/scope-logomark-offwhite.png" alt="Scope" style={{ width: 39, height: 'auto', objectFit: 'contain', display: 'block', filter: 'blur(0.35px)' }} />
+          </Link>
+        </div>
       </div>
 
       {convs === null ? (
