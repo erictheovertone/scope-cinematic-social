@@ -115,8 +115,8 @@ function MobileScreeningRoom() {
 
   return (
     <div className="screen-min" style={{ minHeight: '100dvh', background: '#000', maxWidth: '30rem', margin: '0 auto', position: 'relative' }}>
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '16px 16px 12px' }}>
+      {/* Header — Brief F1: top pad clears the notch. */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 'calc(16px + var(--safe-top)) 16px 12px' }}>
         <button
           onClick={() => router.back()}
           aria-label="Back"

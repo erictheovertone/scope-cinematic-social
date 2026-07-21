@@ -91,6 +91,15 @@ html, body {
 :root {
   --bp-desktop: 1024px;
 
+  /* ── SAFE-AREA SYSTEM (Brief F1) — viewport-fit=cover is set in layout.tsx, so
+     these resolve to real notch / home-indicator insets on device (0 on non-notch).
+     PAGE-CHROME RULE: header zones pad by --safe-top, bottom-anchored controls by
+     --safe-bottom; backgrounds still paint edge-to-edge, only content insets. */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+
   /* ── REBRAND FOUNDATION (Brief 1) ──────────────────────────────────────────
      Semantic font tokens (all resolve to Haas; weight applied by the consumer). */
   --font-display: 'Neue Haas Grotesk Display', 'SK-Modernist', sans-serif; /* 75 Bold  */

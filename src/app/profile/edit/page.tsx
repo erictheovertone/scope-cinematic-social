@@ -297,7 +297,7 @@ export default function EditProfilePage() {
     <div className="bg-black" style={{ position: 'fixed', inset: 0, overflowY: 'auto' }}>
 
       {isDirty && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 200, background: '#000', borderBottom: '1px solid rgba(229,225,219,0.15)', padding: '10px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 200, background: '#000', borderBottom: '1px solid rgba(229,225,219,0.15)', padding: 'calc(10px + var(--safe-top)) 20px 10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'rgba(229,225,219,0.4)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>UNSAVED CHANGES</span>
           <button
             onClick={handleSaveAll}
@@ -311,7 +311,7 @@ export default function EditProfilePage() {
         </div>
       )}
 
-      <div style={{ maxWidth: '30rem', margin: '0 auto', padding: isDirty ? '44px 20px 60px' : '0 20px 60px' }}>
+      <div style={{ maxWidth: '30rem', margin: '0 auto', paddingTop: `calc(${isDirty ? 44 : 0}px + var(--safe-top))`, paddingLeft: 20, paddingRight: 20, paddingBottom: 'calc(60px + var(--safe-bottom))' }}>
 
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', padding: '16px 0 20px', position: 'relative' }}>

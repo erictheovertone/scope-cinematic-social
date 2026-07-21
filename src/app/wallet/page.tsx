@@ -689,7 +689,7 @@ export default function WalletPage() {
       {/* Chrome (node 37:123): title top-left, truncated address + copy under it,
           logomark top-right (return-home). Bell kept beside the logomark so the
           market-notifications entry isn't stranded (frame shows only the mark). */}
-      <div style={{ position: "relative", padding: "10px 10px 6px" }}>
+      <div style={{ position: "relative", padding: "calc(10px + var(--safe-top)) 10px 6px" }}>
         <h1 className="soften-display" style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 32, lineHeight: 1, letterSpacing: "var(--track-display)", color: "var(--ink-100)", margin: 0 }}>
           Wallet
         </h1>
@@ -711,7 +711,7 @@ export default function WalletPage() {
         )}
         {/* Brief 2.3a (N0c): logomark-only — the bell trigger is removed here; the
             /profile/notifications?tab=market route is unchanged, reached elsewhere. */}
-        <div style={{ position: "absolute", top: 4, right: 6, display: "flex", alignItems: "center" }}>
+        <div style={{ position: "absolute", top: "calc(4px + var(--safe-top))", right: 6, display: "flex", alignItems: "center" }}>
           <Link
             href="/"
             aria-label="Home"

@@ -231,8 +231,9 @@ export default function NotificationsPage() {
   return (
     <div className="bg-black w-full app-shell screen-min mx-auto flex flex-col">
 
-      {/* Header */}
-      <div className="relative flex items-center px-[4px] pt-[12px] pb-[10px]">
+      {/* Header — Brief F1: pad the top by the safe-area so the back button clears
+          the notch (was pt-[12px] only). */}
+      <div className="relative flex items-center px-[4px] pb-[10px]" style={{ paddingTop: 'calc(12px + var(--safe-top))' }}>
         <button
           onClick={() => router.back()}
           className="bg-transparent border-none cursor-pointer p-0"

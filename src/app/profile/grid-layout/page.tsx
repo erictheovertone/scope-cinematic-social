@@ -404,8 +404,9 @@ export default function GridLayoutPage() {
   // Layout selection list
   return (
     <>
-      <div className="screen-min" style={{ background: "#000000", width: 375, minHeight: "100dvh", margin: "0 auto", position: "relative", overflowX: "hidden", paddingBottom: 24 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 10, paddingBottom: 10, paddingLeft: 5, paddingRight: 5 }}>
+      <div className="screen-min" style={{ background: "#000000", width: 375, minHeight: "100dvh", margin: "0 auto", position: "relative", overflowX: "hidden", paddingBottom: "calc(24px + var(--safe-bottom))" }}>
+        {/* Brief F1 — WELCOME/CHOOSE header clears the notch. */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "calc(10px + var(--safe-top))", paddingBottom: 10, paddingLeft: 5, paddingRight: 5 }}>
           <span style={{ fontFamily: "'Sk-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-12)', color: "#E5E1DB", letterSpacing: "-0.24px" }}>
             WELCOME {username}
           </span>
