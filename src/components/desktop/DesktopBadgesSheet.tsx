@@ -68,9 +68,16 @@ export default function DesktopBadgesSheet({
   return createPortal(
     <div data-swipe-exclude style={{ position: 'fixed', inset: 0, zIndex: 660, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.88)' }} />
-      <div style={{ position: 'relative', width: 720, maxHeight: '82vh', overflowY: 'auto', background: '#000', border: '1px solid #1a1a1a', boxSizing: 'border-box', padding: '40px 44px 44px' }}>
+      {/* Brief W2 §2 — the corner brackets were a CHILD of this overflow:auto scroller, so
+          their bottom:0 anchored to the SCROLLPORT (clientHeight ≈82vh), not scrollHeight —
+          landing ~2/3 down when content overflows. Split into a NON-scrolling frame wrapper
+          (holds the brackets + close, anchored to the true visible box) and an inner
+          scroller (the content + padding). Brackets now hit the real four corners and stay
+          put on scroll. */}
+      <div style={{ position: 'relative', width: 720, maxHeight: '82vh', background: '#000', border: '1px solid #1a1a1a', boxSizing: 'border-box', display: 'flex', flexDirection: 'column' }}>
         <RedBrackets inset={0} />
         <button onClick={onClose} aria-label="Close" style={{ position: 'absolute', top: 34, right: 40, background: 'transparent', border: 'none', cursor: 'pointer', ...SKR, fontSize: 20, color: 'rgba(229,225,219,0.5)', lineHeight: 1, padding: 4, zIndex: 2 }}>×</button>
+        <div style={{ overflowY: 'auto', minHeight: 0, padding: '40px 44px 44px' }}>
         {/* ── FULL DESCRIPTOR (LEARN MORE → target) — the rich TIER_DETAILS ── */}
         {detailKey && (() => {
           const d = TIER_DETAILS[DETAIL_KEY[detailKey] ?? ''];
@@ -173,6 +180,7 @@ export default function DesktopBadgesSheet({
           );
         })}
         </>)}
+        </div>{/* end inner scroller */}
       </div>
     </div>,
     document.body,
