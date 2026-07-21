@@ -493,7 +493,7 @@ export default function DeckDetailPage() {
   // deck-grid trap. min-h-[100dvh] (document scroll) never scrolled here. screen-min =
   // 100dvh + overflow-y:auto + momentum + contained overscroll (the established pattern).
   return (
-    <div className="bg-black w-full app-shell screen-min mx-auto" style={{ paddingBottom: 'calc(80px + env(safe-area-inset-bottom, 0px))' }}>
+    <div className="bg-black w-full app-shell screen-min mx-auto" style={{ paddingBottom: 'calc(80px + env(safe-area-inset-bottom, 0px))', overscrollBehavior: 'none' }}>
 
       {/* ── Backdrops ────────────────────────────────────────────────────── */}
 
@@ -716,12 +716,16 @@ export default function DeckDetailPage() {
               <button
                 onClick={openEditDialog}
                 style={{
-                  width: 62, height: 22,
+                  // Brief F5 §4b — was width:62 padding:0, which the ~70px "EDIT DECK"
+                  // label overflowed past the 1px border on both sides. Flow-size the box
+                  // to its content: drop the fixed width, add horizontal padding + nowrap.
+                  height: 22,
+                  padding: "0 10px",
+                  whiteSpace: "nowrap",
                   background: "transparent",
                   border: "1px solid #E5E1DB",
                   cursor: "pointer",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  padding: 0,
+                  display: "inline-flex", alignItems: "center", justifyContent: "center",
                 }}
               >
                 <span style={{ ...SKB, fontSize: 'var(--fs-11)', letterSpacing: "-0.22px", color: "#E5E1DB", textTransform: "uppercase" }}>
