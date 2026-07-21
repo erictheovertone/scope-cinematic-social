@@ -30,7 +30,7 @@ import { resolveBadges } from "@/lib/economy/badges";
 import { dividerBackground } from "@/lib/economy/dividerLines";
 import { useEconomy } from "@/components/EconomyProvider";
 import CollectedGrid from "@/components/economy/CollectedGrid";
-import TheatreMode from "@/components/TheatreMode";
+import ProfileTabRow from "@/components/profile/ProfileTabRow";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -47,7 +47,7 @@ export default function PublicProfilePage() {
   const [loaded, setLoaded] = useState(false);
   const [showViewer, setShowViewer] = useState(false);
   const [viewerIndex, setViewerIndex] = useState(0);
-  const [activeTab, setActiveTab] = useState<"main" | "decks" | "theatre" | "collected">("main");
+  const [activeTab, setActiveTab] = useState<"main" | "decks" | "collected">("main");
   const [profileDataOpen, setProfileDataOpen] = useState(false);
   const [showDecks, setShowDecks] = useState(false);
   const [publicDecks, setPublicDecks] = useState<(Deck & { item_count: number; thumbnail_urls: string[] })[]>([]);
@@ -409,48 +409,20 @@ export default function PublicProfilePage() {
         transition: (headerUnsnapping && !headerSnapped) ? 'none' : 'opacity 0.25s ease',
         pointerEvents: (headerSnapped || gridScrollY < 20) ? 'auto' : 'none',
       }}>
-        <div key={snapAnimKey} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 8px', height: 20 }}>
-          {(headerSnapped || headerUnsnapping) ? (
-            <button
-              onClick={dismissSnapMenu}
-              style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', animation: headerUnsnapping ? 'snapOutLeft 0.28s cubic-bezier(0.16,1,0.3,1) 165ms both' : 'snapInLeft 0.32s cubic-bezier(0.16,1,0.3,1) 0ms both' }}
-            >
-              <img src="/logomark-plain-white.png" alt="" style={{ width: 32, height: 20, objectFit: 'contain', display: 'block' }} />
-            </button>
-          ) : (
-            <button
-              onClick={() => setActiveTab('main')}
-              style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer' }}
-            >
-              <span style={{ ...SKB, fontSize: 'var(--fs-9_5)', color: activeTab === 'main' ? 'rgba(229,225,219,0.8)' : 'rgba(229,225,219,0.4)', textTransform: 'uppercase', letterSpacing: '-0.16px' }}>MAIN</span>
-            </button>
-          )}
-
-          <button
-            onClick={() => { setActiveTab('decks'); setShowDecks(true); }}
-            style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', position: 'relative', left: (headerSnapped || headerUnsnapping) ? -8 : 5, animation: headerUnsnapping ? 'snapOutUp 0.28s cubic-bezier(0.16,1,0.3,1) 110ms both' : headerSnapped ? 'snapInUp 0.32s cubic-bezier(0.16,1,0.3,1) 55ms both' : 'none' }}
-          >
-            <img src="/decks-logo-new-lg.png" style={{ height: 8, width: 'auto', display: 'block', filter: activeTab === 'decks' ? 'invert(27%) sepia(100%) saturate(7000%) hue-rotate(0deg) brightness(100%) contrast(100%)' : 'none' }} alt="Decks" />
-          </button>
-
-          <button
-            onClick={() => setActiveTab('theatre')}
-            style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', animation: headerUnsnapping ? 'snapOutUp 0.28s cubic-bezier(0.16,1,0.3,1) 55ms both' : headerSnapped ? 'snapInUp 0.32s cubic-bezier(0.16,1,0.3,1) 110ms both' : 'none' }}
-          >
-            <img
-              src="/theatre-mode-eye-solo.png"
-              style={{ height: 15.6, width: 'auto', display: 'block', opacity: activeTab === 'theatre' ? 1 : 0.7, position: 'relative', left: (headerSnapped || headerUnsnapping) ? 0 : 10 }}
-              alt="Theatre"
-            />
-          </button>
-
-          <button
-            onClick={() => setActiveTab('collected')}
-            style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', animation: headerUnsnapping ? 'snapOutRight 0.28s cubic-bezier(0.16,1,0.3,1) 0ms both' : headerSnapped ? 'snapInRight 0.32s cubic-bezier(0.16,1,0.3,1) 165ms both' : 'none' }}
-          >
-            <span style={{ ...SKB, fontSize: 'var(--fs-9_5)', color: activeTab === 'collected' ? 'rgba(229,225,219,0.8)' : 'rgba(229,225,219,0.4)', textTransform: 'uppercase', letterSpacing: '-0.16px' }}>COLLECTED</span>
-          </button>
-        </div>
+        {/* Brief F6a — adopt own-profile's tab set via shared <ProfileTabRow>:
+            MAIN · COLLECTED · DECKS (text, own styling). The old icon 4-tab row +
+            its THEATRE tab are retired; theatre stays reachable via rotation in
+            ProfilePostViewer. */}
+        <ProfileTabRow
+          activeTab={activeTab}
+          headerSnapped={headerSnapped}
+          headerUnsnapping={headerUnsnapping}
+          snapAnimKey={snapAnimKey}
+          onDismissSnap={dismissSnapMenu}
+          onMain={() => setActiveTab('main')}
+          onCollected={() => setActiveTab('collected')}
+          onDecks={() => { setActiveTab('decks'); setShowDecks(true); }}
+        />
       </div>
 
       {/* Posts grid — header space reserved by spacer in scroll content, not by moving the container. */}
@@ -555,11 +527,9 @@ export default function PublicProfilePage() {
         </div>
       </div>
 
-      {/* THEATRE MODE — landscape full-screen viewing of this profile's posts,
-          toggled by the eye icon in the tab row. Full-screen overlay. */}
-      {activeTab === 'theatre' && (
-        <TheatreMode posts={posts} onClose={() => setActiveTab('main')} />
-      )}
+      {/* Brief F6a — the page-level THEATRE tab is retired (own-profile tab set).
+          Theatre remains reachable via rotation inside ProfilePostViewer, which owns
+          its own full-screen overlay — no page-level activeTab='theatre' needed. */}
 
       <ProfileDataSheet
         isOpen={profileDataOpen}

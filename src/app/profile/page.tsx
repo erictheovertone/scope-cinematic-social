@@ -30,6 +30,7 @@ import { useUpsell } from "@/components/UpsellProvider";
 import FrameLoader from "@/components/FrameLoader";
 import BadgeCluster from "@/components/BadgeCluster";
 import ProfileHeader from "@/components/profile/ProfileHeader";
+import ProfileTabRow from "@/components/profile/ProfileTabRow";
 import { resolveBadges } from "@/lib/economy/badges";
 import { dividerBackground } from "@/lib/economy/dividerLines";
 import { useEconomy } from "@/components/EconomyProvider";
@@ -491,42 +492,19 @@ const userLayoutId = stableLayoutId;
         transition: (headerUnsnapping && !headerSnapped) ? 'none' : 'opacity 0.25s ease',
         pointerEvents: (headerSnapped || gridScrollY < 20) ? 'auto' : 'none',
       }}>
-        <div key={snapAnimKey} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 8px', height: 20 }}>
-          {/* Brief 2.2 (node 1:9) — three text tabs MAIN · COLLECTED · DECKS. 75 Bold
-              10.5px, --track-display; active = ink-100, inactive ~57% (opacity only,
-              no red marker). Theatre eye retired here (frame shows 3 tabs); theatre
-              is still entered by rotation in ProfilePostViewer + the lightbox path. */}
-          {/* First slot: logomark (dismiss) when snapped, MAIN text when at top */}
-          {(headerSnapped || headerUnsnapping) ? (
-            <button
-              onClick={dismissSnapMenu}
-              style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', animation: headerUnsnapping ? 'snapOutLeft 0.28s cubic-bezier(0.16,1,0.3,1) 165ms both' : 'snapInLeft 0.32s cubic-bezier(0.16,1,0.3,1) 0ms both' }}
-            >
-              <img src="/logomark-plain-white.png" alt="" style={{ width: 32, height: 20, objectFit: 'contain', display: 'block' }} />
-            </button>
-          ) : (
-            <button
-              onClick={() => setActiveTab('main')}
-              style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer' }}
-            >
-              <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 10.5, letterSpacing: 'var(--track-display)', color: activeTab === 'main' ? 'var(--ink-100)' : 'rgba(229,225,219,0.57)', textTransform: 'uppercase' }}>MAIN</span>
-            </button>
-          )}
-
-          <button
-            onClick={() => setActiveTab('collected')}
-            style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', animation: headerUnsnapping ? 'snapOutUp 0.28s cubic-bezier(0.16,1,0.3,1) 55ms both' : headerSnapped ? 'snapInUp 0.32s cubic-bezier(0.16,1,0.3,1) 55ms both' : 'none' }}
-          >
-            <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 10.5, letterSpacing: 'var(--track-display)', color: activeTab === 'collected' ? 'var(--ink-100)' : 'rgba(229,225,219,0.57)', textTransform: 'uppercase' }}>COLLECTED</span>
-          </button>
-
-          <button
-            onClick={() => { setActiveTab('decks'); setShowDecks(true); }}
-            style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', animation: headerUnsnapping ? 'snapOutRight 0.28s cubic-bezier(0.16,1,0.3,1) 0ms both' : headerSnapped ? 'snapInRight 0.32s cubic-bezier(0.16,1,0.3,1) 110ms both' : 'none' }}
-          >
-            <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 10.5, letterSpacing: 'var(--track-display)', color: activeTab === 'decks' ? 'var(--ink-100)' : 'rgba(229,225,219,0.57)', textTransform: 'uppercase' }}>DECKS</span>
-          </button>
-        </div>
+        {/* Brief F6a — inner tabs extracted to shared <ProfileTabRow> (verbatim →
+            render byte-identical). MAIN · COLLECTED · DECKS; theatre stays entered by
+            rotation in ProfilePostViewer + the lightbox path, never a tab. */}
+        <ProfileTabRow
+          activeTab={activeTab}
+          headerSnapped={headerSnapped}
+          headerUnsnapping={headerUnsnapping}
+          snapAnimKey={snapAnimKey}
+          onDismissSnap={dismissSnapMenu}
+          onMain={() => setActiveTab('main')}
+          onCollected={() => setActiveTab('collected')}
+          onDecks={() => { setActiveTab('decks'); setShowDecks(true); }}
+        />
       </div>
 
       {/* THEATRE MODE — landscape full-screen viewing of this profile's posts,
