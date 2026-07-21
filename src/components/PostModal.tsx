@@ -243,9 +243,14 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
     setTimeout(onClose, 340);
   };
 
+  // Brief F5 §5 — push FIRST. The old order (handleClose → 340ms → push) painted the
+  // bare feed for a beat before navigating. Navigating away from `/` unmounts the whole
+  // Home tree (this modal with it), so the lightbox disappears with the route — no
+  // intermediate feed paint, no exit-animation delay needed. Close is NOT load-bearing
+  // (onClose only nulls lightbox state; no scroll restoration). `push` (not replace)
+  // keeps one history entry so back returns to the feed with the lightbox closed.
   const goToProfile = (handle?: string) => {
-    handleClose();
-    setTimeout(() => router.push(`/profile/${handle || post.username}`), 340);
+    router.push(`/profile/${handle || post.username}`);
   };
 
   // Video must display EXACTLY as posted — the feed/profile render videos at plain
