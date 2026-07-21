@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useLayoutEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import DesktopProfile from '@/components/desktop/DesktopProfile';
 import { useIsDesktop } from '@/lib/useIsDesktop';
 import { feedImage } from "@/lib/mediaUrl";
@@ -29,6 +29,7 @@ import { getScopeLimitType } from "@/lib/limits";
 import { useUpsell } from "@/components/UpsellProvider";
 import FrameLoader from "@/components/FrameLoader";
 import BadgeCluster from "@/components/BadgeCluster";
+import ProfileHeader from "@/components/profile/ProfileHeader";
 import { resolveBadges } from "@/lib/economy/badges";
 import { dividerBackground } from "@/lib/economy/dividerLines";
 import { useEconomy } from "@/components/EconomyProvider";
@@ -221,10 +222,10 @@ const userLayoutId = stableLayoutId;
   // Brief 2.2c — the header composition self-sizes (flow); its MEASURED content height
   // drives everything below (tab-row anchor, grid spacers) so overlaps are impossible
   // by construction — no stale magic heights.
-  const headerRef = useRef<HTMLDivElement>(null);
-  const textColRef = useRef<HTMLDivElement>(null); // Brief 2.2d — drives the SQUARE PFP
+  // Brief F6 — the header composition + its measurement (nameSize/pfpSize/headerRef)
+  // moved into the shared <ProfileHeader>; the page keeps headerH (set via onMeasure)
+  // to drive the tab anchor + grid spacer below.
   const [headerH, setHeaderH] = useState(120); // measured (excl. safe-area); default ≈ old
-  const [pfpSize, setPfpSize] = useState(86);  // = text-column height → PFP side (square)
   const TAB_ROW_H = 42;                         // rest padded height (paddingTop 10 + 20 + 12)
   const tabAnchor = headerH + 8;               // tab-row rest top, below the divider
   const tabCap = tabAnchor - 2;                // pins when the tab reaches top:2
@@ -383,40 +384,8 @@ const userLayoutId = stableLayoutId;
     if (headerSnapped && !headerUnsnapping && (gridScrollY > snapScrollYRef.current + 30 || gridScrollY < 20)) setHeaderSnapped(false);
   }, [gridScrollY, headerSnapped, headerUnsnapping]);
 
-  // Name split + step-down state. Declared BEFORE the desktop early return so hook
-  // order is stable across the mobile/desktop branch (rules of hooks).
-  // Brief 2.2 — split the display name into first + rest.
-  const nameParts = (userProfile.displayName || '').trim().split(/\s+/).filter(Boolean);
-  const firstName = nameParts[0] || '';
-  const lastName = nameParts.slice(1).join(' ');
-  // Brief 2.2b — NAME NEVER TRUNCATES. Render full at 19px; if it would exceed the
-  // available width (PFP→BIO zone), STEP the font DOWN (19→min 14px) until it fits on
-  // one line. No ellipsis at any size. Measured from the rendered name row width.
-  const nameRowRef = useRef<HTMLDivElement>(null);
-  const [nameSize, setNameSize] = useState(19);
-  useLayoutEffect(() => { setNameSize(19); }, [firstName, lastName, isPaidMember]);
-  useLayoutEffect(() => {
-    const row = nameRowRef.current;
-    if (!row) return;
-    const vw = typeof window !== 'undefined' ? window.innerWidth : 375;
-    const avail = Math.min(vw, 480) - 145; // name left ~100 + right reserve to the BIO zone
-    if (row.scrollWidth > avail && nameSize > 14) setNameSize((s) => Math.max(14, s - 1));
-  }, [nameSize, firstName, lastName, isPaidMember]);
-  // Measure the header composition → drives the tab anchor, grid spacers, and the
-  // SQUARE PFP side (= text-column height) + the tab's full height (Brief 2.2d).
-  useLayoutEffect(() => {
-    const el = headerRef.current;
-    if (!el) return;
-    const measure = () => {
-      setHeaderH(el.offsetHeight);
-      if (textColRef.current) setPfpSize(textColRef.current.offsetHeight);
-    };
-    measure();
-    const ro = new ResizeObserver(measure);
-    ro.observe(el);
-    if (textColRef.current) ro.observe(textColRef.current);
-    return () => ro.disconnect();
-  }, []);
+  // Brief F6 — name split + step-down + header measurement now live inside
+  // <ProfileHeader>; headerH arrives via its onMeasure callback (setHeaderH).
 
   // ── DESKTOP SEAM (Brief 1): ≥1024 renders the desktop profile — its own
   // component tree, zero responsive CSS threaded into this mobile page. ──
@@ -472,90 +441,30 @@ const userLayoutId = stableLayoutId;
           zIndex: profileDataOpen ? 200 : 10,
         }}
       >
-        {/* MEASURED content (excludes safe-area padding above). */}
-        <div ref={headerRef} style={{ position: 'relative', paddingBottom: 8 }}>
-
-          {/* Badge cluster — top-right, under BIO. Shifted +15px down (Brief 2.2c).
-              Absolute overlay (shorter than the stats column → doesn't drive height). */}
-          <div style={{ position: 'absolute', right: 12, top: 41, zIndex: 3 }}>
-            <BadgeCluster
-              badges={resolveBadges({ isFoundingMember, isTopCollector, isScreeningRoomHolder, isPaidMember, isInHouseCreator, firstCutCount, composerTrackCount })
-                .filter((b) => b.bannerSrc)
-                .map((b) => ({ key: b.key, src: (b.framedSrc ?? b.bannerSrc) as string, title: b.title }))}
-              onOpen={() => setShowBadgeSheet(true)}
-            />
-          </div>
-
-          {/* BIO control — top-right; opens the profile data sheet. ≥44px hit. */}
-          <button
-            onClick={() => setProfileDataOpen(true)}
-            style={{ position: 'absolute', top: -4, right: 6, background: 'transparent', border: 'none', cursor: 'pointer', padding: '11px 12px', opacity: profileDataOpen ? 0 : 1, pointerEvents: profileDataOpen ? 'none' : 'auto', transition: 'opacity 200ms ease', zIndex: 6 }}
-            aria-label="View profile info"
-          >
-            <PressPop><span className="soften-ui" style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 15.5, letterSpacing: 'var(--track-body)', color: 'var(--ink-100)', display: 'block' }}>BIO</span></PressPop>
-          </button>
-
-          {/* PFP + text column (flow flex, top-aligned). Brief 2.2d: PFP is SQUARE by
-              construction — ONE driving value (pfpSize = text-column height) applied as
-              BOTH width and height; the text column starts after it + gap and yields
-              right as the PFP widens. Its bottom still lands on the divider. */}
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, padding: '7px 0 0 8px' }}>
-            <div style={{ width: pfpSize, height: pfpSize, flexShrink: 0, border: '1px solid var(--avatar-frame)', boxSizing: 'border-box', overflow: 'hidden' }}>
-              {userProfile.profileImage ? (
-                <img src={feedImage(userProfile.profileImage, 172)} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', display: 'block' }} />
-              ) : (
-                <div style={{ width: '100%', height: '100%', backgroundColor: '#222' }} />
-              )}
-            </div>
-
-            <div ref={textColRef} style={{ flex: 1, minWidth: 0, paddingRight: 8 }}>
-              {/* name+handle+stats — shrinks to the RENDERED NAME WIDTH; that outer edge
-                  is the shared alignment line (handle right end · values right edge). */}
-              <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'stretch', alignSelf: 'flex-start', position: 'relative', maxWidth: '100%' }}>
-                {/* name row — first · gap · last ONLY (PRO excluded → it never affects
-                    the name's right edge or the alignment math, note 6/7). Full render,
-                    no ellipsis; nameSize steps 19→14 to fit. */}
-                <div ref={nameRowRef} style={{ display: 'flex', alignItems: 'baseline', whiteSpace: 'nowrap' }}>
-                  <span className="soften-ui" style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: nameSize, letterSpacing: 'var(--track-display)', color: 'var(--ink-100)', textTransform: 'uppercase', flexShrink: 0 }}>{firstName}</span>
-                  {lastName && (
-                    <>
-                      <span aria-hidden style={{ flexShrink: 0, width: 'min(2.5vw, 10px)' }} />
-                      <span className="soften-ui" style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: nameSize, letterSpacing: 'var(--track-display)', color: 'var(--ink-100)', textTransform: 'uppercase', flexShrink: 0 }}>{lastName}</span>
-                    </>
-                  )}
-                </div>
-                {/* PRO — INDEPENDENT chip, absolute just beyond the name's last letter
-                    (left:100% of the name block). ONLY for pro members; never in the
-                    name flex or its width. */}
-                {isPaidMember && (
-                  <span style={{ position: 'absolute', left: '100%', top: 1, marginLeft: 5, whiteSpace: 'nowrap', fontFamily: 'var(--font-black)', fontWeight: 900, fontSize: 4.85, color: 'rgba(229,225,219,0.64)', letterSpacing: 'var(--track-wide)' }}>PRO</span>
-                )}
-                {/* handle — right-aligned to the name's last letter; tighter + smaller (note 4/6) */}
-                <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'flex-end', gap: 3, opacity: 0.64, marginTop: 2 }}>
-                  <span style={{ fontFamily: 'var(--font-light)', fontWeight: 400, fontSize: 8, color: 'var(--ink-100)', letterSpacing: 'var(--track-wide)', flexShrink: 0 }}>[ at ]</span>
-                  <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 10.5, color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: 'var(--track-body)', whiteSpace: 'nowrap' }}>{userProfile.username}</span>
-                </div>
-                {/* stats — labels left · values flush-right to the name's right edge */}
-                <div style={{ marginTop: 12 }}>
-                  {([
-                    { label: 'Followers', value: analytics.followers.toLocaleString(), gap: false },
-                    { label: 'Collectors', value: analytics.collectors.toLocaleString(), gap: false },
-                    { label: 'Market Cap', value: analytics.portfolioMc > 0 ? `$${analytics.portfolioMc.toLocaleString()}` : '—', gap: true },
-                  ] as const).map((row) => (
-                    <div key={row.label} style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 14, marginTop: row.gap ? 6 : 2 }}>
-                      <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 11.2, color: 'rgba(229,225,219,0.71)', letterSpacing: 'var(--track-body)', whiteSpace: 'nowrap' }}>{row.label}</span>
-                      <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 11.5, color: 'rgba(229,225,219,0.71)', letterSpacing: 'var(--track-body)', whiteSpace: 'nowrap', textAlign: 'right' }}>{row.value}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              {/* Divider — in flow after the stats block; spans the text column to the
-                  right margin (note: stats-left → right margin). PFP bottom lands here. */}
-              <div style={{ height: 1, background: 'var(--hairline)', margin: '8px 0 0' }} />
-            </div>
-          </div>
-
-        </div>
+        {/* Brief F6 — shared header composition (was inline; extracted verbatim so
+            this page's render is byte-identical). onMeasure feeds headerH → tab
+            anchor + grid spacer. Controls slot = own-profile's BIO button. */}
+        <ProfileHeader
+          displayName={userProfile.displayName}
+          username={userProfile.username}
+          profileImage={userProfile.profileImage}
+          isPaidMember={isPaidMember}
+          analytics={{ followers: analytics.followers, collectors: analytics.collectors, portfolioMc: analytics.portfolioMc }}
+          badges={resolveBadges({ isFoundingMember, isTopCollector, isScreeningRoomHolder, isPaidMember, isInHouseCreator, firstCutCount, composerTrackCount })
+            .filter((b) => b.bannerSrc)
+            .map((b) => ({ key: b.key, src: (b.framedSrc ?? b.bannerSrc) as string, title: b.title }))}
+          onOpenBadges={() => setShowBadgeSheet(true)}
+          onMeasure={setHeaderH}
+          controls={
+            <button
+              onClick={() => setProfileDataOpen(true)}
+              style={{ position: 'absolute', top: -4, right: 6, background: 'transparent', border: 'none', cursor: 'pointer', padding: '11px 12px', opacity: profileDataOpen ? 0 : 1, pointerEvents: profileDataOpen ? 'none' : 'auto', transition: 'opacity 200ms ease', zIndex: 6 }}
+              aria-label="View profile info"
+            >
+              <PressPop><span className="soften-ui" style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 15.5, letterSpacing: 'var(--track-body)', color: 'var(--ink-100)', display: 'block' }}>BIO</span></PressPop>
+            </button>
+          }
+        />
       </div>{/* end header */}
 
       {/* Snapped frame icon — LIFTED out of this scroller to sibling level (see end of return)

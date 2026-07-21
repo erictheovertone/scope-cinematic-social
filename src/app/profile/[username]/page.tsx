@@ -25,6 +25,7 @@ import { getColCount } from "@/lib/aspectRatio";
 import { resolveLayout, legacyLayoutId } from "@/lib/layoutModel";
 import FrameLoader from "@/components/FrameLoader";
 import BadgeCluster from "@/components/BadgeCluster";
+import ProfileHeader from "@/components/profile/ProfileHeader";
 import { resolveBadges } from "@/lib/economy/badges";
 import { dividerBackground } from "@/lib/economy/dividerLines";
 import { useEconomy } from "@/components/EconomyProvider";
@@ -113,8 +114,16 @@ export default function PublicProfilePage() {
       setTimeout(() => setHeaderUnsnapping(false), 50);
     }, 500);
   };
-  const headerOpacity = Math.max(0, 1 - gridScrollY / 80);
-  const tabRowOffset = Math.min(gridScrollY, 101);
+  // Brief F6 — measured header (matches own-profile 2.2d): headerH arrives from
+  // <ProfileHeader> onMeasure and drives the tab anchor + grid spacer, replacing the
+  // old fixed height:124 / magic 101·103·140.
+  const [headerH, setHeaderH] = useState(120);
+  const TAB_ROW_H = 42;
+  const tabAnchor = headerH + 8;
+  const tabCap = tabAnchor - 2;
+  const gridSpacer = tabAnchor + TAB_ROW_H + 6;
+  const headerOpacity = Math.max(0, 1 - gridScrollY / 20);
+  const tabRowOffset = Math.min(gridScrollY, tabCap);
 
   useEffect(() => {
     if (!showDecks || !username) return;
@@ -262,118 +271,83 @@ export default function PublicProfilePage() {
   }
 
   return (
-    <div className="bg-black relative w-full app-shell screen-min mx-auto pb-[60px]">
+    <div className="bg-black relative w-full app-shell screen-min mx-auto pb-[60px]" style={{ background: 'var(--canvas)' }}>{/* Brief F6 — canvas #050505 (matches own) */}
 
-      {/* Header */}
+      {/* Brief F6 — the public header now MATCHES own-profile: the shared
+          <ProfileHeader> composition (square PFP + ivory frame, name step-down, PRO,
+          tight handle, stats + Market Cap + dash + divider, badge cluster) on canvas
+          #050505. onMeasure → headerH drives the tab anchor + grid spacer below.
+          Public-specific chrome (ⓘ +2px · mail DM · FOLLOW text) is the controls slot. */}
       <div
         onClick={profileDataOpen ? () => setProfileDataOpen(false) : undefined}
         style={{
-          position: 'relative', height: 124, background: '#000',
+          position: 'relative',
+          background: 'var(--canvas)',
           paddingTop: 'env(safe-area-inset-top, 0px)',
-          boxSizing: 'content-box',
           opacity: profileDataOpen ? 1 : headerOpacity,
           transition: 'opacity 0.25s ease',
           pointerEvents: (profileDataOpen || gridScrollY < 20) ? 'auto' : 'none',
           zIndex: profileDataOpen ? 200 : 10,
         }}
       >
-
-        {/* Badge backdrop strip — PIECE 1. Left of the PFP with a 0.5px divider
-            between (default hairline; Piece 2 colours it). SAME component as the
-            own profile. Renders earned badges generically (16px, symmetric). */}
-        {/* Badges — RELOCATED (Brief 1a · node 1:9): compact cluster top-right,
-            under the bio zone. Retires the PFP-side strip + backdrop. Vertical
-            offset is a device NUDGE item. */}
-        <div style={{ position: 'absolute', right: 12, top: 'calc(48px + env(safe-area-inset-top, 0px))', zIndex: 3 }}>
-          <BadgeCluster
-            badges={resolveBadges({ isFoundingMember, isTopCollector, isScreeningRoomHolder, isPaidMember, isInHouseCreator, firstCutCount, composerTrackCount })
-              .filter((b) => b.bannerSrc)
-              .map((b) => ({ key: b.key, src: (b.framedSrc ?? b.bannerSrc) as string, title: b.title }))}
-            onOpen={() => setShowBadgeSheet(true)}
-          />
-        </div>
-
-        {/* PFP container — right of the 27px strip (cluster left-edge aligns with MAIN). */}
-        <div style={{ position: 'absolute', top: 10, left: 36, width: 80, height: 80 }}>
-          {/* Legacy badge UI removed (clean slate) — holo/gold PFP borders, the
-              right-edge membership stripes, and the BadgeStack coins are replaced
-              by the badge cluster + Piece 2's divider colour. */}
-          <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', zIndex: 1 }}>
-            {profile?.profile_image_url
-              ? <img src={feedImage(profile.profile_image_url, 160)} alt={username} style={{ width: 80, height: 80, objectFit: 'cover', display: 'block' }} />
-              : <div style={{ width: 80, height: 80, backgroundColor: '#222', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span style={{ ...SKB, fontSize: 'var(--fs-28)', color: '#E5E1DB' }}>{username?.[0]?.toUpperCase() ?? '?'}</span></div>
-            }
-          </div>
-        </div>
-
-        {/* Name */}
-        <div style={{ position: 'absolute', left: 126, top: 10 }}>
-          <p style={{ ...SKB, fontSize: 'var(--fs-13)', color: '#E5E1DB', letterSpacing: '-0.02em', lineHeight: 1.2, margin: 0, textTransform: 'uppercase' }}>{profile?.display_name || username}</p>
-        </div>
-
-        {/* Handle — 2px smaller than the display name (fontSize 8). */}
-        <div style={{ position: 'absolute', left: 126, top: 26 }}>
-          <p style={{ ...SKB, fontSize: 'var(--fs-8)', color: 'rgba(229,225,219,0.6)', letterSpacing: '-0.02em', lineHeight: 1.2, margin: 0, textTransform: 'uppercase' }}>@{username}</p>
-        </div>
-
-        {/* Info sheet trigger — hidden while BIO sheet is open so it doesn't bleed over the sheet */}
-        <button
-          ref={infoBtnRef}
-          onClick={() => setProfileDataOpen(true)}
-          style={{
-            position: 'absolute', top: 0, right: 0,
-            background: 'transparent', border: 'none', cursor: 'pointer', padding: 7,
-            animation: iPulse ? 'i-land-pulse 300ms ease-out' : 'none',
-            display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end',
-            opacity: profileDataOpen ? 0 : 1,
-            pointerEvents: profileDataOpen ? 'none' : 'auto',
-            transition: 'opacity 200ms ease',
-          }}
-          aria-label="View profile info"
-        >
-          <div style={{
-            width: 14.6, height: 11.2,
-            border: '0.5px solid #E5E1DB',
-            background: profileDataOpen ? '#E5E1DB' : 'transparent',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxSizing: 'border-box',
-            transition: 'background 200ms ease',
-          }}>
-            <span style={{
-              fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700,
-              fontSize: 'var(--fs-15_7)', letterSpacing: '-0.02em',
-              color: profileDataOpen ? '#000000' : '#E5E1DB',
-              lineHeight: 1, display: 'block',
-              transform: 'translateY(-1px)',
-              transition: 'color 200ms ease',
-            }}>i</span>
-          </div>
-        </button>
-
-        {/* FOLLOW button — shown ONLY when not yet following. Once following, the
-            main page shows no button here; UNFOLLOW lives in the BIO sheet instead.
-            Hidden while the BIO sheet is open so it doesn't bleed over the sheet. */}
-        {user && !isOwnProfile && targetPrivyId && (!followingUser || justFollowed) && (
-          // justFollowed holds the button through the red confirm beat, then the
-          // standing followed state (no button; UNFOLLOW in the BIO sheet) takes over.
-          <button ref={followBtnRef} onClick={justFollowed ? undefined : handleFollow} disabled={followLoading} style={{ position: 'absolute', ...SKB, fontSize: 'var(--fs-8)', color: '#E5E1DB', letterSpacing: '-0.18px', background: justFollowed ? '#E5E1DB' : 'transparent', border: justFollowed ? '1px solid #E5E1DB' : '1px solid white', padding: '3px 8px', right: 4, top: 60, cursor: followLoading || justFollowed ? 'default' : 'pointer', textTransform: 'uppercase', opacity: profileDataOpen ? 0 : 1, pointerEvents: profileDataOpen ? 'none' : 'auto', transition: 'opacity 200ms ease, background 120ms ease, border-color 120ms ease', animation: justFollowed ? 'follow-pop 180ms ease-out' : 'none' }}>
-            {justFollowed ? 'FOLLOWING' : 'FOLLOW'}
-          </button>
-        )}
-
-        {/* MESSAGE — persistent on other users' profiles (Stage 2 DM entry point).
-            Matches FOLLOW's pill language; sits BELOW follow when it's shown, slides
-            up to the primary slot once following (follow pill gone). → the thread,
-            keyed by @handle; the send route creates the conversation on first send. */}
-        {user && !isOwnProfile && targetPrivyId && (
-          <button
-            onClick={() => router.push(`/dm/${encodeURIComponent(username)}`)}
-            style={{ position: 'absolute', ...SKB, fontSize: 'var(--fs-8)', color: '#E5E1DB', letterSpacing: '-0.18px', background: 'transparent', border: '1px solid rgba(229,225,219,0.5)', padding: '3px 8px', right: 4, top: (!followingUser || justFollowed) ? 84 : 60, cursor: 'pointer', textTransform: 'uppercase', opacity: profileDataOpen ? 0 : 1, pointerEvents: profileDataOpen ? 'none' : 'auto', transition: 'opacity 200ms ease, top 200ms ease' }}
-          >
-            MESSAGE
-          </button>
-        )}
-
+        <ProfileHeader
+          displayName={profile?.display_name || username}
+          username={username}
+          profileImage={profile?.profile_image_url}
+          isPaidMember={isPaidMember}
+          analytics={{ followers: followerCount, collectors: 0, portfolioMc: profile?.portfolio_mc || 0 }}
+          badges={resolveBadges({ isFoundingMember, isTopCollector, isScreeningRoomHolder, isPaidMember, isInHouseCreator, firstCutCount, composerTrackCount })
+            .filter((b) => b.bannerSrc)
+            .map((b) => ({ key: b.key, src: (b.framedSrc ?? b.bannerSrc) as string, title: b.title }))}
+          onOpenBadges={() => setShowBadgeSheet(true)}
+          onMeasure={setHeaderH}
+          controls={
+            <>
+              {/* top-right: ⓘ (bio entry, +2px) + mail (DM entry) */}
+              <div style={{ position: 'absolute', top: -2, right: 6, display: 'flex', alignItems: 'center', gap: 8, zIndex: 6, opacity: profileDataOpen ? 0 : 1, pointerEvents: profileDataOpen ? 'none' : 'auto', transition: 'opacity 200ms ease' }}>
+                <button
+                  ref={infoBtnRef}
+                  onClick={() => setProfileDataOpen(true)}
+                  className="tap-target"
+                  style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 7, animation: iPulse ? 'i-land-pulse 300ms ease-out' : 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  aria-label="View profile info"
+                >
+                  <div style={{ width: 16.6, height: 13.2, border: '0.5px solid #E5E1DB', display: 'flex', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box' }}>
+                    <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'calc(var(--fs-15_7) + 2px)', letterSpacing: '-0.02em', color: '#E5E1DB', lineHeight: 1, display: 'block', transform: 'translateY(-1px)' }}>i</span>
+                  </div>
+                </button>
+                {user && !isOwnProfile && targetPrivyId && (
+                  <button
+                    onClick={() => router.push(`/dm/${encodeURIComponent(username)}`)}
+                    className="tap-target"
+                    style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.55 }}
+                    aria-label="Direct message"
+                  >
+                    {/* thin ivory envelope — house-icon stroke language, sharp corners */}
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                      <rect x="3" y="5.5" width="18" height="13" stroke="#E5E1DB" strokeWidth="1.6" strokeLinejoin="round" />
+                      <path d="M3.5 6.5 L12 13 L20.5 6.5" stroke="#E5E1DB" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </button>
+                )}
+              </div>
+              {/* FOLLOW — minimal text, just above the divider in the right zone. 75 Bold;
+                  FOLLOW = ink-100, FOLLOWING = ~55%. handleFollow toggles both states
+                  (unchanged logic; the fly-to-ⓘ still fires). */}
+              {user && !isOwnProfile && targetPrivyId && (
+                <button
+                  ref={followBtnRef}
+                  onClick={handleFollow}
+                  disabled={followLoading}
+                  className="tap-target"
+                  style={{ position: 'absolute', right: 8, bottom: 13, zIndex: 6, background: 'transparent', border: 'none', cursor: followLoading ? 'default' : 'pointer', padding: '4px 2px', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 'var(--fs-11)', letterSpacing: 'var(--track-display)', color: 'var(--ink-100)', textTransform: 'uppercase', opacity: profileDataOpen ? 0 : (followingUser ? 0.55 : 1), pointerEvents: profileDataOpen ? 'none' : 'auto', transition: 'opacity 200ms ease', animation: justFollowed ? 'follow-pop 180ms ease-out' : 'none' }}
+                >
+                  {followingUser ? 'FOLLOWING' : 'FOLLOW'}
+                </button>
+              )}
+            </>
+          }
+        />
       </div>{/* end header */}
 
       {/* FOLLOW flyer — a red pill arcing from the button to the ⓘ. The arc:
@@ -418,12 +392,12 @@ export default function PublicProfilePage() {
 
       {/* Tab row — absolute until scrolled past 101px, then fixed. When snapped, always fixed + aligned with frame icon. */}
       <div style={{
-        position: (headerSnapped || headerUnsnapping || gridScrollY > 101) ? 'fixed' : 'absolute',
-        top: (headerSnapped || headerUnsnapping) ? 0 : gridScrollY > 101 ? 2 : `${103 - tabRowOffset}px`,
-        left: (headerSnapped || headerUnsnapping || gridScrollY > 101) ? '50%' : 0,
-        right: (headerSnapped || headerUnsnapping || gridScrollY > 101) ? 'auto' : 0,
-        transform: (headerSnapped || headerUnsnapping || gridScrollY > 101) ? 'translateX(-50%)' : 'none',
-        width: (headerSnapped || headerUnsnapping || gridScrollY > 101) ? '100%' : 'auto',
+        position: (headerSnapped || headerUnsnapping || gridScrollY > tabCap) ? 'fixed' : 'absolute',
+        top: (headerSnapped || headerUnsnapping) ? 'env(safe-area-inset-top, 0px)' : gridScrollY > tabCap ? 'calc(2px + env(safe-area-inset-top, 0px))' : `calc(${tabAnchor - tabRowOffset}px + env(safe-area-inset-top, 0px))`,
+        left: (headerSnapped || headerUnsnapping || gridScrollY > tabCap) ? '50%' : 0,
+        right: (headerSnapped || headerUnsnapping || gridScrollY > tabCap) ? 'auto' : 0,
+        transform: (headerSnapped || headerUnsnapping || gridScrollY > tabCap) ? 'translateX(-50%)' : 'none',
+        width: (headerSnapped || headerUnsnapping || gridScrollY > tabCap) ? '100%' : 'auto',
         maxWidth: '30rem',
         zIndex: 40,
         background: (headerSnapped || headerUnsnapping)
@@ -491,13 +465,13 @@ export default function PublicProfilePage() {
               requestAnimationFrame(() => setGridScrollY(Math.max(0, el.scrollTop)));
             }}
           >
-            <div style={{ height: 140 }} />
+            <div style={{ height: gridSpacer }} />
             {profile?.user_id
               ? <CollectedGrid userId={profile.user_id} isOwn={!!isOwnProfile} />
               : <div style={{ minHeight: '30vh' }} />}
           </div>
         ) : posts.length === 0 ? (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', flex: 1, minHeight: '50vh', paddingTop: 140 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', flex: 1, minHeight: '50vh', paddingTop: gridSpacer }}>
             <p style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase' }}>NO POSTS YET</p>
           </div>
         ) : (
@@ -510,7 +484,7 @@ export default function PublicProfilePage() {
               rafPendingRef.current = false;
             });
           }}>
-            <div style={{ height: 140, flexShrink: 0 }} />
+            <div style={{ height: gridSpacer, flexShrink: 0 }} />
             {layoutId === 'collage' ? (
               // Collage → masonry mosaic: each post at its own layout_id AR.
               <div style={{ columnCount: 2, columnGap: 2 }}>
