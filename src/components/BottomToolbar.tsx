@@ -21,9 +21,11 @@ const BTN: React.CSSProperties = {
   touchAction: 'manipulation',
   // White icons need contrast where a bright frame shows through the dark glass → subtle shadow.
   filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.55))',
-  // Equal quarter-cells → the red marker maps exactly to each icon's centre; icons sit
-  // above the marker (zIndex 0 behind).
-  flex: 1,
+  // Brief F4 — fixed-width cells (no flex:1 spread): the row gap sets icon-to-icon
+  // spacing and the pill wraps the row. Marker retired → no % cell mapping needed.
+  // 150ms opacity crossfade for the active↔inactive dim (respects reduced-motion net).
+  flexShrink: 0,
+  transition: 'opacity 150ms',
   position: 'relative',
   zIndex: 1,
 };
@@ -42,11 +44,14 @@ function PopInner({ children }: { children: React.ReactNode }) {
   return <span className="pp-inner" style={{ display: 'flex' }}>{children}</span>;
 }
 
+// Brief F4 — active = SOLID (house filled with ink); inactive = outline. No filled
+// twin exists, so we fill the existing closed body path (fill=currentColor route, not
+// new art). Fill set via style so it crossfades under the 150ms transition.
 function HomeIcon({ active }: { active: boolean }) {
-  const c = active ? '#E5E1DB' : '#E5E1DB';
+  const c = '#E5E1DB';
   return (
     <svg width="21" height="21" viewBox="0 0 27 27" fill="none">
-      <path d="M3.375 10.125L13.5 3.375L23.625 10.125V22.5C23.625 23.0967 23.3879 23.669 22.9597 24.0972C22.5315 24.5254 21.9592 24.7625 21.3625 24.7625H5.6375C5.04076 24.7625 4.46851 24.5254 4.04029 24.0972C3.61207 23.669 3.375 23.0967 3.375 22.5V10.125Z" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M3.375 10.125L13.5 3.375L23.625 10.125V22.5C23.625 23.0967 23.3879 23.669 22.9597 24.0972C22.5315 24.5254 21.9592 24.7625 21.3625 24.7625H5.6375C5.04076 24.7625 4.46851 24.5254 4.04029 24.0972C3.61207 23.669 3.375 23.0967 3.375 22.5V10.125Z" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ fill: active ? c : 'transparent', transition: 'fill 150ms' }}/>
       <path d="M10.125 24.7625V13.5H16.875V24.7625" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   );
@@ -79,10 +84,10 @@ function BellIcon() {
 }
 
 function WalletIcon({ active }: { active?: boolean }) {
-  const c = active ? '#E5E1DB' : '#E5E1DB';
+  const c = '#E5E1DB';
   return (
     <svg width="20.5" height="20.5" viewBox="0 0 26 26" fill="none">
-      <path d="M22.75 6.5H3.25C2.42157 6.5 1.75 7.17157 1.75 8V20.5C1.75 21.3284 2.42157 22 3.25 22H22.75C23.5784 22 24.25 21.3284 24.25 20.5V8C24.25 7.17157 23.5784 6.5 22.75 6.5Z" stroke={c} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M22.75 6.5H3.25C2.42157 6.5 1.75 7.17157 1.75 8V20.5C1.75 21.3284 2.42157 22 3.25 22H22.75C23.5784 22 24.25 21.3284 24.25 20.5V8C24.25 7.17157 23.5784 6.5 22.75 6.5Z" stroke={c} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ fill: active ? c : 'transparent', transition: 'fill 150ms' }}/>
       <path d="M17.5 4V6.5" stroke={c} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
       <path d="M8.5 4V6.5" stroke={c} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
       <path d="M19.75 13H21.25C21.6642 13 22 13.3358 22 13.75V14.75C22 15.1642 21.6642 15.5 21.25 15.5H19.75C19.3358 15.5 19 15.1642 19 14.75V13.75C19 13.3358 19.3358 13 19.75 13Z" stroke={c} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -94,10 +99,10 @@ function WalletIcon({ active }: { active?: boolean }) {
 // rounded, per the design system). Message glyph (not envelope: envelope reads
 // as email; a bubble reads as direct messages). Turns red when active.
 function DMIcon({ active }: { active?: boolean }) {
-  const c = active ? '#E5E1DB' : '#E5E1DB';
+  const c = '#E5E1DB';
   return (
     <svg width="21" height="21" viewBox="0 0 24 24" fill="none">
-      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke={c} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke={c} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ fill: active ? c : 'transparent', transition: 'fill 150ms' }}/>
     </svg>
   );
 }
@@ -161,13 +166,9 @@ export default function BottomToolbar({ page, unreadCount = 0, dmUnread = 0, set
   if (takeover) return null;
 
   const isHome = page === 'home';
-  // The active destination the red marker rests under (always 5 fifth-cells now
-  // that DM slots in at index 3, right of profile). /profile → hamburger slot (2);
-  // public-profile is someone else's page → no marker.
-  const activeIndex = page === 'home' ? 0 : page === 'wallet' ? 4 : page === 'profile' ? 2 : page === 'dm' ? 3 : -1;
 
-  // PILL POP (round 4C) — a subtle scale flex on any nav tap, timed with the marker
-  // slide. Furniture, not a button: it flexes, doesn't jump. Retrigger on rapid taps.
+  // PILL POP (round 4C) — a subtle scale flex on any nav tap. Furniture, not a button:
+  // it flexes, doesn't jump. Retrigger on rapid taps. (Marker retired in F4.)
   // (pillRef is declared above the takeover early-return — see the #300 fix.)
   const popPill = () => {
     const el = pillRef.current;
@@ -189,8 +190,15 @@ export default function BottomToolbar({ page, unreadCount = 0, dmUnread = 0, set
       onAnimationEnd={(e) => { if (e.animationName === 'pillPop') e.currentTarget.classList.remove('pill-pop'); }}
       style={{
         position: 'fixed',
-        left: 15,
-        right: 15,
+        // Brief F4 — the pill WRAPS its content (fit-content) and centres via auto side
+        // margins. No transform → the pillPop scale stays clean (transformOrigin center).
+        // The 15px screen inset survives as the max bound. Was: left/right:15 full-width.
+        left: 0,
+        right: 0,
+        marginLeft: 'auto',
+        marginRight: 'auto',
+        width: 'fit-content',
+        maxWidth: 'calc(100% - 30px)',
         // Sit LOW (round 5, down another 12px): on the 15 the ~34px inset minus 12 → ~22px
         // from the bottom, just above the home indicator; non-notch floors at 3px.
         bottom: 'max(3px, calc(env(safe-area-inset-bottom, 0px) - 12px))',
@@ -207,38 +215,29 @@ export default function BottomToolbar({ page, unreadCount = 0, dmUnread = 0, set
           position: 'relative',
           display: 'flex',
           alignItems: 'center',
-          // Quarter-cells (flex:1) fill the full pill → icons spread evenly across the
-          // whole bar; horizontal safe-area only (0 in portrait) so the marker % maps
-          // exactly to cell centres.
-          paddingLeft: 'env(safe-area-inset-left, 0px)',
-          paddingRight: 'env(safe-area-inset-right, 0px)',
-          width: '100%',
+          // Brief F4 — icons at a FIXED gap (icon-to-icon spacing preserved ≈ old cell
+          // pitch) with a TIGHT edge pad; the pill above wraps this row. 8px edge pad +
+          // BTN's 6px = ~14px edge→icon (was ~24px, −42%). Horizontal safe-area folded in.
+          gap: 36,
+          paddingLeft: 'calc(8px + env(safe-area-inset-left, 0px))',
+          paddingRight: 'calc(8px + env(safe-area-inset-right, 0px))',
           height: '100%',
           boxSizing: 'border-box' as const,
         }}
       >
-        {/* RED SLIDING MARKER (4B) — a plate-less 18×2 red underline beneath the active
-            icon; travels cell→cell with a ~200ms spring as `page` changes (on the
-            persistent AppShell footer). The icon still turns red on arrival. */}
-        {activeIndex >= 0 && (
-          <div aria-hidden style={{
-            position: 'absolute', bottom: 3, left: `calc((${activeIndex} + 0.5) * 20%)`,
-            transform: 'translateX(-50%)', width: 18, height: 0.7, borderRadius: 0,
-            background: '#E5E1DB', pointerEvents: 'none', zIndex: 0,
-            transition: 'left 250ms cubic-bezier(0.34, 1.5, 0.5, 1)',
-          }} />
-        )}
+        {/* Brief F4 — the red sliding marker is RETIRED. Active state now reads from the
+            icon itself (solid fill + full ink), not a separate underline element. */}
 
         {/* 1 — Home */}
         <PressPop level="icon">
-          <Link className="tap-target" href="/" style={{ ...BTN, opacity: page === 'home' ? 1 : 0.7 }} aria-label="Home">
+          <Link className="tap-target" href="/" style={{ ...BTN, opacity: page === 'home' ? 1 : 0.55 }} aria-label="Home">
             <PopInner><HomeIcon active={page === 'home'} /></PopInner>
           </Link>
         </PressPop>
 
         {/* 2 — Create */}
         <PressPop level="icon">
-          <Link className="tap-target" href="/create" style={{ ...BTN, opacity: 0.7 }} aria-label="Create post">
+          <Link className="tap-target" href="/create" style={{ ...BTN, opacity: 0.55 }} aria-label="Create post">
             <PopInner><CreateIcon /></PopInner>
           </Link>
         </PressPop>
@@ -247,14 +246,14 @@ export default function BottomToolbar({ page, unreadCount = 0, dmUnread = 0, set
               hamburger (opens settings); everywhere else (home, wallet, DM, public
               profile) it's the Profile link. The hamburger is red ONLY when settings
               is open — NEVER for merely being on /profile, and never left stale on
-              another surface (DMs). The current route is shown by the sliding marker,
-              not by reddening this slot. (Was: hardcoded `active` + a branch that let
+              another surface (DMs). The current route is shown by the active icon's
+              solid fill (F4), not by reddening this slot. (Was: hardcoded `active` + a branch that let
               /dm fall through to the hamburger → the false-active bug.) */}
         {page === 'profile' ? (
           <PressPop level="icon">
             <button
               onClick={onHamburgerPress} className="tap-target"
-              style={{ ...BTN, opacity: 0.7 }}
+              style={{ ...BTN, opacity: settingsOpen ? 1 : 0.55 }}
               aria-label="Menu"
             >
               <PopInner><HamburgerIcon active={settingsOpen} /></PopInner>
@@ -262,16 +261,16 @@ export default function BottomToolbar({ page, unreadCount = 0, dmUnread = 0, set
           </PressPop>
         ) : (
           <PressPop level="icon">
-            <Link className="tap-target" href="/profile" style={{ ...BTN, opacity: 0.7 }} aria-label="Profile">
+            <Link className="tap-target" href="/profile" style={{ ...BTN, opacity: 0.55 }} aria-label="Profile">
               <PopInner><ProfileIcon /></PopInner>
             </Link>
           </PressPop>
         )}
 
-        {/* 4 — DM (always) — first-class citizen: active state + press pop +
-              marker slide, same as the rest. Routes to the DM inbox. */}
+        {/* 4 — DM (always) — first-class citizen: solid-fill active state + press pop,
+              same as the rest. Routes to the DM inbox. */}
         <PressPop level="icon">
-          <Link className="relative tap-target" href="/dm" style={{ ...BTN, opacity: page === 'dm' ? 1 : 0.7 }} aria-label="Direct messages">
+          <Link className="relative tap-target" href="/dm" style={{ ...BTN, opacity: page === 'dm' ? 1 : 0.55 }} aria-label="Direct messages">
             <PopInner><DMIcon active={page === 'dm'} /></PopInner>
             {dmUnread > 0 && page !== 'dm' && (
               // Unread DM dot — the notification-dot language (small, red, no count).
@@ -283,7 +282,7 @@ export default function BottomToolbar({ page, unreadCount = 0, dmUnread = 0, set
         {/* 5 — Bell (home) | Wallet (profile / public-profile) */}
         {!isHome && (
           <PressPop level="icon">
-            <Link className="tap-target" href="/wallet" style={{ ...BTN, opacity: page === 'wallet' ? 1 : 0.7 }} aria-label="Wallet">
+            <Link className="tap-target" href="/wallet" style={{ ...BTN, opacity: page === 'wallet' ? 1 : 0.55 }} aria-label="Wallet">
               <PopInner><WalletIcon active={page === 'wallet'} /></PopInner>
             </Link>
           </PressPop>
@@ -295,7 +294,7 @@ export default function BottomToolbar({ page, unreadCount = 0, dmUnread = 0, set
             href="/profile/notifications"
             onClick={onNotificationsClick}
             className="relative tap-target"
-            style={{ ...BTN, opacity: 0.7 }}
+            style={{ ...BTN, opacity: 0.55 }}
             aria-label="Notifications"
           >
             <PopInner><BellIcon /></PopInner>
