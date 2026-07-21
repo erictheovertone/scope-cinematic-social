@@ -62,19 +62,22 @@ html.no-soften { --text-soften-display: 0px; --text-soften-ui: 0px; }
    and the .screen-min page roots below). Correct in BOTH browser and standalone by
    construction — no display-mode fork. Plain rule, outside @layer, so it wins. */
 html, body {
-  height: 100%;
-  /* Standalone PWA viewport is OS-clipped (~797 on 844 screen); bottom strip is cosmetic;
-     revisit with native shell.
-     Device proof (mode=Si standalone): body=html=inner=visualViewport=797 while
-     screen=844, envTop=47 envBot=34. iOS hands the standalone webview a 797px viewport on
-     an 844px screen — an OS-level clip, NOT a CSS bug. No CSS height (100%, 100vh, 100dvh)
-     can make content exceed the viewport iOS provides, so dvh was tried here and reverted
-     as inert. The app is fully usable; the bottom black strip reads as clean app-black. */
+  /* Brief W2 §1 — DYNAMIC-VIEWPORT SIZING (F1's "OS clip" verdict OVERTURNED by evidence).
+     Theatre mode (a position:fixed height:100dvh overlay) fills the full 844 on iPhone
+     12 & 15 — proving the pixels ARE available. The shell was trapped because `height:100%`
+     resolves to the ~797 LAYOUT viewport (the region under the translucent status bar) and
+     `overflow:hidden` clipped any taller 100dvh child; F1's dvh attempt was inert because
+     it was applied to the CHILD while body stayed height:100%. Fix: size html/body in
+     100dvh (100vh fallback) so the shell reaches the true bottom; the canvas paints
+     edge-to-edge under the home indicator while content insets via --safe-bottom (F1).
+     Theatre parity: shell bottom == theatre bottom. CSS-only → no PWA reinstall. */
+  height: 100vh;
+  height: 100dvh;
   width: 100%;
   overflow: hidden;
   overscroll-behavior: none;
   position: fixed;
-  inset: 0;
+  top: 0; left: 0; right: 0;   /* was inset:0 — drop bottom:0 so 100dvh governs the height, not the layout-viewport clamp */
   touch-action: none;          /* block iOS standalone visual-viewport pan gesture
                                   (overscroll-behavior does NOT govern this; touch-action does).
                                   Inner scrollers must opt back in with touch-action: pan-y. */
