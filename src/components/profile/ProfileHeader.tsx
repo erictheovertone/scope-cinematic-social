@@ -70,22 +70,19 @@ export default function ProfileHeader({
     if (row.scrollWidth > avail && nameSize > 14) setNameSize((s) => Math.max(14, s - 1));
   }, [nameSize, firstName, lastName, isPaidMember]);
 
-  // Measure the composition → the SQUARE PFP side (= text-column height, Brief
-  // 2.2d) and report the total header height to the page.
+  // Brief W4 (revised frame 36:3) — the PFP is now a FIXED 65px square, DECOUPLED
+  // from the divider (bottom ~y70 sits above the stats hairline ~y88). The old
+  // "pfpSize = text-column height" coupling is DEAD. This effect only reports the
+  // measured header height → the page's tab anchor + grid spacer (which re-derive
+  // to the shorter header automatically).
   const headerRef = useRef<HTMLDivElement>(null);
-  const textColRef = useRef<HTMLDivElement>(null);
-  const [pfpSize, setPfpSize] = useState(86);
   useLayoutEffect(() => {
     const el = headerRef.current;
     if (!el) return;
-    const measure = () => {
-      onMeasure?.(el.offsetHeight);
-      if (textColRef.current) setPfpSize(textColRef.current.offsetHeight);
-    };
+    const measure = () => onMeasure?.(el.offsetHeight);
     measure();
     const ro = new ResizeObserver(measure);
     ro.observe(el);
-    if (textColRef.current) ro.observe(textColRef.current);
     return () => ro.disconnect();
   }, [onMeasure]);
 
@@ -100,11 +97,11 @@ export default function ProfileHeader({
       {/* Right-side chrome slot (BIO on own; ⓘ + mail + FOLLOW on public). */}
       {controls}
 
-      {/* PFP + text column (flow flex, top-aligned). PFP is SQUARE by construction
-          — one driving value (pfpSize = text-column height) as BOTH w & h; its
-          bottom lands on the divider. */}
-      <div style={{ display: "flex", alignItems: "flex-start", gap: 6, padding: "7px 0 0 8px" }}>
-        <div style={{ width: pfpSize, height: pfpSize, flexShrink: 0, border: "1px solid var(--avatar-frame)", boxSizing: "border-box", overflow: "hidden" }}>
+      {/* PFP + text column (flow flex, top-aligned). Brief W4 — PFP is a FIXED 65×65
+          square (frame 36:3), NOT derived from the text-column height; its bottom sits
+          above the divider. Text column starts at PFP-right + ~7px gap (≈ x79). */}
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 7, padding: "4px 0 0 8px" }}>
+        <div style={{ width: 65, height: 65, flexShrink: 0, border: "1px solid var(--avatar-frame)", boxSizing: "border-box", overflow: "hidden" }}>
           {profileImage ? (
             <img src={feedImage(profileImage, 172)} alt="Profile" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", display: "block" }} />
           ) : (
@@ -112,18 +109,18 @@ export default function ProfileHeader({
           )}
         </div>
 
-        <div ref={textColRef} style={{ flex: 1, minWidth: 0, paddingRight: 8 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>{/* Brief W4 — no paddingRight: the divider below runs to the RIGHT MARGIN (frame x81→375). */}
           {/* name+handle+stats — shrinks to the RENDERED NAME WIDTH; that outer edge
               is the shared alignment line (handle right end · values right edge). */}
           <div style={{ display: "inline-flex", flexDirection: "column", alignItems: "stretch", alignSelf: "flex-start", position: "relative", maxWidth: "100%" }}>
             {/* name row — first · gap · last ONLY (PRO excluded). Full render, no
                 ellipsis; nameSize steps 19→14 to fit. */}
             <div ref={nameRowRef} style={{ display: "flex", alignItems: "baseline", whiteSpace: "nowrap" }}>
-              <span className="soften-ui" style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: nameSize, letterSpacing: "var(--track-display)", color: "var(--ink-100)", textTransform: "uppercase", flexShrink: 0 }}>{firstName}</span>
+              <span className="soften-ui" style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: nameSize, letterSpacing: "var(--track-display)", color: "var(--ink-100)", textTransform: "uppercase", flexShrink: 0, lineHeight: 1 }}>{firstName}</span>
               {lastName && (
                 <>
                   <span aria-hidden style={{ flexShrink: 0, width: "min(2.5vw, 10px)" }} />
-                  <span className="soften-ui" style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: nameSize, letterSpacing: "var(--track-display)", color: "var(--ink-100)", textTransform: "uppercase", flexShrink: 0 }}>{lastName}</span>
+                  <span className="soften-ui" style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: nameSize, letterSpacing: "var(--track-display)", color: "var(--ink-100)", textTransform: "uppercase", flexShrink: 0, lineHeight: 1 }}>{lastName}</span>
                 </>
               )}
             </div>
@@ -133,27 +130,29 @@ export default function ProfileHeader({
               <span style={{ position: "absolute", left: "100%", top: 1, marginLeft: 5, whiteSpace: "nowrap", fontFamily: "var(--font-black)", fontWeight: 900, fontSize: 4.85, color: "rgba(229,225,219,0.64)", letterSpacing: "var(--track-wide)" }}>PRO</span>
             )}
             {/* handle — right-aligned to the name's last letter; tight + smaller */}
-            <div style={{ display: "flex", alignItems: "baseline", justifyContent: "flex-end", gap: 3, opacity: 0.64, marginTop: 2 }}>
+            <div style={{ display: "flex", alignItems: "baseline", justifyContent: "flex-end", gap: 3, opacity: 0.64, marginTop: 1 }}>
               <span style={{ fontFamily: "var(--font-light)", fontWeight: 400, fontSize: 8, color: "var(--ink-100)", letterSpacing: "var(--track-wide)", flexShrink: 0 }}>[ at ]</span>
               <span style={{ fontFamily: "var(--font-medium)", fontWeight: 500, fontSize: 10.5, color: "var(--ink-100)", textTransform: "uppercase", letterSpacing: "var(--track-body)", whiteSpace: "nowrap" }}>{username}</span>
             </div>
-            {/* stats — labels left · values flush-right to the name's right edge */}
-            <div style={{ marginTop: 12 }}>
+            {/* stats — labels left · values flush-right to the name's right edge.
+                Brief W4: tighter vertical rhythm per frame (rows ~y49/57/73, divider ~y88):
+                lineHeight 1 + compressed row margins; Market Cap keeps its small gap. */}
+            <div style={{ marginTop: 9 }}>
               {([
                 { label: "Followers", value: analytics.followers.toLocaleString(), gap: false },
                 { label: "Collectors", value: analytics.collectors.toLocaleString(), gap: false },
                 { label: "Market Cap", value: analytics.portfolioMc > 0 ? `$${analytics.portfolioMc.toLocaleString()}` : "—", gap: true },
               ] as const).map((row) => (
-                <div key={row.label} style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 14, marginTop: row.gap ? 6 : 2 }}>
-                  <span style={{ fontFamily: "var(--font-medium)", fontWeight: 500, fontSize: 11.2, color: "rgba(229,225,219,0.71)", letterSpacing: "var(--track-body)", whiteSpace: "nowrap" }}>{row.label}</span>
-                  <span style={{ fontFamily: "var(--font-medium)", fontWeight: 500, fontSize: 11.5, color: "rgba(229,225,219,0.71)", letterSpacing: "var(--track-body)", whiteSpace: "nowrap", textAlign: "right" }}>{row.value}</span>
+                <div key={row.label} style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 14, marginTop: row.gap ? 4 : 0 }}>
+                  <span style={{ fontFamily: "var(--font-medium)", fontWeight: 500, fontSize: 11.2, color: "rgba(229,225,219,0.71)", letterSpacing: "var(--track-body)", whiteSpace: "nowrap", lineHeight: 1 }}>{row.label}</span>
+                  <span style={{ fontFamily: "var(--font-medium)", fontWeight: 500, fontSize: 11.5, color: "rgba(229,225,219,0.71)", letterSpacing: "var(--track-body)", whiteSpace: "nowrap", textAlign: "right", lineHeight: 1 }}>{row.value}</span>
                 </div>
               ))}
             </div>
           </div>
-          {/* Divider — in flow after the stats; spans the text column to the right
-              margin. PFP bottom lands here. */}
-          <div style={{ height: 1, background: "var(--hairline)", margin: "8px 0 0" }} />
+          {/* Divider — in flow after the stats; Brief W4: spans the text column to the
+              RIGHT MARGIN (frame x81→375, ~y88). PFP no longer lands on it (decoupled). */}
+          <div style={{ height: 1, background: "var(--hairline)", margin: "7px 0 0" }} />
         </div>
       </div>
     </div>

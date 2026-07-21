@@ -44,7 +44,7 @@ export default function ProfileTabRow({
           onClick={onMain}
           style={{ background: "transparent", border: "none", padding: 0, cursor: "pointer" }}
         >
-          <span style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 10.5, letterSpacing: "var(--track-display)", color: activeTab === "main" ? "var(--ink-100)" : "rgba(229,225,219,0.57)", textTransform: "uppercase" }}>MAIN</span>
+          <span style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 13.5, letterSpacing: "var(--track-display)", color: activeTab === "main" ? "var(--ink-100)" : "rgba(229,225,219,0.57)", textTransform: "uppercase" }}>MAIN</span>
         </button>
       )}
 
@@ -52,14 +52,14 @@ export default function ProfileTabRow({
         onClick={onCollected}
         style={{ background: "transparent", border: "none", padding: 0, cursor: "pointer", animation: headerUnsnapping ? "snapOutUp 0.28s cubic-bezier(0.16,1,0.3,1) 55ms both" : headerSnapped ? "snapInUp 0.32s cubic-bezier(0.16,1,0.3,1) 55ms both" : "none" }}
       >
-        <span style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 10.5, letterSpacing: "var(--track-display)", color: activeTab === "collected" ? "var(--ink-100)" : "rgba(229,225,219,0.57)", textTransform: "uppercase" }}>COLLECTED</span>
+        <span style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 13.5, letterSpacing: "var(--track-display)", color: activeTab === "collected" ? "var(--ink-100)" : "rgba(229,225,219,0.57)", textTransform: "uppercase" }}>COLLECTED</span>
       </button>
 
       <button
         onClick={onDecks}
         style={{ background: "transparent", border: "none", padding: 0, cursor: "pointer", animation: headerUnsnapping ? "snapOutRight 0.28s cubic-bezier(0.16,1,0.3,1) 0ms both" : headerSnapped ? "snapInRight 0.32s cubic-bezier(0.16,1,0.3,1) 110ms both" : "none" }}
       >
-        <span style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 10.5, letterSpacing: "var(--track-display)", color: activeTab === "decks" ? "var(--ink-100)" : "rgba(229,225,219,0.57)", textTransform: "uppercase" }}>DECKS</span>
+        <span style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 13.5, letterSpacing: "var(--track-display)", color: activeTab === "decks" ? "var(--ink-100)" : "rgba(229,225,219,0.57)", textTransform: "uppercase" }}>DECKS</span>
       </button>
     </div>
   );
