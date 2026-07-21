@@ -59,6 +59,10 @@ interface Props {
   gridMode?: boolean;
   /** Always play graded (standalone post view / lightbox). */
   forcePlay?: boolean;
+  /** Brief W3 §1 — mobile feed: autoplay the FULL source (url), muted+looping, plain
+   *  (NO grading pipeline — stays cheap), instead of the pre-baked 3–5s clip. Still
+   *  in-view-gated by the IntersectionObserver below (off-screen unmounts). */
+  fullPlayback?: boolean;
   style?: React.CSSProperties;
   onClick?: () => void;
   showSoundToggle?: boolean;
@@ -66,7 +70,7 @@ interface Props {
 
 export default function GradedVideo({
   url, posterUrl, posterWidth, clipUrl, editParams, cropX = 0, cropY = 0, cropWidth = 1, cropHeight = 1,
-  autoplayFlag = false, gridMode = false, forcePlay = false, style, onClick, showSoundToggle = false,
+  autoplayFlag = false, gridMode = false, forcePlay = false, fullPlayback = false, style, onClick, showSoundToggle = false,
 }: Props) {
   const id = useId();
   const [inView, setInView] = useState(false);          // gridMode visibility
@@ -100,7 +104,9 @@ export default function GradedVideo({
   // A manual tap on a non-autoplay video plays the FULL video (graded), exactly
   // like the standalone/lightbox path — so it shares forcePlay's behavior.
   const effectiveForcePlay = forcePlay || manualPlay;
-  const playbackUrl = effectiveForcePlay ? url : (clipUrl ?? null);
+  // Brief W3 §1 — fullPlayback (mobile feed) plays the full source plain (no pipeline,
+  // usePipeline still gates on effectiveForcePlay below), instead of the ~4s clip.
+  const playbackUrl = effectiveForcePlay ? url : (fullPlayback ? (url ?? null) : (clipUrl ?? null));
   const shouldAttempt = !!playbackUrl && (effectiveForcePlay || (autoplayFlag && (gridMode ? inView : coordActive)));
   const usePipeline = effectiveForcePlay && playing && looked && !failed;
 

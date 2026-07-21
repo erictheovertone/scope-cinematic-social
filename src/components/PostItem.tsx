@@ -310,7 +310,7 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
               wave glyph, capped 28 chars/one line; renders ONLY when a track is
               attached (no reserved space otherwise). Resolves via the module-cached
               useTrackForPost — no new per-card fetch. */}
-          <MusicTitleChip post={post as { music_track_id?: string | null }} uppercase={false} fontSize={11} weight={400} color="rgba(229,225,219,0.55)" glyphW={12} glyphH={9} maxChars={28} />
+          <MusicTitleChip post={post as { music_track_id?: string | null }} uppercase={false} fontSize={11} weight={400} color="rgba(229,225,219,0.55)" glyphW={12} glyphH={9} maxChars={28} marquee />
         </div>
       </div>
       {post.token_standard === 'coin' && post.coin_address ? (
@@ -337,6 +337,7 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
       clipUrl={post.autoplay_clip_url}
       editParams={post.edit_params}
       autoplayFlag={post.autoplay !== false}
+      fullPlayback={!card}
       gridMode
       cropX={post.crop_x ?? 0}
       cropY={post.crop_y ?? 0}
@@ -493,7 +494,7 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
             onClick={(e) => { e.stopPropagation(); setShowCollectSheet(true); }}
             style={{ background: "transparent", border: "none", cursor: "pointer", padding: 0, lineHeight: 1 }}
           >
-            <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 14.5, letterSpacing: 'var(--track-display)', color: showCollectSheet ? "#E5E1DB" : "rgba(229,225,219,0.7)", lineHeight: 1 }}>COLLECT</span>
+            <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 14.5, letterSpacing: 'var(--track-display)', color: showCollectSheet ? "#E5E1DB" : "rgba(229,225,219,0.49)", lineHeight: 1 }}>COLLECT</span>{/* Brief W3 §2 — resting opacity ×0.7: 0.7 → 0.49 (size/weight/position unchanged) */}
           </button>
         </div>
       </div>

@@ -832,6 +832,15 @@ input:-webkit-autofill:focus {
   100% { filter: none; }
 }
 
+/* Brief W3 §3 — song-title marquee (overflow-only). Content is [title][gap][title][gap];
+   translateX(-50%) advances exactly one [title][gap] → seamless infinite wrap. Transform-
+   only (GPU); duration is set inline from the measured cycle width for ~20px/s. Reduced
+   motion is handled in JS (static + ellipsis), and the global net collapses this too. */
+@keyframes songMarquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
 /* ── Brief F7 §3 — DESKTOP MASONRY HOVER GROW — SANCTIONED HOUSE-RULE EXCEPTION ──
    The house rule is "artwork never scales on hover." Eric explicitly OVERRODE it for
    the desktop home masonry ONLY. This is the one and only place artwork may scale — do
