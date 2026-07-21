@@ -725,7 +725,7 @@ export default function WalletPage() {
               transition: "transform 120ms ease, opacity 120ms ease",
             }}
           >
-            <img src="/design-updates-071526/scope-logomark-offwhite.png" alt="Scope" style={{ width: 39, height: "auto", objectFit: "contain", display: "block", filter: "blur(0.35px)" }} />
+            <img src="/design-updates-071526/scope-logomark-offwhite.png" alt="Scope" style={{ width: 39, height: "auto", objectFit: "contain", display: "block" }} />
           </Link>
         </div>
       </div>

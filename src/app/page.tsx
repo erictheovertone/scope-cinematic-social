@@ -323,7 +323,7 @@ export default function Home() {
           }}
         >
           {/* The logomark IS the menu trigger (replaces the corner-bracket frame). */}
-          <img src="/design-updates-071526/scope-logomark-offwhite.png" alt="" style={{ width: 39, height: 'auto', objectFit: 'contain', display: 'block', filter: 'blur(0.35px)' }} />
+          <img src="/design-updates-071526/scope-logomark-offwhite.png" alt="" style={{ width: 39, height: 'auto', objectFit: 'contain', display: 'block' }} />
         </button>,
         document.body,
       )}
@@ -422,7 +422,7 @@ export default function Home() {
                 aria-label="Open viewing modes"
                 style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 9, margin: -3, lineHeight: 0, filter: 'drop-shadow(0 0 8px rgba(0,0,0,0.9))' }}
               >
-                <img src="/design-updates-071526/scope-logomark-offwhite.png" alt="" style={{ width: 39, height: 'auto', objectFit: 'contain', display: 'block', filter: 'blur(0.35px)' }} />
+                <img src="/design-updates-071526/scope-logomark-offwhite.png" alt="" style={{ width: 39, height: 'auto', objectFit: 'contain', display: 'block' }} />
               </button>
             </div>
             {/* BREATHING SPACE — the one tunable (Eric eyeballs on device). */}
