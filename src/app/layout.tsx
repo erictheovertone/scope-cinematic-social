@@ -30,6 +30,9 @@ export default function RootLayout({
             status-bar background (a black band), overriding black-translucent. Omitting
             it lets the translucent status bar overlay content that bleeds edge-to-edge. */}
         <link rel="apple-touch-icon" href="/scope-square-thumbnail-logo-v2.png" />
+        {/* Brief W2-1d — modern standalone flag (Chrome/Android + the spec successor to the
+            apple-prefixed one, which is kept for iOS back-compat). */}
+        <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="Scope" />
