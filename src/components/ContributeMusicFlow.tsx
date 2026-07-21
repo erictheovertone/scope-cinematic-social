@@ -144,9 +144,12 @@ export default function ContributeMusicFlow({ onClose }: { onClose: () => void }
   }, []);
   useEffect(() => {
     if (isDesktop) return;
+    // Brief F5 §7 — hide the footer pill via the takeover flag; `had` guard so cleanup
+    // only clears the flag if THIS flow set it (never clobber a parent takeover).
+    const had = document.documentElement.dataset.suiteOpen;
     document.documentElement.dataset.suiteOpen = "1";
     window.dispatchEvent(new CustomEvent("scope:takeover-change"));
-    return () => { delete document.documentElement.dataset.suiteOpen; window.dispatchEvent(new CustomEvent("scope:takeover-change")); };
+    return () => { if (!had) delete document.documentElement.dataset.suiteOpen; window.dispatchEvent(new CustomEvent("scope:takeover-change")); };
   }, [isDesktop]);
 
   // Abandon cleanup — best-effort delete of uploaded-but-unsubmitted audio.
@@ -307,7 +310,7 @@ export default function ContributeMusicFlow({ onClose }: { onClose: () => void }
           <input ref={fileInput} type="file" multiple accept="audio/mpeg,audio/aac,audio/mp4,audio/x-m4a,audio/wav,audio/*" hidden onChange={(e) => { addFiles(e.target.files); e.target.value = ""; }} />
 
           {rows.length > 0 && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 8, maxHeight: isDesktop ? 300 : "38vh", overflowY: "auto" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8, maxHeight: isDesktop ? 300 : undefined, overflowY: isDesktop ? "auto" : "visible" }}>
               {rows.map((r) => (
                 <div key={r.localId} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", border: `1px solid ${r.status === "failed" ? "rgba(229,225,219,0.4)" : HAIR}` }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
@@ -345,7 +348,7 @@ export default function ContributeMusicFlow({ onClose }: { onClose: () => void }
       {step === "table" && (
         <>
           <p style={{ ...SKR, fontSize: "var(--fs-8)", color: "rgba(229,225,219,0.4)", margin: 0 }}>Title each track and pick {KEYWORDS_MIN}–{KEYWORDS_MAX} keywords.</p>
-          <div style={{ display: "flex", flexDirection: "column", gap: 10, maxHeight: isDesktop ? 380 : "50vh", overflowY: "auto" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10, maxHeight: isDesktop ? 380 : undefined, overflowY: isDesktop ? "auto" : "visible" }}>
             {doneRows.map((r) => {
               const open = expanded === r.localId;
               const ok = rowReady(r);
@@ -436,13 +439,29 @@ export default function ContributeMusicFlow({ onClose }: { onClose: () => void }
       document.body,
     );
   }
+  // Brief F5 §7 — FULL-PAGE takeover matching the bio-sheet pattern (ProfileDataSheet):
+  // one full-viewport scroll container (not a bottom-anchored 90vh sheet), opaque
+  // #050505 canvas faded via background (not a translateY slide), safe-area padded,
+  // pill hidden via the suiteOpen flag above. The inner nested scroll caps (§ upload /
+  // table lists) are lifted on mobile so the page scrolls as ONE — no double-scroll.
   return createPortal(
-    <>
-      <div onClick={close} style={{ position: "fixed", inset: 0, zIndex: 500, background: "rgba(0,0,0,0.7)", opacity: visible ? 1 : 0, transition: "opacity 240ms ease" }} />
-      <div style={{ position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 501, maxWidth: "30rem", margin: "0 auto", background: "#000", borderTop: `1px solid ${HAIR}`, padding: "16px 20px calc(28px + env(safe-area-inset-bottom))", maxHeight: "90vh", overflowY: "auto", transform: visible ? "translateY(0)" : "translateY(100%)", transition: "transform 240ms cubic-bezier(0.32,0.72,0,1)" }}>
+    <div
+      className="bio-sheet-scroll"
+      onClick={close}
+      style={{
+        position: "fixed", inset: 0, zIndex: 500,
+        background: `rgba(5,5,5,${visible ? 0.95 : 0})`,
+        transition: "background 200ms ease",
+        overflowY: "auto", overscrollBehavior: "contain", WebkitOverflowScrolling: "touch",
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{ maxWidth: "30rem", margin: "0 auto", padding: "calc(16px + var(--safe-top)) 20px calc(28px + var(--safe-bottom))" }}
+      >
         {Body}
       </div>
-    </>,
+    </div>,
     document.body,
   );
 }
