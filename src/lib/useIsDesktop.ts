@@ -14,7 +14,12 @@ export const BP_DESKTOP = 1024;
 export function useIsDesktop(): boolean {
   const [isDesktop, setIsDesktop] = useState(false);
   useEffect(() => {
-    const mq = window.matchMedia(`(min-width: ${BP_DESKTOP}px)`);
+    // Brief F5 §1 — the desktop seam must key on INPUT CLASS, not width alone. A
+    // touch device at ≥1024 CSS px (landscape tablet; and any future large phone)
+    // would otherwise flip to the desktop composition on rotate. `(hover:hover) and
+    // (pointer:fine)` is true only for a mouse/trackpad-class primary input, so every
+    // touch device stays on the portrait mobile grid regardless of viewport size.
+    const mq = window.matchMedia(`(min-width: ${BP_DESKTOP}px) and (hover: hover) and (pointer: fine)`);
     const sync = () => setIsDesktop(mq.matches);
     sync();
     mq.addEventListener("change", sync);
