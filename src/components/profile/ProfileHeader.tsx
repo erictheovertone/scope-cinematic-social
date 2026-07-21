@@ -12,7 +12,7 @@
 // so the page's grid spacer + tab anchor follow. The right-side chrome differs by
 // page (BIO on own; ⓘ + mail + FOLLOW on public), injected via `controls`.
 
-import { useRef, useState, useLayoutEffect } from "react";
+import { useRef, useState, useLayoutEffect, useEffect } from "react";
 import BadgeCluster from "@/components/BadgeCluster";
 import { feedImage } from "@/lib/mediaUrl";
 
@@ -20,6 +20,10 @@ export interface ProfileHeaderAnalytics {
   followers: number;
   collectors: number;
   portfolioMc: number;
+  /** Brief W10 — the EXPANDED (bio-sheet) stat groups. Read only when `expanded`. */
+  following?: number;
+  totalPosts?: number;
+  decks?: number;
 }
 export interface ProfileHeaderBadge {
   key: string;
@@ -37,6 +41,7 @@ export default function ProfileHeader({
   onOpenBadges,
   controls,
   onMeasure,
+  expanded = false,
 }: {
   displayName: string;
   username: string;
@@ -45,6 +50,10 @@ export default function ProfileHeader({
   analytics: ProfileHeaderAnalytics;
   badges: ProfileHeaderBadge[];
   onOpenBadges: () => void;
+  /** Brief W10 — when the bio sheet is open the LIVE header expands its stats from the
+   *  3 base rows to THREE COLUMN GROUPS in place (Followers/Collectors/MC · Following/
+   *  Total Posts · Decks). The added columns slide/fade in. Both profiles inherit. */
+  expanded?: boolean;
   /** Right-side chrome slot — differs by page (BIO / ⓘ+mail+follow). Absolutely
    *  positioned within the measured content (this root is position:relative). */
   controls?: React.ReactNode;
@@ -86,11 +95,41 @@ export default function ProfileHeader({
     return () => ro.disconnect();
   }, [onMeasure]);
 
+  // Brief W10 — slide/fade the ADDED stat columns (groups 2·3) in when `expanded` flips
+  // true; reverse when it goes false. Reduced-motion → instant.
+  const reducedRef = useRef(false);
+  const [expandAnim, setExpandAnim] = useState(false);
+  useEffect(() => {
+    reducedRef.current = typeof window !== "undefined" && !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    if (!expanded || reducedRef.current) { setExpandAnim(expanded); return; }
+    const r = requestAnimationFrame(() => requestAnimationFrame(() => setExpandAnim(true)));
+    return () => cancelAnimationFrame(r);
+  }, [expanded]);
+
+  // The three EXPANDED stat groups (frame 141:733). Programs is omitted — no such field
+  // exists on the profile (flagged); the group is Decks only.
+  const statGroups: { label: string; value: string; w: number }[][] = [
+    [
+      { label: "Followers", value: analytics.followers.toLocaleString(), w: 92 },
+      { label: "Collectors", value: analytics.collectors.toLocaleString(), w: 92 },
+      { label: "Market Cap", value: analytics.portfolioMc > 0 ? `$${analytics.portfolioMc.toLocaleString()}` : "—", w: 92 },
+    ],
+    [
+      { label: "Following", value: (analytics.following ?? 0).toLocaleString(), w: 82 },
+      { label: "Total Posts", value: (analytics.totalPosts ?? 0).toLocaleString(), w: 82 },
+    ],
+    [
+      { label: "Decks", value: (analytics.decks ?? 0).toLocaleString(), w: 52 },
+    ],
+  ];
+
   return (
     <div ref={headerRef} style={{ position: "relative", paddingBottom: 8 }}>
       {/* Badge cluster — top-right, under the controls row (absolute overlay,
-          shorter than the stats column → doesn't drive height). */}
-      <div style={{ position: "absolute", right: 12, top: 41, zIndex: 3 }}>
+          shorter than the stats column → doesn't drive height). Brief W10 — fades out
+          when expanded (bio sheet open): the expanded group 3 (Decks) occupies the same
+          right zone, and the badges render in the sheet's own Badges section instead. */}
+      <div style={{ position: "absolute", right: 12, top: 41, zIndex: 3, opacity: expanded ? 0 : 1, pointerEvents: expanded ? "none" : "auto", transition: "opacity 200ms ease" }}>
         <BadgeCluster badges={badges} onOpen={onOpenBadges} />
       </div>
 
@@ -139,6 +178,8 @@ export default function ProfileHeader({
                 lineHeight 1 + compressed row margins; Market Cap keeps its small gap.
                 Brief W5 §1: +12px breathing room ABOVE the block (9 → 21); row pitch,
                 divider, and everything below (via measured headerH) shift down 12px. */}
+            {/* COLLAPSED (base) stats — 3 rows, values flush-right to the name edge. */}
+            {!expanded && (
             <div style={{ marginTop: 21 }}>
               {([
                 { label: "Followers", value: analytics.followers.toLocaleString(), gap: false },
@@ -151,7 +192,34 @@ export default function ProfileHeader({
                 </div>
               ))}
             </div>
-          </div>
+            )}
+          </div>{/* end name+handle inline-flex column */}
+          {/* Brief W10 — EXPANDED stats: THREE COLUMN GROUPS (frame 141:733) replacing the
+              base 3 rows while the bio sheet is open. Group 1 (Followers/Collectors/Market
+              Cap) + group 2 (Following/Total Posts) + group 3 (Decks) side-by-side with
+              vertical hairline separators; groups 2·3 slide/fade in. Spans the text column
+              (below name/handle) so it never disturbs the collapsed layout. */}
+          {expanded && (
+            <div style={{ display: "flex", alignItems: "stretch", marginTop: 14, paddingRight: 8 }}>
+              {statGroups.map((group, gi) => (
+                <div key={gi} style={{ display: "flex", alignItems: "stretch", ...(gi > 0 ? {
+                  opacity: expandAnim ? 1 : 0,
+                  transform: expandAnim ? "translateX(0)" : "translateX(-8px)",
+                  transition: reducedRef.current ? "none" : `opacity 200ms ease ${(gi - 1) * 60}ms, transform 200ms ease ${(gi - 1) * 60}ms`,
+                } : {}) }}>
+                  {gi > 0 && <div style={{ width: 1, background: "var(--hairline)", margin: "0 10px", alignSelf: "stretch" }} />}
+                  <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                    {group.map((row) => (
+                      <div key={row.label} style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, width: row.w }}>
+                        <span style={{ fontFamily: "var(--font-medium)", fontWeight: 500, fontSize: 11.2, color: "rgba(229,225,219,0.57)", letterSpacing: "var(--track-body)", whiteSpace: "nowrap", lineHeight: 1 }}>{row.label}</span>
+                        <span style={{ fontFamily: "var(--font-medium)", fontWeight: 500, fontSize: 11.5, color: "rgba(229,225,219,0.57)", letterSpacing: "var(--track-body)", whiteSpace: "nowrap", textAlign: "right", lineHeight: 1 }}>{row.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
           {/* Divider — in flow after the stats; Brief W4: spans the text column to the
               RIGHT MARGIN (frame x81→375, ~y88). PFP no longer lands on it (decoupled). */}
           <div style={{ height: 1, background: "var(--hairline)", margin: "7px 0 0" }} />

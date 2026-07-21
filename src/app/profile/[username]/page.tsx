@@ -298,7 +298,8 @@ export default function PublicProfilePage() {
           username={username}
           profileImage={profile?.profile_image_url}
           isPaidMember={isPaidMember}
-          analytics={{ followers: followerCount, collectors: 0, portfolioMc: profile?.portfolio_mc || 0 }}
+          analytics={{ followers: followerCount, collectors: 0, portfolioMc: profile?.portfolio_mc || 0, following: followingCount, totalPosts: posts.length, decks: publicDecks.length }}
+          expanded={profileDataOpen}
           badges={resolvedBadges
             .filter((b) => b.bannerSrc)
             .map((b) => ({ key: b.key, src: (b.framedSrc ?? b.bannerSrc) as string, title: b.title }))}

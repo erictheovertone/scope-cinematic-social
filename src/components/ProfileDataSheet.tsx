@@ -160,32 +160,10 @@ export default function ProfileDataSheet({
 
   const slicedLinks = links.slice(0, 3);
 
-  // ── Sheet header data (Brief 2.4a) — the Haas header IS part of the sheet ──────
-  const displayName = String(profile?.display_name ?? '');
-  const nameParts = displayName.trim().split(/\s+/).filter(Boolean);
-  const firstName = nameParts[0] ?? '';
-  const lastName = nameParts.slice(1).join(' ');
-  const handle = String(profile?.username ?? '');
-  const isPro = profile ? isProMember(profile) : false;
-  const pfpUrl = profile?.profile_image_url ? String(profile.profile_image_url) : null;
+  // Brief W10 — the sheet's own header (name/handle/stat groups) is gone; the live page
+  // ProfileHeader owns identity + expanded stats now. Only the meta line's data remains.
   const metaLoc = profile?.location ? String(profile.location) : '';
   const metaPrimary = links?.find((l) => (l as { is_primary?: boolean }).is_primary) ?? null;
-  const mcDisplay = portfolioMc > 0 ? `$${portfolioMc.toLocaleString()}` : '—'; // dash rule
-  // Three stat column groups (label/value). Programs omitted — no such data field.
-  const statGroups: { label: string; value: string }[][] = [
-    [
-      { label: 'Followers', value: followers.toLocaleString() },
-      { label: 'Collectors', value: collectors.toLocaleString() },
-      { label: 'Market Cap', value: mcDisplay },
-    ],
-    [
-      { label: 'Following', value: following.toLocaleString() },
-      { label: 'Total Posts', value: totalPosts.toLocaleString() },
-    ],
-    [
-      { label: 'Decks', value: decks.toLocaleString() },
-    ],
-  ];
 
   // Editorial spine — build ONLY sections that have data; dividers render BETWEEN
   // them below, so an absent section leaves no orphan rule (empty-state collapse).
@@ -213,9 +191,9 @@ export default function ProfileDataSheet({
             onClick={(e) => { e.stopPropagation(); setActiveBlurb(b.key); }}
             style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, width: 'calc((100% - 20px) / 3)', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
           >
-            <span style={{ width: '100%', height: 46, borderRadius: 9, border: '0.5px solid rgba(229,225,219,0.3)', background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-              <img src={(b.framedSrc ?? b.bannerSrc ?? b.src) as string} alt={BADGE_DISPLAY_NAME[b.key]} style={{ maxWidth: '78%', maxHeight: '64%', width: 'auto', height: 'auto', objectFit: 'contain', display: 'block' }} />
-            </span>
+            {/* Brief W10 §4 — no CSS container frame: the new badge PNG carries its own
+                rounded frame in the art. Render the image + label, nothing else. */}
+            <img src={(b.framedSrc ?? b.bannerSrc ?? b.src) as string} alt={BADGE_DISPLAY_NAME[b.key]} style={{ width: '100%', height: 'auto', objectFit: 'contain', display: 'block' }} />
             <span style={{ fontFamily: 'var(--font-body)', fontWeight: 400, fontSize: 7.5, letterSpacing: '0.12em', color: 'rgba(229,225,219,0.46)', textTransform: 'uppercase', textAlign: 'center', lineHeight: 1.1 }}>{BADGE_DISPLAY_NAME[b.key]}</span>
           </button>
         ))}
@@ -317,50 +295,11 @@ export default function ProfileDataSheet({
             is open, ABOVE this z100 sheet). Spacer is bound to the header's MEASURED height
             (bannerClearH = ProfileHeader onMeasure), so W4-style header changes can't re-bury
             the sheet. +8 = a small gap below the banner. */}
+        {/* Brief W10 — the sheet's OWN header copy is DELETED (killed the double). The
+            spacer above = the live page ProfileHeader's measured height (bannerClearH), so
+            the scrim starts BELOW the live header — which now EXPANDS its stats in place
+            (expanded prop). Content below is the sections only; no duplicate to collide. */}
         <div aria-hidden style={{ height: `calc(${bannerClearH + 8}px + env(safe-area-inset-top, 0px))`, flexShrink: 0 }} />
-        {/* ── SHEET HEADER (Brief 2.4a) — opaque, in-scroll identity block: PFP +
-            name + handle + expanded 3-group stats (node 141:733's Haas header). ── */}
-        <div style={{ position: 'relative', padding: '13px 12px 8px', minHeight: 104 }}>
-          <div style={{ position: 'absolute', left: 6, top: 13, width: 86, height: 86, border: '1px solid var(--avatar-frame)', boxSizing: 'border-box', overflow: 'hidden' }}>
-            {pfpUrl
-              ? <img src={feedImage(pfpUrl, 172)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-              : <div style={{ width: '100%', height: '100%', background: '#222' }} />}
-          </div>
-          <div style={{ marginLeft: 92 }}>
-            {/* Name (wide first/last gap) + PRO, with the handle centered beneath. */}
-            <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center' }}>
-              <div style={{ display: 'inline-flex', alignItems: 'baseline', gap: 28 }}>
-                <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 16, letterSpacing: 'var(--track-display)', color: 'var(--ink-100)', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{firstName}</span>
-                {(lastName || isPro) && (
-                  <span style={{ display: 'inline-flex', alignItems: 'baseline', gap: 5 }}>
-                    {lastName && <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 16, letterSpacing: 'var(--track-display)', color: 'var(--ink-100)', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{lastName}</span>}
-                    {isPro && <span style={{ fontFamily: 'var(--font-black)', fontWeight: 900, fontSize: 6.7, color: 'rgba(229,225,219,0.64)', letterSpacing: 'var(--track-wide)', alignSelf: 'flex-start', transform: 'translateY(1px)' }}>PRO</span>}
-                  </span>
-                )}
-              </div>
-              <div style={{ display: 'inline-flex', alignItems: 'baseline', gap: 3, opacity: 0.64, marginTop: 3 }}>
-                <span style={{ fontFamily: 'var(--font-light)', fontWeight: 400, fontSize: 8, color: 'var(--ink-100)', letterSpacing: 'var(--track-wide)' }}>[ at ]</span>
-                <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 10, color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: 'var(--track-body)' }}>{handle}</span>
-              </div>
-            </div>
-            {/* Expanded stats — 3 groups, vertical hairline separators between. */}
-            <div style={{ display: 'flex', alignItems: 'stretch', marginTop: 14 }}>
-              {statGroups.map((group, gi) => (
-                <div key={gi} style={{ display: 'flex', alignItems: 'stretch' }}>
-                  {gi > 0 && <div style={{ width: 1, background: 'var(--hairline)', margin: '0 7px', alignSelf: 'stretch' }} />}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                    {group.map((row) => (
-                      <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
-                        <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 8.2, color: 'rgba(229,225,219,0.71)', letterSpacing: 'var(--track-body)', whiteSpace: 'nowrap' }}>{row.label}</span>
-                        <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 8.5, color: 'rgba(229,225,219,0.71)', letterSpacing: 'var(--track-body)', whiteSpace: 'nowrap', textAlign: 'right' }}>{row.value}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
 
         {/* ── META LINE — location · primary link (desktop meta language, scaled).
             Renders nothing when both are absent (no orphan spacing). ── */}
