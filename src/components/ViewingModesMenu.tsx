@@ -1,184 +1,107 @@
 'use client';
 
-// ── VIEWING MODES — the full-page mode menu (Figma 943:406) ───────────────────
-//
-// Portaled takeover on black. The four cards are Eric's BAKED two-state PNGs
-// (@4x, 1464×492 = 366×123 per the frame — chrome/text/icons/preview art in
-// the image): both states
-// stacked, the CURRENT mode's -active variant revealed by opacity crossfade.
-// Entrance choreography: takeover spring → header stagger → card cascade (all
-// DEFAULT) → the IGNITION beat: ~120ms after the last card lands, the current
-// mode lights red. Selection runs the host's existing mode-switch unchanged.
-// Reduced-motion: instant, pre-lit. Opacity/translate transforms only.
+// ── VIEWING MODES — full-page mode menu (Brief S1, Figma 192:914) ─────────────
+// Rebuilt to the revised frame: page-title "Viewing Modes" top-left + logomark
+// top-right (close/return), four soft gradient cards (mode name · description ·
+// preview crop). Full takeover on --canvas, safe-area padded, footer pill hidden
+// via the body suiteOpen flag. Selection runs the host's EXISTING mode-switch
+// (onSelect) unchanged. No text blur (W5 retirement stands — the frame's soft look
+// is the low-opacity border/fill only; text inside stays crisp).
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, useReducedMotion } from 'framer-motion';
 
-const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
-const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
-
 export type ViewingMode = 'theatre' | 'screening' | 'mirage' | 'feed';
 
-const CARDS: { mode: ViewingMode; label: string; aria: string }[] = [
-  { mode: 'theatre', label: 'Theatre Mode', aria: 'Theatre Mode — full-screen theatrical viewing' },
-  { mode: 'screening', label: 'Screening Room', aria: 'Screening Room — the discovery feed' },
-  { mode: 'mirage', label: 'Mirage View', aria: 'Mirage View — the cinematic home feed' },
-  { mode: 'feed', label: 'Feed', aria: 'Feed — the standard home feed' },
+const CARDS: { mode: ViewingMode; name: string; desc: string; preview: string; aria: string }[] = [
+  { mode: 'theatre',   name: 'Theatre',         desc: 'Turn your phone.',                                   preview: '/viewing-modes-v2/theatre-preview.png',   aria: 'Theatre — full-screen theatrical viewing; turn your phone' },
+  { mode: 'screening', name: 'Screening\nRoom', desc: 'The best work on Scope. Chosen by you',              preview: '/viewing-modes-v2/screening-preview.png', aria: 'Screening Room — the best work on Scope, chosen by you' },
+  { mode: 'mirage',    name: 'Mirage',          desc: 'Everything in a collage. See what catches your eye', preview: '/viewing-modes-v2/mirage-preview.png',     aria: 'Mirage — everything in a collage' },
+  { mode: 'feed',      name: 'Feed',            desc: 'Standard feed mode.',                                preview: '/viewing-modes-v2/feed-preview.png',      aria: 'Feed — the standard home feed' },
 ];
 
-// Choreography (ms) — cards start after the takeover+header, 70ms cascade,
-// ignition fires ~120ms after the LAST card lands.
-const CARD_BASE = 260;
-const CARD_STAGGER = 70;
-const CARD_DUR = 280;
-const IGNITE_AT = CARD_BASE + 3 * CARD_STAGGER + CARD_DUR + 120; // ≈ 870ms
-
 interface Props {
-  currentMode: ViewingMode;
+  /** Kept for the host contract; the revised frame renders cards uniformly (no
+   *  active-state art), so it's no longer used for highlighting. */
+  currentMode?: ViewingMode;
   onClose: () => void;
   /** Runs the host's EXISTING mode-switch logic (unchanged) + closes. */
   onSelect: (mode: ViewingMode) => void;
 }
 
-export default function ViewingModesMenu({ currentMode, onClose, onSelect }: Props) {
+export default function ViewingModesMenu({ onClose, onSelect }: Props) {
   const reduced = !!useReducedMotion();
-  // The illuminated card: null until the ignition beat, then the current mode;
-  // switches (250ms crossfade) when a different card is tapped before closing.
-  const [lit, setLit] = useState<ViewingMode | null>(reduced ? currentMode : null);
-  const [pressed, setPressed] = useState<ViewingMode | null>(null);
 
+  // Footer pill hide — the body takeover flag (same mechanism as the bio/collect
+  // sheets); `had` guards a nested takeover from clearing a parent's flag.
   useEffect(() => {
-    if (reduced) return;
-    const id = window.setTimeout(() => setLit(currentMode), IGNITE_AT);
-    return () => window.clearTimeout(id);
-  }, [reduced, currentMode]);
-
-  const pick = (mode: ViewingMode) => {
-    if (mode === lit) { onSelect(mode); return; }
-    setLit(mode); // crossfade to the tapped card…
-    window.setTimeout(() => onSelect(mode), reduced ? 0 : 300); // …then close into it
-  };
+    const had = document.documentElement.dataset.suiteOpen;
+    document.documentElement.dataset.suiteOpen = '1';
+    window.dispatchEvent(new CustomEvent('scope:takeover-change'));
+    return () => {
+      if (!had) delete document.documentElement.dataset.suiteOpen;
+      window.dispatchEvent(new CustomEvent('scope:takeover-change'));
+    };
+  }, []);
 
   if (typeof document === 'undefined') return null;
 
-  const headerIn = (delayMs: number) => ({
-    initial: reduced ? false : { opacity: 0, y: 8 },
-    animate: { opacity: 1, y: 0 },
-    exit: { opacity: 0, transition: { duration: 0.15 } },
-    transition: { duration: reduced ? 0 : 0.25, delay: reduced ? 0 : delayMs / 1000, ease: 'easeOut' as const },
-  });
-
   return createPortal(
-    <div data-swipe-exclude style={{ position: 'fixed', inset: 0, zIndex: 60 }}>
-      {/* Backdrop */}
-      <motion.div
-        initial={reduced ? false : { opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0, transition: { duration: 0.15 } }}
-        transition={{ duration: reduced ? 0 : 0.2 }}
-        onClick={onClose}
-        style={{ position: 'absolute', inset: 0, background: '#000' }}
-      />
-      {/* Takeover */}
-      <motion.div
-        initial={reduced ? false : { y: '100%' }}
-        animate={{ y: 0 }}
-        exit={{ y: '100%', transition: { duration: 0.25, ease: 'easeIn' } }}
-        transition={reduced ? { duration: 0 } : { type: 'spring', duration: 0.3, bounce: 0.12 }}
-        style={{
-          position: 'absolute', inset: 0, overflowY: 'auto', background: '#000',
-          // near-full-bleed: the 366-wide cards leave ~4px sides at the 375 frame;
-          // header elements re-indent themselves to the frame's positions.
-          padding: 'calc(14px + env(safe-area-inset-top, 0px)) 4px calc(24px + env(safe-area-inset-bottom, 0px))',
-        }}
-      >
-        {/* Top hairline — frame width ~234, left-anchored at the title indent */}
-        <div style={{ height: 1, width: 234, background: 'rgba(229,225,219,0.14)', margin: '0 0 18px 19px' }} />
+    <motion.div
+      data-swipe-exclude
+      initial={reduced ? false : { opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0, transition: { duration: 0.18 } }}
+      transition={{ duration: reduced ? 0 : 0.22 }}
+      onClick={onClose}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 60, background: 'var(--canvas)',
+        overflowY: 'auto', WebkitOverflowScrolling: 'touch', boxSizing: 'border-box',
+        padding: 'calc(15px + var(--safe-top)) 7px calc(24px + var(--safe-bottom))',
+      }}
+    >
+      {/* Header — title top-left, logomark top-right (close/return affordance;
+          replaces the old ✕. Backdrop tap still closes too). */}
+      <div onClick={(e) => e.stopPropagation()} style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '0 3px 0 6px' }}>
+        <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 32, lineHeight: 0.94, letterSpacing: 'var(--track-display)', color: 'var(--ink-100)', margin: 0 }}>
+          Viewing Modes
+        </h1>
+        <button onClick={onClose} aria-label="Close viewing modes" style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px 2px', marginTop: -2, lineHeight: 0 }}>
+          <img src="/design-updates-071526/scope-logomark-offwhite.png" alt="Close" style={{ width: 39, height: 'auto', objectFit: 'contain', display: 'block' }} />
+        </button>
+      </div>
 
-        {/* Header row: title two lines + close × */}
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '0 8px 0 19px' }}>
-          <motion.h1
-            {...headerIn(120)}
-            style={{ ...SKB, fontSize: 40, lineHeight: 0.94, letterSpacing: '-1.2px', color: '#E5E1DB', textTransform: 'uppercase', margin: 0, whiteSpace: 'pre-line' }}
-          >
-            {'VIEWING\nMODES'}
-          </motion.h1>
+      {/* Cards — 360×110 fluid, radius 13, 1px 0.49 ivory border, horizontal
+          0.07→0.08 gradient. Whole card is the tap target. */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 15, margin: '18px 0 0' }}>
+        {CARDS.map((card, i) => (
           <motion.button
-            {...headerIn(120)}
-            onClick={onClose}
-            aria-label="Close viewing modes"
-            style={{ ...SKB, background: 'transparent', border: 'none', cursor: 'pointer', color: '#E5E1DB', fontSize: 22, lineHeight: 1, padding: '4px 2px' }}
+            key={card.mode}
+            initial={reduced ? false : { opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: reduced ? 0 : 0.3, delay: reduced ? 0 : 0.06 + i * 0.06, ease: 'easeOut' }}
+            whileTap={reduced ? undefined : { scale: 0.98 }}
+            onClick={(e) => { e.stopPropagation(); onSelect(card.mode); }}
+            aria-label={card.aria}
+            style={{
+              position: 'relative', width: '100%', height: 110, flexShrink: 0, borderRadius: 13,
+              border: '1px solid rgba(229,225,219,0.49)',
+              background: 'linear-gradient(90deg, rgba(229,225,219,0.07), rgba(33,31,31,0.08))',
+              overflow: 'hidden', cursor: 'pointer', textAlign: 'left',
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              padding: '0 16px 0 32px', gap: 14,
+            }}
           >
-            ✕
+            <span style={{ flex: '1 1 auto', minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+              <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 20, lineHeight: 0.82, letterSpacing: 'var(--track-display)', color: 'var(--ink-100)', whiteSpace: 'pre-line' }}>{card.name}</span>
+              <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 10, lineHeight: 1.25, color: 'rgba(229,225,219,0.5)', marginTop: 8 }}>{card.desc}</span>
+            </span>
+            <img src={card.preview} alt="" aria-hidden style={{ width: 140, height: 59, objectFit: 'contain', opacity: 0.78, flexShrink: 0, display: 'block' }} />
           </motion.button>
-        </div>
-
-        {/* Tagline — red + glyph, right-aligned */}
-        <motion.div {...headerIn(180)} style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 7, margin: '14px 8px 0 0' }}>
-          <span style={{ ...SKB, fontSize: 14, color: '#E5E1DB', lineHeight: 1 }}>+</span>
-          <span style={{ ...SKR, fontSize: 8.6, color: 'rgba(229,225,219,0.6)', letterSpacing: '2.5px', textTransform: 'uppercase' }}>
-            DEFINE YOUR PERSPECTIVE. CONTROL YOUR EXPERIENCE.
-          </span>
-        </motion.div>
-
-        {/* SELECT A FORMAT over a hairline */}
-        <motion.div {...headerIn(240)} style={{ margin: '22px 0 0', paddingLeft: 19 }}>
-          <p style={{ ...SKB, fontSize: 14, color: 'rgba(229,225,219,0.6)', letterSpacing: '2.52px', textTransform: 'uppercase', margin: '0 0 8px' }}>
-            SELECT A FORMAT
-          </p>
-          <div style={{ height: 1, width: 268, background: 'rgba(229,225,219,0.14)' }} />
-        </motion.div>
-
-        {/* The four cards — baked two-state PNGs, ratio-locked, cascading in
-            DEFAULT state; the ignition beat lights the current mode after. */}
-        {/* 18px uniform rhythm (frame shows 17/19 — uniform reads cleaner). */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 18, margin: '18px 0 0' }}>
-          {CARDS.map((card, i) => (
-            <motion.button
-              key={card.mode}
-              initial={reduced ? false : { opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, transition: { duration: 0.15 } }}
-              transition={{ duration: reduced ? 0 : CARD_DUR / 1000, delay: reduced ? 0 : (CARD_BASE + i * CARD_STAGGER) / 1000, ease: 'easeOut' }}
-              onClick={() => pick(card.mode)}
-              onPointerDown={() => setPressed(card.mode)}
-              onPointerUp={() => setPressed(null)}
-              onPointerLeave={() => setPressed(null)}
-              aria-label={card.aria}
-              style={{
-                position: 'relative', width: '100%', aspectRatio: '366 / 123', borderRadius: 2, overflow: 'hidden',
-                background: 'transparent', border: 'none', padding: 0, cursor: 'pointer',
-                transform: pressed === card.mode ? 'scale(0.97)' : 'scale(1)',
-                transition: 'transform 120ms ease',
-              }}
-            >
-              <img
-                src={`/viewing-modes/${card.mode}-default.png?v=2`}
-                alt=""
-                style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
-              />
-              {/* -active stacked above; the crossfade IS the illumination:
-                  ignition 300ms, tap-switch 250ms — same mechanism. */}
-              <img
-                src={`/viewing-modes/${card.mode}-active.png?v=2`}
-                alt=""
-                style={{
-                  position: 'absolute', inset: 0, width: '100%', height: '100%',
-                  opacity: lit === card.mode ? 1 : 0,
-                  transition: reduced ? 'none' : `opacity ${lit === card.mode ? 300 : 250}ms ease`,
-                }}
-              />
-            </motion.button>
-          ))}
-        </div>
-
-        {/* Logomark, centered at the bottom */}
-        <motion.div {...headerIn(CARD_BASE + 3 * CARD_STAGGER + 100)} style={{ display: 'flex', justifyContent: 'center', margin: '26px 0 0' }}>
-          <img src="/logomark-plain-white.png" alt="Scope" style={{ width: 34, height: 22, objectFit: 'contain', opacity: 0.9 }} />
-        </motion.div>
-      </motion.div>
-    </div>,
+        ))}
+      </div>
+    </motion.div>,
     document.body,
   );
 }
