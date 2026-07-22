@@ -1,148 +1,57 @@
 "use client";
 
-// import Link from "next/link";
-import { useState, useEffect } from "react";
-import DesktopLanding from '@/components/desktop/DesktopLanding';
-import { useIsDesktop } from '@/lib/useIsDesktop';
-import { useRouter } from "next/navigation";
-import { useLogin } from '@privy-io/react-auth';
-import FrameLoader from "@/components/FrameLoader";
+// ── Welcome / Lander (Brief S2, Figma 93:674) ────────────────────────────────
+// The cold-load destination for logged-out users (F5 §3 routes here). Radically
+// minimal per the frame: canvas #050505, and ONE centered-upper row —
+// "Login" · the blurred logomark (baked-blur art) · "Sign Up" on a single baseline.
+// Both actions enter the SAME existing Privy useLogin flow (the current auth setup
+// does NOT distinguish login vs signup) → onComplete → /auth/callback. Auth logic
+// is untouched — entry points only. The old bordered two-button box + 750ms
+// FrameLoader are gone (not in the frame; the welcome now renders directly, no flash).
 
-// const imgScopeLogo1 = "/scope-logo.svg";
+import { useRouter } from "next/navigation";
+import { useLogin } from "@privy-io/react-auth";
+import DesktopLanding from "@/components/desktop/DesktopLanding";
+import { useIsDesktop } from "@/lib/useIsDesktop";
 
 export default function Welcome() {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(true);
   const isDesktop = useIsDesktop();
 
   const { login } = useLogin({
-    onComplete: () => {
-      console.log('Authentication successful, redirecting...');
-      router.push('/auth/callback');
-    },
-    onError: (error) => {
-      console.log('Authentication error:', error);
-    }
+    onComplete: () => router.push("/auth/callback"),
+    onError: (error) => { console.log("Authentication error:", error); },
   });
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 750);
-
-    return () => clearTimeout(timer);
-  }, []);
 
   // DESKTOP SEAM: the logged-out desktop landing (mobile welcome untouched).
   if (isDesktop) return <DesktopLanding />;
 
-  if (isLoading) {
-    return (
-      <div style={{
-        backgroundColor: '#000000',
-        minHeight: '100dvh',
-        width: '100%',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center'
-      }}>
-        <FrameLoader variant="page" />
-      </div>
-    );
-  }
+  const action: React.CSSProperties = {
+    fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 24,
+    letterSpacing: "var(--track-display)", color: "var(--ink-100)",
+    background: "transparent", border: "none", cursor: "pointer",
+    padding: "10px 6px", lineHeight: 1, whiteSpace: "nowrap",
+  };
 
   return (
     <div
-      data-name="Welcome Page"
-      data-node-id="86:27"
       style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: '#000',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'space-between',
-        padding: '40px 24px 48px'
+        position: "fixed", inset: 0, background: "var(--canvas)", boxSizing: "border-box",
+        // Centered-upper (frame: logomark top ≈ 33% of 844).
+        paddingTop: "calc(33vh + var(--safe-top))",
+        paddingLeft: "calc(4px + var(--safe-left))",
+        paddingRight: "calc(4px + var(--safe-right))",
       }}
     >
-      <div style={{ marginTop: 'calc(33vh - 18px)' }}>
-        <img
-          src="/scope-logo-new.png"
-          alt="Scope"
-          style={{
-            height: 45,
-            display: 'block',
-            margin: '0 auto'
-          }}
-        />
-      </div>
-
-      <div style={{ width: '100%', height: '112px', border: '1px solid rgba(229,225,219,0.5)', position: 'relative' }}>
-        <button
-          onClick={login}
-          style={{
-            position: 'absolute',
-            top: '2px',
-            left: '2px',
-            color: '#E5E1DB',
-            fontSize: 'var(--fs-12)',
-            fontFamily: "'SK-Modernist', sans-serif",
-            fontWeight: 700,
-            textDecoration: 'none',
-            background: 'transparent',
-            border: 'none',
-            cursor: 'pointer',
-            zIndex: 1000,
-            transition: 'all 0.1s cubic-bezier(0.4, 0, 0.2, 1)'
-          }}
-          className="hover:opacity-70 scope-auth-button"
-          onPointerDown={(e) => {
-            e.currentTarget.style.transform = 'scale(0.95)';
-            e.currentTarget.style.opacity = '0.8';
-          }}
-          onPointerUp={(e) => {
-            e.currentTarget.style.transform = 'scale(1)';
-            e.currentTarget.style.opacity = '1';
-          }}
-          onPointerLeave={(e) => {
-            e.currentTarget.style.transform = 'scale(1)';
-            e.currentTarget.style.opacity = '1';
-          }}
-        >
-          LOG IN
+      {/* Login · logomark · Sign Up — single baseline; logomark exactly centred via a
+          1fr | auto | 1fr grid (Login left-anchored, Sign Up right-anchored). */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center", columnGap: 6, padding: "0 38px" }}>
+        <button onClick={login} className="tap-target" aria-label="Log in" style={{ ...action, justifySelf: "start", textAlign: "left" }}>
+          Login
         </button>
-        <button
-          onClick={login}
-          style={{
-            position: 'absolute',
-            bottom: '2px',
-            right: '2px',
-            color: '#E5E1DB',
-            fontSize: 'var(--fs-12)',
-            fontFamily: "'SK-Modernist', sans-serif",
-            fontWeight: 700,
-            textDecoration: 'none',
-            background: 'transparent',
-            border: 'none',
-            cursor: 'pointer',
-            zIndex: 1000,
-            transition: 'all 0.1s cubic-bezier(0.4, 0, 0.2, 1)'
-          }}
-          className="hover:opacity-70 scope-auth-button"
-          onPointerDown={(e) => {
-            e.currentTarget.style.transform = 'scale(0.95)';
-            e.currentTarget.style.opacity = '0.8';
-          }}
-          onPointerUp={(e) => {
-            e.currentTarget.style.transform = 'scale(1)';
-            e.currentTarget.style.opacity = '1';
-          }}
-          onPointerLeave={(e) => {
-            e.currentTarget.style.transform = 'scale(1)';
-            e.currentTarget.style.opacity = '1';
-          }}
-        >
-          SIGN UP
+        <img src="/design-updates-071526/welcome-logomark-blur.png" alt="Scope" style={{ width: 116, height: "auto", objectFit: "contain", display: "block" }} />
+        <button onClick={login} className="tap-target" aria-label="Sign up" style={{ ...action, justifySelf: "end", textAlign: "right" }}>
+          Sign Up
         </button>
       </div>
     </div>
