@@ -542,6 +542,14 @@ export default function TheatreMode({
             visual height (~34px) centers inside it. */}
         {!showData && (
           <div style={{ position: 'absolute', top: stageH / 2 + boxH / 2 + Math.max(2, (stageH / 2 - boxH / 2 - 34) / 2), left: 0, right: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, zIndex: 3, height: 34 }}>
+            {/* Brief M3c §2 — rank lives INSIDE this data bar, at its LEFT end (SR-origin
+                only). Same bar as the "+"/stats; quiet two-digit, 75 Bold --track-wide 50%.
+                Updates live on swipe. Other origins render the bar exactly as before. */}
+            {isScreening && ranks?.[index] != null && (
+              <span style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 12, letterSpacing: 'var(--track-wide)', color: 'rgba(229,225,219,0.5)', pointerEvents: 'none' }}>
+                {String(ranks[index]).padStart(2, '0')}
+              </span>
+            )}
             {/* "+" — ≥44px tap target (the 12 couldn't hit the old padding-0 glyph),
                 inset-relative bottom. Handle sits immediately to its right —
                 everything lives BELOW the media in the black band. */}
@@ -677,15 +685,6 @@ export default function TheatreMode({
         {source === 'profile' && (
           <div style={{ position: 'absolute', right: 16, bottom: 14, ...SKB, fontSize: 'var(--fs-9)', color: 'rgba(229,225,219,0.45)', letterSpacing: '0.08em', pointerEvents: 'none' }}>
             {index + 1} / {posts.length}
-          </div>
-        )}
-
-        {/* ── Rank indicator — SR-origin theatre ONLY. Below-left in rotated space, quiet
-            two-digit rank (01–50), 75 Bold, --track-wide, ~50% ink. Updates live on swipe.
-            The single piece of new chrome; profile/feed theatre shows nothing here. ── */}
-        {isScreening && ranks?.[index] != null && (
-          <div style={{ position: 'absolute', left: 16, bottom: 14, fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 12, letterSpacing: 'var(--track-wide)', color: 'rgba(229,225,219,0.5)', pointerEvents: 'none' }}>
-            {String(ranks[index]).padStart(2, '0')}
           </div>
         )}
       </div>

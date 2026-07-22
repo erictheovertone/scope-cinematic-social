@@ -6,18 +6,20 @@
 // collect sheet's media be a tap-through to the post from anywhere (wallet
 // holdings, feed, profile) without prop-drilling or import cycles.
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import PostModal from '@/components/PostModal';
 import TheatreMode from '@/components/TheatreMode';
 import { getPostById } from '@/lib/postsService';
-import { OPEN_POST_EVENT } from '@/lib/postLightbox';
+import { OPEN_POST_EVENT, type PostLightboxContext } from '@/lib/postLightbox';
 import { useRotateToTheatre } from '@/lib/useRotateToTheatre';
 import { useIsDesktop } from '@/lib/useIsDesktop';
 
 export default function PostLightboxHost() {
   const [post, setPost] = useState<Record<string, unknown> | null>(null);
+  const [ctx, setCtx] = useState<PostLightboxContext | null>(null); // Brief M3c §3 — queue context
   const [showTheatre, setShowTheatre] = useState(false);
   const isDesktop = useIsDesktop();
+  const theatreIdx = useRef(0); // live theatre index → return the lightbox to the swiped post
 
   // Brief M3a — rotate-to-theatre for the post view opened from anywhere via
   // openPostLightbox (Screening Room, wallet holdings, collect tap-through). Shares the
@@ -31,8 +33,8 @@ export default function PostLightboxHost() {
   });
 
   // Brief M3b — mark the DOM while a post view is up so the Screening Room's OWN main
-  // rotate hook (mounted underneath) yields: an opened post rotates into the host's
-  // single-post theatre, not the SR lineup theatre. Two hooks, one wins.
+  // rotate hook (mounted underneath) yields: an opened post rotates into THIS host's
+  // theatre (now queue-aware, §3), not a second SR lineup theatre. Two hooks, one wins.
   useEffect(() => {
     if (!post) return;
     document.documentElement.dataset.postLightboxOpen = '1';
@@ -41,11 +43,12 @@ export default function PostLightboxHost() {
 
   useEffect(() => {
     const handler = async (e: Event) => {
-      const postId = (e as CustomEvent).detail?.postId as string | undefined;
+      const detail = (e as CustomEvent).detail as { postId?: string; ctx?: PostLightboxContext } | undefined;
+      const postId = detail?.postId;
       if (!postId) return;
       try {
         const p = await getPostById(postId);
-        if (p) { setShowTheatre(false); setPost(p as unknown as Record<string, unknown>); }
+        if (p) { setShowTheatre(false); setCtx(detail?.ctx ?? null); setPost(p as unknown as Record<string, unknown>); }
       } catch (err) {
         console.error('[PostLightboxHost] load error:', err);
       }
@@ -55,16 +58,29 @@ export default function PostLightboxHost() {
   }, []);
 
   if (!post) return null;
+
+  // Brief M3c §3 — theatre swipes the whole queue when a context was supplied (SR lineup),
+  // else the single opened post (wallet / collect tap-through, unchanged). On exit, land
+  // the lightbox on whichever post was last viewed in theatre (origin + position continuity).
+  const theatrePosts = ctx?.posts?.length ? ctx.posts : [post];
+  const theatreStart = ctx ? (ctx.startIndex ?? 0) : 0;
+  const closeTheatre = () => {
+    setShowTheatre(false);
+    if (ctx?.posts?.length) { const p = ctx.posts[theatreIdx.current]; if (p) setPost(p); }
+  };
+
   return (
     <>
-      <PostModal post={post as any} onClose={() => { setShowTheatre(false); setPost(null); }} />
+      <PostModal post={post as any} onClose={() => { setShowTheatre(false); setCtx(null); setPost(null); }} />
       {showTheatre && (
         <TheatreMode
-          posts={[post]}
-          startIndex={0}
-          source="feed"
+          posts={theatrePosts}
+          ranks={ctx?.ranks}
+          startIndex={theatreStart}
+          source={ctx?.source ?? 'feed'}
           exitOnPortrait={enteredViaRotation.current}
-          onClose={() => setShowTheatre(false)}
+          onIndexChange={(i) => { theatreIdx.current = i; }}
+          onClose={closeTheatre}
         />
       )}
     </>

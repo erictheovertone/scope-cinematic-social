@@ -145,7 +145,11 @@ function MobileScreeningRoom() {
       const addrs = cache.map((c) => c.coin_address).filter(Boolean);
       const { data: posts } = await supabase
         .from('posts')
-        .select('id, coin_address, username, ticker, layout_id, media_type, poster_url, thumbnail_url, media_urls, autoplay_clip_url, autoplay, crop_x, crop_y, crop_width, crop_height')
+        // Brief M3c §1 — full shape so the SR queue's post objects match what profile
+        // theatre gets (getUserPosts selects *). Adds token_standard (else isCoinPost=false
+        // → collect silently disabled), edit_params (video grade), caption, music_* — so
+        // TheatreMode renders SR posts IDENTICALLY. Same query, more columns; no new fetch.
+        .select('id, coin_address, token_standard, username, ticker, caption, layout_id, media_type, poster_url, thumbnail_url, media_urls, autoplay_clip_url, autoplay, crop_x, crop_y, crop_width, crop_height, edit_params, music_track_id, music_mode, music_start_seconds')
         .in('coin_address', addrs);
       const byAddr = new Map((posts ?? []).map((p) => [String(p.coin_address).toLowerCase(), p]));
 
@@ -165,6 +169,7 @@ function MobileScreeningRoom() {
     p.media_type === 'video' ? (p.poster_url || p.thumbnail_url || null) : (p.media_urls?.[0] || null);
 
   return (
+    <>
     <div className="screen-min" style={{ minHeight: '100dvh', background: '#000', maxWidth: '30rem', margin: '0 auto', position: 'relative' }}>
       {/* Header — Brief M3: the established PageTitle treatment (32px sentence-case title
           + return-home logomark). Replaces the old ‹ back button, the RED temp logo
@@ -246,7 +251,9 @@ function MobileScreeningRoom() {
               <div
                 key={r.rank}
                 ref={(el) => { if (el && p) rowRefs.current.set(r.rank, el); else rowRefs.current.delete(r.rank); }}
-                onClick={() => p && openPostLightbox(p.id)}
+                // Brief M3c §3 — carry the SR queue context so rotating FROM the opened
+                // post view enters theatre on this post, swiping the whole lineup + rank.
+                onClick={() => p && openPostLightbox(p.id, { posts: lineupPosts, ranks: lineupRanks, startIndex: lineupRanks.indexOf(r.rank), source: 'screening' })}
                 style={{ marginBottom: 22, cursor: p ? 'pointer' : 'default' }}
               >
                 {/* Frame at the post's OWN ratio — media only, rank chip the sole overlay. */}
@@ -284,20 +291,26 @@ function MobileScreeningRoom() {
         </div>
       )}
 
-      {/* SR-origin theatre — the lineup IS the queue; theatre's own swipe/arrows navigate
-          it in rank order. source="screening" gives the rank indicator; rotating back to
-          portrait exits and closeTheatre lands the list on the last-viewed rank. */}
-      {showTheatre && (
-        <TheatreMode
-          posts={lineupPosts}
-          ranks={lineupRanks}
-          startIndex={theatreStart}
-          source="screening"
-          exitOnPortrait={enteredViaRotation.current}
-          onIndexChange={(i) => { theatreIndexRef.current = i; }}
-          onClose={closeTheatre}
-        />
-      )}
     </div>
+
+    {/* Brief M3c §1 — theatre renders OUTSIDE .screen-min (matches profile's mount). A
+        position:fixed stage nested in a -webkit-overflow-scrolling:touch scroller is
+        trapped/clipped to that container on iOS → the wrong-AR "cut". As a top-level
+        sibling the stage is viewport-true — same render path as every other origin.
+        The lineup IS the queue; theatre's own swipe/arrows navigate it in rank order;
+        source="screening" gives the rank indicator; rotate-back exits and closeTheatre
+        lands the list on the last-viewed rank. */}
+    {showTheatre && (
+      <TheatreMode
+        posts={lineupPosts}
+        ranks={lineupRanks}
+        startIndex={theatreStart}
+        source="screening"
+        exitOnPortrait={enteredViaRotation.current}
+        onIndexChange={(i) => { theatreIndexRef.current = i; }}
+        onClose={closeTheatre}
+      />
+    )}
+    </>
   );
 }
