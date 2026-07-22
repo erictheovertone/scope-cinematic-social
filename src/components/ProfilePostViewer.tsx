@@ -25,6 +25,7 @@ import MusicTitleChip from "@/components/music/MusicTitleChip";
 import MediaRenderer from "@/components/MediaRenderer";
 import GradedVideo from "@/components/finishing/GradedVideo";
 import TheatreMode from "@/components/TheatreMode";
+import { useRotateToTheatre } from "@/lib/useRotateToTheatre";
 import { supabase } from "@/lib/supabase/client";
 import { getAspectRatio } from "@/lib/aspectRatio";
 import PillarboxFrame from "@/components/PillarboxFrame";
@@ -519,8 +520,6 @@ export default function ProfilePostViewer({
   const [theatreStart, setTheatreStart] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
   const postRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const rotateArmed = useRef(true); // rotate-to-theatre re-trigger guard
-  const enteredViaRotation = useRef(false); // theatre opened by a rotate (vs the eye)
   const theatreIndexRef = useRef(0); // theatre's live index, for scroll-restore on exit
 
   // Theatre entry — scoped to THIS profile's posts, starting on whichever post is
@@ -543,28 +542,10 @@ export default function ProfilePostViewer({
   };
 
   // ROTATE-TO-THEATRE — while the post-scroll is mounted, rotating to LANDSCAPE enters
-  // theatre (scoped to this profile's posts, at the currently-viewed post). Both entries
-  // stay live (the eye is the tap path). Guards: (1) an `armed` flag — theatre force-
-  // rotates in portrait (it does NOT exit on portrait), so we only re-arm once the scroll
-  // is back in portrait, preventing a re-trigger loop when the user exits theatre while
-  // still landscape; (2) don't fire while theatre is already up or a sheet/takeover is
-  // over the scroll (delete sheet / data-suite-open collect+deck sheets). It's a MODE
-  // change, not an animation → prefers-reduced-motion is unaffected.
-  useEffect(() => {
-    const onOrient = () => {
-      const landscape = window.innerWidth > window.innerHeight;
-      if (!landscape) { rotateArmed.current = true; return; } // re-arm in portrait
-      if (!rotateArmed.current || showTheatre) return;
-      if (showDeleteSheet || document.documentElement.dataset.suiteOpen) return; // sheet/takeover up
-      rotateArmed.current = false; // no re-trigger (esp. exiting theatre while still landscape)
-      enteredViaRotation.current = true; // this session exits when the device returns to portrait
-      openTheatre();
-    };
-    window.addEventListener('resize', onOrient);
-    window.addEventListener('orientationchange', onOrient);
-    return () => { window.removeEventListener('resize', onOrient); window.removeEventListener('orientationchange', onOrient); };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showTheatre, showDeleteSheet]);
+  // theatre (scoped to this profile's posts, at the currently-viewed post). Brief M3a:
+  // the mechanism now lives in the shared useRotateToTheatre hook (also wired to the SR
+  // post view); the eye stays the tap path. `enteredViaRotation` is owned by the hook.
+  const { enteredViaRotation } = useRotateToTheatre({ isOpen: showTheatre, blocked: showDeleteSheet, onEnter: openTheatre });
 
   // When a ROTATION-entered theatre closes (TheatreMode fires its own portrait exit),
   // land the post-scroll on whichever post was last viewed in theatre, then clear the

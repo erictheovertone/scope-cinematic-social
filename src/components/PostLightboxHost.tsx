@@ -8,11 +8,27 @@
 
 import { useEffect, useState } from 'react';
 import PostModal from '@/components/PostModal';
+import TheatreMode from '@/components/TheatreMode';
 import { getPostById } from '@/lib/postsService';
 import { OPEN_POST_EVENT } from '@/lib/postLightbox';
+import { useRotateToTheatre } from '@/lib/useRotateToTheatre';
+import { useIsDesktop } from '@/lib/useIsDesktop';
 
 export default function PostLightboxHost() {
   const [post, setPost] = useState<Record<string, unknown> | null>(null);
+  const [showTheatre, setShowTheatre] = useState(false);
+  const isDesktop = useIsDesktop();
+
+  // Brief M3a — rotate-to-theatre for the post view opened from anywhere via
+  // openPostLightbox (Screening Room, wallet holdings, collect tap-through). Shares the
+  // SAME hook as the profile post-scroll. Gated to non-desktop so a desktop window RESIZE
+  // can't mis-fire (this host is globally mounted). Rotating back to portrait exits
+  // theatre; the PostModal stays mounted underneath → return-to-origin (the SR post view).
+  const { enteredViaRotation } = useRotateToTheatre({
+    enabled: !isDesktop && !!post,
+    isOpen: showTheatre,
+    onEnter: () => setShowTheatre(true),
+  });
 
   useEffect(() => {
     const handler = async (e: Event) => {
@@ -20,7 +36,7 @@ export default function PostLightboxHost() {
       if (!postId) return;
       try {
         const p = await getPostById(postId);
-        if (p) setPost(p as unknown as Record<string, unknown>);
+        if (p) { setShowTheatre(false); setPost(p as unknown as Record<string, unknown>); }
       } catch (err) {
         console.error('[PostLightboxHost] load error:', err);
       }
@@ -30,5 +46,18 @@ export default function PostLightboxHost() {
   }, []);
 
   if (!post) return null;
-  return <PostModal post={post as any} onClose={() => setPost(null)} />;
+  return (
+    <>
+      <PostModal post={post as any} onClose={() => { setShowTheatre(false); setPost(null); }} />
+      {showTheatre && (
+        <TheatreMode
+          posts={[post]}
+          startIndex={0}
+          source="feed"
+          exitOnPortrait={enteredViaRotation.current}
+          onClose={() => setShowTheatre(false)}
+        />
+      )}
+    </>
+  );
 }

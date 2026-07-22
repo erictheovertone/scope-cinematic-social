@@ -163,7 +163,12 @@ function MobileScreeningRoom() {
             // decoder freed, off-screen transfers nothing; poster until ready).
             // Image posts + reduced-motion + clip-less videos: the static
             // poster exactly as before. Same box — the row design is untouched.
-            const media = p && p.media_type === 'video' && p.autoplay_clip_url && !reducedMotion ? (
+            const media = p && p.media_type === 'video' && !reducedMotion ? (
+              // Brief M3a §2 — the W3 feed ruleset: fullPlayback = autoplay the FULL source
+              // muted + looping + playsinline, in-view-gated by GradedVideo's observer
+              // (gridMode → plays near-viewport, unmounts off-screen → decoder freed). This
+              // replaces the old baked-clip-only gate so EVERY video animates, not just the
+              // ~4s clips. Reduced-motion still falls through to the static poster below.
               <GradedVideo
                 url={p.media_urls?.[0] ?? ''}
                 posterUrl={p.poster_url ?? p.thumbnail_url}
@@ -171,6 +176,7 @@ function MobileScreeningRoom() {
                 clipUrl={p.autoplay_clip_url}
                 cropX={p.crop_x ?? 0} cropY={p.crop_y ?? 0} cropWidth={p.crop_width ?? 1} cropHeight={p.crop_height ?? 1}
                 autoplayFlag={p.autoplay !== false}
+                fullPlayback
                 gridMode
                 style={{ width: '100%', height: '100%' }}
               />
