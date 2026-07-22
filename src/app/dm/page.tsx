@@ -18,6 +18,7 @@ import { feedImage } from '@/lib/mediaUrl';
 import { useIsDesktop } from '@/lib/useIsDesktop';
 import DesktopDM from '@/components/desktop/DesktopDM';
 import { useTitleDebugTap } from '@/components/ViewportDebug';
+import PageTitle from '@/components/PageTitle';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -34,7 +35,6 @@ function MobileDMInbox() {
   const { user } = usePrivy();
   const router = useRouter();
   const [convs, setConvs] = useState<InboxConversation[] | null>(null);
-  const [logoPressed, setLogoPressed] = useState(false); // Brief W9 — return-home logomark press-pop (matches Wallet)
   const debugTap = useTitleDebugTap(); // Brief W2-1c — 5 rapid title taps toggle the viewport overlay
 
   const load = useCallback(() => {
@@ -57,27 +57,9 @@ function MobileDMInbox() {
 
   return (
     <main style={{ minHeight: '100dvh', background: '#000', paddingBottom: 'calc(72px + env(safe-area-inset-bottom, 0px))' }}>
-      {/* Header — Brief W9: page-title treatment matching Wallet (32px / 75 Bold /
-          --track-display / --ink-100 / sentence case), ~10px left inset + --safe-top per
-          the F1 chrome rule, return-home logomark top-right (the Wallet/Discover house
-          pattern; the inbox had nothing top-right before), ~24px to the first row. */}
-      <div style={{ position: 'relative', padding: 'calc(10px + var(--safe-top)) 10px 24px' }}>
-        <h1 onClick={debugTap} style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 32, lineHeight: 1, letterSpacing: 'var(--track-display)', color: 'var(--ink-100)', margin: 0 }}>
-          Messages
-        </h1>
-        <div style={{ position: 'absolute', top: 'calc(4px + var(--safe-top))', right: 6, display: 'flex', alignItems: 'center' }}>
-          <Link
-            href="/"
-            aria-label="Home"
-            onPointerDown={() => setLogoPressed(true)}
-            onPointerUp={() => setLogoPressed(false)}
-            onPointerLeave={() => setLogoPressed(false)}
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '9px 6px', textDecoration: 'none', outline: 'none', transform: logoPressed ? 'scale(0.92)' : 'scale(1)', opacity: logoPressed ? 0.75 : 1, transition: 'transform 120ms ease, opacity 120ms ease' }}
-          >
-            <img src="/design-updates-071526/scope-logomark-offwhite.png" alt="Scope" style={{ width: 39, height: 'auto', objectFit: 'contain', display: 'block' }} />
-          </Link>
-        </div>
-      </div>
+      {/* Header — Brief M3: now consumes the shared PageTitle primitive (extracted this
+          brief). Same 32px / return-home treatment as before; ~24px to the first row. */}
+      <PageTitle title="Messages" onTitleTap={debugTap} paddingBottom={24} />
 
       {convs === null ? (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '40vh' }}>

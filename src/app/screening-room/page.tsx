@@ -11,7 +11,6 @@
 // Design: pure black, #E5E1DB, SK-Modernist, sharp corners, no shadows/blur.
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
 import { openPostLightbox } from '@/lib/postLightbox';
 import { getAspectRatio, ratioPadding } from '@/lib/aspectRatio';
@@ -19,6 +18,8 @@ import PillarboxFrame from '@/components/PillarboxFrame';
 import GradedVideo from '@/components/finishing/GradedVideo';
 import { useIsDesktop } from '@/lib/useIsDesktop';
 import DesktopScreeningRoom from '@/components/desktop/DesktopScreeningRoom';
+import PageTitle from '@/components/PageTitle';
+import { useTitleDebugTap } from '@/components/ViewportDebug';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -61,7 +62,7 @@ export default function ScreeningRoomPage() {
 }
 
 function MobileScreeningRoom() {
-  const router = useRouter();
+  const debugTap = useTitleDebugTap(); // 5 rapid title taps toggle the viewport overlay (sibling parity)
   const [rows, setRows] = useState<RoomRow[] | null>(null); // null = loading
   // Reduced-motion → the tiles stay static posters (the pre-live behavior).
   const [reducedMotion, setReducedMotion] = useState(false);
@@ -115,23 +116,15 @@ function MobileScreeningRoom() {
 
   return (
     <div className="screen-min" style={{ minHeight: '100dvh', background: '#000', maxWidth: '30rem', margin: '0 auto', position: 'relative' }}>
-      {/* Header — Brief F1: top pad clears the notch. */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 'calc(16px + var(--safe-top)) 16px 12px' }}>
-        <button
-          onClick={() => router.back()}
-          aria-label="Back"
-          style={{ background: 'transparent', border: 'none', color: '#E5E1DB', cursor: 'pointer', fontSize: 'var(--fs-18)', padding: '0 6px 0 0', lineHeight: 1 }}
-        >
-          ‹
-        </button>
-        <img src="/screening-room-logo-temp-01.png" alt="" style={{ width: 22, height: 22, objectFit: 'contain', display: 'block' }} />
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <span style={{ ...SKB, fontSize: 'var(--fs-13)', color: '#E5E1DB', letterSpacing: '0.14em', textTransform: 'uppercase' }}>Screening Room</span>
-          <span style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(229,225,219,0.45)', letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: 2 }}>
-            Top 50 · market cap · refreshed 6h
-          </span>
-        </div>
-      </div>
+      {/* Header — Brief M3: the established PageTitle treatment (32px sentence-case title
+          + return-home logomark). Replaces the old ‹ back button, the RED temp logo
+          (screening-room-logo-temp-01.png — removed), and the uppercase label. The
+          descriptor rides under the title as a child, filling the space cleanly. */}
+      <PageTitle title="Screening Room" onTitleTap={debugTap} paddingBottom={16}>
+        <span style={{ ...SKR, display: 'block', fontSize: 'var(--fs-8)', color: 'rgba(229,225,219,0.45)', letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: 6 }}>
+          Top 50 · market cap · refreshed 6h
+        </span>
+      </PageTitle>
 
       {/* Loading */}
       {rows === null && (

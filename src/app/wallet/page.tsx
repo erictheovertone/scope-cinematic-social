@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import DesktopWallet from '@/components/desktop/DesktopWallet';
 import { useIsDesktop } from '@/lib/useIsDesktop';
 import { useTitleDebugTap } from '@/components/ViewportDebug';
+import PageTitle from '@/components/PageTitle';
 import { usePrivy, useFundWallet, useWallets } from "@privy-io/react-auth";
 import { base } from "viem/chains";
 import { createWalletClient, custom, getAddress, parseEther, encodeFunctionData } from "viem";
@@ -83,7 +84,6 @@ export default function WalletPage() {
   const [importedAssets, setImportedAssets] = useState<(UserAsset & { balance: string | null })[]>([]);
   const [showImport, setShowImport] = useState(false);
   const [addPressed, setAddPressed] = useState(false);
-  const [logoPressed, setLogoPressed] = useState(false);
   const debugTap = useTitleDebugTap(); // Brief W2-1c — 5 rapid title taps toggle the viewport overlay
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState("");
@@ -691,10 +691,11 @@ export default function WalletPage() {
       {/* Chrome (node 37:123): title top-left, truncated address + copy under it,
           logomark top-right (return-home). Bell kept beside the logomark so the
           market-notifications entry isn't stranded (frame shows only the mark). */}
-      <div style={{ position: "relative", padding: "calc(10px + var(--safe-top)) 10px 6px" }}>
-        <h1 onClick={debugTap} style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 32, lineHeight: 1, letterSpacing: "var(--track-display)", color: "var(--ink-100)", margin: 0 }}>
-          Wallet
-        </h1>
+      {/* Brief M3: header now consumes the shared PageTitle primitive (extracted this
+          brief). paddingBottom 6 keeps total header height ~53 so the balance card stays
+          seated at y79. Copy-address line passes through as children; return-home logomark
+          + press-pop live in PageTitle now (bell was already removed in 2.3a/N0c). */}
+      <PageTitle title="Wallet" onTitleTap={debugTap} paddingBottom={6}>
         {walletAddress && (
           <button
             onClick={() => navigator.clipboard.writeText(walletAddress).then(() => showToast("Address copied"))}
@@ -711,26 +712,7 @@ export default function WalletPage() {
             </span>
           </button>
         )}
-        {/* Brief 2.3a (N0c): logomark-only — the bell trigger is removed here; the
-            /profile/notifications?tab=market route is unchanged, reached elsewhere. */}
-        <div style={{ position: "absolute", top: "calc(4px + var(--safe-top))", right: 6, display: "flex", alignItems: "center" }}>
-          <Link
-            href="/"
-            aria-label="Home"
-            onPointerDown={() => setLogoPressed(true)}
-            onPointerUp={() => setLogoPressed(false)}
-            onPointerLeave={() => setLogoPressed(false)}
-            style={{
-              display: "flex", alignItems: "center", justifyContent: "center",
-              padding: "9px 6px", textDecoration: "none", outline: "none",
-              transform: logoPressed ? "scale(0.92)" : "scale(1)", opacity: logoPressed ? 0.75 : 1,
-              transition: "transform 120ms ease, opacity 120ms ease",
-            }}
-          >
-            <img src="/design-updates-071526/scope-logomark-offwhite.png" alt="Scope" style={{ width: 39, height: "auto", objectFit: "contain", display: "block" }} />
-          </Link>
-        </div>
-      </div>
+      </PageTitle>
 
       {/* ══ WALLET REDUX chrome (Figma 962:886 + 957:565) — chrome only ══ */}
 
