@@ -457,6 +457,13 @@ export default function Home() {
         <PostModal
           post={lightboxPost}
           onClose={() => setLightboxPost(null)}
+          /* Brief M1 §2 — swipe nav over the ALREADY-LOADED feed queue (no new fetches).
+             onStep swaps lightboxPost to the neighbour; no wrap (posts[i±1] undefined at
+             the ends → no-op, and PostModal rubber-bands there). */
+          nav={(() => {
+            const i = posts.findIndex((p) => p.id === (lightboxPost as { id?: string }).id);
+            return { index: Math.max(0, i), total: posts.length, onStep: (dir: 1 | -1) => { const next = posts[i + dir]; if (next) setLightboxPost(next); } };
+          })()}
           onTheaterMode={() => {
             // Enter theatre AT this post; exit returns here (feed untouched).
             const i = posts.findIndex((p) => p.id === (lightboxPost as { id?: string }).id);

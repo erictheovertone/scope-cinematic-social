@@ -464,9 +464,9 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
           className="tap-target-x6"
           onClick={handleLike}
           disabled={loading || !user}
-          style={{ background: "transparent", border: "none", cursor: user ? "pointer" : "default", display: "flex", alignItems: "center", gap: 4, padding: 0, color: isLiked ? "#E5E1DB" : "rgba(229,225,219,0.6)" }}
+          style={{ background: "transparent", border: "none", cursor: user ? "pointer" : "default", display: "flex", alignItems: "center", gap: 4, padding: 0, color: isLiked ? "#E5E1DB" : "rgba(229,225,219,0.51)" }}
         >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill={isLiked ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill={isLiked ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
           </svg>
           <span style={{ ...SKR, fontSize: 12.5, color: "inherit", letterSpacing: 'var(--track-body)' }}>{likes.length}</span>
@@ -477,9 +477,9 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
         <button
           className="tap-target-x6"
           onClick={(e) => { e.stopPropagation(); toggleComments(); }}
-          style={{ background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 4, padding: 0, color: "rgba(229,225,219,0.6)" }}
+          style={{ background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 4, padding: 0, color: "rgba(229,225,219,0.51)" }}
         >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
           </svg>
           <span style={{ ...SKR, fontSize: 12.5, color: "inherit", letterSpacing: 'var(--track-body)' }}>{comments.length}</span>
@@ -498,7 +498,7 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
             onClick={(e) => { e.stopPropagation(); setShowCollectSheet(true); }}
             style={{ background: "transparent", border: "none", cursor: "pointer", padding: 0, lineHeight: 1 }}
           >
-            <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 14.5, letterSpacing: 'var(--track-display)', color: showCollectSheet ? "#E5E1DB" : "rgba(229,225,219,0.49)", lineHeight: 1 }}>COLLECT</span>{/* Brief W3 §2 — resting opacity ×0.7: 0.7 → 0.49 (size/weight/position unchanged) */}
+            <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 13, letterSpacing: 'var(--track-display)', color: showCollectSheet ? "#E5E1DB" : "rgba(229,225,219,0.42)", lineHeight: 1 }}>COLLECT</span>{/* Brief M1 §1 — opacity 0.49 → 0.42 (−15%); font 14.5 → 13 (−1.5px) */}
           </button>
         </div>
       </div>

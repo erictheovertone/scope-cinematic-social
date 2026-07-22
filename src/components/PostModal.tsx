@@ -113,6 +113,89 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
   const [showDeckPicker, setShowDeckPicker] = useState(false);
   const [deckToast, setDeckToast] = useState("");
 
+  // Brief M1 §2 — finger-tracking horizontal swipe nav (feed lightbox). Drives the nav
+  // prop: swipe left → next, right → prev. Content translateX follows the pan; commits
+  // past ~30% width or a velocity flick, else eases back. Edge dead-zone so the iOS
+  // system back-swipe can't double-fire (known #3). Rubber-bands at the ends (no wrap).
+  const [dragX, setDragX] = useState(0);
+  const [dragTransition, setDragTransition] = useState("none");
+  const swipeRef = useRef<{ x0: number; y0: number; t0: number; axis: "none" | "x" | "y"; active: boolean } | null>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const navRef = useRef(nav);
+  navRef.current = nav;
+  const EDGE_INSET = 24;   // dead-zone each side; iOS edge-back can't be blocked in the PWA
+  const AXIS_LOCK = 10;    // px of movement before we claim horizontal intent
+
+  // Swap the post WITHOUT touching `visible` (no slide-down) + close any post-bound
+  // transient sheets so they can't leak onto the wrong post (money-path: collect sheet).
+  const doStep = (dir: 1 | -1) => {
+    if (!navRef.current) return;
+    setShowCollectSheet(false);
+    setShowComments(false);
+    setShowDeckPicker(false);
+    setOwnerMenuOpen(false);
+    setReplyingTo(null);
+    navRef.current.onStep(dir);
+  };
+
+  // Non-passive touchmove so preventDefault can suppress the vertical scroller while a
+  // horizontal drag is in flight. Attached once; reads the latest nav via navRef.
+  useEffect(() => {
+    const el = bodyRef.current;
+    if (!el) return;
+    const onMove = (e: TouchEvent) => {
+      const s = swipeRef.current;
+      const n = navRef.current;
+      if (!s || !s.active || !n) return;
+      const t = e.touches[0];
+      const dx = t.clientX - s.x0, dy = t.clientY - s.y0;
+      if (s.axis === "none") {
+        if (Math.abs(dx) < AXIS_LOCK && Math.abs(dy) < AXIS_LOCK) return;
+        s.axis = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
+        if (s.axis === "y") { s.active = false; return; } // hand vertical off to the scroller
+      }
+      if (s.axis === "x") {
+        e.preventDefault();
+        const atStart = n.index === 0 && dx > 0;
+        const atEnd = n.index === n.total - 1 && dx < 0;
+        setDragX(atStart || atEnd ? dx * 0.32 : dx); // rubber-band resist at the ends
+      }
+    };
+    el.addEventListener("touchmove", onMove, { passive: false });
+    return () => el.removeEventListener("touchmove", onMove);
+  }, []);
+
+  const onSwipeStart = (e: React.TouchEvent) => {
+    if (!navRef.current) return;
+    const t = e.touches[0];
+    if (t.clientX < EDGE_INSET || t.clientX > window.innerWidth - EDGE_INSET) { swipeRef.current = null; return; }
+    swipeRef.current = { x0: t.clientX, y0: t.clientY, t0: performance.now(), axis: "none", active: true };
+    setDragTransition("none");
+  };
+  const onSwipeEnd = (e: React.TouchEvent) => {
+    const s = swipeRef.current; swipeRef.current = null;
+    const n = navRef.current;
+    const ease = "transform 300ms cubic-bezier(0.32,0.72,0,1)";
+    if (!s || s.axis !== "x" || !n) { if (dragX !== 0) { setDragTransition(ease); setDragX(0); } return; }
+    const t = e.changedTouches[0];
+    const dx = t.clientX - s.x0;
+    const dt = performance.now() - s.t0;
+    const v = dt > 0 ? dx / dt : 0;
+    const w = window.innerWidth;
+    const dir: 1 | -1 = dx < 0 ? 1 : -1;
+    const hasNeighbor = dir === 1 ? n.index < n.total - 1 : n.index > 0;
+    const commit = hasNeighbor && (Math.abs(dx) > w * 0.3 || Math.abs(v) > 0.5);
+    const reduced = typeof window !== "undefined" && !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    setDragTransition(ease);
+    if (commit) {
+      if (reduced) { doStep(dir); setDragX(0); setDragTransition("none"); return; }
+      setDragX(dir === 1 ? -w : w); // slide the outgoing post off in the drag direction
+      window.setTimeout(() => { doStep(dir); setDragX(0); setDragTransition("none"); }, 300);
+    } else {
+      setDragX(0); // ease back
+    }
+  };
+
   // Viewer's own Supabase profile (for comment submission + owner detection)
   const [viewerUsername, setViewerUsername] = useState<string>("");
   const [viewerAvatar, setViewerAvatar] = useState<string | null>(null);
@@ -235,7 +318,6 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
     return () => { cancelled = true; };
   }, [post.id, post.coin_address, post.token_standard, economy, marketRefreshKey]);
 
-  const navTouch = useRef<{ x: number; y: number } | null>(null);
 
   // Animated close
   const handleClose = () => {
@@ -331,14 +413,6 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
       <div
         className="bg-black"
         data-swipe-exclude
-        onTouchStart={(e) => { if (nav) { const t = e.touches[0]; navTouch.current = { x: t.clientX, y: t.clientY }; } }}
-        onTouchEnd={(e) => {
-          const s0 = navTouch.current; navTouch.current = null;
-          if (!nav || !s0) return;
-          const t = e.changedTouches[0];
-          const dx = t.clientX - s0.x, dy = t.clientY - s0.y;
-          if (Math.abs(dx) > 52 && Math.abs(dx) > Math.abs(dy) * 1.5) nav.onStep(dx < 0 ? 1 : -1); // ends no-op inside onStep
-        }}
         style={{
           position: "fixed",
           inset: 0,
@@ -408,20 +482,26 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
           </span>
         </div>
 
-        {/* ── Scrollable body ── */}
+        {/* ── Scrollable body ── (Brief M1 §2: owns the swipe gesture; overflowX hidden
+            clips the sliding content) */}
         <div
+          ref={bodyRef}
           onClick={() => { if (ownerMenuOpen) setOwnerMenuOpen(false); }} // tap-out collapses the owner reveal
+          onTouchStart={onSwipeStart}
+          onTouchEnd={onSwipeEnd}
           style={{
             flex: 1,
             overflowY: "auto",
+            overflowX: "hidden",
             // @ts-ignore
             WebkitOverflowScrolling: "touch",
           }}
         >
           {/* ONE GROUP — media + the data block center vertically TOGETHER
               (no void: the data block sits directly beneath the media with
-              normal spacing, never pinned to the screen bottom). */}
-          <div style={{ minHeight: "calc(100vh - 44px)", display: "flex", flexDirection: "column", justifyContent: "center", position: "relative", paddingBottom: onScrollDown ? 72 : 0 }}>
+              normal spacing, never pinned to the screen bottom). Brief M1 §2:
+              translateX follows the swipe pan. */}
+          <div style={{ minHeight: "calc(100vh - 44px)", display: "flex", flexDirection: "column", justifyContent: "center", position: "relative", paddingBottom: onScrollDown ? 72 : 0, transform: `translateX(${dragX}px)`, transition: dragTransition, willChange: dragX !== 0 ? "transform" : "auto" }}>
             {/* ── Program nav — a slim row DIRECTLY ABOVE the media frame, in the
                 black: ‹ left · counter center · › right (one line, never over
                 the media). An arrow vanishes at its end — the rubber-band. ── */}
@@ -458,7 +538,7 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
                 </span>
               )}
             </div>
-            <div style={{ position: "relative", width: "92%", margin: "0 auto", aspectRatio: getAspectRatio(post.layout_id ?? ''), overflow: "hidden", background: "#0a0a0a" }}>
+            <div key={post.id} style={{ position: "relative", width: "92%", margin: "0 auto", aspectRatio: getAspectRatio(post.layout_id ?? ''), overflow: "hidden", background: "#0a0a0a" }}>{/* Brief M1 §2 — key remounts media per swiped post: frees the outgoing decoder, re-inits GradedVideo's forcePlay + iOS decode watchdog for the incoming (W3 pause/play handoff) */}
               <MusicWaveButton post={post as { music_track_id?: string | null; music_mode?: string | null; music_start_seconds?: number | null; media_type?: string | null }} />
               {post.media_urls?.[0] ? (
                 isVideoPost ? (
