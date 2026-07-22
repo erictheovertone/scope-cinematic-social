@@ -403,38 +403,17 @@ export default function EditProfilePage() {
           {savingProfile ? 'SAVING...' : profileSaved ? 'SAVED ✓' : 'SAVE PROFILE'}
         </button>
 
-        <DIVIDER />
-
-        {/* DIVIDING LINE — Piece 2. The line between your badges and photo; tier
-            unlocks the gradients. THICK swatches (real preview); locked lines
-            shown dimmed with the tier needed. Persists on select. Shows for
-            EVERYONE — free users see the default + locked/dimmed options. */}
-        <SECTION label="DIVIDING LINE" />
-        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 12 }}>
-          {DIVIDER_ORDER.map((key) => {
-            const line = DIVIDER_LINES[key];
-            const unlocked = isDividerUnlocked(key, lineTier);
-            const selected = selectedLine === key;
-            return (
-              <button
-                key={key}
-                onClick={() => selectLine(key)}
-                disabled={!unlocked}
-                style={{ background: 'transparent', border: 'none', padding: 0, cursor: unlocked ? 'pointer' : 'default', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, opacity: unlocked ? 1 : 0.32 }}
-              >
-                {/* THICK swatch — gradient preview (the real divider is 0.5px). */}
-                <div style={{ width: 20, height: 60, background: line.gradient, border: selected ? '1.5px solid #E5E1DB' : '1px solid rgba(229,225,219,0.18)', boxSizing: 'border-box' }} />
-                <span style={{ ...SKB, fontSize: 'var(--fs-7_5)', letterSpacing: '0.05em', color: selected ? '#E5E1DB' : 'rgba(229,225,219,0.7)', textTransform: 'uppercase' }}>{line.name}</span>
-                {!unlocked && line.tier > 0 && (
-                  <span style={{ ...SKR, fontSize: 'var(--fs-6)', letterSpacing: '0.08em', color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase' }}>{TIER_UNLOCK_LABEL[line.tier as 1 | 2 | 3]}</span>
-                )}
-              </button>
-            );
-          })}
-        </div>
-        <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: 'rgba(229,225,219,0.35)', lineHeight: 1.5, margin: '0 0 4px' }}>
-          The line between your badges and your photo. Default is invisible — climb tiers to unlock colours.
-        </p>
+        {/* Brief M2 §4 — DIVIDING LINE picker section removed per the standing ruling.
+            INTERIM/conservative scope: the editable UI is gone from this mobile surface;
+            the divider_line DB column + the profile-header rendering are left INTACT
+            (existing users' lines still show, just no longer editable), and the desktop
+            DesktopSettings twin + render-site neutralization await Eric's full-scope call.
+            The select/tier logic below is left wired so restore or full-removal is clean.
+            NOTE: this is Piece 2 of the badge redesign (git f8bc095), a deliberate economy
+            reward — NOT the Stage-2B leftover the brief assumed. Holo banner (Piece 3,
+            below) is a separate feature and is untouched. The single <DIVIDER /> after
+            the holo block (before KIT) is the sole separator now — avoids a double rule
+            when holo is absent (non-founding users). */}
 
         {/* HOLO BANNER — Piece 3. Augmented (Founding 500) ONLY: an iridescent
             fill for the badge backdrop. Default OFF. Persists on SAVE. */}
