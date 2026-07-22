@@ -7,8 +7,6 @@ import { usePrivy } from "@privy-io/react-auth";
 import { saveProfile, uploadImage, getUserByPrivyId, getProfileByUsername, syncUserWithSupabase } from "@/lib/userService";
 import FrameLoader from "@/components/FrameLoader";
 
-const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
-
 async function compressImage(file: File): Promise<File> {
   return new Promise((resolve) => {
     // PFP only — it renders at avatar sizes, so 512² WebP (~80–150KB) is plenty and
@@ -157,35 +155,46 @@ export default function ProfileSetup() {
 
   const triggerFileInput = () => fileInputRef.current?.click();
 
+  const disabled = isLoading || imageUploading || !!imageUploadError;
+  const fieldStyle: React.CSSProperties = {
+    width: '100%', boxSizing: 'border-box', background: 'transparent',
+    border: '1px solid rgba(229,225,219,0.19)', borderRadius: 0, outline: 'none',
+    fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 16,
+    color: 'var(--ink-100)', letterSpacing: 'var(--track-body)',
+  };
+  const errStyle: React.CSSProperties = {
+    display: 'block', marginTop: 5, fontFamily: 'var(--font-display)', fontWeight: 700,
+    fontSize: 9, color: 'var(--danger)', textTransform: 'uppercase', letterSpacing: '0.08em',
+  };
+
+  // Brief S3 — presentation rebuilt to frame 93:708; upload/validation/submit untouched.
   return (
-    <div style={{ background: '#000', position: 'relative', width: 375, minHeight: 820, margin: '0 auto' }}>
+    <div style={{ position: 'fixed', inset: 0, background: 'var(--canvas)', boxSizing: 'border-box', overflowY: 'auto', WebkitOverflowScrolling: 'touch', display: 'flex', flexDirection: 'column', padding: 'calc(8px + var(--safe-top)) 13px calc(24px + var(--safe-bottom))' }}>
+      {/* Placeholder labels = small tracked dim caps (Haas). ::placeholder carries its OWN
+          font-size, so the INPUT text can stay ≥16px (iOS zoom trap) while labels read tiny. */}
+      <style>{`
+        .s3-input::placeholder {
+          font-family: var(--font-display); font-weight: 700;
+          font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase;
+          color: rgba(229,225,219,0.28);
+        }
+      `}</style>
 
-      {/* Scope logo — top right */}
-      <img
-        src="/scope-logo-new.png"
-        alt="Scope"
-        style={{ position: 'absolute', top: 7, right: 6, height: 23, width: 'auto' }}
-      />
+      {/* Logomark — top-right, 44×28, 60%. */}
+      <img src="/design-updates-071526/scope-logomark-offwhite.png" alt="Scope" style={{ position: 'absolute', top: 'calc(11px + var(--safe-top))', right: 13, width: 44, height: 'auto', opacity: 0.6 }} />
 
-      {/* "PROFILE / SETUP" — left of photo box */}
-      <div style={{ position: 'absolute', left: 40, top: 163, transform: 'translateY(-50%)' }}>
-        <p style={{ ...SKB, fontSize: 'var(--fs-14)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '-0.28px', lineHeight: 1.4, margin: 0 }}>PROFILE</p>
-        <p style={{ ...SKB, fontSize: 'var(--fs-14)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '-0.28px', lineHeight: 1.4, margin: 0 }}>SETUP</p>
-      </div>
+      {/* Title — centred, above the PFP. */}
+      <p style={{ alignSelf: 'center', margin: '70px 0 0', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 14, letterSpacing: 'var(--track-display)', color: 'var(--ink-100)', textAlign: 'center' }}>Set up your profile</p>
 
-      {/* Profile photo box — 130×130 with crosshair */}
-      <div
-        onClick={triggerFileInput}
-        style={{ position: 'absolute', left: 122, top: 146, width: 130, height: 130, border: '1px solid white', background: 'transparent', cursor: 'pointer', overflow: 'hidden' }}
-      >
+      {/* PFP upload — 130×130 hairline, "+" trigger. On selected image the preview covers
+          and the + disappears. Upload flow (picker → compress → upload) unchanged. */}
+      <div onClick={triggerFileInput} style={{ position: 'relative', width: 130, height: 130, alignSelf: 'center', marginTop: 16, border: '1px solid rgba(229,225,219,0.15)', boxSizing: 'border-box', background: 'transparent', cursor: 'pointer', overflow: 'hidden' }}>
         {profileImage ? (
           <img src={feedImage(profileImage, 320)} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
         ) : (
           <>
-            {/* Vertical line */}
-            <div style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', width: 1, height: 82, background: '#d9d9d9' }} />
-            {/* Horizontal line */}
-            <div style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', width: 82, height: 1, background: '#d9d9d9' }} />
+            <div style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', width: 1, height: 82, background: 'rgba(229,225,219,0.52)' }} />
+            <div style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', width: 82, height: 1, background: 'rgba(229,225,219,0.52)' }} />
           </>
         )}
         {imageUploading && (
@@ -194,76 +203,23 @@ export default function ProfileSetup() {
           </div>
         )}
       </div>
-
       <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} style={{ display: 'none' }} />
 
-      {/* Username field */}
-      <div style={{ position: 'absolute', left: 38, top: 349, width: 298, height: 25, border: '1px solid white', background: 'transparent', display: 'flex', alignItems: 'center' }}>
-        <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: '#E5E1DB', paddingLeft: 6, flexShrink: 0 }}>@</span>
-        <input
-          type="text"
-          value={username}
-          onChange={(e) => setUsername(e.target.value.toUpperCase())}
-          placeholder="USERNAME"
-          style={{ flex: 1, height: '100%', background: 'transparent', border: 'none', outline: 'none', ...SKB, fontSize: 'max(16px, var(--fs-9))', color: '#E5E1DB', letterSpacing: '-0.18px', paddingLeft: 3, paddingRight: 6 }}
-        />
-      </div>
-      {usernameError && (
-        <div style={{ position: 'absolute', left: 38, top: 378 }}>
-          <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'var(--danger)', textTransform: 'uppercase', letterSpacing: '-0.18px' }}>{usernameError}</span>
+      {/* Fields — hairline recipe, 294 wide, in-field placeholder labels. */}
+      <div style={{ alignSelf: 'center', width: 294, maxWidth: '100%', marginTop: 66, display: 'flex', flexDirection: 'column', gap: 15 }}>
+        <div>
+          <input className="s3-input" type="text" value={username} onChange={(e) => setUsername(e.target.value.toUpperCase())} placeholder="@ USERNAME" style={{ ...fieldStyle, height: 40, padding: '0 12px' }} />
+          {usernameError && <span style={errStyle}>{usernameError}</span>}
         </div>
-      )}
-
-      {/* Display name field */}
-      <div style={{ position: 'absolute', left: 38, top: 406, width: 298, height: 24, border: '1px solid white', background: 'transparent', display: 'flex', alignItems: 'center' }}>
-        <input
-          type="text"
-          value={displayName}
-          onChange={(e) => setDisplayName(e.target.value.toUpperCase())}
-          placeholder="DISPLAY NAME"
-          style={{ width: '100%', height: '100%', background: 'transparent', border: 'none', outline: 'none', ...SKB, fontSize: 'max(16px, var(--fs-9))', color: '#E5E1DB', letterSpacing: '-0.18px', paddingLeft: 6, paddingRight: 6 }}
-        />
+        <input className="s3-input" type="text" value={displayName} onChange={(e) => setDisplayName(e.target.value.toUpperCase())} placeholder="DISPLAY NAME" style={{ ...fieldStyle, height: 40, padding: '0 12px' }} />
+        <textarea className="s3-input" value={bio} onChange={(e) => setBio(e.target.value)} maxLength={160} placeholder="BIO [ 160 CHARACTER MAX ]" style={{ ...fieldStyle, height: 122, resize: 'none', padding: '10px 12px' }} />
+        {imageUploadError && <span style={errStyle}>{imageUploadError}</span>}
+        {error && <span style={errStyle}>{error}</span>}
       </div>
 
-      {/* Bio field */}
-      <div style={{ position: 'absolute', left: 38, top: 462, width: 298, height: 83, border: '1px solid white', background: 'transparent' }}>
-        <textarea
-          value={bio}
-          onChange={(e) => setBio(e.target.value)}
-          maxLength={160}
-          placeholder="BIO [ 160 CHARACTER MAX ]"
-          style={{ width: '100%', height: '100%', background: 'transparent', border: 'none', outline: 'none', resize: 'none', ...SKB, fontSize: 'max(16px, var(--fs-9))', color: '#E5E1DB', letterSpacing: '-0.18px', padding: '6px 6px', boxSizing: 'border-box' }}
-        />
-      </div>
-
-      {/* Image upload error */}
-      {imageUploadError && (
-        <div style={{ position: 'absolute', left: 38, top: 556 }}>
-          <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'var(--danger)', textTransform: 'uppercase', letterSpacing: '-0.18px' }}>{imageUploadError}</span>
-        </div>
-      )}
-
-      {/* General error */}
-      {error && (
-        <div style={{ position: 'absolute', left: 38, top: 572, width: 298 }}>
-          <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'var(--danger)', textTransform: 'uppercase', letterSpacing: '-0.18px' }}>{error}</span>
-        </div>
-      )}
-
-      {/* Continue button */}
-      <button
-        onClick={handleContinue}
-        disabled={isLoading || imageUploading || !!imageUploadError}
-        style={{
-          position: 'absolute', left: 122, top: 736, width: 130, height: 45,
-          border: '1px solid white', background: 'transparent', cursor: 'pointer',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          opacity: (isLoading || imageUploading || !!imageUploadError) ? 0.4 : 1,
-        }}
-      >
-        <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '-0.2px' }}>
-          {isLoading ? 'SAVING...' : 'CONTINUE'}
-        </span>
+      {/* Continue — bottom-right, 24px 75 Bold ~67%. Same submit handler; disabled = dimmed. */}
+      <button onClick={handleContinue} disabled={disabled} className="tap-target" style={{ marginTop: 'auto', alignSelf: 'flex-end', background: 'transparent', border: 'none', cursor: disabled ? 'default' : 'pointer', padding: '10px 2px', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 24, letterSpacing: 'var(--track-display)', color: 'rgba(229,225,219,0.67)', opacity: disabled ? 0.4 : 1 }}>
+        {isLoading ? 'Saving…' : 'Continue'}
       </button>
     </div>
   );
