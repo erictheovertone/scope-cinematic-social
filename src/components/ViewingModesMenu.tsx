@@ -100,8 +100,8 @@ export default function ViewingModesMenu({ onClose, onSelect }: Props) {
             }}
           >
             <span style={{ flex: '1 1 auto', minWidth: 0, display: 'flex', flexDirection: 'column' }}>
-              <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 20, lineHeight: 0.82, letterSpacing: 'var(--track-display)', color: 'var(--ink-100)', whiteSpace: 'pre-line' }}>{card.name}</span>
-              <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 10, lineHeight: 1.25, color: 'rgba(229,225,219,0.5)', marginTop: 8 }}>{card.desc}</span>
+              <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 25, lineHeight: 0.82, letterSpacing: 'var(--track-display)', color: 'var(--ink-100)', whiteSpace: 'pre-line' }}>{card.name}</span>
+              <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 15, lineHeight: 1.25, color: 'rgba(229,225,219,0.5)', marginTop: 8 }}>{card.desc}</span>
             </span>
             {/* Brief S1a — preview scales WITH the card: height = 53% of the card height
                 (preserves the original 59/110 ratio), aspect locked 140:59, capped at 82px
