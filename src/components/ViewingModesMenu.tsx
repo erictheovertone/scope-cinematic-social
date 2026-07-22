@@ -58,12 +58,13 @@ export default function ViewingModesMenu({ onClose, onSelect }: Props) {
       style={{
         position: 'fixed', inset: 0, zIndex: 60, background: 'var(--canvas)',
         overflowY: 'auto', WebkitOverflowScrolling: 'touch', boxSizing: 'border-box',
+        display: 'flex', flexDirection: 'column',
         padding: 'calc(15px + var(--safe-top)) 7px calc(24px + var(--safe-bottom))',
       }}
     >
       {/* Header — title top-left, logomark top-right (close/return affordance;
           replaces the old ✕. Backdrop tap still closes too). */}
-      <div onClick={(e) => e.stopPropagation()} style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '0 3px 0 6px' }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ flexShrink: 0, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '0 3px 0 6px' }}>
         <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 32, lineHeight: 0.94, letterSpacing: 'var(--track-display)', color: 'var(--ink-100)', margin: 0 }}>
           Viewing Modes
         </h1>
@@ -72,9 +73,14 @@ export default function ViewingModesMenu({ onClose, onSelect }: Props) {
         </button>
       </div>
 
-      {/* Cards — 360×110 fluid, radius 13, 1px 0.49 ivory border, horizontal
-          0.07→0.08 gradient. Whole card is the tap target. */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 15, margin: '18px 0 0' }}>
+      {/* Cards — Brief S1a: the stack fills the viewport. flex:1 column distributes the
+          height BELOW the title zone; four cards share it equally (flex:1 each) with 12px
+          gaps down to safe-bottom — no dead space, no scroll on 812/844/852. Recipe
+          (radius 13 / 0.49 ivory border / 0.07→0.08 gradient) unchanged. Whole card taps.
+          Short-viewport guard: each card floors at minHeight 110 (the S1 size) → once the
+          natural flex height would drop below that the stack overflows and this container
+          scrolls (graceful, not crushed). */}
+      <div style={{ flex: '1 1 auto', display: 'flex', flexDirection: 'column', gap: 12, margin: '18px 0 0' }}>
         {CARDS.map((card, i) => (
           <motion.button
             key={card.mode}
@@ -85,7 +91,7 @@ export default function ViewingModesMenu({ onClose, onSelect }: Props) {
             onClick={(e) => { e.stopPropagation(); onSelect(card.mode); }}
             aria-label={card.aria}
             style={{
-              position: 'relative', width: '100%', height: 110, flexShrink: 0, borderRadius: 13,
+              position: 'relative', width: '100%', flex: '1 1 0', minHeight: 110, borderRadius: 13,
               border: '1px solid rgba(229,225,219,0.49)',
               background: 'linear-gradient(90deg, rgba(229,225,219,0.07), rgba(33,31,31,0.08))',
               overflow: 'hidden', cursor: 'pointer', textAlign: 'left',
@@ -97,7 +103,11 @@ export default function ViewingModesMenu({ onClose, onSelect }: Props) {
               <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 20, lineHeight: 0.82, letterSpacing: 'var(--track-display)', color: 'var(--ink-100)', whiteSpace: 'pre-line' }}>{card.name}</span>
               <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 10, lineHeight: 1.25, color: 'rgba(229,225,219,0.5)', marginTop: 8 }}>{card.desc}</span>
             </span>
-            <img src={card.preview} alt="" aria-hidden style={{ width: 140, height: 59, objectFit: 'contain', opacity: 0.78, flexShrink: 0, display: 'block' }} />
+            {/* Brief S1a — preview scales WITH the card: height = 53% of the card height
+                (preserves the original 59/110 ratio), aspect locked 140:59, capped at 82px
+                so the text column keeps ≥~120px and is never crowded. Falls back to ~58px
+                (≈ the original 59) when cards floor at minHeight 110. */}
+            <img src={card.preview} alt="" aria-hidden style={{ height: '53%', maxHeight: 82, aspectRatio: '140 / 59', width: 'auto', objectFit: 'contain', opacity: 0.78, flexShrink: 0, display: 'block' }} />
           </motion.button>
         ))}
       </div>
