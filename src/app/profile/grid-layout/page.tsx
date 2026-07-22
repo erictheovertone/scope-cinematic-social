@@ -8,7 +8,7 @@ import { getUserByPrivyId, getProfile } from "@/lib/userService";
 import { setSharedAspect, setMobileCount, type AspectId } from "@/lib/layoutModel";
 import WelcomeTransition from "@/components/WelcomeTransition";
 
-const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
+const SKB: React.CSSProperties = { fontFamily: "var(--font-display)", fontWeight: 700 };
 
 const LAYOUTS = [
   { id: "pana-wide-2col", label: "2X ULTRA-PAN", ratio: 2.75, ratioLabel: "2.75:1", cols: 2, resolution: "4096x1551" },
@@ -96,21 +96,23 @@ function CellOverlay({
     <div style={{ position: "relative", width, height, border, background: "transparent", flexShrink: 0, overflow: "visible" }}>
       {isFirst && (
         <>
+          {/* Brief M2 §3a — chip was ivory-on-ivory when selected (invisible label = the
+              "plain white box"). Ivory fill, dark legible text, both states. §3b cushion. */}
           <span style={{
-            position: "absolute", top: 5, left: 6,
-            background: selected ? "#E5E1DB" : "#d9d9d9", height: 11, padding: "0 3px",
+            position: "absolute", top: 8, left: 9,
+            background: "#E5E1DB", height: 13, padding: "0 5px",
             display: "flex", alignItems: "center",
-            fontFamily: "'Sk-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-8)',
-            color: selected ? "#E5E1DB" : "#000000", letterSpacing: "-0.16px", whiteSpace: "nowrap", lineHeight: 1, zIndex: 1,
+            fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 'var(--fs-8)',
+            color: "#050505", letterSpacing: "-0.16px", whiteSpace: "nowrap", lineHeight: 1, zIndex: 1,
           }}>
             {layout.label}
           </span>
 
-          <div style={{ position: "absolute", top: 19, left: 6, display: "flex", alignItems: "center" }}>
-            <span style={{ fontFamily: "'Sk-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-7)', color: "#E5E1DB", letterSpacing: "-0.14px" }}>
+          <div style={{ position: "absolute", top: 26, left: 9, display: "flex", alignItems: "center" }}>
+            <span style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 'var(--fs-7)', color: "#E5E1DB", letterSpacing: "-0.14px" }}>
               {"AR     "}
             </span>
-            <span style={{ fontFamily: "'Sk-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-7)', color: "#E5E1DB", letterSpacing: ratioLS, marginLeft: 4 }}>
+            <span style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 'var(--fs-7)', color: "#E5E1DB", letterSpacing: ratioLS, marginLeft: 4 }}>
               {layout.ratioLabel}
             </span>
           </div>
@@ -118,7 +120,7 @@ function CellOverlay({
           {layout.resolution && (() => {
             const [lp, rp] = layout.resolution.split("x");
             const ts: React.CSSProperties = {
-              fontFamily: "'Sk-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-7)',
+              fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 'var(--fs-7)',
               color: "rgba(229,225,219,0.5)", letterSpacing: "22px", whiteSpace: "nowrap", lineHeight: 1,
             };
             return (
@@ -157,12 +159,12 @@ function LayoutSection({
             <div key={i} style={{ position: "absolute", left: cell.left, top: cell.top, width: cell.width, height: cell.height, border, background: "transparent" }}>
               {i === 0 && (
                 <>
-                  <span style={{ position: "absolute", top: 5, left: 6, background: selected ? "#E5E1DB" : "#d9d9d9", height: 11, padding: "0 3px", display: "flex", alignItems: "center", fontFamily: "'Sk-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-8)', color: selected ? "#E5E1DB" : "#000000", letterSpacing: "-0.16px", whiteSpace: "nowrap", lineHeight: 1 }}>
+                  <span style={{ position: "absolute", top: 8, left: 9, background: "#E5E1DB", height: 13, padding: "0 5px", display: "flex", alignItems: "center", fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 'var(--fs-8)', color: "#050505", letterSpacing: "-0.16px", whiteSpace: "nowrap", lineHeight: 1 }}>
                     {layout.label}
                   </span>
-                  <div style={{ position: "absolute", top: 18, left: 6, display: "flex", alignItems: "center" }}>
-                    <span style={{ fontFamily: "'Sk-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-7)', color: "#E5E1DB", letterSpacing: "-0.14px" }}>AR{"     "}</span>
-                    <span style={{ fontFamily: "'Sk-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-7)', color: "#E5E1DB", letterSpacing: "1.33px", marginLeft: 4 }}>mixed</span>
+                  <div style={{ position: "absolute", top: 26, left: 9, display: "flex", alignItems: "center" }}>
+                    <span style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 'var(--fs-7)', color: "#E5E1DB", letterSpacing: "-0.14px" }}>AR{"     "}</span>
+                    <span style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 'var(--fs-7)', color: "#E5E1DB", letterSpacing: "1.33px", marginLeft: 4 }}>mixed</span>
                   </div>
                 </>
               )}
@@ -263,14 +265,15 @@ function ConfirmationView({
     <div style={{ background: "#000", position: "fixed", inset: 0, zIndex: 50, overflow: "hidden" }}>
       {renderGrid()}
 
-      {/* Header — floats over grid */}
+      {/* Header — floats over grid. Brief M2 §2 — step-2 data was buried under the notch
+          (F1 safe-area missed this step); pad the header zone by --safe-top. */}
       <div style={{
         position: "absolute", top: 0, left: 0, right: 0, zIndex: 10,
         background: "rgba(0,0,0,0.6)",
         display: "flex", justifyContent: "space-between", alignItems: "center",
-        padding: "14px 8px 10px",
+        padding: "calc(14px + var(--safe-top)) 8px 10px",
       }}>
-        <span style={{ ...SKB, background: "#d9d9d9", padding: "2px 6px", fontSize: 'var(--fs-9)', color: "#000", letterSpacing: "-0.16px" }}>
+        <span style={{ ...SKB, background: "#E5E1DB", padding: "2px 6px", fontSize: 'var(--fs-9)', color: "#050505", letterSpacing: "-0.16px" }}>
           {layout.label}
         </span>
         <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
@@ -297,7 +300,7 @@ function ConfirmationView({
           disabled={saving}
           style={{ background: saving ? "rgba(229,225,219,0.4)" : "#E5E1DB", border: "none", cursor: saving ? "default" : "pointer", padding: "8px 24px" }}
         >
-          <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "#E5E1DB", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+          <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "#050505", textTransform: "uppercase", letterSpacing: "0.1em" }}>
             {saving ? "SAVING..." : "CONFIRM"}
           </span>
         </button>
@@ -316,7 +319,6 @@ export default function GridLayoutPage() {
   const [selectedLayout, setSelectedLayout] = useState<string>("");
   const [confirming, setConfirming] = useState(false);
   const [showTransition, setShowTransition] = useState(false);
-  const [username, setUsername] = useState<string>("");
   const [saving, setSaving] = useState(false);
   const [animating, setAnimating] = useState(false);
   const [animatingLayout, setAnimatingLayout] = useState<typeof LAYOUTS[0] | null>(null);
@@ -341,7 +343,6 @@ export default function GridLayoutPage() {
     getUserByPrivyId(user.id).then(async (dbUser) => {
       if (!dbUser) return;
       const profile = await getProfile(dbUser.id);
-      if (profile?.username) setUsername(profile.username.toUpperCase());
       // Also seed selectedLayout from DB (source of truth over localStorage)
       if (profile?.grid_layout) {
         const canonical = LEGACY_MAP[profile.grid_layout] ?? profile.grid_layout;
@@ -405,14 +406,13 @@ export default function GridLayoutPage() {
   return (
     <>
       <div className="screen-min" style={{ background: "#000000", width: 375, minHeight: "100dvh", margin: "0 auto", position: "relative", overflowX: "hidden", paddingBottom: "calc(24px + var(--safe-bottom))" }}>
-        {/* Brief F1 — WELCOME/CHOOSE header clears the notch. */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "calc(10px + var(--safe-top))", paddingBottom: 10, paddingLeft: 5, paddingRight: 5 }}>
-          <span style={{ fontFamily: "'Sk-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-12)', color: "#E5E1DB", letterSpacing: "-0.24px" }}>
-            WELCOME {username}
+        {/* Brief M2 §1 — header per frame 241:1375: title top-left (Haas 75 Bold 16px) +
+            logomark top-right (39×24, 78%). Replaces the F1 WELCOME/CHOOSE treatment. */}
+        <div style={{ position: "relative", display: "flex", alignItems: "center", paddingTop: "calc(20px + var(--safe-top))", paddingBottom: 14, paddingLeft: 10, paddingRight: 10 }}>
+          <span style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 16, letterSpacing: "var(--track-display)", color: "var(--ink-100)" }}>
+            Customize your grid.
           </span>
-          <span style={{ fontFamily: "'Sk-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-12)', color: "#E5E1DB", letterSpacing: "-0.24px" }}>
-            CHOOSE YOUR GRID LAYOUT
-          </span>
+          <img src="/design-updates-071526/scope-logomark-offwhite.png" alt="Scope" style={{ position: "absolute", top: "calc(11px + var(--safe-top))", right: 12, width: 39, height: "auto", opacity: 0.78 }} />
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 4, paddingTop: 4 }}>
@@ -518,7 +518,7 @@ export default function GridLayoutPage() {
             position: "absolute", top: 0, left: 0, right: 0, zIndex: 10,
             background: "rgba(0,0,0,0.6)",
             display: "flex", alignItems: "center", justifyContent: "space-between",
-            padding: "14px 12px 10px",
+            padding: "calc(14px + var(--safe-top)) 12px 10px",
             animation: "slideDown 0.4s cubic-bezier(0.16,1,0.3,1) 0.15s both",
             opacity: 0,
           }}>
