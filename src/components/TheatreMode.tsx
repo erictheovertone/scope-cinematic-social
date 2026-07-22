@@ -62,6 +62,7 @@ export default function TheatreMode({
   zBase = 490,
   exitOnPortrait = false,
   onIndexChange,
+  ranks,
 }: {
   posts: AnyPost[];
   startIndex?: number;
@@ -69,8 +70,11 @@ export default function TheatreMode({
   /** Stage stacking base (default 490); surfaces above that pass higher. */
   zBase?: number;
   /** 'feed' = home-feed entry (many creators, infinite) → show @handle + always-on
-      stats, no counter. 'profile' = one creator → expand-only stats, counter kept. */
-  source?: 'feed' | 'profile';
+      stats, no counter. 'profile' = one creator → expand-only stats, counter kept.
+      'screening' = Screening Room lineup → no counter; a quiet rank indicator instead. */
+  source?: 'feed' | 'profile' | 'screening';
+  /** Brief M3b §3 — SR-origin only: the lineup rank per index (1–50), shown below-left. */
+  ranks?: number[];
   /** When theatre was ENTERED by physically rotating to landscape, rotating BACK to
       portrait exits it through the normal close chain — the gesture is symmetric.
       Eye-entered sessions (false) keep the force-rotate rule and NEVER exit on
@@ -81,6 +85,7 @@ export default function TheatreMode({
   onIndexChange?: (i: number) => void;
 }) {
   const isFeed = source === 'feed';
+  const isScreening = source === 'screening';
   const economy = useEconomy();
   const { user } = usePrivy();
   const [index, setIndex] = useState(() => Math.min(Math.max(0, startIndex), Math.max(0, posts.length - 1)));
@@ -229,6 +234,12 @@ export default function TheatreMode({
   const onTouchStart = (e: React.TouchEvent) => {
     if (dragAnim) return;
     const t = e.touches[0];
+    // Brief M3b §2 — ~24px dead zones on the PHYSICAL screen edges (device coords, read
+    // pre-rotation) so the iOS system back-swipe is never captured as a lineup swipe. In
+    // the forced-rotate stage the visual-horizontal swipe is a device-VERTICAL drag across
+    // mid-screen, so this rarely touches a real swipe. (Shared hardening; profile theatre
+    // swipes across the media, unaffected.)
+    if (t.clientX < 24 || t.clientX > window.innerWidth - 24) { drag.current = null; return; }
     drag.current = { x: t.clientX, y: t.clientY, axis: null, lastX: portrait ? t.clientY : t.clientX, lastT: e.timeStamp, vx: 0 };
   };
   const onTouchMove = (e: React.TouchEvent) => {
@@ -662,10 +673,19 @@ export default function TheatreMode({
         </div>
 
         {/* Position counter — PROFILE only (finite posts). The feed is effectively
-            infinite, so the number climbs meaninglessly → removed there. */}
-        {!isFeed && (
+            infinite (removed there); the Screening Room shows a rank instead (below). */}
+        {source === 'profile' && (
           <div style={{ position: 'absolute', right: 16, bottom: 14, ...SKB, fontSize: 'var(--fs-9)', color: 'rgba(229,225,219,0.45)', letterSpacing: '0.08em', pointerEvents: 'none' }}>
             {index + 1} / {posts.length}
+          </div>
+        )}
+
+        {/* ── Rank indicator — SR-origin theatre ONLY. Below-left in rotated space, quiet
+            two-digit rank (01–50), 75 Bold, --track-wide, ~50% ink. Updates live on swipe.
+            The single piece of new chrome; profile/feed theatre shows nothing here. ── */}
+        {isScreening && ranks?.[index] != null && (
+          <div style={{ position: 'absolute', left: 16, bottom: 14, fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 12, letterSpacing: 'var(--track-wide)', color: 'rgba(229,225,219,0.5)', pointerEvents: 'none' }}>
+            {String(ranks[index]).padStart(2, '0')}
           </div>
         )}
       </div>

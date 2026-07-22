@@ -30,6 +30,15 @@ export default function PostLightboxHost() {
     onEnter: () => setShowTheatre(true),
   });
 
+  // Brief M3b — mark the DOM while a post view is up so the Screening Room's OWN main
+  // rotate hook (mounted underneath) yields: an opened post rotates into the host's
+  // single-post theatre, not the SR lineup theatre. Two hooks, one wins.
+  useEffect(() => {
+    if (!post) return;
+    document.documentElement.dataset.postLightboxOpen = '1';
+    return () => { delete document.documentElement.dataset.postLightboxOpen; };
+  }, [post]);
+
   useEffect(() => {
     const handler = async (e: Event) => {
       const postId = (e as CustomEvent).detail?.postId as string | undefined;

@@ -10,7 +10,7 @@
 //
 // Design: pure black, #E5E1DB, SK-Modernist, sharp corners, no shadows/blur.
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { openPostLightbox } from '@/lib/postLightbox';
 import { getAspectRatio, ratioPadding } from '@/lib/aspectRatio';
@@ -18,6 +18,8 @@ import PillarboxFrame from '@/components/PillarboxFrame';
 import GradedVideo from '@/components/finishing/GradedVideo';
 import { useIsDesktop } from '@/lib/useIsDesktop';
 import DesktopScreeningRoom from '@/components/desktop/DesktopScreeningRoom';
+import TheatreMode from '@/components/TheatreMode';
+import { useRotateToTheatre } from '@/lib/useRotateToTheatre';
 import PageTitle from '@/components/PageTitle';
 import { useTitleDebugTap } from '@/components/ViewportDebug';
 
@@ -73,6 +75,54 @@ function MobileScreeningRoom() {
     m.addEventListener?.('change', sync);
     return () => m.removeEventListener?.('change', sync);
   }, []);
+
+  // ── Brief M3b — ROTATE-TO-THEATRE from the SR MAIN surface (the lineup) ──
+  // Reuses M3a's shared hook. Queue = the SAME loaded ranking (read-only, no new fetch):
+  // post-bearing rows in rank order + a parallel ranks array for the indicator. Theatre's
+  // existing swipe/arrows navigate it; we add nothing to that implementation.
+  const [showTheatre, setShowTheatre] = useState(false);
+  const [theatreStart, setTheatreStart] = useState(0);
+  const theatreIndexRef = useRef(0);                         // live index in theatre → scroll-restore
+  const rowRefs = useRef<Map<number, HTMLDivElement>>(new Map()); // rank → row el (focal + restore)
+
+  const lineup = useMemo(() => (rows ?? []).filter((r) => r.post), [rows]);
+  const lineupPosts = useMemo(() => lineup.map((l) => l.post as unknown as Record<string, unknown>), [lineup]);
+  const lineupRanks = useMemo(() => lineup.map((l) => l.rank), [lineup]);
+
+  // Focal entry heuristic (kept simple): the lineup cell whose center is nearest the
+  // viewport center at rotation; no dominant cell → rank 1 (index 0).
+  const focalIndex = useCallback(() => {
+    const mid = window.innerHeight / 2;
+    let best = Infinity, idx = 0;
+    lineup.forEach((l, i) => {
+      const el = rowRefs.current.get(l.rank);
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      const d = Math.abs((r.top + r.height / 2) - mid);
+      if (d < best) { best = d; idx = i; }
+    });
+    return idx;
+  }, [lineup]);
+
+  const { enteredViaRotation } = useRotateToTheatre({
+    enabled: lineup.length > 0,
+    isOpen: showTheatre,
+    onEnter: () => {
+      // A post view opened from the lineup owns the rotate (M3a host → single-post theatre).
+      if (document.documentElement.dataset.postLightboxOpen) return;
+      const i = focalIndex();
+      setTheatreStart(i);
+      theatreIndexRef.current = i;
+      setShowTheatre(true);
+    },
+  });
+
+  // Exit → land the lineup on whichever rank was last viewed in theatre (continuity both ways).
+  const closeTheatre = useCallback(() => {
+    setShowTheatre(false);
+    const l = lineup[theatreIndexRef.current];
+    if (l) requestAnimationFrame(() => rowRefs.current.get(l.rank)?.scrollIntoView({ block: 'center' }));
+  }, [lineup]);
 
   useEffect(() => {
     let cancelled = false;
@@ -195,6 +245,7 @@ function MobileScreeningRoom() {
             return (
               <div
                 key={r.rank}
+                ref={(el) => { if (el && p) rowRefs.current.set(r.rank, el); else rowRefs.current.delete(r.rank); }}
                 onClick={() => p && openPostLightbox(p.id)}
                 style={{ marginBottom: 22, cursor: p ? 'pointer' : 'default' }}
               >
@@ -231,6 +282,21 @@ function MobileScreeningRoom() {
             );
           })}
         </div>
+      )}
+
+      {/* SR-origin theatre — the lineup IS the queue; theatre's own swipe/arrows navigate
+          it in rank order. source="screening" gives the rank indicator; rotating back to
+          portrait exits and closeTheatre lands the list on the last-viewed rank. */}
+      {showTheatre && (
+        <TheatreMode
+          posts={lineupPosts}
+          ranks={lineupRanks}
+          startIndex={theatreStart}
+          source="screening"
+          exitOnPortrait={enteredViaRotation.current}
+          onIndexChange={(i) => { theatreIndexRef.current = i; }}
+          onClose={closeTheatre}
+        />
       )}
     </div>
   );
