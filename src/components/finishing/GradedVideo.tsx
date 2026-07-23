@@ -66,11 +66,15 @@ interface Props {
   style?: React.CSSProperties;
   onClick?: () => void;
   showSoundToggle?: boolean;
+  /** Brief V2 — Stream is still encoding (video_status='processing'). The poster shows
+   *  (or a placeholder) with a quiet PROCESSING label; no playback attempt. */
+  processing?: boolean;
 }
 
 export default function GradedVideo({
   url, posterUrl, posterWidth, clipUrl, editParams, cropX = 0, cropY = 0, cropWidth = 1, cropHeight = 1,
   autoplayFlag = false, gridMode = false, forcePlay = false, fullPlayback = false, style, onClick, showSoundToggle = false,
+  processing = false,
 }: Props) {
   const id = useId();
   const [inView, setInView] = useState(false);          // gridMode visibility
@@ -223,6 +227,16 @@ export default function GradedVideo({
       {/* Graded poster — the at-rest layer, and what shows until a tile actually plays. */}
       {posterUrl && (
         <img src={posterWidth ? feedImage(posterUrl, posterWidth) : posterUrl} alt="" draggable={false} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+      )}
+
+      {/* Brief V2 — Stream still encoding: poster (above) or the #0a0a0a placeholder (the
+          box bg), with a quiet PROCESSING label. No playback is attempted (media_urls is
+          empty for processing videos). Overlay only; playback logic untouched (V3). */}
+      {processing && (
+        <div style={{ position: "absolute", left: 8, bottom: 8, zIndex: 4, pointerEvents: "none", display: "flex", alignItems: "center", gap: 5 }}>
+          <span style={{ width: 5, height: 5, borderRadius: "50%", background: "rgba(229,225,219,0.4)" }} />
+          <span style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 9, letterSpacing: "var(--track-wide)", textTransform: "uppercase", color: "rgba(229,225,219,0.4)" }}>Processing</span>
+        </div>
       )}
 
       {/* The <video> — for AUTOPLAY this is the pre-baked graded CLIP (plain, no

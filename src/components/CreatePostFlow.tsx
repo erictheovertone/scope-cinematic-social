@@ -6,6 +6,7 @@ import { usePrivy, useWallets } from "@privy-io/react-auth";
 import { createWalletClient, custom } from "viem";
 import { base } from "viem/chains";
 import { createPost, updatePostCoinData, updatePostCoinTxHash, updatePostMusic } from '@/lib/postsService';
+import { uploadVideoToStream } from '@/lib/streamUpload';
 import MediaRenderer from '@/components/MediaRenderer';
 // NOTE: the 1155 path (mintNewPost) is DORMANT — intact in src/lib/zora.ts as the
 // rollback lifeboat, deliberately unreferenced here. New posts mint as coins.
@@ -291,6 +292,9 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
   }, [selectedMedia]);
   const [caption, setCaption] = useState('');
   const [isUploading, setIsUploading] = useState(false);
+  // Brief V2 — Stream TUS upload progress (0–100). Set during the video upload; the
+  // richer stage-progress UI (E1) consumes this. Surfaced minimally today (POST label).
+  const [uploadPct, setUploadPct] = useState(0);
   const [isPosting, setIsPosting] = useState(false);
   const [isOptimising, setIsOptimising] = useState(false);
   const [videoError, setVideoError] = useState<string | null>(null);
@@ -510,14 +514,13 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
     const newMedia: MediaItem[] = [];
 
     for (const file of files) {
-      // .mov / QuickTime isn't web-playable (Chrome/Firefox can't decode it). Reject at
-      // upload. INTERIM GUARD: auto-transcode of .mov is deferred to the async-media-bake
-      // build, which will replace this rejection with a convert-on-upload "just works" flow.
-      if (file.type === "video/quicktime" || file.name.toLowerCase().endsWith(".mov")) {
-        setVideoError("Please use MP4 — QuickTime (.MOV) isn't web-playable yet.");
-        continue;
-      }
-      if (file.type.startsWith("video/")) {
+      // Brief V2 — .mov / QuickTime / HEVC now ACCEPTED: Cloudflare Stream transcodes them
+      // server-side. On iOS Safari (the primary iPhone target) the local preview + poster
+      // bake decode HEVC natively; on non-Safari the best-effort client poster may skip and
+      // Stream's own auto-thumbnail backfills stream_poster_url. (The 50MB guard stays for
+      // V2 — raising it is a follow-up now the transcode barrier is gone.)
+      const isMov = file.type === "video/quicktime" || file.name.toLowerCase().endsWith(".mov");
+      if (file.type.startsWith("video/") || isMov) {
         if (file.size > VIDEO_MAX_BYTES) {
           setVideoError("Video must be under 50MB. Please trim or compress before uploading.");
           continue;
@@ -708,7 +711,18 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
       console.log('[handlePost] layout_id:', finalLayoutId, '| geometry:', geometry);
 
       const mediaUrls: string[] = [];
+      let streamUid: string | null = null;
       for (const media of selectedMedia) {
+        // Brief V2 — VIDEO branch: the raw file is Cloudflare Stream's store of record
+        // (NOT Supabase → no double storage). TUS straight to Stream; the post publishes
+        // 'processing' and the webhook flips it 'ready'. Playback swap is V3, so media_urls
+        // stays EMPTY for video until then — surfaces show the graded poster meanwhile.
+        if (media.type === 'video') {
+          console.log('[handlePost] uploading video to Stream:', media.file.name);
+          streamUid = await uploadVideoToStream(media.file, (frac) => setUploadPct(Math.round(frac * 100)));
+          console.log('[handlePost] stream upload complete, uid:', streamUid);
+          continue;
+        }
         console.log('[handlePost] uploading:', media.file.name);
         let fileToUpload = media.file;
         if (media.type === 'image') {
@@ -816,6 +830,10 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
         ...(isVideo ? {
           cropX: geometry.crop.x, cropY: geometry.crop.y,
           cropWidth: geometry.crop.w, cropHeight: geometry.crop.h,
+          // Brief V2 — Stream store-of-record + processing status. mediaUrls is empty
+          // for video (V3 wires stream_playback_url into playback).
+          streamUid,
+          videoStatus: 'processing' as const,
         } : {}),
       };
       console.log('[handlePost] createPost payload:', postPayload);

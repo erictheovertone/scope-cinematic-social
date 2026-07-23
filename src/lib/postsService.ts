@@ -78,6 +78,12 @@ export const createPost = async (postData: {
   // that already runs before any mint, so an attached track can never block publish.
   musicTrackId?: string | null;
   musicMode?: string | null;
+  // Video pipeline (V2) — Cloudflare Stream. Set for NEW video posts only: the raw
+  // video lives in Stream (streamUid), the row publishes as 'processing', and the
+  // Stream webhook flips it to 'ready' + fills the playback/poster URLs. Additive,
+  // on the same pre-mint insert → encoding never blocks publish (fire-and-forget).
+  streamUid?: string | null;
+  videoStatus?: string | null;
 }): Promise<Post> => {
   const { data, error } = await supabase
     .from('posts')
@@ -109,6 +115,9 @@ export const createPost = async (postData: {
         // flags only; the post's own media/audio is never baked or stripped.
         ...(postData.musicTrackId !== undefined ? { music_track_id: postData.musicTrackId } : {}),
         ...(postData.musicMode !== undefined ? { music_mode: postData.musicMode } : {}),
+        // Video pipeline (V2) — Stream store-of-record + processing status.
+        ...(postData.streamUid !== undefined ? { stream_uid: postData.streamUid } : {}),
+        ...(postData.videoStatus !== undefined ? { video_status: postData.videoStatus } : {}),
       }
     ])
     .select()

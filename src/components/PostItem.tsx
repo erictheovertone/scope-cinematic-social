@@ -343,6 +343,7 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
       autoplayFlag={post.autoplay !== false}
       fullPlayback={!card}
       gridMode
+      processing={(post as { video_status?: string }).video_status === 'processing'}
       cropX={post.crop_x ?? 0}
       cropY={post.crop_y ?? 0}
       cropWidth={post.crop_width ?? 1}
