@@ -111,6 +111,14 @@ export default function GradedVideo({
   // Stable ref callback so the <video> isn't churned every render.
   const setVideoRef = useCallback((el: HTMLVideoElement | null) => { videoRef.current = el; setVideoEl(el); }, []);
 
+  // Brief P1a — lifecycle instrumentation (DEV ONLY; strip-safe via NODE_ENV). Names the
+  // break in the attach→teardown→re-attach cycle per card.
+  const tagRef = useRef("");
+  tagRef.current = ((hlsUrl || url || id) as string).slice(-10);
+  const dlog = useCallback((ev: string) => {
+    if (process.env.NODE_ENV !== "production") console.log(`[vid ${tagRef.current}] ${ev}`);
+  }, []);
+
   const params = useMemo<EditParams | null>(() => {
     if (!editParams || typeof editParams !== "object") return null;
     const { v: _v, ...rest } = editParams as Record<string, unknown>;
@@ -175,7 +183,12 @@ export default function GradedVideo({
     return () => { io.disconnect(); unregister(); };
   }, [id, autoplayFlag, forcePlay, gridMode]);
 
-  useEffect(() => { setErrored(false); }, [playbackUrl]); // a new source gets a fresh chance
+  // Brief P1a — RESURRECTION: reset `errored` on a new source AND on NEAR RE-ENTRY. Before,
+  // it only cleared on playbackUrl change — so a fatal error latched during teardown
+  // (hls.destroy / src detach) stuck forever for the same source, and the mount gate
+  // ({shouldAttach && !errored}) then blocked the card from EVER re-attaching → frozen on
+  // scroll-return. Re-entry (nearStable→true) now gives the card a clean fresh chance.
+  useEffect(() => { setErrored(false); }, [playbackUrl, nearStable]);
 
   // Brief V3d — NEAR observer (ATTACH tier). Expanded rootMargin so a card WITHIN ~1.5vp
   // counts; DWELL-debounced so a fast flick-past never attaches (no manifest/segment churn).
@@ -186,8 +199,10 @@ export default function GradedVideo({
     let dwell: number | null = null;
     const io = new IntersectionObserver(([e]) => {
       if (e.isIntersecting) {
-        if (dwell == null) dwell = window.setTimeout(() => { dwell = null; setNearStable(true); }, NEAR_DWELL_MS);
+        dlog("NEAR-enter");
+        if (dwell == null) dwell = window.setTimeout(() => { dwell = null; dlog("dwell-fire→nearStable"); setNearStable(true); }, NEAR_DWELL_MS);
       } else {
+        dlog("NEAR-exit");
         if (dwell != null) { clearTimeout(dwell); dwell = null; }
         setNearStable(false);
       }
@@ -202,10 +217,10 @@ export default function GradedVideo({
   useEffect(() => {
     if (forcePlay || !autoplayFlag || !nearStable) { setBufferSlot(false); return; }
     let held = false;
-    const grab = () => { if (!held && acquireAttach()) { held = true; setBufferSlot(true); return true; } return false; };
-    if (grab()) return () => { if (held) releaseAttach(); };
+    const grab = () => { if (!held && acquireAttach()) { held = true; dlog("slot-acquired"); setBufferSlot(true); return true; } return false; };
+    if (grab()) return () => { held && dlog("slot-released"); if (held) releaseAttach(); };
     const off = onAttachSlotFree(() => { if (grab()) off(); });
-    return () => { off(); if (held) releaseAttach(); };
+    return () => { off(); held && dlog("slot-released"); if (held) releaseAttach(); };
   }, [forcePlay, autoplayFlag, nearStable]);
 
   // ── ATTACH (source + buffer, the NEAR tier) — NO play here. HLS: native <video src> on
@@ -226,6 +241,7 @@ export default function GradedVideo({
     const onPlaying = () => {
       if (cancelled) return;
       setPlaying(true);
+      dlog("playing");
       if (!ttffLogged) {
         ttffLogged = true;
         if (process.env.NODE_ENV !== "production" && attachAt) {
@@ -251,21 +267,29 @@ export default function GradedVideo({
           hls = new Hls(feedMode
             ? { capLevelToPlayerSize: true, startLevel: 0, maxBufferLength: 8, backBufferLength: 0, enableWorker: true }
             : { maxBufferLength: 30, enableWorker: true });
-          hls.on(Hls.Events.ERROR, (_e: unknown, data: { fatal?: boolean }) => { if (data?.fatal) setErrored(true); });
+          // Brief P1a — !cancelled so hls.destroy()'s own teardown error can't LATCH errored
+          // (which would block the card from ever re-attaching on scroll-return).
+          hls.on(Hls.Events.ERROR, (_e: unknown, data: { fatal?: boolean }) => { if (!cancelled && data?.fatal) setErrored(true); });
           hls.loadSource(playbackUrl);
           hls.attachMedia(v);
+          dlog("attached (hls.js)");
         } else { setErrored(true); }
       }).catch(() => setErrored(true));
     } else {
       // Native HLS (Safari/iOS): Safari runs its OWN ABR keyed to the element size — we
       // don't fight it (no per-level API here); the card size already governs its choice.
       if (v.getAttribute("src") !== playbackUrl) v.src = playbackUrl;
+      dlog("attached (native)");
     }
     return () => {
-      cancelled = true;
+      cancelled = true; // set FIRST so onError/hls-ERROR during teardown can't latch errored
       v.removeEventListener("playing", onPlaying);
       v.removeEventListener("pause", onPause);
+      // hls.destroy() detaches the MediaSource. The <video> itself UNMOUNTS (shouldAttach
+      // gate) → a FRESH element mounts on re-entry, so we never re-use a dead MediaSource
+      // and never force-clear the native src (which would fire onError → re-latch errored).
       if (hls) { try { hls.destroy(); } catch { /* already gone */ } }
+      dlog("destroyed");
     };
   }, [shouldAttach, videoEl, playbackUrl, errored, isHls, effectiveForcePlay]);
 
@@ -288,6 +312,7 @@ export default function GradedVideo({
       tryPlay();
       return () => { cancelled = true; if (retryRef.current) { clearTimeout(retryRef.current); retryRef.current = null; } };
     }
+    dlog("view-exit→pause");
     try { v.pause(); } catch { /* not ready */ }
   }, [shouldPlay, shouldAttach, videoEl, errored]);
 
