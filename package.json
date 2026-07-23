@@ -12,7 +12,7 @@
     "@privy-io/react-auth": "^2.25.0",
     "@stripe/stripe-js": "^9.4.0",
     "@supabase/supabase-js": "^2.78.0",
-    "@zoralabs/coins-sdk": "^0.6.0",
+    "@zoralabs/coins-sdk": "^0.8.0",
     "@zoralabs/protocol-sdk": "^0.13.21",
     "bs58": "^6.0.0",
     "framer-motion": "^12.23.12",

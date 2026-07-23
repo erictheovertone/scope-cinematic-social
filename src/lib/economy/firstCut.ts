@@ -14,7 +14,8 @@
 // A missed award is recoverable (a later verified pass / Moment 2 still fires);
 // a false award is not. When in doubt, DEFER.
 
-import { getCoinSwaps, getCoins, setApiKey } from '@zoralabs/coins-sdk';
+import { getCoinSwaps, getCoins } from '@zoralabs/coins-sdk';
+import { ensureZoraApi } from '@/lib/zoraApi';
 import { getAddress, formatEther } from 'viem';
 import { publicClient } from '@/lib/zoraCoins';
 
@@ -59,8 +60,9 @@ export function swapUsd(n: any): number {
 
 let _keyed = false;
 function ensureKey() {
-  if (!_keyed && process.env.ZORA_API_KEY) {
-    setApiKey(process.env.ZORA_API_KEY);
+  // Brief Z2 — one keyed transport for every context (see src/lib/zoraApi.ts).
+  if (!_keyed) {
+    ensureZoraApi();
     _keyed = true;
   }
 }

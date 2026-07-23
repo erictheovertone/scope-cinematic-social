@@ -10,6 +10,7 @@ import PostModal from "@/components/PostModal";
 import PillarboxFrame from "@/components/PillarboxFrame";
 import FrameLoader from "@/components/FrameLoader";
 import GradedVideo from "@/components/finishing/GradedVideo";
+import { streamGradedProps } from "@/lib/editor/videoGrade";
 import { getAspectRatio } from "@/lib/aspectRatio";
 
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -278,7 +279,7 @@ export default function MirageView({ onClose }: { onClose: () => void }) {
         {/* 3-column masonry grid (CSS multi-column — preserves natural aspect ratios) */}
         <div style={{ columnCount: 3, columnGap: 1, padding: 0 }}>
           {posts.map((post, index) =>
-            post.media_urls?.[0] ? (
+            (post.media_urls?.[0] || (post as { stream_uid?: string | null }).stream_uid) ? (
               <div
                 key={post.id}
                 style={{
@@ -300,26 +301,28 @@ export default function MirageView({ onClose }: { onClose: () => void }) {
                   post.layout_id === 'legacy' ? (
                     <PillarboxFrame>
                       <GradedVideo
-                        url={post.media_urls[0]}
-                        posterUrl={post.poster_url ?? post.thumbnail_url}
+                        url={post.media_urls?.[0] ?? ""}
+                        posterUrl={(post as { stream_poster_url?: string | null }).stream_poster_url ?? post.poster_url ?? post.thumbnail_url}
                         posterWidth={750}
                         clipUrl={post.autoplay_clip_url}
                         editParams={post.edit_params}
                         autoplayFlag={post.autoplay !== false}
                         gridMode
+                        {...streamGradedProps(post as unknown as Record<string, unknown>)}
                         cropX={post.crop_x ?? 0} cropY={post.crop_y ?? 0} cropWidth={post.crop_width ?? 1} cropHeight={post.crop_height ?? 1}
                         style={{ width: '100%', height: '100%' }}
                       />
                     </PillarboxFrame>
                   ) : (
                     <GradedVideo
-                      url={post.media_urls[0]}
-                      posterUrl={post.poster_url ?? post.thumbnail_url}
+                      url={post.media_urls?.[0] ?? ""}
+                      posterUrl={(post as { stream_poster_url?: string | null }).stream_poster_url ?? post.poster_url ?? post.thumbnail_url}
                       posterWidth={750}
                       clipUrl={post.autoplay_clip_url}
                       editParams={post.edit_params}
                       autoplayFlag={post.autoplay !== false}
                       gridMode
+                      {...streamGradedProps(post as unknown as Record<string, unknown>)}
                       cropX={post.crop_x ?? 0} cropY={post.crop_y ?? 0} cropWidth={post.crop_width ?? 1} cropHeight={post.crop_height ?? 1}
                       style={{ width: '100%', aspectRatio: getAspectRatio(post.layout_id ?? '') }}
                     />

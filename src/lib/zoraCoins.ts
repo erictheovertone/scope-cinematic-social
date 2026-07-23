@@ -5,10 +5,13 @@
 // The legacy 1155 path (src/lib/zora.ts mintNewPost) stays intact but dormant —
 // the rollback lifeboat. Do not delete it.
 //
-// Pinned to @zoralabs/coins-sdk@0.6.0 (CreateCoinArgs: creator, name, symbol,
+// Pinned to @zoralabs/coins-sdk@0.8.0 (CreateCoinArgs: creator, name, symbol,
 // metadata{type:'RAW_URI',uri}, currency, chainId, startingMarketCap,
-// platformReferrer, payoutRecipientOverride). NOTE: 0.6.0 has NO initialPurchase
-// param — the creator self-buy is a SEPARATE post-create tradeCoin (backOwnCoin).
+// platformReferrer, payoutRecipientOverride). Still NO initialPurchase param —
+// the creator self-buy is a SEPARATE post-create tradeCoin (backOwnCoin).
+// Brief Z2 raised 0.6.0 → 0.8.0: three additive releases, CreateCoinArgs
+// unchanged, zero new type errors. The SDK version was never the bug — see
+// zoraApi.ts for what actually was.
 
 import {
   createCoin,
@@ -22,6 +25,13 @@ import { base } from "viem/chains";
 import { supabase } from "@/lib/supabase/client";
 import { getEthUsdRate } from "@/lib/coingecko";
 import { TOKENS_PER_PIECE } from "@/lib/economy/tokenomics";
+// Brief Z2 — points the SDK at the keyed transport for this context (proxy in
+// the browser, key-injecting fetch on the server). Module-scope side effect:
+// it MUST run before any SDK call below. See src/lib/zoraApi.ts.
+import { ensureZoraApi, ZORA_PROXY_PATH, ZORA_KEYED_HEADER } from "@/lib/zoraApi";
+import { recordZoraApiFailure, classifyZoraFailure } from "@/lib/zoraErrors";
+
+ensureZoraApi();
 
 export const publicClient = createPublicClient({
   chain: base,
@@ -71,25 +81,44 @@ export const errInfo = (e: unknown) => {
 //
 // Logged via console.warn, NOT console.error, deliberately: backOwnCoin runs
 // under withQuietConsoleError, which would otherwise mute this evidence.
+// Brief Z2 — the tap is no longer diagnostics-only: it is the SOURCE OF TRUTH
+// for error classification. It records each failing response into the shared
+// slot in zoraErrors.ts, which classifyZoraFailure() then reads, so the status
+// the SDK threw away is what decides the message the user sees.
 const ZORA_SDK_API_HOST = "api-sdk.zora.engineering";
+
+// Reentrancy guard: backOwnCoin → buyCoin nests wrapped calls. Stacking taps
+// would double-log and double-record; the outermost one already observes every
+// inner request, so nested calls simply pass through.
+let tapActive = false;
 
 export async function withZoraApiEvidence<T>(label: string, fn: () => Promise<T>): Promise<T> {
   const orig = globalThis.fetch;
-  if (typeof orig !== "function") return fn();
+  if (typeof orig !== "function" || tapActive) return fn();
+  tapActive = true;
 
   globalThis.fetch = async function (input: any, init?: any) {
     const res = await orig(input, init);
     try {
       const url = typeof input === "string" ? input : (input?.url ?? String(input));
-      if (url.includes(ZORA_SDK_API_HOST)) {
-        // Did this request carry an api-key header? (getApiKeyMeta() only adds
-        // one when setApiKey() ran in THIS JS context — never true in the
-        // browser bundle today.) This single boolean decides the hypothesis.
+      // Brief Z2 — the SDK now talks to our proxy in the browser, so match BOTH
+      // the proxy path and the direct upstream host (server-side, and any
+      // caller that hasn't been re-pointed).
+      if (url.includes(ZORA_SDK_API_HOST) || url.includes(ZORA_PROXY_PATH)) {
+        // Was this call keyed? In the browser the key is attached by the proxy,
+        // downstream of here and invisible to us — so the proxy reports it back
+        // on a response header. Server-side, the request header is visible
+        // directly. Either way this line is the verification the walk depends on.
         const hdrs: Headers | undefined = input?.headers instanceof Headers ? input.headers : (init?.headers instanceof Headers ? init.headers : undefined);
-        const keyed = hdrs ? hdrs.has("api-key") : "unknown";
+        const proxyKeyed = res.headers.get(ZORA_KEYED_HEADER);
+        const keyed: boolean | "unknown" =
+          proxyKeyed ? proxyKeyed === "sent" : (hdrs ? hdrs.has("api-key") : "unknown");
         if (!res.ok) {
           // clone() so the SDK still gets an unread body.
           const body = await res.clone().text().catch(() => "<unreadable>");
+          // THE HANDOFF: this is the evidence the SDK is about to destroy.
+          // Record it before the generic throw so the classifier can use it.
+          recordZoraApiFailure({ status: res.status, body, url, keyed, at: Date.now() });
           console.warn(
             `[zora] ${label} — SDK API FAILED\n` +
             `  endpoint : ${(init?.method ?? input?.method ?? "GET").toUpperCase()} ${url}\n` +
@@ -105,7 +134,7 @@ export async function withZoraApiEvidence<T>(label: string, fn: () => Promise<T>
     return res;
   } as typeof fetch;
 
-  try { return await fn(); } finally { globalThis.fetch = orig; }
+  try { return await fn(); } finally { globalThis.fetch = orig; tapActive = false; }
 }
 
 // The SDK's createTradeCall console.error()s its raw failed quote internally —
@@ -396,7 +425,7 @@ export async function buyCoin({
       recipient: sender,
     };
     console.log("[zoraCoins] buyCoin USDC quote request:", JSON.stringify({ ...tradeParameters, amountIn: tradeParameters.amountIn.toString() }));
-    const res: any = await tradeCoin({ tradeParameters, walletClient, publicClient: publicClient as any, account: sender, validateTransaction: true });
+    const res: any = await withZoraApiEvidence("buyCoin(USDC)", () => tradeCoin({ tradeParameters, walletClient, publicClient: publicClient as any, account: sender, validateTransaction: true }));
     receipt = res;
     hash = (res?.transactionHash ?? res?.hash) as `0x${string}`;
   } else {
@@ -412,7 +441,7 @@ export async function buyCoin({
       recipient: sender,
     };
     console.log("[zoraCoins] buyCoin quote request:", JSON.stringify({ ...tradeParameters, amountIn: amountIn.toString(), usd: usdAmount, ethUsd }));
-    const quote = await createTradeCall(tradeParameters);
+    const quote = await withZoraApiEvidence("buyCoin(ETH) quote", () => createTradeCall(tradeParameters));
     console.log("[zoraCoins] buyCoin quote response:", JSON.stringify(quote)?.slice(0, 400));
     const exec = await executeQuotedTrade({ walletClient, sender, quote, label: `buy $${usdAmount}` });
     hash = exec.hash;
@@ -504,7 +533,7 @@ export async function sellCoin({
   // ERC-20 sells need Permit2 — the SDK signs the typed-data permit and sends
   // atomically inside tradeCoin (validated + estimated; no separate approval tx).
   const { tradeCoin } = await import("@zoralabs/coins-sdk");
-  const res: any = await tradeCoin({ tradeParameters, walletClient, publicClient: publicClient as any, account: sender, validateTransaction: true });
+  const res: any = await withZoraApiEvidence("sellCoin", () => tradeCoin({ tradeParameters, walletClient, publicClient: publicClient as any, account: sender, validateTransaction: true }));
   const hash = (res?.transactionHash ?? res?.hash) as `0x${string}`;
 
   // RECEIPT-TRUE GATE (A): only a tx that MINED with status:success is a real sale —
@@ -642,9 +671,16 @@ export async function backOwnCoin({
   // Hand off cleanly — the backing can still be done from the post's collect
   // sheet (where, a moment later, the pool is ready). The caller surfaces ONE
   // dismissible chip that auto-clears; no stuck UI.
-  console.warn("[zoraCoins] backing did not land in-flow — handing off:", errInfo(lastErr));
+  // Brief Z2 §3 — the hand-off message used to append the SDK's raw message,
+  // which for a quote failure is the constant "Quote failed" (no information).
+  // Classify instead: a 429 says wait, an outage says outage, and only a genuine
+  // pool-not-ready failure says "the market may still be opening".
+  const verdict = classifyZoraFailure(lastErr, { action: "trade" });
+  console.warn(`[zoraCoins] backing did not land in-flow — handing off [${verdict.kind}: ${verdict.evidence}]:`, errInfo(lastErr));
   throw new Error(
-    `Backing not available yet — the market may still be opening. You can back it from the post shortly. (${(lastErr as Error)?.message})`
+    verdict.kind === "unknown" || verdict.kind === "chain"
+      ? "Backing not available yet — the market may still be opening. You can back it from the post shortly."
+      : `${verdict.message} You can back it from the post shortly.`
   );
 }
 
@@ -759,7 +795,7 @@ export async function quoteSwap({ sell, buy, amountIn, sender, slippage = SWAP_S
   sender: `0x${string}`;
   slippage?: number;
 }): Promise<{ amountOut: bigint }> {
-  const quote: any = await createTradeCall(swapParams(sell, buy, amountIn, sender, slippage));
+  const quote: any = await withZoraApiEvidence("quoteSwap", () => createTradeCall(swapParams(sell, buy, amountIn, sender, slippage)));
   return { amountOut: BigInt(quote?.quote?.amountOut ?? 0) };
 }
 
@@ -783,16 +819,16 @@ export async function swapTokens({ walletClient, sender, sell, buy, amountIn, sl
   if (sell !== "ETH") {
     // ERC-20 sell → Permit2 leg — the SDK orchestrates approval (first time) + signature + send.
     const { tradeCoin } = await import("@zoralabs/coins-sdk");
-    const res: any = await tradeCoin({
+    const res: any = await withZoraApiEvidence(`swap ${sell}->${buy}`, () => tradeCoin({
       tradeParameters: swapParams(sell, buy, amountIn, sender, slippage),
       walletClient, publicClient: publicClient as any, account: sender, validateTransaction: true,
-    });
+    }));
     hash = (res?.transactionHash ?? res?.hash) as `0x${string}`;
     if (!hash) throw new Error("Swap didn't broadcast — no transaction hash. Nothing was swapped.");
     const mined = await publicClient.waitForTransactionReceipt({ hash });
     if (mined.status !== "success") throw new Error(`Swap reverted on-chain (tx ${hash}) — nothing was swapped.`);
   } else {
-    const quote = await createTradeCall(swapParams(sell, buy, amountIn, sender, slippage));
+    const quote = await withZoraApiEvidence(`swap ${sell}->${buy} quote`, () => createTradeCall(swapParams(sell, buy, amountIn, sender, slippage)));
     const exec = await executeQuotedTrade({ walletClient, sender, quote, label: `swap ${sell}→${buy}` });
     hash = exec.hash; // executeQuotedTrade already enforced mined status:success
   }

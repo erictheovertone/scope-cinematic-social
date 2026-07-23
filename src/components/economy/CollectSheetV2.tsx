@@ -25,6 +25,7 @@ import { preflightTrade, preflightMessage } from '@/lib/economy/preflight';
 import { economyPreviewEnabled } from '@/lib/economy/flag';
 import FirstCutFlourish from '@/components/economy/FirstCutFlourish';
 import GradedVideo from '@/components/finishing/GradedVideo';
+import { streamGradedProps } from "@/lib/editor/videoGrade";
 import type { PostMarket, BuyQuote, SellQuote, TradeCurrency } from '@/lib/economy/types';
 import ApertureMark from '@/components/economy/ApertureMark';
 import TickerMark from '@/components/economy/TickerMark';
@@ -458,7 +459,7 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
               {isVideo ? (
                 <GradedVideo
                   url={post.media_urls?.[0] ?? ''}
-                  posterUrl={post.poster_url ?? post.thumbnail_url ?? null}
+                  posterUrl={(post as { stream_poster_url?: string | null }).stream_poster_url ?? post.poster_url ?? post.thumbnail_url ?? null}
                   clipUrl={post.autoplay_clip_url ?? null}
                   editParams={post.edit_params}
                   cropX={post.crop_x ?? 0}
@@ -467,6 +468,7 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
                   cropHeight={post.crop_height ?? 1}
                   autoplayFlag
                   gridMode
+                  {...streamGradedProps(post as unknown as Record<string, unknown>)}
                   style={{ width: '100%', height: '100%' }}
                   onClick={() => openPostLightbox(post.id)}
                 />

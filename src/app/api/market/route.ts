@@ -18,7 +18,8 @@
 // { found: false } — the boundary renders the honest "market opening" state.
 
 import { NextRequest, NextResponse } from "next/server";
-import { getCoins, setApiKey } from "@zoralabs/coins-sdk";
+import { getCoins } from "@zoralabs/coins-sdk";
+import { ensureZoraApi } from "@/lib/zoraApi";
 
 const CHAIN_ID = 8453; // Base
 const MAX_ADDRESSES = 50;
@@ -47,7 +48,7 @@ const inflight = new Map<string, Promise<void>>();
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const EMPTY: CoinRead = { found: false, priceInUsdc: null, marketCap: null, uniqueHolders: 0, symbol: null };
 
-if (process.env.ZORA_API_KEY) setApiKey(process.env.ZORA_API_KEY);
+ensureZoraApi(); // Brief Z2 — keyed transport; this route still calls Zora directly
 
 // Fetch a batch, RETRYING 429s with backoff. Caches ONLY a SUCCESSFUL read —
 // real data, or a genuine not-found (the call succeeded but Zora doesn't index

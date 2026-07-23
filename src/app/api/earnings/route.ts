@@ -13,7 +13,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { getCoinSwaps, setApiKey, createTradeCall } from '@zoralabs/coins-sdk';
+import { getCoinSwaps, createTradeCall } from '@zoralabs/coins-sdk';
+import { ensureZoraApi } from '@/lib/zoraApi';
 import { swapUsd } from '@/lib/economy/firstCut';
 import { decodeCreatorReward, mapPoolRewards } from '@/lib/economy/rewardsIndex';
 import { getScopePlatformReferrer } from '@/lib/zoraCoins';
@@ -31,7 +32,7 @@ const RPC_URL = process.env.NEXT_PUBLIC_ALCHEMY_BASE_URL || 'https://mainnet.bas
 
 let _keyed = false;
 function ensureKey() {
-  if (!_keyed && process.env.ZORA_API_KEY) { setApiKey(process.env.ZORA_API_KEY); _keyed = true; }
+  if (!_keyed) { ensureZoraApi(); _keyed = true; } // Brief Z2 — also keys this route's createTradeCall
 }
 
 // Spot ZORA/USD (fallback pricing only) — one quote per request, best-effort.

@@ -11,6 +11,7 @@ import MediaRenderer from '@/components/MediaRenderer';
 // NOTE: the 1155 path (mintNewPost) is DORMANT — intact in src/lib/zora.ts as the
 // rollback lifeboat, deliberately unreferenced here. New posts mint as coins.
 import { createScopeCoin, backOwnCoin, errInfo } from '@/lib/zoraCoins';
+import { classifyZoraFailure } from '@/lib/zoraErrors';
 import { preflightTrade, preflightMessage } from '@/lib/economy/preflight';
 import { suggestTicker, normalizeTicker, isValidTicker } from '@/lib/economy/ticker';
 import { useTxNarrator } from '@/components/TxNarrator';
@@ -1099,21 +1100,23 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
       // IN-FLOW failure state: [ COIN FAILED ] + plain-English reason +
       // RETRY / CONTINUE TO PROFILE (rendered by MintPromptSheet). The post is
       // never hostage — no auto-navigation, kebab retry always remains.
-      console.error('[coin] createScopeCoin failed:', errInfo(coinError));
-      const msg = (coinError as Error)?.message ?? '';
+      // Brief Z2 §3 — classification by EVIDENCE, not by string-matching.
+      //
+      // The old regex matched "failed to create content calldata" — the single
+      // constant the SDK throws for EVERY create failure — and called it an
+      // outage. So a rate limit, a rejected key and bad metadata all rendered as
+      // "Zora's service is having trouble", and that sentence was a guess. Z1
+      // spent a whole investigation getting behind it.
+      //
+      // classifyZoraFailure reads the real HTTP status recorded by the evidence
+      // tap (which sits below the SDK, where the response still exists). The
+      // outage line is now reserved for 5xx / network-class evidence and is
+      // never a fallback.
+      const verdict = classifyZoraFailure(coinError, { action: 'mint' });
+      console.error(`[coin] createScopeCoin failed [${verdict.kind}: ${verdict.evidence}]:`, errInfo(coinError));
       setMintStatus('coin-failed');
       setCodified(false);
-      // Zora UPSTREAM OUTAGE (their create/content 500s, or its internal Base-RPC
-      // proxy 5xx/526s) → a human "temporarily unavailable" line, never the raw
-      // "Failed to create content calldata" / proxy error. Testers must not see a
-      // dead technical string for an incident on Zora's side. Everything else keeps
-      // its plain-English reason.
-      const upstreamOutage = /failed to create content calldata|create\/content|base-proxy|notnotzora|http request failed|status:\s*5\d\d|\b(500|502|503|504|526)\b/i.test(msg);
-      setBackingNarration(
-        upstreamOutage
-          ? 'Minting is temporarily unavailable — Zora’s service is having trouble. Your post is safe; retry in a bit.'
-          : (msg.length > 0 && msg.length < 120 ? msg : 'Something failed on the way to the chain. Your post is safe.'),
-      );
+      setBackingNarration(verdict.message);
     }
   };
 

@@ -29,6 +29,7 @@ import { lookById } from "./looksCatalog";
 import { ensureLut } from "@/lib/editor/lut";
 import { registerAutoplayVideo, reportVisibility } from "@/lib/videoPlayback";
 import { feedImage } from "@/lib/mediaUrl";
+import { videoCssFilter, videoOverlays } from "@/lib/editor/videoGrade";
 import type HlsType from "hls.js"; // TYPE ONLY (erased) — the runtime import is dynamic (§2)
 
 const Pipeline = dynamic(() => import("./Pipeline"), { ssr: false });
@@ -124,21 +125,11 @@ export default function GradedVideo({
   // pipeline stays a legacy-only path (zero re-encode, keeps HLS cheap).
   const usePipeline = !isHls && effectiveForcePlay && playing && looked && !failed;
 
-  // Brief V3 §5 — GRADE via CSS filter for HLS playback. Only the linearly-mappable
-  // finishing params translate to CSS filter functions; everything else is NOT mappable
-  // (halation/bloom/grain/LUT/splitTone/curves/vignette/clarity/whiteBalance/fade/…) and is
-  // FLAGGED in the brief report (Eric rules — no silent dropping). Factors are a calibrated
-  // approximation of the pipeline; tune if they drift from the baked poster.
-  const cssFilter = useMemo(() => {
-    if (!isHls || !params) return undefined;
-    const p = params as unknown as { exposure?: number; contrast?: number; saturation?: number };
-    const clamp = (n: number) => Math.max(-6, Math.min(6, n || 0));
-    const parts: string[] = [];
-    if (p.exposure) parts.push(`brightness(${(1 + clamp(p.exposure) / 6 * 0.4).toFixed(3)})`);
-    if (p.contrast) parts.push(`contrast(${(1 + clamp(p.contrast) / 6 * 0.5).toFixed(3)})`);
-    if (p.saturation) parts.push(`saturate(${(1 + clamp(p.saturation) / 6 * 0.6).toFixed(3)})`);
-    return parts.length ? parts.join(' ') : undefined;
-  }, [isHls, params]);
+  // Brief V3a §2 — GRADE via the shared video kit (CSS filter + overlay layers), HLS path
+  // only. The SAME videoCssFilter/videoOverlays drive the NEW POST preview → preview ==
+  // playback (parity). Non-mappable (tier-3) params are hidden for video, so nothing to drop.
+  const cssFilter = useMemo(() => (isHls ? videoCssFilter(params) : undefined), [isHls, params]);
+  const overlays = useMemo(() => (isHls ? videoOverlays(params) : []), [isHls, params]);
 
   // ── Visibility ──
   useEffect(() => {
@@ -324,6 +315,12 @@ export default function GradedVideo({
           </div>
         </div>
       )}
+
+      {/* Brief V3a §2 — video grade OVERLAY layers (vignette / fade / white-balance tint),
+          HLS path only. Over the media, under the controls. Same recipe as the preview. */}
+      {isHls && overlays.map((s, i) => (
+        <div key={i} style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 3, ...s }} />
+      ))}
 
       {/* Non-autoplay videos get a small RED play triangle, lower-right — the
           austere corner affordance. Tap plays the full graded video in place.

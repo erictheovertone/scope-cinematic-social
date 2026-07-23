@@ -12,7 +12,8 @@
 // 0 = Zora's real value, not a gap) are correctly excluded.
 
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { getCoins, setApiKey } from '@zoralabs/coins-sdk';
+import { getCoins } from '@zoralabs/coins-sdk';
+import { ensureZoraApi } from '@/lib/zoraApi';
 import { reconcileCoinFromTx } from '@/lib/zoraCoins';
 
 const BASE_CHAIN = 8453;
@@ -40,7 +41,7 @@ export interface RecomputeResult {
  *  and the refresh route can both call it. Caller supplies a service-role client. */
 export async function recomputeScreeningRoom(supabase: SupabaseClient): Promise<RecomputeResult> {
   const t0 = Date.now();
-  if (process.env.ZORA_API_KEY) setApiKey(process.env.ZORA_API_KEY);
+  ensureZoraApi(); // Brief Z2 — keyed transport
   let apiCalls = 0;
 
   // ── Step A reconcile: posts with a coin tx but no coin_address (DB write lost

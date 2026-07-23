@@ -8,7 +8,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { getCoinSwaps, setApiKey } from '@zoralabs/coins-sdk';
+import { getCoinSwaps } from '@zoralabs/coins-sdk';
+import { ensureZoraApi } from '@/lib/zoraApi';
 import { swapUsd } from '@/lib/economy/firstCut';
 import { type Recap, type RecapBreakdownRow } from '@/lib/economy/recap';
 import { decodeCreatorReward, mapPoolRewards } from '@/lib/economy/rewardsIndex';
@@ -41,7 +42,7 @@ async function mapPool<T, R>(items: T[], limit: number, fn: (item: T) => Promise
 
 let _keyed = false;
 function ensureKey() {
-  if (!_keyed && process.env.ZORA_API_KEY) { setApiKey(process.env.ZORA_API_KEY); _keyed = true; }
+  if (!_keyed) { ensureZoraApi(); _keyed = true; } // Brief Z2 — keyed transport
 }
 
 function thumbOf(p: {

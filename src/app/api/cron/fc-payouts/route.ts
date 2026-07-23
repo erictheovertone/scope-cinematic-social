@@ -28,6 +28,7 @@ import { base } from 'viem/chains';
 import { accrueFcTrade, zoraSpotUsd, erc20BalanceOf, ZORA_BASE } from '@/lib/economy/fcRewards';
 import { swapUsd } from '@/lib/economy/firstCut';
 import { GAS_FLOOR_ETH } from '@/lib/economy/preflight';
+import { ensureZoraApi } from '@/lib/zoraApi';
 import { getAdminUserId } from '@/lib/adminUser';
 
 export const dynamic = 'force-dynamic';
@@ -79,7 +80,7 @@ export async function GET(req: NextRequest) {
       const { data: posts } = await supabase.from('posts').select('id, coin_address').in('coin_address', coins);
       const postOf = new Map((posts ?? []).map((p) => [(p.coin_address as string), p.id as string]));
       const sdk = await import('@zoralabs/coins-sdk');
-      if (process.env.ZORA_API_KEY) sdk.setApiKey(process.env.ZORA_API_KEY);
+      ensureZoraApi(); // Brief Z2 — keyed transport
       const spot = await zoraSpotUsd();
       for (const coin of coins) {
         const postId = postOf.get(coin);

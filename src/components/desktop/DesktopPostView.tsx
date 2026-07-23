@@ -16,6 +16,7 @@ import { useFirstCutLedger } from '@/lib/firstCutLedger';
 import { getAspectRatio } from '@/lib/aspectRatio';
 import { feedImage } from '@/lib/mediaUrl';
 import GradedVideo from '@/components/finishing/GradedVideo';
+import { streamGradedProps } from "@/lib/editor/videoGrade";
 import CollectSheetGate from '@/components/economy/CollectSheetGate';
 import CommentList, { useCommentLikes, ReplyComposer, type UIComment } from '@/components/CommentList';
 import { replyToComment } from '@/lib/commentInteractions';
@@ -186,7 +187,7 @@ export default function DesktopPostView({
                 <GradedVideo
                   key={postId}
                   url={mediaUrl}
-                  posterUrl={poster}
+                  posterUrl={((post?.stream_poster_url as string) ?? poster)}
                   posterWidth={1600}
                   clipUrl={(post?.autoplay_clip_url as string) ?? null}
                   editParams={post?.edit_params}
@@ -195,6 +196,7 @@ export default function DesktopPostView({
                   cropWidth={(post?.crop_width as number) ?? 1}
                   cropHeight={(post?.crop_height as number) ?? 1}
                   forcePlay
+                  {...streamGradedProps(post as unknown as Record<string, unknown>)}
                   showSoundToggle
                   style={{ width: '100%', height: '100%' }}
                 />

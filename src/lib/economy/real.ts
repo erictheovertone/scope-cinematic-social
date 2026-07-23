@@ -16,6 +16,12 @@
 // mock so the preview-flag surfaces keep working unchanged.
 
 import { createTradeCall } from "@zoralabs/coins-sdk";
+// Brief Z2 — this module's createTradeCall quotes run in the BROWSER
+// (EconomyProvider is a client component) and /quote is the endpoint the SDK
+// never keys itself. Route them through the keyed proxy. Must precede any call.
+import { ensureZoraApi } from "@/lib/zoraApi";
+
+ensureZoraApi();
 import { formatEther, parseEther, getAddress } from "viem";
 import { base } from "viem/chains";
 import { supabase } from "@/lib/supabase/client";

@@ -5,6 +5,7 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { FC_REWARD_RATE, fcRankWeight, TOKENS_PER_PIECE } from '@/lib/economy/tokenomics';
+import { ensureZoraApi } from '@/lib/zoraApi';
 
 const RPC_URL = 'https://mainnet.base.org';
 const MIN_HOLD_RAW = BigInt(TOKENS_PER_PIECE) * BigInt('1000000000000000000');
@@ -28,6 +29,7 @@ export async function erc20BalanceOf(token: string, wallet: string): Promise<big
 export async function zoraSpotUsd(): Promise<number | null> {
   try {
     const { createTradeCall } = await import('@zoralabs/coins-sdk');
+    ensureZoraApi(); // Brief Z2 — /quote is never keyed by the SDK itself
     const probe = BigInt(1000) * BigInt('1000000000000000000');
     const q = await createTradeCall({
       tradeType: 'sell' as never,

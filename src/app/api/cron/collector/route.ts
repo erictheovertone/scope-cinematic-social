@@ -13,7 +13,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { getProfileBalances, getCoinSwaps, setApiKey } from '@zoralabs/coins-sdk';
+import { getProfileBalances, getCoinSwaps } from '@zoralabs/coins-sdk';
+import { ensureZoraApi } from '@/lib/zoraApi';
 import {
   COLLECTOR_CONFIG,
   COLLECTOR_WEIGHTS,
@@ -61,7 +62,7 @@ export async function GET(req: NextRequest) {
   }
 
   const t0 = Date.now();
-  if (process.env.ZORA_API_KEY) setApiKey(process.env.ZORA_API_KEY);
+  ensureZoraApi(); // Brief Z2 — keyed transport (reaches /quote too)
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
