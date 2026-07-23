@@ -37,8 +37,20 @@ function renditionFor(width: number): number | null {
  * @param width    target CSS×DPR pixel width (retina-aware — request ~2–3× the CSS width)
  * @param _quality accepted for call-site compatibility; ignored (quality is baked in)
  */
+// Brief P1b — Cloudflare Stream thumbnails (…/thumbnails/thumbnail.jpg) DO support live
+// sizing params, unlike our baked-rendition images. Size them to the requested display
+// width, longest-side (width=height=w + fit=clip = the FULL frame, aspect-maintained, no
+// double-crop against the poster's objectFit:cover). CDN-cached per (uid,width) variant.
+// NOTE: this is DISPLAY only — the V2e coin-metadata chain returns the RAW thumbnail URL
+// (never through here), so minted-forever metadata stays untransformed.
+const STREAM_THUMB = /\.cloudflarestream\.com\/[^/]+\/thumbnails\/thumbnail\.(?:jpg|gif)/i;
+
 export function feedImage(url: string | null | undefined, width: number, _quality = 78): string {
   if (!url) return url ?? '';
+  if (STREAM_THUMB.test(url)) {
+    const w = Math.round(width);
+    return `${url.split('?')[0]}?width=${w}&height=${w}&fit=clip`;
+  }
   // Foreign hosts / already-transformed URLs lack the object marker → untouched.
   if (!url.includes(PUBLIC_OBJECT)) return url;
   const path = url.split('?')[0];

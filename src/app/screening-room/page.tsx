@@ -13,6 +13,7 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { openPostLightbox } from '@/lib/postLightbox';
+import { feedImage } from '@/lib/mediaUrl';
 import { getAspectRatio, ratioPadding } from '@/lib/aspectRatio';
 import PillarboxFrame from '@/components/PillarboxFrame';
 import GradedVideo from '@/components/finishing/GradedVideo';
@@ -166,7 +167,7 @@ function MobileScreeningRoom() {
   }, []);
 
   const mediaSrc = (p: NonNullable<RoomRow['post']>): string | null =>
-    p.media_type === 'video' ? (p.poster_url || p.thumbnail_url || null) : (p.media_urls?.[0] || null);
+    p.media_type === 'video' ? ((p as { stream_poster_url?: string | null }).stream_poster_url || p.poster_url || p.thumbnail_url || null) : (p.media_urls?.[0] || null);
 
   return (
     <>
@@ -238,7 +239,7 @@ function MobileScreeningRoom() {
                 style={{ width: '100%', height: '100%' }}
               />
             ) : src ? (
-              <img src={src} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              <img src={feedImage(src, 750)} alt="" loading="lazy" decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
             ) : (
               <div style={{ width: '100%', height: '100%', background: '#111' }} />
             );

@@ -364,7 +364,7 @@ export default function GradedVideo({
           pixel ever paints between poster and the graded video. Legacy posters are already
           baked-graded, so no filter there (isHls false). */}
       {posterUrl && (
-        <img src={posterWidth ? feedImage(posterUrl, posterWidth) : posterUrl} alt="" draggable={false} loading="lazy" decoding="async" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", display: "block", filter: isHls ? cssFilter : undefined }} />
+        <img src={feedImage(posterUrl, posterWidth ?? 750)} alt="" draggable={false} loading="lazy" decoding="async" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", display: "block", filter: isHls ? cssFilter : undefined }} />
       )}
 
       {/* Brief V2 — Stream still encoding: poster (above) or the #0a0a0a placeholder (the
