@@ -24,7 +24,6 @@ import {
 import FinishingStep from '@/components/finishing/FinishingStep';
 import { DEFAULT_PARAMS, type EditParams } from '@/lib/editor/params';
 import { bakeLook, hasLookEdits, decodeImageFile } from '@/lib/editor/bakeLook';
-import { bakeAutoplayClip } from '@/lib/editor/bakeClip';
 import { createLook, getLooks, uploadLookThumb, setLookThumb, type SavedLook } from '@/lib/looksService';
 import { getScopeLimitType } from '@/lib/limits';
 import { useUpsell } from '@/components/UpsellProvider';
@@ -112,6 +111,15 @@ async function cropImageToAspect(file: File, cropXFrac: number, cropYFrac: numbe
     img.onerror = () => { URL.revokeObjectURL(objectUrl); resolve(file); };
     img.src = objectUrl;
   });
+}
+
+// Brief V2a — a bake/decode that never settles = a silently FROZEN "POSTING…". Wrap any
+// awaited stage that could hang so a stall becomes a NAMED, caught error instead of a freeze.
+function withTimeout<T>(p: Promise<T>, ms: number, stage: string): Promise<T> {
+  return Promise.race([
+    p,
+    new Promise<T>((_, rej) => setTimeout(() => rej(new Error(`${stage} timed out after ${Math.round(ms / 1000)}s`)), ms)),
+  ]);
 }
 
 function captureVideoThumbnail(videoUrl: string): Promise<string | null> {
@@ -299,6 +307,9 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
   const [isOptimising, setIsOptimising] = useState(false);
   const [videoError, setVideoError] = useState<string | null>(null);
   const [postError, setPostError] = useState<string | null>(null);
+  // Brief V2a — the live publish stage, surfaced on the POSTING overlay so a HANG names
+  // itself on Eric's device (no inspector needed). Set via the local `stage` in handlePost.
+  const [postStage, setPostStage] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const { user } = usePrivy();
@@ -685,6 +696,11 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
     setIsUploading(true);
     setPostError(null);
 
+    // Brief V2a — track the current stage locally (the state var is stale inside the
+    // catch closure) so a failure/hang can NAME the stage on screen + in the message.
+    let stage = '';
+    const setStage = (s: string) => { stage = s; setPostStage(s); console.log('[handlePost] stage:', s); };
+
     try {
       const supabaseUser = await getUserByPrivyId(user.id);
       if (!supabaseUser) throw new Error('User not found in database');
@@ -718,6 +734,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
         // 'processing' and the webhook flips it 'ready'. Playback swap is V3, so media_urls
         // stays EMPTY for video until then — surfaces show the graded poster meanwhile.
         if (media.type === 'video') {
+          setStage('Uploading video');
           console.log('[handlePost] uploading video to Stream:', media.file.name);
           streamUid = await uploadVideoToStream(media.file, (frac) => setUploadPct(Math.round(frac * 100)));
           console.log('[handlePost] stream upload complete, uid:', streamUid);
@@ -759,45 +776,38 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
       //    cost. Best-effort: a failure never blocks publishing.
       let posterUrl: string | null = null;
       if (selectedMedia[0]?.type === 'video') {
+        setStage('Baking poster');
         try {
-          const heroT = editParams.heroFrameTime ?? 0;
-          const frameFile = await captureVideoFrameFile(selectedMedia[0].url, heroT);
-          let posterFile = await bakeImageGeometry(frameFile, geometry, exportChip.exportW, exportChip.exportH);
-          if (hasLookEdits(editParams)) {
-            const posterImg = await decodeImageFile(posterFile);
-            const posterBlob = await bakeLook(posterImg, editParams, exportChip.exportW, exportChip.exportH);
-            posterFile = new File([posterBlob], 'poster.jpg', { type: 'image/jpeg' });
-          }
-          // Poster is the video post's feed face (shown via feedImage) → renditions.
-          posterUrl = await uploadImageWithRenditions(posterFile, 'post-media', user.id);
-          console.log('[handlePost] poster baked (hero frame:', heroT, ') (+renditions):', posterUrl);
+          // Brief V2a — ONE frame (image work, NOT a re-encode → E1-compliant). Wrapped in a
+          // timeout so a gl-react readback stall can't freeze POSTING: on stall it throws, is
+          // caught here, and the post still publishes (poster is best-effort; the Stream
+          // webhook backfills stream_poster_url anyway).
+          posterUrl = await withTimeout((async () => {
+            const heroT = editParams.heroFrameTime ?? 0;
+            const frameFile = await captureVideoFrameFile(selectedMedia[0].url, heroT);
+            let posterFile = await bakeImageGeometry(frameFile, geometry, exportChip.exportW, exportChip.exportH);
+            if (hasLookEdits(editParams)) {
+              const posterImg = await decodeImageFile(posterFile);
+              const posterBlob = await bakeLook(posterImg, editParams, exportChip.exportW, exportChip.exportH);
+              posterFile = new File([posterBlob], 'poster.jpg', { type: 'image/jpeg' });
+            }
+            return uploadImageWithRenditions(posterFile, 'post-media', user.id);
+          })(), 25_000, 'Poster bake');
+          console.log('[handlePost] poster baked (+renditions):', posterUrl);
         } catch (e) {
-          console.warn('[handlePost] poster bake failed (publishing without graded poster):', e);
+          console.warn('[handlePost] poster bake failed/stalled (publishing without graded poster):', e);
         }
       }
 
-      // ── Autoplay snippet (VIDEO) — bake the creator's 3–5s window of the GRADED
-      //    video into a tiny muted clip; autoplay surfaces loop this plain <video>
-      //    (no live pipeline). Window = the selector's choice, else auto (hero frame
-      //    anchor, else randomized). Best-effort: a failure never blocks publishing
-      //    (autoplay falls back to the poster). EVERY video post gets a clip baked.
-      let autoplayClipUrl: string | null = null;
-      if (selectedMedia[0]?.type === 'video') {
-        try {
-          const clip = await bakeAutoplayClip(selectedMedia[0].url, editParams, {
-            windowStart: snippetWindow?.start,
-            clipLen: snippetWindow?.length,
-            heroFrameTime: editParams.heroFrameTime,
-          });
-          if (clip) {
-            const clipFile = new File([clip.blob], `autoplay-clip.${clip.ext}`, { type: clip.mimeType });
-            autoplayClipUrl = await uploadImage(clipFile, 'post-media', user.id);
-            console.log('[handlePost] autoplay clip baked + uploaded:', autoplayClipUrl);
-          }
-        } catch (e) {
-          console.warn('[handlePost] autoplay clip bake failed (autoplay will use poster):', e);
-        }
-      }
+      // ── Brief V2a — the autoplay-clip bake is REMOVED for the Stream path. It re-encoded
+      //    the video client-side (canvas.captureStream + MediaRecorder driving the gl-react
+      //    Pipeline) — a VIOLATION of E1 (no client-side video re-encode) that V2 wrongly
+      //    kept, and the FREEZE Eric hit: on iOS Safari that chain STALLS with halation and
+      //    never fires recorder.onstop, so `await bakeAutoplayClip` never settled → POSTING
+      //    hung forever (a try/catch can't rescue a hang). The raw video is Stream's store of
+      //    record and edit_params are persisted, so graded playback is V3's job — no client
+      //    re-encode here.
+      const autoplayClipUrl: string | null = null;
 
       let thumbnailUrl: string | null = null;
       if (customThumbnail) {
@@ -837,6 +847,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
         } : {}),
       };
       console.log('[handlePost] createPost payload:', postPayload);
+      setStage('Publishing');
       const newPost = await createPost(postPayload);
       console.log('[handlePost] post created:', newPost?.id);
 
@@ -882,7 +893,10 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
       console.error('[handlePost] error message:', e?.message);
       console.error('[handlePost] error code:', e?.code);
       console.error('[handlePost] error details:', JSON.stringify(e, null, 2));
-      setPostError('Failed to create post. Please try again.');
+      // Brief V2a — NAME the failing stage + code on screen (publish-honesty rule); the
+      // stage line also shows on the POSTING overlay during a stall so a hang self-reports.
+      const code = e?.code ?? e?.status ?? '';
+      setPostError(`${stage || 'Publish'} failed${code ? ` [${code}]` : ''} — ${e?.message ?? 'unknown error'}. Please try again.`);
       setIsUploading(false);
       // Clear the full-screen POSTING overlay so the error is actually visible
       // (GATE B: a bake/publish failure must be loud, never a silent stuck state).
@@ -893,6 +907,8 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
   const completeFlow = () => {
     onClose();
     setStep('media');
+    setPostStage('');
+    setUploadPct(0);
     setSelectedMedia([]);
     setCaption('');
     setEditGeometry(null);
@@ -1688,9 +1704,18 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           animation: 'fadeInBlack 0.2s ease forwards',
         }}>
-          <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-12)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.15em' }}>
-            POSTING...
-          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+            <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-12)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.15em', margin: 0 }}>
+              POSTING...
+            </p>
+            {/* Brief V2a — the live stage. If POSTING freezes, this line names the stalled
+                stage on Eric's device without a connected inspector. */}
+            {postStage && (
+              <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: 'var(--fs-9)', color: 'rgba(229,225,219,0.5)', textTransform: 'uppercase', letterSpacing: '0.12em', margin: 0 }}>
+                {postStage}{uploadPct > 0 && uploadPct < 100 && postStage === 'Uploading video' ? ` ${uploadPct}%` : ''}
+              </p>
+            )}
+          </div>
         </div>
       )}
     </>

@@ -38,15 +38,28 @@ export async function uploadVideoToStream(file: File, onProgress?: (frac: number
 
   while (offset < file.size) {
     const end = Math.min(offset + CHUNK, file.size);
-    const res = await fetch(uploadUrl, {
-      method: 'PATCH',
-      headers: {
-        'Tus-Resumable': '1.0.0',
-        'Upload-Offset': String(offset),
-        'Content-Type': 'application/offset+octet-stream',
-      },
-      body: file.slice(offset, end),
-    });
+    // Brief V2a — per-chunk timeout: a stalled PATCH (iOS backgrounding / dead connection)
+    // must FAIL VISIBLY, never hang the POSTING overlay forever. 90s per 5 MiB chunk is
+    // generous even on slow cell. Abort → throws → surfaced as "Uploading video failed".
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 90_000);
+    let res: Response;
+    try {
+      res = await fetch(uploadUrl, {
+        method: 'PATCH',
+        headers: {
+          'Tus-Resumable': '1.0.0',
+          'Upload-Offset': String(offset),
+          'Content-Type': 'application/offset+octet-stream',
+        },
+        body: file.slice(offset, end),
+        signal: ctrl.signal,
+      });
+    } catch (e) {
+      throw new Error(`stream tus PATCH stalled/failed at offset ${offset} (${(e as Error)?.name === 'AbortError' ? 'timeout' : (e as Error)?.message})`);
+    } finally {
+      clearTimeout(timer);
+    }
     if (res.status !== 204 && res.status !== 200) {
       throw new Error(`stream tus PATCH failed (${res.status}) at offset ${offset}`);
     }
