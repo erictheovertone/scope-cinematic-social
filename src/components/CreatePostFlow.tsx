@@ -300,9 +300,28 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
   }, [selectedMedia]);
   const [caption, setCaption] = useState('');
   const [isUploading, setIsUploading] = useState(false);
-  // Brief V2 — Stream TUS upload progress (0–100). Set during the video upload; the
-  // richer stage-progress UI (E1) consumes this. Surfaced minimally today (POST label).
+  // Brief V2 — Stream TUS upload progress (0–100). Set during the video upload.
   const [uploadPct, setUploadPct] = useState(0);
+  // Brief V2c — the SHOWN value: interpolated toward uploadPct so the big counter ticks
+  // 1-by-1 instead of jumping in 5 MiB chunk steps. Never exceeds the real value.
+  const [displayPct, setDisplayPct] = useState(0);
+  // Interpolate displayPct → uploadPct at ~1%/tick (4%/tick to sweep the final stretch to
+  // 100). The display is clamped to the real value, so a STALLED upload freezes the counter
+  // (honesty rule — the counter must not drift past real and mask a stall). A drop in
+  // uploadPct (new post reset) snaps the display straight down. Reduced-motion → jump.
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setDisplayPct(uploadPct);
+      return;
+    }
+    const id = setInterval(() => {
+      setDisplayPct((d) => {
+        if (d >= uploadPct) return uploadPct;            // caught up / reset → sit at real
+        return Math.min(uploadPct, d + (uploadPct >= 100 ? 4 : 1)); // sweep quickly at completion
+      });
+    }, 50);
+    return () => clearInterval(id);
+  }, [uploadPct]);
   const [isPosting, setIsPosting] = useState(false);
   const [isOptimising, setIsOptimising] = useState(false);
   const [videoError, setVideoError] = useState<string | null>(null);
@@ -695,6 +714,8 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
     setIsPosting(true);
     setIsUploading(true);
     setPostError(null);
+    setUploadPct(0);      // Brief V2c — reset the counter for this publish
+    setDisplayPct(0);
 
     // Brief V2a — track the current stage locally (the state var is stale inside the
     // catch closure) so a failure/hang can NAME the stage on screen + in the message.
@@ -1709,15 +1730,25 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           animation: 'fadeInBlack 0.2s ease forwards',
         }}>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
-            <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-12)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.15em', margin: 0 }}>
-              POSTING...
-            </p>
-            {/* Brief V2a — the live stage. If POSTING freezes, this line names the stalled
-                stage on Eric's device without a connected inspector. */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
+            {/* Brief V2c — the big smooth counter (video upload). Haas 75 Bold 56px; the %
+                sits ~0.5em and slightly raised (top-aligned + a hair of top margin). Only
+                shows once there's real upload progress; images fall back to POSTING…. */}
+            {uploadPct > 0 ? (
+              <div style={{ display: 'flex', alignItems: 'flex-start', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 56, lineHeight: 1, letterSpacing: 'var(--track-display)', color: 'var(--ink-100)' }}>
+                {displayPct}
+                <span style={{ fontSize: '0.5em', marginTop: '0.14em', marginLeft: '0.04em' }}>%</span>
+              </div>
+            ) : (
+              <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-12)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.15em', margin: 0 }}>
+                POSTING...
+              </p>
+            )}
+            {/* Brief V2a — the live stage, smaller, below the number. If POSTING freezes,
+                this line names the stalled stage on Eric's device without an inspector. */}
             {postStage && (
               <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: 'var(--fs-9)', color: 'rgba(229,225,219,0.5)', textTransform: 'uppercase', letterSpacing: '0.12em', margin: 0 }}>
-                {postStage}{uploadPct > 0 && uploadPct < 100 && postStage === 'Uploading video' ? ` ${uploadPct}%` : ''}
+                {postStage}
               </p>
             )}
           </div>
