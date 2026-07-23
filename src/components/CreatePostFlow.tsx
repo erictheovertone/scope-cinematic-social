@@ -875,7 +875,12 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
         mediaUrls,
         postCaption: caption,
         // GRADED image: poster (video hero frame) for video, baked image for photos.
-        image: (isVideo ? posterUrl : null) || mediaUrls[0],
+        // Brief V2b — Stream videos have EMPTY mediaUrls, so the old `|| mediaUrls[0]`
+        // fallback is gone; a stalled poster bake then left image undefined → the coin
+        // metadata dropped `image` → SDK "Metadata image is required and must be a string".
+        // Fall back to the client auto-thumbnail (captured at selection) so a video coin
+        // ALWAYS mints with a valid image string (poster-only, no animation, until V3).
+        image: (isVideo ? (posterUrl ?? thumbnailUrl) : null) || mediaUrls[0],
         animationUrl: isVideo ? autoplayClipUrl : null,
         mediaType: selectedMedia[0]?.type || 'image',
         layoutId: finalLayoutId,

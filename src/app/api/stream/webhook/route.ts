@@ -35,16 +35,24 @@ export async function POST(req: NextRequest) {
   if (!secret) { console.error('[stream/webhook] missing STREAM_WEBHOOK_SECRET'); return NextResponse.json({ error: 'not configured' }, { status: 500 }); }
 
   const raw = await req.text(); // MUST be the unaltered raw body for signature verification
-  if (!verify(raw, req.headers.get('webhook-signature'), secret)) {
+  // Brief V2b — RECEIPT LOGGING: prove call vs no-call, and verified vs rejected+reason.
+  // "never called" = these lines never appear in the Vercel logs → registration/delivery
+  // problem (see the report's GET-webhook-config check). "called + rejected" = they do.
+  const sigHeader = req.headers.get('webhook-signature');
+  if (!verify(raw, sigHeader, secret)) {
+    console.warn('[stream/webhook] REJECTED — bad signature', {
+      hasHeader: !!sigHeader, bodyLen: raw.length,
+    });
     return NextResponse.json({ error: 'bad signature' }, { status: 401 });
   }
 
   let body: Record<string, unknown>;
-  try { body = JSON.parse(raw); } catch { return NextResponse.json({ error: 'bad json' }, { status: 400 }); }
+  try { body = JSON.parse(raw); } catch { console.warn('[stream/webhook] verified but bad JSON'); return NextResponse.json({ error: 'bad json' }, { status: 400 }); }
 
   const uid = String(body.uid ?? '');
   const state = (body.status as { state?: string } | undefined)?.state;
   const ready = body.readyToStream === true || state === 'ready';
+  console.log('[stream/webhook] VERIFIED hit', { uid, state, ready });
   if (!uid) return NextResponse.json({ ok: true }); // nothing to map; ack so Stream stops retrying
 
   const supabase = createClient(
@@ -62,10 +70,16 @@ export async function POST(req: NextRequest) {
       }
     : { video_status: 'failed' };
 
-  const { error } = await supabase.from('posts').update(patch).eq('stream_uid', uid);
+  // .select() so we can tell "unknown uid" (0 rows matched) from a real write.
+  const { data: rows, error } = await supabase.from('posts').update(patch).eq('stream_uid', uid).select('id');
   if (error) {
-    console.error('[stream/webhook] status write failed', uid, error);
+    console.error('[stream/webhook] status write FAILED', uid, error);
     return NextResponse.json({ error: 'write failed' }, { status: 500 }); // 5xx → Stream retries
+  }
+  if (!rows?.length) {
+    console.warn('[stream/webhook] verified but NO POST matched stream_uid', uid);
+  } else {
+    console.log('[stream/webhook] wrote', ready ? 'ready' : 'failed', 'for post', rows[0].id);
   }
   // Always 200 on success so Stream doesn't retry-storm. Any side effects would go here,
   // wrapped so they can never fail the status write.

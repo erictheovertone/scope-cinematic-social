@@ -102,11 +102,19 @@ async function uploadCoinMetadata(args: {
   animationUrl?: string | null; // baked video clip, if any
   mimeType?: string;
 }): Promise<string> {
+  // Brief V2b — the coins-sdk validates the fetched tokenURI: name/description/image must
+  // all be strings ("Metadata image is required and must be a string"). Guard image HERE so
+  // a missing one throws a CLEAR, retryable coin-failed error instead of the cryptic SDK one.
+  if (typeof args.image !== "string" || !args.image) {
+    throw new Error("[zoraCoins] coin metadata image missing — video poster/thumbnail unavailable (cannot mint)");
+  }
   const metadata: Record<string, unknown> = {
     name: args.name,
     description: args.description ?? "",
     image: args.image,
   };
+  // OMIT animation_url when absent (V2b: never write it as null — the SDK requires a string
+  // IF the key is present). Video coins are poster-only until V3 wires Stream playback.
   if (args.animationUrl) {
     metadata.animation_url = args.animationUrl;
     metadata.content = { mime: args.mimeType || "video/mp4", uri: args.animationUrl };
