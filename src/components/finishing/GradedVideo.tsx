@@ -29,6 +29,7 @@ import { lookById } from "./looksCatalog";
 import { ensureLut } from "@/lib/editor/lut";
 import { registerAutoplayVideo, reportVisibility } from "@/lib/videoPlayback";
 import { feedImage } from "@/lib/mediaUrl";
+import type HlsType from "hls.js"; // TYPE ONLY (erased) — the runtime import is dynamic (§2)
 
 const Pipeline = dynamic(() => import("./Pipeline"), { ssr: false });
 
@@ -69,13 +70,19 @@ interface Props {
   /** Brief V2 — Stream is still encoding (video_status='processing'). The poster shows
    *  (or a placeholder) with a quiet PROCESSING label; no playback attempt. */
   processing?: boolean;
+  /** Brief V3 — Stream HLS manifest (stream_playback_url) for a READY video. Its PRESENCE
+   *  is the dual-path branch: set → HLS playback (native <video> on Safari/iOS, hls.js via
+   *  dynamic import elsewhere) + the look via CSS filter (no gl-react pipeline, no crop-
+   *  double-work). Absent → the legacy url/clip path is UNTOUCHED. */
+  hlsUrl?: string | null;
 }
 
 export default function GradedVideo({
   url, posterUrl, posterWidth, clipUrl, editParams, cropX = 0, cropY = 0, cropWidth = 1, cropHeight = 1,
   autoplayFlag = false, gridMode = false, forcePlay = false, fullPlayback = false, style, onClick, showSoundToggle = false,
-  processing = false,
+  processing = false, hlsUrl = null,
 }: Props) {
+  const isHls = !!hlsUrl; // Brief V3 — the dual-path branch: Stream HLS vs legacy source.
   const id = useId();
   const [inView, setInView] = useState(false);          // gridMode visibility
   const [coordActive, setCoordActive] = useState(false); // feed coordinator grant
@@ -108,11 +115,30 @@ export default function GradedVideo({
   // A manual tap on a non-autoplay video plays the FULL video (graded), exactly
   // like the standalone/lightbox path — so it shares forcePlay's behavior.
   const effectiveForcePlay = forcePlay || manualPlay;
-  // Brief W3 §1 — fullPlayback (mobile feed) plays the full source plain (no pipeline,
-  // usePipeline still gates on effectiveForcePlay below), instead of the ~4s clip.
-  const playbackUrl = effectiveForcePlay ? url : (fullPlayback ? (url ?? null) : (clipUrl ?? null));
+  // Brief V3 — HLS (Stream) overrides source selection: the manifest plays in ALL modes
+  // (feed/grid/forcePlay), in-view-gated the same way. Legacy selection is UNCHANGED.
+  // Brief W3 §1 — fullPlayback (mobile feed) plays the full source plain (no pipeline).
+  const playbackUrl = isHls ? hlsUrl : (effectiveForcePlay ? url : (fullPlayback ? (url ?? null) : (clipUrl ?? null)));
   const shouldAttempt = !!playbackUrl && (effectiveForcePlay || (autoplayFlag && (gridMode ? inView : coordActive)));
-  const usePipeline = effectiveForcePlay && playing && looked && !failed;
+  // HLS carries its grade via CSS filter (below), NOT the gl-react pipeline — so the
+  // pipeline stays a legacy-only path (zero re-encode, keeps HLS cheap).
+  const usePipeline = !isHls && effectiveForcePlay && playing && looked && !failed;
+
+  // Brief V3 §5 — GRADE via CSS filter for HLS playback. Only the linearly-mappable
+  // finishing params translate to CSS filter functions; everything else is NOT mappable
+  // (halation/bloom/grain/LUT/splitTone/curves/vignette/clarity/whiteBalance/fade/…) and is
+  // FLAGGED in the brief report (Eric rules — no silent dropping). Factors are a calibrated
+  // approximation of the pipeline; tune if they drift from the baked poster.
+  const cssFilter = useMemo(() => {
+    if (!isHls || !params) return undefined;
+    const p = params as unknown as { exposure?: number; contrast?: number; saturation?: number };
+    const clamp = (n: number) => Math.max(-6, Math.min(6, n || 0));
+    const parts: string[] = [];
+    if (p.exposure) parts.push(`brightness(${(1 + clamp(p.exposure) / 6 * 0.4).toFixed(3)})`);
+    if (p.contrast) parts.push(`contrast(${(1 + clamp(p.contrast) / 6 * 0.5).toFixed(3)})`);
+    if (p.saturation) parts.push(`saturate(${(1 + clamp(p.saturation) / 6 * 0.6).toFixed(3)})`);
+    return parts.length ? parts.join(' ') : undefined;
+  }, [isHls, params]);
 
   // ── Visibility ──
   useEffect(() => {
@@ -158,8 +184,8 @@ export default function GradedVideo({
     // of a REMOTE video (Supabase Storage, a different origin). Setting it after src
     // requires a reload to take effect — order matters. Harmless for the plain clip.
     if (v.crossOrigin !== "anonymous") v.crossOrigin = "anonymous";
-    if (v.getAttribute("src") !== playbackUrl) v.src = playbackUrl;
     let cancelled = false;
+    let hls: HlsType | null = null;
     const onPlaying = () => { if (!cancelled) setPlaying(true); };
     const onPause = () => { if (!cancelled) setPlaying(false); };
     v.addEventListener("playing", onPlaying);
@@ -173,14 +199,33 @@ export default function GradedVideo({
         retryRef.current = window.setTimeout(tryPlay, 1200); // retry (policy / decoder)
       });
     };
-    tryPlay();
+    // Brief V3 §2 — SOURCE ATTACH. HLS (Stream): native <video src> on Safari/iOS (no lib);
+    // hls.js via DYNAMIC import elsewhere (its own chunk — stays out of the main bundle).
+    // Legacy/progressive: set src directly (unchanged). A truly unsupported browser → poster.
+    const nativeHls = !!v.canPlayType("application/vnd.apple.mpegurl");
+    if (isHls && !nativeHls) {
+      import("hls.js").then(({ default: Hls }) => {
+        if (cancelled) return;
+        if (Hls.isSupported()) {
+          hls = new Hls({ maxBufferLength: 12, enableWorker: true });
+          hls.on(Hls.Events.MANIFEST_PARSED, () => tryPlay());
+          hls.on(Hls.Events.ERROR, (_e: unknown, data: { fatal?: boolean }) => { if (data?.fatal) setErrored(true); });
+          hls.loadSource(playbackUrl);
+          hls.attachMedia(v);
+        } else { setErrored(true); }
+      }).catch(() => setErrored(true));
+    } else {
+      if (v.getAttribute("src") !== playbackUrl) v.src = playbackUrl;
+      tryPlay();
+    }
     return () => {
       cancelled = true;
       v.removeEventListener("playing", onPlaying);
       v.removeEventListener("pause", onPause);
       if (retryRef.current) { clearTimeout(retryRef.current); retryRef.current = null; }
+      if (hls) { try { hls.destroy(); } catch { /* already gone */ } }
     };
-  }, [shouldAttempt, videoEl, playbackUrl, errored]);
+  }, [shouldAttempt, videoEl, playbackUrl, errored, isHls]);
 
   useEffect(() => { if (videoEl) videoEl.muted = muted; }, [videoEl, muted]);
 
@@ -262,8 +307,8 @@ export default function GradedVideo({
           // played back zoomed. fullW/fullH preserve the video's AR, so the
           // frame maps cleanly with no distortion.
           style={geom
-            ? { position: "absolute", left: geom.left, top: geom.top, width: geom.fullW, height: geom.fullH, objectFit: "cover", display: "block", opacity: playing && !usePipeline ? 1 : 0 }
-            : { position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", display: "block", opacity: playing && !usePipeline ? 1 : 0 }}
+            ? { position: "absolute", left: geom.left, top: geom.top, width: geom.fullW, height: geom.fullH, objectFit: "cover", display: "block", opacity: playing && !usePipeline ? 1 : 0, filter: cssFilter }
+            : { position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", display: "block", opacity: playing && !usePipeline ? 1 : 0, filter: cssFilter }}
         />
       )}
 

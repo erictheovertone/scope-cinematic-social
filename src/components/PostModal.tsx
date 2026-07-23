@@ -540,19 +540,23 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
             </div>
             <div key={post.id} style={{ position: "relative", width: "92%", margin: "0 auto", aspectRatio: getAspectRatio(post.layout_id ?? ''), overflow: "hidden", background: "#0a0a0a" }}>{/* Brief M1 §2 — key remounts media per swiped post: frees the outgoing decoder, re-inits GradedVideo's forcePlay + iOS decode watchdog for the incoming (W3 pause/play handoff) */}
               <MusicWaveButton post={post as { music_track_id?: string | null; music_mode?: string | null; music_start_seconds?: number | null; media_type?: string | null }} />
-              {post.media_urls?.[0] ? (
-                isVideoPost ? (
-                  // Standalone view → always play GRADED (look applied live via the pipeline).
+              {/* Brief V3 §2/§3 — a Stream video has EMPTY media_urls, so it must render on
+                  stream_uid too (empty-media-safe). Ready → HLS; processing → poster+label;
+                  legacy (media_urls, no stream_uid) → the untouched forcePlay path. */}
+              {isVideoPost && (post.media_urls?.[0] || (post as { stream_uid?: string | null }).stream_uid) ? (
                   <GradedVideo
-                    url={post.media_urls[0]}
-                    posterUrl={post.poster_url ?? post.thumbnail_url}
+                    url={post.media_urls?.[0] ?? ''}
+                    posterUrl={(post as { stream_poster_url?: string | null }).stream_poster_url ?? post.poster_url ?? post.thumbnail_url}
                     editParams={post.edit_params}
                     cropX={post.crop_x ?? 0} cropY={post.crop_y ?? 0} cropWidth={post.crop_width ?? 1} cropHeight={post.crop_height ?? 1}
                     forcePlay
                     showSoundToggle
+                    processing={(post as { video_status?: string | null }).video_status === 'processing'}
+                    hlsUrl={(post as { video_status?: string | null; stream_playback_url?: string | null }).video_status === 'ready' ? (post as { stream_playback_url?: string | null }).stream_playback_url : null}
                     style={{ width: "100%", height: "100%" }}
                   />
-                ) : (
+              ) : post.media_urls?.[0] ? (
+                (
                   <MediaRenderer
                     url={post.media_urls[0]}
                     width={1280}

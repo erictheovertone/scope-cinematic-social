@@ -69,7 +69,7 @@ export const DATABASE_PROVIDERS = {
 
 // File validation
 export const FILE_CONSTRAINTS = {
-  maxFileSize: 50 * 1024 * 1024, // 50MB
+  maxFileSize: 500 * 1024 * 1024, // 500MB (Brief V3)
   allowedImageTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/heic'],
   allowedVideoTypes: ['video/mp4', 'video/webm'], // .mov/quicktime rejected at upload (handleMediaSelect); not web-playable,
   maxVideoDuration: 60, // seconds

@@ -32,11 +32,81 @@ export const publicClient = createPublicClient({
 
 // LOG HYGIENE: SDK errors carry non-enumerable props — logging the raw object
 // prints "{}". Always log through this extractor.
-export const errInfo = (e: unknown) => ({
-  name: (e as any)?.name,
-  message: (e as any)?.message,
-  cause: (e as any)?.cause?.message ?? (e as any)?.cause,
-});
+//
+// Brief Z1 — the SDK's createTradeCall ATTACHES the upstream response body to the
+// error it throws (err.errorType / err.errorBody) and that is the ONLY record of
+// what the SDK API actually said (status text, rate-limit notice, auth refusal).
+// The old extractor read name/message/cause and dropped both, so every quote
+// failure logged a bare "Quote failed". Surfaced here, so every existing callsite
+// (backing hand-off, collect, swap) gains the evidence with no callsite change.
+export const errInfo = (e: unknown) => {
+  const body = (e as any)?.errorBody;
+  return {
+    name: (e as any)?.name,
+    message: (e as any)?.message,
+    cause: (e as any)?.cause?.message ?? (e as any)?.cause,
+    ...((e as any)?.errorType ? { errorType: (e as any).errorType } : {}),
+    ...(body ? { errorBody: typeof body === "string" ? body.slice(0, 400) : JSON.stringify(body)?.slice(0, 400) } : {}),
+  };
+};
+
+// ── Brief Z1 — Zora SDK API evidence capture (DIAGNOSTIC, logging only) ───────
+//
+// WHY THIS EXISTS: coins-sdk@0.6.0's createCoin builds its calldata SERVER-side
+// (POST https://api-sdk.zora.engineering/create/content), and its generated
+// fetch client does NOT throw on non-2xx — it returns { data: undefined, error,
+// response }. The SDK then does:
+//     if (!res.data?.calls) throw new Error("Failed to create content calldata")
+// discarding `error` and `response` entirely. The HTTP status, the response body
+// and the endpoint are destroyed inside the SDK before we ever see them, so a
+// 401/403/429 (auth / rate-limit) is indistinguishable from a genuine 5xx —
+// both arrive as that one generic string, which CreatePostFlow's regex then
+// reports as "Zora's service is having trouble".
+//
+// So we tap the ONE layer below the SDK that still holds the truth: a scoped
+// globalThis.fetch wrapper, active only for the awaited call, always restored
+// (the withQuietConsoleError discipline). It observes and logs; it never
+// modifies the request, the response, or control flow — a failure inside the tap
+// is swallowed so diagnostics can never break a mint.
+//
+// Logged via console.warn, NOT console.error, deliberately: backOwnCoin runs
+// under withQuietConsoleError, which would otherwise mute this evidence.
+const ZORA_SDK_API_HOST = "api-sdk.zora.engineering";
+
+export async function withZoraApiEvidence<T>(label: string, fn: () => Promise<T>): Promise<T> {
+  const orig = globalThis.fetch;
+  if (typeof orig !== "function") return fn();
+
+  globalThis.fetch = async function (input: any, init?: any) {
+    const res = await orig(input, init);
+    try {
+      const url = typeof input === "string" ? input : (input?.url ?? String(input));
+      if (url.includes(ZORA_SDK_API_HOST)) {
+        // Did this request carry an api-key header? (getApiKeyMeta() only adds
+        // one when setApiKey() ran in THIS JS context — never true in the
+        // browser bundle today.) This single boolean decides the hypothesis.
+        const hdrs: Headers | undefined = input?.headers instanceof Headers ? input.headers : (init?.headers instanceof Headers ? init.headers : undefined);
+        const keyed = hdrs ? hdrs.has("api-key") : "unknown";
+        if (!res.ok) {
+          // clone() so the SDK still gets an unread body.
+          const body = await res.clone().text().catch(() => "<unreadable>");
+          console.warn(
+            `[zora] ${label} — SDK API FAILED\n` +
+            `  endpoint : ${(init?.method ?? input?.method ?? "GET").toUpperCase()} ${url}\n` +
+            `  status   : ${res.status} ${res.statusText}\n` +
+            `  api-key  : ${keyed === true ? "sent" : keyed === false ? "ABSENT (keyless request)" : "unknown"}\n` +
+            `  body     : ${body.slice(0, 600)}`
+          );
+        } else {
+          console.log(`[zora] ${label} — SDK API ok (${res.status}) ${url} | api-key: ${keyed === true ? "sent" : keyed === false ? "ABSENT" : "unknown"}`);
+        }
+      }
+    } catch { /* the tap must never affect the call it observes */ }
+    return res;
+  } as typeof fetch;
+
+  try { return await fn(); } finally { globalThis.fetch = orig; }
+}
 
 // The SDK's createTradeCall console.error()s its raw failed quote internally —
 // pure noise during the readiness poll where failure is EXPECTED. Scoped
@@ -202,21 +272,27 @@ export async function createScopeCoin({
 
   console.log("[zoraCoins] createScopeCoin — creator:", creator, "symbol:", post.symbol, "currency:", currency);
 
-  const { hash, address, deployment } = await createCoin({
-    call: {
-      creator,
-      name: post.name,
-      symbol: post.symbol,
-      metadata: { type: "RAW_URI", uri: metadataUri },
-      currency,
-      chainId: base.id,
-      startingMarketCap: CreateConstants.StartingMarketCaps.LOW, // ratified LOW — early-collector upside
-      platformReferrer,
-      payoutRecipientOverride: creator, // creator receives native 0.5% + 1% allocation
-    },
-    walletClient,
-    publicClient: publicClient as any,
-  });
+  // Brief Z1 — the createCoin call is wrapped in the SDK-API evidence tap so a
+  // failure logs the VERBATIM upstream response (status, body, endpoint, whether
+  // an api-key was sent) instead of the SDK's generic "Failed to create content
+  // calldata". Logging only — the call itself is unchanged.
+  const { hash, address, deployment } = await withZoraApiEvidence("createCoin", () =>
+    createCoin({
+      call: {
+        creator,
+        name: post.name,
+        symbol: post.symbol,
+        metadata: { type: "RAW_URI", uri: metadataUri },
+        currency,
+        chainId: base.id,
+        startingMarketCap: CreateConstants.StartingMarketCaps.LOW, // ratified LOW — early-collector upside
+        platformReferrer,
+        payoutRecipientOverride: creator, // creator receives native 0.5% + 1% allocation
+      },
+      walletClient,
+      publicClient: publicClient as any,
+    })
+  );
 
   const coinAddress = (address ?? deployment?.coin) as `0x${string}` | undefined;
   if (!coinAddress) {

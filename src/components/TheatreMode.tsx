@@ -422,7 +422,7 @@ export default function TheatreMode({
           {vid ? (
             <GradedVideo
               url={url ?? ''}
-              posterUrl={pstr ?? null}
+              posterUrl={(f(p, 'stream_poster_url') || pstr) ?? null}
               posterWidth={THEATRE_IMG_WIDTH}
               clipUrl={f(p, 'autoplay_clip_url') ?? null}
               editParams={p['edit_params']}
@@ -432,6 +432,8 @@ export default function TheatreMode({
               cropHeight={(p['crop_height'] as number | undefined) ?? 1}
               forcePlay={center}
               showSoundToggle={center}
+              processing={f(p, 'video_status') === 'processing'}
+              hlsUrl={f(p, 'video_status') === 'ready' ? (f(p, 'stream_playback_url') ?? null) : null}
               style={{ width: '100%', height: '100%' }}
             />
           ) : (

@@ -36,6 +36,12 @@ interface Post {
   crop_y?: number;
   crop_width?: number;
   crop_height?: number;
+  // Video pipeline (V2/V3) — Cloudflare Stream. video_status: processing|ready|failed for
+  // Stream-backed videos; NULL for images + legacy (pre-pipeline) videos.
+  video_status?: string | null;
+  stream_uid?: string | null;
+  stream_playback_url?: string | null; // HLS manifest (ready)
+  stream_poster_url?: string | null;   // Stream auto-thumbnail (ready)
 }
 
 interface Like {

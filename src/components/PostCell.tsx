@@ -80,20 +80,24 @@ export default function PostCell({ post, layoutId, index, onClick, showSoundTogg
         </div>
       )}
       <div style={{ position: 'absolute', inset: 0 }}>
-        {post.media_urls?.[0] && (
+        {/* Brief V3 §3 — render on stream_uid too: a Stream video has EMPTY media_urls
+            and must NOT blank-cell the grid. */}
+        {(post.media_urls?.[0] || (post as { stream_uid?: string | null }).stream_uid) && (
           // Video → GradedVideo. gridMode = ALIVE grid: every in-view autoplay tile
           // attempts to play GRADED at tile-res; the device's decoder limit caps it,
           // overflow rests as graded posters. Non-autoplay = poster (tap opens the
           // post). Photos → MediaRenderer.
           post.media_type === 'video' ? (
             <GradedVideo
-              url={post.media_urls[0]}
-              posterUrl={post.poster_url ?? post.thumbnail_url}
+              url={post.media_urls?.[0] ?? ''}
+              posterUrl={(post as { stream_poster_url?: string | null }).stream_poster_url ?? post.poster_url ?? post.thumbnail_url}
               posterWidth={600}
               clipUrl={post.autoplay_clip_url}
               editParams={post.edit_params}
               autoplayFlag={post.autoplay !== false}
               gridMode
+              processing={(post as { video_status?: string | null }).video_status === 'processing'}
+              hlsUrl={(post as { video_status?: string | null; stream_playback_url?: string | null }).video_status === 'ready' ? (post as { stream_playback_url?: string | null }).stream_playback_url : null}
               cropX={post.crop_x ?? 0}
               cropY={post.crop_y ?? 0}
               cropWidth={post.crop_width ?? 1}

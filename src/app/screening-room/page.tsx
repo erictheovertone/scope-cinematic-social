@@ -149,7 +149,7 @@ function MobileScreeningRoom() {
         // theatre gets (getUserPosts selects *). Adds token_standard (else isCoinPost=false
         // → collect silently disabled), edit_params (video grade), caption, music_* — so
         // TheatreMode renders SR posts IDENTICALLY. Same query, more columns; no new fetch.
-        .select('id, coin_address, token_standard, username, ticker, caption, layout_id, media_type, poster_url, thumbnail_url, media_urls, autoplay_clip_url, autoplay, crop_x, crop_y, crop_width, crop_height, edit_params, music_track_id, music_mode, music_start_seconds')
+        .select('id, coin_address, token_standard, username, ticker, caption, layout_id, media_type, poster_url, thumbnail_url, media_urls, autoplay_clip_url, autoplay, crop_x, crop_y, crop_width, crop_height, edit_params, music_track_id, music_mode, music_start_seconds, video_status, stream_playback_url, stream_poster_url')
         .in('coin_address', addrs);
       const byAddr = new Map((posts ?? []).map((p) => [String(p.coin_address).toLowerCase(), p]));
 
@@ -226,13 +226,15 @@ function MobileScreeningRoom() {
               // ~4s clips. Reduced-motion still falls through to the static poster below.
               <GradedVideo
                 url={p.media_urls?.[0] ?? ''}
-                posterUrl={p.poster_url ?? p.thumbnail_url}
+                posterUrl={(p as { stream_poster_url?: string | null }).stream_poster_url ?? p.poster_url ?? p.thumbnail_url}
                 posterWidth={750}
                 clipUrl={p.autoplay_clip_url}
                 cropX={p.crop_x ?? 0} cropY={p.crop_y ?? 0} cropWidth={p.crop_width ?? 1} cropHeight={p.crop_height ?? 1}
                 autoplayFlag={p.autoplay !== false}
                 fullPlayback
                 gridMode
+                processing={(p as { video_status?: string | null }).video_status === 'processing'}
+                hlsUrl={(p as { video_status?: string | null; stream_playback_url?: string | null }).video_status === 'ready' ? (p as { stream_playback_url?: string | null }).stream_playback_url : null}
                 style={{ width: '100%', height: '100%' }}
               />
             ) : src ? (

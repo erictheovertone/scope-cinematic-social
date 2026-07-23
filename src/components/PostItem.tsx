@@ -336,7 +336,7 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
     // device's decoder limit caps any overflow. Tap opens the standalone view.
     <GradedVideo
       url={post.media_urls?.[0]}
-      posterUrl={post.poster_url ?? post.thumbnail_url}
+      posterUrl={(post as { stream_poster_url?: string | null }).stream_poster_url ?? post.poster_url ?? post.thumbnail_url}
       posterWidth={750}
       clipUrl={post.autoplay_clip_url}
       editParams={post.edit_params}
@@ -344,6 +344,7 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
       fullPlayback={!card}
       gridMode
       processing={(post as { video_status?: string }).video_status === 'processing'}
+      hlsUrl={(post as { video_status?: string; stream_playback_url?: string | null }).video_status === 'ready' ? (post as { stream_playback_url?: string | null }).stream_playback_url : null}
       cropX={post.crop_x ?? 0}
       cropY={post.crop_y ?? 0}
       cropWidth={post.crop_width ?? 1}

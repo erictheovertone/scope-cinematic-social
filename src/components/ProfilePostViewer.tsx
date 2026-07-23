@@ -205,12 +205,14 @@ function PostViewerItem({
             // trigger (one snapped post in view → it plays graded). The wrapper's
             // onClick opens the standalone view (taps bubble).
             <GradedVideo
-              url={post.media_urls[0]}
-              posterUrl={(post as any).poster_url ?? (post as any).thumbnail_url}
+              url={post.media_urls?.[0] ?? ''}
+              posterUrl={(post as any).stream_poster_url ?? (post as any).poster_url ?? (post as any).thumbnail_url}
               clipUrl={(post as any).autoplay_clip_url}
               editParams={(post as any).edit_params}
               autoplayFlag={(post as any).autoplay !== false}
               gridMode
+              processing={(post as any).video_status === 'processing'}
+              hlsUrl={(post as any).video_status === 'ready' ? ((post as any).stream_playback_url ?? null) : null}
               cropX={(post as any).crop_x ?? 0}
               cropY={(post as any).crop_y ?? 0}
               cropWidth={(post as any).crop_width ?? 1}

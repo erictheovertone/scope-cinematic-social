@@ -34,7 +34,6 @@ import {
   neutralGeometry, bakeImageGeometry, type EditGeometry,
 } from '@/lib/editGeometry';
 import FinishingPreview from '@/components/finishing/FinishingPreview';
-import SnippetSelector from '@/components/finishing/SnippetSelector';
 import MusicPicker, { type LibraryTrack } from '@/components/MusicPicker';
 import ClipSelector from '@/components/ClipSelector';
 
@@ -236,7 +235,7 @@ async function compressImage(file: File): Promise<File> {
   });
 }
 
-const VIDEO_MAX_BYTES = 50 * 1024 * 1024; // 50 MB
+const VIDEO_MAX_BYTES = 500 * 1024 * 1024; // 500 MB (Brief V3 — tus handles it; 300s duration backstop stays)
 
 interface MediaItem {
   id: string;
@@ -270,8 +269,6 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
   const [editGeometry, setEditGeometry] = useState<EditGeometry | null>(null);
   // Look params from FINISHING (Brief 8B). Baked into the JPEG (photo) + stored.
   const [editParams, setEditParams] = useState<EditParams>(DEFAULT_PARAMS);
-  // Creator-chosen autoplay snippet window (null = auto on publish). { start, length } in seconds.
-  const [snippetWindow, setSnippetWindow] = useState<{ start: number; length: number } | null>(null);
   // Music (M2) — an attached library track + its layering mode. Playback flags only;
   // NEVER on the publish critical path (just columns on the create insert).
   const [musicTrackId, setMusicTrackId] = useState<string | null>(null);
@@ -547,12 +544,12 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
       // Brief V2 — .mov / QuickTime / HEVC now ACCEPTED: Cloudflare Stream transcodes them
       // server-side. On iOS Safari (the primary iPhone target) the local preview + poster
       // bake decode HEVC natively; on non-Safari the best-effort client poster may skip and
-      // Stream's own auto-thumbnail backfills stream_poster_url. (The 50MB guard stays for
+      // Stream's own auto-thumbnail backfills stream_poster_url. (The 500MB guard stays for
       // V2 — raising it is a follow-up now the transcode barrier is gone.)
       const isMov = file.type === "video/quicktime" || file.name.toLowerCase().endsWith(".mov");
       if (file.type.startsWith("video/") || isMov) {
         if (file.size > VIDEO_MAX_BYTES) {
-          setVideoError("Video must be under 50MB. Please trim or compress before uploading.");
+          setVideoError("Video must be under 500MB. Please trim or compress before uploading.");
           continue;
         }
         const objUrl = URL.createObjectURL(file);
@@ -1260,7 +1257,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
               Select a photo or video from your library
             </p>
             <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-9)', color: 'rgba(229,225,219,0.3)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 28, textAlign: 'center' }}>
-              Videos up to 50MB · MP4 recommended
+              Videos up to 500MB · MP4 recommended
             </p>
             <button
               onClick={() => fileInputRef.current?.click()}
@@ -1269,7 +1266,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
             >
               Choose from Library
             </button>
-            <input ref={fileInputRef} type="file" accept="image/*,video/mp4,video/webm" onChange={handleMediaSelect} className="hidden" />
+            <input ref={fileInputRef} type="file" accept="image/*,video/mp4,video/webm,video/quicktime,.mov" onChange={handleMediaSelect} className="hidden" />
           </div>
         ) : (
           /* Loaded — the single selected media WHOLE (true aspect, letterboxed on black,
@@ -1279,7 +1276,11 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
               {selectedMedia[0].type === 'image' ? (
                 <img src={selectedMedia[0].url} alt="" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', display: 'block' }} />
               ) : (
-                <video src={selectedMedia[0].url} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', display: 'block' }} muted playsInline />
+                /* Brief V3 §4 — ALWAYS previews. Was muted+playsInline only: an unloaded
+                   <video> has 0 intrinsic size → paints NOTHING (the "renders nothing"
+                   case). autoPlay+loop+preload paints the frame immediately, letterboxed
+                   (objectFit:contain) at any AR. */
+                <video src={selectedMedia[0].url} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', display: 'block' }} autoPlay muted loop playsInline preload="auto" />
               )}
               <button
                 onClick={() => handleRemoveMedia(selectedMedia[0].id)}
@@ -1289,9 +1290,9 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
               >×</button>
             </div>
             <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-9)', color: 'rgba(229,225,219,0.3)', textTransform: 'uppercase', letterSpacing: '0.06em', textAlign: 'center', marginTop: 12 }}>
-              Videos up to 50MB · MP4 recommended
+              Videos up to 500MB · MP4 recommended
             </p>
-            <input ref={fileInputRef} type="file" accept="image/*,video/mp4,video/webm" onChange={handleMediaSelect} className="hidden" />
+            <input ref={fileInputRef} type="file" accept="image/*,video/mp4,video/webm,video/quicktime,.mov" onChange={handleMediaSelect} className="hidden" />
           </div>
         )}
       </div>
@@ -1340,19 +1341,9 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
               <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-8)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.06em' }}>ADJUST CROP</span>
             </button>
           </div>
-          {/* Autoplay-clip window selector (video only). */}
-          {selectedMedia[0]?.type === 'video' && (
-            <div style={{ flexShrink: 0 }}>
-              <SnippetSelector
-                videoUrl={selectedMedia[0].url}
-                heroFrameTime={editParams.heroFrameTime}
-                onChange={(w) => setSnippetWindow(w)}
-                params={editParams}
-                geometry={editGeometry ?? neutralGeometry(chipForLayout(chosenLayoutId || userLayoutId).id)}
-                layoutId={chosenLayoutId || userLayoutId}
-              />
-            </div>
-          )}
+          {/* Brief V3 §6 — the autoplay-clip window selector is REMOVED. Nothing consumes
+              it since V2a dropped the client clip bake (Stream is the video store of record;
+              graded HLS playback is this brief). Dead control gone. */}
           {/* CAPTION TARGET — the ENTIRE region below the media focuses the caption. The
               textarea GROWS to fill this zone (so most taps land in it directly), AND the
               zone's onClick → input.focus() so even taps in the dead space around it land
