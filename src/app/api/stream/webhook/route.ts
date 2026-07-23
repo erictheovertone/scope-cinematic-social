@@ -77,11 +77,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'write failed' }, { status: 500 }); // 5xx → Stream retries
   }
   if (!rows?.length) {
-    console.warn('[stream/webhook] verified but NO POST matched stream_uid', uid);
-  } else {
-    console.log('[stream/webhook] wrote', ready ? 'ready' : 'failed', 'for post', rows[0].id);
+    // Brief V3c/V2d — 5xx so Stream RETRIES: the post row may not be inserted yet (publish
+    // in flight when a fast encode's webhook fires), so a retry lands once the row exists.
+    // Cloudflare retries a bounded number of times then gives up (orphan/test uploads).
+    console.warn('[stream/webhook] verified but NO POST matched stream_uid — 503 for retry', uid);
+    return NextResponse.json({ error: 'no post matched — retry' }, { status: 503 });
   }
-  // Always 200 on success so Stream doesn't retry-storm. Any side effects would go here,
-  // wrapped so they can never fail the status write.
+  console.log('[stream/webhook] wrote', ready ? 'ready' : 'failed', 'for post', rows[0].id);
+  // 200 so Stream stops retrying a SUCCESSFUL write.
   return NextResponse.json({ ok: true });
 }

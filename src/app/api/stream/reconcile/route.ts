@@ -1,25 +1,26 @@
-// ── POST /api/stream/reconcile — heal posts stuck in 'processing' ────────────
-// Brief V2, minimal reconciliation. If a webhook is missed, a post can sit
-// video_status='processing' forever. This admin-callable route finds posts stuck
-// >15 min and asks Stream directly for each one's real status, then corrects it.
+// ── /api/stream/reconcile — heal posts stuck in 'processing' ─────────────────
+// Brief V2 + V2d + V3c §0b. If a webhook is missed/lost, a post can sit
+// video_status='processing' forever. This finds posts stuck >5 min and asks Stream
+// directly for each one's real status, then corrects it (matched by stream_uid).
 //
-// Gate: `Authorization: Bearer <STREAM_WEBHOOK_SECRET>` (reuse the webhook secret so
-// no new env). Call manually, or later wire to a cron (we already run crons).
-// Shape: POST with the bearer header → { checked, updated: [{uid, status}] }.
+// TRIGGERS:
+//   · GET  — the Vercel cron (vercel.json, every 5 min). Auth: Bearer <CRON_SECRET>
+//            (Vercel sends it when CRON_SECRET is set) OR Bearer <STREAM_WEBHOOK_SECRET>.
+//   · POST — manual/admin. Auth: Bearer <STREAM_WEBHOOK_SECRET>.
+// Together with the webhook's 5xx-retry and the publish-side check, stuck-processing
+// now requires THREE independent failures.
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
-const STUCK_MINUTES = 15;
+const STUCK_MINUTES = 5; // Brief V2d — was 15
 
-export async function POST(req: NextRequest) {
-  const secret = process.env.STREAM_WEBHOOK_SECRET;
+async function runReconcile(): Promise<{ checked: number; updated: { uid: string; status: string }[]; error?: string }> {
   const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
   const token = process.env.CLOUDFLARE_STREAM_TOKEN;
-  if (!secret || !accountId || !token) return NextResponse.json({ error: 'not configured' }, { status: 500 });
-  if (req.headers.get('authorization') !== `Bearer ${secret}`) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+  if (!accountId || !token) return { checked: 0, updated: [], error: 'not configured' };
 
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -34,7 +35,7 @@ export async function POST(req: NextRequest) {
     .eq('video_status', 'processing')
     .lt('created_at', cutoff)
     .limit(100);
-  if (error) return NextResponse.json({ error: 'query failed' }, { status: 500 });
+  if (error) return { checked: 0, updated: [], error: 'query failed' };
 
   const updated: { uid: string; status: string }[] = [];
   for (const row of stuck ?? []) {
@@ -65,5 +66,27 @@ export async function POST(req: NextRequest) {
       console.error('[stream/reconcile] check failed', uid, e);
     }
   }
-  return NextResponse.json({ checked: stuck?.length ?? 0, updated });
+  if (updated.length) console.log('[stream/reconcile] healed', updated.length, updated);
+  return { checked: stuck?.length ?? 0, updated };
+}
+
+// GET — the scheduled cron.
+export async function GET(req: NextRequest) {
+  const cron = process.env.CRON_SECRET;
+  const secret = process.env.STREAM_WEBHOOK_SECRET;
+  const auth = req.headers.get('authorization');
+  const ok = (cron && auth === `Bearer ${cron}`) || (secret && auth === `Bearer ${secret}`);
+  if (!ok) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+  const r = await runReconcile();
+  return NextResponse.json(r, { status: r.error ? 500 : 200 });
+}
+
+// POST — manual/admin (bearer = STREAM_WEBHOOK_SECRET).
+export async function POST(req: NextRequest) {
+  const secret = process.env.STREAM_WEBHOOK_SECRET;
+  if (!secret || req.headers.get('authorization') !== `Bearer ${secret}`) {
+    return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+  }
+  const r = await runReconcile();
+  return NextResponse.json(r, { status: r.error ? 500 : 200 });
 }

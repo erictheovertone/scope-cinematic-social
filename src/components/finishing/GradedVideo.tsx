@@ -260,9 +260,13 @@ export default function GradedVideo({
 
   return (
     <div ref={boxRef} onClick={onClick} style={{ position: "relative", overflow: "hidden", cursor: onClick ? "pointer" : "default", background: "#0a0a0a", ...style }}>
-      {/* Graded poster — the at-rest layer, and what shows until a tile actually plays. */}
+      {/* Graded poster — the at-rest layer, and what shows until a tile actually plays.
+          Brief V3c §2 — for HLS the poster is Stream's UNGRADED thumbnail, so it gets the
+          SAME CSS grade (filter here + the overlay layers below cover it) → no ungraded
+          pixel ever paints between poster and the graded video. Legacy posters are already
+          baked-graded, so no filter there (isHls false). */}
       {posterUrl && (
-        <img src={posterWidth ? feedImage(posterUrl, posterWidth) : posterUrl} alt="" draggable={false} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+        <img src={posterWidth ? feedImage(posterUrl, posterWidth) : posterUrl} alt="" draggable={false} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", display: "block", filter: isHls ? cssFilter : undefined }} />
       )}
 
       {/* Brief V2 — Stream still encoding: poster (above) or the #0a0a0a placeholder (the
@@ -298,8 +302,8 @@ export default function GradedVideo({
           // played back zoomed. fullW/fullH preserve the video's AR, so the
           // frame maps cleanly with no distortion.
           style={geom
-            ? { position: "absolute", left: geom.left, top: geom.top, width: geom.fullW, height: geom.fullH, objectFit: "cover", display: "block", opacity: playing && !usePipeline ? 1 : 0, filter: cssFilter }
-            : { position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", display: "block", opacity: playing && !usePipeline ? 1 : 0, filter: cssFilter }}
+            ? { position: "absolute", left: geom.left, top: geom.top, width: geom.fullW, height: geom.fullH, objectFit: "cover", display: "block", opacity: playing && !usePipeline ? 1 : 0, filter: cssFilter, transition: "opacity 60ms linear" }
+            : { position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", display: "block", opacity: playing && !usePipeline ? 1 : 0, filter: cssFilter, transition: "opacity 60ms linear" }}
         />
       )}
 

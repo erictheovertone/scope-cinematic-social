@@ -870,6 +870,16 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
       const newPost = await createPost(postPayload);
       console.log('[handlePost] post created:', newPost?.id);
 
+      // Brief V2d — publish-side ready check (fire-and-forget). A short encode can finish
+      // before the webhook lands; this heals the row fast without waiting for Stream's retry
+      // backoff. No-op if still processing; the webhook + 5-min reconcile cron are the net.
+      if (isVideo && newPost?.id) {
+        const pid = newPost.id;
+        setTimeout(() => {
+          fetch('/api/stream/check', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ postId: pid }) }).catch(() => {});
+        }, 10_000);
+      }
+
       if (deckId && newPost?.id) {
         addPostToDeck(deckId, newPost.id).catch(e => console.error('addPostToDeck error:', errInfo(e)));
       }

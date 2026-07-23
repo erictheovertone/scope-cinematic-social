@@ -15,6 +15,10 @@
     {
       "path": "/api/cron/fc-payouts",
       "schedule": "15 0 * * 1"
+    },
+    {
+      "path": "/api/stream/reconcile",
+      "schedule": "*/5 * * * *"
     }
   ]
 }
