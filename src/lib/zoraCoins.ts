@@ -192,6 +192,29 @@ export function getCoinCurrency(): ContentCoinCurrency {
 // pre-coin key (the coin address doesn't exist yet at upload time), and this
 // URL becomes the coin's permanent tokenURI. Retries upsert the same path with
 // identical content (idempotent).
+// ── Brief V2e — coin image + animation chain (video posts) ───────────────────
+// ONE builder for the coin's image, used by BOTH mint paths (publish + retry). Four links;
+// uploadCoinMetadata's guard is the final backstop.
+//   image = posterUrl ?? thumbnailUrl ?? stream_poster_url ?? constructed-Stream-thumbnail(uid)
+// The Stream URLs are DETERMINISTIC from the video uid + the customer subdomain code, so
+// they're valid at publish time (before the webhook lands stream_poster_url). The code MUST
+// be NEXT_PUBLIC — the mint builds this metadata in the browser.
+const STREAM_CUSTOMER_CODE = process.env.NEXT_PUBLIC_CLOUDFLARE_STREAM_CUSTOMER_CODE;
+export const HLS_MIME = "application/x-mpegURL";
+
+export function streamThumbnailUrl(uid: string | null | undefined): string | null {
+  return uid && STREAM_CUSTOMER_CODE ? `https://customer-${STREAM_CUSTOMER_CODE}.cloudflarestream.com/${uid}/thumbnails/thumbnail.jpg` : null;
+}
+/** Deterministic HLS manifest for a Stream uid (Brief V2e §2 — coin animation_url). */
+export function streamHlsUrl(uid: string | null | undefined): string | null {
+  return uid && STREAM_CUSTOMER_CODE ? `https://customer-${STREAM_CUSTOMER_CODE}.cloudflarestream.com/${uid}/manifest/video.m3u8` : null;
+}
+/** The four-link coin image chain for a video post. Null only if every link is empty AND
+ *  there's no uid/customer-code — then uploadCoinMetadata's guard fires (honest failure). */
+export function coinImageUrl(f: { posterUrl?: string | null; thumbnailUrl?: string | null; streamPosterUrl?: string | null; streamUid?: string | null }): string | null {
+  return f.posterUrl ?? f.thumbnailUrl ?? f.streamPosterUrl ?? streamThumbnailUrl(f.streamUid);
+}
+
 async function uploadCoinMetadata(args: {
   userId: string;
   postId: string;

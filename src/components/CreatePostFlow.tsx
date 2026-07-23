@@ -10,7 +10,7 @@ import { uploadVideoToStream } from '@/lib/streamUpload';
 import MediaRenderer from '@/components/MediaRenderer';
 // NOTE: the 1155 path (mintNewPost) is DORMANT — intact in src/lib/zora.ts as the
 // rollback lifeboat, deliberately unreferenced here. New posts mint as coins.
-import { createScopeCoin, backOwnCoin, errInfo } from '@/lib/zoraCoins';
+import { createScopeCoin, backOwnCoin, errInfo, coinImageUrl, streamHlsUrl, HLS_MIME } from '@/lib/zoraCoins';
 import { classifyZoraFailure } from '@/lib/zoraErrors';
 import { preflightTrade, preflightMessage } from '@/lib/economy/preflight';
 import { suggestTicker, normalizeTicker, isValidTicker } from '@/lib/economy/ticker';
@@ -482,8 +482,9 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
     mediaUrls: string[];
     postCaption: string;
     // Coin metadata image = the GRADED media: poster_url (video hero frame) for
-    // video, the baked image for photos — never the raw upload.
-    image: string;
+    // video, the baked image for photos — never the raw upload. Nullable (V2e): the
+    // video chain can return null only when every link is empty → the mint guard fires.
+    image: string | null;
     animationUrl: string | null;
     mediaType: string;
     layoutId: string;
@@ -903,14 +904,13 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
         userId: supabaseUser.id,
         mediaUrls,
         postCaption: caption,
-        // GRADED image: poster (video hero frame) for video, baked image for photos.
-        // Brief V2b — Stream videos have EMPTY mediaUrls, so the old `|| mediaUrls[0]`
-        // fallback is gone; a stalled poster bake then left image undefined → the coin
-        // metadata dropped `image` → SDK "Metadata image is required and must be a string".
-        // Fall back to the client auto-thumbnail (captured at selection) so a video coin
-        // ALWAYS mints with a valid image string (poster-only, no animation, until V3).
-        image: (isVideo ? (posterUrl ?? thumbnailUrl) : null) || mediaUrls[0],
-        animationUrl: isVideo ? autoplayClipUrl : null,
+        // GRADED image: photos = baked image. Video = the Brief V2e four-link chain
+        // (posterUrl ?? thumbnailUrl ?? stream_poster_url[null at publish] ?? constructed
+        // Stream thumbnail from the uid) — the guard in uploadCoinMetadata is the backstop.
+        image: isVideo ? coinImageUrl({ posterUrl, thumbnailUrl, streamUid }) : mediaUrls[0],
+        // Brief V2e §2 — animation_url = the deterministic HLS manifest (from the uid). The
+        // manifest becomes valid once encoding finishes; Zora only needs a string at mint.
+        animationUrl: isVideo ? streamHlsUrl(streamUid) : null,
         mediaType: selectedMedia[0]?.type || 'image',
         layoutId: finalLayoutId,
       });
@@ -1015,9 +1015,9 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
           name: data.postCaption || 'Scope Post',
           description: data.postCaption || '',
           symbol: sym,
-          image: data.image,
+          image: data.image ?? '', // null → the uploadCoinMetadata guard fires (honest backstop)
           animationUrl: data.animationUrl,
-          mimeType: data.mediaType === 'video' ? 'video/mp4' : undefined,
+          mimeType: data.mediaType === 'video' ? HLS_MIME : undefined,
         },
       });
       // Reconciliation breadcrumb BEFORE the canonical write (amendment C).

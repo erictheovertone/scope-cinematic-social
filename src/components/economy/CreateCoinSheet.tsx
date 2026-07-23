@@ -12,7 +12,7 @@ import { useState } from 'react';
 import { useWallets } from '@privy-io/react-auth';
 import { createWalletClient, custom } from 'viem';
 import { base } from 'viem/chains';
-import { createScopeCoin, backOwnCoin, reconcileCoinFromTx } from '@/lib/zoraCoins';
+import { createScopeCoin, backOwnCoin, reconcileCoinFromTx, coinImageUrl, streamHlsUrl, HLS_MIME } from '@/lib/zoraCoins';
 import { updatePostCoinData, updatePostCoinTxHash } from '@/lib/postsService';
 import { suggestTicker, normalizeTicker, isValidTicker, tickerError } from '@/lib/economy/ticker';
 import FrameLoader from '@/components/FrameLoader';
@@ -81,7 +81,13 @@ export default function CreateCoinSheet({
         }
       }
 
-      const image = (post.media_type === 'video' ? post.poster_url : null) || post.media_urls?.[0] || '';
+      // Brief V2e — the SAME four-link chain as the publish path (one function). By retry
+      // time the webhook has usually landed stream_poster_url (link 3); else the constructed
+      // Stream thumbnail (link 4). Guard is the backstop. Photos keep media_urls[0].
+      const p = post as { poster_url?: string | null; thumbnail_url?: string | null; stream_poster_url?: string | null; stream_uid?: string | null };
+      const image = post.media_type === 'video'
+        ? (coinImageUrl({ posterUrl: p.poster_url, thumbnailUrl: p.thumbnail_url, streamPosterUrl: p.stream_poster_url, streamUid: p.stream_uid }) ?? '')
+        : (post.media_urls?.[0] ?? '');
       const { coinAddress, hash, currency } = await createScopeCoin({
         walletClient,
         creatorAddress: embeddedWallet.address,
@@ -92,8 +98,8 @@ export default function CreateCoinSheet({
           description: post.caption || '',
           symbol: sym,
           image,
-          animationUrl: post.media_type === 'video' ? post.autoplay_clip_url : null,
-          mimeType: post.media_type === 'video' ? 'video/mp4' : undefined,
+          animationUrl: post.media_type === 'video' ? streamHlsUrl(p.stream_uid) : null,
+          mimeType: post.media_type === 'video' ? HLS_MIME : undefined,
         },
       });
       await updatePostCoinTxHash(post.id, hash).catch(() => {});
