@@ -219,7 +219,21 @@ export default function GradedVideo({
     if (v.crossOrigin !== "anonymous") v.crossOrigin = "anonymous";
     let cancelled = false;
     let hls: HlsType | null = null;
-    const onPlaying = () => { if (!cancelled) setPlaying(true); };
+    const feedMode = !effectiveForcePlay; // feed/grid/scroll = capped; theatre/modal = full quality
+    // Brief P1 §3 — TTFF (dev only): attach → first painted frame.
+    const attachAt = typeof performance !== "undefined" ? performance.now() : 0;
+    let ttffLogged = false;
+    const onPlaying = () => {
+      if (cancelled) return;
+      setPlaying(true);
+      if (!ttffLogged) {
+        ttffLogged = true;
+        if (process.env.NODE_ENV !== "production" && attachAt) {
+          const path = isHls ? (v.canPlayType("application/vnd.apple.mpegurl") ? "hls-native" : "hls.js") : "legacy";
+          console.log(`[TTFF] ${Math.round(performance.now() - attachAt)}ms · ${feedMode ? "feed" : "theatre"} · ${path}`);
+        }
+      }
+    };
     const onPause = () => { if (!cancelled) setPlaying(false); };
     v.addEventListener("playing", onPlaying);
     v.addEventListener("pause", onPause);
@@ -228,13 +242,23 @@ export default function GradedVideo({
       import("hls.js").then(({ default: Hls }) => {
         if (cancelled) return;
         if (Hls.isSupported()) {
-          hls = new Hls({ maxBufferLength: 12, enableWorker: true });
+          // Brief P1 §1/§2 — rendition + buffer discipline SPLIT BY CONTEXT. Feed players:
+          // cap segments to the rendered card size (~360p on a 375px card, never 1080p),
+          // start at the LOWEST level for instant first frame (ABR upgrades during play),
+          // tight 8s buffer, no back-buffer. With V3d's 3-player cap → bounded memory
+          // (~8s of ~360p × 3 ≈ a few MB). Theatre/modal (forcePlay): NO cap, generous
+          // buffer — the work deserves full quality.
+          hls = new Hls(feedMode
+            ? { capLevelToPlayerSize: true, startLevel: 0, maxBufferLength: 8, backBufferLength: 0, enableWorker: true }
+            : { maxBufferLength: 30, enableWorker: true });
           hls.on(Hls.Events.ERROR, (_e: unknown, data: { fatal?: boolean }) => { if (data?.fatal) setErrored(true); });
           hls.loadSource(playbackUrl);
           hls.attachMedia(v);
         } else { setErrored(true); }
       }).catch(() => setErrored(true));
     } else {
+      // Native HLS (Safari/iOS): Safari runs its OWN ABR keyed to the element size — we
+      // don't fight it (no per-level API here); the card size already governs its choice.
       if (v.getAttribute("src") !== playbackUrl) v.src = playbackUrl;
     }
     return () => {
@@ -243,7 +267,7 @@ export default function GradedVideo({
       v.removeEventListener("pause", onPause);
       if (hls) { try { hls.destroy(); } catch { /* already gone */ } }
     };
-  }, [shouldAttach, videoEl, playbackUrl, errored, isHls]);
+  }, [shouldAttach, videoEl, playbackUrl, errored, isHls, effectiveForcePlay]);
 
   // ── PLAY / PAUSE (the IN-VIEW tier). Attached+buffered → play() with RETRY (autoplay
   //    policy / decoder); leaving view → pause (buffer stays until it also leaves NEAR). ──
@@ -315,7 +339,7 @@ export default function GradedVideo({
           pixel ever paints between poster and the graded video. Legacy posters are already
           baked-graded, so no filter there (isHls false). */}
       {posterUrl && (
-        <img src={posterWidth ? feedImage(posterUrl, posterWidth) : posterUrl} alt="" draggable={false} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", display: "block", filter: isHls ? cssFilter : undefined }} />
+        <img src={posterWidth ? feedImage(posterUrl, posterWidth) : posterUrl} alt="" draggable={false} loading="lazy" decoding="async" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", display: "block", filter: isHls ? cssFilter : undefined }} />
       )}
 
       {/* Brief V2 — Stream still encoding: poster (above) or the #0a0a0a placeholder (the
