@@ -30,7 +30,14 @@ import { ensureLut } from "@/lib/editor/lut";
 import { registerAutoplayVideo, reportVisibility } from "@/lib/videoPlayback";
 import { feedImage } from "@/lib/mediaUrl";
 import { videoCssFilter, videoOverlays } from "@/lib/editor/videoGrade";
+import { acquireAttach, releaseAttach, onAttachSlotFree } from "@/lib/videoAttachBudget";
 import type HlsType from "hls.js"; // TYPE ONLY (erased) — the runtime import is dynamic (§2)
+
+// Brief V3d — the NEAR window. A card WITHIN ~1.5 viewports (this rootMargin) may attach +
+// buffer (not play); outside it, nothing loads (FAR). Debounced so a fast scroll that flicks
+// past a card never attaches (no manifest/segment request churn).
+const NEAR_ROOT_MARGIN = "150% 0px";
+const NEAR_DWELL_MS = 200;
 
 const Pipeline = dynamic(() => import("./Pipeline"), { ssr: false });
 
@@ -85,8 +92,10 @@ export default function GradedVideo({
 }: Props) {
   const isHls = !!hlsUrl; // Brief V3 — the dual-path branch: Stream HLS vs legacy source.
   const id = useId();
-  const [inView, setInView] = useState(false);          // gridMode visibility
-  const [coordActive, setCoordActive] = useState(false); // feed coordinator grant
+  const [inView, setInView] = useState(false);          // gridMode visibility (→ PLAY)
+  const [coordActive, setCoordActive] = useState(false); // feed coordinator grant (→ PLAY)
+  const [nearStable, setNearStable] = useState(false);   // Brief V3d — within NEAR + dwelt (→ ATTACH)
+  const [bufferSlot, setBufferSlot] = useState(false);   // Brief V3d — budget granted (→ ATTACH)
   const [playing, setPlaying] = useState(false);         // ACTUAL play state (drives visible output)
   const [failed, setFailed] = useState(false);           // pipeline failure → plain playback
   const [errored, setErrored] = useState(false);         // video element error → poster (contain to this tile)
@@ -120,7 +129,12 @@ export default function GradedVideo({
   // (feed/grid/forcePlay), in-view-gated the same way. Legacy selection is UNCHANGED.
   // Brief W3 §1 — fullPlayback (mobile feed) plays the full source plain (no pipeline).
   const playbackUrl = isHls ? hlsUrl : (effectiveForcePlay ? url : (fullPlayback ? (url ?? null) : (clipUrl ?? null)));
-  const shouldAttempt = !!playbackUrl && (effectiveForcePlay || (autoplayFlag && (gridMode ? inView : coordActive)));
+  // Brief V3d — the THREE tiers, split from the old single shouldAttach:
+  //  · ATTACH (mount + buffer, NOT playing): forcePlay (single-focus, budget-exempt) OR an
+  //    autoplay tile that is NEAR-and-dwelt AND holds a budget slot. FAR = neither → nothing.
+  //  · PLAY: forcePlay OR an autoplay tile IN-VIEW (gridMode) / coordinator-active (feed).
+  const shouldAttach = !!playbackUrl && (effectiveForcePlay || (autoplayFlag && bufferSlot));
+  const shouldPlay = !!playbackUrl && (effectiveForcePlay || (autoplayFlag && (gridMode ? inView : coordActive)));
   // HLS carries its grade via CSS filter (below), NOT the gl-react pipeline — so the
   // pipeline stays a legacy-only path (zero re-encode, keeps HLS cheap).
   const usePipeline = !isHls && effectiveForcePlay && playing && looked && !failed;
@@ -161,19 +175,47 @@ export default function GradedVideo({
     return () => { io.disconnect(); unregister(); };
   }, [id, autoplayFlag, forcePlay, gridMode]);
 
-  // ── Play with RETRY — the fix for the autoplay delay. The <video> is in the DOM
-  //    (reliable load/autoplay); we still call play() and, on rejection (autoplay
-  //    policy not yet satisfied, or decoder exhaustion on the alive grid), keep the
-  //    poster and retry shortly so it starts within ~1s / grabs a freed decoder as
-  //    other tiles scroll off. ──
   useEffect(() => { setErrored(false); }, [playbackUrl]); // a new source gets a fresh chance
 
+  // Brief V3d — NEAR observer (ATTACH tier). Expanded rootMargin so a card WITHIN ~1.5vp
+  // counts; DWELL-debounced so a fast flick-past never attaches (no manifest/segment churn).
+  useEffect(() => {
+    if (forcePlay || !autoplayFlag) return;
+    const el = boxRef.current;
+    if (!el) return;
+    let dwell: number | null = null;
+    const io = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting) {
+        if (dwell == null) dwell = window.setTimeout(() => { dwell = null; setNearStable(true); }, NEAR_DWELL_MS);
+      } else {
+        if (dwell != null) { clearTimeout(dwell); dwell = null; }
+        setNearStable(false);
+      }
+    }, { rootMargin: NEAR_ROOT_MARGIN, threshold: 0 });
+    io.observe(el);
+    return () => { io.disconnect(); if (dwell != null) clearTimeout(dwell); };
+  }, [forcePlay, autoplayFlag]);
+
+  // Brief V3d — BUDGET: cap concurrent attached autoplay players (~3). Acquire when
+  // NEAR-stable; release on cleanup (leaving NEAR / unmount). If capped, wait for a freed
+  // slot then retry. forcePlay (single-focus) is exempt — it never enters here.
+  useEffect(() => {
+    if (forcePlay || !autoplayFlag || !nearStable) { setBufferSlot(false); return; }
+    let held = false;
+    const grab = () => { if (!held && acquireAttach()) { held = true; setBufferSlot(true); return true; } return false; };
+    if (grab()) return () => { if (held) releaseAttach(); };
+    const off = onAttachSlotFree(() => { if (grab()) off(); });
+    return () => { off(); if (held) releaseAttach(); };
+  }, [forcePlay, autoplayFlag, nearStable]);
+
+  // ── ATTACH (source + buffer, the NEAR tier) — NO play here. HLS: native <video src> on
+  //    Safari/iOS (no lib); hls.js via DYNAMIC import elsewhere (its own chunk). Legacy:
+  //    src direct. hls.js loadSource/attachMedia + preload="auto" BUFFER without playing.
+  //    Cleanup on leaving ATTACH → hls.destroy (no unbounded buffer down a long feed). ──
   useEffect(() => {
     const v = videoEl;
-    if (!shouldAttempt || errored || !v || !playbackUrl) { setPlaying(false); return; }
-    // crossOrigin MUST be set BEFORE src so WebGL (texImage2D) can read the frames
-    // of a REMOTE video (Supabase Storage, a different origin). Setting it after src
-    // requires a reload to take effect — order matters. Harmless for the plain clip.
+    if (!shouldAttach || errored || !v || !playbackUrl) { setPlaying(false); return; }
+    // crossOrigin BEFORE src so WebGL (texImage2D) can read a remote video's frames.
     if (v.crossOrigin !== "anonymous") v.crossOrigin = "anonymous";
     let cancelled = false;
     let hls: HlsType | null = null;
@@ -181,25 +223,12 @@ export default function GradedVideo({
     const onPause = () => { if (!cancelled) setPlaying(false); };
     v.addEventListener("playing", onPlaying);
     v.addEventListener("pause", onPause);
-    const tryPlay = () => {
-      if (cancelled || !v) return;
-      v.play().then(() => { if (!cancelled) setPlaying(true); }).catch(() => {
-        if (cancelled) return;
-        setPlaying(false);
-        if (retryRef.current) clearTimeout(retryRef.current);
-        retryRef.current = window.setTimeout(tryPlay, 1200); // retry (policy / decoder)
-      });
-    };
-    // Brief V3 §2 — SOURCE ATTACH. HLS (Stream): native <video src> on Safari/iOS (no lib);
-    // hls.js via DYNAMIC import elsewhere (its own chunk — stays out of the main bundle).
-    // Legacy/progressive: set src directly (unchanged). A truly unsupported browser → poster.
     const nativeHls = !!v.canPlayType("application/vnd.apple.mpegurl");
     if (isHls && !nativeHls) {
       import("hls.js").then(({ default: Hls }) => {
         if (cancelled) return;
         if (Hls.isSupported()) {
           hls = new Hls({ maxBufferLength: 12, enableWorker: true });
-          hls.on(Hls.Events.MANIFEST_PARSED, () => tryPlay());
           hls.on(Hls.Events.ERROR, (_e: unknown, data: { fatal?: boolean }) => { if (data?.fatal) setErrored(true); });
           hls.loadSource(playbackUrl);
           hls.attachMedia(v);
@@ -207,23 +236,43 @@ export default function GradedVideo({
       }).catch(() => setErrored(true));
     } else {
       if (v.getAttribute("src") !== playbackUrl) v.src = playbackUrl;
-      tryPlay();
     }
     return () => {
       cancelled = true;
       v.removeEventListener("playing", onPlaying);
       v.removeEventListener("pause", onPause);
-      if (retryRef.current) { clearTimeout(retryRef.current); retryRef.current = null; }
       if (hls) { try { hls.destroy(); } catch { /* already gone */ } }
     };
-  }, [shouldAttempt, videoEl, playbackUrl, errored, isHls]);
+  }, [shouldAttach, videoEl, playbackUrl, errored, isHls]);
+
+  // ── PLAY / PAUSE (the IN-VIEW tier). Attached+buffered → play() with RETRY (autoplay
+  //    policy / decoder); leaving view → pause (buffer stays until it also leaves NEAR). ──
+  useEffect(() => {
+    const v = videoEl;
+    if (!v) return;
+    if (shouldPlay && shouldAttach && !errored) {
+      let cancelled = false;
+      const tryPlay = () => {
+        if (cancelled || !v) return;
+        v.play().then(() => { if (!cancelled) setPlaying(true); }).catch(() => {
+          if (cancelled) return;
+          setPlaying(false);
+          if (retryRef.current) clearTimeout(retryRef.current);
+          retryRef.current = window.setTimeout(tryPlay, 1200);
+        });
+      };
+      tryPlay();
+      return () => { cancelled = true; if (retryRef.current) { clearTimeout(retryRef.current); retryRef.current = null; } };
+    }
+    try { v.pause(); } catch { /* not ready */ }
+  }, [shouldPlay, shouldAttach, videoEl, errored]);
 
   useEffect(() => { if (videoEl) videoEl.muted = muted; }, [videoEl, muted]);
 
   // Load the LOOK LUT — ONLY for full playback (forcePlay), the only path that
   // runs the pipeline. Autoplay clips are already graded (baked), so no LUT.
   useEffect(() => {
-    if (!effectiveForcePlay || !shouldAttempt || !looked) { setActiveLut(null); return; }
+    if (!effectiveForcePlay || !shouldAttach || !looked) { setActiveLut(null); return; }
     let cancelled = false;
     const look = lookById(params?.lutId ?? null);
     if (!look) { setActiveLut(null); return; }
@@ -231,7 +280,7 @@ export default function GradedVideo({
       .then((e) => { if (!cancelled) setActiveLut({ canvas: e.canvas, size: e.parsed.size }); })
       .catch(() => { if (!cancelled) setActiveLut(null); });
     return () => { cancelled = true; };
-  }, [effectiveForcePlay, shouldAttempt, looked, params?.lutId]);
+  }, [effectiveForcePlay, shouldAttach, looked, params?.lutId]);
 
   // Measure the container for the cover/crop pipeline geometry.
   useEffect(() => {
@@ -284,14 +333,13 @@ export default function GradedVideo({
           when graded). crossOrigin set before src. Visible whenever playing AND the
           pipeline isn't covering it (i.e. always for the autoplay clip). src assigned
           imperatively in the play effect — NOT a prop here. */}
-      {shouldAttempt && !errored && (
+      {shouldAttach && !errored && (
         <video
           ref={setVideoRef}
           crossOrigin="anonymous"
           muted={muted}
           loop
           playsInline
-          autoPlay
           preload="auto"
           onError={() => { console.warn("[GradedVideo] video element error → poster:", playbackUrl); setErrored(true); }}
           // FRAMING INTEGRITY: the plain <video> uses the SAME crop geometry as
