@@ -83,12 +83,16 @@ interface Props {
    *  dynamic import elsewhere) + the look via CSS filter (no gl-react pipeline, no crop-
    *  double-work). Absent → the legacy url/clip path is UNTOUCHED. */
   hlsUrl?: string | null;
+  /** Brief P1 §4 — above-the-fold card (first 2–3 in the feed): the POSTER is the initial
+   *  paint, so it loads EAGER + high fetch-priority instead of lazy. Off-screen cards stay
+   *  lazy (P1b). Native-HLS Safari especially leans on this poster for instant paint. */
+  priority?: boolean;
 }
 
 export default function GradedVideo({
   url, posterUrl, posterWidth, clipUrl, editParams, cropX = 0, cropY = 0, cropWidth = 1, cropHeight = 1,
   autoplayFlag = false, gridMode = false, forcePlay = false, fullPlayback = false, style, onClick, showSoundToggle = false,
-  processing = false, hlsUrl = null,
+  processing = false, hlsUrl = null, priority = false,
 }: Props) {
   const isHls = !!hlsUrl; // Brief V3 — the dual-path branch: Stream HLS vs legacy source.
   const id = useId();
@@ -364,7 +368,7 @@ export default function GradedVideo({
           pixel ever paints between poster and the graded video. Legacy posters are already
           baked-graded, so no filter there (isHls false). */}
       {posterUrl && (
-        <img src={feedImage(posterUrl, posterWidth ?? 750)} alt="" draggable={false} loading="lazy" decoding="async" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", display: "block", filter: isHls ? cssFilter : undefined }} />
+        <img src={feedImage(posterUrl, posterWidth ?? 750)} alt="" draggable={false} loading={priority ? "eager" : "lazy"} fetchPriority={priority ? "high" : "auto"} decoding="async" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", display: "block", filter: isHls ? cssFilter : undefined }} />
       )}
 
       {/* Brief V2 — Stream still encoding: poster (above) or the #0a0a0a placeholder (the
