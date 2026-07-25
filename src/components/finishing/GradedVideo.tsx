@@ -87,12 +87,16 @@ interface Props {
    *  paint, so it loads EAGER + high fetch-priority instead of lazy. Off-screen cards stay
    *  lazy (P1b). Native-HLS Safari especially leans on this poster for instant paint. */
   priority?: boolean;
+  /** Brief P1c §2 — gridMode PLAY gate: a card plays once it's ≥ this fraction visible
+   *  (Eric's rule "visible → plays", no top bias). Default 0 = any-visibility (grid/profile,
+   *  unchanged). The feed passes 0.5. */
+  minPlayRatio?: number;
 }
 
 export default function GradedVideo({
   url, posterUrl, posterWidth, clipUrl, editParams, cropX = 0, cropY = 0, cropWidth = 1, cropHeight = 1,
   autoplayFlag = false, gridMode = false, forcePlay = false, fullPlayback = false, style, onClick, showSoundToggle = false,
-  processing = false, hlsUrl = null, priority = false,
+  processing = false, hlsUrl = null, priority = false, minPlayRatio = 0,
 }: Props) {
   const isHls = !!hlsUrl; // Brief V3 — the dual-path branch: Stream HLS vs legacy source.
   const id = useId();
@@ -166,7 +170,8 @@ export default function GradedVideo({
     const io = new IntersectionObserver(
       ([e]) => {
         if (gridMode) {
-          setInView(e.isIntersecting); // grid: any visibility → attempt
+          // Brief P1c §2 — PLAY when ≥ minPlayRatio visible (feed 0.5; grid/profile 0 = any).
+          setInView(e.isIntersecting && e.intersectionRatio >= minPlayRatio);
         } else if (e.isIntersecting) {
           // ANY visibility makes it ELIGIBLE; the cap + this score (distance of the
           // tile centre from the viewport centre) admit the most-visible. The old
@@ -181,11 +186,11 @@ export default function GradedVideo({
       },
       // Finer steps so the distance-to-centre score updates as the user scrolls
       // (the cap follows the most-centred video).
-      { threshold: gridMode ? [0, 0.01, 1] : [0, 0.1, 0.25, 0.5, 0.75, 1] },
+      { threshold: gridMode ? [0, 0.25, 0.5, 0.75, 1] : [0, 0.1, 0.25, 0.5, 0.75, 1] },
     );
     io.observe(el);
     return () => { io.disconnect(); unregister(); };
-  }, [id, autoplayFlag, forcePlay, gridMode]);
+  }, [id, autoplayFlag, forcePlay, gridMode, minPlayRatio]);
 
   // Brief P1a — RESURRECTION: reset `errored` on a new source AND on NEAR RE-ENTRY. Before,
   // it only cleared on playbackUrl change — so a fatal error latched during teardown
@@ -219,13 +224,16 @@ export default function GradedVideo({
   // NEAR-stable; release on cleanup (leaving NEAR / unmount). If capped, wait for a freed
   // slot then retry. forcePlay (single-focus) is exempt — it never enters here.
   useEffect(() => {
-    if (forcePlay || !autoplayFlag || !nearStable) { setBufferSlot(false); return; }
+    // Brief P1c §2 — a VISIBLE (inView / coordActive) card attaches IMMEDIATELY, not only
+    // after the NEAR dwell — so a card entering mid/bottom-viewport plays without waiting
+    // (kills the "near-top" feel). NEAR-but-not-visible cards still prebuffer via the dwell.
+    if (forcePlay || !autoplayFlag || !(nearStable || inView || coordActive)) { setBufferSlot(false); return; }
     let held = false;
     const grab = () => { if (!held && acquireAttach()) { held = true; dlog("slot-acquired"); setBufferSlot(true); return true; } return false; };
     if (grab()) return () => { held && dlog("slot-released"); if (held) releaseAttach(); };
     const off = onAttachSlotFree(() => { if (grab()) off(); });
     return () => { off(); held && dlog("slot-released"); if (held) releaseAttach(); };
-  }, [forcePlay, autoplayFlag, nearStable]);
+  }, [forcePlay, autoplayFlag, nearStable, inView, coordActive]);
 
   // ── ATTACH (source + buffer, the NEAR tier) — NO play here. HLS: native <video src> on
   //    Safari/iOS (no lib); hls.js via DYNAMIC import elsewhere (its own chunk). Legacy:
@@ -255,8 +263,14 @@ export default function GradedVideo({
       }
     };
     const onPause = () => { if (!cancelled) setPlaying(false); };
+    // Brief P1c §1b/§2 — LOOP EXPLICITLY. The `loop` attribute is unreliable with hls.js on
+    // iOS → the video stops at 'ended' → frozen mid-view (the ~75% loop freeze). Seek 0 +
+    // play() on 'ended'. The budget slot is NOT touched (it's keyed on visibility/NEAR, not
+    // playback), so an ended-then-looped card keeps its slot and never dies in view.
+    const onEnded = () => { if (cancelled) return; try { v.currentTime = 0; const p = v.play(); if (p) p.catch(() => {}); } catch { /* not ready */ } };
     v.addEventListener("playing", onPlaying);
     v.addEventListener("pause", onPause);
+    v.addEventListener("ended", onEnded);
     const nativeHls = !!v.canPlayType("application/vnd.apple.mpegurl");
     if (isHls && !nativeHls) {
       import("hls.js").then(({ default: Hls }) => {
@@ -289,6 +303,7 @@ export default function GradedVideo({
       cancelled = true; // set FIRST so onError/hls-ERROR during teardown can't latch errored
       v.removeEventListener("playing", onPlaying);
       v.removeEventListener("pause", onPause);
+      v.removeEventListener("ended", onEnded);
       // hls.destroy() detaches the MediaSource. The <video> itself UNMOUNTS (shouldAttach
       // gate) → a FRESH element mounts on re-entry, so we never re-use a dead MediaSource
       // and never force-clear the native src (which would fire onError → re-latch errored).

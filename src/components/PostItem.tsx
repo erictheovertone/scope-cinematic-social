@@ -346,6 +346,7 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
       processing={(post as { video_status?: string }).video_status === 'processing'}
       hlsUrl={(post as { video_status?: string; stream_playback_url?: string | null }).video_status === 'ready' ? (post as { stream_playback_url?: string | null }).stream_playback_url : null}
       priority={priority}
+      minPlayRatio={0.5}
       cropX={post.crop_x ?? 0}
       cropY={post.crop_y ?? 0}
       cropWidth={post.crop_width ?? 1}
