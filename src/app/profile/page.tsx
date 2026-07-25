@@ -17,7 +17,6 @@ import BadgeExplainerSheet from "@/components/BadgeExplainerSheet";
 import MembershipSheet from "@/components/MembershipSheet";
 import BottomToolbar from "@/components/BottomToolbar";
 import MediaRenderer from "@/components/MediaRenderer";
-import PostModal from "@/components/PostModal";
 import TheatreMode from "@/components/TheatreMode";
 import OnboardingModal from "@/components/OnboardingModal";
 import AddToHomeScreenSheet from "@/components/AddToHomeScreenSheet";
@@ -77,8 +76,6 @@ export default function Profile() {
   const [spinning, setSpinning] = useState(false);
   const [showViewer, setShowViewer] = useState(false);
   const [viewerIndex, setViewerIndex] = useState(0);
-  const [showLightbox, setShowLightbox] = useState(false);
-  const [lightboxPost, setLightboxPost] = useState<any>(null);
   const [supabaseUserId, setSupabaseUserId] = useState<string | undefined>();
   const [userProfile, setUserProfile] = useState({
     displayName: "",
@@ -602,18 +599,14 @@ const userLayoutId = stableLayoutId;
             >
               <div style={{ height: `calc(${gridSpacer}px + env(safe-area-inset-top, 0px))`, flexShrink: 0 }} />
               {(() => {
-                const openPost = (post: any, index: number) => {
-                  const isVid = post.media_type === 'video' ||
-                    ['mp4','mov','webm'].includes(
-                      post.media_urls?.[0]?.split('?')[0].split('.').pop()?.toLowerCase() || ''
-                    );
-                  if (isVid) {
-                    setLightboxPost(post);
-                    setShowLightbox(true);
-                  } else {
-                    setViewerIndex(index);
-                    setShowViewer(true);
-                  }
+                // Brief M6 — ONE pipeline for all media: every grid tap (image OR
+                // video) opens the post-scroll (ProfilePostViewer) landing on the
+                // tapped post. No solo video lightbox — GradedVideo renders video in
+                // post-scroll (empty-media-safe on stream_uid), and rotate→theatre
+                // works there via the shared M3a hook.
+                const openPost = (_post: any, index: number) => {
+                  setViewerIndex(index);
+                  setShowViewer(true);
                 };
                 // Collage → masonry mosaic: each post at its own layout_id AR.
                 if (userLayoutId === 'collage') {
@@ -675,25 +668,6 @@ const userLayoutId = stableLayoutId;
             onDeleted={(deletedPostId) => setUserPosts(prev => prev.filter(p => p.id !== deletedPostId))}
           />
         </>
-      )}
-
-      {showLightbox && lightboxPost && (
-        <PostModal
-          post={lightboxPost}
-          onClose={() => { setShowLightbox(false); setLightboxPost(null); }}
-          onScrollDown={() => {
-            setShowLightbox(false);
-            setLightboxPost(null);
-            const idx = userPosts.findIndex(p => p.id === lightboxPost.id);
-            setViewerIndex(idx >= 0 ? idx : 0);
-            setShowViewer(true);
-          }}
-          isOwner={true}
-          supabaseUserId={supabaseUserId}
-          onTheaterMode={() => { setShowLightbox(false); setLightboxPost(null); setActiveTab('theatre'); }}
-          onDeleted={(deletedPostId) => setUserPosts(prev => prev.filter(p => p.id !== deletedPostId))}
-          layoutId={userLayoutId}
-        />
       )}
 
       {showFollowersModal && user && (

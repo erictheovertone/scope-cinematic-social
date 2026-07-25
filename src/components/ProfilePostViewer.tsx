@@ -199,8 +199,15 @@ function PostViewerItem({
       {/* ── IMAGE ── */}
       {(() => {
         const is43 = (post.layout_id ?? '') === 'legacy';
-        const mediaEl = post.media_urls?.[0] ? (
-          (post as any).media_type === 'video' ? (
+        // Brief M6 — empty-media-safe: a Stream video has EMPTY media_urls, so the
+        // video branch must gate on stream_uid too (mirrors PostModal). Ready → HLS;
+        // processing → poster+label; legacy (media_urls, no stream_uid) → progressive.
+        const isVideoPost = (post as any).media_type === 'video' ||
+          ['mp4','mov','webm','avi','mkv'].includes(
+            (post.media_urls?.[0] ?? '').split('?')[0].split('.').pop()?.toLowerCase() || ''
+          );
+        const mediaEl = isVideoPost && (post.media_urls?.[0] || (post as any).stream_uid) ? (
+          (
             // Profile scroll video → GradedVideo, gridMode = the grid's direct in-view
             // trigger (one snapped post in view → it plays graded). The wrapper's
             // onClick opens the standalone view (taps bubble).
@@ -220,18 +227,18 @@ function PostViewerItem({
               showSoundToggle={true}
               style={{ width: "100%", height: "100%" }}
             />
-          ) : (
-            <MediaRenderer
-              url={post.media_urls[0]}
-              width={1280}
-              mediaType={(post as any).media_type}
-              caption={post.caption || ""}
-              thumbnailUrl={(post as any).poster_url ?? (post as any).thumbnail_url}
-              autoplay={true}
-              showSoundToggle={true}
-              style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-            />
           )
+        ) : post.media_urls?.[0] ? (
+          <MediaRenderer
+            url={post.media_urls[0]}
+            width={1280}
+            mediaType={(post as any).media_type}
+            caption={post.caption || ""}
+            thumbnailUrl={(post as any).poster_url ?? (post as any).thumbnail_url}
+            autoplay={true}
+            showSoundToggle={true}
+            style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+          />
         ) : (
           <div style={{ width: "100%", height: "100%", background: "#111" }} />
         );
