@@ -56,6 +56,14 @@ export const BADGES: Record<BadgeKey, BadgeMeta> = {
   free:      { key: 'free',      src: '/free-tier-aperture-logo-red.png',            title: 'FREE TIER', color: '#E5E1DB' },
 };
 
+// Brief M8a — the FRAMELESS First Cut mark. ACTION-ROW ONLY: the icon-only FC in
+// lightbox/viewer contexts (FirstCutChip `iconOnly` → PostModal action row, profile
+// post-scroll, SR post view, desktop under-stage row, deck post views). BADGE contexts
+// keep the FRAMED BADGES.firstCut.src (badge cluster, badges sheet, bio-sheet cards,
+// FirstCutFlourish celebration, the FirstCutLedger/sheet header, the feed count chip).
+// Keep the split explicit — do NOT cross-wire the two.
+export const FIRST_CUT_ACTION_MARK = `${NEW}/first-cut-no-frame.png`;
+
 // ── Display names (Brief 2.4a) — the USER-FACING label layer ──────────────────
 // Registry `title` stays for internal/legacy use; these are what surfaces should
 // show going forward (e.g. top1k reads as COLLECTOR, not TOP 1K). Shared: any badge

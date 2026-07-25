@@ -438,14 +438,11 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
         </button>
         </PressPop>
 
-        {/* First Cut — icon only, inline with like/comment (Brief M8). Non-interactive
-            (matches today's chip); the whip lands on the mark. */}
-        {post.token_standard === 'coin' && post.coin_address && (
-          <FirstCutChip iconOnly size={18.7} coinAddress={post.coin_address} postId={post.id} />
-        )}
-
-        {/* Right cluster — COLLECT. */}
+        {/* Right cluster — First Cut count (coin posts) sits to the LEFT of COLLECT. */}
         <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 10 }}>
+          {post.token_standard === 'coin' && post.coin_address && (
+            <FirstCutChip coinAddress={post.coin_address} postId={post.id} />
+          )}
           <button
             className="tap-target-x6"
             onClick={(e) => { e.stopPropagation(); setShowCollectSheet(true); }}
@@ -493,14 +490,13 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
         </button>
         </PressPop>
 
-        {/* First Cut — icon only, inline with like/comment (Brief M8): the "5 | 10"
-            numeral row is superseded in post views. Non-interactive; the whip lands here. */}
-        {post.token_standard === 'coin' && post.coin_address && (
-          <FirstCutChip iconOnly size={17} coinAddress={post.coin_address} postId={post.id} />
-        )}
-
-        {/* Right cluster — COLLECT. */}
+        {/* Right cluster — FC count (coin posts) LEFT of COLLECT. FirstCutChip is a
+            shared component (out of blast radius): the frame's "5 | 10" two-numeral
+            format is FLAGGED for a nudge, not restyled here. */}
         <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 9 }}>
+          {post.token_standard === 'coin' && post.coin_address && (
+            <FirstCutChip coinAddress={post.coin_address} postId={post.id} />
+          )}
           <button
             className="tap-target-x6"
             onClick={(e) => { e.stopPropagation(); setShowCollectSheet(true); }}

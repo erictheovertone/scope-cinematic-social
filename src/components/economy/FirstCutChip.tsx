@@ -16,10 +16,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useFirstCutLedger, FIRST_CUT_SLOTS, onFirstCutEarned } from '@/lib/firstCutLedger';
-import { BADGES } from '@/lib/economy/badges';
+import { BADGES, FIRST_CUT_ACTION_MARK } from '@/lib/economy/badges';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
-const MARK = BADGES.firstCut.bannerSrc ?? BADGES.firstCut.src;
+// Framed badge for the FEED count chip (default); FRAMELESS mark for the icon-only
+// action-row treatment in lightbox/viewer contexts (Brief M8a). Chosen per-instance below.
+const FRAMED_MARK = BADGES.firstCut.bannerSrc ?? BADGES.firstCut.src;
 const WHIP_MS = 560; // fast, decisive
 
 interface Fly { cx: number; cy: number; sx: number; sy: number; ss: number }
@@ -78,9 +80,10 @@ export default function FirstCutChip({
   // Brief M8 — icon-only: the mark alone (no count), the whip anchored on it. A ≥44px
   // tap target when `onPress` is given (opens the ledger sheet), else non-interactive
   // (matches today's chip, which had no tap).
+  const markSrc = iconOnly ? FIRST_CUT_ACTION_MARK : FRAMED_MARK;
   const mark = (
     <img
-      src={MARK}
+      src={markSrc}
       alt="First Cut"
       style={{ width: size, height: size, objectFit: 'contain', display: 'block', ...(pulse ? { animation: 'fcMarkPop 0.5s cubic-bezier(0.16,0.84,0.3,1) both' } : null) }}
     />
@@ -125,7 +128,7 @@ export default function FirstCutChip({
           any transformed feed-tile ancestor. Lands centred on the counter. */}
       {fly && typeof document !== 'undefined' && createPortal(
         <img
-          src={MARK}
+          src={markSrc}
           alt=""
           style={{
             position: 'fixed', left: fly.cx, top: fly.cy, width: 22, height: 22, objectFit: 'contain',
