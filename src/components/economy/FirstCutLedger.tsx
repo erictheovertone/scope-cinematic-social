@@ -31,12 +31,18 @@ export default function FirstCutLedger({
   coinAddress,
   postId,
   onHolderTap,
+  variant = 'inline',
 }: {
   coinAddress: string;
   postId?: string;
   onHolderTap?: (username: string) => void;
+  // Brief M8 — 'sheet' = rendered inside FirstCutSheet (the icon's tap destination on
+  // post views): always-expanded, no caret, header not a toggle, no whip (the action-row
+  // FC icon owns the whip). 'inline' = the legacy self-contained collapsible block.
+  variant?: 'inline' | 'sheet';
 }) {
-  const [expanded, setExpanded] = useState(false);
+  const isSheet = variant === 'sheet';
+  const [expanded, setExpanded] = useState(isSheet);
   const [refreshKey, setRefreshKey] = useState(0);
   const holders = useFirstCutLedger(coinAddress, refreshKey);
 
@@ -49,7 +55,9 @@ export default function FirstCutLedger({
   useEffect(() => { reduceMotion.current = window.matchMedia('(prefers-reduced-motion: reduce)').matches; }, []);
 
   // Our own earn on this post → re-fetch (ready by impact) and whip into the count.
-  useEffect(() => onFirstCutEarned((earnedPostId) => {
+  // Skipped in 'sheet' variant — the persistent action-row FC icon owns the whip; the
+  // sheet is transient and usually closed at earn time.
+  useEffect(() => { if (isSheet) return; return onFirstCutEarned((earnedPostId) => {
     if (!postId || earnedPostId !== postId) return;
     setRefreshKey((k) => k + 1); // pull the new count during the flight
 
@@ -65,7 +73,7 @@ export default function FirstCutLedger({
     setFly({ cx, cy, sx: window.innerWidth / 2 - cx, sy: window.innerHeight * 0.42 - cy, ss: 5.5 });
     const t = setTimeout(() => { setFly(null); frozen.current = null; impact(); }, WHIP_MS); // land → reveal + flash
     return () => clearTimeout(t);
-  }), [postId, holders]);
+  }); }, [postId, holders]);
 
   const filled = holders?.length ?? 0;
   const byRank = new Map((holders ?? []).map((h) => [h.rank, h]));
@@ -73,10 +81,11 @@ export default function FirstCutLedger({
 
   return (
     <div style={{ background: '#000', width: '100%' }}>
-      {/* Header — tappable to expand/collapse; the count on the right is the whip target */}
+      {/* Header — tappable to expand/collapse (inline); in 'sheet' it's a static title
+          (the sheet is already the expanded detail). The count is the whip target. */}
       <div
-        onClick={() => setExpanded((v) => !v)}
-        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 0 10px', cursor: 'pointer' }}
+        onClick={isSheet ? undefined : () => setExpanded((v) => !v)}
+        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 0 10px', cursor: isSheet ? 'default' : 'pointer' }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
           <img
@@ -98,13 +107,16 @@ export default function FirstCutLedger({
           >
             {holders === null ? '— / 10' : `${shown} / ${FIRST_CUT_SLOTS}`}
           </span>
-          {/* caret — points right collapsed, down expanded */}
+          {/* caret — points right collapsed, down expanded (inline only; the sheet has no
+              collapse affordance) */}
+          {!isSheet && (
           <svg
             width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(229,225,219,0.5)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"
             style={{ transform: expanded ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.25s cubic-bezier(0.16,0.84,0.3,1)', flexShrink: 0 }}
           >
             <polyline points="9 6 15 12 9 18" />
           </svg>
+          )}
         </div>
       </div>
 

@@ -189,7 +189,8 @@ export default function DesktopScreeningRoom() {
                   <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="rgba(229,225,219,0.75)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
                   <span style={{ ...SKR, fontSize: 12, color: 'rgba(229,225,219,0.7)', fontVariantNumeric: 'tabular-nums' }}>{meta.comments}</span>
                 </span>
-                {current.coin_address && <FirstCutChip coinAddress={current.coin_address} postId={post.id} />}
+                {/* Brief M8 — icon only, inline with like/comment (no count). */}
+                {current.coin_address && <FirstCutChip iconOnly size={18} coinAddress={current.coin_address} postId={post.id} />}
                 {/* Standard #525252-bordered COLLECT (the frame's x1266 gradient variant is a
                     mock exploration — shipped the standard one). */}
                 <button onClick={() => setCollectOpen(true)} className="tappable" style={{ ...SKB, fontSize: 12, color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.08em', background: 'transparent', border: '1px solid #525252', cursor: 'pointer', padding: '9px 18px' }}>Collect</button>

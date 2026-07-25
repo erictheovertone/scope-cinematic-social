@@ -324,6 +324,11 @@ function PostViewerItem({
           </button>
           </PressPop>
 
+          {/* First Cut — icon only, inline with like/comment (Brief M8). Non-interactive
+              (matches today's chip); the whip lands on the mark. */}
+          {isCoinPost(post as { coin_address?: string | null; token_standard?: string | null }) && (post as { coin_address?: string | null }).coin_address && (
+            <FirstCutChip iconOnly size={17} coinAddress={(post as { coin_address?: string }).coin_address as string} postId={(post as { id?: string }).id as string} />
+          )}
 
           {/* Share button removed from the profile post-scroll (own AND public). */}
         </div>
@@ -332,12 +337,6 @@ function PostViewerItem({
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           {deckToast && (
             <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "#E5E1DB", textTransform: "uppercase", letterSpacing: "0.04em" }}>Added to {deckToast}</span>
-          )}
-          {/* First Cut counter — the SMALL icon + count, identical to the home
-              feed (all scrolls use this treatment; the full ledger row is
-              Lightbox-only). Whip-into-counter lands here. Left of COLLECT. */}
-          {isCoinPost(post as { coin_address?: string | null; token_standard?: string | null }) && (post as { coin_address?: string | null }).coin_address && (
-            <FirstCutChip coinAddress={(post as { coin_address?: string }).coin_address as string} postId={(post as { id?: string }).id as string} />
           )}
           <button
             onClick={handleCollect}

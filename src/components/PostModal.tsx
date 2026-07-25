@@ -26,7 +26,8 @@ import MediaRenderer from "@/components/MediaRenderer";
 import GradedVideo from "@/components/finishing/GradedVideo";
 import { useEconomy, isCoinPost } from "@/components/EconomyProvider";
 import TickerMark from "@/components/economy/TickerMark";
-import FirstCutLedger from "@/components/economy/FirstCutLedger";
+import FirstCutChip from "@/components/economy/FirstCutChip";
+import FirstCutSheet from "@/components/economy/FirstCutSheet";
 import DeletePostSheet from "@/components/DeletePostSheet";
 import CommentList, { useCommentLikes, ReplyComposer, type UIComment } from "@/components/CommentList";
 import { replyToComment } from "@/lib/commentInteractions";
@@ -110,6 +111,7 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
   const commentInputRef = useRef<HTMLInputElement>(null);
   const [collectToast, setCollectToast] = useState(false);
   const [showCollectSheet, setShowCollectSheet] = useState(false);
+  const [showFcSheet, setShowFcSheet] = useState(false); // Brief M8 — FC detail sheet
   const [showDeckPicker, setShowDeckPicker] = useState(false);
   const [deckToast, setDeckToast] = useState("");
 
@@ -649,12 +651,9 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
               </button>
             </div>
 
-            {/* First Cut ledger — the post's founding collectors (coin posts) */}
-            {isCoinPost(post) && post.coin_address && (
-              <div style={{ marginBottom: 16 }}>
-                <FirstCutLedger coinAddress={post.coin_address} postId={post.id} onHolderTap={(u) => router.push("/profile/" + u)} />
-              </div>
-            )}
+            {/* Brief M8 — the FIRST CUT ledger row is gone from here: it collapsed to the
+                FC icon in the action row below, which opens the ranked list as a sheet
+                (FirstCutSheet). The vacated vertical space closes up. */}
 
             {/* Divider */}
             <div style={{ height: 1, background: "rgba(229,225,219,0.1)", marginBottom: 12 }} />
@@ -690,6 +689,12 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
                 <span style={{ ...SKR, fontSize: 'var(--fs-7)', color: "inherit" }}>{comments.length}</span>
                 </span></PressPop>
               </button>
+
+              {/* First Cut — icon only, inline with like/comment (Brief M8). Tap opens the
+                  founding-collectors ranked list as a sheet. Coin posts only. */}
+              {isCoinPost(post) && post.coin_address && (
+                <PressPop><FirstCutChip iconOnly size={18.7} coinAddress={post.coin_address} postId={post.id} onPress={() => setShowFcSheet(true)} /></PressPop>
+              )}
 
               {/* ••• — owner controls reveal (ripple-down). Non-owners have no
                   extra actions today (share is already in the row) → hidden. */}
@@ -951,6 +956,16 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
         visible={showCollectSheet}
         onClose={() => setShowCollectSheet(false)}
       />
+
+      {/* Brief M8 — First Cut detail sheet (the action-row FC icon's tap destination). */}
+      {showFcSheet && isCoinPost(post) && post.coin_address && (
+        <FirstCutSheet
+          coinAddress={post.coin_address}
+          postId={post.id}
+          onClose={() => setShowFcSheet(false)}
+          onHolderTap={(u) => { setShowFcSheet(false); router.push("/profile/" + u); }}
+        />
+      )}
 
       {/* Owner sheets — mounted only for the author. */}
       {ownerView && (

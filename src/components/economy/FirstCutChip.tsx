@@ -24,7 +24,24 @@ const WHIP_MS = 560; // fast, decisive
 
 interface Fly { cx: number; cy: number; sx: number; sy: number; ss: number }
 
-export default function FirstCutChip({ coinAddress, postId }: { coinAddress: string; postId?: string }) {
+// Brief M8 — in post lightbox/viewer contexts the FC row collapses to JUST the mark,
+// sitting inline with the like/comment icons. `iconOnly` drops the "N/10" count (the mark
+// alone, sized to the surface's icon class); `onPress` makes it a ≥44px tap target (the
+// ledger surfaces open the FirstCutSheet). The whip still lands on the mark. Default (no
+// iconOnly) keeps the legacy mark+count for any non-post-view caller.
+export default function FirstCutChip({
+  coinAddress,
+  postId,
+  iconOnly = false,
+  size = 22,
+  onPress,
+}: {
+  coinAddress: string;
+  postId?: string;
+  iconOnly?: boolean;
+  size?: number;
+  onPress?: () => void;
+}) {
   const [refreshKey, setRefreshKey] = useState(0);
   const holders = useFirstCutLedger(coinAddress, refreshKey);
   const countRef = useRef<HTMLSpanElement>(null);
@@ -58,14 +75,35 @@ export default function FirstCutChip({ coinAddress, postId }: { coinAddress: str
   const live = holders.length;
   const shown = fly && frozen.current !== null ? frozen.current : live; // frozen during flight
 
+  // Brief M8 — icon-only: the mark alone (no count), the whip anchored on it. A ≥44px
+  // tap target when `onPress` is given (opens the ledger sheet), else non-interactive
+  // (matches today's chip, which had no tap).
+  const mark = (
+    <img
+      src={MARK}
+      alt="First Cut"
+      style={{ width: size, height: size, objectFit: 'contain', display: 'block', ...(pulse ? { animation: 'fcMarkPop 0.5s cubic-bezier(0.16,0.84,0.3,1) both' } : null) }}
+    />
+  );
+
   return (
     <>
+      {iconOnly ? (
+        onPress ? (
+          <button
+            onClick={(e) => { e.stopPropagation(); onPress(); }}
+            aria-label="First Cut"
+            className="tap-target-x6"
+            style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', flexShrink: 0 }}
+          >
+            <span ref={countRef} style={{ display: 'inline-flex', alignItems: 'center', flexShrink: 0 }}>{mark}</span>
+          </button>
+        ) : (
+          <span ref={countRef} style={{ display: 'inline-flex', alignItems: 'center', flexShrink: 0 }}>{mark}</span>
+        )
+      ) : (
       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
-        <img
-          src={MARK}
-          alt="First Cut"
-          style={{ width: 22, height: 22, objectFit: 'contain', display: 'block', ...(pulse ? { animation: 'fcMarkPop 0.5s cubic-bezier(0.16,0.84,0.3,1) both' } : null) }}
-        />
+        {mark}
         <span
           ref={countRef}
           className={pulse ? 'fc-tickup' : undefined}
@@ -81,6 +119,7 @@ export default function FirstCutChip({ coinAddress, postId }: { coinAddress: str
           {shown}/{FIRST_CUT_SLOTS}
         </span>
       </span>
+      )}
 
       {/* The whip — portaled to body so `fixed` is viewport-true regardless of
           any transformed feed-tile ancestor. Lands centred on the counter. */}
