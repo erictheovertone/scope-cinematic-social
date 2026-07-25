@@ -11,6 +11,7 @@ import MirageView from "@/components/MirageView";
 import TheatreMode from "@/components/TheatreMode";
 import ViewingModesMenu from "@/components/ViewingModesMenu";
 import { useIsDesktop } from "@/lib/useIsDesktop";
+import { useRotateToTheatre } from "@/lib/useRotateToTheatre";
 import DesktopHome from "@/components/desktop/DesktopHome";
 import { AnimatePresence } from "framer-motion";
 import { useTitleDebugTap } from "@/components/ViewportDebug";
@@ -62,6 +63,36 @@ export default function Home() {
   // the feed reflows (another post may collapse above it).
   const anchorRef = useRef<{ id: string; top: number } | null>(null);
   const isDesktop = useIsDesktop();
+
+  // Brief M7 — ROTATE-TO-THEATRE from the feed lightbox. Fourth consumer of the shared
+  // M3a hook (after profile post-scroll, SR host, SR lineup). Rotating the device while
+  // the lightbox is open enters theatre on the CURRENT post, fed the ALREADY-LOADED feed
+  // queue (`posts` — the same array M1's swipe nav reads; no new fetches). The lightbox
+  // stays mounted underneath; rotating back to portrait exits theatre and REBINDS the
+  // lightbox to whichever post was navigated to in theatre (origin + position continuity).
+  // Gated to non-desktop (isDesktop returns DesktopHome below) + only while a lightbox is
+  // up, so a desktop window resize / a plain-feed rotate can't mis-fire.
+  const theatreIdx = useRef(0); // theatre's live index → rebind the lightbox on rotation exit
+  const enterTheatreFromRotation = useCallback(() => {
+    if (!lightboxPost) return; // keeps the lightbox mounted under theatre (rebinds on exit)
+    const i = Math.max(0, posts.findIndex((p) => p.id === (lightboxPost as { id?: string }).id));
+    setTheatreStart(i);
+    theatreIdx.current = i;
+    setTheatreActive(true);
+  }, [posts, lightboxPost]);
+  const { enteredViaRotation } = useRotateToTheatre({
+    enabled: !isDesktop && !!lightboxPost,
+    isOpen: theatreActive,
+    onEnter: enterTheatreFromRotation,
+  });
+  // Rotation-entered theatre close → land the lightbox on the navigated post. Eye-tap
+  // entries leave the flag false (they null the lightbox on entry) → this no-ops.
+  useEffect(() => {
+    if (theatreActive || !enteredViaRotation.current) return;
+    enteredViaRotation.current = false;
+    const p = posts[theatreIdx.current];
+    if (p) setLightboxPost(p);
+  }, [theatreActive]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Stable (refs + setState only) so PostItem's memo holds across home re-renders.
   const toggleComments = useCallback((postId: string) => {
@@ -465,7 +496,10 @@ export default function Home() {
             return { index: Math.max(0, i), total: posts.length, onStep: (dir: 1 | -1) => { const next = posts[i + dir]; if (next) setLightboxPost(next); } };
           })()}
           onTheaterMode={() => {
-            // Enter theatre AT this post; exit returns here (feed untouched).
+            // Eye-tap entry: enter theatre AT this post; exit returns to the FEED (the
+            // lightbox closes). Distinct from the M7 rotate entry (which keeps the lightbox
+            // and rebinds it on exit) — so clear the rotation flag before opening.
+            enteredViaRotation.current = false;
             const i = posts.findIndex((p) => p.id === (lightboxPost as { id?: string }).id);
             setTheatreStart(Math.max(0, i));
             setLightboxPost(null);
@@ -479,7 +513,7 @@ export default function Home() {
 
       {/* Theatre Mode over the FEED's posts (feed order). Same component as the
           profile eye-icon entry — just sourced from the feed. */}
-      {theatreActive && <TheatreMode posts={posts} source="feed" startIndex={theatreStart} onClose={() => { setTheatreActive(false); setTheatreStart(0); }} />}
+      {theatreActive && <TheatreMode posts={posts} source="feed" startIndex={theatreStart} exitOnPortrait={enteredViaRotation.current} onIndexChange={(i) => { theatreIdx.current = i; }} onClose={() => { setTheatreActive(false); setTheatreStart(0); }} />}
     </div>
   );
 }

@@ -165,6 +165,17 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
     return () => el.removeEventListener("touchmove", onMove);
   }, []);
 
+  // Brief M7 §2 — rotation is orthogonal to the M1 pan. An orientation flip (e.g. the
+  // rotate-to-theatre entry from the feed lightbox) never fires touchend, so a mid-swipe
+  // rotate would leave `swipeRef` live and `dragX` non-zero — the pan half-committed under
+  // theatre, resuming on return. Cancel it cleanly on orientationchange. No-op when idle
+  // (dragX already 0, no active gesture).
+  useEffect(() => {
+    const onOrient = () => { swipeRef.current = null; setDragX(0); setDragTransition("none"); };
+    window.addEventListener("orientationchange", onOrient);
+    return () => window.removeEventListener("orientationchange", onOrient);
+  }, []);
+
   const onSwipeStart = (e: React.TouchEvent) => {
     if (!navRef.current) return;
     const t = e.touches[0];
