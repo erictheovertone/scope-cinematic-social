@@ -53,18 +53,21 @@ function MirageLightbox({
         position: "fixed",
         inset: 0,
         zIndex: 70,
-        background: visible ? "rgba(0,0,0,0.96)" : "rgba(0,0,0,0)",
+        // Brief M10a §2 — focus dim lightened ~×0.8 (0.96 → 0.77) so the collage stays
+        // legible behind the focused item: the visible collage IS the return affordance.
+        background: visible ? "rgba(0,0,0,0.77)" : "rgba(0,0,0,0)",
         transition: "background 200ms ease",
         overflowY: "auto",
       }}
       onClick={handleClose}
     >
-      {/* ← back — sticky so it stays visible while scrolling the lightbox */}
+      {/* ← back — sticky so it stays visible while scrolling the lightbox. Brief M10a §1 —
+          same safe-area class as the header: pad top by --safe-top so it clears the notch. */}
       <button
         onClick={(e) => { e.stopPropagation(); handleClose(); }}
         style={{
           position: "sticky",
-          top: 16,
+          top: "calc(16px + var(--safe-top))",
           display: "flex",
           alignItems: "center",
           gap: 6,
@@ -91,7 +94,10 @@ function MirageLightbox({
         </span>
       </button>
 
-      {/* Image + metadata — stopPropagation so tapping here doesn't close */}
+      {/* Centering wrapper — Brief M10a §3: NO stopPropagation here. It filled the
+          viewport (minHeight ~100vh, full width) and swallowed every backdrop tap, so
+          click-away was dead. Now only the focused-media block below absorbs taps; the
+          empty space around it bubbles to the root's handleClose (tap-away → return). */}
       <div
         style={{
           display: "flex",
@@ -102,33 +108,36 @@ function MirageLightbox({
           transform: visible ? "scale(1)" : "scale(0.95)",
           transition: "transform 200ms ease",
         }}
-        onClick={(e) => e.stopPropagation()}
       >
-        {/* Tap image → open PostModal */}
-        {post.layout_id === 'legacy' ? (
-          <PillarboxFrame onClick={onOpenModal} cursor="pointer">
-            <img src={post.media_urls?.[0]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-          </PillarboxFrame>
-        ) : (
-          <img
-            src={post.media_urls?.[0]}
-            alt=""
-            style={{ width: "100%", height: "auto", display: "block", cursor: "pointer" }}
-            onClick={onOpenModal}
-          />
-        )}
+        {/* The focused item (media + metadata) — stopPropagation so taps ON it don't
+            close. The media's own tap → open PostModal (preserved). */}
+        <div onClick={(e) => e.stopPropagation()}>
+          {/* Tap image → open PostModal */}
+          {post.layout_id === 'legacy' ? (
+            <PillarboxFrame onClick={onOpenModal} cursor="pointer">
+              <img src={post.media_urls?.[0]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+            </PillarboxFrame>
+          ) : (
+            <img
+              src={post.media_urls?.[0]}
+              alt=""
+              style={{ width: "100%", height: "auto", display: "block", cursor: "pointer" }}
+              onClick={onOpenModal}
+            />
+          )}
 
-        <div style={{ padding: "10px 16px 76px" }}>
-          <span
-            style={{
-              ...SKR,
-              fontSize: 'var(--fs-9)',
-              color: "rgba(229,225,219,0.7)",
-              letterSpacing: "-0.1px",
-            }}
-          >
-            @{post.username} · ♡ {likeCount} · ○ {commentCount}
-          </span>
+          <div style={{ padding: "10px 16px 76px" }}>
+            <span
+              style={{
+                ...SKR,
+                fontSize: 'var(--fs-9)',
+                color: "rgba(229,225,219,0.7)",
+                letterSpacing: "-0.1px",
+              }}
+            >
+              @{post.username} · ♡ {likeCount} · ○ {commentCount}
+            </span>
+          </div>
         </div>
       </div>
     </div>
@@ -236,7 +245,10 @@ export default function MirageView({ onClose }: { onClose: () => void }) {
           animation: exiting ? "mirage-view-out 380ms ease-in both" : "none",
         }}
       >
-        {/* Mirage logo — sticky close button, always top-right */}
+        {/* Mirage logo — sticky close button, always top-right. Brief M10a §1 — pad the
+            header zone by --safe-top (F1 page-chrome rule) so the logomark clears the
+            notch/status bar. This header is a bare `sticky top:0` div (not .top-bar / not
+            PageTitle), which is why the M5 §4 safe-area audit missed it. */}
         <div
           style={{
             position: "sticky",
@@ -244,7 +256,7 @@ export default function MirageView({ onClose }: { onClose: () => void }) {
             zIndex: 2,
             display: "flex",
             justifyContent: "flex-end",
-            padding: "4px 6px 14px",
+            padding: "calc(4px + var(--safe-top)) 6px 14px",
             pointerEvents: "none",
           }}
         >
