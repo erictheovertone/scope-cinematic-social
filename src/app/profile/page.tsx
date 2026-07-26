@@ -9,6 +9,7 @@ import { usePrivy } from "@privy-io/react-auth";
 import { getUserByPrivyId, getProfile, getFollowerCount, getFollowingCount, getUserDecks, createDeck, getProfileLinks, isProMember, type Deck, type ProfileLink } from "@/lib/userService";
 import ProfileDataSheet from "@/components/ProfileDataSheet";
 import PressPop from "@/components/PressPop";
+import { profileTabFlow, gridSpacerCss } from "@/components/profile/profileTabFlow";
 import { getUserPosts } from '@/lib/postsService';
 import CreatePostFlow from "@/components/CreatePostFlow";
 import FollowListModal from "@/components/FollowListModal";
@@ -224,14 +225,12 @@ const userLayoutId = stableLayoutId;
   // moved into the shared <ProfileHeader>; the page keeps headerH (set via onMeasure)
   // to drive the tab anchor + grid spacer below.
   const [headerH, setHeaderH] = useState(120); // measured (excl. safe-area); default ≈ old
-  const TAB_ROW_H = 42;                         // rest padded height (paddingTop 10 + 20 + 12)
-  const tabAnchor = headerH + 8;               // tab-row rest top, below the divider
-  const tabCap = tabAnchor - 2;                // pins when the tab reaches top:2
-  // Brief 2.2d fix: reserve the tab's FULL padded height (was +20 = the INNER height →
-  // 22px overlap). Constant (not measured) because the tab's padding shrinks when
-  // snapped — measuring it would feed the spacer and jump the scroll. +6 = small gap.
-  const gridSpacer = tabAnchor + TAB_ROW_H + 6;
-  const tabRowOffset = Math.min(gridScrollY, tabCap);
+  // Brief F6b §1 — the tab/grid flow math is now the SHARED profileTabFlow() (own + public
+  // consume it identically → the fork that let public drop the safe-area term is gone).
+  // tabAnchor = rest top below the divider; tabCap pins at top:2; gridSpacer reserves the
+  // tab's FULL padded height + 6px gap (2.2d, kills the 22px overlap); tabRowOffset drives
+  // the pin. Output is byte-identical to the prior inline math (own unchanged).
+  const { tabAnchor, tabCap, gridSpacer, tabRowOffset } = profileTabFlow(headerH, gridScrollY);
   const gridScrollRef = useRef<HTMLDivElement>(null);
   const rafPendingRef = useRef(false);
 
@@ -536,7 +535,7 @@ const userLayoutId = stableLayoutId;
             });
           }}
         >
-          <div style={{ height: `calc(${gridSpacer}px + env(safe-area-inset-top, 0px))` }} />
+          <div style={{ height: gridSpacerCss(gridSpacer) }} />
           <CollectedGrid userId={supabaseUserId} isOwn />
         </div>
       )}
@@ -556,7 +555,7 @@ const userLayoutId = stableLayoutId;
                 minHeight: '50vh',
                 cursor: 'pointer',
                 gap: '16px',
-                paddingTop: `calc(${gridSpacer}px + env(safe-area-inset-top, 0px))`,
+                paddingTop: gridSpacerCss(gridSpacer),
               }}
               onClick={() => {
                 setSpinning(true);
@@ -597,7 +596,7 @@ const userLayoutId = stableLayoutId;
                 });
               }}
             >
-              <div style={{ height: `calc(${gridSpacer}px + env(safe-area-inset-top, 0px))`, flexShrink: 0 }} />
+              <div style={{ height: gridSpacerCss(gridSpacer), flexShrink: 0 }} />
               {(() => {
                 // Brief M6 — ONE pipeline for all media: every grid tap (image OR
                 // video) opens the post-scroll (ProfilePostViewer) landing on the

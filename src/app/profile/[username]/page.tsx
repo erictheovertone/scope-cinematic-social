@@ -13,6 +13,8 @@ import {
   getDecksByUsername, getProfileLinks, isProMember, type Deck, type ProfileLink,
 } from "@/lib/userService";
 import ProfileDataSheet from "@/components/ProfileDataSheet";
+import PressPop from "@/components/PressPop";
+import { profileTabFlow, gridSpacerCss } from "@/components/profile/profileTabFlow";
 import { getUserPosts } from "@/lib/postsService";
 import ProfilePostViewer from "@/components/ProfilePostViewer";
 import FollowListModal from "@/components/FollowListModal";
@@ -118,12 +120,10 @@ export default function PublicProfilePage() {
   // <ProfileHeader> onMeasure and drives the tab anchor + grid spacer, replacing the
   // old fixed height:124 / magic 101·103·140.
   const [headerH, setHeaderH] = useState(120);
-  const TAB_ROW_H = 42;
-  const tabAnchor = headerH + 8;
-  const tabCap = tabAnchor - 2;
-  const gridSpacer = tabAnchor + TAB_ROW_H + 6;
+  // Brief F6b §1 — shared tab/grid flow, identical to own-profile. Ends the fork that had
+  // dropped the safe-area term from public's grid spacers (→ tab row over grid content).
+  const { tabAnchor, tabCap, gridSpacer, tabRowOffset } = profileTabFlow(headerH, gridScrollY);
   const headerOpacity = Math.max(0, 1 - gridScrollY / 20);
-  const tabRowOffset = Math.min(gridScrollY, tabCap);
 
   useEffect(() => {
     if (!showDecks || !username) return;
@@ -274,7 +274,7 @@ export default function PublicProfilePage() {
   const resolvedBadges = resolveBadges({ isFoundingMember, isTopCollector, isScreeningRoomHolder, isPaidMember, isInHouseCreator, firstCutCount, composerTrackCount });
 
   return (
-    <div className="bg-black relative w-full app-shell screen-min mx-auto pb-[60px]" style={{ background: 'var(--canvas)' }}>{/* Brief F6 — canvas #050505 (matches own) */}
+    <div className="bg-black relative w-full app-shell screen-min mx-auto pb-[60px]" style={{ background: 'var(--canvas)', overscrollBehavior: 'none' }}>{/* Brief F6 — canvas #050505 (matches own). Brief F6b §4a — overscroll-behavior:none on the app-shell root kills the rubber-band scroll-chain (the F5 §4a / decks-page pattern). */}
 
       {/* Brief F6 — the public header now MATCHES own-profile: the shared
           <ProfileHeader> composition (square PFP + ivory frame, name step-down, PRO,
@@ -307,7 +307,7 @@ export default function PublicProfilePage() {
           onMeasure={setHeaderH}
           controls={
             <>
-              {/* top-right: ⓘ (bio entry, +2px) + mail (DM entry) */}
+              {/* top-right: BIO (bio entry) + paper-plane (DM entry) */}
               <div style={{ position: 'absolute', top: -2, right: 6, display: 'flex', alignItems: 'center', gap: 8, zIndex: 6, opacity: profileDataOpen ? 0 : 1, pointerEvents: profileDataOpen ? 'none' : 'auto', transition: 'opacity 200ms ease' }}>
                 <button
                   ref={infoBtnRef}
@@ -316,9 +316,11 @@ export default function PublicProfilePage() {
                   style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 7, animation: iPulse ? 'i-land-pulse 300ms ease-out' : 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                   aria-label="View profile info"
                 >
-                  <div style={{ width: 16.6, height: 13.2, border: '0.5px solid #E5E1DB', display: 'flex', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box' }}>
-                    <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'calc(var(--fs-15_7) + 2px)', letterSpacing: '-0.02em', color: '#E5E1DB', lineHeight: 1, display: 'block', transform: 'translateY(-1px)' }}>i</span>
-                  </div>
+                  {/* Brief F6b §2 — the ⓘ glyph becomes the word BIO, styled exactly as
+                      own-profile's control (65 Medium, --ink-100, 15.5px). The F6 +2px ⓘ
+                      sizing is superseded. Behavior unchanged (opens the bio/data sheet;
+                      the follow flyer still lands on this ref). */}
+                  <PressPop><span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 15.5, letterSpacing: 'var(--track-body)', color: 'var(--ink-100)', display: 'block' }}>BIO</span></PressPop>
                 </button>
                 {user && !isOwnProfile && targetPrivyId && (
                   <button
@@ -327,26 +329,31 @@ export default function PublicProfilePage() {
                     style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.55 }}
                     aria-label="Direct message"
                   >
-                    {/* thin ivory envelope — house-icon stroke language, sharp corners */}
+                    {/* Brief F6b §5 — minimal geometric paper plane (Telegram-style:
+                        triangular, pointing up-and-right), thin ivory stroke matching the
+                        house-icon language (1.6 weight, round joins). Replaces the envelope. */}
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                      <rect x="3" y="5.5" width="18" height="13" stroke="#E5E1DB" strokeWidth="1.6" strokeLinejoin="round" />
-                      <path d="M3.5 6.5 L12 13 L20.5 6.5" stroke="#E5E1DB" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M21.5 3 L2.5 9.8 L11 13 L14 21.5 L21.5 3 Z" stroke="#E5E1DB" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M11 13 L21.5 3" stroke="#E5E1DB" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   </button>
                 )}
               </div>
-              {/* FOLLOW — minimal text, just above the divider in the right zone. 75 Bold;
-                  FOLLOW = ink-100, FOLLOWING = ~55%. handleFollow toggles both states
-                  (unchanged logic; the fly-to-ⓘ still fires). */}
-              {user && !isOwnProfile && targetPrivyId && (
+              {/* FOLLOW — minimal text, just above the divider in the right zone. 75 Bold,
+                  ink-100. Brief F6b §3 — the control renders ONLY while NOT following; once
+                  the viewer follows, it disappears entirely (no FOLLOWING label, no layout
+                  hole — it's absolute). Unfollow lives in the bio sheet's UNFOLLOW affordance
+                  (ProfileDataSheet, wired via onUnfollow). The fly-to-BIO confirm still fires
+                  (handleFollow captures the rects before this unmounts). */}
+              {user && !isOwnProfile && targetPrivyId && !followingUser && (
                 <button
                   ref={followBtnRef}
                   onClick={handleFollow}
                   disabled={followLoading}
                   className="tap-target"
-                  style={{ position: 'absolute', right: 8, bottom: 13, zIndex: 6, background: 'transparent', border: 'none', cursor: followLoading ? 'default' : 'pointer', padding: '4px 2px', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 'var(--fs-11)', letterSpacing: 'var(--track-display)', color: 'var(--ink-100)', textTransform: 'uppercase', opacity: profileDataOpen ? 0 : (followingUser ? 0.55 : 1), pointerEvents: profileDataOpen ? 'none' : 'auto', transition: 'opacity 200ms ease', animation: justFollowed ? 'follow-pop 180ms ease-out' : 'none' }}
+                  style={{ position: 'absolute', right: 8, bottom: 13, zIndex: 6, background: 'transparent', border: 'none', cursor: followLoading ? 'default' : 'pointer', padding: '4px 2px', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 'var(--fs-11)', letterSpacing: 'var(--track-display)', color: 'var(--ink-100)', textTransform: 'uppercase', opacity: profileDataOpen ? 0 : 1, pointerEvents: profileDataOpen ? 'none' : 'auto', transition: 'opacity 200ms ease', animation: justFollowed ? 'follow-pop 180ms ease-out' : 'none' }}
                 >
-                  {followingUser ? 'FOLLOWING' : 'FOLLOW'}
+                  FOLLOW
                 </button>
               )}
             </>
@@ -441,13 +448,13 @@ export default function PublicProfilePage() {
               requestAnimationFrame(() => setGridScrollY(Math.max(0, el.scrollTop)));
             }}
           >
-            <div style={{ height: gridSpacer }} />
+            <div style={{ height: gridSpacerCss(gridSpacer) }} />
             {profile?.user_id
               ? <CollectedGrid userId={profile.user_id} isOwn={!!isOwnProfile} />
               : <div style={{ minHeight: '30vh' }} />}
           </div>
         ) : posts.length === 0 ? (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', flex: 1, minHeight: '50vh', paddingTop: gridSpacer }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', flex: 1, minHeight: '50vh', paddingTop: gridSpacerCss(gridSpacer) }}>
             <p style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase' }}>NO POSTS YET</p>
           </div>
         ) : (
@@ -460,7 +467,7 @@ export default function PublicProfilePage() {
               rafPendingRef.current = false;
             });
           }}>
-            <div style={{ height: gridSpacer, flexShrink: 0 }} />
+            <div style={{ height: gridSpacerCss(gridSpacer), flexShrink: 0 }} />
             {layoutId === 'collage' ? (
               // Collage → masonry mosaic: each post at its own layout_id AR.
               <div style={{ columnCount: 2, columnGap: 2 }}>
