@@ -1,8 +1,10 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useIsDesktop } from "@/lib/useIsDesktop";
+import TheatreMode from "@/components/TheatreMode";
+import { useRotateToTheatre } from "@/lib/useRotateToTheatre";
 import DesktopDeck from "@/components/desktop/DesktopDeck";
 import { usePrivy } from "@privy-io/react-auth";
 import {
@@ -224,6 +226,10 @@ export default function DeckDetailPage() {
   const [theatreToast, setTheatreToast] = useState(false);
   const [removeToast, setRemoveToast] = useState(false);
 
+  // Brief M5 §5 — rotate-to-theatre on the deck (6th consumer of the shared hook).
+  const [theatreActive, setTheatreActive] = useState(false);
+  const theatreIdx = useRef(0);
+
   // Post viewing
   const [modalPost, setModalPost] = useState<any>(null);
   const [lightboxItem, setLightboxItem] = useState<DeckItemWithMedia | null>(null);
@@ -334,10 +340,36 @@ export default function DeckDetailPage() {
     }
   };
 
+  // Brief M5 §5 — the deck's posts in DECK ORDER become the theatre queue. Prefer the
+  // full post object; a raw media_url item is synthesised to the minimal post shape
+  // TheatreMode reads (media_urls + layout_id). Empty-post items are dropped.
+  const theatrePosts = useMemo(() => {
+    const items = deck?.items ?? [];
+    return items
+      .map((it) => it.post
+        ? it.post
+        : (it.media_url ? { id: it.id, username: "", media_urls: [it.media_url], layout_id: deck?.grid_layout ?? "" } : null))
+      .filter(Boolean) as any[];
+  }, [deck]);
+
+  // Rotate a portrait phone → enter theatre on the deck (button below is the manual entry).
+  // Guarded: disabled on desktop, with no posts, or while a sheet/lightbox is up.
+  useRotateToTheatre({
+    enabled: !isDesktop && theatrePosts.length > 0 && !lightboxItem && !modalPost,
+    isOpen: theatreActive,
+    blocked: menuOpen || infoOpen || showEditDialog || showFramesSheet || showFramesProUpsell || showMembership,
+    onEnter: () => setTheatreActive(true),
+  });
+
   const handleTheatre = () => {
     setMenuOpen(false);
-    setTheatreToast(true);
-    setTimeout(() => setTheatreToast(false), 2000);
+    if (theatrePosts.length === 0) {
+      setTheatreToast(true);
+      setTimeout(() => setTheatreToast(false), 2000);
+      return;
+    }
+    theatreIdx.current = 0; // entry = first post in deck order
+    setTheatreActive(true);
   };
 
   const handleRemoveItem = async (itemId: string) => {
@@ -510,8 +542,10 @@ export default function DeckDetailPage() {
         style={{
           position: "relative", zIndex: 20,
           background: "#000000",
-          height: 56,
-          padding: 0,
+          // Brief M5 §4 — pad the top by --safe-top (F1) so the deck title + "+" clear the
+          // notch. minHeight keeps the 56px chrome height below the inset.
+          minHeight: 56,
+          padding: 'var(--safe-top) 0 0',
           display: "flex",
           alignItems: "flex-start",
           justifyContent: "space-between",
@@ -647,7 +681,7 @@ export default function DeckDetailPage() {
           onClick={e => e.stopPropagation()}
           style={{
             position: "fixed",
-            top: 56,
+            top: 'calc(56px + var(--safe-top))', // Brief M5 §4 — track the safe-area-padded header
             left: 0,
             right: 0,
             minHeight: 437,
@@ -750,7 +784,7 @@ export default function DeckDetailPage() {
 
       {theatreToast && (
         <div style={{ position: "fixed", top: 64, left: "50%", transform: "translateX(-50%)", zIndex: 200, background: "rgba(0,0,0,0.85)", padding: "8px 16px", pointerEvents: "none" }}>
-          <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "#E5E1DB", letterSpacing: "0.08em", textTransform: "uppercase" }}>Theatre Mode coming soon</span>
+          <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "#E5E1DB", letterSpacing: "0.08em", textTransform: "uppercase" }}>No frames to screen yet</span>
         </div>
       )}
 
@@ -869,7 +903,7 @@ export default function DeckDetailPage() {
           </div>
           <button
             onClick={() => setLightboxItem(null)}
-            style={{ position: "fixed", top: 16, left: 16, zIndex: 132, background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 6, padding: 0 }}
+            style={{ position: "fixed", top: 'calc(16px + var(--safe-top))', left: 16, zIndex: 132, background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 6, padding: 0 }}
           >
             <svg width="15.5" height="15.5" viewBox="0 0 13 13" fill="none">
               <path d="M8.5 1.5L3.5 6.5l5 5" stroke="#E5E1DB" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
@@ -1150,6 +1184,19 @@ export default function DeckDetailPage() {
           }
         }
       `}</style>
+
+      {/* Brief M5 §5 — Theatre Mode over the deck (rotation or the theatre icon). Queue =
+          deck order; exitOnPortrait returns to the deck (still mounted at its scroll pos).
+          Simplified = TheatreMode's normal minimal chrome, no rank indicator. */}
+      {theatreActive && theatrePosts.length > 0 && (
+        <TheatreMode
+          posts={theatrePosts}
+          startIndex={theatreIdx.current}
+          onClose={() => setTheatreActive(false)}
+          exitOnPortrait
+          onIndexChange={(i) => { theatreIdx.current = i; }}
+        />
+      )}
 
     </div>
   );

@@ -10,6 +10,8 @@ import { getUserByPrivyId, getProfile, getFollowerCount, getFollowingCount, getU
 import ProfileDataSheet from "@/components/ProfileDataSheet";
 import PressPop from "@/components/PressPop";
 import { profileTabFlow, gridSpacerCss } from "@/components/profile/profileTabFlow";
+import PageTitle from "@/components/PageTitle";
+import DeckThumbnail from "@/components/DeckThumbnail";
 import { getUserPosts } from '@/lib/postsService';
 import CreatePostFlow from "@/components/CreatePostFlow";
 import FollowListModal from "@/components/FollowListModal";
@@ -708,20 +710,22 @@ const userLayoutId = stableLayoutId;
           display: 'flex', flexDirection: 'column',
         }}
       >
-        {/* Header */}
-        <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px 16px 10px', flexShrink: 0 }}>
-          <div style={{ position: 'absolute', top: 8, left: '50%', transform: 'translateX(-50%)', width: 40, height: 3, backgroundColor: 'rgba(229,225,219,0.3)' }} />
-          <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-11)', color: '#E5E1DB', letterSpacing: '0.05em', textTransform: 'uppercase' }}>DECKS</span>
+        {/* Header — Brief M5 §2: the shared PageTitle SHEET variant ("Decks", 26px, top-left,
+            no logomark, clear space below). Drag handle + × close overlaid (sheet affordances). */}
+        <div style={{ position: 'relative', flexShrink: 0 }}>
+          <div style={{ position: 'absolute', top: 8, left: '50%', transform: 'translateX(-50%)', width: 40, height: 3, backgroundColor: 'rgba(229,225,219,0.3)', zIndex: 1 }} />
+          <PageTitle title="Decks" variant="sheet" paddingBottom={14} />
           <button
             onClick={() => { setShowDecks(false); setActiveTab('main'); setShowNewDeckForm(false); setNewDeckTitle(''); setNewDeckDesc(''); }}
-            style={{ position: 'absolute', right: 16, fontSize: 'var(--fs-18)', color: '#E5E1DB', background: 'none', border: 'none', cursor: 'pointer', lineHeight: 1, padding: 0 }}
+            style={{ position: 'absolute', top: 10, right: 16, fontSize: 'var(--fs-18)', color: '#E5E1DB', background: 'none', border: 'none', cursor: 'pointer', lineHeight: 1, padding: 0 }}
           >
             ×
           </button>
         </div>
 
-        {/* Deck list */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '0 16px' }}>
+        {/* Deck list — Brief M5 §6: contain overscroll so the sheet list can't rubber-band-
+            chain to the locked body. */}
+        <div style={{ flex: 1, overflowY: 'auto', overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch', padding: '0 16px' }}>
           {decksLoading ? (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '50%' }}>
               <FrameLoader />
@@ -734,19 +738,28 @@ const userLayoutId = stableLayoutId;
             userDecks.map(deck => (
               <div
                 key={deck.id}
-                onClick={() => { setShowDecks(false); router.push(`/profile/${userProfile.username}/decks/${deck.id}`); }}
+                /* Brief M5 §3 — navigate DIRECTLY; do NOT setShowDecks(false) first (that
+                   uncovered the profile for a frame → the flash). The sheet stays up over
+                   the profile until the route swaps to the deck's own loader. Back remounts
+                   the profile fresh (showDecks defaults false → sheet closed). */
+                onClick={() => router.push(`/profile/${userProfile.username}/decks/${deck.id}`)}
                 style={{ marginBottom: 12, cursor: 'pointer' }}
               >
-                {/* Cover — the BAKED collage (thumbnail_url: one ~600px WebP) instead
-                    of compositing N master-size post images live (the old slowness).
-                    Fallback: the first post's display rendition. */}
-                <div style={{ width: '100%', aspectRatio: getDeckAspect(deck.grid_layout), overflow: 'hidden', background: '#1a1a1a' }}>
-                  {deck.thumbnail_url ? (
+                {/* Cover — Brief M5 §1: the BAKED collage WebP (thumbnail_url, fast path) if
+                    present; else a live COLLAGE of the deck's first 3–4 post thumbnails
+                    (feedImage 600-class, video posters included via getUserDecks); else the
+                    quiet placeholder tile (DeckThumbnail n===0). */}
+                {deck.thumbnail_url ? (
+                  <div style={{ width: '100%', aspectRatio: getDeckAspect(deck.grid_layout), overflow: 'hidden', background: '#1a1a1a' }}>
                     <img src={deck.thumbnail_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                  ) : deck.thumbnail_urls.length > 0 ? (
-                    <img src={feedImage(deck.thumbnail_urls[0], 600)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                  ) : null}
-                </div>
+                  </div>
+                ) : (
+                  <DeckThumbnail
+                    imageUrls={deck.thumbnail_urls.slice(0, 4).map((u) => feedImage(u, 600))}
+                    title={deck.title}
+                    aspectRatio={getDeckAspect(deck.grid_layout)}
+                  />
+                )}
                 {/* Title + count */}
                 <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-10)', color: '#E5E1DB', margin: '4px 0 0', textTransform: 'uppercase' }}>{deck.title}</p>
                 <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: 'var(--fs-9)', color: 'rgba(229,225,219,0.5)', margin: '2px 0 0' }}>{deck.item_count} frames</p>

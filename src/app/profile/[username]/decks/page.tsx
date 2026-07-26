@@ -9,6 +9,7 @@ import {
 } from "@/lib/userService";
 import { getScopeLimitType } from "@/lib/limits";
 import { feedImage } from "@/lib/mediaUrl";
+import DeckThumbnail from "@/components/DeckThumbnail";
 import { useUpsell } from "@/components/UpsellProvider";
 import FrameLoader from "@/components/FrameLoader";
 
@@ -98,17 +99,17 @@ export default function DecksPage() {
   return (
     <div className="bg-black w-full app-shell screen-min mx-auto pb-[80px]">
 
-      {/* Red dot */}
+      {/* Red dot — Brief M5 §4: cleared of the notch via --safe-top (F1 page-chrome rule). */}
       <div
         className="absolute cursor-pointer"
         onClick={() => router.push("/")}
-        style={{ left: 0, top: 0, width: 28, height: 28, padding: "3px 0 0 2px", zIndex: 10 }}
+        style={{ left: 0, top: 'var(--safe-top)', width: 28, height: 28, padding: "3px 0 0 2px", zIndex: 10 }}
       >
         <div className="w-[11px] h-[11px] bg-[#E5E1DB] rounded-full" />
       </div>
 
-      {/* Header */}
-      <div style={{ position: "relative", display: "flex", alignItems: "center", padding: "12px 4px 10px" }}>
+      {/* Header — Brief M5 §4: pad the top by --safe-top so the back/title/+ clear the notch. */}
+      <div style={{ position: "relative", display: "flex", alignItems: "center", padding: "calc(12px + var(--safe-top)) 4px 10px" }}>
         <button
           onClick={() => router.back()}
           style={{ background: "transparent", border: "none", cursor: "pointer", padding: 0 }}
@@ -147,26 +148,24 @@ export default function DecksPage() {
               onClick={() => router.push(`/profile/${username}/decks/${deck.id}`)}
               style={{ cursor: "pointer", marginBottom: 1 }}
             >
-              {/* Cover image */}
-              <div style={{ width: "100%", aspectRatio: "2.4 / 1", background: "#111", overflow: "hidden" }}>
-                {(deck.thumbnail_url || deck.cover_image_url) ? (
+              {/* Cover — Brief M5 §1: baked collage WebP / cover as a single rendition
+                  (fast path); else a live COLLAGE of the deck's first 3–4 post thumbnails
+                  (feedImage 600-class; video posters included). DeckThumbnail renders its
+                  own quiet placeholder tile when there are no images (empty deck). */}
+              {(deck.thumbnail_url || deck.cover_image_url) ? (
+                <div style={{ width: "100%", aspectRatio: "2.4 / 1", background: "#111", overflow: "hidden" }}>
                   <img
-                    /* Prefer the baked collage WebP (~600px); else the cover as a
-                       display rendition — never the master-size original. */
                     src={deck.thumbnail_url ?? feedImage(deck.cover_image_url, 600)}
                     alt={deck.title}
                     style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
                   />
-                ) : (
-                  <div style={{ width: "100%", height: "100%", background: "#111", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <svg width="27.5" height="19.5" viewBox="0 0 24 16" fill="none">
-                      <rect width="24" height="3.5" fill="rgba(229,225,219,0.15)" />
-                      <rect y="6.25" width="24" height="3.5" fill="rgba(229,225,219,0.15)" />
-                      <rect y="12.5" width="24" height="3.5" fill="rgba(229,225,219,0.15)" />
-                    </svg>
-                  </div>
-                )}
-              </div>
+                </div>
+              ) : (
+                <DeckThumbnail
+                  imageUrls={((deck as { thumbnail_urls?: string[] }).thumbnail_urls ?? []).slice(0, 4).map((u) => feedImage(u, 600))}
+                  title={deck.title}
+                />
+              )}
               {/* Meta */}
               <div style={{ padding: "6px 4px 10px" }}>
                 <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: "#E5E1DB", margin: 0, letterSpacing: "-0.18px" }}>

@@ -17,20 +17,28 @@ export default function PageTitle({
   onTitleTap,
   paddingBottom = 24,
   children,
+  variant = 'page',
 }: {
   title: string;
   onTitleTap?: () => void;
   paddingBottom?: number;
   children?: React.ReactNode;
+  /** Brief M5 §2 — 'sheet' = the bottom-sheet treatment: 26px (6px smaller than the 32px
+   *  page standard), NO return-home logomark (a sheet closes, it doesn't navigate home),
+   *  and NO --safe-top pad (a bottom-anchored sheet header sits mid-screen, clear of the
+   *  notch — safe-top there would inject dead space). */
+  variant?: 'page' | 'sheet';
 }) {
   const [logoPressed, setLogoPressed] = useState(false);
+  const isSheet = variant === 'sheet';
+  const topPad = isSheet ? '10px' : 'calc(10px + var(--safe-top))';
   return (
-    <div style={{ position: 'relative', padding: `calc(10px + var(--safe-top)) 10px ${paddingBottom}px` }}>
-      <h1 onClick={onTitleTap} style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 32, lineHeight: 1, letterSpacing: 'var(--track-display)', color: 'var(--ink-100)', margin: 0 }}>
+    <div style={{ position: 'relative', padding: `${topPad} 10px ${paddingBottom}px` }}>
+      <h1 onClick={onTitleTap} style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: isSheet ? 26 : 32, lineHeight: 1, letterSpacing: 'var(--track-display)', color: 'var(--ink-100)', margin: 0 }}>
         {title}
       </h1>
       {children}
-      <div style={{ position: 'absolute', top: 'calc(4px + var(--safe-top))', right: 6, display: 'flex', alignItems: 'center' }}>
+      {!isSheet && <div style={{ position: 'absolute', top: 'calc(4px + var(--safe-top))', right: 6, display: 'flex', alignItems: 'center' }}>
         <Link
           href="/"
           aria-label="Home"
@@ -41,7 +49,7 @@ export default function PageTitle({
         >
           <img src="/design-updates-071526/scope-logomark-offwhite.png" alt="Scope" style={{ width: 39, height: 'auto', objectFit: 'contain', display: 'block' }} />
         </Link>
-      </div>
+      </div>}
     </div>
   );
 }

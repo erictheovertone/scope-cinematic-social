@@ -5,15 +5,18 @@ const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fon
 interface Props {
   imageUrls: string[];
   title?: string;
+  /** Brief M5 §1 — the cover AR follows the deck's grid layout; defaults to the 2.4:1
+   *  ultra-wide. Callers pass the deck's own aspect (e.g. getDeckAspect(grid_layout)). */
+  aspectRatio?: string;
 }
 
-export default function DeckThumbnail({ imageUrls, title }: Props) {
+export default function DeckThumbnail({ imageUrls, title, aspectRatio = '2.4 / 1' }: Props) {
   const imgs = imageUrls.filter(Boolean);
   const n = imgs.length;
 
   const wrap: React.CSSProperties = {
     width: '100%',
-    aspectRatio: '2.4 / 1',
+    aspectRatio,
     overflow: 'hidden',
     background: '#111',
     position: 'relative',

@@ -658,10 +658,14 @@ export const getUserDecks = async (privyUserId: string): Promise<(Deck & { item_
   )]
   const postMediaMap = new Map<string, string>()
   if (postIds.length > 0) {
+    // Brief M5 §1 — also pull the poster fields so VIDEO posts (Stream: media_urls=[])
+    // contribute a thumbnail (their graded poster) instead of nothing → video-only decks
+    // render a collage. feedImage() handles both image renditions and Stream poster URLs.
     const { data: posts } = await supabase
-      .from('posts').select('id, media_urls').in('id', postIds)
+      .from('posts').select('id, media_urls, stream_poster_url, poster_url, thumbnail_url').in('id', postIds)
     for (const p of posts || []) {
-      if (p.media_urls?.[0]) postMediaMap.set(p.id, p.media_urls[0])
+      const thumb = p.media_urls?.[0] ?? p.stream_poster_url ?? p.poster_url ?? p.thumbnail_url
+      if (thumb) postMediaMap.set(p.id, thumb)
     }
   }
 
