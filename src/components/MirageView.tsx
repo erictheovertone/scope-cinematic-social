@@ -118,8 +118,45 @@ function MirageLightbox({
         {/* The focused item (media + metadata) — stopPropagation so taps ON it don't
             close. The media's own tap → open PostModal (preserved). */}
         <div onClick={(e) => e.stopPropagation()}>
-          {/* Tap image → open PostModal */}
-          {post.layout_id === 'legacy' ? (
+          {/* Tap media → open PostModal. Brief M10b — the focus view was IMAGE-ONLY:
+              Stream videos (media_urls=[]) rendered a broken <img> → "absent from the
+              lightbox". Video posts now get a GradedVideo branch. RULE: focus = the FULL
+              graded video (forcePlay), NOT the collage snippet window (the window is a
+              grid-scale preview gesture only), unmuted-capable via the sound toggle.
+              Poster fallback: stream_poster_url ?? poster_url ?? thumbnail_url (P1b sizing). */}
+          {post.media_type === 'video' ? (
+            post.layout_id === 'legacy' ? (
+              <PillarboxFrame onClick={onOpenModal} cursor="pointer">
+                <GradedVideo
+                  url={post.media_urls?.[0] ?? ""}
+                  posterUrl={(post as { stream_poster_url?: string | null }).stream_poster_url ?? post.poster_url ?? post.thumbnail_url}
+                  posterWidth={1200}
+                  clipUrl={post.autoplay_clip_url}
+                  editParams={post.edit_params}
+                  forcePlay
+                  showSoundToggle
+                  {...streamGradedProps(post as unknown as Record<string, unknown>)}
+                  cropX={post.crop_x ?? 0} cropY={post.crop_y ?? 0} cropWidth={post.crop_width ?? 1} cropHeight={post.crop_height ?? 1}
+                  style={{ width: '100%', height: '100%' }}
+                  onClick={onOpenModal}
+                />
+              </PillarboxFrame>
+            ) : (
+              <GradedVideo
+                url={post.media_urls?.[0] ?? ""}
+                posterUrl={(post as { stream_poster_url?: string | null }).stream_poster_url ?? post.poster_url ?? post.thumbnail_url}
+                posterWidth={1200}
+                clipUrl={post.autoplay_clip_url}
+                editParams={post.edit_params}
+                forcePlay
+                showSoundToggle
+                {...streamGradedProps(post as unknown as Record<string, unknown>)}
+                cropX={post.crop_x ?? 0} cropY={post.crop_y ?? 0} cropWidth={post.crop_width ?? 1} cropHeight={post.crop_height ?? 1}
+                style={{ width: '100%', aspectRatio: getAspectRatio(post.layout_id ?? '') }}
+                onClick={onOpenModal}
+              />
+            )
+          ) : post.layout_id === 'legacy' ? (
             <PillarboxFrame onClick={onOpenModal} cursor="pointer">
               <img src={post.media_urls?.[0]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
             </PillarboxFrame>
@@ -195,6 +232,18 @@ export default function MirageView({ onClose }: { onClose: () => void }) {
 
   useEffect(() => {
     console.log("[MirageView] Grid rendered with", posts.length, "posts");
+    // Brief M10b §1b — log a sample video post AS IT REACHES the cells, so a device walk
+    // can confirm the Stream fields survive the query→cell hand-off (video_status must be
+    // 'ready' for autoplay; 'processing' → poster + label is correct, not a bug). Dev-only.
+    if (process.env.NODE_ENV !== "production") {
+      const v = posts.find((p) => p.media_type === "video");
+      if (v) console.log("[MirageView] sample video post:", {
+        id: v.id, media_type: v.media_type, video_status: v.video_status,
+        stream_uid: v.stream_uid, stream_playback_url: v.stream_playback_url,
+        stream_poster_url: v.stream_poster_url, media_urls: v.media_urls,
+        autoplay: v.autoplay, snippet_start: v.snippet_start, snippet_length: v.snippet_length,
+      });
+    }
   }, [posts]);
 
   useEffect(() => {
