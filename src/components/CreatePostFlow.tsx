@@ -35,6 +35,7 @@ import {
   neutralGeometry, bakeImageGeometry, type EditGeometry,
 } from '@/lib/editGeometry';
 import FinishingPreview from '@/components/finishing/FinishingPreview';
+import SnippetSelector from '@/components/finishing/SnippetSelector';
 import MusicPicker, { type LibraryTrack } from '@/components/MusicPicker';
 import ClipSelector from '@/components/ClipSelector';
 
@@ -356,6 +357,10 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
   const thumbnailInputRef = useRef<HTMLInputElement>(null);
   const captionInputRef = useRef<HTMLTextAreaElement>(null);
   const [videoAutoplay, setVideoAutoplay] = useState(true);
+  // Brief M10 §2 — the Mirage autoplay snippet window. null → untouched → Mirage plays
+  // from 0 (the default). Set only when the creator drags the SnippetSelector. Persisted
+  // as plain metadata (snippet_start / snippet_length) — NO baked clip.
+  const [snippetWindow, setSnippetWindow] = useState<{ start: number; length: number } | null>(null);
   const [autoThumbnail, setAutoThumbnail] = useState<string | null>(null);
 
   // Resolve real Pro status + grid gating for FINISHING once the user is known.
@@ -864,6 +869,10 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
           // for video (V3 wires stream_playback_url into playback).
           streamUid,
           videoStatus: 'processing' as const,
+          // Brief M10 §2 — Mirage snippet window (metadata, seconds). null when the creator
+          // didn't set one → Mirage plays from 0. NO clip is baked (the window is data).
+          snippetStart: snippetWindow ? snippetWindow.start : null,
+          snippetLength: snippetWindow ? snippetWindow.length : null,
         } : {}),
       };
       console.log('[handlePost] createPost payload:', postPayload);
@@ -951,6 +960,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
     setMintStatus('idle');
     setCustomThumbnail(null);
     setVideoAutoplay(true);
+    setSnippetWindow(null);
     setAutoThumbnail(null);
     setMusicTrackId(null);
     setMusicTrack(null);
@@ -1412,6 +1422,25 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
                 <div style={{ position: 'absolute', top: 2, left: videoAutoplay ? 18 : 2, width: 16, height: 16, borderRadius: 0, background: '#E5E1DB', transition: 'left 0.2s ease' }} />
               </button>
             </div>
+            {/* Brief M10 §2 — MIRAGE PREVIEW WINDOW (optional). Reinstated selector: scrub a
+                start point + fixed 4s window against the local video; graded audition thumb.
+                Untouched → null → Mirage plays from 0. Metadata only — no clip is baked.
+                Shown only when autoplay is on (a window with no autoplay has nowhere to play). */}
+            {videoAutoplay && selectedMedia[0] && (
+              <div style={{ marginTop: 16 }}>
+                <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-9)', color: 'rgba(229,225,219,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 2px' }}>
+                  MIRAGE PREVIEW
+                </p>
+                <SnippetSelector
+                  videoUrl={selectedMedia[0].url}
+                  heroFrameTime={editParams.heroFrameTime ?? 0}
+                  params={editParams}
+                  geometry={editGeometry ?? neutralGeometry(chipForLayout(chosenLayoutId || userLayoutId).id)}
+                  layoutId={chosenLayoutId || userLayoutId}
+                  onChange={setSnippetWindow}
+                />
+              </div>
+            )}
             </div>
           )}
           {/* MUSIC (M2) — attach an approved library track. Applies to image + video;

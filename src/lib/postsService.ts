@@ -74,6 +74,10 @@ export const createPost = async (postData: {
   posterUrl?: string | null;
   autoplayClipUrl?: string | null;
   autoplay?: boolean;
+  // Brief M10 — Mirage snippet window (seconds). Optional creative control; null → Mirage
+  // plays from 0. Metadata only (NO baked clip). New columns: snippet_start / snippet_length.
+  snippetStart?: number | null;
+  snippetLength?: number | null;
   editGeometry?: unknown;
   editParams?: unknown;
   cropX?: number;
@@ -108,6 +112,10 @@ export const createPost = async (postData: {
         // Baked 3–5s graded MUTED clip — the autoplay material (looped as a plain
         // <video> on grid/feed/scroll; no live pipeline).
         ...(postData.autoplayClipUrl !== undefined ? { autoplay_clip_url: postData.autoplayClipUrl } : {}),
+        // Brief M10 — Mirage snippet window (metadata, seconds). Additive; null/absent for
+        // legacy posts and posts without a chosen window → Mirage plays from 0.
+        ...(postData.snippetStart !== undefined ? { snippet_start: postData.snippetStart } : {}),
+        ...(postData.snippetLength !== undefined ? { snippet_length: postData.snippetLength } : {}),
         autoplay: postData.autoplay !== false,
         // Additive — null/absent for legacy posts, never replaces layout_id.
         ...(postData.editGeometry !== undefined ? { edit_geometry: postData.editGeometry } : {}),

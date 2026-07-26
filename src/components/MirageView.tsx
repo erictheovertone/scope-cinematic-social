@@ -15,6 +15,12 @@ import { getAspectRatio } from "@/lib/aspectRatio";
 
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
 
+// Brief M10 §3 — the standard Mirage preview-window length (seconds). A video cell loops
+// its saved [snippet_start, +snippet_length]; a cell with NO saved window loops this length
+// from 0 (visual-rhythm consistency across the collage). Keep in sync with SnippetSelector's
+// CLIP_LEN (4s). ONLY Mirage windows playback — feed / profile / theatre play the full video.
+const SNIPPET_WINDOW_LEN = 4;
+
 // ── Mirage Lightbox ──────────────────────────────────────────────────────────
 
 function MirageLightbox({
@@ -288,8 +294,10 @@ export default function MirageView({ onClose }: { onClose: () => void }) {
           </button>
         </div>
 
-        {/* 3-column masonry grid (CSS multi-column — preserves natural aspect ratios) */}
-        <div style={{ columnCount: 3, columnGap: 1, padding: 0 }}>
+        {/* Masonry grid (CSS multi-column — preserves natural aspect ratios). Brief M10 §1 —
+            columns 3→2: doubles the cell footprint (≈124px→≈187px wide @375; ≈2.25× area)
+            so thumbnails read legibly while the 2-wide masonry keeps the collage character. */}
+        <div style={{ columnCount: 2, columnGap: 1, padding: 0 }}>
           {posts.map((post, index) =>
             (post.media_urls?.[0] || (post as { stream_uid?: string | null }).stream_uid) ? (
               <div
@@ -305,21 +313,25 @@ export default function MirageView({ onClose }: { onClose: () => void }) {
                 onClick={() => handleItemTap(post)}
               >
                 {post.media_type === 'video' ? (
-                  // Video → GradedVideo (gridMode): autoplay tiles loop the baked
-                  // snippet (plain muted <video>, graded — no pipeline); the density
-                  // guard attempts all visible, overflow rests as graded posters with
-                  // most-visible priority; non-autoplay / clipless → poster. Tap
-                  // bubbles to the wrapper (navigation unchanged).
+                  // Video → GradedVideo (gridMode): autoplay tiles loop the MIRAGE SNIPPET
+                  // WINDOW (Brief M10 §3) — the post's saved [snippet_start, +snippet_length],
+                  // else the standard length from 0. gridMode + the ≤3 attach budget cap
+                  // concurrent players; overflow in-view cells rest as graded posters and
+                  // recycle as cells scroll. posterWidth 600 (Brief M10 §1) — the doubled
+                  // cell (~187px × DPR ≤ 561) lands in the 600-class rendition. Tap bubbles
+                  // to the wrapper (navigation unchanged).
                   post.layout_id === 'legacy' ? (
                     <PillarboxFrame>
                       <GradedVideo
                         url={post.media_urls?.[0] ?? ""}
                         posterUrl={(post as { stream_poster_url?: string | null }).stream_poster_url ?? post.poster_url ?? post.thumbnail_url}
-                        posterWidth={750}
+                        posterWidth={600}
                         clipUrl={post.autoplay_clip_url}
                         editParams={post.edit_params}
                         autoplayFlag={post.autoplay !== false}
                         gridMode
+                        windowStart={post.snippet_start ?? 0}
+                        windowLength={post.snippet_length ?? SNIPPET_WINDOW_LEN}
                         {...streamGradedProps(post as unknown as Record<string, unknown>)}
                         cropX={post.crop_x ?? 0} cropY={post.crop_y ?? 0} cropWidth={post.crop_width ?? 1} cropHeight={post.crop_height ?? 1}
                         style={{ width: '100%', height: '100%' }}
@@ -329,11 +341,13 @@ export default function MirageView({ onClose }: { onClose: () => void }) {
                     <GradedVideo
                       url={post.media_urls?.[0] ?? ""}
                       posterUrl={(post as { stream_poster_url?: string | null }).stream_poster_url ?? post.poster_url ?? post.thumbnail_url}
-                      posterWidth={750}
+                      posterWidth={600}
                       clipUrl={post.autoplay_clip_url}
                       editParams={post.edit_params}
                       autoplayFlag={post.autoplay !== false}
                       gridMode
+                      windowStart={post.snippet_start ?? 0}
+                      windowLength={post.snippet_length ?? SNIPPET_WINDOW_LEN}
                       {...streamGradedProps(post as unknown as Record<string, unknown>)}
                       cropX={post.crop_x ?? 0} cropY={post.crop_y ?? 0} cropWidth={post.crop_width ?? 1} cropHeight={post.crop_height ?? 1}
                       style={{ width: '100%', aspectRatio: getAspectRatio(post.layout_id ?? '') }}

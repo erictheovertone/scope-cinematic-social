@@ -91,12 +91,20 @@ interface Props {
    *  (Eric's rule "visible → plays", no top bias). Default 0 = any-visibility (grid/profile,
    *  unchanged). The feed passes 0.5. */
   minPlayRatio?: number;
+  /** Brief M10 §3 — MIRAGE ONLY. Loop just this [windowStart, windowStart+windowLength]
+   *  slice (seconds), muted — the Mirage preview gesture. Mirage passes windowLength ALWAYS
+   *  (the post's saved snippet, else the standard length from 0). Every OTHER surface
+   *  (feed / profile-scroll / theatre / SR) passes NOTHING → full-video playback, UNCHANGED.
+   *  This is a preview window, NOT a playback cap — it lives only in Mirage. */
+  windowStart?: number | null;
+  windowLength?: number | null;
 }
 
 export default function GradedVideo({
   url, posterUrl, posterWidth, clipUrl, editParams, cropX = 0, cropY = 0, cropWidth = 1, cropHeight = 1,
   autoplayFlag = false, gridMode = false, forcePlay = false, fullPlayback = false, style, onClick, showSoundToggle = false,
   processing = false, hlsUrl = null, priority = false, minPlayRatio = 0,
+  windowStart = null, windowLength = null,
 }: Props) {
   const isHls = !!hlsUrl; // Brief V3 — the dual-path branch: Stream HLS vs legacy source.
   const id = useId();
@@ -134,6 +142,15 @@ export default function GradedVideo({
     return rest as unknown as EditParams;
   }, [editParams]);
   const looked = !!params && hasLookEdits(params);
+
+  // Brief M10 §3 — the active MIRAGE loop window. A ref (not effect deps) so a window value
+  // never re-runs the ATTACH effect — windows are stable per post, and the media event
+  // handlers read the latest here. Null → no window → full playback (every non-Mirage
+  // surface passes nothing). windowLength ≤ 0 is treated as no window.
+  const windowRef = useRef<{ start: number; end: number } | null>(null);
+  windowRef.current = windowLength != null && windowLength > 0
+    ? { start: Math.max(0, windowStart ?? 0), end: Math.max(0, windowStart ?? 0) + windowLength }
+    : null;
 
   // Autoplay plays the pre-baked GRADED CLIP (plain <video>, already graded — no
   // pipeline). The live pipeline runs ONLY for full playback (forcePlay = lightbox/
@@ -267,10 +284,20 @@ export default function GradedVideo({
     // iOS → the video stops at 'ended' → frozen mid-view (the ~75% loop freeze). Seek 0 +
     // play() on 'ended'. The budget slot is NOT touched (it's keyed on visibility/NEAR, not
     // playback), so an ended-then-looped card keeps its slot and never dies in view.
-    const onEnded = () => { if (cancelled) return; try { v.currentTime = 0; const p = v.play(); if (p) p.catch(() => {}); } catch { /* not ready */ } };
+    // Brief M10 §3 — loop back to the WINDOW start (Mirage), else to 0 (every full-video
+    // surface, unchanged). w is null for all non-Mirage consumers → identical to before.
+    const onEnded = () => { if (cancelled) return; const w = windowRef.current; try { v.currentTime = w ? w.start : 0; const p = v.play(); if (p) p.catch(() => {}); } catch { /* not ready */ } };
+    // Brief M10 §3 — MIRAGE WINDOW LOOP. Seek into the window once metadata is ready, and
+    // snap back to start whenever playback crosses the window end. timeupdate fires ~4×/s,
+    // so the loop-back lands within ~250ms of the boundary — imperceptible for a muted
+    // preview slice. No-op when w is null (all full-video surfaces).
+    const onLoadedMeta = () => { const w = windowRef.current; if (w && (v.currentTime < w.start || v.currentTime >= w.end)) { try { v.currentTime = w.start; } catch { /* not seekable yet */ } } };
+    const onTimeUpdate = () => { const w = windowRef.current; if (!w) return; if (v.currentTime >= w.end || v.currentTime < w.start - 0.25) { try { v.currentTime = w.start; } catch { /* ignore */ } } };
     v.addEventListener("playing", onPlaying);
     v.addEventListener("pause", onPause);
     v.addEventListener("ended", onEnded);
+    v.addEventListener("loadedmetadata", onLoadedMeta);
+    v.addEventListener("timeupdate", onTimeUpdate);
     const nativeHls = !!v.canPlayType("application/vnd.apple.mpegurl");
     if (isHls && !nativeHls) {
       import("hls.js").then(({ default: Hls }) => {
@@ -304,6 +331,8 @@ export default function GradedVideo({
       v.removeEventListener("playing", onPlaying);
       v.removeEventListener("pause", onPause);
       v.removeEventListener("ended", onEnded);
+      v.removeEventListener("loadedmetadata", onLoadedMeta);
+      v.removeEventListener("timeupdate", onTimeUpdate);
       // hls.destroy() detaches the MediaSource. The <video> itself UNMOUNTS (shouldAttach
       // gate) → a FRESH element mounts on re-entry, so we never re-use a dead MediaSource
       // and never force-clear the native src (which would fire onError → re-latch errored).
