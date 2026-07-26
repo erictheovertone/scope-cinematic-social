@@ -22,7 +22,12 @@ const budgetLog = (op: string) => { if (process.env.NODE_ENV !== "production") c
 
 /** Try to take an attach slot. Returns true if granted. */
 export function acquireAttach(): boolean {
-  if (attached >= MAX_ATTACHED) return false;
+  if (attached >= MAX_ATTACHED) {
+    // Brief M10c — log DENIALS (not just grants): a starved surface (e.g. Mirage cells
+    // blocked by a still-mounted feed holding all slots) is invisible without this.
+    budgetLog("DENIED (full)");
+    return false;
+  }
   attached += 1;
   budgetLog("acquire");
   return true;

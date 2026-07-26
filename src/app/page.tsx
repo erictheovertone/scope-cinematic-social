@@ -408,6 +408,15 @@ export default function Home() {
         // column stays intact; 2px side padding preserved.
         style={{
           position: 'fixed',
+          // Brief M10c — HARD-HIDE (display:none, not opacity:0) the feed while Mirage is
+          // open. The feed's PostItem cells are gridMode and hold the GLOBAL attach budget
+          // (MAX_ATTACHED=3, a module singleton shared with Mirage). Held at opacity:0 they
+          // STILL intersect the viewport → keep all 3 slots → Mirage's gridMode cells get
+          // zero and never attach (the snippets-not-playing bug; theatre escaped it because
+          // forcePlay is budget-exempt). display:none drops their layout boxes → IO fires
+          // not-intersecting → they release the slots → Mirage acquires and plays. Restored
+          // on exit (mirageActive=false) before the feed-item-in animation runs.
+          display: mirageActive ? 'none' : undefined,
           // Edge-to-edge (IG pattern): content extends to the true top (under the
           // status bar) — was top:30, which left an ugly black bar. The floating frame
           // bracket (portaled, fixed, inset-aware) stays clickable above this; the first

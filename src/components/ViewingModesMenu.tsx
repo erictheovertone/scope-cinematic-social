@@ -101,12 +101,11 @@ export default function ViewingModesMenu({ onClose, onSelect }: Props) {
           >
             <span style={{ flex: '1 1 auto', minWidth: 0, display: 'flex', flexDirection: 'column' }}>
               <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 25, lineHeight: 0.82, letterSpacing: 'var(--track-display)', color: 'var(--ink-100)', whiteSpace: 'pre-line' }}>{card.name}</span>
-              {/* Brief M10a §4 — description at Eric's literal 5px (SANITY-FLAGGED: this
-                  is likely illegibly small; the prior value was 15px, not the 10px the
-                  brief assumed — the fa59661 "+5px" bump — so this is −10px from reality).
-                  marginTop 8→5 re-balances the title/description group for the smaller line;
-                  the group stays vertically centered via the card's alignItems:center. */}
-              <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 5, lineHeight: 1.25, color: 'rgba(229,225,219,0.5)', marginTop: 5 }}>{card.desc}</span>
+              {/* Brief M10c §2 — description +2.5px from M10a's 5px → 7.5px. (M10a had
+                  dropped it to a literal 5px, flagged illegible; this restores legibility.)
+                  The title/description group stays vertically centered via the card's
+                  alignItems:center (S1a), so the larger line re-balances automatically. */}
+              <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 7.5, lineHeight: 1.25, color: 'rgba(229,225,219,0.5)', marginTop: 5 }}>{card.desc}</span>
             </span>
             {/* Brief S1a — preview scales WITH the card: height = 53% of the card height
                 (preserves the original 59/110 ratio), aspect locked 140:59, capped at 82px

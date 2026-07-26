@@ -291,7 +291,7 @@ export default function GradedVideo({
     // snap back to start whenever playback crosses the window end. timeupdate fires ~4×/s,
     // so the loop-back lands within ~250ms of the boundary — imperceptible for a muted
     // preview slice. No-op when w is null (all full-video surfaces).
-    const onLoadedMeta = () => { const w = windowRef.current; if (w && (v.currentTime < w.start || v.currentTime >= w.end)) { try { v.currentTime = w.start; } catch { /* not seekable yet */ } } };
+    const onLoadedMeta = () => { const w = windowRef.current; if (w && (v.currentTime < w.start || v.currentTime >= w.end)) { dlog(`window seek→${w.start} (readyState ${v.readyState})`); try { v.currentTime = w.start; } catch { /* not seekable yet */ } } };
     const onTimeUpdate = () => { const w = windowRef.current; if (!w) return; if (v.currentTime >= w.end || v.currentTime < w.start - 0.25) { try { v.currentTime = w.start; } catch { /* ignore */ } } };
     v.addEventListener("playing", onPlaying);
     v.addEventListener("pause", onPause);
