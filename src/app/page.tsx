@@ -495,16 +495,10 @@ export default function Home() {
             const i = posts.findIndex((p) => p.id === (lightboxPost as { id?: string }).id);
             return { index: Math.max(0, i), total: posts.length, onStep: (dir: 1 | -1) => { const next = posts[i + dir]; if (next) setLightboxPost(next); } };
           })()}
-          onTheaterMode={() => {
-            // Eye-tap entry: enter theatre AT this post; exit returns to the FEED (the
-            // lightbox closes). Distinct from the M7 rotate entry (which keeps the lightbox
-            // and rebinds it on exit) — so clear the rotation flag before opening.
-            enteredViaRotation.current = false;
-            const i = posts.findIndex((p) => p.id === (lightboxPost as { id?: string }).id);
-            setTheatreStart(Math.max(0, i));
-            setLightboxPost(null);
-            setTheatreActive(true);
-          }}
+          /* Brief M7a §2 — NO onTheaterMode on the feed lightbox: the eye tap-trigger
+             (which sat next to the × in the back bar) was the "back button triggers
+             theatre" mis-hit under the broken landscape reflow. Theatre entry here is
+             rotation-ONLY (§1). BACK/× do exactly one thing: close. */
         />
       )}
 

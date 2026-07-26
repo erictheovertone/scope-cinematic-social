@@ -39,18 +39,31 @@ export function useRotateToTheatre({
 
   useEffect(() => {
     if (!enabled) return;
+    // Brief M7a §1 — read orientation from the layout engine's media feature, NOT from
+    // innerWidth/innerHeight sampled inside the event handler. That sample is stale at
+    // event time on iOS, and a full-screen fixed-portal consumer (the feed lightbox /
+    // PostModal) makes the race reliably LOSE — so rotation was silently missed and the
+    // modal just reflowed to a landscape lightbox. `matchMedia('(orientation: landscape)')`
+    // is evaluated by layout and stays correct under the pinned overlay, so every consumer
+    // (portaled or not) now enters theatre on the actual orientation flip. Dropping the
+    // `resize` proxy in favour of the mq `change` also removes spurious non-rotation fires.
+    const landscapeMq = window.matchMedia('(orientation: landscape)');
     const onOrient = () => {
-      const landscape = window.innerWidth > window.innerHeight;
-      if (!landscape) { armed.current = true; return; } // re-arm in portrait
+      if (!landscapeMq.matches) { armed.current = true; return; } // re-arm in portrait
       if (!armed.current || isOpen) return;
       if (blocked || document.documentElement.dataset.suiteOpen) return; // sheet/takeover up
       armed.current = false; // no re-trigger (esp. exiting theatre while still landscape)
       enteredViaRotation.current = true; // this session exits when the device returns to portrait
       onEnterRef.current();
     };
-    window.addEventListener('resize', onOrient);
+    landscapeMq.addEventListener('change', onOrient);
+    // Belt-and-braces for engines that fire orientationchange but not mq change; both
+    // read landscapeMq.matches, so neither can act on stale dimensions.
     window.addEventListener('orientationchange', onOrient);
-    return () => { window.removeEventListener('resize', onOrient); window.removeEventListener('orientationchange', onOrient); };
+    return () => {
+      landscapeMq.removeEventListener('change', onOrient);
+      window.removeEventListener('orientationchange', onOrient);
+    };
   }, [enabled, isOpen, blocked]);
 
   return { enteredViaRotation };
