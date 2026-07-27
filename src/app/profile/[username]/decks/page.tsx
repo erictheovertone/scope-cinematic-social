@@ -8,7 +8,7 @@ import {
   createDeck, type Deck,
 } from "@/lib/userService";
 import { getScopeLimitType } from "@/lib/limits";
-import { feedImage } from "@/lib/mediaUrl";
+import { feedImage, THUMB_WIDTH } from "@/lib/mediaUrl";
 import DeckThumbnail from "@/components/DeckThumbnail";
 import { useUpsell } from "@/components/UpsellProvider";
 import FrameLoader from "@/components/FrameLoader";
@@ -142,7 +142,7 @@ export default function DecksPage() {
         </div>
       ) : (
         <div style={{ padding: "0 0 8px" }}>
-          {decks.map(deck => (
+          {decks.map((deck, index) => (
             <div
               key={deck.id}
               onClick={() => router.push(`/profile/${username}/decks/${deck.id}`)}
@@ -162,8 +162,9 @@ export default function DecksPage() {
                 </div>
               ) : (
                 <DeckThumbnail
-                  imageUrls={((deck as { thumbnail_urls?: string[] }).thumbnail_urls ?? []).slice(0, 4).map((u) => feedImage(u, 600))}
+                  imageUrls={((deck as { thumbnail_urls?: string[] }).thumbnail_urls ?? []).slice(0, 4).map((u) => feedImage(u, THUMB_WIDTH))}
                   title={deck.title}
+                  eager={index < 2}
                 />
               )}
               {/* Meta */}

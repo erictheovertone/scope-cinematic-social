@@ -23,6 +23,13 @@ const RENDITION_SUFFIX = /\.(?:600|1600)\.webp$/;
  *  requested width; the publish bake produces exactly these. Keep the two in sync. */
 export const RENDITION_WIDTHS = [600, 1600] as const;
 
+/** Brief M11 §1 — the THUMB display class (~200px): retina-safe for a ~90px collage tile
+ *  (deck-collage tiles were over-fetching the 600 class by ~6×). Stream posters honour it
+ *  exactly (arbitrary ?width= param); baked post-media IMAGES floor at the smallest baked
+ *  rendition (600) — those await a small-rendition BACKFILL (not re-baked here). Profile
+ *  images (deck covers/avatars) are already small at upload. */
+export const THUMB_WIDTH = 200;
+
 /** Map a requested display width → the rendition size to serve (nearest baked ≥ it),
  *  or null when it exceeds the largest baked size (→ serve the master). */
 function renditionFor(width: number): number | null {

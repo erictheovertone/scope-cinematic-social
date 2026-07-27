@@ -9,6 +9,13 @@ import { BADGES, resolveBadges, BADGE_SHORT_BLURB, BADGE_DISPLAY_NAME, type Badg
 import { economyPreviewEnabled } from "@/lib/economy/flag";
 import { LedgerCard } from "@/components/Ledger";
 import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase/client";
+
+/** Brief M11 §4b — seconds → m:ss for a track's micro-meta. */
+function fmtDuration(s: number): string {
+  const m = Math.floor(s / 60), sec = Math.floor(s % 60);
+  return `${m}:${sec.toString().padStart(2, '0')}`;
+}
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -82,6 +89,10 @@ export default function ProfileDataSheet({
   const [sectionsVisible, setSectionsVisible] = useState(false);
   // BADGES section — tapped badge whose blurb pop-up is open (null = closed).
   const [activeBlurb, setActiveBlurb] = useState<BadgeKey | null>(null);
+  // Brief M11 §4b — the composer's approved tracks (Music section). Read-only; one query,
+  // no per-row fetches. Gated on the COMPOSER badge (same source of truth — W8 §2 lesson).
+  const [tracks, setTracks] = useState<{ id: string; title: string; duration_seconds: number | null }[]>([]);
+  const hasComposerBadge = badges.some((b) => b.key === 'composer');
 
   useEffect(() => {
     if (!isOpen) {
@@ -114,6 +125,22 @@ export default function ProfileDataSheet({
   }, [isOpen]);
 
   if (!isOpen) return null;
+
+  // Brief M11 §4b — load the composer's approved tracks (newest first) when the sheet opens
+  // for a composer. created_at ordering + duration_seconds are both available on `tracks`.
+  useEffect(() => {
+    if (!isOpen || !hasComposerBadge || !profile?.user_id) { setTracks([]); return; }
+    let cancelled = false;
+    supabase
+      .from('tracks')
+      .select('id, title, duration_seconds')
+      .eq('composer_user_id', profile.user_id)
+      .eq('status', 'approved')
+      .order('created_at', { ascending: false })
+      .limit(5)
+      .then(({ data }) => { if (!cancelled) setTracks((data as typeof tracks) ?? []); });
+    return () => { cancelled = true; };
+  }, [isOpen, hasComposerBadge, profile?.user_id]);
 
   const hasBio = !!profile?.bio;
   const hasKit = !!(profile?.kit_camera || profile?.kit_lens || profile?.kit_favorite_tool);
@@ -188,7 +215,15 @@ export default function ProfileDataSheet({
         {badges.map((b) => (
           <button
             key={b.key}
-            onClick={(e) => { e.stopPropagation(); setActiveBlurb(b.key); }}
+            /* Brief M11 §4a — the COMPOSER badge navigates to the user's discography
+               (/composer/[handle], the badge's door); every OTHER badge keeps the blurb
+               pop-up. The Music section below reinforces the composer's nav intent, so a
+               tap-to-navigate here reads consistently rather than confusing the blurb pattern. */
+            onClick={(e) => {
+              e.stopPropagation();
+              if (b.key === 'composer' && profile?.username) { router.push(`/composer/${profile.username}`); return; }
+              setActiveBlurb(b.key);
+            }}
             style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, width: 'calc((100% - 20px) / 3)', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
           >
             {/* Brief W10 §4 — no CSS container frame: the new badge PNG carries its own
@@ -197,6 +232,38 @@ export default function ProfileDataSheet({
             <span style={{ fontFamily: 'var(--font-body)', fontWeight: 400, fontSize: 7.5, letterSpacing: '0.12em', color: 'rgba(229,225,219,0.46)', textTransform: 'uppercase', textAlign: 'center', lineHeight: 1.1 }}>{BADGE_DISPLAY_NAME[b.key]}</span>
           </button>
         ))}
+      </div>
+    </div>
+  );
+
+  // MUSIC — Brief M11 §4b. ABOVE Kit in the spine. Renders ONLY for a composer with ≥1
+  // approved track (empty-section collapse). Rows + footer navigate to the discography
+  // (/composer/[handle]) — the track's home in this route structure; the music library
+  // exposes no per-track public deep link, and inline play would need the audio infra
+  // (out of this brief's read-only scope), so both route to the composer page for
+  // consistency with its own row behaviour.
+  if (hasComposerBadge && tracks.length > 0) sectionNodes.push(
+    <div key="music" style={{ ...sectionPad, ...sec(180) }}>
+      <div style={titleStyle}>Music</div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        {tracks.map((t, i) => (
+          <button
+            key={t.id}
+            onClick={(e) => { e.stopPropagation(); if (profile?.username) router.push(`/composer/${profile.username}`); }}
+            style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 12, width: '100%', background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left', marginBottom: i < tracks.length - 1 ? 10 : 0 }}
+          >
+            <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 10, color: 'rgba(229,225,219,0.79)', letterSpacing: 'var(--track-body)', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.title}</span>
+            {t.duration_seconds != null && (
+              <span style={{ fontFamily: 'var(--font-body)', fontWeight: 400, fontSize: 9, color: 'rgba(229,225,219,0.4)', letterSpacing: 'var(--track-body)', flexShrink: 0 }}>{fmtDuration(t.duration_seconds)}</span>
+            )}
+          </button>
+        ))}
+        <button
+          onClick={(e) => { e.stopPropagation(); if (profile?.username) router.push(`/composer/${profile.username}`); }}
+          style={{ display: 'block', marginTop: 14, background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 9, letterSpacing: 'var(--track-wide)', color: 'rgba(229,225,219,0.6)', textTransform: 'uppercase' }}
+        >
+          View Discography →
+        </button>
       </div>
     </div>
   );
@@ -304,7 +371,9 @@ export default function ProfileDataSheet({
         {/* ── META LINE — location · primary link (desktop meta language, scaled).
             Renders nothing when both are absent (no orphan spacing). ── */}
         {(metaLoc || metaPrimary) && (
-          <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 18, padding: '0 12px 6px' }}>
+          /* Brief M11 §3 — +7px breathing room above AND below the meta row (top 0→7,
+             bottom 6→13); the Bio section title + everything below reflows down by 14. */
+          <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 18, padding: '7px 12px 13px' }}>
             {metaLoc && (
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 10, color: 'rgba(229,225,219,0.58)', textTransform: 'uppercase', letterSpacing: 'var(--track-body)' }}>
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(229,225,219,0.58)" strokeWidth="1.6"><path d="M12 21s-6.5-5.4-6.5-10.5A6.5 6.5 0 0 1 12 4a6.5 6.5 0 0 1 6.5 6.5C18.5 15.6 12 21 12 21z" /><circle cx="12" cy="10.5" r="2.2" /></svg>

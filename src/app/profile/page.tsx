@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import DesktopProfile from '@/components/desktop/DesktopProfile';
 import { useIsDesktop } from '@/lib/useIsDesktop';
-import { feedImage } from "@/lib/mediaUrl";
+import { feedImage, THUMB_WIDTH } from "@/lib/mediaUrl";
 import { useRouter, useSearchParams } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
 import { getUserByPrivyId, getProfile, getFollowerCount, getFollowingCount, getUserDecks, createDeck, getProfileLinks, isProMember, type Deck, type ProfileLink } from "@/lib/userService";
@@ -755,7 +755,7 @@ const userLayoutId = stableLayoutId;
                   </div>
                 ) : (
                   <DeckThumbnail
-                    imageUrls={deck.thumbnail_urls.slice(0, 4).map((u) => feedImage(u, 600))}
+                    imageUrls={deck.thumbnail_urls.slice(0, 4).map((u) => feedImage(u, THUMB_WIDTH))}
                     title={deck.title}
                     aspectRatio={getDeckAspect(deck.grid_layout)}
                   />

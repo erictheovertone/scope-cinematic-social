@@ -8,11 +8,18 @@ interface Props {
   /** Brief M5 §1 — the cover AR follows the deck's grid layout; defaults to the 2.4:1
    *  ultra-wide. Callers pass the deck's own aspect (e.g. getDeckAspect(grid_layout)). */
   aspectRatio?: string;
+  /** Brief M11 §1 — first-viewport decks (overview) load eager; everything else stays
+   *  lazy (the pull-up sheet is below the fold, so it never passes this). */
+  eager?: boolean;
 }
 
-export default function DeckThumbnail({ imageUrls, title, aspectRatio = '2.4 / 1' }: Props) {
+export default function DeckThumbnail({ imageUrls, title, aspectRatio = '2.4 / 1', eager = false }: Props) {
   const imgs = imageUrls.filter(Boolean);
   const n = imgs.length;
+
+  // Brief M11 §1 — every collage tile loads lazy + decodes async (eager only for the
+  // overview's first-viewport decks). Spread onto each tile below.
+  const imgProps = { loading: (eager ? 'eager' : 'lazy') as 'eager' | 'lazy', decoding: 'async' as const };
 
   const wrap: React.CSSProperties = {
     width: '100%',
@@ -36,7 +43,7 @@ export default function DeckThumbnail({ imageUrls, title, aspectRatio = '2.4 / 1
   if (n === 1) {
     return (
       <div style={wrap}>
-        <img src={imgs[0]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+        <img src={imgs[0]} alt="" {...imgProps} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
       </div>
     );
   }
@@ -44,7 +51,7 @@ export default function DeckThumbnail({ imageUrls, title, aspectRatio = '2.4 / 1
   if (n === 2) {
     return (
       <div style={{ ...wrap, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
-        {imgs.map((u, i) => <img key={i} src={u} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />)}
+        {imgs.map((u, i) => <img key={i} src={u} alt="" {...imgProps} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />)}
       </div>
     );
   }
@@ -52,9 +59,9 @@ export default function DeckThumbnail({ imageUrls, title, aspectRatio = '2.4 / 1
   if (n === 3) {
     return (
       <div style={wrap}>
-        <img src={imgs[0]} alt="" style={{ position: 'absolute', left: 0, top: 0, width: '66%', height: '100%', objectFit: 'cover' }} />
-        <img src={imgs[1]} alt="" style={{ position: 'absolute', right: 0, top: 0, width: '33%', height: '50%', objectFit: 'cover' }} />
-        <img src={imgs[2]} alt="" style={{ position: 'absolute', right: 0, bottom: 0, width: '33%', height: '50%', objectFit: 'cover' }} />
+        <img src={imgs[0]} alt="" {...imgProps} style={{ position: 'absolute', left: 0, top: 0, width: '66%', height: '100%', objectFit: 'cover' }} />
+        <img src={imgs[1]} alt="" {...imgProps} style={{ position: 'absolute', right: 0, top: 0, width: '33%', height: '50%', objectFit: 'cover' }} />
+        <img src={imgs[2]} alt="" {...imgProps} style={{ position: 'absolute', right: 0, bottom: 0, width: '33%', height: '50%', objectFit: 'cover' }} />
       </div>
     );
   }
@@ -76,7 +83,7 @@ export default function DeckThumbnail({ imageUrls, title, aspectRatio = '2.4 / 1
       gap: 1,
     }}>
       {cells.map((u, i) => (
-        <img key={i} src={u} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+        <img key={i} src={u} alt="" {...imgProps} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
       ))}
     </div>
   );
