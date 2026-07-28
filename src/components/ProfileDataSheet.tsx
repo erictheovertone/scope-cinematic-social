@@ -124,10 +124,11 @@ export default function ProfileDataSheet({
     };
   }, [isOpen]);
 
-  if (!isOpen) return null;
-
-  // Brief M11 §4b — load the composer's approved tracks (newest first) when the sheet opens
-  // for a composer. created_at ordering + duration_seconds are both available on `tracks`.
+  // Brief M11 §4b (fixed M11a) — load the composer's approved tracks (newest first). This
+  // MUST sit with the other hooks ABOVE the `if (!isOpen) return null` guard below: React
+  // #310 is a hook that runs on only SOME renders — placing it after the early return meant
+  // it ran when open (7 hooks) but not when closed (6) → order/count mismatch → crash. It
+  // no-ops internally when closed / non-composer, so running every render is free.
   useEffect(() => {
     if (!isOpen || !hasComposerBadge || !profile?.user_id) { setTracks([]); return; }
     let cancelled = false;
@@ -141,6 +142,8 @@ export default function ProfileDataSheet({
       .then(({ data }) => { if (!cancelled) setTracks((data as typeof tracks) ?? []); });
     return () => { cancelled = true; };
   }, [isOpen, hasComposerBadge, profile?.user_id]);
+
+  if (!isOpen) return null;
 
   const hasBio = !!profile?.bio;
   const hasKit = !!(profile?.kit_camera || profile?.kit_lens || profile?.kit_favorite_tool);
