@@ -48,7 +48,12 @@ export default function DesktopWallet() {
   const { wallets } = useWallets();
   const { fundWallet } = useFundWallet();
   const economy = useEconomy();
-  const walletAddress = user?.wallet?.address ?? null;
+  // Brief W10 — scope the wallet DISPLAY (balances + activity) to the EMBEDDED wallet — the
+  // one Scope actually transacts with (every collect/trade path uses walletClientType 'privy').
+  // The old `user?.wallet?.address` is Privy's PRIMARY wallet, which is a LINKED EXTERNAL wallet
+  // when the user has one → Activity showed that other wallet's unrelated on-chain history
+  // ("activity that isn't his"). Fall back to the primary only when there's no embedded wallet.
+  const walletAddress = wallets.find((w) => w.walletClientType === 'privy')?.address ?? user?.wallet?.address ?? null;
 
   const [eth, setEth] = useState<number | null>(null);
   const [usdc, setUsdc] = useState<number | null>(null);

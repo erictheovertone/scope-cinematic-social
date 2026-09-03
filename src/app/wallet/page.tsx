@@ -46,7 +46,11 @@ export default function WalletPage() {
   const { wallets } = useWallets();
   const economy = useEconomy();
   const router = useRouter();
-  const walletAddress = user?.wallet?.address ?? "";
+  // Brief W10 — display the EMBEDDED wallet (walletClientType 'privy') — the wallet Scope
+  // transacts with — not Privy's PRIMARY (`user.wallet.address`), which is a linked EXTERNAL
+  // wallet when the user has one → Activity showed that other wallet's history. Primary is
+  // the fallback only when there's no embedded wallet.
+  const walletAddress = wallets.find((w) => w.walletClientType === "privy")?.address ?? user?.wallet?.address ?? "";
 
   const isDesktop = useIsDesktop();
   const [activeTab, setActiveTab] = useState<"balances" | "holdings" | "earnings" | "activity">("balances");
