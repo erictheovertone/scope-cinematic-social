@@ -34,7 +34,9 @@ export default function DesktopLanding() {
       {/* Placement — upper-middle-left, off-centre calm (NOT dead-centred): left ~10vw,
           top ~30vh. The lockup is left-aligned; the 0.4px blur is on THIS group only. */}
       <div style={{ position: 'absolute', top: '30vh', left: 'max(calc(var(--safe-left) + 48px), 10vw)', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', filter: `blur(${WELCOME_BLUR})` }}>
-        <span style={{ fontFamily: 'var(--font-script)', fontSize: DESKTOP_WORDMARK, lineHeight: 0.85, letterSpacing: '1.5px', color: 'var(--ink-100)', display: 'block' }}>
+        {/* Brief S2c — pin 400 / normal / no-synthesis so the inherited body 700 can't
+            synthesize bold on the single-cut script face (the thickening). */}
+        <span style={{ fontFamily: 'var(--font-script)', fontWeight: 400, fontStyle: 'normal', fontSynthesis: 'none', fontSize: DESKTOP_WORDMARK, lineHeight: 0.85, letterSpacing: '1.5px', color: 'var(--ink-100)', display: 'block' }}>
           scope
         </span>
         <button onClick={login} aria-label="Log in" style={{ ...action, marginTop: 26 }}>Login</button>

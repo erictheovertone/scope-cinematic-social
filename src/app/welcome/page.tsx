@@ -54,8 +54,11 @@ export default function Welcome() {
       {/* The lockup — wordmark + the two actions, all left-aligned. The 0.4px blur is on
           THIS group only (welcome-only exception; no app-wide soften — W5 stays retired). */}
       <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", filter: `blur(${WELCOME_BLUR})` }}>
-        {/* "scope" — script face, ~100px @390 ref, --ink, ~1px tracking (frame 179×81). */}
-        <span style={{ fontFamily: "var(--font-script)", fontSize: 100, lineHeight: 0.85, letterSpacing: "1px", color: "var(--ink-100)", display: "block" }}>
+        {/* "scope" — script face, ~100px @390 ref, --ink, ~1px tracking (frame 179×81).
+            Brief S2c — the face has ONLY a 400 cut; body sets font-weight:700, so without an
+            explicit weight the browser SYNTHESIZED bold (the thickening). Pin weight 400 +
+            style normal + font-synthesis:none so the loaded Regular renders with no faking. */}
+        <span style={{ fontFamily: "var(--font-script)", fontWeight: 400, fontStyle: "normal", fontSynthesis: "none", fontSize: 100, lineHeight: 0.85, letterSpacing: "1px", color: "var(--ink-100)", display: "block" }}>
           scope
         </span>
         {/* ~22px below the wordmark (frame: 349→371). */}
