@@ -32,6 +32,7 @@ import { resolveLayout, ratioForAspect, type AspectId } from '@/lib/layoutModel'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useRef } from 'react';
 import DesktopShell from '@/components/desktop/DesktopShell';
+import { useFluidColumns } from '@/lib/useFluidColumns';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -74,11 +75,18 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
   const [badgesOpen, setBadgesOpen] = useState(false);
   // Profile grid = the SHARED aspect × the DESKTOP count (resolveLayout).
   const [gridConf, setGridConf] = useState<{ aspect: AspectId; count: number }>({ aspect: 'scope', count: 4 });
+  // Brief R1a — media grid grows with the window: HONOURS the user's count as the floor,
+  // ADDS columns only once tiles would exceed ~420px. At 1440 = the user count (anchor);
+  // for count=4 → 1920:5, 2560:6, 3440:8.
+  const [gridRef, gridCols] = useFluidColumns(gridConf.count, 420);
   const [deckCreateOpen, setDeckCreateOpen] = useState(false);
   const [newDeckTitle, setNewDeckTitle] = useState('');
   const [newDeckDesc, setNewDeckDesc] = useState('');
   const [creatingDeck, setCreatingDeck] = useState(false);
   const [decksCount, setDecksCount] = useState(4); // desktop decks grid columns (3|4|5)
+  // Brief R1a — decks-tab covers also grow with the window (deck covers cap ~460px), floored
+  // at the user's 3|4|5 choice, so a fluid profile shell doesn't balloon the covers.
+  const [decksGridRef, decksGridCols] = useFluidColumns(decksCount, 460);
   const bakingRef = useRef<Set<string>>(new Set());
 
   const submitDeck = async () => {
@@ -224,7 +232,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
 
   return (
     <div ref={scrollerRef} className="bg-black" style={{ position: 'fixed', inset: 0, left: 'var(--rail-w)', overflowY: 'auto' }}>
-      <DesktopShell padding="0 24px">
+      <DesktopShell width="fluid" padding="0 24px">
 
         {/* ═══ HEADER ZONE (node 38:88 — header band ends at the y205 hairline) ═══ */}
         <div style={{ position: 'relative', height: 205, boxSizing: 'border-box' }}>
@@ -368,7 +376,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
         )}
 
         {tab === 'portfolio' && postView == null && (
-          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${gridConf.count}, 1fr)`, gap: 4, paddingBottom: 80 }}>
+          <div ref={gridRef} style={{ display: 'grid', gridTemplateColumns: `repeat(${gridCols}, 1fr)`, gap: 4, paddingBottom: 80 }}>
             {sortedPosts.map((p, i) => {
               const src = (p.poster_url as string) || (p.thumbnail_url as string) || ((p.media_urls as string[])?.[0] ?? '');
               const pid = String(p.id);
@@ -418,7 +426,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
             })}
             {loaded && sortedPosts.length === 0 && (
               isOwn ? (
-                <button onClick={() => router.push('/create')} style={{ gridColumn: `span ${gridConf.count}`, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 24, background: 'transparent', border: 'none', cursor: 'pointer', padding: '90px 0 100px' }}>
+                <button onClick={() => router.push('/create')} style={{ gridColumn: `span ${gridCols}`, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 24, background: 'transparent', border: 'none', cursor: 'pointer', padding: '90px 0 100px' }}>
                   {/* large, delicate crosshair plus — 1px stroke, viewfinder-thin */}
                   <svg width="88" height="88" viewBox="0 0 88 88" fill="none" style={{ display: 'block' }}>
                     <path d="M44 6V82M6 44H82" stroke="rgba(229,225,219,0.8)" strokeWidth="1" />
@@ -426,7 +434,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
                   <span style={{ ...SKB, fontSize: 12, color: 'rgba(229,225,219,0.7)', textTransform: 'uppercase', letterSpacing: '0.16em' }}>CREATE YOUR FIRST POST</span>
                 </button>
               ) : (
-                <p style={{ ...SKR, fontSize: 12, color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase', gridColumn: `span ${gridConf.count}`, padding: '40px 0', textAlign: 'center' }}>NO POSTS YET</p>
+                <p style={{ ...SKR, fontSize: 12, color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase', gridColumn: `span ${gridCols}`, padding: '40px 0', textAlign: 'center' }}>NO POSTS YET</p>
               )
             )}
           </div>
@@ -466,7 +474,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
                 ))}
               </div>
             )}
-            <div style={{ display: 'grid', gridTemplateColumns: `repeat(${decksCount}, 1fr)`, gap: 16 }}>
+            <div ref={decksGridRef} style={{ display: 'grid', gridTemplateColumns: `repeat(${decksGridCols}, 1fr)`, gap: 16 }}>
               {isOwn && (
                 <button onClick={() => setDeckCreateOpen(true)} style={{ aspectRatio: `${ratioForAspect(gridConf.aspect)}`, border: `1px dashed ${HAIR}`, background: 'transparent', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
                   <svg width="34" height="34" viewBox="0 0 34 34" fill="none"><path d="M17 6v22M6 17h22" stroke="rgba(229,225,219,0.7)" strokeWidth="1" /></svg>
@@ -486,7 +494,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
                   </button>
                 );
               })}
-              {decks.length === 0 && !isOwn && <p style={{ ...SKR, fontSize: 12, color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase', gridColumn: `span ${decksCount}`, padding: '40px 0', textAlign: 'center' }}>NO DECKS YET</p>}
+              {decks.length === 0 && !isOwn && <p style={{ ...SKR, fontSize: 12, color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase', gridColumn: `span ${decksGridCols}`, padding: '40px 0', textAlign: 'center' }}>NO DECKS YET</p>}
             </div>
           </div>
         )}

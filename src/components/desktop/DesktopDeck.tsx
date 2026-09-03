@@ -17,6 +17,7 @@ import {
 import { resolveLayout, ratioForAspect } from '@/lib/layoutModel';
 import { feedImage } from '@/lib/mediaUrl';
 import DesktopShell from '@/components/desktop/DesktopShell';
+import { useFluidColumns } from '@/lib/useFluidColumns';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -34,6 +35,9 @@ export default function DesktopDeck({ deckId }: { deckId: string }) {
   const [isOwn, setIsOwn] = useState(false);
   const [aspect, setAspect] = useState<number>(2.39);
   const [count, setCount] = useState(4);
+  // Brief R1a — deck posts grow with the window; floored at the owner's desktop count,
+  // adding columns once tiles would exceed ~460px.
+  const [gridRef, gridCols] = useFluidColumns(count, 460);
   const [menuOpen, setMenuOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [editTitle, setEditTitle] = useState('');
@@ -103,7 +107,7 @@ export default function DesktopDeck({ deckId }: { deckId: string }) {
 
   return (
     <div className="bg-black" style={{ position: 'fixed', inset: 0, left: 'var(--rail-w)', background: '#000', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
-      <DesktopShell padding="28px 48px 96px">{/* Brief R1 — grid canvas, cap lifted 1440→--shell-max */}
+      <DesktopShell width="fluid" padding="28px 48px 96px">{/* Brief R1a — media surface: fills the window, deck grid grows columns */}
         {/* header */}
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, marginBottom: 26 }}>
           <div style={{ minWidth: 0 }}>
@@ -128,7 +132,7 @@ export default function DesktopDeck({ deckId }: { deckId: string }) {
 
         {/* posts GRID — owner's AR × desktop count, scrollable (this container) */}
         {!loading && deck && (
-          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${count}, 1fr)`, gap: 6 }}>
+          <div ref={gridRef} style={{ display: 'grid', gridTemplateColumns: `repeat(${gridCols}, 1fr)`, gap: 6 }}>
             {isOwn && (
               <button onClick={() => fileRef.current?.click()} disabled={busy} style={{ aspectRatio: `${aspect}`, border: `1px dashed ${HAIR}`, background: 'transparent', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
                 <svg width="30" height="30" viewBox="0 0 34 34" fill="none"><path d="M17 6v22M6 17h22" stroke="rgba(229,225,219,0.7)" strokeWidth="1" /></svg>

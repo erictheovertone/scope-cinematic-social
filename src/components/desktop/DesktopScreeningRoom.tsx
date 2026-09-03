@@ -131,7 +131,7 @@ export default function DesktopScreeningRoom() {
 
   return (
     <div className="bg-black" style={{ position: 'fixed', inset: 0, left: 'var(--rail-w)', overflowY: 'auto', WebkitOverflowScrolling: 'touch', background: '#000' }}>
-      <DesktopShell padding="0 58px 40px" style={{ position: 'relative', minHeight: '100%' }}>{/* Brief R1 — cap lifted 1369→--shell-max */}
+      <DesktopShell width="fluid" padding="0 58px 40px" style={{ position: 'relative', minHeight: '100%' }}>{/* Brief R1a — media stage grows to fill */}
 
         {/* ═══ 1. HEADER ═══ */}
         <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', padding: '58px 0 30px' }}>
@@ -149,14 +149,14 @@ export default function DesktopScreeningRoom() {
         {current && post && (
           <>
             {/* ═══ 2. THE STAGE (1227×343 letterbox) ═══ */}
-            <div style={{ width: '100%', maxWidth: 1227, aspectRatio: '1227 / 343', background: '#000', overflow: 'hidden', position: 'relative', margin: '0 auto' }}>
+            <div style={{ width: '100%', maxWidth: 'var(--shell-fluid)', aspectRatio: '1227 / 343', background: '#000', overflow: 'hidden', position: 'relative', margin: '0 auto' }}>
               <div key={swapKey} style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'sr-stage-in 180ms ease-out both' }}>
                 {stageMedia(post)}
               </div>
             </div>
 
             {/* ═══ DETAIL ROW ═══ */}
-            <div style={{ position: 'relative', display: 'flex', alignItems: 'flex-start', gap: 24, padding: '22px 0 0', maxWidth: 1227, margin: '0 auto' }}>
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'flex-start', gap: 24, padding: '22px 0 0', maxWidth: 'var(--shell-fluid)', margin: '0 auto' }}>
               {/* rank numeral + underline */}
               <div style={{ flexShrink: 0 }}>
                 <span style={{ ...SKB, fontSize: 75, color: '#E5E1DB', lineHeight: 0.9, letterSpacing: '-0.04em', display: 'block' }}>{two(current.rank)}</span>
@@ -202,7 +202,7 @@ export default function DesktopScreeningRoom() {
             </div>
 
             {/* ═══ 3. THE LINEUP ═══ */}
-            <div style={{ margin: '52px auto 0', maxWidth: 1227 }}>
+            <div style={{ margin: '52px auto 0', maxWidth: 'var(--shell-fluid)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 14 }}>
                 <span style={{ ...SKB, fontSize: 13, color: '#808080', letterSpacing: '9.1px', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>The Lineup</span>
                 <div style={{ flex: 1, height: 1, background: 'rgba(229,225,219,0.12)' }} />

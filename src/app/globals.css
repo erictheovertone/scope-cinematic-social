@@ -93,8 +93,13 @@ html, body {
      --shell-narrow: reading/detail surfaces (bio sheet) that intentionally stay
      tighter than the grid cap. Consumed via <DesktopShell>. */
   --rail-w: 71px;
-  --shell-max: 1600px;
-  --shell-narrow: 1180px;
+  --shell-max: 1600px;      /* capped UI/reading surfaces (DM, Settings, Viewing Modes, Grid Picker) */
+  --shell-narrow: 1180px;   /* tighter reading surfaces (Wallet, Bio sheet) */
+  /* Brief R1a — MEDIA surfaces (Home masonry, Profile grid, Screening Room, Decks,
+     Home Lightbox stage, Theatre) do NOT cap: they fill the window minus the rail and
+     GROW columns/stage with width. --shell-fluid is only a pathological-width safety
+     bound (never reached on real displays), not a design cap. */
+  --shell-fluid: 3840px;
 
   /* ── SAFE-AREA SYSTEM (Brief F1) — viewport-fit=cover is set in layout.tsx, so
      these resolve to real notch / home-indicator insets on device (0 on non-notch).

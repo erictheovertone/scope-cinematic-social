@@ -19,6 +19,7 @@ import DesktopHomeLightbox from '@/components/desktop/DesktopHomeLightbox';
 import DesktopViewingModes, { type ViewingMode } from '@/components/desktop/DesktopViewingModes';
 import TheatreMode from '@/components/TheatreMode';
 import DesktopShell from '@/components/desktop/DesktopShell';
+import { useFluidColumns } from '@/lib/useFluidColumns';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 
@@ -34,6 +35,10 @@ export default function DesktopHome() {
   const [flash, setFlash] = useState(false); // mode-switch flash-through-black
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null); // the feed's own scroller (body is overflow:hidden)
+  // Brief R1a — the masonry GROWS with the window: full feed cards cap at ~500px, columns
+  // add beyond the fixed-3 floor. At 1440 this resolves to 3 (the anchor); 1920→4, 2560→5,
+  // 3440→7. The ref measures the column row; i % masonryCols keeps the round-robin order.
+  const [masonryRef, masonryCols] = useFluidColumns(3, 500);
 
   useEffect(() => {
     let alive = true;
@@ -108,7 +113,7 @@ export default function DesktopHome() {
     // full-height scroller, the same fixed/inset-0/overflow-y:auto pattern the
     // desktop profile page uses (cleared past the 71px rail).
     <div ref={scrollRef} className="bg-black" style={{ position: 'fixed', inset: 0, left: 'var(--rail-w)', background: '#000', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
-      <DesktopShell padding="40px 48px 96px">{/* Brief R1 — grid canvas, cap lifted 1440→--shell-max (1600) */}
+      <DesktopShell width="fluid" padding="40px 48px 96px">{/* Brief R1a — media surface: fills the window, masonry grows columns */}
         {/* DISCOVER — the page title, top-left of the content column (mobile home's
             title, now on desktop). SK-Modernist Bold, −0.06em, 40px page-title scale. */}
         {/* DISCOVER title + SEARCH control (top-right — same language as the lightbox) */}
@@ -136,10 +141,10 @@ export default function DesktopHome() {
                 deterministic (a post's column is fixed by its feed index, so
                 load-more appends correctly), and it preserves the left-to-right
                 newest-first reading order across the top row. Cards unchanged. */}
-            <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start' }}>
-              {([0, 1, 2] as const).map((col) => (
+            <div ref={masonryRef} style={{ display: 'flex', gap: 20, alignItems: 'flex-start' }}>
+              {Array.from({ length: masonryCols }, (_, col) => (
                 <div key={col} style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 20 }}>
-                  {posts.map((p, i) => (i % 3 === col ? (
+                  {posts.map((p, i) => (i % masonryCols === col ? (
                     <PostItem
                       key={String(p.id)}
                       post={p as unknown as React.ComponentProps<typeof PostItem>['post']}

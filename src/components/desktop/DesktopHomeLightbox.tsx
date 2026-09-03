@@ -181,7 +181,7 @@ export default function DesktopHomeLightbox({
     // overflow:hidden → everything fits one screen, no scroll (frame 775:4).
     <div data-swipe-exclude style={{ position: 'fixed', top: 0, right: 0, bottom: 0, left: 'var(--rail-w)', zIndex: 140, background: '#000', overflow: 'hidden' }}>
       {/* header row seated 8px higher (top padding 18→10) */}
-      <div style={{ maxWidth: 1369, margin: '0 auto', padding: '10px 24px 0', height: '100%', boxSizing: 'border-box' }}/* R1: detail-panel width — NOT lifted to shell-max; flagged */>
+      <div style={{ maxWidth: 'var(--shell-max)', margin: '0 auto', padding: '10px 24px 0', height: '100%', boxSizing: 'border-box' }}/* Brief R1a — lightbox stage GROWS (1369→--shell-max 1600): DesktopPostView stage is flex:1 so it takes the surplus, panel stays width:309. BOUNDED at --shell-max (not --shell-fluid) on purpose: the stage is aspectRatio 2.39, so a fully-fluid width would exceed viewport HEIGHT at ≥2560 and break the fits-one-screen design. FLAGGED for Eric if he wants full-fluid + a vertical-fit rework. */>
 
         {/* ── FEED heading (page-title, 40px) + FOR YOU / FOLLOWING tabs (frame ~y38) ── */}
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 20, marginBottom: 12 }}>

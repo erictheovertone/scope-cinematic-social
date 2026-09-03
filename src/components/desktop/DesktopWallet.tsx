@@ -125,7 +125,7 @@ export default function DesktopWallet() {
 
   return (
     <div className="bg-black" style={{ position: 'fixed', inset: 0, left: 'var(--rail-w)', overflowY: 'auto' }}>
-      <div style={{ maxWidth: 1160, margin: '0 auto', padding: '40px 24px 80px' }}/* R1: bespoke composition width — flagged for Eric's ruling */>
+      <div style={{ maxWidth: 'var(--shell-narrow)', margin: '0 auto', padding: '40px 24px 80px' }}/* Brief R1a §2 — capped reading surface (--shell-narrow) */>
 
         {/* ═══ 1. HEADER BAND ═══ */}
         <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', paddingBottom: 22 }}>
