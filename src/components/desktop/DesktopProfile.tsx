@@ -18,6 +18,7 @@ import { bakeAndStoreDeckCover } from '@/lib/deckCollage';
 import { getUserPosts } from '@/lib/postsService';
 import { useEconomy } from '@/components/EconomyProvider';
 import { resolveBadges, FIRST_CUT_ACTION_MARK } from '@/lib/economy/badges';
+import { getCachedMarketCaps } from '@/lib/economy/coinMarketData';
 import { feedImage } from '@/lib/mediaUrl';
 import PostModal from '@/components/PostModal';
 import DesktopBioSheet from '@/components/desktop/DesktopBioSheet';
@@ -33,6 +34,13 @@ import { resolveLayout, ratioForAspect, DESKTOP_COUNTS, type AspectId } from '@/
 // Brief R1b — the profile grid never exceeds the system's own desktop_count ceiling (5).
 // Sourced from DESKTOP_COUNTS ([3,4,5]) rather than a literal.
 const PROFILE_MAX_COLS = Math.max(...DESKTOP_COUNTS);
+
+// Brief Q2 — compact USD for the grid-hover market cap ($1.2M / $340K / $85).
+function mcCompact(n: number): string {
+  if (n >= 1e6) return `$${(n / 1e6).toFixed(1)}M`;
+  if (n >= 1e3) return `$${(n / 1e3).toFixed(1)}K`;
+  return `$${Math.round(n)}`;
+}
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useRef } from 'react';
 import DesktopShell from '@/components/desktop/DesktopShell';
@@ -83,10 +91,11 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
   // ADDS columns only once tiles would exceed ~420px. At 1440 = the user count (anchor);
   // for count=4 → 1920:5, 2560:6, 3440:8.
   const [gridRef, gridCols] = useFluidColumns(gridConf.count, 420, PROFILE_MAX_COLS);
-  // Brief D2 — batched hover-stats per post (likes · comments · first-cut count). Filled by
-  // ONE set-based query each in the load effect below (NOT per-cell). Market cap is FLAGGED:
-  // no batched source (screening_room cache = top-50 only) → omitted this pass.
-  const [statsByPost, setStatsByPost] = useState<Record<string, { likes: number; comments: number; fc: number }>>({});
+  // Brief D2/Q2 — batched hover-stats per post (likes · comments · first-cut · market cap).
+  // Each is ONE set-based read in the load effect below (NOT per-cell): likes/comments/fc
+  // from their tables; mc from the coin_market_data cache (Q2, staleness-filtered → dash when
+  // stale/absent). Collect/trade keep LIVE pricing — this cache is ambient display only.
+  const [statsByPost, setStatsByPost] = useState<Record<string, { likes: number; comments: number; fc: number; mc?: number }>>({});
   const [deckCreateOpen, setDeckCreateOpen] = useState(false);
   const [newDeckTitle, setNewDeckTitle] = useState('');
   const [newDeckDesc, setNewDeckDesc] = useState('');
@@ -185,10 +194,12 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
           const likeM = tally(likesRes.data, 'post_id');
           const commentM = tally(commentsRes.data, 'post_id');
           const fcM = tally(fcRes.data as { [k: string]: unknown }[], 'coin_address');
-          const map: Record<string, { likes: number; comments: number; fc: number }> = {};
+          // Brief Q2 — batched cached MC for the profile's coins (staleness-filtered; ONE query).
+          const mcM = await getCachedMarketCaps(addrs);
+          const map: Record<string, { likes: number; comments: number; fc: number; mc?: number }> = {};
           for (const r of postRows) {
             const a = (r.coin_address ?? '').toLowerCase();
-            map[r.id] = { likes: likeM[r.id.toLowerCase()] ?? 0, comments: commentM[r.id.toLowerCase()] ?? 0, fc: a ? (fcM[a] ?? 0) : 0 };
+            map[r.id] = { likes: likeM[r.id.toLowerCase()] ?? 0, comments: commentM[r.id.toLowerCase()] ?? 0, fc: a ? (fcM[a] ?? 0) : 0, mc: a ? mcM.get(a) : undefined };
           }
           if (alive) setStatsByPost(map);
         }
@@ -524,12 +535,16 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
                               <span style={val}>{s.fc}</span>
                             </span>
                           )}
-                          {/* Brief D3a §2 — MARKET CAP slots in HERE (minted only, after FC) once a
-                              batched coin-MC source exists (screening_room cache is top-50 only; live
-                              per-coin is per-cell, forbidden). This is a gap:12 flex row, not a 4-slot
-                              grid, so the three current stats sit balanced/left-aligned with no hole —
-                              adding MC just appends a 4th span. e.g.:
-                              {minted && s.mc != null && <span …><span style={val}>{usdMc(s.mc)}</span></span>} */}
+                          {/* Brief Q2 — MARKET CAP, minted only, from the coin_market_data cache
+                              (Q2). Absent/stale → undefined → nothing rendered (dash rule holds:
+                              unminted never show it; a minted coin with no fresh cache shows only
+                              likes/comments/fc). "MC" label + compact USD, appended as the 4th stat. */}
+                          {minted && s.mc != null && (
+                            <span style={{ display: 'inline-flex', alignItems: 'baseline', gap: 4 }}>
+                              <span style={{ ...val, fontSize: 8.5, color: 'rgba(229,225,219,0.55)' }}>MC</span>
+                              <span style={val}>{mcCompact(s.mc)}</span>
+                            </span>
+                          )}
                         </div>
                       </div>
                     );
