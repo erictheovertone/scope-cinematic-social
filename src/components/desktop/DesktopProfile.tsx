@@ -407,7 +407,10 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
             return (
               <button key={t} onClick={() => setTab(t)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 8, background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>
                 <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 13, letterSpacing: 'var(--track-display)', color: active ? 'var(--ink-100)' : 'rgba(229,225,219,0.5)' }}>{t.charAt(0).toUpperCase() + t.slice(1)}</span>
-                {active ? <FilmstripIndicator /> : <span style={{ height: 8, display: 'block' }} />}
+                {/* Brief D3a §1 — hide the active-tab marker while a post is open (postView
+                    != null); the tab row + labels stay. The 8px spacer holds the row height
+                    in both states, so the marker returns cleanly on close (no reflow/flicker). */}
+                {active && postView == null ? <FilmstripIndicator /> : <span style={{ height: 8, display: 'block' }} />}
               </button>
             );
           })}
@@ -521,6 +524,12 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
                               <span style={val}>{s.fc}</span>
                             </span>
                           )}
+                          {/* Brief D3a §2 — MARKET CAP slots in HERE (minted only, after FC) once a
+                              batched coin-MC source exists (screening_room cache is top-50 only; live
+                              per-coin is per-cell, forbidden). This is a gap:12 flex row, not a 4-slot
+                              grid, so the three current stats sit balanced/left-aligned with no hole —
+                              adding MC just appends a 4th span. e.g.:
+                              {minted && s.mc != null && <span …><span style={val}>{usdMc(s.mc)}</span></span>} */}
                         </div>
                       </div>
                     );
