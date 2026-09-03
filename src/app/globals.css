@@ -17,6 +17,12 @@
 @font-face { font-family: 'SK-Modernist'; src: url('/design-updates-071526/font-files/NeueHaasGrotDisp-55Roman.otf') format('opentype'); font-weight: 400; font-style: normal; font-display: swap; }
 @font-face { font-family: 'SK-Modernist'; src: url('/design-updates-071526/font-files/NeueHaasGrotDisp-95Black.otf') format('opentype'); font-weight: 900; font-style: normal; font-display: swap; }
 
+/* Brief S2b — SCRIPT wordmark face (the "scope" lockup on the welcome/landing only).
+   Renamed from "Birds of Paradise И PERSONAL USE ONLY.ttf" to a URL-safe slug (the
+   original name's spaces + non-ASCII char break url()). Commercial license being procured
+   separately (Eric). Exposed as --font-script; currently used ONLY by the welcome surface. */
+@font-face { font-family: 'Birds of Paradise'; src: url('/design-updates-071526/font-files/birds-of-paradise-script.ttf') format('truetype'); font-weight: 400; font-style: normal; font-display: swap; }
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -117,6 +123,7 @@ html, body {
   --font-body:    'Neue Haas Grotesk Display', 'SK-Modernist', sans-serif; /* 55 Roman */
   --font-black:   'Neue Haas Grotesk Display', 'SK-Modernist', sans-serif; /* 95 Black */
   --font-light:   'Neue Haas Grotesk Display', 'SK-Modernist', sans-serif; /* 45 absent → 55 */
+  --font-script:  'Birds of Paradise', 'Times New Roman', serif;           /* S2b — welcome wordmark only */
   /* Tracking — Haas sets tighter than SK-Modernist. --track-wide is OPT-IN only. */
   --track-display: -0.06em;
   --track-body: -0.02em;
