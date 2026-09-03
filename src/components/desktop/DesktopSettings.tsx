@@ -33,7 +33,6 @@ import { updateProfileFields, invalidateMembership } from '@/lib/userService';
 import { getUserPosts } from '@/lib/postsService';
 import { createPortal } from 'react-dom';
 import { resolveMembership, membershipBarLabel, type MembershipState } from '@/lib/membership';
-import { DIVIDER_LINES, DIVIDER_ORDER, TIER_UNLOCK_LABEL, dividerTier, isDividerUnlocked, type DividerLineKey } from '@/lib/economy/dividerLines';
 import { useEconomy } from '@/components/EconomyProvider';
 import { feedImage } from '@/lib/mediaUrl';
 import PfpCropStage from '@/components/desktop/PfpCropStage';
@@ -104,7 +103,6 @@ export default function DesktopSettings() {
   const [kitTool, setKitTool] = useState('');
   const [contactEmail, setContactEmail] = useState('');
   const [contactPublic, setContactPublic] = useState(false);
-  const [dividerLine, setDividerLine] = useState<DividerLineKey>('default');
   const [holoBanner, setHoloBanner] = useState(false);
   const [tierFlags, setTierFlags] = useState({ isPaidMember: false, isFoundingMember: false, isTopCollector: false, isInHouseCreator: false, isScreeningRoomHolder: false, firstCutCount: 0 });
 
@@ -149,7 +147,6 @@ export default function DesktopSettings() {
           setKitTool((px.kit_favorite_tool as string) || '');
           setContactEmail((px.contact_email as string) || '');
           setContactPublic(!!px.contact_email_public);
-          setDividerLine((px.divider_line as DividerLineKey) || 'default');
           setHoloBanner(!!px.holo_banner);
           const badges = await economy.getBadges(sbUser.id).catch(() => ({} as { firstCutCount?: number }));
           setTierFlags({
@@ -218,7 +215,6 @@ export default function DesktopSettings() {
         kit_favorite_tool: kitTool.trim() || undefined,
         contact_email: contactEmail.trim() || undefined,
         contact_email_public: contactPublic,
-        divider_line: dividerLine === 'default' ? null : dividerLine,
         holo_banner: holoBanner,
       });
       setSaveState('saved');
@@ -322,35 +318,19 @@ export default function DesktopSettings() {
             <div style={{ marginBottom: 20 }}><label style={LABEL}>LOCATION</label>
               <input value={location} onChange={(e) => setLocation(e.target.value.slice(0, 40))} placeholder="CITY, COUNTRY" style={INPUT} /></div>
 
-            {/* DIVIDING LINE — Piece 2 (tier-gated swatches, same rules as mobile) */}
-            <div style={{ marginBottom: 22 }}>
-              <label style={LABEL}>DIVIDING LINE</label>
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                {DIVIDER_ORDER.map((k) => {
-                  const line = DIVIDER_LINES[k];
-                  const tier = dividerTier(tierFlags);
-                  const unlocked = isDividerUnlocked(k, tier);
-                  const active = dividerLine === k;
-                  return (
-                    <button
-                      key={k}
-                      onClick={() => unlocked && setDividerLine(k)}
-                      disabled={!unlocked}
-                      title={unlocked ? line.name : TIER_UNLOCK_LABEL[line.tier as 1 | 2 | 3]}
-                      style={{ width: 56, background: 'transparent', border: 'none', cursor: unlocked ? 'pointer' : 'default', padding: 0, opacity: unlocked ? 1 : 0.3 }}
-                    >
-                      <span style={{ display: 'block', width: 8, height: 44, margin: '0 auto', background: line.gradient, border: active ? '1px solid #E5E1DB' : '1px solid rgba(229,225,219,0.15)' }} />
-                      <span style={{ ...SKB, fontSize: 8, color: active ? '#E5E1DB' : 'rgba(229,225,219,0.5)', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginTop: 5 }}>{line.name}</span>
-                    </button>
-                  );
-                })}
-              </div>
-              {tierFlags.isFoundingMember && (
-                <button onClick={() => setHoloBanner((h) => !h)} style={{ ...SKB, fontSize: 10, color: holoBanner ? '#E5E1DB' : 'rgba(229,225,219,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em', background: 'transparent', border: `1px solid ${HAIR}`, cursor: 'pointer', padding: '6px 12px', marginTop: 10 }}>
+            {/* Brief D5 §3 — the DIVIDING LINE picker is REMOVED (3rd attempt; the two prior
+                removals were on the MOBILE settings twin — this desktop DesktopSettings copy
+                was the surviving render path, flagged-but-kept since M2). The HOLO BANNER
+                toggle (a SEPARATE founding-member feature that was nested here) is preserved
+                under its own label. DB column divider_line is untouched (no longer written). */}
+            {tierFlags.isFoundingMember && (
+              <div style={{ marginBottom: 22 }}>
+                <label style={LABEL}>HOLO BANNER</label>
+                <button onClick={() => setHoloBanner((h) => !h)} style={{ ...SKB, fontSize: 10, color: holoBanner ? '#E5E1DB' : 'rgba(229,225,219,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em', background: 'transparent', border: `1px solid ${HAIR}`, cursor: 'pointer', padding: '6px 12px' }}>
                   HOLO BANNER · {holoBanner ? 'ON' : 'OFF'}
                 </button>
-              )}
-            </div>
+              </div>
+            )}
 
             {/* KIT — camera / lens / favorite tool (profiles.kit_*) */}
             <div style={{ marginBottom: 22 }}>

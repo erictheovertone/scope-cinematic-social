@@ -32,6 +32,13 @@ export default function DesktopHome() {
   const [modesOpen, setModesOpen] = useState(false);
   const [view, setView] = useState<number | null>(null); // home-feed lightbox
   const [theatreOpen, setTheatreOpen] = useState(false); // theatre on the feed posts
+  // Brief D5 §1 — theatre origin continuity (desktop echo of mobile M3c). Capture the
+  // lightbox's open index on entry so theatre STARTS on that post (not index 0), track the
+  // index the user ends on, and — when theatre was entered FROM the lightbox — return to
+  // the lightbox on that ended post.
+  const [theatreStart, setTheatreStart] = useState(0);
+  const theatreIdx = useRef(0);
+  const theatreFromLightbox = useRef(false);
   const [flash, setFlash] = useState(false); // mode-switch flash-through-black
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null); // the feed's own scroller (body is overflow:hidden)
@@ -101,7 +108,15 @@ export default function DesktopHome() {
     setModesOpen(false);
     switchWith(() => {
       setTheatreOpen(false);
-      if (mode === 'theatre') { setView(null); setTheatreOpen(true); }
+      if (mode === 'theatre') {
+        // Enter on the lightbox's open post (or 0 from the grid); remember the origin.
+        const start = view != null ? view : 0;
+        theatreFromLightbox.current = view != null;
+        theatreIdx.current = start;
+        setTheatreStart(start);
+        setView(null);
+        setTheatreOpen(true);
+      }
       else if (mode === 'lightbox') { setTheatreOpen(false); setView((v) => (v == null ? 0 : v)); }
       else if (mode === 'screening') { setView(null); router.push('/screening-room'); }
       else { setView(null); } // feed → back to the grid
@@ -174,7 +189,18 @@ export default function DesktopHome() {
       {/* THEATRE on the feed's posts (desktop theatre — arrows/keyboard; the rail
           stands down via the theatre-mode takeover). */}
       {theatreOpen && posts && posts.length > 0 && (
-        <TheatreMode posts={posts} source="feed" onClose={() => setTheatreOpen(false)} />
+        <TheatreMode
+          posts={posts}
+          source="feed"
+          startIndex={theatreStart}
+          onIndexChange={(i) => { theatreIdx.current = i; }}
+          onClose={() => {
+            setTheatreOpen(false);
+            // Origin continuity: entered from the lightbox → reopen it on the ended-on post;
+            // entered from the grid → back to the grid (view stays null).
+            if (theatreFromLightbox.current) setView(theatreIdx.current);
+          }}
+        />
       )}
 
       {/* MODE-SWITCH FLASH — one language for every switch: cut through black. */}

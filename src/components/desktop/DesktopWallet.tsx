@@ -29,6 +29,7 @@ import { feedImage } from '@/lib/mediaUrl';
 import EarningsSheet from '@/components/economy/EarningsSheet';
 import SwapSheet, { type SwapInitial } from '@/components/SwapSheet';
 import { GAS_FLOOR_ETH } from '@/lib/economy/preflight';
+import { openPostLightbox } from '@/lib/postLightbox';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -265,7 +266,11 @@ export default function DesktopWallet() {
                 ) : holdings.length === 0 ? (
                   <p style={{ ...SKR, fontSize: 11, color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase', padding: '18px 0' }}>NO POSITIONS YET</p>
                 ) : holdings.map((h) => (
-                  <div key={h.postId} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '11px 0', borderBottom: `1px solid ${HAIR}` }}>
+                  /* Brief D5 §2 — the row navigates to the held post's canonical view. The
+                     holdings payload already carries postId (Holding.postId), so no query
+                     addition/per-row fetch is needed. openPostLightbox is the app-wide
+                     open-post-by-id path (PostLightboxHost, mounted in Providers). */
+                  <button key={h.postId} onClick={() => openPostLightbox(h.postId)} className="tappable" style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '11px 0', width: '100%', textAlign: 'left', background: 'transparent', border: 'none', borderBottom: `1px solid ${HAIR}`, cursor: 'pointer' }}>
                     {h.thumbUrl ? (
                       <img src={feedImage(h.thumbUrl, 600)} alt="" style={{ width: 108, height: 62, objectFit: 'cover', display: 'block', background: '#111', flexShrink: 0 }} />
                     ) : <div style={{ width: 108, height: 62, background: '#111', flexShrink: 0 }} />}
@@ -274,7 +279,7 @@ export default function DesktopWallet() {
                       <span style={{ ...SKR, fontSize: 10.5, color: 'rgba(229,225,219,0.5)', display: 'block', marginTop: 3 }}>{h.pieces.toLocaleString()} FRAGMENTS · MC {h.priceUsd != null ? usd(h.priceUsd * 10_000) : '$—'}</span>
                     </span>
                     <span style={{ ...SKB, fontSize: 13.5, color: '#E5E1DB', fontVariantNumeric: 'tabular-nums' }}>{usd(h.valueUsd)}</span>
-                  </div>
+                  </button>
                 ))}
               </div>
             )}
