@@ -17,7 +17,7 @@ import { updateProfileFields } from '@/lib/userService';
 import { bakeAndStoreDeckCover } from '@/lib/deckCollage';
 import { getUserPosts } from '@/lib/postsService';
 import { useEconomy } from '@/components/EconomyProvider';
-import { resolveBadges } from '@/lib/economy/badges';
+import { resolveBadges, FIRST_CUT_ACTION_MARK } from '@/lib/economy/badges';
 import { feedImage } from '@/lib/mediaUrl';
 import PostModal from '@/components/PostModal';
 import DesktopBioSheet from '@/components/desktop/DesktopBioSheet';
@@ -83,6 +83,10 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
   // ADDS columns only once tiles would exceed ~420px. At 1440 = the user count (anchor);
   // for count=4 → 1920:5, 2560:6, 3440:8.
   const [gridRef, gridCols] = useFluidColumns(gridConf.count, 420, PROFILE_MAX_COLS);
+  // Brief D2 — batched hover-stats per post (likes · comments · first-cut count). Filled by
+  // ONE set-based query each in the load effect below (NOT per-cell). Market cap is FLAGGED:
+  // no batched source (screening_room cache = top-50 only) → omitted this pass.
+  const [statsByPost, setStatsByPost] = useState<Record<string, { likes: number; comments: number; fc: number }>>({});
   const [deckCreateOpen, setDeckCreateOpen] = useState(false);
   const [newDeckTitle, setNewDeckTitle] = useState('');
   const [newDeckDesc, setNewDeckDesc] = useState('');
@@ -160,6 +164,34 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
         // no per-coin holder amplification).
         const { data: collectRows } = await supabase.from('notifications').select('sender_id').eq('recipient_id', privyId).eq('type', 'collect');
         setCollectors(new Set((collectRows ?? []).map((r) => r.sender_id)).size);
+
+        // Brief D2 — GRID HOVER STATS, batched (NOT per-cell): one set-based query each for
+        // likes + comments (by post_id) and first-cut awards (by coin_address). Market cap
+        // has no batched source (screening_room = top-50 only) → omitted, FLAGGED.
+        const postRows = (ps as unknown as { id: string; coin_address?: string | null }[]) ?? [];
+        const ids = postRows.map((r) => r.id).filter(Boolean);
+        const addrs = [...new Set(postRows.map((r) => (r.coin_address ?? '').toLowerCase()).filter(Boolean))];
+        if (ids.length) {
+          const [likesRes, commentsRes, fcRes] = await Promise.all([
+            supabase.from('likes').select('post_id').in('post_id', ids),
+            supabase.from('comments').select('post_id').in('post_id', ids),
+            addrs.length ? supabase.from('first_cut_awards').select('coin_address').in('coin_address', addrs) : Promise.resolve({ data: [] as { coin_address: string }[] }),
+          ]);
+          const tally = (rows: { [k: string]: unknown }[] | null | undefined, key: string): Record<string, number> => {
+            const m: Record<string, number> = {};
+            for (const r of rows ?? []) { const k = String(r[key] ?? '').toLowerCase(); if (k) m[k] = (m[k] ?? 0) + 1; }
+            return m;
+          };
+          const likeM = tally(likesRes.data, 'post_id');
+          const commentM = tally(commentsRes.data, 'post_id');
+          const fcM = tally(fcRes.data as { [k: string]: unknown }[], 'coin_address');
+          const map: Record<string, { likes: number; comments: number; fc: number }> = {};
+          for (const r of postRows) {
+            const a = (r.coin_address ?? '').toLowerCase();
+            map[r.id] = { likes: likeM[r.id.toLowerCase()] ?? 0, comments: commentM[r.id.toLowerCase()] ?? 0, fc: a ? (fcM[a] ?? 0) : 0 };
+          }
+          if (alive) setStatsByPost(map);
+        }
       } catch (e) { console.error('[desktop-profile] load error:', e); }
       finally { if (alive) setLoaded(true); }
     })();
@@ -380,6 +412,24 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
         )}
 
         {tab === 'portfolio' && postView == null && (
+          <>
+          {/* Brief D2 §1 — KILL the auto-dim: the cells inherited the global hover-brighten
+              ([data-no-pop]:hover brightness(1.1) + button:has(img):hover scale+brightness),
+              so the creator's grade looked dimmed at rest and lit on hover. Force none on both
+              so the grid always shows the true grade — no auto-dim, no grow (§3: grid reveals
+              stats, only home MASONRY keeps the F7 hover-grow). §2 — the reveal slides+fades up
+              (reduced-motion: opacity only, no translate). */}
+          <style>{`
+            @media (min-width: 1024px) {
+              .dg-cell:hover { filter: none !important; transform: none !important; }
+              .dg-cell .dg-reveal { opacity: 0; transform: translateY(8px); transition: opacity 200ms ease-out, transform 200ms ease-out; }
+              .dg-cell:hover .dg-reveal { opacity: 1; transform: translateY(0); }
+            }
+            @media (prefers-reduced-motion: reduce) {
+              .dg-cell .dg-reveal { transform: none !important; transition: opacity 200ms ease-out !important; }
+              .dg-cell:hover .dg-reveal { transform: none !important; }
+            }
+          `}</style>
           <div ref={gridRef} style={{ display: 'grid', gridTemplateColumns: `repeat(${gridCols}, 1fr)`, gap: 4, paddingBottom: 80 }}>
             {sortedPosts.map((p, i) => {
               const src = (p.poster_url as string) || (p.thumbnail_url as string) || ((p.media_urls as string[])?.[0] ?? '');
@@ -388,6 +438,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
                 <motion.button
                   key={pid}
                   data-no-pop
+                  className="dg-cell"
                   layoutId={reducedMotion ? undefined : `dpost-${pid}`}
                   transition={{ layout: { duration: 0.18, ease: 'easeOut' } }}
                   initial={false}
@@ -425,6 +476,37 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
                       </svg>
                     </div>
                   )}
+                  {/* Brief D2 §2 — HOVER STATS REVEAL. Gradient over the bottom ~40% only (upper
+                      60% of the artwork untouched); stats slide+fade up on hover (CSS below).
+                      pointer-events:none so it never intercepts the cell's click. Dash rule:
+                      unminted (no coin_address) show only likes/comments — never FC/MC. MC is
+                      omitted entirely this pass (no batched source — FLAGGED). */}
+                  {(() => {
+                    const s = statsByPost[pid] ?? { likes: 0, comments: 0, fc: 0 };
+                    const minted = !!p.coin_address;
+                    const ico: React.CSSProperties = { color: 'rgba(229,225,219,0.7)', flexShrink: 0 };
+                    const val: React.CSSProperties = { fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 11, color: 'var(--ink-100)', fontVariantNumeric: 'tabular-nums', lineHeight: 1 };
+                    return (
+                      <div className="dg-reveal" style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: '40%', pointerEvents: 'none', display: 'flex', alignItems: 'flex-end', padding: '0 9px 8px', zIndex: 2, background: 'linear-gradient(to top, rgba(5,5,5,0.85) 0%, rgba(5,5,5,0.55) 45%, transparent 100%)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={ico}><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" /></svg>
+                            <span style={val}>{s.likes}</span>
+                          </span>
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={ico}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
+                            <span style={val}>{s.comments}</span>
+                          </span>
+                          {minted && (
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                              <img src={FIRST_CUT_ACTION_MARK} alt="" style={{ width: 12, height: 12, objectFit: 'contain', opacity: 0.7, display: 'block' }} />
+                              <span style={val}>{s.fc}</span>
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </motion.button>
               );
             })}
@@ -442,6 +524,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
               )
             )}
           </div>
+          </>
         )}
         {tab === 'portfolio' && postView != null && sortedPosts[postView] && (
           <DesktopPostView
