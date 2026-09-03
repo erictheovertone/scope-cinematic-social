@@ -2,8 +2,9 @@
 
 import { useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { usePrivy } from '@privy-io/react-auth';
+import { usePrivy, useWallets } from '@privy-io/react-auth';
 import { syncUserWithSupabase, getUserByPrivyId, getProfile } from '@/lib/userService';
+import { getEmbeddedAddress } from '@/lib/embeddedWallet';
 
 // Only attempt routing on post-login transition pages.
 // On all other paths we sync silently and let the page handle itself.
@@ -11,8 +12,13 @@ const AUTH_FLOW_PATHS = ['/auth/callback', '/transition'];
 
 export function UserSyncProvider({ children }: { children: React.ReactNode }) {
   const { user, authenticated } = usePrivy();
+  const { wallets } = useWallets();
   const router = useRouter();
   const pathname = usePathname();
+  // Brief W10a — the EMBEDDED wallet address; a dep below so the sync RE-RUNS when Privy
+  // finishes creating the embedded wallet (async at signup) → the users.wallet_address row is
+  // backfilled/corrected to the embedded on first authenticated load, never left as the primary.
+  const embeddedAddress = getEmbeddedAddress(user, wallets);
 
   useEffect(() => {
     console.log('[UserSyncProvider] effect — authenticated:', authenticated, 'user:', user?.id ?? 'null', 'pathname:', pathname);
@@ -24,7 +30,7 @@ export function UserSyncProvider({ children }: { children: React.ReactNode }) {
 
     const syncAndMaybeRoute = async () => {
       // ── Step 1: sync the user row (upsert — always safe to call) ──────────
-      const syncedUser = await syncUserWithSupabase(user);
+      const syncedUser = await syncUserWithSupabase(user, embeddedAddress);
       console.log('[UserSyncProvider] sync complete — supabase id:', syncedUser?.id ?? 'null');
 
       // ── Step 2: only route on post-login paths ─────────────────────────────
@@ -65,7 +71,7 @@ export function UserSyncProvider({ children }: { children: React.ReactNode }) {
         router.replace('/profile/setup');
       }
     });
-  }, [authenticated, user?.id, pathname]);
+  }, [authenticated, user?.id, pathname, embeddedAddress]);
 
   return <>{children}</>;
 }

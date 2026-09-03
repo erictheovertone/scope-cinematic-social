@@ -30,6 +30,7 @@ import EarningsSheet from '@/components/economy/EarningsSheet';
 import SwapSheet, { type SwapInitial } from '@/components/SwapSheet';
 import { GAS_FLOOR_ETH } from '@/lib/economy/preflight';
 import { openPostLightbox } from '@/lib/postLightbox';
+import { getEmbeddedAddress } from '@/lib/embeddedWallet';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -48,12 +49,8 @@ export default function DesktopWallet() {
   const { wallets } = useWallets();
   const { fundWallet } = useFundWallet();
   const economy = useEconomy();
-  // Brief W10 — scope the wallet DISPLAY (balances + activity) to the EMBEDDED wallet — the
-  // one Scope actually transacts with (every collect/trade path uses walletClientType 'privy').
-  // The old `user?.wallet?.address` is Privy's PRIMARY wallet, which is a LINKED EXTERNAL wallet
-  // when the user has one → Activity showed that other wallet's unrelated on-chain history
-  // ("activity that isn't his"). Fall back to the primary only when there's no embedded wallet.
-  const walletAddress = wallets.find((w) => w.walletClientType === 'privy')?.address ?? user?.wallet?.address ?? null;
+  // Brief W10/W10a — scope the wallet DISPLAY to the EMBEDDED wallet via the shared helper.
+  const walletAddress = getEmbeddedAddress(user, wallets);
 
   const [eth, setEth] = useState<number | null>(null);
   const [usdc, setUsdc] = useState<number | null>(null);

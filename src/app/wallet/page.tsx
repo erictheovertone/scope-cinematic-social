@@ -10,6 +10,7 @@ import { base } from "viem/chains";
 import { createWalletClient, custom, getAddress, parseEther, encodeFunctionData } from "viem";
 import { publicClient, errInfo, quoteSwap } from "@/lib/zoraCoins";
 import { getEthBalance, getUsdcBalance, getZoraBalance, getTransactionHistoryCached, invalidateTxHistory } from "@/lib/wallet";
+import { getEmbeddedAddress } from "@/lib/embeddedWallet";
 import { useEconomy } from "@/components/EconomyProvider";
 import TickerMark from "@/components/economy/TickerMark";
 import FrameLoader from "@/components/FrameLoader";
@@ -46,11 +47,8 @@ export default function WalletPage() {
   const { wallets } = useWallets();
   const economy = useEconomy();
   const router = useRouter();
-  // Brief W10 — display the EMBEDDED wallet (walletClientType 'privy') — the wallet Scope
-  // transacts with — not Privy's PRIMARY (`user.wallet.address`), which is a linked EXTERNAL
-  // wallet when the user has one → Activity showed that other wallet's history. Primary is
-  // the fallback only when there's no embedded wallet.
-  const walletAddress = wallets.find((w) => w.walletClientType === "privy")?.address ?? user?.wallet?.address ?? "";
+  // Brief W10/W10a — display the EMBEDDED wallet via the shared helper (single source of truth).
+  const walletAddress = getEmbeddedAddress(user, wallets) ?? "";
 
   const isDesktop = useIsDesktop();
   const [activeTab, setActiveTab] = useState<"balances" | "holdings" | "earnings" | "activity">("balances");

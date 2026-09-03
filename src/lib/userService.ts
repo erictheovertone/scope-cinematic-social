@@ -41,17 +41,27 @@ function sbErr(error: unknown): string {
   return [e.message, e.code, e.details, e.hint].filter(Boolean).join(' | ') || JSON.stringify(error);
 }
 
-export const syncUserWithSupabase = async (privyUser: { id: string; wallet?: { address: string } }): Promise<User | null> => {
+export const syncUserWithSupabase = async (
+  privyUser: { id: string; wallet?: { address: string } },
+  // Brief W10a — the EMBEDDED wallet address (getEmbeddedAddress), resolved by the caller
+  // which has useWallets(). Omitted → falls back to the primary (privyUser.wallet.address) for
+  // back-compat, but the primary caller (UserSyncProvider) now always passes the embedded.
+  walletAddress?: string | null,
+): Promise<User | null> => {
   console.log('[syncUserWithSupabase] called for privy_id:', privyUser.id);
 
   try {
+    const resolved = walletAddress !== undefined ? walletAddress : (privyUser.wallet?.address ?? null);
+    // W10a — only write a REAL address; NEVER overwrite an existing good wallet_address with
+    // null (the embedded can be transiently absent while Privy creates it). Omitting the column
+    // preserves the current value on conflict (insert → DB null default).
+    const payload: { privy_id: string; wallet_address?: string } = { privy_id: privyUser.id };
+    if (resolved) payload.wallet_address = resolved;
+
     // Upsert on privy_id — idempotent, never fails on duplicate, always returns the row
     const { data, error } = await supabase
       .from('users')
-      .upsert(
-        { privy_id: privyUser.id, wallet_address: privyUser.wallet?.address || null },
-        { onConflict: 'privy_id' }
-      )
+      .upsert(payload, { onConflict: 'privy_id' })
       .select()
       .single();
 
