@@ -157,7 +157,7 @@ export default function CreateCoinSheet({
               <div style={{ display: 'flex', alignItems: 'center', border: '1px solid rgba(229,225,219,0.18)', padding: '0 12px', marginTop: 6 }}>
                 <span style={{ ...SKB, fontSize: 'var(--fs-16)', color: '#E5E1DB' }}>[</span>
                 <input value={ticker} onChange={(e) => setTicker(normalizeTicker(e.target.value))} placeholder="TICKER" maxLength={6}
-                  style={{ ...SKB, fontSize: 'var(--fs-16)', color: '#E5E1DB', background: 'transparent', border: 'none', outline: 'none', width: '100%', padding: '11px 8px', letterSpacing: '0.08em', textTransform: 'uppercase', textAlign: 'center' }} />
+                  style={{ ...SKB, fontSize: 'var(--fs-16)', color: '#E5E1DB', background: 'transparent', WebkitAppearance: 'none', appearance: 'none', caretColor: '#E5E1DB', border: 'none', outline: 'none', width: '100%', padding: '11px 8px', letterSpacing: '0.08em', textTransform: 'uppercase', textAlign: 'center' }} />
                 <span style={{ ...SKB, fontSize: 'var(--fs-16)', color: '#E5E1DB' }}>]</span>
               </div>
               {tickerError(ticker) && <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: '#E5E1DB', margin: '6px 0 0', textTransform: 'uppercase' }}>{tickerError(ticker)}</p>}
@@ -168,7 +168,7 @@ export default function CreateCoinSheet({
               <div style={{ display: 'flex', alignItems: 'center', border: '1px solid rgba(229,225,219,0.18)', padding: '0 12px', marginTop: 6 }}>
                 <span style={{ ...SKB, fontSize: 'var(--fs-16)', color: selfBuyUsd ? '#E5E1DB' : 'rgba(229,225,219,0.3)' }}>$</span>
                 <input inputMode="decimal" value={selfBuyUsd} onChange={(e) => setSelfBuyUsd(e.target.value.replace(/[^0-9.]/g, ''))} placeholder="0"
-                  style={{ ...SKB, fontSize: 'var(--fs-16)', color: '#E5E1DB', background: 'transparent', border: 'none', outline: 'none', width: '100%', padding: '11px 6px' }} />
+                  style={{ ...SKB, fontSize: 'var(--fs-16)', color: '#E5E1DB', background: 'transparent', WebkitAppearance: 'none', appearance: 'none', caretColor: '#E5E1DB', border: 'none', outline: 'none', width: '100%', padding: '11px 6px' }} />
               </div>
             </div>
 
@@ -185,7 +185,9 @@ export default function CreateCoinSheet({
             ) : (
               <button onClick={run} disabled={!isValidTicker(ticker)}
                 style={{ width: '100%', background: !isValidTicker(ticker) ? 'rgba(229,225,219,0.4)' : '#E5E1DB', border: 'none', cursor: !isValidTicker(ticker) ? 'default' : 'pointer', padding: '14px 0', marginBottom: 8 }}>
-                <span style={{ ...SKB, fontSize: 'var(--fs-12)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                {/* Brief X2 §3 — the ENABLED state fills solid ivory → its label must go charcoal
+                    (--on-ink); the disabled state is a translucent grey where ivory reads fine. */}
+                <span style={{ ...SKB, fontSize: 'var(--fs-12)', color: isValidTicker(ticker) ? 'var(--on-ink)' : '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                   {/* Amount = the consented spend; "BACK" banned from the button. */}
                   {!isValidTicker(ticker) ? 'ENTER A TICKER'
                     : (() => { const b = parseFloat(selfBuyUsd); return isFinite(b) && b > 0 ? `CREATE COIN · $${b.toFixed(2)}` : 'CREATE COIN'; })()}

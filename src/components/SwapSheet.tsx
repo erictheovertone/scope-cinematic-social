@@ -396,7 +396,7 @@ export default function SwapSheet({ visible, onClose, ethBalance, usdcBalance, z
                 disabled={!validAmount || overMax || quoteOut == null}
                 style={{ width: '100%', background: !validAmount || overMax || quoteOut == null ? 'rgba(229,225,219,0.4)' : '#E5E1DB', border: 'none', cursor: !validAmount || overMax || quoteOut == null ? 'default' : 'pointer', padding: '14px 0', marginTop: 14 }}
               >
-                <span style={{ ...SKB, fontSize: 'var(--fs-12)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                <span style={{ ...SKB, fontSize: 'var(--fs-12)', color: (!validAmount || overMax || quoteOut == null) ? '#E5E1DB' : 'var(--on-ink)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                   {cashOut ? 'CONFIRM CASH OUT' : 'CONFIRM SWAP'}
                 </span>
               </button>

@@ -280,7 +280,7 @@ export default function MintPromptSheet({ visible, onMint, onSkip, onCoinSkipped
                   onChange={(e) => onTickerChange(e.target.value)}
                   placeholder="TICKER"
                   maxLength={6}
-                  style={{ ...SKB, fontSize: 'var(--fs-16)', color: '#E5E1DB', background: 'transparent', border: 'none', outline: 'none', width: '100%', padding: '11px 8px', letterSpacing: '0.08em', textTransform: 'uppercase', textAlign: 'center' }}
+                  style={{ ...SKB, fontSize: 'var(--fs-16)', color: '#E5E1DB', background: 'transparent', WebkitAppearance: 'none', appearance: 'none', caretColor: '#E5E1DB', border: 'none', outline: 'none', width: '100%', padding: '11px 8px', letterSpacing: '0.08em', textTransform: 'uppercase', textAlign: 'center' }}
                 />
                 <span style={{ ...SKB, fontSize: 'var(--fs-16)', color: '#E5E1DB' }}>]</span>
               </div>
@@ -371,7 +371,9 @@ export default function MintPromptSheet({ visible, onMint, onSkip, onCoinSkipped
                   disabled={!walletReady || checkingBalance || !isValidTicker(ticker)}
                   style={{ width: '100%', background: (!walletReady || checkingBalance || !isValidTicker(ticker)) ? 'rgba(229,225,219,0.4)' : '#E5E1DB', border: 'none', cursor: (!walletReady || checkingBalance || !isValidTicker(ticker)) ? 'default' : 'pointer', padding: '14px 0', marginBottom: 10 }}
                 >
-                  <span style={{ ...SKB, fontSize: 'var(--fs-12)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.08em', animation: !walletReady ? 'mp-connect-pulse 1.4s ease-in-out infinite' : 'none' }}>
+                  {/* Brief X2 §3 — enabled = solid ivory fill → label goes charcoal (--on-ink);
+                      the disabled translucent-grey state keeps ivory. */}
+                  <span style={{ ...SKB, fontSize: 'var(--fs-12)', color: (!walletReady || checkingBalance || !isValidTicker(ticker)) ? '#E5E1DB' : 'var(--on-ink)', textTransform: 'uppercase', letterSpacing: '0.08em', animation: !walletReady ? 'mp-connect-pulse 1.4s ease-in-out infinite' : 'none' }}>
                     {/* The button carries the plain-language contract — this tap IS
                         the consent for everything it names (no second confirm). */}
                     {/* Amount = the consented spend. No word that can read as

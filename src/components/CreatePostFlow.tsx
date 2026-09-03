@@ -1684,8 +1684,14 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
         <CropTool
           mediaUrl={selectedMedia[0].url}
           mediaType={selectedMedia[0].type}
-          allowArChoice={userLayoutId === 'collage'}
-          initialAr={chipForLayout(userLayoutId).id}
+          // Brief X2 §1 — derive the crop AR from the SAME resolved layout the bake + finishing
+          // use (finishCtx.layoutId = the loaded, LEGACY_TO_CANONICAL-mapped grid, == handlePost's
+          // canonicalLayoutId), NOT the raw prop userLayoutId. The prop is a SECOND async source
+          // (create/page's state, default 'scope' until its own profile load), so it drifted from
+          // the bake's layout → the crop composed at one ratio but baked at another (wrong frame
+          // AND result≠selection, from one cause). Fallback to the prop only pre-finishCtx.
+          allowArChoice={(finishCtx?.gridLayout ?? (userLayoutId === 'collage' ? 'collage' : 'standard')) === 'collage'}
+          initialAr={chipForLayout(finishCtx?.layoutId ?? userLayoutId).id}
           onCancel={() => setStep('media')}
           onConfirm={(geom, layoutId) => {
             setEditGeometry(geom);

@@ -103,7 +103,7 @@ export default function ImportAssetSheet({ visible, onClose, userUuid, onAdded }
             disabled={!address.trim()}
             style={{ width: '100%', background: !address.trim() ? 'rgba(229,225,219,0.4)' : '#E5E1DB', border: 'none', cursor: !address.trim() ? 'default' : 'pointer', padding: '14px 0', marginTop: 14 }}
           >
-            <span style={{ ...SKB, fontSize: 'var(--fs-12)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.08em' }}>IMPORT</span>
+            <span style={{ ...SKB, fontSize: 'var(--fs-12)', color: address.trim() ? 'var(--on-ink)' : '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.08em' }}>IMPORT</span>
           </button>
         )}
       </div>
