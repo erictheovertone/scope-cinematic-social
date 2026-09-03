@@ -127,6 +127,10 @@ export default function TheatreMode({
   const portrait = vp.h >= vp.w;          // taller than wide → rotate to present landscape
   const stageW = portrait ? vp.h : vp.w;  // landscape width
   const stageH = portrait ? vp.w : vp.h;  // landscape height
+  // Brief Q1 — the IMAGE rendition to request for this stage: ~the media box width (0.92·stageW
+  // matches availW below), capped at the 2560 tier. Display-aware → 1600 on ≤~1740px stages,
+  // 2560 above. POSTER path keeps THEATRE_IMG_WIDTH (untouched). Same value drives the preload.
+  const stageImgW = Math.min(2560, Math.round(stageW * 0.92));
 
   const post = posts[index] as AnyPost | undefined;
   const coinAddr = post && isCoinPost(post as { coin_address?: string | null; token_standard?: string | null })
@@ -188,7 +192,7 @@ export default function TheatreMode({
         : (p['media_urls'] as string[] | undefined)?.[0];
       if (!raw) return;
       const im = new window.Image();
-      im.src = feedImage(raw, THEATRE_IMG_WIDTH);
+      im.src = feedImage(raw, vid ? THEATRE_IMG_WIDTH : stageImgW); // poster stays 1600; image is stage-sized
       im.decode?.().catch(() => { /* decode-on-paint fallback */ });
     });
   }, [index, posts]);
@@ -437,7 +441,7 @@ export default function TheatreMode({
               style={{ width: '100%', height: '100%' }}
             />
           ) : (
-            url && <img src={feedImage(url, THEATRE_IMG_WIDTH)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+            url && <img src={feedImage(url, stageImgW)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} /> /* Brief Q1 — stage-sized image rendition (2560 tier above ~1740px) */
           )}
         </div>
       </div>

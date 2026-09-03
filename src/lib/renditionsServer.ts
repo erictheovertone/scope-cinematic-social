@@ -35,7 +35,7 @@ function parsePublicUrl(url: string): { bucket: string; path: string } | null {
 export async function bakeRenditionsFromUrl(
   supabase: SupabaseClient,
   masterUrl: string,
-): Promise<{ width: number; ok: boolean; bytes?: number; error?: string }[]> {
+): Promise<{ width: number; ok: boolean; bytes?: number; error?: string; skipped?: boolean }[]> {
   const parsed = parsePublicUrl(masterUrl);
   if (!parsed) return RENDITION_WIDTHS.map((w) => ({ width: w, ok: false, error: 'not a public object url' }));
   const { bucket, path } = parsed;
@@ -44,8 +44,16 @@ export async function bakeRenditionsFromUrl(
   if (!res.ok) return RENDITION_WIDTHS.map((w) => ({ width: w, ok: false, error: `fetch master ${res.status}` }));
   const input = Buffer.from(await res.arrayBuffer());
 
-  const out: { width: number; ok: boolean; bytes?: number; error?: string }[] = [];
+  // Brief Q1 — the master's longest side. The 2560 tier is baked ONLY when the master is
+  // genuinely ≥2560 (no upscaling, no redundant near-1600 file). withoutEnlargement already
+  // prevents pixel-upscaling; this guard prevents WASTING storage on a mislabeled 2560.
+  let longest = 0;
+  try { const meta = await sharp(input).metadata(); longest = Math.max(meta.width ?? 0, meta.height ?? 0); } catch { /* longest stays 0 → 2560 skipped */ }
+
+  const out: { width: number; ok: boolean; bytes?: number; error?: string; skipped?: boolean }[] = [];
   for (const w of RENDITION_WIDTHS) {
+    // Guard the 2560 tier only; 600/1600 baking is unchanged (existing renditions untouched).
+    if (w >= 2560 && longest < w) { out.push({ width: w, ok: false, skipped: true, error: `master longest side ${longest} < ${w}` }); continue; }
     try {
       const webp = await sharp(input)
         .rotate() // honor EXIF orientation before resize

@@ -68,6 +68,21 @@ export default function DesktopPostView({
   const [comments, setComments] = useState<{ id?: string; username?: string; content?: string; created_at?: string }[]>([]);
   const [market, setMarket] = useState<{ mcUsd: number; holders: number | null; live: boolean } | null>(null);
   const [viewer, setViewer] = useState<{ uuid: string; name: string; avatar: string | null } | null>(null);
+  // Brief Q1 — measure the stage box so the IMAGE requests a display-sized rendition (the
+  // 2560 tier once the stage exceeds ~1600px; ≤ that stays 1600). Lightbox stage ≈ 1452 @1920
+  // → 1600, ≈ 2092 @2560 → 2560; the profile framing's capped stage stays 1600. Poster path
+  // (posterWidth 1600) untouched.
+  const stageRef = useRef<HTMLDivElement>(null);
+  const [stageW, setStageW] = useState(1600);
+  useEffect(() => {
+    const el = stageRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const measure = () => { const w = el.clientWidth; if (w > 0) setStageW(w); };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
   const [avatars, setAvatars] = useState<Map<string, string>>(new Map());
   const [newComment, setNewComment] = useState('');
   const [replyingTo, setReplyingTo] = useState<UIComment | null>(null);
@@ -181,7 +196,7 @@ export default function DesktopPostView({
               morph target. Each post sits at its own ratio within. 2.39 lets the
               common scope/pana posts FILL the width so the media hugs the arrows
               (the #8 binding-dimension fix — a 2.75 box pillarboxed them small). */}
-          <motion.div layoutId={`dpost-${postId}`} transition={{ layout: { duration: 0.18, ease: 'easeOut' } }} style={{ width: '100%', aspectRatio: '2.39 / 1', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+          <motion.div ref={stageRef} layoutId={`dpost-${postId}`} transition={{ layout: { duration: 0.18, ease: 'easeOut' } }} style={{ width: '100%', aspectRatio: '2.39 / 1', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
             <div style={{ ...(ar >= 2.39 ? { width: '100%' } : { height: '100%' }), aspectRatio: `${ar}`, overflow: 'hidden', background: '#0a0a0a' }}>
               {isVideo ? (
                 <GradedVideo
@@ -201,7 +216,7 @@ export default function DesktopPostView({
                   style={{ width: '100%', height: '100%' }}
                 />
               ) : (
-                mediaUrl && <img src={feedImage(mediaUrl, 1600)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                mediaUrl && <img src={feedImage(mediaUrl, Math.min(2560, Math.round(stageW)))} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} /> /* Brief Q1 — stage-sized rendition (2560 above ~1600px) */
               )}
             </div>
           </motion.div>
