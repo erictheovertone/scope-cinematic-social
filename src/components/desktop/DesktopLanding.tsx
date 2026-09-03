@@ -22,11 +22,13 @@ export default function DesktopLanding() {
   const router = useRouter();
   const { login } = useLogin({ onComplete: () => router.push('/auth/callback'), onError: (e) => console.error('[landing] auth error:', e) });
 
+  // Aligned to the OUTER left edge of the "s" swash (Eric): 0 left padding + a small
+  // negative margin (scaled to the 160px wordmark) pulls the text to the "s" leftmost point.
   const action: React.CSSProperties = {
     fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 20,
     letterSpacing: 'var(--track-display)', color: 'var(--ink-100)',
     background: 'transparent', border: 'none', cursor: 'pointer',
-    padding: '4px 6px', lineHeight: 1.25, textAlign: 'left', whiteSpace: 'nowrap', display: 'block',
+    padding: '4px 6px 4px 0', marginLeft: -8, lineHeight: 1.25, textAlign: 'left', whiteSpace: 'nowrap', display: 'block',
   };
 
   return (
@@ -41,13 +43,6 @@ export default function DesktopLanding() {
         </span>
         <button onClick={login} aria-label="Log in" style={{ ...action, marginTop: 26 }}>Login</button>
         <button onClick={login} aria-label="Sign up" style={{ ...action, marginTop: 10 }}>Sign Up</button>
-      </div>
-
-      {/* Brief S2b §4 — quiet terms/privacy micro-line (frame omits it; proposed, not dropped). */}
-      <div style={{ position: 'absolute', left: 0, right: 0, bottom: 'calc(var(--safe-bottom) + 22px)', textAlign: 'center' }}>
-        <a href="/profile/terms" style={{ fontFamily: 'var(--font-body)', fontWeight: 400, fontSize: 11, letterSpacing: 'var(--track-body)', color: 'rgba(229,225,219,0.3)', textDecoration: 'none' }}>
-          Terms &amp; Privacy
-        </a>
       </div>
     </div>
   );
