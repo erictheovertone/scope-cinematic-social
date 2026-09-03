@@ -266,8 +266,13 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
   // Brief R1 — ONE shared left edge for header + tabs + grid via <DesktopShell>; the
   // cap lifts from the old 1369 to --shell-max (1600) and the rail offset is --rail-w.
 
+  // Brief D3 §2 — the fixed scroller had NO overscroll containment (the one desktop scroller
+  // R1 left bare), so it elastic-bounced past content into the black body (the "void"); and the
+  // full-bleed divider below (margin:0 -100vw) overflowed horizontally. overscroll-behavior:
+  // contain stops the bounce; overflow-x:hidden clips the bleed → scroll extent bounded by
+  // content on both axes. scrollHeight == content (no true vertical inflation — it was the bounce).
   return (
-    <div ref={scrollerRef} className="bg-black" style={{ position: 'fixed', inset: 0, left: 'var(--rail-w)', overflowY: 'auto' }}>
+    <div ref={scrollerRef} className="bg-black" style={{ position: 'fixed', inset: 0, left: 'var(--rail-w)', overflowY: 'auto', overflowX: 'hidden', overscrollBehavior: 'contain' }}>
       <DesktopShell width="fluid" padding="0 24px">
 
         {/* ═══ HEADER ZONE (node 38:88 — header band ends at the y205 hairline) ═══ */}
@@ -280,21 +285,34 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
             ) : <div style={{ width: '100%', height: '100%', background: '#141414' }} />}
           </div>
 
-          {/* Text block — name x288 (frame). 2-col grid gives the wide first/last
-              gap (flex, not spaces) + the handle tracking under the first-name-end. */}
+          {/* Text block — name x288 (frame). Brief D3 §3 — adopt mobile's NAME-EDGE SYSTEM
+              (the same declarative CSS pattern as ProfileHeader, node 38:88; it's a layout
+              pattern, not extractable math): an inline-flex column that shrink-wraps to the
+              rendered NAME width, so the handle (justify flex-end) right-aligns to the name's
+              right edge, and PRO is absolute (left:100%) — excluded from the width/edge. This
+              replaces the old grid where the handle was left-anchored under the name gap. */}
           <div style={{ position: 'absolute', left: 196, top: 13, right: 250 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'auto minmax(10px, 40px) 1fr', alignItems: 'baseline', rowGap: 6 }}>
-              <span style={{ gridColumn: 1, gridRow: 1, fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 21, letterSpacing: 'var(--track-display)', color: 'var(--ink-100)', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{firstName}</span>
-              <span style={{ gridColumn: lastName ? 3 : 1, gridRow: 1, display: 'inline-flex', alignItems: 'baseline', gap: 5, minWidth: 0 }}>
-                {lastName && <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 21, letterSpacing: 'var(--track-display)', color: 'var(--ink-100)', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{lastName}</span>}
-                {profile && isProMember(profile as { is_paid_member?: boolean; paid_member_until?: string | null }) && (
-                  <span style={{ fontFamily: 'var(--font-black)', fontWeight: 900, fontSize: 6.7, color: 'rgba(229,225,219,0.64)', letterSpacing: 'var(--track-wide)', alignSelf: 'flex-start', transform: 'translateY(2px)', flexShrink: 0 }}>PRO</span>
+            <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'stretch', position: 'relative', maxWidth: '100%' }}>
+              {/* name row — first · gap · last ONLY (PRO excluded); the widest child, so it
+                  sets the column width = the shared alignment edge. */}
+              <div style={{ display: 'flex', alignItems: 'baseline', whiteSpace: 'nowrap' }}>
+                <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 21, letterSpacing: 'var(--track-display)', color: 'var(--ink-100)', textTransform: 'uppercase', flexShrink: 0, lineHeight: 1 }}>{firstName}</span>
+                {lastName && (
+                  <>
+                    <span aria-hidden style={{ flexShrink: 0, width: 'min(3vw, 40px)' }} />
+                    <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 21, letterSpacing: 'var(--track-display)', color: 'var(--ink-100)', textTransform: 'uppercase', flexShrink: 0, lineHeight: 1 }}>{lastName}</span>
+                  </>
                 )}
-              </span>
-              <span style={{ gridColumn: lastName ? '2 / span 2' : 1, gridRow: 2, display: 'inline-flex', alignItems: 'baseline', gap: 4, opacity: 0.64, minWidth: 0 }}>
+              </div>
+              {/* PRO — independent absolute chip just beyond the name; never in the edge math. */}
+              {profile && isProMember(profile as { is_paid_member?: boolean; paid_member_until?: string | null }) && (
+                <span style={{ position: 'absolute', left: '100%', top: 2, marginLeft: 6, whiteSpace: 'nowrap', fontFamily: 'var(--font-black)', fontWeight: 900, fontSize: 6.7, color: 'rgba(229,225,219,0.64)', letterSpacing: 'var(--track-wide)' }}>PRO</span>
+              )}
+              {/* handle — RIGHT edge == the name's right edge (justify flex-end in the shrink column). */}
+              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'flex-end', gap: 4, opacity: 0.64, marginTop: 6 }}>
                 <span style={{ fontFamily: 'var(--font-light)', fontWeight: 400, fontSize: 8, color: 'var(--ink-100)', letterSpacing: 'var(--track-wide)' }}>[ at ]</span>
                 <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 10, color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: 'var(--track-body)', whiteSpace: 'nowrap' }}>{handle}</span>
-              </span>
+              </div>
             </div>
 
             {/* Bio — single line (frame y71) */}
