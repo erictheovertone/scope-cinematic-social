@@ -31,6 +31,7 @@ import FilmstripIndicator from '@/components/FilmstripIndicator';
 import { resolveLayout, ratioForAspect, type AspectId } from '@/lib/layoutModel';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useRef } from 'react';
+import DesktopShell from '@/components/desktop/DesktopShell';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -218,13 +219,12 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
     ['POSTS', posts.length], ['DECKS', decks.length],
   ];
 
-  // 1440 reference — content scales proportionally; the rail is fixed 71.
-  // ONE shared left edge for header + tabs + grid; tightened inset (item 4/7).
-  const scaleWrap: React.CSSProperties = { maxWidth: 1369, margin: '0 auto', padding: '0 24px' };
+  // Brief R1 — ONE shared left edge for header + tabs + grid via <DesktopShell>; the
+  // cap lifts from the old 1369 to --shell-max (1600) and the rail offset is --rail-w.
 
   return (
-    <div ref={scrollerRef} className="bg-black" style={{ position: 'fixed', inset: 0, left: 71, overflowY: 'auto' }}>
-      <div style={scaleWrap}>
+    <div ref={scrollerRef} className="bg-black" style={{ position: 'fixed', inset: 0, left: 'var(--rail-w)', overflowY: 'auto' }}>
+      <DesktopShell padding="0 24px">
 
         {/* ═══ HEADER ZONE (node 38:88 — header band ends at the y205 hairline) ═══ */}
         <div style={{ position: 'relative', height: 205, boxSizing: 'border-box' }}>
@@ -490,7 +490,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
             </div>
           </div>
         )}
-      </div>
+      </DesktopShell>
 
       {theatreOpen && (
         <TheatreMode posts={sortedPosts as Record<string, unknown>[]} source="profile" onClose={() => setTheatreOpen(false)} />

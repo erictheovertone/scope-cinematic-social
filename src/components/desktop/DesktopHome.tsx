@@ -18,9 +18,9 @@ import PostItem from '@/components/PostItem';
 import DesktopHomeLightbox from '@/components/desktop/DesktopHomeLightbox';
 import DesktopViewingModes, { type ViewingMode } from '@/components/desktop/DesktopViewingModes';
 import TheatreMode from '@/components/TheatreMode';
+import DesktopShell from '@/components/desktop/DesktopShell';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
-const RAIL_W = 71; // clear the global left rail
 
 export default function DesktopHome() {
   const router = useRouter();
@@ -107,8 +107,8 @@ export default function DesktopHome() {
     // The shell fixes html/body (overflow:hidden) — so the feed needs its OWN
     // full-height scroller, the same fixed/inset-0/overflow-y:auto pattern the
     // desktop profile page uses (cleared past the 71px rail).
-    <div ref={scrollRef} className="bg-black" style={{ position: 'fixed', inset: 0, left: RAIL_W, background: '#000', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
-      <div style={{ maxWidth: 1440, margin: '0 auto', padding: '40px 48px 96px' }}>
+    <div ref={scrollRef} className="bg-black" style={{ position: 'fixed', inset: 0, left: 'var(--rail-w)', background: '#000', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
+      <DesktopShell padding="40px 48px 96px">{/* Brief R1 — grid canvas, cap lifted 1440→--shell-max (1600) */}
         {/* DISCOVER — the page title, top-left of the content column (mobile home's
             title, now on desktop). SK-Modernist Bold, −0.06em, 40px page-title scale. */}
         {/* DISCOVER title + SEARCH control (top-right — same language as the lightbox) */}
@@ -155,7 +155,7 @@ export default function DesktopHome() {
             {hasMore && <div ref={sentinelRef} style={{ height: 1 }} />}
           </>
         )}
-      </div>
+      </DesktopShell>
 
       {/* ── HOME FEED LIGHTBOX (overlay) ── */}
       {view != null && posts && posts[view] && (

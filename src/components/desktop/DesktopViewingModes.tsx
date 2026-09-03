@@ -13,7 +13,6 @@ const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fon
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
 const HAIR = 'rgba(229,225,219,0.12)';
 const RED = '#E5E1DB';
-const RAIL_W = 71; // keep the global rail visible
 
 export type ViewingMode = 'theatre' | 'screening' | 'lightbox' | 'mirage' | 'feed';
 
@@ -69,7 +68,7 @@ export default function DesktopViewingModes({ currentMode, onClose, onSelect }: 
     <div data-swipe-exclude style={{ position: 'fixed', inset: 0, zIndex: 200 }}>
       <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.92)', opacity: mounted ? 1 : 0, transition: reduced ? 'none' : 'opacity 220ms ease' }} />
       {/* content panel — offset right of the rail, scrollable, centered column */}
-      <div style={{ position: 'absolute', top: 0, left: RAIL_W, right: 0, bottom: 0, overflowY: 'auto' }}>
+      <div style={{ position: 'absolute', top: 0, left: 'var(--rail-w)', right: 0, bottom: 0, overflowY: 'auto' }}>
         <button onClick={onClose} aria-label="Close" style={{ position: 'fixed', top: 26, right: 34, zIndex: 2, background: 'transparent', border: 'none', cursor: 'pointer', ...SKR, fontSize: 22, color: 'rgba(229,225,219,0.55)', lineHeight: 1, padding: 4 }}>✕</button>
         <div style={{ maxWidth: 1120, margin: '0 auto', padding: '72px 56px 96px', opacity: mounted ? 1 : 0, transform: mounted ? 'translateY(0)' : 'translateY(10px)', transition: reduced ? 'none' : 'opacity 320ms ease, transform 320ms cubic-bezier(0.16,0.84,0.3,1)' }}>
 

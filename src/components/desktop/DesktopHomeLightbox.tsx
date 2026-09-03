@@ -18,7 +18,6 @@ import DesktopPostView from '@/components/desktop/DesktopPostView';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
-const RAIL_W = 71;
 
 type P = Record<string, unknown>;
 const thumbOf = (p: P): string =>
@@ -178,11 +177,11 @@ export default function DesktopHomeLightbox({
   ) : undefined;
 
   return createPortal(
-    // left:RAIL_W keeps the global rail (z80) VISIBLE beneath this z140 overlay.
+    // left:var(--rail-w) keeps the global rail (z80) VISIBLE beneath this z140 overlay.
     // overflow:hidden → everything fits one screen, no scroll (frame 775:4).
-    <div data-swipe-exclude style={{ position: 'fixed', top: 0, right: 0, bottom: 0, left: RAIL_W, zIndex: 140, background: '#000', overflow: 'hidden' }}>
+    <div data-swipe-exclude style={{ position: 'fixed', top: 0, right: 0, bottom: 0, left: 'var(--rail-w)', zIndex: 140, background: '#000', overflow: 'hidden' }}>
       {/* header row seated 8px higher (top padding 18→10) */}
-      <div style={{ maxWidth: 1369, margin: '0 auto', padding: '10px 24px 0', height: '100%', boxSizing: 'border-box' }}>
+      <div style={{ maxWidth: 1369, margin: '0 auto', padding: '10px 24px 0', height: '100%', boxSizing: 'border-box' }}/* R1: detail-panel width — NOT lifted to shell-max; flagged */>
 
         {/* ── FEED heading (page-title, 40px) + FOR YOU / FOLLOWING tabs (frame ~y38) ── */}
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 20, marginBottom: 12 }}>

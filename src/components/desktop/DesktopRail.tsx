@@ -12,7 +12,8 @@ import { usePrivy } from '@privy-io/react-auth';
 import { motion, useReducedMotion } from 'framer-motion';
 import { getInbox } from '@/lib/dm';
 
-const RAIL_W = 71;
+// Brief R1 — the rail width is the --rail-w token (globals). Every surface's scroller
+// offsets its left by the same token, so the rail is the single source of truth.
 const ACTIVE_BAR = '#E5E1DB';
 const ACTIVE_GRAD = 'linear-gradient(225deg, rgba(229,225,219,0.12) 18%, rgba(203,195,195,0.12) 105%)';
 
@@ -87,7 +88,7 @@ export default function DesktopRail() {
     <nav
       aria-label="Primary"
       style={{
-        position: 'fixed', left: 0, top: 0, bottom: 0, width: RAIL_W, zIndex: 80,
+        position: 'fixed', left: 0, top: 0, bottom: 0, width: 'var(--rail-w)', zIndex: 80,
         background: '#000', borderRight: '0.25px solid rgba(229,225,219,0.35)',
         display: 'flex', flexDirection: 'column', alignItems: 'center',
       }}

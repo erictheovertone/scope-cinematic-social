@@ -16,7 +16,6 @@ import type { BadgeMeta } from '@/lib/economy/badges';
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
 const HAIR = 'rgba(229,225,219,0.12)';
-const RAIL_W = 71;
 const RED = '#E5E1DB';
 const TOTAL_BADGES = 7;
 
@@ -103,10 +102,10 @@ export default function DesktopBioSheet({ profile, isOwn, links, badges, posts, 
   );
 
   return createPortal(
-    <div data-swipe-exclude style={{ position: 'fixed', top: 0, right: 0, bottom: 0, left: RAIL_W, zIndex: 150, background: '#000', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
+    <div data-swipe-exclude style={{ position: 'fixed', top: 0, right: 0, bottom: 0, left: 'var(--rail-w)', zIndex: 150, background: '#000', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
       <button onClick={onClose} aria-label="Close" style={{ position: 'fixed', top: 20, right: 30, zIndex: 4, background: 'transparent', border: 'none', cursor: 'pointer', ...SKR, fontSize: 22, color: 'rgba(229,225,219,0.6)', lineHeight: 1, padding: 4 }}>✕</button>
 
-      <div style={{ maxWidth: 1180, margin: '0 auto', padding: '0 40px 80px' }}>
+      <div style={{ maxWidth: 'var(--shell-narrow)', margin: '0 auto', padding: '0 40px 80px' }}>{/* Brief R1 — reading/detail width = --shell-narrow (1180), intentionally tighter than the grid --shell-max */}
 
         {/* ═══ 1. AUTO-BANNER HERO — the album-art treatment ═══ */}
         {/* Blurred cover-fill of the PFP gives the WHOLE band the portrait's color

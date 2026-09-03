@@ -110,7 +110,7 @@ export default function DesktopGridPicker({
         <span style={{ position: 'absolute', top: 22, right: 26, ...SKB, fontSize: 13, color: RED, textTransform: 'uppercase', letterSpacing: '0.1em' }}>{echo}</span>
       )}
 
-      <div style={{ maxWidth: 900, margin: '0 auto', padding: '64px 40px 80px', textAlign: 'center' }}>
+      <div style={{ maxWidth: 900, margin: '0 auto', padding: '64px 40px 80px', textAlign: 'center' }}/* R1: bespoke width — flagged */>
         <CornerBrackets>
           <h1 style={{ ...SKB, fontSize: 72, color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '-0.01em', margin: 0, lineHeight: 1 }}>{title}</h1>
         </CornerBrackets>

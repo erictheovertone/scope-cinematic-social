@@ -16,11 +16,11 @@ import {
 } from '@/lib/userService';
 import { resolveLayout, ratioForAspect } from '@/lib/layoutModel';
 import { feedImage } from '@/lib/mediaUrl';
+import DesktopShell from '@/components/desktop/DesktopShell';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
 const HAIR = 'rgba(229,225,219,0.14)';
-const RAIL_W = 71;
 const RED = '#E5E1DB';
 
 const itemMedia = (it: DeckWithItems['items'][number]): string =>
@@ -102,8 +102,8 @@ export default function DesktopDeck({ deckId }: { deckId: string }) {
   );
 
   return (
-    <div className="bg-black" style={{ position: 'fixed', inset: 0, left: RAIL_W, background: '#000', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
-      <div style={{ maxWidth: 1440, margin: '0 auto', padding: '28px 48px 96px' }}>
+    <div className="bg-black" style={{ position: 'fixed', inset: 0, left: 'var(--rail-w)', background: '#000', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
+      <DesktopShell padding="28px 48px 96px">{/* Brief R1 — grid canvas, cap lifted 1440→--shell-max */}
         {/* header */}
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, marginBottom: 26 }}>
           <div style={{ minWidth: 0 }}>
@@ -151,7 +151,7 @@ export default function DesktopDeck({ deckId }: { deckId: string }) {
         )}
 
         <input ref={fileRef} type="file" accept="image/*" multiple onChange={(e) => { void onFiles(e.target.files); e.target.value = ''; }} style={{ display: 'none' }} />
-      </div>
+      </DesktopShell>
 
       {/* EDIT modal — the creation-modal language */}
       {editOpen && (

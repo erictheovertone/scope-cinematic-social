@@ -5,7 +5,7 @@
 // Master-detail (the settings language): LEFT = inbox list (~340px, hairline-
 // separated rows, active = red left-bar), RIGHT = the active thread, SWAPPED IN
 // PLACE (no navigation — selecting a row sets local state). Sits beside the 71px
-// rail (left: 71); the rail stays visible (no takeover). Same services/behaviors
+// rail (left: var(--rail-w)); the rail stays visible (no takeover). Same services/behaviors
 // as mobile: optimistic send, ~4.5s poll, mark-read on open, scroll-up paging.
 // Reading a thread fires 'scope:dm-updated' → the rail badge clears.
 
@@ -18,6 +18,7 @@ import {
 } from '@/lib/dm';
 import { getUserByPrivyId, getProfileByUsername } from '@/lib/userService';
 import { feedImage } from '@/lib/mediaUrl';
+import DesktopShell from '@/components/desktop/DesktopShell';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -67,7 +68,11 @@ export default function DesktopDM({ initialUsername }: { initialUsername?: strin
   const activeConvId = active ? (convs.find((c) => c.otherUserId === active.userId)?.conversationId ?? null) : null;
 
   return (
-    <div style={{ position: 'fixed', inset: 0, left: 71, background: '#000', display: 'flex' }}>
+    <div style={{ position: 'fixed', inset: 0, left: 'var(--rail-w)', background: '#000' }}>
+      {/* Brief R1 §4 — the two-pane composition is bounded by <DesktopShell> (centered at
+          --shell-max) so at 1920/2560 the thread + composer no longer stretch edge-to-edge;
+          the message bubbles' 68% max-width now reads against a sane column, not the window. */}
+      <DesktopShell style={{ height: '100%', display: 'flex' }}>
       {/* LEFT — inbox list */}
       <div style={{ width: 340, flexShrink: 0, borderRight: `1px solid ${HAIR}`, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
         <div style={{ padding: '22px 20px 14px' }}>
@@ -132,6 +137,7 @@ export default function DesktopDM({ initialUsername }: { initialUsername?: strin
           </div>
         )}
       </div>
+      </DesktopShell>
     </div>
   );
 }

@@ -21,6 +21,7 @@ import { streamGradedProps } from "@/lib/editor/videoGrade";
 import FirstCutChip from '@/components/economy/FirstCutChip';
 import CollectSheetGate from '@/components/economy/CollectSheetGate';
 import TheatreMode from '@/components/TheatreMode';
+import DesktopShell from '@/components/desktop/DesktopShell';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -129,8 +130,8 @@ export default function DesktopScreeningRoom() {
   };
 
   return (
-    <div className="bg-black" style={{ position: 'fixed', inset: 0, left: 71, overflowY: 'auto', WebkitOverflowScrolling: 'touch', background: '#000' }}>
-      <div style={{ maxWidth: 1440 - 71, margin: '0 auto', padding: '0 58px 40px', position: 'relative', minHeight: '100%' }}>
+    <div className="bg-black" style={{ position: 'fixed', inset: 0, left: 'var(--rail-w)', overflowY: 'auto', WebkitOverflowScrolling: 'touch', background: '#000' }}>
+      <DesktopShell padding="0 58px 40px" style={{ position: 'relative', minHeight: '100%' }}>{/* Brief R1 — cap lifted 1369→--shell-max */}
 
         {/* ═══ 1. HEADER ═══ */}
         <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', padding: '58px 0 30px' }}>
@@ -232,7 +233,7 @@ export default function DesktopScreeningRoom() {
             <p style={{ ...SKB, fontSize: 12, color: '#808080', letterSpacing: '8.52px', textTransform: 'uppercase', textAlign: 'center', margin: '48px 0 0' }}>Chosen by you</p>
           </>
         )}
-      </div>
+      </DesktopShell>
 
       {collectOpen && post && (
         <CollectSheetGate post={post as unknown as React.ComponentProps<typeof CollectSheetGate>['post']} visible={collectOpen} onClose={() => setCollectOpen(false)} />

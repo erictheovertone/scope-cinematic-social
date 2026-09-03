@@ -124,8 +124,8 @@ export default function DesktopWallet() {
   const heldMap = useMemo(() => new Map((holdings ?? []).map((h) => [h.postId, h])), [holdings]);
 
   return (
-    <div className="bg-black" style={{ position: 'fixed', inset: 0, left: 71, overflowY: 'auto' }}>
-      <div style={{ maxWidth: 1160, margin: '0 auto', padding: '40px 24px 80px' }}>
+    <div className="bg-black" style={{ position: 'fixed', inset: 0, left: 'var(--rail-w)', overflowY: 'auto' }}>
+      <div style={{ maxWidth: 1160, margin: '0 auto', padding: '40px 24px 80px' }}/* R1: bespoke composition width — flagged for Eric's ruling */>
 
         {/* ═══ 1. HEADER BAND ═══ */}
         <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', paddingBottom: 22 }}>

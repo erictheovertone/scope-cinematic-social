@@ -503,7 +503,7 @@ export default function DesktopSettings() {
     // height; the LEFT list stays fixed. Momentum scrolling included.
     <div
       className="bg-black"
-      style={{ position: 'fixed', inset: 0, left: 71, overflow: 'hidden' }}
+      style={{ position: 'fixed', inset: 0, left: 'var(--rail-w)', overflow: 'hidden' }}
       // WHEEL FORWARDING (round-2 evidence): the pane scrolls correctly when
       // content overflows, but the root is overflow:hidden — wheeling over the
       // LEFT list or the margins was a dead zone. Forward every wheel to the
