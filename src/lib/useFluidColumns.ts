@@ -14,20 +14,25 @@
 
 import { useEffect, useRef, useState } from "react";
 
-export function useFluidColumns(base: number, maxCard: number) {
+// maxCols (Brief R1b) — an optional HARD ceiling on the column count. Default Infinity
+// (unbounded growth, R1a behavior — Home/SR/Decks unaffected). The profile grid passes 5
+// (the system's desktop_count ceiling): beyond the width where 5 columns reach maxCard,
+// columns stop being added and the cards simply widen.
+export function useFluidColumns(base: number, maxCard: number, maxCols = Infinity) {
   const ref = useRef<HTMLDivElement>(null);
-  const [cols, setCols] = useState(base);
+  const clampBase = Math.min(base, maxCols);
+  const [cols, setCols] = useState(clampBase);
   useEffect(() => {
     const el = ref.current;
-    if (!el || typeof ResizeObserver === "undefined") { setCols(base); return; }
+    if (!el || typeof ResizeObserver === "undefined") { setCols(clampBase); return; }
     const measure = () => {
       const w = el.clientWidth;
-      if (w > 0) setCols(Math.max(base, Math.ceil(w / maxCard)));
+      if (w > 0) setCols(Math.min(maxCols, Math.max(base, Math.ceil(w / maxCard))));
     };
     measure();
     const ro = new ResizeObserver(measure);
     ro.observe(el);
     return () => ro.disconnect();
-  }, [base, maxCard]);
+  }, [base, maxCard, maxCols, clampBase]);
   return [ref, cols] as const;
 }

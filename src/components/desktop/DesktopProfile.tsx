@@ -28,7 +28,11 @@ import GradedVideo from '@/components/finishing/GradedVideo';
 import { streamGradedProps } from "@/lib/editor/videoGrade";
 import DesktopPostView from '@/components/desktop/DesktopPostView';
 import FilmstripIndicator from '@/components/FilmstripIndicator';
-import { resolveLayout, ratioForAspect, type AspectId } from '@/lib/layoutModel';
+import { resolveLayout, ratioForAspect, DESKTOP_COUNTS, type AspectId } from '@/lib/layoutModel';
+
+// Brief R1b — the profile grid never exceeds the system's own desktop_count ceiling (5).
+// Sourced from DESKTOP_COUNTS ([3,4,5]) rather than a literal.
+const PROFILE_MAX_COLS = Math.max(...DESKTOP_COUNTS);
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useRef } from 'react';
 import DesktopShell from '@/components/desktop/DesktopShell';
@@ -78,7 +82,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
   // Brief R1a — media grid grows with the window: HONOURS the user's count as the floor,
   // ADDS columns only once tiles would exceed ~420px. At 1440 = the user count (anchor);
   // for count=4 → 1920:5, 2560:6, 3440:8.
-  const [gridRef, gridCols] = useFluidColumns(gridConf.count, 420);
+  const [gridRef, gridCols] = useFluidColumns(gridConf.count, 420, PROFILE_MAX_COLS);
   const [deckCreateOpen, setDeckCreateOpen] = useState(false);
   const [newDeckTitle, setNewDeckTitle] = useState('');
   const [newDeckDesc, setNewDeckDesc] = useState('');
@@ -86,7 +90,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
   const [decksCount, setDecksCount] = useState(4); // desktop decks grid columns (3|4|5)
   // Brief R1a — decks-tab covers also grow with the window (deck covers cap ~460px), floored
   // at the user's 3|4|5 choice, so a fluid profile shell doesn't balloon the covers.
-  const [decksGridRef, decksGridCols] = useFluidColumns(decksCount, 460);
+  const [decksGridRef, decksGridCols] = useFluidColumns(decksCount, 460, PROFILE_MAX_COLS);
   const bakingRef = useRef<Set<string>>(new Set());
 
   const submitDeck = async () => {
