@@ -254,6 +254,16 @@ const LEGACY_TO_CANONICAL: Record<string, string> = {
   '2x-scope': 'scope-2col',    '1x-scope': 'scope',
   '2x-cine': 'cine-wide-2col', '1x-cine': 'cine-wide',
   '3x-legacy': 'legacy',
+  // Brief X2b — legacy NON-canonical grids (square 1:1 · 16:9 · super-wide) resolve to their
+  // nearest of the FIVE canonical layouts, so a NEW post from an old-grid profile bakes AND
+  // stores a canonical layout_id → crop == bake == grid render (no snap-then-store mismatch).
+  // Square (1:1) and 16:9 are the only getAspectRatio ratios without an exact AR_CHIP, so they
+  // were the source of X2's flag. Old posts keep their stored ids and still render via
+  // getAspectRatio's legacy handlers (untouched). The pickers never offer these — this only
+  // migrates pre-change profiles' NEW posts onto the canonical five.
+  '3x-square': 'legacy',                 // 1:1 → nearest canonical (4:3)
+  '2x-regular-wide': 'cine-wide-2col',   // 16:9 → nearest canonical (1.85)
+  '2x-super-wide': 'scope-2col', '1x-super-wide': 'scope', // already 2.39 → canonicalize to scope
 };
 
 interface CreatePostFlowProps {
