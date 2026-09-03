@@ -202,7 +202,7 @@ export default function AddToHomeScreenSheet({ isOpen, onClose, privyId, forceSh
               onClick={handleIOSAdded}
               style={{ width: '100%', padding: '14px 0', background: '#E5E1DB', border: 'none', cursor: 'pointer' }}
             >
-              <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+              <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: 'var(--on-ink)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
                 GOT IT
               </span>
             </button>
@@ -212,7 +212,7 @@ export default function AddToHomeScreenSheet({ isOpen, onClose, privyId, forceSh
               onClick={handleInstallAndroid}
               style={{ width: '100%', padding: '14px 0', background: '#E5E1DB', border: 'none', cursor: 'pointer' }}
             >
-              <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+              <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: 'var(--on-ink)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
                 INSTALL SCOPE
               </span>
             </button>
@@ -222,7 +222,7 @@ export default function AddToHomeScreenSheet({ isOpen, onClose, privyId, forceSh
               onClick={handleCopyLink}
               style={{ width: '100%', padding: '14px 0', background: '#E5E1DB', border: 'none', cursor: 'pointer' }}
             >
-              <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+              <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: 'var(--on-ink)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
                 {copied ? 'COPIED ✓' : 'COPY LINK'}
               </span>
             </button>

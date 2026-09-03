@@ -132,7 +132,7 @@ export default function OnboardingModal({ onComplete }: Props) {
           width: '100%', background: '#E5E1DB', border: 'none',
           cursor: 'pointer', padding: '16px 0', marginBottom: 12,
         }}>
-          <span style={{ ...SKB, fontSize: 'var(--fs-12)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+          <span style={{ ...SKB, fontSize: 'var(--fs-12)', color: 'var(--on-ink)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
             {current.cta}
           </span>
         </button>

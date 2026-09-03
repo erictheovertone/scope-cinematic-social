@@ -304,7 +304,7 @@ export default function BottomToolbar({ page, unreadCount = 0, dmUnread = 0, set
                 style={{
                   top: 2, right: 1,
                   background: '#E5E1DB',
-                  color: '#E5E1DB',
+                  color: 'var(--on-ink)',
                   fontFamily: "'SK-Modernist', sans-serif",
                   fontWeight: 700,
                   fontSize: 'var(--fs-8)',

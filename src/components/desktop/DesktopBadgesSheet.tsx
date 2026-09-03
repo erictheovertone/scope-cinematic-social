@@ -99,7 +99,7 @@ export default function DesktopBadgesSheet({
               ))}
               {/* the descriptor converts too — GET PRO inside the PRO/FREE detail */}
               {(detailKey === 'pro' || detailKey === 'free') && badgeState('pro', flags) !== 'held' && isOwn && (
-                <button onClick={() => { onClose(); goPro(); }} style={{ ...SKB, width: '100%', fontSize: 12, color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.08em', background: '#E5E1DB', border: 'none', cursor: 'pointer', padding: '13px 0', marginTop: 8 }}>
+                <button onClick={() => { onClose(); goPro(); }} style={{ ...SKB, width: '100%', fontSize: 12, color: 'var(--on-ink)', textTransform: 'uppercase', letterSpacing: '0.08em', background: '#E5E1DB', border: 'none', cursor: 'pointer', padding: '13px 0', marginTop: 8 }}>
                   GET PRO →
                 </button>
               )}

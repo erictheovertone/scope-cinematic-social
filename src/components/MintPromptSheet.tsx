@@ -183,7 +183,7 @@ export default function MintPromptSheet({ visible, onMint, onSkip, onCoinSkipped
               }}
               style={{ width: '100%', background: '#E5E1DB', border: 'none', cursor: 'pointer', padding: '14px 0', marginTop: 24, marginBottom: 10 }}
             >
-              <span style={{ ...SKB, fontSize: 'var(--fs-12)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+              <span style={{ ...SKB, fontSize: 'var(--fs-12)', color: 'var(--on-ink)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                 ADD ETH · CARD OR APPLE PAY
               </span>
             </button>
@@ -339,7 +339,7 @@ export default function MintPromptSheet({ visible, onMint, onSkip, onCoinSkipped
                   </button>
                 )}
                 <button onClick={onRetry} style={{ width: '100%', background: '#E5E1DB', border: 'none', cursor: 'pointer', padding: '13px 0', marginBottom: 8 }}>
-                  <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{sequencePhase === 'backing-failed' ? 'RETRY BACKING' : 'RETRY'}</span>
+                  <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: 'var(--on-ink)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{sequencePhase === 'backing-failed' ? 'RETRY BACKING' : 'RETRY'}</span>
                 </button>
                 <button onClick={onContinue} style={{ width: '100%', background: 'transparent', border: '1px solid rgba(229,225,219,0.15)', cursor: 'pointer', padding: '11px 0' }}>
                   <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'rgba(229,225,219,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>CONTINUE TO PROFILE</span>

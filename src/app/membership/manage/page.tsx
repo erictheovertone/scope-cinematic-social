@@ -100,7 +100,7 @@ export default function ManageMembershipPage() {
           Your Pro access continues until the end of your billing period.
         </p>
         <button onClick={() => router.push('/profile')} style={{ background: '#E5E1DB', border: 'none', cursor: 'pointer', padding: '12px 32px' }}>
-          <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.08em' }}>BACK TO PROFILE</span>
+          <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: 'var(--on-ink)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>BACK TO PROFILE</span>
         </button>
       </div>
     );
@@ -170,7 +170,7 @@ export default function ManageMembershipPage() {
               disabled={resuming}
               style={{ background: '#E5E1DB', border: 'none', cursor: resuming ? 'default' : 'pointer', padding: '12px 24px', width: '100%' }}
             >
-              <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+              <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'var(--on-ink)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                 {resuming ? 'RESUMING…' : 'RESUME MEMBERSHIP'}
               </span>
             </button>

@@ -304,7 +304,7 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
 
               {(detailKey === 'free' || detailKey === 'pro') && (
                 <button onClick={onJoinPress} style={{ width: '100%', background: '#E5E1DB', border: 'none', cursor: 'pointer', padding: '14px 0' }}>
-                  <span style={{ ...BOLD, fontSize: 'var(--fs-12)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.08em' }}>BECOME A SCOPE MEMBER</span>
+                  <span style={{ ...BOLD, fontSize: 'var(--fs-12)', color: 'var(--on-ink)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>BECOME A SCOPE MEMBER</span>
                 </button>
               )}
             </div>
@@ -446,7 +446,7 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
           onClick={onJoinPress}
           style={{ width: '100%', background: '#E5E1DB', border: 'none', cursor: 'pointer', padding: '14px 0', marginTop: 8 }}
         >
-          <span style={{ ...BOLD, fontSize: 'var(--fs-12)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+          <span style={{ ...BOLD, fontSize: 'var(--fs-12)', color: 'var(--on-ink)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
             BECOME A SCOPE MEMBER
           </span>
         </button>

@@ -92,7 +92,7 @@ export default function ReframeOverlay({ post, layoutId, onSave, onCancel }: Ref
           onClick={() => onSave(cropX, cropY, cropWidth, cropHeight)}
           style={{ background: '#E5E1DB', border: 'none', cursor: 'pointer', padding: '6px 14px' }}
         >
-          <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-10)', color: '#E5E1DB', textTransform: 'uppercase' }}>SAVE</span>
+          <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-10)', color: 'var(--on-ink)', textTransform: 'uppercase' }}>SAVE</span>
         </button>
       </div>
 

@@ -172,7 +172,7 @@ export default function LinkManager() {
             disabled={saving}
             style={{ background: '#E5E1DB', border: 'none', cursor: saving ? 'default' : 'pointer', padding: '8px 18px' }}
           >
-            <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: '#E5E1DB', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+            <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'var(--on-ink)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
               {saving ? 'SAVING…' : 'SAVE'}
             </span>
           </button>

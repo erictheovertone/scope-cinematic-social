@@ -1398,7 +1398,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
                   <img src={URL.createObjectURL(customThumbnail)} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                   <button
                     onClick={() => setCustomThumbnail(null)}
-                    style={{ position: 'absolute', top: -6, right: -6, width: 16, height: 16, borderRadius: '50%', background: '#E5E1DB', border: 'none', cursor: 'pointer', color: '#E5E1DB', fontSize: 'var(--fs-10)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    style={{ position: 'absolute', top: -6, right: -6, width: 16, height: 16, borderRadius: '50%', background: '#E5E1DB', border: 'none', cursor: 'pointer', color: 'var(--on-ink)', fontSize: 'var(--fs-10)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                   >×</button>
                 </div>
               ) : (

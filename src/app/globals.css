@@ -139,6 +139,10 @@ html, body {
   --ink-72:  rgba(229,225,219,0.72);
   --ink-80:  rgba(229,225,219,0.80);
   --ink-100: #E5E1DB;
+  /* Brief D4 §1 — content color for text/icons sitting ON a light/ivory (--ink) FILL.
+     The Brief-1 white→ivory sweep recolored text globally, turning buttons with an ivory
+     fill + ivory text invisible. Charcoal (matches --canvas) reads cleanly on ivory. */
+  --on-ink: #050505;
   /* Hairlines (ivory-alpha; widths unchanged elsewhere). */
   --hairline: rgba(229,225,219,0.22);
   --hairline-strong: rgba(229,225,219,0.30);

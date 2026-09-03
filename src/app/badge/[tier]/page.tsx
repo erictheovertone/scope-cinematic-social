@@ -281,7 +281,7 @@ export default function BadgeDetailPage() {
             onClick={() => router.push('/profile?showMembership=true')}
             style={{ width: '100%', background: '#E5E1DB', border: 'none', cursor: 'pointer', padding: '14px 0' }}
           >
-            <span style={{ ...BOLD, fontSize: 'var(--fs-12)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+            <span style={{ ...BOLD, fontSize: 'var(--fs-12)', color: 'var(--on-ink)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
               BECOME A SCOPE MEMBER
             </span>
           </button>

@@ -188,7 +188,7 @@ export default function PfpCropModal({ file, onCancel, onConfirm }: Props) {
 
       <div style={{ display: 'flex', gap: 12, marginTop: 22, width: FRAME }}>
         <button onClick={cancel} disabled={baking} style={{ ...SKB, flex: 1, fontSize: 'var(--fs-11)', color: '#E5E1DB', background: 'transparent', border: '1px solid rgba(229,225,219,0.4)', padding: '12px 0', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.1em' }}>CANCEL</button>
-        <button onClick={confirm} disabled={baking || !nat} style={{ ...SKB, flex: 1, fontSize: 'var(--fs-11)', color: '#E5E1DB', background: '#E5E1DB', border: 'none', padding: '12px 0', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.1em', opacity: baking ? 0.6 : 1 }}>{baking ? 'CROPPING…' : 'USE PHOTO'}</button>
+        <button onClick={confirm} disabled={baking || !nat} style={{ ...SKB, flex: 1, fontSize: 'var(--fs-11)', color: 'var(--on-ink)', background: '#E5E1DB', border: 'none', padding: '12px 0', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.1em', opacity: baking ? 0.6 : 1 }}>{baking ? 'CROPPING…' : 'USE PHOTO'}</button>
       </div>
     </div>,
     document.body,
