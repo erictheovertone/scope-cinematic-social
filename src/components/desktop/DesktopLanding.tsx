@@ -8,6 +8,7 @@
 
 import { useLogin } from '@privy-io/react-auth';
 import { useRouter } from 'next/navigation';
+import { useFontReady } from '@/lib/useFontReady';
 
 // Brief S2b §3 — Welcome-only exception per Eric; the app-wide soften system stays
 // retired (W5). The ONE shared blur constant (mobile welcome imports this), so the
@@ -21,6 +22,8 @@ const DESKTOP_WORDMARK = 160;
 export default function DesktopLanding() {
   const router = useRouter();
   const { login } = useLogin({ onComplete: () => router.push('/auth/callback'), onError: (e) => console.error('[landing] auth error:', e) });
+  // Brief S2d — gate the script wordmark until its face loads (no fallback frame), then fade in.
+  const wordmarkReady = useFontReady('400 100px "Birds of Paradise"');
 
   // Aligned to the OUTER left edge of the "s" swash (Eric): 0 left padding + a small
   // negative margin (scaled to the 160px wordmark) pulls the text to the "s" leftmost point.
@@ -38,7 +41,7 @@ export default function DesktopLanding() {
       <div style={{ position: 'absolute', top: '30vh', left: 'max(calc(var(--safe-left) + 48px), 10vw)', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', filter: `blur(${WELCOME_BLUR})` }}>
         {/* Brief S2c — pin 400 / normal / no-synthesis so the inherited body 700 can't
             synthesize bold on the single-cut script face (the thickening). */}
-        <span style={{ fontFamily: 'var(--font-script)', fontWeight: 400, fontStyle: 'normal', fontSynthesis: 'none', fontSize: DESKTOP_WORDMARK, lineHeight: 0.85, letterSpacing: '1.5px', color: 'var(--ink-100)', display: 'block' }}>
+        <span style={{ fontFamily: 'var(--font-script)', fontWeight: 400, fontStyle: 'normal', fontSynthesis: 'none', fontSize: DESKTOP_WORDMARK, lineHeight: 0.85, letterSpacing: '1.5px', color: 'var(--ink-100)', display: 'block', opacity: wordmarkReady ? 1 : 0, transition: 'opacity 120ms ease' }}>
           scope
         </span>
         <button onClick={login} aria-label="Log in" style={{ ...action, marginTop: 26 }}>Login</button>

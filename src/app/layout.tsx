@@ -25,6 +25,13 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
         <link rel="dns-prefetch" href="https://auth.privy.io" />
+        {/* Brief S2d — preload the SCRIPT wordmark face so its fetch starts with the HTML
+            (not after CSS parse), shrinking the invisible window on the welcome cold-load —
+            the primary logged-out entry. crossOrigin is required or the preload won't match
+            the CORS-mode font fetch (browser would ignore it / double-fetch). woff2, 36KB.
+            Correctness doesn't hinge on this: font-display:block + the useFontReady gate
+            already guarantee no fallback frame; the preload only shrinks the blank window. */}
+        <link rel="preload" as="font" type="font/woff2" href="/design-updates-071526/font-files/birds-of-paradise-script.woff2" crossOrigin="anonymous" />
         <link rel="manifest" href="/manifest.json" />
         {/* No theme-color: on iOS 16.4+ standalone an opaque theme-color paints the
             status-bar background (a black band), overriding black-translucent. Omitting

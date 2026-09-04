@@ -20,8 +20,13 @@
 /* Brief S2b — SCRIPT wordmark face (the "scope" lockup on the welcome/landing only).
    Renamed from "Birds of Paradise И PERSONAL USE ONLY.ttf" to a URL-safe slug (the
    original name's spaces + non-ASCII char break url()). Commercial license being procured
-   separately (Eric). Exposed as --font-script; currently used ONLY by the welcome surface. */
-@font-face { font-family: 'Birds of Paradise'; src: url('/design-updates-071526/font-files/birds-of-paradise-script.ttf') format('truetype'); font-weight: 400; font-style: normal; font-display: swap; }
+   separately (Eric). Exposed as --font-script; currently used ONLY by the welcome surface.
+   Brief S2d — KILL THE FOUT: woff2 first (36KB, −76% vs the 150KB TTF; TTF kept as the
+   fallback src and left untouched on disk), and font-display: BLOCK — the wordmark is a
+   brand mark, so an invisible beat is correct while a wrong-font (Times) beat is not. The
+   welcome surface additionally gates the wordmark on document.fonts (useFontReady) so no
+   fallback frame ever paints even past block's timeout. Preloaded in the document head. */
+@font-face { font-family: 'Birds of Paradise'; src: url('/design-updates-071526/font-files/birds-of-paradise-script.woff2') format('woff2'), url('/design-updates-071526/font-files/birds-of-paradise-script.ttf') format('truetype'); font-weight: 400; font-style: normal; font-display: block; }
 
 @tailwind base;
 @tailwind components;

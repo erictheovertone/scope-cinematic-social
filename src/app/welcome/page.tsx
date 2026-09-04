@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation";
 import { useLogin } from "@privy-io/react-auth";
 import DesktopLanding from "@/components/desktop/DesktopLanding";
 import { useIsDesktop } from "@/lib/useIsDesktop";
+import { useFontReady } from "@/lib/useFontReady";
 
 // NOTE: the 0.4px wordmark blur is now DESKTOP-ONLY (Eric — it read too heavy on a 3× iPhone,
 // the exact reason the app-wide soften system was retired in W5). Mobile renders crisp; the
@@ -20,6 +21,9 @@ import { useIsDesktop } from "@/lib/useIsDesktop";
 export default function Welcome() {
   const router = useRouter();
   const isDesktop = useIsDesktop();
+  // Brief S2d — gate the script wordmark until its face is loaded, so no fallback
+  // (Times) frame ever paints; then fade in. Login/Sign Up (Haas) render immediately.
+  const wordmarkReady = useFontReady('400 100px "Birds of Paradise"');
 
   const { login } = useLogin({
     onComplete: () => router.push("/auth/callback"),
@@ -59,7 +63,7 @@ export default function Welcome() {
             Brief S2c — the face has ONLY a 400 cut; body sets font-weight:700, so without an
             explicit weight the browser SYNTHESIZED bold (the thickening). Pin weight 400 +
             style normal + font-synthesis:none so the loaded Regular renders with no faking. */}
-        <span style={{ fontFamily: "var(--font-script)", fontWeight: 400, fontStyle: "normal", fontSynthesis: "none", fontSize: 100, lineHeight: 0.85, letterSpacing: "1px", color: "var(--ink-100)", display: "block" }}>
+        <span style={{ fontFamily: "var(--font-script)", fontWeight: 400, fontStyle: "normal", fontSynthesis: "none", fontSize: 100, lineHeight: 0.85, letterSpacing: "1px", color: "var(--ink-100)", display: "block", opacity: wordmarkReady ? 1 : 0, transition: "opacity 120ms ease" }}>
           scope
         </span>
         {/* ~22px below the wordmark (frame: 349→371). */}
