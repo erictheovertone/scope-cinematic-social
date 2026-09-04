@@ -152,16 +152,14 @@ export default function DesktopHome() {
                 that's how a creator's AR intent reaches the feed. No viewer's or
                 creator's setting changes the feed's column structure. */}
             {/* MASONRY: 3 independent columns, each packing top-to-bottom with one
-                uniform 5px gap (both axes) → tops scatter, no craters from
+                uniform 20px gap (both axes) → tops scatter, no craters from
                 row-alignment. ROUND-ROBIN distribution (i % 3) — cheap,
                 deterministic (a post's column is fixed by its feed index, so
                 load-more appends correctly), and it preserves the left-to-right
                 newest-first reading order across the top row. Cards unchanged. */}
-            {/* Brief D7 §1 — masonry gap 20 → 5px (both axes): the card frame already
-                separates posts, so cards grow to fill the reclaimed width. */}
-            <div ref={masonryRef} style={{ display: 'flex', gap: 5, alignItems: 'flex-start' }}>
+            <div ref={masonryRef} style={{ display: 'flex', gap: 20, alignItems: 'flex-start' }}>
               {Array.from({ length: masonryCols }, (_, col) => (
-                <div key={col} style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 5 }}>
+                <div key={col} style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 20 }}>
                   {posts.map((p, i) => (i % masonryCols === col ? (
                     <PostItem
                       key={String(p.id)}
