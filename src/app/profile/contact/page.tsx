@@ -135,7 +135,7 @@ export default function ContactUs() {
 
               <button
                 type="submit"
-                className="w-full bg-[#E5E1DB] text-[#E5E1DB] py-4 rounded-lg font-['IBM_Plex_Mono'] font-medium text-[var(--fs-16)] hover:bg-[#CC0000] transition-colors"
+                className="w-full bg-[#E5E1DB] text-[var(--on-ink)] py-4 rounded-lg font-['IBM_Plex_Mono'] font-medium text-[var(--fs-16)] hover:bg-[#d6d2cb] transition-colors"
               >
                 Send Message
               </button>

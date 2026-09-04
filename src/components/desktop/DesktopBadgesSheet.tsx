@@ -108,8 +108,12 @@ export default function DesktopBadgesSheet({
         })()}
 
         {!detailKey && (<>
-        {/* header logo — the bracketed SCOPE wordmark (1196×620) */}
-        <img src="/badges-on-scope-logo.png" alt="Badges on Scope" style={{ height: 162, width: 'auto', objectFit: 'contain', display: 'block', margin: '4px 0 26px' }} />
+        {/* header title — Brief M12: title graphic (basdges-on-scope-title.png, 403×226),
+            width-driven 240px (aspect preserved). Wrapped in <h2> so heading semantics stay;
+            the img alt is the heading's accessible name. Entrance/frame untouched. */}
+        <h2 style={{ margin: 0, lineHeight: 0 }}>
+          <img src="/basdges-on-scope-title.png" alt="Badges on Scope" style={{ width: 240, height: 'auto', objectFit: 'contain', display: 'block', margin: '4px 0 26px' }} />
+        </h2>
 
         {/* MY MEMBERSHIP bar — same read + label as the mobile sheet. Shown once
             the viewer's own membership resolves; RENEWS / CANCELS <date> inline. */}

@@ -255,6 +255,16 @@ button:active,
   transition: transform 0.13s cubic-bezier(0.34,1.5,0.5,1), opacity 0.13s;
 }
 
+/* Brief M12 — house GHOST CTA. Transparent in every state; a hairline ivory border
+   with an ivory label. The border is --ink @60% (rgba(229,225,219,0.6)) rather than
+   --hairline-strong @30%: on the near-black --canvas (#050505) the 30% hairline reads
+   too faint to anchor a page's PRIMARY action, while 60% stays clearly ghost (no fill)
+   yet confident. Hover lifts only the border; the press dip is the global button:active
+   rule above (never a fill). Used by the While-You-Were-Away ENTER button (was a red
+   ivory→#990000 gradient — a red-kill survivor). */
+.ghost-cta { background: transparent; border: 0.5px solid rgba(229,225,219,0.6); transition: border-color 140ms ease; }
+.ghost-cta:hover { border-color: rgba(229,225,219,0.85); }
+
 /* 1.3b Press-pop — JS-retriggered scale "pop" on tap (the <PressPop> primitive).
    transform-origin center, transform-only (GPU). The pop OWNS the scale on these
    elements, so we cancel the global :active scale above to avoid stacking the two

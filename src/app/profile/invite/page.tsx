@@ -63,7 +63,7 @@ export default function Invite() {
         {!inviteLink ? (
           <button
             onClick={generateInviteLink}
-            className="w-full bg-[#E5E1DB] text-[#E5E1DB] py-4 rounded-lg font-['IBM_Plex_Mono'] font-medium text-[var(--fs-16)] hover:bg-[#CC0000] transition-colors mb-6"
+            className="w-full bg-[#E5E1DB] text-[var(--on-ink)] py-4 rounded-lg font-['IBM_Plex_Mono'] font-medium text-[var(--fs-16)] hover:bg-[#d6d2cb] transition-colors mb-6"
           >
             Generate Invite Link
           </button>

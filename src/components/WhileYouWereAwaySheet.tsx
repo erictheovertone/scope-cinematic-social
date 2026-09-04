@@ -189,8 +189,10 @@ export default function WhileYouWereAwaySheet({ visible, recap, username, onClos
         {/* SECTION ROW — top element now (greeting removed) */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 26, flexShrink: 0 }}>
           <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: W65, textTransform: 'uppercase', letterSpacing: '0.14em' }}>WHILE YOU WERE AWAY</span>
-          {/* N DAYS pill — dark gradient + dark-red border, RED text (Figma 793:323), radius 2 */}
-          <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: RED, background: 'linear-gradient(93.77deg, #181818 24.12%, #000 64.5%)', border: '0.5px solid #7a2e2e', borderRadius: 2, padding: '3px 8px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{recap.sinceDays} DAYS</span>
+          {/* N DAYS pill — dark gradient, ivory label, radius 2. Brief M12: the border was
+              dark-red #7a2e2e (a red-kill survivor on this page) → ivory hairline @30%, which
+              keeps subtle definition on the dark gradient and pairs with the ghost ENTER CTA. */}
+          <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: RED, background: 'linear-gradient(93.77deg, #181818 24.12%, #000 64.5%)', border: '0.5px solid rgba(229,225,219,0.3)', borderRadius: 2, padding: '3px 8px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{recap.sinceDays} DAYS</span>
         </div>
 
         {/* HERO / EARNED CARD — baked PNG background (fills + scales), radius 2, h 127,
@@ -253,11 +255,13 @@ export default function WhileYouWereAwaySheet({ visible, recap, username, onClos
             collapses to 0 when content overflows and the page scrolls). */}
         <div style={{ flex: '1 1 24px', minHeight: 24 }} />
 
-        {/* ENTER — red→dark-red gradient (DELIBERATE), 0.25px white border, radius 2, ~44px (tap floor) */}
+        {/* ENTER — Brief M12: house GHOST CTA (.ghost-cta). Was an ivory→#990000 red
+            gradient (a red-kill survivor); now transparent, 0.5px ivory border @60%, radius
+            3, ivory label. Hover lifts the border; press = the global button:active dip. */}
         <button
           onClick={onClose}
-          className="tap-target"
-          style={{ width: '100%', flexShrink: 0, background: 'linear-gradient(to right, #E5E1DB 0%, #990000 100%)', border: '0.25px solid #E5E1DB', borderRadius: 2, cursor: 'pointer', padding: '13px 0' }}
+          className="tap-target ghost-cta"
+          style={{ width: '100%', flexShrink: 0, borderRadius: 3, cursor: 'pointer', padding: '13px 0' }}
         >
           <span style={{ ...SKB, fontSize: 'var(--fs-12)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.14em' }}>ENTER</span>
         </button>

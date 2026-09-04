@@ -378,12 +378,17 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
           );
         })()}
 
-        {/* Header */}
-        <img
-          src="/badges-on-scope-logo.png"
-          alt="Badges on Scope"
-          style={{ height: 96, display: 'block', margin: '0 auto 55px' }}
-        />
+        {/* Header — Brief M12: title graphic (basdges-on-scope-title.png, 403×226). Width-
+            driven 200px (≈2× native → retina-crisp), aspect preserved (never stretched).
+            Wrapped in <h2> so the sheet keeps heading semantics; the img alt is the heading's
+            accessible name (single announcement). The tier ripple entrance below is untouched. */}
+        <h2 style={{ margin: 0, lineHeight: 0 }}>
+          <img
+            src="/basdges-on-scope-title.png"
+            alt="Badges on Scope"
+            style={{ width: 200, height: 'auto', display: 'block', margin: '0 auto 55px' }}
+          />
+        </h2>
 
         {/* Tier list — ORDER: FREE → SCOPE PRO (membership tiers together) →
             earned honors below. Sorted by the ratified order. */}
