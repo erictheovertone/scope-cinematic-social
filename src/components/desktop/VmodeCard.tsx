@@ -58,7 +58,7 @@ export default function VmodeCard({ card, index, reduced, selected, onSelect }: 
       }}
     >
       <span style={{ flex: '1 1 auto', minWidth: 0, display: 'flex', flexDirection: 'column' }}>
-        <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 40, lineHeight: 0.82, letterSpacing: 'var(--track-display)', color: 'var(--ink-100)', whiteSpace: 'pre-line' }}>{card.name}</span>
+        <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 'calc(40px * var(--type-scale))', lineHeight: 0.82, letterSpacing: 'var(--track-display)', color: 'var(--ink-100)', whiteSpace: 'pre-line' }}>{card.name}</span>
         <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 13, lineHeight: 1.3, color: 'rgba(229,225,219,0.5)', marginTop: 10, maxWidth: 320 }}>{card.desc}</span>
       </span>
       <img src={card.preview} alt="" aria-hidden style={{ height: '58%', maxHeight: 150, aspectRatio: '140 / 59', width: 'auto', objectFit: 'contain', opacity: 0.78, flexShrink: 0, display: 'block' }} />

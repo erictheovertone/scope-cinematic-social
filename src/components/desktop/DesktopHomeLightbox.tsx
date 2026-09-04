@@ -187,7 +187,7 @@ export default function DesktopHomeLightbox({
         {/* ── FEED heading (page-title, 40px) + FOR YOU / FOLLOWING tabs (frame ~y38) ── */}
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 20, marginBottom: 12 }}>
           {/* Brief D7 §2 — sentence case + house title tier (75 Bold, --track-display, --ink-100). */}
-          <span style={{ ...SKB, fontSize: 40, lineHeight: 1, color: 'var(--ink-100)', letterSpacing: 'var(--track-display)', marginRight: 10 }}>Feed</span>
+          <span style={{ ...SKB, fontSize: 'calc(40px * var(--type-scale))', lineHeight: 1, color: 'var(--ink-100)', letterSpacing: 'var(--track-display)', marginRight: 10 }}>Feed</span>
           {tabBtn('FOR YOU', 'foryou')}
           {tabBtn('FOLLOWING', 'following')}
           {/* search chrome + the ONE control: × close takes the old "?" position. */}

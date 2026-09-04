@@ -41,7 +41,7 @@ function Band({ label, sub, action, children }: { label: string; sub?: string; a
     <div style={{ display: 'flex', gap: 44, padding: '44px 0', borderTop: `1px solid ${HAIR}` }}>
       <div style={{ width: 250, flexShrink: 0 }}>
         {/* big left-column section title + red underline accent (per the reference) */}
-        <p style={{ ...SKB, fontSize: 32, lineHeight: 1, color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '-0.01em', margin: 0 }}>{label}</p>
+        <p style={{ ...SKB, fontSize: 'calc(32px * var(--type-scale))', lineHeight: 1, color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '-0.01em', margin: 0 }}>{label}</p>
         <div style={{ width: 32, height: 2, background: RED, margin: '13px 0 0' }} />
         {sub && <p style={{ ...SKR, fontSize: 11, color: 'rgba(229,225,219,0.45)', textTransform: 'uppercase', letterSpacing: '0.12em', margin: '13px 0 0' }}>{sub}</p>}
         {action && <div style={{ marginTop: 16 }}>{action}</div>}
@@ -133,7 +133,7 @@ export default function DesktopBioSheet({ profile, isOwn, links, badges, posts, 
           {/* left overlay — identity */}
           <div style={{ position: 'absolute', left: 40, top: 0, bottom: 0, width: 440, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
             <p style={{ ...SKB, fontSize: 11, color: RED, textTransform: 'uppercase', letterSpacing: '0.22em', margin: '0 0 14px' }}>CREATOR</p>
-            <h1 style={{ ...SKB, fontSize: 46, lineHeight: 1, letterSpacing: '-0.02em', color: '#E5E1DB', textTransform: 'uppercase', margin: 0 }}>{name}</h1>
+            <h1 style={{ ...SKB, fontSize: 'calc(46px * var(--type-scale))', lineHeight: 1, letterSpacing: '-0.02em', color: '#E5E1DB', textTransform: 'uppercase', margin: 0 }}>{name}</h1>
             {handle && <p style={{ ...SKR, fontSize: 14, color: 'rgba(229,225,219,0.55)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '10px 0 0' }}>@{handle}</p>}
             {shortBio && <p style={{ ...SKR, fontSize: 14, color: 'rgba(229,225,219,0.7)', lineHeight: 1.6, margin: '18px 0 0', maxWidth: 400 }}>{shortBio}</p>}
             <button onClick={onMessage} style={{ ...SKB, alignSelf: 'flex-start', fontSize: 11, color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'transparent', border: '1px solid rgba(229,225,219,0.4)', cursor: 'pointer', padding: '12px 22px', margin: '26px 0 0' }}>MESSAGE {name.split(' ')[0]}</button>
@@ -169,7 +169,7 @@ export default function DesktopBioSheet({ profile, isOwn, links, badges, posts, 
         {longBio && (
           <Band label="BIO">
             <div style={{ position: 'relative' }}>
-              <span style={{ position: 'absolute', top: -18, right: 0, ...SKB, fontSize: 70, color: 'rgba(229,225,219,0.08)', lineHeight: 1 }}>&rdquo;</span>
+              <span style={{ position: 'absolute', top: -18, right: 0, ...SKB, fontSize: 'calc(70px * var(--type-scale))', color: 'rgba(229,225,219,0.08)', lineHeight: 1 }}>&rdquo;</span>
               <p style={{ ...SKR, fontSize: 15, color: 'rgba(229,225,219,0.72)', lineHeight: 1.7, margin: 0, maxWidth: 620 }}>{longBio}</p>
             </div>
           </Band>

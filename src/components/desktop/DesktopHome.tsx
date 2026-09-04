@@ -136,7 +136,7 @@ export default function DesktopHome() {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '0 0 30px' }}>
           {/* Brief D7 §2 — sentence case (no uppercase transform), house title tier
               (75 Bold, --track-display, --ink-100). Desktop page-title scale 40px. */}
-          <h1 style={{ ...SKB, fontSize: 40, lineHeight: 0.95, letterSpacing: 'var(--track-display)', color: 'var(--ink-100)', margin: 0 }}>Discover</h1>
+          <h1 style={{ ...SKB, fontSize: 'calc(40px * var(--type-scale))', lineHeight: 0.95, letterSpacing: 'var(--track-display)', color: 'var(--ink-100)', margin: 0 }}>Discover</h1>
           {/* Brief D7 §3 — real creator search (was a dead placeholder div). */}
           <CreatorSearch width={160} height={34} />
         </div>

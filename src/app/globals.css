@@ -162,33 +162,41 @@ html, body {
      in one place; var(--fs-N) references never change. (Icon sizes use --icon-bump
      below.) */
   --ui-bump: 3.5px;
-  --fs-6:    calc(6px    + var(--ui-bump));
-  --fs-6_5:  calc(6.5px  + var(--ui-bump));
-  --fs-7:    calc(7px    + var(--ui-bump));
-  --fs-7_5:  calc(7.5px  + var(--ui-bump));
-  --fs-8:    calc(8px    + var(--ui-bump));
-  --fs-9:    calc(9px    + var(--ui-bump));
-  --fs-9_5:  calc(9.5px  + var(--ui-bump));
-  --fs-10:   calc(10px   + var(--ui-bump));
-  --fs-10_5: calc(10.5px + var(--ui-bump));
-  --fs-11:   calc(11px   + var(--ui-bump));
-  --fs-12:   calc(12px   + var(--ui-bump));
-  --fs-13:   calc(13px   + var(--ui-bump));
-  --fs-14:   calc(14px   + var(--ui-bump));
-  --fs-15:   calc(15px   + var(--ui-bump));
-  --fs-15_7: calc(15.7px + var(--ui-bump));
-  --fs-16:   calc(16px   + var(--ui-bump));
-  --fs-18:   calc(18px   + var(--ui-bump));
-  --fs-20:   calc(20px   + var(--ui-bump));
-  --fs-22:   calc(22px   + var(--ui-bump));
-  --fs-24:   calc(24px   + var(--ui-bump));
-  --fs-26:   calc(26px   + var(--ui-bump));
-  --fs-28:   calc(28px   + var(--ui-bump));
-  --fs-30:   calc(30px   + var(--ui-bump));
-  --fs-32:   calc(32px   + var(--ui-bump));
-  --fs-34:   calc(34px   + var(--ui-bump));
-  --fs-36:   calc(36px   + var(--ui-bump));
-  --fs-38:   calc(38px   + var(--ui-bump));
+  /* Brief D8 §1 — global TYPE multiplier. 1 by default → reference sizes are pixel-
+     identical at every width ≤2559px (all mobile included). Bumped only on very wide
+     desktop viewports by the @media steps at the end of this file (≥2560 → 1.06,
+     ≥3400 → 1.12). Composed INSIDE each --fs token with the additive --ui-bump so the
+     whole effective size scales. TEXT ONLY — spacing/padding are not scaled; line-
+     heights are ratios and scale naturally. Font-size LITERALS (px not via --fs-*) do
+     NOT scale — primary reading-surface literals were migrated to tokens in this brief. */
+  --type-scale: 1;
+  --fs-6:    calc((6px + var(--ui-bump)) * var(--type-scale));
+  --fs-6_5:  calc((6.5px + var(--ui-bump)) * var(--type-scale));
+  --fs-7:    calc((7px + var(--ui-bump)) * var(--type-scale));
+  --fs-7_5:  calc((7.5px + var(--ui-bump)) * var(--type-scale));
+  --fs-8:    calc((8px + var(--ui-bump)) * var(--type-scale));
+  --fs-9:    calc((9px + var(--ui-bump)) * var(--type-scale));
+  --fs-9_5:  calc((9.5px + var(--ui-bump)) * var(--type-scale));
+  --fs-10:   calc((10px + var(--ui-bump)) * var(--type-scale));
+  --fs-10_5: calc((10.5px + var(--ui-bump)) * var(--type-scale));
+  --fs-11:   calc((11px + var(--ui-bump)) * var(--type-scale));
+  --fs-12:   calc((12px + var(--ui-bump)) * var(--type-scale));
+  --fs-13:   calc((13px + var(--ui-bump)) * var(--type-scale));
+  --fs-14:   calc((14px + var(--ui-bump)) * var(--type-scale));
+  --fs-15:   calc((15px + var(--ui-bump)) * var(--type-scale));
+  --fs-15_7: calc((15.7px + var(--ui-bump)) * var(--type-scale));
+  --fs-16:   calc((16px + var(--ui-bump)) * var(--type-scale));
+  --fs-18:   calc((18px + var(--ui-bump)) * var(--type-scale));
+  --fs-20:   calc((20px + var(--ui-bump)) * var(--type-scale));
+  --fs-22:   calc((22px + var(--ui-bump)) * var(--type-scale));
+  --fs-24:   calc((24px + var(--ui-bump)) * var(--type-scale));
+  --fs-26:   calc((26px + var(--ui-bump)) * var(--type-scale));
+  --fs-28:   calc((28px + var(--ui-bump)) * var(--type-scale));
+  --fs-30:   calc((30px + var(--ui-bump)) * var(--type-scale));
+  --fs-32:   calc((32px + var(--ui-bump)) * var(--type-scale));
+  --fs-34:   calc((34px + var(--ui-bump)) * var(--type-scale));
+  --fs-36:   calc((36px + var(--ui-bump)) * var(--type-scale));
+  --fs-38:   calc((38px + var(--ui-bump)) * var(--type-scale));
 
   --sp-1: 4px;
   --sp-2: 8px;
@@ -881,3 +889,13 @@ input:-webkit-autofill:focus {
 .ledger-row { transition: background 120ms ease; }
 .ledger-row:hover,
 .ledger-row:active { background: rgba(229, 225, 219, 0.04); }
+
+/* ── Brief D8 §1 — 4K TYPE SCALE STEPS ───────────────────────────────────────
+   The only rules that raise --type-scale above 1. Viewport-WIDTH gated, so they
+   engage only on very wide desktop displays and never on mobile (which never
+   reaches 2560 CSS px). Placed at end-of-file so they win over the :root default
+   (same specificity, later in source). A 4K panel at OS 200% scaling reports
+   ~1920 CSS px → NO bump (text is already physically large); at 100%/150% it
+   reports 3840/2560 → bump. Text only — no spacing/layout change. */
+@media (min-width: 2560px) { :root { --type-scale: 1.06; } }
+@media (min-width: 3400px) { :root { --type-scale: 1.12; } }

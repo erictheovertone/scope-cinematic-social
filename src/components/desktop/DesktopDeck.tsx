@@ -112,7 +112,7 @@ export default function DesktopDeck({ deckId }: { deckId: string }) {
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, marginBottom: 26 }}>
           <div style={{ minWidth: 0 }}>
             <button onClick={() => router.back()} style={{ ...SKR, fontSize: 12, color: 'rgba(229,225,219,0.5)', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'transparent', border: 'none', cursor: 'pointer', padding: '0 0 12px' }}>← BACK</button>
-            <h1 style={{ ...SKB, fontSize: 34, lineHeight: 1, letterSpacing: '-0.02em', color: '#E5E1DB', textTransform: 'uppercase', margin: 0 }}>{loading ? '' : (deck?.title ?? 'DECK NOT FOUND')}</h1>
+            <h1 style={{ ...SKB, fontSize: 'calc(34px * var(--type-scale))', lineHeight: 1, letterSpacing: '-0.02em', color: '#E5E1DB', textTransform: 'uppercase', margin: 0 }}>{loading ? '' : (deck?.title ?? 'DECK NOT FOUND')}</h1>
             {deck && <p style={{ ...SKR, fontSize: 12, color: 'rgba(229,225,219,0.45)', margin: '8px 0 0' }}>{deck.item_count} {deck.item_count === 1 ? 'POST' : 'POSTS'}{deck.description ? ` · ${deck.description}` : ''}</p>}
           </div>
           {isOwn && deck && (

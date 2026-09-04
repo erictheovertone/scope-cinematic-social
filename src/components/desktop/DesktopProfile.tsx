@@ -8,14 +8,16 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { usePrivy } from '@privy-io/react-auth';
 import {
   getProfile, getFollowerCount, getFollowingCount, getUserDecks, getProfileLinks,
-  createDeck, isProMember, type ProfileLink, type Deck,
+  createDeck, isProMember, getUserByPrivyId, type ProfileLink, type Deck,
 } from '@/lib/userService';
 import { createPortal } from 'react-dom';
 import { updateProfileFields } from '@/lib/userService';
 import { bakeAndStoreDeckCover } from '@/lib/deckCollage';
-import { getUserPosts } from '@/lib/postsService';
+import { getUserPosts, likePost, unlikePost } from '@/lib/postsService';
+import GridCommentPanel, { GRID_PANEL_WIDTH, type GridPanelViewer } from '@/components/desktop/GridCommentPanel';
 import { useEconomy } from '@/components/EconomyProvider';
 import { resolveBadges, FIRST_CUT_ACTION_MARK } from '@/lib/economy/badges';
 import { getCachedMarketCaps } from '@/lib/economy/coinMarketData';
@@ -68,6 +70,7 @@ type Tab = 'portfolio' | 'collected' | 'decks';
 export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
   const router = useRouter();
   const economy = useEconomy();
+  const { user } = usePrivy(); // Brief D8 §2 — the VIEWER (for grid like/comment interactions)
 
   const [profile, setProfile] = useState<Record<string, unknown> | null>(null);
   const [posts, setPosts] = useState<Record<string, unknown>[]>([]);
@@ -96,6 +99,12 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
   // from their tables; mc from the coin_market_data cache (Q2, staleness-filtered → dash when
   // stale/absent). Collect/trade keep LIVE pricing — this cache is ambient display only.
   const [statsByPost, setStatsByPost] = useState<Record<string, { likes: number; comments: number; fc: number; mc?: number }>>({});
+  // Brief D8 §2 — grid hover INTERACTIONS. viewer = resolved identity for likePost/addComment;
+  // likedSet = which of these posts the viewer already liked (fill state); panel = the open
+  // floating comment panel (anchored to a cell). Like/comment logic = the existing handlers.
+  const [viewer, setViewer] = useState<GridPanelViewer | null>(null);
+  const [likedSet, setLikedSet] = useState<Set<string>>(new Set());
+  const [panel, setPanel] = useState<{ postId: string; index: number; left: number; top: number; side: 'left' | 'right' } | null>(null);
   const [deckCreateOpen, setDeckCreateOpen] = useState(false);
   const [newDeckTitle, setNewDeckTitle] = useState('');
   const [newDeckDesc, setNewDeckDesc] = useState('');
@@ -208,6 +217,76 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
     })();
     return () => { alive = false; };
   }, [userId, privyId, economy]);
+
+  // Brief D8 §2 — resolve the VIEWER (uuid + username + avatar) for like/comment writes.
+  useEffect(() => {
+    if (!user) { setViewer(null); return; }
+    let dead = false;
+    getUserByPrivyId(user.id)
+      .then((su) => (su ? getProfile(su.id).then((p) => ({ su, p })) : null))
+      .then((r) => { if (!dead && r) setViewer({ uuid: r.su.id, name: (r.p as { username?: string })?.username ?? 'user', avatar: (r.p as { profile_image_url?: string })?.profile_image_url ?? null }); })
+      .catch(() => {});
+    return () => { dead = true; };
+  }, [user?.id]);
+
+  // Which of these posts the viewer already liked (likes.user_id = the PRIVY DID) — ONE
+  // set-based read, so the grid heart shows fill state without per-cell queries.
+  useEffect(() => {
+    if (!user || posts.length === 0) { setLikedSet(new Set()); return; }
+    let dead = false;
+    (async () => {
+      const ids = posts.map((p) => String(p.id)).filter(Boolean);
+      if (!ids.length) return;
+      const { supabase } = await import('@/lib/supabase/client');
+      const { data } = await supabase.from('likes').select('post_id').eq('user_id', user.id).in('post_id', ids);
+      if (!dead) setLikedSet(new Set((data ?? []).map((r) => String(r.post_id))));
+    })().catch(() => {});
+    return () => { dead = true; };
+  }, [user?.id, posts]);
+
+  // Optimistic like toggle — the existing likePost/unlikePost handlers; count updates in
+  // place in statsByPost, fill state via likedSet. Reverts both on failure.
+  const toggleGridLike = (postId: string) => {
+    if (!user || !viewer) return;
+    const liked = likedSet.has(postId);
+    setLikedSet((prev) => { const n = new Set(prev); liked ? n.delete(postId) : n.add(postId); return n; });
+    setStatsByPost((prev) => { const s = prev[postId] ?? { likes: 0, comments: 0, fc: 0 }; return { ...prev, [postId]: { ...s, likes: Math.max(0, s.likes + (liked ? -1 : 1)) } }; });
+    (liked ? unlikePost(postId, user.id) : likePost(postId, user.id, viewer.name)).catch(() => {
+      // revert
+      setLikedSet((prev) => { const n = new Set(prev); liked ? n.add(postId) : n.delete(postId); return n; });
+      setStatsByPost((prev) => { const s = prev[postId] ?? { likes: 0, comments: 0, fc: 0 }; return { ...prev, [postId]: { ...s, likes: Math.max(0, s.likes + (liked ? 1 : -1)) } }; });
+    });
+  };
+
+  // Open the floating comment panel anchored to a cell. Default RIGHT of the cell; flips
+  // LEFT for the rightmost column(s) or when the panel would overflow the viewport right.
+  const openCommentPanel = (index: number, postId: string, cellEl: HTMLElement) => {
+    const r = cellEl.getBoundingClientRect();
+    const gap = 8;
+    const rightmost = index % gridCols === gridCols - 1;
+    const overflowsRight = r.right + gap + GRID_PANEL_WIDTH > window.innerWidth - 8;
+    const side: 'left' | 'right' = (rightmost || overflowsRight) ? 'left' : 'right';
+    const left = side === 'right' ? r.right + gap : Math.max(8, r.left - gap - GRID_PANEL_WIDTH);
+    const maxTop = Math.max(8, window.innerHeight - 8 - Math.min(window.innerHeight * 0.7, 420));
+    const top = Math.min(Math.max(8, r.top), maxTop);
+    setPanel({ postId, index, left, top, side });
+  };
+
+  // Dismiss the panel when the GRID scrolls (the panel is position:fixed, so a scroll
+  // would detach it from its cell). Capture-phase catches whichever inner container
+  // scrolls; scrolls originating INSIDE the panel are ignored so it stays open when the
+  // viewer scrolls its own comment list.
+  useEffect(() => {
+    if (!panel) return;
+    const onScroll = (e: Event) => {
+      const t = e.target as Node | null;
+      const panelEl = document.getElementById('grid-comment-panel');
+      if (panelEl && t && panelEl.contains(t)) return; // scrolling the panel itself
+      setPanel(null);
+    };
+    document.addEventListener('scroll', onScroll, { capture: true, passive: true });
+    return () => document.removeEventListener('scroll', onScroll, { capture: true } as EventListenerOptions);
+  }, [panel]);
 
   const name = String(profile?.display_name ?? '');
   // Brief 2.5 — first/last split for the wide inter-word name gap (flex, not spaces).
@@ -516,16 +595,33 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
                   {(() => {
                     const s = statsByPost[pid] ?? { likes: 0, comments: 0, fc: 0 };
                     const minted = !!p.coin_address;
+                    const liked = likedSet.has(pid);
+                    const pinned = panel?.postId === pid; // Brief D8 §2 — keep the gradient up while its panel is open
                     const ico: React.CSSProperties = { color: 'rgba(229,225,219,0.7)', flexShrink: 0 };
                     const val: React.CSSProperties = { fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 11, color: 'var(--ink-100)', fontVariantNumeric: 'tabular-nums', lineHeight: 1 };
+                    // Brief D8 §2a/b — ≥44px hit area (padding), pointer-events re-enabled on the
+                    // control only (the gradient stays none so empty areas still open the lightbox),
+                    // negative margin keeps the glyph's optical position. stopPropagation so the
+                    // cell's lightbox trigger never fires from an icon click.
+                    const hit: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 4, pointerEvents: 'auto', cursor: 'pointer', padding: '16px 8px', margin: '-11px -6px', WebkitTapHighlightColor: 'transparent' };
                     return (
-                      <div className="dg-reveal" style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: '40%', pointerEvents: 'none', display: 'flex', alignItems: 'flex-end', padding: '0 9px 8px', zIndex: 2, background: 'linear-gradient(to top, rgba(5,5,5,0.85) 0%, rgba(5,5,5,0.55) 45%, transparent 100%)' }}>
+                      <div className="dg-reveal" style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: '40%', pointerEvents: 'none', display: 'flex', alignItems: 'flex-end', padding: '0 9px 8px', zIndex: 2, background: 'linear-gradient(to top, rgba(5,5,5,0.85) 0%, rgba(5,5,5,0.55) 45%, transparent 100%)', ...(pinned ? { opacity: 1, transform: 'translateY(0)' } : {}) }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={ico}><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" /></svg>
+                          <span
+                            role="button" tabIndex={0} aria-label={liked ? 'Unlike' : 'Like'} aria-pressed={liked}
+                            onClick={(e) => { e.stopPropagation(); toggleGridLike(pid); }}
+                            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); toggleGridLike(pid); } }}
+                            style={hit}
+                          >
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill={liked ? '#E5E1DB' : 'none'} stroke={liked ? '#E5E1DB' : 'currentColor'} strokeWidth="2" style={ico}><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" /></svg>
                             <span style={val}>{s.likes}</span>
                           </span>
-                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                          <span
+                            role="button" tabIndex={0} aria-label="Open comments"
+                            onClick={(e) => { e.stopPropagation(); const cell = (e.currentTarget as HTMLElement).closest('.dg-cell') as HTMLElement | null; if (cell) openCommentPanel(i, pid, cell); }}
+                            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); const cell = (e.currentTarget as HTMLElement).closest('.dg-cell') as HTMLElement | null; if (cell) openCommentPanel(i, pid, cell); } }}
+                            style={hit}
+                          >
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={ico}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
                             <span style={val}>{s.comments}</span>
                           </span>
@@ -663,6 +759,19 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
       {/* Desktop lightbox v1: PostModal (portaled) renders as the full overlay —
           acceptable centered presentation for v1. */}
       {openPost && <PostModal post={openPost as any} onClose={() => setOpenPost(null)} />}
+      {/* Brief D8 §2b — floating comment panel, anchored beside the hovered grid cell. */}
+      {panel && (
+        <GridCommentPanel
+          postId={panel.postId}
+          viewer={viewer}
+          userDid={user?.id ?? null}
+          left={panel.left}
+          top={panel.top}
+          side={panel.side}
+          onClose={() => setPanel(null)}
+          onCountChange={(n) => setStatsByPost((prev) => { const s = prev[panel.postId] ?? { likes: 0, comments: 0, fc: 0 }; return { ...prev, [panel.postId]: { ...s, comments: n } }; })}
+        />
+      )}
       {/* Desktop bio SHEET — the personal-site treatment (replaces ProfileDataSheet). */}
       {infoOpen && (
         <DesktopBioSheet

@@ -112,7 +112,7 @@ export default function DesktopGridPicker({
 
       <div style={{ maxWidth: 900, margin: '0 auto', padding: '64px 40px 80px', textAlign: 'center' }}/* R1: bespoke width — flagged */>
         <CornerBrackets>
-          <h1 style={{ ...SKB, fontSize: 72, color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '-0.01em', margin: 0, lineHeight: 1 }}>{title}</h1>
+          <h1 style={{ ...SKB, fontSize: 'calc(72px * var(--type-scale))', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '-0.01em', margin: 0, lineHeight: 1 }}>{title}</h1>
         </CornerBrackets>
 
         {/* ── STEP 1: ASPECT — outlined frames at true ratio ── */}

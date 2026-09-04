@@ -67,7 +67,7 @@ export default function DesktopProfileSetup({ onComplete }: { onComplete: (userI
     <div className="bg-black" style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div style={{ position: 'relative', width: 820, minHeight: 520, background: '#000', border: '1px solid #1a1a1a', boxSizing: 'border-box', padding: '54px 60px' }}>
         <RedBrackets inset={0} />
-        <h1 style={{ ...SKB, fontSize: 34, color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '-0.01em', margin: '0 0 4px' }}>SET UP YOUR PROFILE</h1>
+        <h1 style={{ ...SKB, fontSize: 'calc(34px * var(--type-scale))', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '-0.01em', margin: '0 0 4px' }}>SET UP YOUR PROFILE</h1>
         <p style={{ ...SKB, fontWeight: 400, fontSize: 13, color: '#9e9e9e', margin: '0 0 30px' }}>This is how the world sees you on Scope.</p>
 
         <div style={{ display: 'flex', gap: 30, alignItems: 'flex-start' }}>

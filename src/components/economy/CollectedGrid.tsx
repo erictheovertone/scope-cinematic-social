@@ -260,7 +260,7 @@ export default function CollectedGrid({
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '26px 10px 37px' }}>
             {/* Brief D7 §8 — sentence case + house title tier (75 Bold, --track-display,
                 --ink-100). Shared surface: mobile Collected tab also reads "Repertory". */}
-            <span style={{ ...SKB, fontSize: 33, color: 'var(--ink-100)', letterSpacing: 'var(--track-display)', lineHeight: 1 }}>Repertory</span>
+            <span style={{ ...SKB, fontSize: 'calc(33px * var(--type-scale))', color: 'var(--ink-100)', letterSpacing: 'var(--track-display)', lineHeight: 1 }}>Repertory</span>
             {isOwn && (
               <button
                 onClick={() => setCreateOpen(true)}

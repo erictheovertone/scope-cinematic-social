@@ -135,7 +135,7 @@ export default function DesktopWallet() {
           <div>
             <h1 style={{ ...SKB, fontSize: 22, color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 14px' }}>WALLET</h1>
             <p style={{ ...SKB, fontSize: 11, color: 'rgba(229,225,219,0.45)', textTransform: 'uppercase', letterSpacing: '0.14em', margin: '0 0 4px' }}>TOTAL BALANCE</p>
-            <p style={{ ...SKB, fontSize: 40, color: '#E5E1DB', margin: 0, fontVariantNumeric: 'tabular-nums' }}>{usd(animatedTotal)}</p>
+            <p style={{ ...SKB, fontSize: 'calc(40px * var(--type-scale))', color: '#E5E1DB', margin: 0, fontVariantNumeric: 'tabular-nums' }}>{usd(animatedTotal)}</p>
           </div>
           <div style={{ display: 'flex', gap: 44 }}>
             <div>

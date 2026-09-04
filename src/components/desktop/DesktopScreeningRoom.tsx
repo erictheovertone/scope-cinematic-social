@@ -137,7 +137,7 @@ export default function DesktopScreeningRoom() {
         <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', padding: '58px 0 30px' }}>
           {/* Brief D7 §5 — page-title tier: sentence case (no uppercase transform),
               75 Bold, --track-display, --ink-100. Desktop hero scale (58px). */}
-          <h1 style={{ ...SKB, fontSize: 58, letterSpacing: 'var(--track-display)', color: 'var(--ink-100)', margin: 0, lineHeight: 1 }}>Screening Room</h1>
+          <h1 style={{ ...SKB, fontSize: 'calc(58px * var(--type-scale))', letterSpacing: 'var(--track-display)', color: 'var(--ink-100)', margin: 0, lineHeight: 1 }}>Screening Room</h1>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
             <span style={{ ...SKB, fontSize: 12, color: '#E5E1DB', letterSpacing: '0.14em', textTransform: 'uppercase' }}>Top 50 Market Cap Content</span>
             {/* The 172×31 top-right control (Figma x1192): v1 ships RANK-ORDER ONLY — the
@@ -161,7 +161,7 @@ export default function DesktopScreeningRoom() {
             <div style={{ position: 'relative', display: 'flex', alignItems: 'flex-start', gap: 24, padding: '22px 0 0', maxWidth: 'var(--shell-fluid)', margin: '0 auto' }}>
               {/* rank numeral + underline */}
               <div style={{ flexShrink: 0 }}>
-                <span style={{ ...SKB, fontSize: 75, color: '#E5E1DB', lineHeight: 0.9, letterSpacing: '-0.04em', display: 'block' }}>{two(current.rank)}</span>
+                <span style={{ ...SKB, fontSize: 'calc(75px * var(--type-scale))', color: '#E5E1DB', lineHeight: 0.9, letterSpacing: '-0.04em', display: 'block' }}>{two(current.rank)}</span>
                 <div style={{ width: 48, height: 2, background: '#E5E1DB', marginTop: 10 }} />
               </div>
 

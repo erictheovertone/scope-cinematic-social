@@ -45,7 +45,7 @@ export default function DesktopViewingModes({ currentMode, onClose, onSelect }: 
 
           {/* HEADER — page-title left, logomark top-right (closes), matching mobile. */}
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexShrink: 0, marginBottom: 34 }}>
-            <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 44, lineHeight: 0.94, letterSpacing: 'var(--track-display)', color: 'var(--ink-100)', margin: 0 }}>Viewing Modes</h1>
+            <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 'calc(44px * var(--type-scale))', lineHeight: 0.94, letterSpacing: 'var(--track-display)', color: 'var(--ink-100)', margin: 0 }}>Viewing Modes</h1>
             <button onClick={onClose} aria-label="Close viewing modes" style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px 2px', marginTop: -2, lineHeight: 0 }}>
               <img src="/design-updates-071526/scope-logomark-offwhite.png" alt="Close" style={{ width: 44, height: 'auto', objectFit: 'contain', display: 'block' }} />
             </button>

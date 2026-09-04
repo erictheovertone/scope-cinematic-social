@@ -65,7 +65,7 @@ export default function WelcomeExplainer({ onDone, onSkip }: { onDone: () => voi
 
         {/* content */}
         <div key={i} style={{ position: 'absolute', left: 50, top: 150, right: 50, animation: reduced ? 'none' : `explainerIn 200ms ease both`, ['--exd' as string]: dir === 1 ? '24px' : '-24px' }}>
-          <h1 style={{ ...INTER_B, fontSize: 54, lineHeight: '56px', color: '#E5E1DB', margin: 0, whiteSpace: 'pre-line', letterSpacing: '-0.01em' }}>{slide.title}</h1>
+          <h1 style={{ ...INTER_B, fontSize: 'calc(54px * var(--type-scale))', lineHeight: '56px', color: '#E5E1DB', margin: 0, whiteSpace: 'pre-line', letterSpacing: '-0.01em' }}>{slide.title}</h1>
           <p style={{ ...INTER_B, fontWeight: 400, fontSize: 16, color: '#9e9e9e', lineHeight: 1.5, margin: '22px 0 0', maxWidth: 600 }}>{slide.subtitle}</p>
         </div>
 
