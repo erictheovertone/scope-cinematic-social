@@ -5,7 +5,7 @@ import { feedImage } from "@/lib/mediaUrl";
 import { useRouter } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
 import { saveProfile, uploadImage, getUserByPrivyId, getProfileByUsername, syncUserWithSupabase } from "@/lib/userService";
-import FrameLoader from "@/components/FrameLoader";
+import ScopeLoader from "@/components/ScopeLoader";
 
 async function compressImage(file: File): Promise<File> {
   return new Promise((resolve) => {
@@ -199,7 +199,7 @@ export default function ProfileSetup() {
         )}
         {imageUploading && (
           <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <FrameLoader />
+            <ScopeLoader size="md" />
           </div>
         )}
       </div>

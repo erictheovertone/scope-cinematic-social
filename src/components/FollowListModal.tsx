@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { feedImage } from "@/lib/mediaUrl";
 import { useRouter } from "next/navigation";
 import { getFollowers, getFollowing } from "@/lib/userService";
-import FrameLoader from "@/components/FrameLoader";
+import ScopeLoader from "@/components/ScopeLoader";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -60,7 +60,7 @@ export default function FollowListModal({ type, privyUserId, onClose }: Props) {
       <div className="flex-1 overflow-y-auto px-[4px]">
         {loading ? (
           <div className="flex items-center justify-center mt-8">
-            <FrameLoader />
+            <ScopeLoader size="md" />
           </div>
         ) : profiles.length === 0 ? (
           <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: "rgba(229,225,219,0.4)", marginTop: 24 }}>

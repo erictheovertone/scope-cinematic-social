@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
+import ScopeLoader from "@/components/ScopeLoader";
 
 export default function DeleteAccount() {
   const router = useRouter();
@@ -45,7 +46,7 @@ export default function DeleteAccount() {
       <div className="flex-1 overflow-y-auto px-6 py-6">
         {isDeleting ? (
           <div className="flex flex-col items-center justify-center h-full">
-            <div className="w-16 h-16 border-4 border-[#E5E1DB] border-t-transparent rounded-full animate-spin mb-6"></div>
+            <div className="mb-6"><ScopeLoader size="lg" /></div>
             <h2 className="font-['IBM_Plex_Mono'] font-medium text-[#E5E1DB] text-[var(--fs-18)] mb-4 text-center">
               Deleting Account...
             </h2>

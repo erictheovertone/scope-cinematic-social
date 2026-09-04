@@ -11,7 +11,7 @@ import { getScopeLimitType } from "@/lib/limits";
 import { feedImage, THUMB_WIDTH } from "@/lib/mediaUrl";
 import DeckThumbnail from "@/components/DeckThumbnail";
 import { useUpsell } from "@/components/UpsellProvider";
-import FrameLoader from "@/components/FrameLoader";
+import ScopeLoader from "@/components/ScopeLoader";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -83,7 +83,7 @@ export default function DecksPage() {
   if (loading) {
     return (
       <div className="bg-black w-full app-shell screen-min mx-auto flex items-center justify-center">
-        <FrameLoader variant="page" />
+        <ScopeLoader size="lg" label="Loading" />
       </div>
     );
   }

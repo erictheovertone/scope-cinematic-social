@@ -10,7 +10,7 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { resolveErc20, addUserAsset, type UserAsset } from '@/lib/userAssets';
-import FrameLoader from '@/components/FrameLoader';
+import ScopeLoader from '@/components/ScopeLoader';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -94,7 +94,7 @@ export default function ImportAssetSheet({ visible, onClose, userUuid, onAdded }
 
         {busy ? (
           <div style={{ width: '100%', border: '1px solid rgba(229,225,219,0.55)', padding: '13px 0', marginTop: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, minHeight: 46 }}>
-            <FrameLoader size={23.5} />
+            <ScopeLoader size="sm" />
             <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.1em' }}>CHECKING TOKEN…</span>
           </div>
         ) : (

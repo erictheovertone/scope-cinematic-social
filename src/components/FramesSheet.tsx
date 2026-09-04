@@ -5,7 +5,7 @@ import { type Deck, type DeckItemWithMedia } from "@/lib/userService";
 import { getFramesLayout } from "@/lib/framesLayouts";
 import { generateFramesExport } from "@/lib/framesExport";
 import FramesPreview from "@/components/FramesPreview";
-import FrameLoader from "@/components/FrameLoader";
+import ScopeLoader from "@/components/ScopeLoader";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -296,7 +296,7 @@ export default function FramesSheet({
               </p>
             ) : (
               <>
-                <FrameLoader />
+                <ScopeLoader size="md" />
                 <p style={{ ...SKB, fontSize: 'var(--fs-10)', letterSpacing: "0.15em", color: "rgba(229,225,219,0.7)", textTransform: "uppercase", margin: 0 }}>
                   RENDERING FRAMES...
                 </p>

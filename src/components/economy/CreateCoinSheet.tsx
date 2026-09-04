@@ -15,7 +15,7 @@ import { base } from 'viem/chains';
 import { createScopeCoin, backOwnCoin, reconcileCoinFromTx, coinImageUrl, streamHlsUrl, HLS_MIME } from '@/lib/zoraCoins';
 import { updatePostCoinData, updatePostCoinTxHash } from '@/lib/postsService';
 import { suggestTicker, normalizeTicker, isValidTicker, tickerError } from '@/lib/economy/ticker';
-import FrameLoader from '@/components/FrameLoader';
+import ScopeLoader from '@/components/ScopeLoader';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -177,7 +177,7 @@ export default function CreateCoinSheet({
             {working ? (
               /* THE WHEEL — pressed button transformed into live narration. */
               <div style={{ width: '100%', border: '1px solid rgba(229,225,219,0.55)', padding: '13px 0', marginBottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, minHeight: 46 }}>
-                <FrameLoader size={23.5} />
+                <ScopeLoader size="sm" />
                 <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
                   {narration ?? 'CREATING YOUR COIN…'}
                 </span>

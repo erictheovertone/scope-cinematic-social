@@ -13,7 +13,7 @@ import { getEthBalance, getUsdcBalance, getZoraBalance, getTransactionHistoryCac
 import { getEmbeddedAddress } from "@/lib/embeddedWallet";
 import { useEconomy } from "@/components/EconomyProvider";
 import TickerMark from "@/components/economy/TickerMark";
-import FrameLoader from "@/components/FrameLoader";
+import ScopeLoader from "@/components/ScopeLoader";
 import CollectSheetGate from "@/components/economy/CollectSheetGate";
 import type { Holding } from "@/lib/economy/types";
 import { onTradeSettled } from "@/lib/economy/tradeEvents";
@@ -1265,7 +1265,7 @@ export default function WalletPage() {
               </div>
             ) : sendStep === "sending" ? (
               <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, minHeight: 180 }}>
-                <FrameLoader size={23.5} />
+                <ScopeLoader size="sm" />
                 <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: "#E5E1DB", textTransform: "uppercase", letterSpacing: "0.1em" }}>
                   SENDING · ${isFinite(sendUsdNum) ? sendUsdNum.toFixed(2) : ""}…
                 </span>

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
 import { syncUserWithSupabase, getUserByPrivyId, getProfile } from "@/lib/userService";
 import { hasSeenDesktopExplainer } from "@/lib/desktopOnboarding";
-import FrameLoader from "@/components/FrameLoader";
+import ScopeLoader from "@/components/ScopeLoader";
 
 export default function AuthCallback() {
   const router = useRouter();
@@ -70,7 +70,7 @@ export default function AuthCallback() {
         justifyContent: "center",
       }}
     >
-      <FrameLoader variant="page" />
+      <ScopeLoader size="lg" label="Loading" />
     </div>
   );
 }

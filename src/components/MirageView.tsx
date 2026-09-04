@@ -8,7 +8,7 @@ import {
 } from "@/lib/postsService";
 import PostModal from "@/components/PostModal";
 import PillarboxFrame from "@/components/PillarboxFrame";
-import FrameLoader from "@/components/FrameLoader";
+import ScopeLoader from "@/components/ScopeLoader";
 import GradedVideo from "@/components/finishing/GradedVideo";
 import { streamGradedProps } from "@/lib/editor/videoGrade";
 import { getAspectRatio } from "@/lib/aspectRatio";
@@ -435,7 +435,7 @@ export default function MirageView({ onClose }: { onClose: () => void }) {
               padding: "16px 0",
             }}
           >
-            <FrameLoader />
+            <ScopeLoader size="md" />
           </div>
         )}
 

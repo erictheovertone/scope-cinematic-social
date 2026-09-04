@@ -29,7 +29,7 @@ import { getColCount } from "@/lib/aspectRatio";
 import { resolveLayout, legacyLayoutId } from "@/lib/layoutModel";
 import { getScopeLimitType } from "@/lib/limits";
 import { useUpsell } from "@/components/UpsellProvider";
-import FrameLoader from "@/components/FrameLoader";
+import ScopeLoader from "@/components/ScopeLoader";
 import BadgeCluster from "@/components/BadgeCluster";
 import ProfileHeader from "@/components/profile/ProfileHeader";
 import ProfileTabRow from "@/components/profile/ProfileTabRow";
@@ -728,7 +728,7 @@ const userLayoutId = stableLayoutId;
         <div style={{ flex: 1, overflowY: 'auto', overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch', padding: '0 16px' }}>
           {decksLoading ? (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '50%' }}>
-              <FrameLoader />
+              <ScopeLoader size="md" />
             </div>
           ) : userDecks.length === 0 ? (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '50%' }}>

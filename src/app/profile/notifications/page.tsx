@@ -10,7 +10,7 @@ import {
 import { supabase } from "@/lib/supabase/client";
 import { getPostById } from "@/lib/postsService";
 import { feedImage } from "@/lib/mediaUrl";
-import FrameLoader from "@/components/FrameLoader";
+import ScopeLoader from "@/components/ScopeLoader";
 import PostModal from "@/components/PostModal";
 import { NotificationActorAvatar, NotificationActorMessage } from "@/components/NotificationActor";
 import { getAspectRatio } from "@/lib/aspectRatio";
@@ -276,7 +276,7 @@ export default function NotificationsPage() {
       <div ref={listRef} data-swipe-exclude className="flex-1 overflow-y-auto" style={{ overflowX: 'hidden' }}>
         {loading ? (
           <div className="flex items-center justify-center mt-12">
-            <FrameLoader />
+            <ScopeLoader size="md" />
           </div>
         ) : !user ? (
           <div className="flex items-center justify-center mt-12">

@@ -5,7 +5,7 @@ import { createPublicClient, http, formatEther } from "viem";
 import { base } from "viem/chains";
 import { isValidTicker, tickerError } from "@/lib/economy/ticker";
 import { GAS_FLOOR_ETH } from "@/lib/economy/preflight";
-import FrameLoader from "@/components/FrameLoader";
+import ScopeLoader from "@/components/ScopeLoader";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -352,7 +352,7 @@ export default function MintPromptSheet({ visible, onMint, onSkip, onCoinSkipped
               <div style={{ marginBottom: 10 }}>
                 <div style={{ width: '100%', border: '1px solid rgba(229,225,219,0.55)', padding: '13px 0', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, minHeight: 46 }}>
                   {sequenceLine && !sequenceLine.startsWith('[') && !sequenceLine.includes('DIDN’T') ? (
-                    <FrameLoader size={23.5} />
+                    <ScopeLoader size="sm" />
                   ) : null}
                   <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: sequenceLine?.includes('DIDN’T') ? '#E5E1DB' : sequenceLine?.startsWith('[') ? '#E5E1DB' : '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
                     {sequenceLine ?? 'WORKING…'}

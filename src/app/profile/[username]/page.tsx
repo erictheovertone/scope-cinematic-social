@@ -25,7 +25,7 @@ import MediaRenderer from "@/components/MediaRenderer";
 import PostCell from "@/components/PostCell";
 import { getColCount } from "@/lib/aspectRatio";
 import { resolveLayout, legacyLayoutId } from "@/lib/layoutModel";
-import FrameLoader from "@/components/FrameLoader";
+import ScopeLoader from "@/components/ScopeLoader";
 import BadgeCluster from "@/components/BadgeCluster";
 import ProfileHeader from "@/components/profile/ProfileHeader";
 import { resolveBadges } from "@/lib/economy/badges";
@@ -259,7 +259,7 @@ export default function PublicProfilePage() {
 
   if (!loaded) return (
     <div className="bg-black w-full app-shell screen-min mx-auto flex items-center justify-center">
-      <FrameLoader variant="page" />
+      <ScopeLoader size="lg" label="Loading" />
     </div>
   );
 
@@ -519,7 +519,7 @@ export default function PublicProfilePage() {
           <button onClick={() => { setShowDecks(false); setActiveTab('main'); }} style={{ position: 'absolute', right: 16, fontSize: 'var(--fs-18)', color: '#E5E1DB', background: 'none', border: 'none', cursor: 'pointer' }}>×</button>
         </div>
         <div style={{ flex: 1, overflowY: 'auto', padding: '0 16px' }}>
-          {decksLoading ? <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '50%' }}><FrameLoader /></div>
+          {decksLoading ? <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '50%' }}><ScopeLoader size="md" /></div>
           : publicDecks.length === 0 ? <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '50%' }}><span style={{ ...SKB, fontSize: 'var(--fs-11)', color: '#E5E1DB', textTransform: 'uppercase' }}>NO DECKS YET</span></div>
           : publicDecks.map(deck => (
             <div key={deck.id} onClick={() => { setShowDecks(false); router.push(`/profile/${username}/decks/${deck.id}`); }} style={{ marginBottom: 12, cursor: 'pointer' }}>

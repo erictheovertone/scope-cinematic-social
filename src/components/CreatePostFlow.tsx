@@ -29,7 +29,7 @@ import { createLook, getLooks, uploadLookThumb, setLookThumb, type SavedLook } f
 import { getScopeLimitType } from '@/lib/limits';
 import { useUpsell } from '@/components/UpsellProvider';
 import CropTool from '@/components/CropTool';
-import FrameLoader from '@/components/FrameLoader';
+import ScopeLoader from '@/components/ScopeLoader';
 import { chipForLayout, getAspectRatio } from '@/lib/aspectRatio';
 import {
   neutralGeometry, bakeImageGeometry, type EditGeometry,
@@ -1226,7 +1226,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
       <div className="h-full flex flex-col items-center justify-center gap-4 p-6">
         {mintStatus === 'minting' && (
           <>
-            <FrameLoader />
+            <ScopeLoader size="md" />
             <p style={{ ...SKB, fontSize: 'var(--fs-10)', color: '#E5E1DB', textAlign: 'center', lineHeight: 1.6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
               Creating your coin on Base...
             </p>
@@ -1533,7 +1533,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
         <div className="flex-1 overflow-y-auto">
           {decksLoading ? (
             <div className="flex items-center justify-center mt-8">
-              <FrameLoader />
+              <ScopeLoader size="md" />
             </div>
           ) : (
             <>

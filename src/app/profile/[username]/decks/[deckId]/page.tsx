@@ -18,7 +18,7 @@ import FramesSheet from "@/components/FramesSheet";
 import FramesProUpsellSheet from "@/components/FramesProUpsellSheet";
 import MembershipSheet from "@/components/MembershipSheet";
 import MediaRenderer from "@/components/MediaRenderer";
-import FrameLoader from "@/components/FrameLoader";
+import ScopeLoader from "@/components/ScopeLoader";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -468,7 +468,7 @@ export default function DeckDetailPage() {
   if (loading) {
     return (
       <div className="bg-black w-full app-shell min-h-[100dvh] mx-auto flex items-center justify-center">
-        <FrameLoader variant="page" />
+        <ScopeLoader size="lg" label="Loading" />
       </div>
     );
   }
@@ -833,7 +833,7 @@ export default function DeckDetailPage() {
             {/* Batch progress — corner-bracket loader + count, so large batches read as working */}
             {uploading && uploadProgress && (
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <FrameLoader variant="inline" size={29.5} />
+                <ScopeLoader size="sm" />
                 <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: "rgba(229,225,219,0.7)", letterSpacing: "0.06em" }}>
                   {uploadProgress.done} / {uploadProgress.total}
                 </span>

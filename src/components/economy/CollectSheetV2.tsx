@@ -29,7 +29,7 @@ import { streamGradedProps } from "@/lib/editor/videoGrade";
 import type { PostMarket, BuyQuote, SellQuote, TradeCurrency } from '@/lib/economy/types';
 import ApertureMark from '@/components/economy/ApertureMark';
 import TickerMark from '@/components/economy/TickerMark';
-import FrameLoader from '@/components/FrameLoader';
+import ScopeLoader from '@/components/ScopeLoader';
 import { getAspectRatio } from '@/lib/aspectRatio';
 import { notifyTradeSettled } from '@/lib/economy/tradeEvents';
 import { notifyMarketTrade } from '@/lib/postsService';
@@ -630,7 +630,7 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
                 {busy ? (
                   /* THE WHEEL — pressed button transformed into narration. */
                   <div style={{ width: '100%', border: '1px solid rgba(229,225,219,0.55)', padding: '13px 0', marginBottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, minHeight: 46 }}>
-                    <FrameLoader size={23.5} />
+                    <ScopeLoader size="sm" />
                     <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
                       BUYING · {buyQuote ? usd(buyQuote.usdAmount) : ''}…
                     </span>
@@ -761,7 +761,7 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
                     {busy ? (
                       /* THE WHEEL — pressed button transformed into narration. */
                       <div style={{ width: '100%', border: '1px solid rgba(229,225,219,0.55)', padding: '13px 0', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, minHeight: 46 }}>
-                        <FrameLoader size={23.5} />
+                        <ScopeLoader size="sm" />
                         <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
                           SELLING · {sellPieces} {sellPieces === 1 ? 'FRAGMENT' : 'FRAGMENTS'}…
                         </span>

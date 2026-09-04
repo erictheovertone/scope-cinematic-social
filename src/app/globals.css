@@ -401,18 +401,15 @@ button:active,
   }
 }
 
-/* FrameLoader — viewfinder corner-bracket loader (replaces the old red ball).
-   frameSnap: each bracket snaps inward from its corner offset (--fdx/--fdy) with
-   a tiny scale overshoot. framePulse: the assembled frame breathes on slow loads. */
-@keyframes frameSnap {
-  0%   { opacity: 0; transform: translate(var(--fdx, 0), var(--fdy, 0)) scale(0.6); }
-  70%  { opacity: 1; transform: translate(0, 0) scale(1.06); }
-  100% { opacity: 1; transform: translate(0, 0) scale(1); }
-}
-
-@keyframes framePulse {
-  0%, 100% { opacity: 0.45; transform: scale(0.97); }
-  50%      { opacity: 1;    transform: scale(1);    }
+/* ScopeLoader (Brief L1 "Pulse") — six masked logomark arc-layers pulse opacity
+   center-out. Peak at 30%, rest at .2 from 65% on; GPU-cheap (opacity only). The
+   per-layer stagger (inner 0s · mid .2s · outer .4s) is applied inline. Reduced-
+   motion is handled in JS (static .85) so it lands exactly, not on this keyframe's
+   .2 floor via the Stage 4.1 net. */
+@keyframes scopeLoaderPulse {
+  0%, 100% { opacity: 0.2; }
+  30%      { opacity: 1;   }
+  65%      { opacity: 0.2; }
 }
 
 /* PALETTE tab arrival ping — the "filed away" frame landing in the gallery. */

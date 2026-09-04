@@ -17,7 +17,7 @@ import { usePrivy } from '@privy-io/react-auth';
 import { getUserByPrivyId, getProfile } from '@/lib/userService';
 import { hasSeenDesktopExplainer, markDesktopExplainerSeen } from '@/lib/desktopOnboarding';
 import { deriveDesktopLayout, type DesktopLayout } from '@/lib/desktopLayout';
-import FrameLoader from '@/components/FrameLoader';
+import ScopeLoader from '@/components/ScopeLoader';
 import WelcomeExplainer from '@/components/desktop/WelcomeExplainer';
 import DesktopProfileSetup from '@/components/desktop/DesktopProfileSetup';
 import DesktopGridPicker from '@/components/desktop/DesktopGridPicker';
@@ -70,7 +70,7 @@ export default function DesktopOnboarding() {
   const skip = async () => { await markSeen(); router.replace('/'); };
 
   if (phase === 'resolving') {
-    return <div className="bg-black" style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><FrameLoader variant="page" /></div>;
+    return <div className="bg-black" style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><ScopeLoader size="lg" label="Loading" /></div>;
   }
   if (phase === 'explainer') return <WelcomeExplainer onDone={afterExplainer} onSkip={skip} />;
   if (phase === 'setup') {

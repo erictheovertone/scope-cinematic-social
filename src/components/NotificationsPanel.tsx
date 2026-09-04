@@ -9,7 +9,7 @@ import {
   type AppNotification,
 } from "@/lib/userService";
 import { getPostById } from "@/lib/postsService";
-import FrameLoader from "@/components/FrameLoader";
+import ScopeLoader from "@/components/ScopeLoader";
 import PostModal from "@/components/PostModal";
 import { NotificationActorAvatar, NotificationActorMessage } from "@/components/NotificationActor";
 
@@ -99,7 +99,7 @@ export default function NotificationsPanel({ onClose }: Props) {
       <div className="flex-1 overflow-y-auto">
         {loading ? (
           <div className="flex items-center justify-center mt-12">
-            <FrameLoader />
+            <ScopeLoader size="md" />
           </div>
         ) : !user ? (
           <div className="flex items-center justify-center mt-12">

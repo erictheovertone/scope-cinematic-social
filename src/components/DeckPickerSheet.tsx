@@ -9,7 +9,7 @@ import {
 } from "@/lib/userService";
 import { getScopeLimitType } from '@/lib/limits';
 import { useUpsell } from '@/components/UpsellProvider';
-import FrameLoader from '@/components/FrameLoader';
+import ScopeLoader from '@/components/ScopeLoader';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -142,7 +142,7 @@ export default function DeckPickerSheet({ postId, onClose, onAdded }: Props) {
 
         {loading ? (
           <div style={{ display: "flex", justifyContent: "center", padding: 20 }}>
-            <FrameLoader />
+            <ScopeLoader size="md" />
           </div>
         ) : (
           <>

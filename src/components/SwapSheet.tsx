@@ -21,7 +21,7 @@ import { base } from 'viem/chains';
 import { swapTokens, quoteSwap, erc20SwapNeedsApproval, swapTokenDecimals, errInfo, type SwapToken } from '@/lib/zoraCoins';
 import { preflightTrade, preflightMessage, GAS_FLOOR_ETH } from '@/lib/economy/preflight';
 import { getEthUsdRate } from '@/lib/coingecko';
-import FrameLoader from '@/components/FrameLoader';
+import ScopeLoader from '@/components/ScopeLoader';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -364,7 +364,7 @@ export default function SwapSheet({ visible, onClose, ethBalance, usdcBalance, z
             <div style={panel}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
                 <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: 'rgba(229,225,219,0.35)', textTransform: 'uppercase', letterSpacing: '0.14em' }}>YOU RECEIVE</span>
-                {quoting && <FrameLoader size={11} />}
+                {quoting && <ScopeLoader size="sm" />}
               </div>
               <p style={{ ...SKB, fontSize: 24, color: GREEN, margin: 0, fontVariantNumeric: 'tabular-nums' }}>
                 {quoteOut != null ? `≈ ${fmtToken(quoteOut, buyToken)}` : '—'}{' '}
@@ -385,7 +385,7 @@ export default function SwapSheet({ visible, onClose, ethBalance, usdcBalance, z
 
             {phase === 'swapping' ? (
               <div style={{ width: '100%', border: '1px solid rgba(229,225,219,0.55)', padding: '13px 0', marginTop: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, minHeight: 46 }}>
-                <FrameLoader size={23.5} />
+                <ScopeLoader size="sm" />
                 <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
                   {needsApproval ? `STEP 1 · APPROVING ${sellToken}, THEN SWAPPING…` : cashOut ? 'CASHING OUT…' : 'SWAPPING…'}
                 </span>

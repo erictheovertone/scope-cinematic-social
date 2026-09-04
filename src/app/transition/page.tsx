@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import FrameLoader from "@/components/FrameLoader";
+import ScopeLoader from "@/components/ScopeLoader";
 
 export default function Transition() {
   const router = useRouter();
@@ -21,7 +21,7 @@ export default function Transition() {
   return (
     <div className="bg-black relative w-[375px] h-[812px] mx-auto flex items-center justify-center">
       
-      <FrameLoader variant="page" />
+      <ScopeLoader size="lg" label="Loading" />
 
     </div>
   );

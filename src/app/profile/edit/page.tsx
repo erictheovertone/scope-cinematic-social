@@ -9,7 +9,7 @@ import {
   getProfileLinks, addProfileLink, deleteProfileLink, setPrimaryLink,
   type ProfileLink,
 } from "@/lib/userService";
-import FrameLoader from "@/components/FrameLoader";
+import ScopeLoader from "@/components/ScopeLoader";
 import { useEconomy } from "@/components/EconomyProvider";
 import { economyPreviewEnabled } from "@/lib/economy/flag";
 import { DIVIDER_ORDER, DIVIDER_LINES, dividerTier, isDividerUnlocked, TIER_UNLOCK_LABEL, type DividerLineKey } from "@/lib/economy/dividerLines";
@@ -289,7 +289,7 @@ export default function EditProfilePage() {
 
   if (!loaded) return (
     <div className="bg-black" style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <FrameLoader variant="page" />
+      <ScopeLoader size="lg" label="Loading" />
     </div>
   );
 
