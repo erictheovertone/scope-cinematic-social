@@ -1018,3 +1018,29 @@ export const addProfileLink = async (
   if (error) throw error;
   return data;
 };
+
+// ── Brief D7 §3 — CREATOR SEARCH (desktop home) ──────────────────────────────
+// The desktop "SEARCH" control shipped as decorative chrome only — no input, no
+// query, no results (never a regression; it was never wired). This is the query
+// path: match username OR display_name (case-insensitive substring), capped.
+export interface CreatorResult {
+  user_id: string;
+  username: string;
+  display_name: string | null;
+  profile_image_url: string | null;
+}
+
+export async function searchCreators(query: string, limit = 8): Promise<CreatorResult[]> {
+  // Sanitise to a safe subset — usernames/handles are alphanumeric; this also
+  // neutralises PostgREST or()-filter breakers (commas, parens) and LIKE wildcards.
+  const safe = query.trim().replace(/[^a-zA-Z0-9 ._-]/g, '');
+  if (safe.length < 1) return [];
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('user_id, username, display_name, profile_image_url')
+    .or(`username.ilike.%${safe}%,display_name.ilike.%${safe}%`)
+    .not('username', 'is', null)
+    .limit(limit);
+  if (error || !data) return [];
+  return data as CreatorResult[];
+}

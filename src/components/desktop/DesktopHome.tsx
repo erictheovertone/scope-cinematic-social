@@ -19,6 +19,7 @@ import DesktopHomeLightbox from '@/components/desktop/DesktopHomeLightbox';
 import DesktopViewingModes, { type ViewingMode } from '@/components/desktop/DesktopViewingModes';
 import TheatreMode from '@/components/TheatreMode';
 import DesktopShell from '@/components/desktop/DesktopShell';
+import CreatorSearch from '@/components/desktop/CreatorSearch';
 import { useFluidColumns } from '@/lib/useFluidColumns';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
@@ -133,11 +134,11 @@ export default function DesktopHome() {
             title, now on desktop). SK-Modernist Bold, −0.06em, 40px page-title scale. */}
         {/* DISCOVER title + SEARCH control (top-right — same language as the lightbox) */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '0 0 30px' }}>
-          <h1 style={{ ...SKB, fontSize: 40, lineHeight: 0.95, letterSpacing: '-0.06em', color: '#E5E1DB', textTransform: 'uppercase', margin: 0 }}>Discover</h1>
-          <div style={{ width: 160, height: 34, border: '0.5px solid rgba(229,225,219,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 12px', flexShrink: 0 }}>
-            <span style={{ ...SKB, fontSize: 11, color: 'rgba(229,225,219,0.5)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>SEARCH</span>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(229,225,219,0.5)" strokeWidth="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3" strokeLinecap="round"/></svg>
-          </div>
+          {/* Brief D7 §2 — sentence case (no uppercase transform), house title tier
+              (75 Bold, --track-display, --ink-100). Desktop page-title scale 40px. */}
+          <h1 style={{ ...SKB, fontSize: 40, lineHeight: 0.95, letterSpacing: 'var(--track-display)', color: 'var(--ink-100)', margin: 0 }}>Discover</h1>
+          {/* Brief D7 §3 — real creator search (was a dead placeholder div). */}
+          <CreatorSearch width={160} height={34} />
         </div>
         {posts == null ? (
           <div style={{ minHeight: '40vh' }} />
@@ -151,14 +152,16 @@ export default function DesktopHome() {
                 that's how a creator's AR intent reaches the feed. No viewer's or
                 creator's setting changes the feed's column structure. */}
             {/* MASONRY: 3 independent columns, each packing top-to-bottom with one
-                uniform 20px gap (both axes) → tops scatter, no craters from
+                uniform 5px gap (both axes) → tops scatter, no craters from
                 row-alignment. ROUND-ROBIN distribution (i % 3) — cheap,
                 deterministic (a post's column is fixed by its feed index, so
                 load-more appends correctly), and it preserves the left-to-right
                 newest-first reading order across the top row. Cards unchanged. */}
-            <div ref={masonryRef} style={{ display: 'flex', gap: 20, alignItems: 'flex-start' }}>
+            {/* Brief D7 §1 — masonry gap 20 → 5px (both axes): the card frame already
+                separates posts, so cards grow to fill the reclaimed width. */}
+            <div ref={masonryRef} style={{ display: 'flex', gap: 5, alignItems: 'flex-start' }}>
               {Array.from({ length: masonryCols }, (_, col) => (
-                <div key={col} style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 20 }}>
+                <div key={col} style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 5 }}>
                   {posts.map((p, i) => (i % masonryCols === col ? (
                     <PostItem
                       key={String(p.id)}

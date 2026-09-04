@@ -502,22 +502,34 @@ export default function TheatreMode({
           <button
             onClick={(e) => { stop(e); go(-1); }}
             aria-label="Previous"
-            style={{ position: 'absolute', left: sideMargin / 2, top: '50%', transform: 'translate(-50%, -50%)', background: 'transparent', border: 'none', cursor: 'pointer', padding: ARROW_PAD, opacity: 1 }}
+            style={{ position: 'absolute', left: sideMargin / 2, top: '50%', transform: 'translate(-50%, -50%)', background: 'transparent', border: 'none', cursor: 'pointer', padding: ARROW_PAD, opacity: 1, ...(isDesktopVp ? { zIndex: 4, minWidth: 44, minHeight: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' } : {}) }}
           >
-            {/* DESKTOP: full opacity + a white glow so the arrows read clearly.
-                MOBILE: full opacity + a softer brightness (no glow) so they read
-                clearly without the harsh desktop halo — the 0.85 button opacity
-                plus a missing filter were the only mobile dimmers. */}
-            <img src="/theatre-mode-arrow-01.png" alt="Previous" style={{ height: arrowH, width: 'auto', display: 'block', transform: 'scaleX(-1)', filter: isDesktopVp ? 'brightness(1.3) drop-shadow(0 0 6px rgba(229,225,219,0.55))' : 'brightness(1.2)' }} />
+            {/* Brief D7 §7 — DESKTOP: thin ivory (75%) chevron with a dark drop-shadow for
+                legibility over any media, ≥44px target, z-index above the scaled media
+                stacking context. MOBILE keeps the PNG glyph byte-for-byte (brightness 1.2). */}
+            {isDesktopVp ? (
+              <svg width={Math.round(arrowH * ARROW_AR)} height={arrowH} viewBox="0 0 24 46" fill="none" stroke="rgba(229,225,219,0.75)" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block', filter: 'drop-shadow(0 1px 4px rgba(0,0,0,0.75))' }}>
+                <polyline points="15,6 7,23 15,40" />
+              </svg>
+            ) : (
+              <img src="/theatre-mode-arrow-01.png" alt="Previous" style={{ height: arrowH, width: 'auto', display: 'block', transform: 'scaleX(-1)', filter: 'brightness(1.2)' }} />
+            )}
           </button>
         )}
         {!showData && index < posts.length - 1 && (
           <button
             onClick={(e) => { stop(e); go(1); }}
             aria-label="Next"
-            style={{ position: 'absolute', left: stageW - sideMargin / 2, top: '50%', transform: 'translate(-50%, -50%)', background: 'transparent', border: 'none', cursor: 'pointer', padding: ARROW_PAD, opacity: 1 }}
+            style={{ position: 'absolute', left: stageW - sideMargin / 2, top: '50%', transform: 'translate(-50%, -50%)', background: 'transparent', border: 'none', cursor: 'pointer', padding: ARROW_PAD, opacity: 1, ...(isDesktopVp ? { zIndex: 4, minWidth: 44, minHeight: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' } : {}) }}
           >
-            <img src="/theatre-mode-arrow-01.png" alt="Next" style={{ height: arrowH, width: 'auto', display: 'block', filter: isDesktopVp ? 'brightness(1.3) drop-shadow(0 0 6px rgba(229,225,219,0.55))' : 'brightness(1.2)' }} />
+            {/* Brief D7 §7 — desktop ivory-75% chevron (see Previous). Mobile PNG unchanged. */}
+            {isDesktopVp ? (
+              <svg width={Math.round(arrowH * ARROW_AR)} height={arrowH} viewBox="0 0 24 46" fill="none" stroke="rgba(229,225,219,0.75)" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block', filter: 'drop-shadow(0 1px 4px rgba(0,0,0,0.75))' }}>
+                <polyline points="9,6 17,23 9,40" />
+              </svg>
+            ) : (
+              <img src="/theatre-mode-arrow-01.png" alt="Next" style={{ height: arrowH, width: 'auto', display: 'block', filter: 'brightness(1.2)' }} />
+            )}
           </button>
         )}
 

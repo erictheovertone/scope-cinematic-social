@@ -15,6 +15,7 @@ import { getPostsByIds } from '@/lib/postsService';
 import { feedImage } from '@/lib/mediaUrl';
 import { useEconomy } from '@/components/EconomyProvider';
 import DesktopPostView from '@/components/desktop/DesktopPostView';
+import CreatorSearch from '@/components/desktop/CreatorSearch';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -185,15 +186,14 @@ export default function DesktopHomeLightbox({
 
         {/* ── FEED heading (page-title, 40px) + FOR YOU / FOLLOWING tabs (frame ~y38) ── */}
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 20, marginBottom: 12 }}>
-          <span style={{ ...SKB, fontSize: 40, lineHeight: 1, color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '-0.02em', marginRight: 10 }}>FEED</span>
+          {/* Brief D7 §2 — sentence case + house title tier (75 Bold, --track-display, --ink-100). */}
+          <span style={{ ...SKB, fontSize: 40, lineHeight: 1, color: 'var(--ink-100)', letterSpacing: 'var(--track-display)', marginRight: 10 }}>Feed</span>
           {tabBtn('FOR YOU', 'foryou')}
           {tabBtn('FOLLOWING', 'following')}
           {/* search chrome + the ONE control: × close takes the old "?" position. */}
           <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ width: 123, height: 30, border: '0.5px solid rgba(229,225,219,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 10px' }}>
-              <span style={{ ...SKB, fontSize: 10, color: 'rgba(229,225,219,0.5)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>SEARCH</span>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(229,225,219,0.5)" strokeWidth="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3" strokeLinecap="round"/></svg>
-            </div>
+            {/* Brief D7 §3 — real creator search (was a dead placeholder div). */}
+            <CreatorSearch width={123} height={30} />
             <button onClick={onClose} aria-label="Close" style={{ width: 31, height: 30, border: '0.5px solid rgba(229,225,219,0.3)', background: 'transparent', cursor: 'pointer', ...SKR, fontSize: 15, color: 'rgba(229,225,219,0.6)', lineHeight: 1 }}>✕</button>
           </div>
         </div>

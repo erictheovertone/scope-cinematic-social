@@ -258,7 +258,9 @@ export default function CollectedGrid({
               radial hairline; + NEW PROGRAM small/regular in the understated
               gradient-stroke box. */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '26px 10px 37px' }}>
-            <span style={{ ...SKB, fontSize: 33, color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '-0.02em', lineHeight: 1 }}>REPERTORY</span>
+            {/* Brief D7 §8 — sentence case + house title tier (75 Bold, --track-display,
+                --ink-100). Shared surface: mobile Collected tab also reads "Repertory". */}
+            <span style={{ ...SKB, fontSize: 33, color: 'var(--ink-100)', letterSpacing: 'var(--track-display)', lineHeight: 1 }}>Repertory</span>
             {isOwn && (
               <button
                 onClick={() => setCreateOpen(true)}

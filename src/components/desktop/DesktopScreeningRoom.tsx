@@ -135,7 +135,9 @@ export default function DesktopScreeningRoom() {
 
         {/* ═══ 1. HEADER ═══ */}
         <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', padding: '58px 0 30px' }}>
-          <h1 style={{ ...SKB, fontSize: 58, letterSpacing: '-2.32px', color: '#E5E1DB', textTransform: 'uppercase', margin: 0, lineHeight: 1 }}>Screening Room</h1>
+          {/* Brief D7 §5 — page-title tier: sentence case (no uppercase transform),
+              75 Bold, --track-display, --ink-100. Desktop hero scale (58px). */}
+          <h1 style={{ ...SKB, fontSize: 58, letterSpacing: 'var(--track-display)', color: 'var(--ink-100)', margin: 0, lineHeight: 1 }}>Screening Room</h1>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
             <span style={{ ...SKB, fontSize: 12, color: '#E5E1DB', letterSpacing: '0.14em', textTransform: 'uppercase' }}>Top 50 Market Cap Content</span>
             {/* The 172×31 top-right control (Figma x1192): v1 ships RANK-ORDER ONLY — the

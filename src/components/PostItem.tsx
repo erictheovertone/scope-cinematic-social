@@ -513,7 +513,7 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
           <p
             ref={captionRef}
             style={{ ...SKR, ...(card
-              ? { fontSize: 'var(--fs-11)', color: "#E5E1DB", letterSpacing: "-0.1px", lineHeight: 1.5 }
+              ? { fontSize: 'var(--fs-11)', color: "rgba(229,225,219,0.75)", letterSpacing: "-0.1px", lineHeight: 1.5 }/* Brief D7 §4 — desktop masonry caption −25% (was solid #E5E1DB @1.0 → 0.75). card branch = desktop only; mobile (!card) unaffected. */
               : { fontSize: 12.5, color: "rgba(229,225,219,0.75)", letterSpacing: 'var(--track-body)', lineHeight: 1.16 }), margin: 0,
               ...(clampCaption ? ({ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' } as React.CSSProperties) : {}) }}
           >
