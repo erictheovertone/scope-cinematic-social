@@ -223,7 +223,17 @@ export default function DesktopHomeLightbox({
         {/* group (stage/panel/actions/creator/caption/MORE FROM) sits 15px lower
             than round 3 — marginTop 24→39; internal positioning unchanged. */}
         <div style={{ marginTop: 39 }}>
-          <DesktopPostView posts={nav} index={pos} onStep={step} location={null} framing="lightbox" belowLeft={moreFromRow} />
+          <DesktopPostView posts={nav} index={pos} onStep={step} location={null} framing="lightbox" belowLeft={moreFromRow}
+            /* Brief D6 — owner deleted this post: drop it from nav; close if it was the last. */
+            onPostDeleted={(id) => {
+              setNav((cur) => {
+                const next = cur.filter((p) => String(p.id) !== id);
+                if (next.length === 0) { onClose(); return cur; }
+                setPos((i) => Math.min(i, next.length - 1));
+                return next;
+              });
+            }}
+          />
         </div>
       </div>
     </div>,

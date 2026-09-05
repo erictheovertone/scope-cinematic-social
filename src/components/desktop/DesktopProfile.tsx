@@ -674,6 +674,11 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
               return n < 0 || n >= sortedPosts.length ? i : n; // rubber-band
             })}
             location={location}
+            /* Brief D6 — owner deleted this post: drop it from the grid; clamp/close the 1-up. */
+            onPostDeleted={(id) => {
+              setPosts((ps) => ps.filter((p) => String(p.id) !== id));
+              setPostView((v) => (v == null ? v : Math.max(0, Math.min(v, posts.length - 2))));
+            }}
           />
         )}
         {tab === 'collected' && (

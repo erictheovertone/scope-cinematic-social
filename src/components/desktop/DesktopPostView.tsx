@@ -9,7 +9,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { usePrivy } from '@privy-io/react-auth';
-import { useEconomy } from '@/components/EconomyProvider';
+import { useEconomy, isCoinPost } from '@/components/EconomyProvider';
 import { getPostLikes, getPostComments, addComment, likePost, unlikePost } from '@/lib/postsService';
 import { getUserByPrivyId, getProfile } from '@/lib/userService';
 import { useFirstCutLedger } from '@/lib/firstCutLedger';
@@ -20,6 +20,12 @@ import { streamGradedProps } from "@/lib/editor/videoGrade";
 import CollectSheetGate from '@/components/economy/CollectSheetGate';
 import CommentList, { useCommentLikes, ReplyComposer, type UIComment } from '@/components/CommentList';
 import { replyToComment } from '@/lib/commentInteractions';
+// Brief D6 — the owner affordance reuses mobile's exact action sheets (no new
+// edit/delete logic; ProfilePostViewer is the reference). DeckPicker gates on an
+// authed Privy user internally, mirroring mobile.
+import DeckPickerSheet from '@/components/DeckPickerSheet';
+import CreateCoinSheet from '@/components/economy/CreateCoinSheet';
+import DeletePostSheet from '@/components/DeletePostSheet';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -42,7 +48,7 @@ function Chevron({ dir }: { dir: 1 | -1 }) {
 }
 
 export default function DesktopPostView({
-  posts, index, onStep, location, framing = 'profile', belowLeft,
+  posts, index, onStep, location, framing = 'profile', belowLeft, onPostDeleted,
 }: {
   posts: Record<string, unknown>[];
   index: number;
@@ -55,6 +61,10 @@ export default function DesktopPostView({
   framing?: 'profile' | 'lightbox';
   /** Extra content in the LEFT column below the caption (the MORE FROM row). */
   belowLeft?: React.ReactNode;
+  /** Brief D6 — called after the owner soft-deletes a post, so the parent (lightbox
+   *  nav / profile grid) can drop it from its list. Optional; the soft-delete itself
+   *  is done by DeletePostSheet regardless. */
+  onPostDeleted?: (postId: string) => void;
 }) {
   const lightbox = framing === 'lightbox';
   const { user } = usePrivy();
@@ -87,6 +97,12 @@ export default function DesktopPostView({
   const [newComment, setNewComment] = useState('');
   const [replyingTo, setReplyingTo] = useState<UIComment | null>(null);
   const [collectOpen, setCollectOpen] = useState(false);
+  // Brief D6 — owner affordance (own posts only). Menu + the three reused sheets.
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [showDeckPicker, setShowDeckPicker] = useState(false);
+  const [showCreateCoin, setShowCreateCoin] = useState(false);
+  const [showDelete, setShowDelete] = useState(false);
+  const [deckToast, setDeckToast] = useState('');
   const commentInputRef = useRef<HTMLInputElement>(null);
   const { likeStates, toggleLike: toggleCommentLike } = useCommentLikes(comments as UIComment[], user?.id ?? null, viewer?.name ?? null);
   const fcHolders = useFirstCutLedger(coinAddr);
@@ -163,6 +179,18 @@ export default function DesktopPostView({
   const isVideo = post?.media_type === 'video';
   const fcCount = fcHolders?.length ?? 0;
   const STAGE_AR = 2.39;
+
+  // Brief D6 — OWNERSHIP (the identity landmine): posts.user_id is the SUPABASE UUID,
+  // and viewer.uuid is that same users.id (getUserByPrivyId → getProfile). Compare
+  // those two — NOT user.id (the Privy DID, which likes/comments use and which would
+  // never equal post.user_id). Works in both framings: own-profile → all true, other
+  // profile → all false, lightbox → per-post.
+  const isOwner = !!viewer && String(post?.user_id ?? '') === viewer.uuid;
+  // Coin-pending retry mirrors mobile: offered only when the post has no coin AND is
+  // not a legacy 1155 mint.
+  const coinPending = !isCoinPost(post as { coin_address?: string | null; token_standard?: string | null }) && !(post as { is_minted?: boolean }).is_minted;
+  // Close the menu when the post changes under it (arrows / strip tap).
+  useEffect(() => { setMenuOpen(false); }, [postId]);
   // ROUND-2 REVERSAL (hit-target stability): the arrows' seats derive from the
   // STAGE frame — constant pockets at its edges — NOT the media's rendered
   // width (3C's media-anchoring moved them between ratios, under the cursor).
@@ -245,6 +273,49 @@ export default function DesktopPostView({
             <button onClick={() => setCollectOpen(true)} style={{ marginLeft: 'auto', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 13.5, letterSpacing: 'var(--track-display)', color: 'rgba(229,225,219,0.7)', textTransform: 'uppercase' }}>
               COLLECT
             </button>
+          )}
+
+          {/* Brief D6 — owner affordance: 3-dot beside COLLECT (or right-aligned when
+              there's no COLLECT). Same action set as mobile's post-owner menu, wired to
+              the same reused sheets. ≥44px effective target via the −11px hit inset. */}
+          {isOwner && (
+            <div style={{ position: 'relative', marginLeft: coinAddr ? 14 : 'auto', display: 'inline-flex' }}>
+              <button
+                onClick={() => setMenuOpen((o) => !o)}
+                aria-label="Post options"
+                aria-haspopup="menu"
+                aria-expanded={menuOpen}
+                style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '13px 8px', margin: '-13px -8px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', lineHeight: 0 }}
+              >
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden style={{ display: 'block' }}>
+                  <circle cx="3" cy="9" r="1.5" fill="#E5E1DB" opacity="0.7" />
+                  <circle cx="9" cy="9" r="1.5" fill="#E5E1DB" opacity="0.7" />
+                  <circle cx="15" cy="9" r="1.5" fill="#E5E1DB" opacity="0.7" />
+                </svg>
+              </button>
+
+              {menuOpen && (
+                <>
+                  {/* click-away */}
+                  <div onClick={() => setMenuOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 120 }} />
+                  {/* menu — canvas fill + hairline, opens downward-right (below the row,
+                      clear of the media). House vocabulary; no new component. */}
+                  <div role="menu" style={{ position: 'absolute', top: 'calc(100% + 8px)', right: 0, zIndex: 121, minWidth: 148, background: 'var(--canvas)', border: `1px solid ${HAIR}` }}>
+                    <button role="menuitem" onClick={() => { setMenuOpen(false); setShowDeckPicker(true); }} style={{ display: 'block', width: '100%', textAlign: 'left', background: 'transparent', border: 'none', borderBottom: `1px solid ${HAIR}`, cursor: 'pointer', padding: '11px 14px' }}>
+                      <span style={{ ...SKB, fontSize: 11, color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.06em' }}>ADD TO DECK</span>
+                    </button>
+                    {coinPending && (
+                      <button role="menuitem" onClick={() => { setMenuOpen(false); setShowCreateCoin(true); }} style={{ display: 'block', width: '100%', textAlign: 'left', background: 'transparent', border: 'none', borderBottom: `1px solid ${HAIR}`, cursor: 'pointer', padding: '11px 14px' }}>
+                        <span style={{ ...SKB, fontSize: 11, color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.06em' }}>CREATE COIN</span>
+                      </button>
+                    )}
+                    <button role="menuitem" onClick={() => { setMenuOpen(false); setShowDelete(true); }} style={{ display: 'block', width: '100%', textAlign: 'left', background: 'transparent', border: 'none', cursor: 'pointer', padding: '11px 14px' }}>
+                      <span style={{ ...SKB, fontSize: 11, color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.06em' }}>DELETE</span>
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
           )}
         </div>
 
@@ -376,6 +447,28 @@ export default function DesktopPostView({
 
       <style>{`button:hover > .dk-arrow-glyph { opacity: 1 !important; }`}</style>
       <CollectSheetGate post={post as any} visible={collectOpen} onClose={() => setCollectOpen(false)} />
+
+      {/* ── Brief D6 owner sheets — the SAME components mobile mounts (no new logic) ── */}
+      {showDeckPicker && user && (
+        <DeckPickerSheet
+          postId={postId}
+          onClose={() => setShowDeckPicker(false)}
+          onAdded={(deckTitle) => { setShowDeckPicker(false); setDeckToast(deckTitle); setTimeout(() => setDeckToast(''), 2500); }}
+        />
+      )}
+      <CreateCoinSheet post={post as any} visible={showCreateCoin} onClose={() => setShowCreateCoin(false)} onDone={() => { setTimeout(() => setShowCreateCoin(false), 1400); }} />
+      <DeletePostSheet
+        visible={showDelete}
+        postId={postId}
+        userId={viewer?.uuid ?? ''}
+        onClose={() => setShowDelete(false)}
+        onDeleted={(id) => { setShowDelete(false); onPostDeleted?.(id); }}
+      />
+      {deckToast && (
+        <div style={{ position: 'fixed', left: '50%', bottom: 'calc(28px + var(--safe-bottom))', transform: 'translateX(-50%)', zIndex: 700, background: 'var(--canvas)', border: `1px solid ${HAIR}`, padding: '10px 16px', pointerEvents: 'none' }}>
+          <span style={{ ...SKB, fontSize: 11, color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.06em' }}>ADDED TO {deckToast}</span>
+        </div>
+      )}
     </div>
   );
 }
