@@ -165,7 +165,7 @@ export default function LinkManager() {
     <div className="bg-black" style={{ position: "fixed", inset: 0, overflowY: "auto" }}>
 
       {isDirty && !addingLink && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 200, background: '#000', borderBottom: '1px solid rgba(229,225,219,0.15)', padding: '10px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 200, background: '#000', borderBottom: '1px solid rgba(229,225,219,0.15)', padding: 'calc(10px + var(--safe-top)) 20px 10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }/* Brief X3 §3 — fixed top:0 unsaved-changes bar; pad top by --safe-top so it clears the notch */}>
           <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'rgba(229,225,219,0.4)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>UNSAVED CHANGES</span>
           <button
             onClick={handleFloatingSave}
@@ -180,7 +180,7 @@ export default function LinkManager() {
       )}
 
       {/* Header */}
-      <div style={{ position: "relative", display: "flex", alignItems: "center", padding: isDirty && !addingLink ? "58px 16px 14px" : "14px 16px" }}>
+      <div style={{ position: "relative", display: "flex", alignItems: "center", padding: isDirty && !addingLink ? "calc(58px + var(--safe-top)) 16px 14px" : "calc(14px + var(--safe-top)) 16px 14px" }/* Brief X3 §3 — pad top by --safe-top (clears notch when it's the top chrome; tracks the safe-padded floating bar when dirty) */}>
         <button
           onClick={() => router.back()}
           style={{ ...SKB, fontSize: 'var(--fs-11)', color: "#E5E1DB", background: "none", border: "none", cursor: "pointer", padding: 0 }}

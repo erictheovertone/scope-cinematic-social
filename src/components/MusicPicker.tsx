@@ -130,8 +130,10 @@ export default function MusicPicker({
       {/* audio engine (one, single-at-a-time) */}
       <audio ref={audioRef} onEnded={() => { setPlaying(null); setProgress(0); }} onTimeUpdate={() => { const a = audioRef.current; if (a && a.duration && isFinite(a.duration)) setProgress(a.currentTime / a.duration); }} />
 
-      {/* header + search */}
-      <div style={{ padding: "16px 18px 12px", borderBottom: `1px solid ${HAIR}` }}>
+      {/* header + search — Brief X3 §3: portaled full-screen takeover; its own header
+          was un-inset (the audit missed it — not a .top-bar / PageTitle). Pad top by
+          --safe-top (F1 page-chrome rule) so "Add Music" + ✕ clear the notch. */}
+      <div style={{ padding: "calc(16px + var(--safe-top)) 18px 12px", borderBottom: `1px solid ${HAIR}` }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
           <span style={{ ...SKB, fontSize: "var(--fs-11)", color: "#E5E1DB", textTransform: "uppercase", letterSpacing: "0.1em" }}>Add Music</span>
           <button onClick={onClose} aria-label="Close" style={{ background: "none", border: "none", cursor: "pointer", ...SKR, fontSize: 20, color: "rgba(229,225,219,0.55)", lineHeight: 1, padding: 4 }}>✕</button>

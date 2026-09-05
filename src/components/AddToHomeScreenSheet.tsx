@@ -93,7 +93,7 @@ export default function AddToHomeScreenSheet({ isOpen, onClose, privyId, forceSh
         zIndex: 801,
         transform: canShow ? 'translateY(0)' : 'translateY(100%)',
         transition: 'transform 0.4s cubic-bezier(0.32, 0.72, 0, 1)',
-        padding: '20px 20px 28px',
+        padding: '20px 20px calc(28px + var(--safe-bottom))', /* X3 §3 — bottom sheet: clear the home indicator */
       }}>
         {/* Drag handle */}
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>

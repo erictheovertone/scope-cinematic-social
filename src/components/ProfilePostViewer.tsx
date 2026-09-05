@@ -635,8 +635,12 @@ export default function ProfilePostViewer({
       <style>{`.pm-input::placeholder { color: rgba(229,225,219,0.35); }`}</style>
 
       {/* Back bar — BACK (left) · Scope logomark (center, static, never scrolls with
-          content) · THEATRE eye (right, enters theatre for this profile's posts). */}
-      <div style={{ flexShrink: 0, height: 44, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", borderBottom: "1px solid rgba(229,225,219,0.06)" }}>
+          content) · THEATRE eye (right, enters theatre for this profile's posts).
+          Brief X3 §1 — this fixed-overlay's own header was un-inset; pad the top by
+          --safe-top (F1 page-chrome rule) so BACK/logomark/eye clear the notch /
+          Dynamic Island. Black paints edge-to-edge behind (root inset:0); only the
+          control row insets. */}
+      <div style={{ flexShrink: 0, height: "calc(44px + var(--safe-top))", paddingTop: "var(--safe-top)", display: "flex", alignItems: "center", justifyContent: "space-between", paddingLeft: 14, paddingRight: 14, borderBottom: "1px solid rgba(229,225,219,0.06)" }}>
         <button onClick={handleClose} style={{ background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 7, padding: 0 }}>
           <svg width="16.5" height="16.5" viewBox="0 0 13 13" fill="none">
             <path d="M8.5 1.5L3.5 6.5l5 5" stroke="#E5E1DB" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />

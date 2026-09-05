@@ -923,8 +923,11 @@ export default function DeckDetailPage() {
             display: "flex", flexDirection: "column",
           }}
         >
-          {/* Dialog header */}
-          <div style={{ position: "sticky", top: 0, zIndex: 1, background: "#000000", flexShrink: 0 }}>
+          {/* Dialog header — Brief X3 §3: full-screen edit dialog; its sticky header
+              was un-inset (fixed inset:0 takeover, missed by the .top-bar/PageTitle
+              audit). Pad top by --safe-top (F1) — black paints under the notch, the
+              56px row insets below it. */}
+          <div style={{ position: "sticky", top: 0, zIndex: 1, background: "#000000", flexShrink: 0, paddingTop: "var(--safe-top)" }}>
             <div
               style={{
                 maxWidth: '30rem', margin: "0 auto", width: "100%",

@@ -1242,6 +1242,7 @@ export default function WalletPage() {
             position: "fixed", bottom: 0, left: 0, right: 0, height: "60vh",
             backgroundColor: "#0a0a0a", borderTop: "1px solid rgba(229,225,219,0.1)",
             zIndex: 301, display: "flex", flexDirection: "column",
+            paddingBottom: "var(--safe-bottom)", /* X3 §3 — SEND sheet: clear the home indicator */
             transform: showSend ? "translateY(0)" : "translateY(100%)",
             transition: "transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)",
           }}

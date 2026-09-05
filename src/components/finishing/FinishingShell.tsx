@@ -839,7 +839,7 @@ export default function FinishingShell({
             background: '#0a0a0a', borderTop: `1px solid rgba(229,225,219,0.1)`,
             transform: activeTool ? 'translateY(0)' : 'translateY(110%)',
             transition: `transform 0.42s ${SNAP}`,
-            padding: '16px 18px 28px',
+            padding: '16px 18px calc(28px + var(--safe-bottom))', /* X3 §3 — bottom sheet: clear the home indicator */
           }}
         >
           {/* header: X cancel / ✓ commit */}

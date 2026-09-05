@@ -222,6 +222,7 @@ export default function CollectSheet({ post, visible, onClose }: CollectSheetPro
           zIndex: 301,
           display: "flex",
           flexDirection: "column",
+          paddingBottom: "var(--safe-bottom)", /* X3 §3 — 70vh sheet: clear the home indicator */
           transform: visible ? "translateY(0)" : "translateY(100%)",
           transition: "transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)",
         }}

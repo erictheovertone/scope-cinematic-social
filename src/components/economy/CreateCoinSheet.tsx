@@ -136,7 +136,7 @@ export default function CreateCoinSheet({
   return (
     <>
       <div onClick={working ? undefined : onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 560 }} />
-      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, margin: '0 auto', maxWidth: '30rem', background: '#080808', borderTop: '1px solid rgba(229,225,219,0.08)', zIndex: 561, padding: '24px 22px 40px' }}>
+      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, margin: '0 auto', maxWidth: '30rem', background: '#080808', borderTop: '1px solid rgba(229,225,219,0.08)', zIndex: 561, padding: '24px 22px calc(40px + var(--safe-bottom))' }/* X3 §3 — bottom sheet: clear the home indicator */}>
         <p style={{ ...SKB, fontSize: 'var(--fs-14)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.04em', margin: '0 0 4px' }}>CREATE YOUR COIN</p>
         <p style={{ ...SKR, fontSize: 'var(--fs-11)', color: 'rgba(229,225,219,0.55)', margin: '0 0 18px', lineHeight: 1.5 }}>
           This post is live but has no coin yet. Create it to start earning on every trade.

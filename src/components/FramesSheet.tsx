@@ -158,7 +158,7 @@ export default function FramesSheet({
           borderTop: "1px solid rgba(229,225,219,0.12)",
           maxHeight: "92vh",
           overflowY: "auto",
-          paddingBottom: 36,
+          paddingBottom: 'calc(36px + var(--safe-bottom))', /* X3 §3 — bottom sheet: clear the home indicator */
         }}
       >
         {/* Drag handle */}

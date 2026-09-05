@@ -194,7 +194,7 @@ export default function DecksPage() {
               maxWidth: '30rem', margin: "0 auto",
               background: "#080808",
               borderTop: "1px solid rgba(229,225,219,0.12)",
-              padding: "20px 20px 36px",
+              padding: "20px 20px calc(36px + var(--safe-bottom))", /* X3 §3 — bottom sheet: clear the home indicator */
             }}
           >
             {/* Sheet title */}

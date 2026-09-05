@@ -82,8 +82,9 @@ export default function ReframeOverlay({ post, layoutId, onSave, onCancel }: Ref
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 600, backgroundColor: '#000', display: 'flex', flexDirection: 'column' }}>
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', flexShrink: 0 }}>
+      {/* Header — Brief X3 §3: full-screen reframe takeover; header was un-inset.
+          Pad top by --safe-top (F1) so CANCEL / RE-FRAME / SAVE clear the notch. */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 'calc(16px + var(--safe-top)) 16px 16px', flexShrink: 0 }}>
         <button onClick={onCancel} style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}>
           <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-10)', color: 'rgba(229,225,219,0.5)', textTransform: 'uppercase' }}>CANCEL</span>
         </button>

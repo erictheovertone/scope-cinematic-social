@@ -135,7 +135,7 @@ export default function MintPromptSheet({ visible, onMint, onSkip, onCoinSkipped
         zIndex: 501,
         transform: visible ? 'translateY(0)' : 'translateY(100%)',
         transition: 'transform 0.4s cubic-bezier(0.32, 0.72, 0, 1)',
-        padding: '28px 24px 48px',
+        padding: '28px 24px calc(48px + var(--safe-bottom))', /* X3 §3 — bottom sheet: clear the home indicator */
         // Brief F2 — the sheet is bottom-anchored and content-sized; without a scroll
         // container the top (media/headline) scrolled off-screen and "more info"
         // wedged it. Own the scroll: cap the height and scroll internally, trapped

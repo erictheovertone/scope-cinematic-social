@@ -410,7 +410,7 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
         background: '#080808', borderTop: '1px solid rgba(229,225,219,0.08)', zIndex: 501,
         transform: visible ? 'translateY(0)' : 'translateY(100%)',
         transition: 'transform 0.4s cubic-bezier(0.32,0.72,0,1)',
-        padding: '24px 22px 40px', maxHeight: '90vh', overflowY: 'auto',
+        padding: '24px 22px calc(40px + var(--safe-bottom))', maxHeight: '90vh', overflowY: 'auto', /* X3 §3 — bottom sheet: clear the home indicator */
       }}>
         {/* × dismiss — the app's sheet close (matches the earnings/swap sheets'
             top-right ×). Backdrop tap keeps working; nothing else moves. */}

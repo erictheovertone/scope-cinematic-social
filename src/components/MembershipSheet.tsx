@@ -329,7 +329,7 @@ export default function MembershipSheet({ visible, onClose, onSuccess, isPaidMem
         zIndex: 501,
         transform: visible ? "translateY(0)" : "translateY(100%)",
         transition: "transform 0.4s cubic-bezier(0.32, 0.72, 0, 1)",
-        padding: "32px 24px 48px",
+        padding: "32px 24px calc(48px + var(--safe-bottom))", /* X3 §3 — bottom sheet: clear the home indicator */
         maxHeight: "90vh",
         overflowY: "auto",
       }}>

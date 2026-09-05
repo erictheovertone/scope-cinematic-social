@@ -27,7 +27,7 @@ export default function FramesProUpsellSheet({ isOpen, onClose, onUpgrade }: Pro
           maxWidth: '30rem', margin: "0 auto",
           background: "#080808",
           borderTop: "1px solid rgba(229,225,219,0.12)",
-          padding: "0 20px 28px",
+          padding: "0 20px calc(28px + var(--safe-bottom))", /* X3 §3 — bottom sheet: clear the home indicator */
         }}
       >
         {/* Drag handle */}
