@@ -430,7 +430,7 @@ export default function EditProfilePage() {
             </div>
             <button
               onClick={() => { setHoloBanner(v => !v); setIsDirty(true); }}
-              style={{ ...SKB, fontSize: 'var(--fs-9)', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '8px 14px', cursor: 'pointer', flexShrink: 0, background: holoBanner ? '#E5E1DB' : 'transparent', color: holoBanner ? '#E5E1DB' : 'rgba(229,225,219,0.6)', border: holoBanner ? 'none' : '1px solid rgba(229,225,219,0.3)' }}
+              style={{ ...SKB, fontSize: 'var(--fs-9)', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '8px 14px', cursor: 'pointer', flexShrink: 0, background: holoBanner ? '#E5E1DB' : 'transparent', color: holoBanner ? 'var(--on-ink)' : 'rgba(229,225,219,0.6)', border: holoBanner ? 'none' : '1px solid rgba(229,225,219,0.3)' }/* X2c — ON state fills ivory; label → --on-ink (was ivory-on-ivory) */}
             >
               {holoBanner ? 'ON' : 'OFF'}
             </button>

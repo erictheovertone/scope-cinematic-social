@@ -106,7 +106,7 @@ export default function SpikePage() {
         {running ? 'RUNNING…' : 'RUN PRE-FLIGHT'}
       </button>
       <button onClick={runSponsoredMint}
-        style={{ ...SKB, fontSize: 'var(--fs-11)', letterSpacing: '0.08em', textTransform: 'uppercase', color: ARMED ? '#E5E1DB' : 'rgba(229,225,219,0.35)', background: ARMED ? '#E5E1DB' : 'transparent', border: ARMED ? 'none' : '1px solid rgba(229,225,219,0.15)', padding: '10px 18px', cursor: 'pointer' }}>
+        style={{ ...SKB, fontSize: 'var(--fs-11)', letterSpacing: '0.08em', textTransform: 'uppercase', color: ARMED ? 'var(--on-ink)' : 'rgba(229,225,219,0.35)', background: ARMED ? '#E5E1DB' : 'transparent', border: ARMED ? 'none' : '1px solid rgba(229,225,219,0.15)', padding: '10px 18px', cursor: 'pointer' }/* X2c — ARMED fills ivory; text → --on-ink (parked dev harness) */}>
         RUN SPONSORED MINT
       </button>
 

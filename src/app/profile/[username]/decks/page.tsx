@@ -245,7 +245,7 @@ export default function DecksPage() {
                 disabled={!newTitle.trim() || creating}
                 style={{ width: "100%", padding: "14px 0", background: "#E5E1DB", border: "none", cursor: newTitle.trim() && !creating ? "pointer" : "default", opacity: newTitle.trim() ? 1 : 0.5 }}
               >
-                <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: "#E5E1DB", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+                <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: "var(--on-ink)", textTransform: "uppercase", letterSpacing: "0.1em" }/* X2c — ivory fill; text → --on-ink */}>
                   {creating ? "CREATING…" : "CREATE DECK"}
                 </span>
               </button>

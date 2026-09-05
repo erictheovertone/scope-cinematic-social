@@ -597,7 +597,7 @@ function ProgramSheet({
           disabled={!canCreate}
           style={{ display: 'block', width: '100%', marginTop: 16, background: canCreate ? '#E5E1DB' : 'rgba(229,225,219,0.08)', border: 'none', cursor: canCreate ? 'pointer' : 'default', padding: '13px 0' }}
         >
-          <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: canCreate ? '#E5E1DB' : 'rgba(229,225,219,0.35)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+          <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: canCreate ? 'var(--on-ink)' : 'rgba(229,225,219,0.35)', textTransform: 'uppercase', letterSpacing: '0.1em' }/* X2c — enabled bg fills solid ivory; text → --on-ink (was ivory-on-ivory) */}>
             {busy ? 'CREATING…' : 'CREATE PROGRAM'}
           </span>
         </button>

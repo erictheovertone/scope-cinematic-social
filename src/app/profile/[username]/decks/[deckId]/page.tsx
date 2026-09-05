@@ -1070,7 +1070,7 @@ export default function DeckDetailPage() {
                   marginBottom: 20,
                 }}
               >
-                <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: "#E5E1DB", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+                <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: "var(--on-ink)", textTransform: "uppercase", letterSpacing: "0.1em" }/* X2c — ivory fill; text → --on-ink */}>
                   {saving ? "SAVING…" : "SAVE CHANGES"}
                 </span>
               </button>

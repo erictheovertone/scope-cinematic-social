@@ -1290,7 +1290,7 @@ export default function WalletPage() {
                   </p>
                 </div>
                 {sendError && <p style={{ ...SKR, fontSize: 'var(--fs-10)', color: "#E5E1DB", margin: "0 0 12px", lineHeight: 1.4 }}>{sendError}</p>}
-                <button onClick={doSend} style={{ ...SKB, fontSize: 'var(--fs-11)', color: "#E5E1DB", background: "#E5E1DB", border: "none", cursor: "pointer", padding: "13px", width: "100%", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>
+                <button onClick={doSend} style={{ ...SKB, fontSize: 'var(--fs-11)', color: "var(--on-ink)", background: "#E5E1DB", border: "none", cursor: "pointer", padding: "13px", width: "100%", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }/* X2c — ivory fill; text → --on-ink */}>
                   SEND · ${sendUsdNum.toFixed(2)}
                 </button>
                 <button onClick={() => { setSendStep("input"); setSendError(null); }} style={{ ...SKB, fontSize: 'var(--fs-10)', color: "rgba(229,225,219,0.5)", background: "transparent", border: "1px solid rgba(229,225,219,0.15)", cursor: "pointer", padding: "11px", width: "100%", textTransform: "uppercase", letterSpacing: "0.08em" }}>

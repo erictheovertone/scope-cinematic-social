@@ -112,7 +112,7 @@ export default function FramesProUpsellSheet({ isOpen, onClose, onUpgrade }: Pro
             onClick={onUpgrade}
             style={{ width: "100%", padding: "14px 0", background: "#E5E1DB", border: "none", cursor: "pointer" }}
           >
-            <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: "#E5E1DB", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+            <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: "var(--on-ink)", textTransform: "uppercase", letterSpacing: "0.1em" }/* X2c — ivory fill; text → --on-ink */}>
               UPGRADE TO PRO
             </span>
           </button>

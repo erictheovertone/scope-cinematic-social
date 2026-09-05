@@ -432,7 +432,7 @@ export default function MembershipSheet({ visible, onClose, onSuccess, isPaidMem
             cursor: working ? "default" : "pointer",
           }}
         >
-          <span style={{ ...BOLD, fontSize: 'var(--fs-12)', color: "#E5E1DB", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+          <span style={{ ...BOLD, fontSize: 'var(--fs-12)', color: working ? "#E5E1DB" : "var(--on-ink)", textTransform: "uppercase", letterSpacing: "0.06em" }/* X2c — idle state fills solid ivory → --on-ink; working state is translucent-grey so ivory stays legible */}>
             {working ? "PROCESSING..." : txStatus === "confirming" ? "CONFIRMING..." : "JOIN SCOPE · " + plans.find(p => p.id === selectedPlan)?.price}
           </span>
         </button>

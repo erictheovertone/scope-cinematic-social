@@ -641,7 +641,7 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
                     disabled={!buyQuote}
                     style={{ width: '100%', background: !buyQuote ? 'rgba(229,225,219,0.4)' : '#E5E1DB', border: 'none', cursor: !buyQuote ? 'default' : 'pointer', padding: '14px 0', marginBottom: 8 }}
                   >
-                    <span style={{ ...SKB, fontSize: 'var(--fs-12)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                    <span style={{ ...SKB, fontSize: 'var(--fs-12)', color: buyQuote ? 'var(--on-ink)' : '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.08em' }/* X2c — enabled state fills solid ivory; text → --on-ink (charcoal) so it isn't ivory-on-ivory. Disabled bg is translucent over dark, so ivory stays legible there. */}>
                       {buyQuote ? `BUY · ${usd(buyQuote.usdAmount)}` : 'ENTER AN AMOUNT'}
                     </span>
                   </button>
@@ -772,7 +772,7 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
                         disabled={sellPieces <= 0}
                         style={{ width: '100%', background: sellPieces <= 0 ? 'rgba(229,225,219,0.08)' : (sellEndsFirstCut && confirmEndFirstCut ? '#E5E1DB' : 'transparent'), border: sellPieces <= 0 ? 'none' : '1px solid #E5E1DB', cursor: sellPieces <= 0 ? 'default' : 'pointer', padding: '14px 0' }}
                       >
-                        <span style={{ ...SKB, fontSize: 'var(--fs-12)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                        <span style={{ ...SKB, fontSize: 'var(--fs-12)', color: (sellEndsFirstCut && confirmEndFirstCut) ? 'var(--on-ink)' : '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.08em' }/* X2c — the CONFIRM—END FIRST CUT state fills solid ivory; text → --on-ink there. Other states are transparent/faint over dark → ivory stays legible. */}>
                           {sellPieces <= 0 ? 'ENTER FRAGMENTS'
                             : sellEndsFirstCut && !confirmEndFirstCut ? 'SELL — END FIRST CUT'
                             : sellEndsFirstCut && confirmEndFirstCut ? 'CONFIRM — END FIRST CUT'

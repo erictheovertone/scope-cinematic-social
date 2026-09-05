@@ -389,7 +389,7 @@ export default function LinkManager() {
           <button
             onClick={handleSave}
             disabled={saving}
-            style={{ ...SKB, fontSize: 'var(--fs-11)', color: "#E5E1DB", background: "#E5E1DB", border: "none", cursor: "pointer", padding: "12px", width: "100%", marginTop: 16, opacity: saving ? 0.6 : 1 }}
+            style={{ ...SKB, fontSize: 'var(--fs-11)', color: "var(--on-ink)", background: "#E5E1DB", border: "none", cursor: "pointer", padding: "12px", width: "100%", marginTop: 16, opacity: saving ? 0.6 : 1 }/* X2c — ivory fill; text → --on-ink */}
           >
             {saving ? "Saving…" : saved ? "Saved ✓" : "SAVE LINKS"}
           </button>

@@ -410,7 +410,7 @@ export default function CollectSheet({ post, visible, onClose }: CollectSheetPro
                 padding: "14px 0",
               }}
             >
-              <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: "#E5E1DB", letterSpacing: "0.06em" }}>
+              <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: (canAct && !sellQtyExceedsBalance) ? "var(--on-ink)" : "#E5E1DB", letterSpacing: "0.06em" }/* X2c — solid-ivory (actionable) branch → --on-ink; disabled branch is translucent-grey so ivory stays legible. Mirrors the bg's light state (txStatus can't be "success" here, so it drops out). */}>
                 {working
                   ? mode === "buy" ? "BUYING..." : "SELLING..."
                   : txStatus === "success"

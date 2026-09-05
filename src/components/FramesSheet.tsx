@@ -240,7 +240,7 @@ export default function FramesSheet({
                           boxSizing: "border-box",
                         }}
                       >
-                        <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: "#E5E1DB", letterSpacing: "0.04em", lineHeight: 1 }}>
+                        <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: "var(--on-ink)", letterSpacing: "0.04em", lineHeight: 1 }/* X2c — ivory badge; number → --on-ink */}>
                           {String(selIdx + 1).padStart(2, '0')}
                         </span>
                       </div>
@@ -318,7 +318,7 @@ export default function FramesSheet({
               opacity: count > 0 ? 1 : 0.5,
             }}
           >
-            <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: "#E5E1DB", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+            <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: "var(--on-ink)", textTransform: "uppercase", letterSpacing: "0.1em" }/* X2c — ivory fill; text → --on-ink */}>
               EXPORT FRAMES
             </span>
           </button>
