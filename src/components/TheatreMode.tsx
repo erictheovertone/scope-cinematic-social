@@ -22,7 +22,7 @@
 // Design system: pure black, #E5E1DB, SK-Modernist, sharp corners, no shadow/blur,
 // signature easing cubic-bezier(0.16,0.84,0.3,1). No IBM Plex Mono.
 
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, useCallback } from 'react';
 import { usePrivy } from '@privy-io/react-auth';
 import { useEconomy, isCoinPost } from '@/components/EconomyProvider';
 import { getPostLikes, getPostComments, addComment, likePost, unlikePost, isPostLikedByUser } from '@/lib/postsService';
@@ -143,11 +143,32 @@ export default function TheatreMode({
 
   // TAKEOVER STANDDOWN: theatre owns all gestures while open — global page-
   // swipe navigation is off wholesale (the finishing-suite gate).
-  useEffect(() => {
-    document.documentElement.dataset.suiteOpen = '1';
-    window.dispatchEvent(new CustomEvent('scope:takeover-change')); // AppShell hides the footer
+  // Brief M7b — SELF-HEALING hold. suiteOpen is a SHARED, un-reference-counted flag
+  // (~16 writers). On the feed path a sibling that co-mounts around theatre and manages
+  // the same flag with a `had` guard — CommentList inside the still-open PostModal, or
+  // ViewingModesMenu on the door-entry path — deletes it on ITS unmount even though
+  // theatre still needs it → the pill reappeared (symptom 1) and SwipeNav (which gates on
+  // suiteOpen) re-armed → tab navigation (symptom 2's flag-side). Theatre RE-ASSERTS the
+  // flag for as long as it's mounted: any sibling delete is immediately undone. A
+  // MutationObserver catches deletes that don't dispatch the event; theatre only ever
+  // SETS in the observer (never deletes) so there's no fight/loop. Cleanup disconnects
+  // first, then clears once.
+  // useLayoutEffect (not useEffect): set the flag SYNCHRONOUSLY before theatre's first
+  // painted frame. A passive effect runs a frame+ after the rotate→mount paint, leaving a
+  // window where the pill's takeover sync and SwipeNav's suiteOpen gate still saw no flag
+  // (symptom 1, and symptom 2's flag-side). Theatre is client-only → SSR never runs this.
+  useLayoutEffect(() => {
+    const root = document.documentElement;
+    const assert = () => { if (!root.dataset.suiteOpen) { root.dataset.suiteOpen = '1'; window.dispatchEvent(new CustomEvent('scope:takeover-change')); } };
+    root.dataset.suiteOpen = '1';
+    window.dispatchEvent(new CustomEvent('scope:takeover-change')); // AppShell/pill hide the footer
+    window.addEventListener('scope:takeover-change', assert);
+    const mo = new MutationObserver(assert);
+    mo.observe(root, { attributes: true, attributeFilter: ['data-suite-open'] });
     return () => {
-      delete document.documentElement.dataset.suiteOpen;
+      mo.disconnect();
+      window.removeEventListener('scope:takeover-change', assert);
+      delete root.dataset.suiteOpen;
       window.dispatchEvent(new CustomEvent('scope:takeover-change'));
     };
   }, []);
@@ -459,8 +480,13 @@ export default function TheatreMode({
   return (
     <>
     {/* Stage z=490: BELOW the collect sheet (500/501), First Cut celebration (600)
-        and whip (650), so a collect from theatre layers those above it. */}
-    <div style={{ ...stageStyle, zIndex: zBase }}>
+        and whip (650), so a collect from theatre layers those above it.
+        Brief M7b — data-swipe-exclude: SwipeNav (the global route pager) excludes any
+        touch starting inside an excluded container by ELEMENT (its per-element gate),
+        independent of the suiteOpen flag's timing. Theatre owns its own queue-swipe, so
+        it must opt out — its ABSENCE let a horizontal swipe over theatre reach SwipeNav →
+        the next tab (Create Post). This makes tab-nav impossible while theatre is open. */}
+    <div data-swipe-exclude style={{ ...stageStyle, zIndex: zBase }}>
       {/* Black field — tapping the empty space (not the image / panel) exits. On
           desktop a near-opaque dim lets the profile bleed ~8% (matches the ref);
           on a rotated phone the field is solid so the portrait profile behind
