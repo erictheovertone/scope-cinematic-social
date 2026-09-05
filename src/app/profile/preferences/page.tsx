@@ -47,7 +47,7 @@ export default function Preferences() {
   const router = useRouter();
   const { logout } = usePrivy();
   const { user } = usePrivy();
-  const { showUpsell } = useUpsell();
+  const { goPro } = useUpsell();
   const photoInputRef = useRef<HTMLInputElement>(null);
 
   const isDesktop = useIsDesktop();
@@ -155,7 +155,7 @@ export default function Preferences() {
       rows: [
         isPaid
           ? { label: 'Manage Membership', action: () => router.push('/membership/manage') }
-          : { label: 'Become a Member', action: () => showUpsell('posts') }, // generic pitch context (UpsellLimit has no neutral key)
+          : { label: 'Become a Member', action: () => goPro() }, // Brief X4 — opens the NEUTRAL membership upsell (MembershipSheet: benefits + $5/$50 + Stripe), not the post-limit 'posts' variant ("Your reel is full"). goPro from here has limit===null so fromFinishing stays false → normal success flow.
       ],
     },
     {
