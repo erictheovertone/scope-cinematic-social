@@ -13,7 +13,7 @@
 
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { getAllPosts, FEED_PAGE_SIZE } from '@/lib/postsService';
+import { getFeedPage, type FeedCursor } from '@/lib/postsService';
 import PostItem from '@/components/PostItem';
 import DesktopHomeLightbox from '@/components/desktop/DesktopHomeLightbox';
 import DesktopViewingModes, { type ViewingMode } from '@/components/desktop/DesktopViewingModes';
@@ -27,7 +27,7 @@ const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fon
 export default function DesktopHome() {
   const router = useRouter();
   const [posts, setPosts] = useState<Record<string, unknown>[] | null>(null);
-  const [page, setPage] = useState(0);
+  const feedCursorRef = useRef<FeedCursor | null>(null); // Brief M13 — keyset cursor
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [modesOpen, setModesOpen] = useState(false);
@@ -52,10 +52,11 @@ export default function DesktopHome() {
     let alive = true;
     (async () => {
       try {
-        const first = await getAllPosts(0);
+        const { posts: first, nextCursor } = await getFeedPage(null);
         if (!alive) return;
         setPosts(first as unknown as Record<string, unknown>[]);
-        setHasMore(first.length >= FEED_PAGE_SIZE);
+        feedCursorRef.current = nextCursor;
+        setHasMore(nextCursor !== null);
       } catch (e) { console.error('[desktop-home] load error:', e); if (alive) setPosts([]); }
     })();
     return () => { alive = false; };
@@ -72,21 +73,26 @@ export default function DesktopHome() {
     if (loadingMore || !hasMore) return;
     setLoadingMore(true);
     try {
-      const next = page + 1;
-      const more = await getAllPosts(next);
-      setPosts((prev) => [...(prev ?? []), ...(more as unknown as Record<string, unknown>[])]);
-      setPage(next);
-      setHasMore(more.length >= FEED_PAGE_SIZE);
+      const { posts: more, nextCursor } = await getFeedPage(feedCursorRef.current);
+      if (more.length > 0) {
+        setPosts((prev) => {
+          const seen = new Set((prev ?? []).map((p) => p.id as string));
+          return [...(prev ?? []), ...(more as unknown as Record<string, unknown>[]).filter((p) => !seen.has(p.id as string))];
+        });
+      }
+      feedCursorRef.current = nextCursor;
+      setHasMore(nextCursor !== null);
     } catch (e) { console.error('[desktop-home] loadMore error:', e); }
     finally { setLoadingMore(false); }
-  }, [loadingMore, hasMore, page]);
+  }, [loadingMore, hasMore]);
 
   useEffect(() => {
     const el = sentinelRef.current;
     if (!el || !hasMore || view != null) return;
     // root = the feed's own scroller (document scroll is disabled by the shell),
     // so the sentinel fires against the right container as it nears the end.
-    const io = new IntersectionObserver((es) => { if (es[0]?.isIntersecting) loadMore(); }, { root: scrollRef.current, rootMargin: '600px' });
+    const near = Math.round((typeof window !== 'undefined' ? window.innerHeight : 800) * 1.5); // Brief M13 — ~1.5 viewports
+    const io = new IntersectionObserver((es) => { if (es[0]?.isIntersecting) loadMore(); }, { root: scrollRef.current, rootMargin: `${near}px` });
     io.observe(el);
     return () => io.disconnect();
   }, [loadMore, hasMore, view, posts?.length]);

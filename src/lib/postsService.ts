@@ -146,7 +146,8 @@ export const createPost = async (postData: {
 };
 
 // Feed page size — the home feed loads one page, then appends more on scroll.
-export const FEED_PAGE_SIZE = 10;
+// Brief M13 — ~20 per Eric's spec (was 10).
+export const FEED_PAGE_SIZE = 20;
 
 export const getAllPosts = async (
   page = 0,
@@ -190,6 +191,66 @@ export const getAllPosts = async (
       grid_layout: prof?.grid_layout ?? null,
     };
   });
+};
+
+// ── Brief M13 — CURSOR-paginated Discover feed (replaces getAllPosts' offset range).
+// Keyset on (created_at, id) DESC so pages never skip or duplicate as new posts arrive
+// (offset does both). WHERE is is_deleted=false ONLY — no following / media_type /
+// video_status filter, so every account's newest work (incl. processing + legacy
+// videos) is reachable. select('*') + {...post} preserves EVERY card field (Stream,
+// track title, coin, crop). Returns the page plus the cursor for the next fetch (null
+// when the feed is exhausted → the caller shows the end state).
+export interface FeedCursor { created_at: string; id: string }
+
+export const getFeedPage = async (
+  cursor: FeedCursor | null = null,
+  pageSize = FEED_PAGE_SIZE,
+): Promise<{ posts: (Post & { profile_image_url?: string | null })[]; nextCursor: FeedCursor | null }> => {
+  let query = supabase
+    .from('posts')
+    .select('*')
+    .eq('is_deleted', false)
+    .order('created_at', { ascending: false })
+    .order('id', { ascending: false })   // deterministic tiebreaker → stable keyset
+    .limit(pageSize);
+  if (cursor) {
+    // (created_at, id) < (cursor.created_at, cursor.id) for DESC order. Timestamp is
+    // quoted so its ':' / '+' can't be misread by the PostgREST filter parser.
+    query = query.or(
+      `created_at.lt."${cursor.created_at}",and(created_at.eq."${cursor.created_at}",id.lt.${cursor.id})`,
+    );
+  }
+  const { data: posts, error } = await query;
+  if (error || !posts) {
+    console.error('Error fetching feed page:', error);
+    return { posts: [], nextCursor: null };
+  }
+
+  // Batch-fetch author profiles by stable user_id (same as getAllPosts).
+  const userIds = [...new Set(posts.map((p) => p.user_id).filter(Boolean))];
+  let profileMap = new Map<string, { username?: string; profile_image_url?: string | null; grid_layout?: string | null }>();
+  if (userIds.length > 0) {
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('user_id, username, profile_image_url, grid_layout')
+      .in('user_id', userIds);
+    profileMap = new Map((profiles || []).map((p) => [p.user_id, p]));
+  }
+
+  const enriched = posts.map((post) => {
+    const prof = profileMap.get(post.user_id);
+    return {
+      ...post,
+      username: prof?.username ?? post.username,
+      profile_image_url: prof?.profile_image_url ?? null,
+      grid_layout: prof?.grid_layout ?? null,
+    };
+  });
+
+  const last = posts[posts.length - 1];
+  // A full page implies there may be more; a short page is the end of the feed.
+  const nextCursor = posts.length === pageSize && last ? { created_at: last.created_at, id: last.id } : null;
+  return { posts: enriched, nextCursor };
 };
 
 export const getUserPosts = async (userId: string): Promise<Post[]> => {

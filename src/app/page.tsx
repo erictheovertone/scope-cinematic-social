@@ -4,7 +4,7 @@ import { usePrivy } from "@privy-io/react-auth";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { getAllPosts, FEED_PAGE_SIZE } from "@/lib/postsService";
+import { getFeedPage, type FeedCursor } from "@/lib/postsService";
 import PostItem from "@/components/PostItem";
 import PostModal from "@/components/PostModal";
 import MirageView from "@/components/MirageView";
@@ -50,8 +50,10 @@ export default function Home() {
   const [feedState, setFeedState] = useState<FeedState>("normal");
   // Inline comments are one-at-a-time: only one feed post's section is open.
   const [openCommentsPostId, setOpenCommentsPostId] = useState<string | null>(null);
-  // Feed pagination — load one page, append more on scroll.
-  const [feedPage, setFeedPage] = useState(0);
+  // Feed pagination — Brief M13: cursor (keyset) paginated, load one page then append.
+  // The cursor lives in a ref so loadMore reads the latest without re-subscribing the
+  // observer or risking a stale closure.
+  const feedCursorRef = useRef<FeedCursor | null>(null);
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const loadingMoreRef = useRef(false);   // guards against double-fire from the sentinel
@@ -210,7 +212,7 @@ export default function Home() {
   useEffect(() => {
     const load = async () => {
       try {
-        const all = await getAllPosts(0);   // first page only — rest appends on scroll
+        const { posts: all, nextCursor } = await getFeedPage(null);   // first page — rest appends on scroll
         if (all.length === 0) {
           setPosts([
             { id: "mock1", username: "creator1",    caption: "Cinematic shot from my latest project", media_urls: [], created_at: new Date().toISOString() },
@@ -220,7 +222,8 @@ export default function Home() {
           setHasMore(false);
         } else {
           setPosts(all);
-          setHasMore(all.length >= FEED_PAGE_SIZE);   // a short first page = end of feed
+          feedCursorRef.current = nextCursor;
+          setHasMore(nextCursor !== null);   // null cursor (short page) = end of feed
         }
       } catch (e) {
         console.error("Error loading posts:", e);
@@ -236,32 +239,34 @@ export default function Home() {
     loadingMoreRef.current = true;
     setLoadingMore(true);
     try {
-      const next = feedPage + 1;
-      const more = await getAllPosts(next);
+      const { posts: more, nextCursor } = await getFeedPage(feedCursorRef.current);
       if (more.length > 0) {
         setPosts((prev) => {
           const seen = new Set(prev.map((p) => p.id));
-          return [...prev, ...more.filter((p) => !seen.has(p.id))];
+          return [...prev, ...more.filter((p) => !seen.has(p.id))];   // dedupe on append
         });
-        setFeedPage(next);
       }
-      if (more.length < FEED_PAGE_SIZE) setHasMore(false);
+      feedCursorRef.current = nextCursor;
+      if (nextCursor === null) setHasMore(false);   // exhausted → end state
     } catch (e) {
       console.error("Error loading more posts:", e);
     } finally {
       loadingMoreRef.current = false;
       setLoadingMore(false);
     }
-  }, [feedPage, hasMore]);
+  }, [hasMore]);
 
   // Infinite scroll — a sentinel below the list; when it nears view, fetch the next
   // page. root = the feed scroller; rootMargin prefetches ~1.5 screens early.
   useEffect(() => {
     const el = sentinelRef.current;
     if (!el || !hasMore) return;   // posts.length in deps re-runs this once the sentinel mounts
+    // Brief M13 — prefetch ~1.5 viewports out (V3d NEAR-tier feel) so the next page
+    // is in hand before the user reaches the end.
+    const near = Math.round((typeof window !== 'undefined' ? window.innerHeight : 800) * 1.5);
     const io = new IntersectionObserver(
       ([entry]) => { if (entry.isIntersecting) loadMore(); },
-      { root: feedRef.current, rootMargin: '800px 0px' },
+      { root: feedRef.current, rootMargin: `${near}px 0px` },
     );
     io.observe(el);
     return () => io.disconnect();
@@ -488,6 +493,12 @@ export default function Home() {
               {loadingMore && (
                 <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: 'var(--fs-9)', color: 'rgba(229,225,219,0.35)', letterSpacing: '0.14em', textTransform: 'uppercase' }}>LOADING…</span>
               )}
+            </div>
+          )}
+          {/* Brief M13 — end-of-feed state (cursor exhausted). */}
+          {!hasMore && posts.length > 0 && (
+            <div style={{ height: 48, display: 'flex', alignItems: 'center', justifyContent: 'center', paddingBottom: 'calc(12px + var(--safe-bottom))' }}>
+              <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: 'var(--fs-9)', color: 'rgba(229,225,219,0.28)', letterSpacing: '0.14em', textTransform: 'uppercase' }}>You’re all caught up</span>
             </div>
           )}
         </div>
