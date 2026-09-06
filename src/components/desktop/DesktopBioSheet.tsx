@@ -184,14 +184,30 @@ export default function DesktopBioSheet({ profile, isOwn, links, badges, posts, 
         {/* ═══ 2. BANDS ═══ */}
         {badges.length > 0 && (
           <Band label="BADGES" sub={`${badges.length} / ${TOTAL_BADGES} UNLOCKED`} action={<button onClick={onViewBadges} style={{ ...SKB, fontSize: 10, color: 'rgba(229,225,219,0.6)', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>VIEW ALL BADGES →</button>}>
-            <div style={{ display: 'flex', gap: 30, flexWrap: 'wrap' }}>
+            {/* Brief D12 — badges ~1.5× (art 40→60, card 76→112, label 9→10 one step) and
+                CLICKABLE: a HELD composer badge routes to the viewed profile's discography
+                (M11 parity — /composer/[handle] exists on desktop); every other badge opens
+                DesktopBadgesSheet via the SAME opener as VIEW ALL (onViewBadges). Native
+                <button> → focusable + Enter/Space. Hover = a slight opacity/border lift (no
+                art scale) per the press system. This strip lists only UNLOCKED badges; the
+                locked "how to earn" copy lives in the sheet these open. */}
+            <style>{`
+              .d12-badge{display:flex;flex-direction:column;align-items:center;gap:10px;width:112px;background:transparent;border:1px solid transparent;cursor:pointer;padding:12px 10px;opacity:0.92;transition:opacity 140ms ease,border-color 140ms ease,background 140ms ease}
+              .d12-badge:hover,.d12-badge:focus-visible{opacity:1;border-color:rgba(229,225,219,0.18);background:rgba(229,225,219,0.03);outline:none}
+            `}</style>
+            <div style={{ display: 'flex', gap: 34, flexWrap: 'wrap' }}>
               {badges.map((b) => (
-                <div key={b.key} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, width: 76 }}>
-                  <img src={b.bannerSrc ?? b.src} alt="" style={{ width: 40, height: 40, objectFit: 'contain' }} />
-                  <span style={{ ...SKB, fontSize: 9, color: 'rgba(229,225,219,0.65)', textTransform: 'uppercase', letterSpacing: '0.08em', textAlign: 'center' }}>{b.key === 'top1k' ? 'COLLECTOR' : b.title}</span>
-                  {b.key === 'firstCut' && firstCutCount > 0 && <span style={{ ...SKB, fontSize: 8, color: RED }}>{firstCutCount} SLOTS</span>}
-                  {b.key === 'srh' && srhCount > 0 && <span style={{ ...SKB, fontSize: 8, color: RED }}>×{srhCount}</span>}
-                </div>
+                <button
+                  key={b.key}
+                  className="d12-badge"
+                  onClick={() => { if (b.key === 'composer' && handle) { onClose(); router.push(`/composer/${handle}`); } else { onViewBadges(); } }}
+                  aria-label={`${b.key === 'top1k' ? 'Collector' : b.title} badge — view details`}
+                >
+                  <img src={b.bannerSrc ?? b.src} alt="" style={{ width: 60, height: 60, objectFit: 'contain' }} />
+                  <span style={{ ...SKB, fontSize: 10, color: 'rgba(229,225,219,0.65)', textTransform: 'uppercase', letterSpacing: '0.08em', textAlign: 'center' }}>{b.key === 'top1k' ? 'COLLECTOR' : b.title}</span>
+                  {b.key === 'firstCut' && firstCutCount > 0 && <span style={{ ...SKB, fontSize: 9, color: RED }}>{firstCutCount} SLOTS</span>}
+                  {b.key === 'srh' && srhCount > 0 && <span style={{ ...SKB, fontSize: 9, color: RED }}>×{srhCount}</span>}
+                </button>
               ))}
             </div>
           </Band>
