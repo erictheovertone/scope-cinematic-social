@@ -31,6 +31,7 @@ import { registerAutoplayVideo, reportVisibility } from "@/lib/videoPlayback";
 import { feedImage } from "@/lib/mediaUrl";
 import { videoCssFilter, videoOverlays } from "@/lib/editor/videoGrade";
 import { acquireAttach, releaseAttach, onAttachSlotFree } from "@/lib/videoAttachBudget";
+import { isVideoDebug } from "@/lib/debugFlags";
 import type HlsType from "hls.js"; // TYPE ONLY (erased) — the runtime import is dynamic (§2)
 
 // Brief V3d — the NEAR window. A card WITHIN ~1.5 viewports (this rootMargin) may attach +
@@ -154,12 +155,13 @@ export default function GradedVideo({
   // ref callback (deps []) never churns the <video>.
   const setVideoRef = useCallback((el: HTMLVideoElement | null) => { videoRef.current = el; setVideoEl(el); onVideoElRef.current?.(el); }, []);
 
-  // Brief P1a — lifecycle instrumentation (DEV ONLY; strip-safe via NODE_ENV). Names the
+  // Brief P1a / P2c — lifecycle instrumentation, gated by ?debug=video (isVideoDebug), so it
+  // works in PRODUCTION for evidence capture and stays silent by default. Names the
   // break in the attach→teardown→re-attach cycle per card.
   const tagRef = useRef("");
   tagRef.current = ((hlsUrl || url || id) as string).slice(-10);
   const dlog = useCallback((ev: string) => {
-    if (process.env.NODE_ENV !== "production") console.log(`[vid ${tagRef.current}] ${ev}`);
+    if (isVideoDebug()) console.log(`[vid ${tagRef.current}] ${ev}`);
   }, []);
 
   const params = useMemo<EditParams | null>(() => {
@@ -304,7 +306,7 @@ export default function GradedVideo({
       dlog("playing");
       if (!ttffLogged) {
         ttffLogged = true;
-        if (process.env.NODE_ENV !== "production" && attachAt) {
+        if (isVideoDebug() && attachAt) {
           const path = isHls ? (v.canPlayType("application/vnd.apple.mpegurl") ? "hls-native" : "hls.js") : "legacy";
           console.log(`[TTFF] ${Math.round(performance.now() - attachAt)}ms · ${feedMode ? "feed" : "theatre"} · ${path}`);
         }
@@ -370,9 +372,10 @@ export default function GradedVideo({
               try { h.startLoad(); } catch { /* already loading */ }
             });
           }
-          // Brief P2 §1 — [hls] instrumentation (dev only, forcePlay): the ladder, the level
-          // ACTUALLY playing at attach/2/5/10/20s, the bandwidth estimate, every switch.
-          if (forcePlayCtx && process.env.NODE_ENV !== "production") {
+          // Brief P2 §1 / P2c — [hls] instrumentation (forcePlay), gated by ?debug=video so it
+          // runs in PRODUCTION for the evidence round: the ladder, the level ACTUALLY playing
+          // at attach/2/5/10/20s, the bandwidth estimate, every switch.
+          if (forcePlayCtx && isVideoDebug()) {
             const fmt = (i: number) => { const l = h.levels?.[i]; return l ? `${i}:${l.width}x${l.height}@${Math.round((l.bitrate || 0) / 1000)}k` : `${i}:?`; };
             h.on(Hls.Events.MANIFEST_PARSED, () => console.log("[hls] ladder", h.levels.map((_l, i) => fmt(i)).join(" | ")));
             h.on(Hls.Events.LEVEL_SWITCHED, (_e: unknown, d: { level: number }) => console.log(`[hls] switch → ${fmt(d.level)} est=${Math.round(h.bandwidthEstimate / 1000)}k`));
