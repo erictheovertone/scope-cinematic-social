@@ -39,6 +39,11 @@ import type HlsType from "hls.js"; // TYPE ONLY (erased) — the runtime import 
 // past a card never attaches (no manifest/segment request churn).
 const NEAR_ROOT_MARGIN = "150% 0px";
 const NEAR_DWELL_MS = 200;
+// Brief P1e §0 — a budget slot must convert to a LOADING source within this window or be
+// recycled (the attach-or-release valve). Backstops a slot that acquired but whose source
+// never reaches metadata (a stuck manifest / a silent decode failure). Healthy prebuffers
+// reach metadata well inside it, so it never yanks a working player.
+const ATTACH_VALVE_MS = 1500;
 
 const Pipeline = dynamic(() => import("./Pipeline"), { ssr: false });
 
@@ -277,13 +282,45 @@ export default function GradedVideo({
     // Brief P1c §2 — a VISIBLE (inView / coordActive) card attaches IMMEDIATELY, not only
     // after the NEAR dwell — so a card entering mid/bottom-viewport plays without waiting
     // (kills the "near-top" feel). NEAR-but-not-visible cards still prebuffer via the dwell.
-    if (forcePlay || !autoplayFlag || !(nearStable || inView || coordActive)) { setBufferSlot(false); return; }
+    //
+    // Brief P1e §0 — PHANTOMS & DEAD SLOTS NEVER HOLD THE BUDGET. Acquisition now REQUIRES a
+    // resolved, non-errored source (playbackUrl && !errored). Two leaks this closes:
+    //  · NO-SOURCE cards — a Stream post whose video_status isn't yet 'ready' (empty
+    //    media_urls + null stream_playback_url → the "_r_*"-tagged [vid] entries, whose
+    //    fallback id has no url) or a still-processing post — used to grab a slot on NEAR and
+    //    hold it forever (shouldAttach needs a url → they never attached, never errored, never
+    //    released) → starved real videos under the ~3 cap ("only ~2 autoplay").
+    //  · ERRORED cards — the effect didn't depend on `errored`, so a card that failed while
+    //    staying NEAR pinned its slot until it left NEAR; three accumulating down a long
+    //    scroll pinned all slots ("posts from before today don't play at all"). It now
+    //    releases on error and re-tries on NEAR re-entry (the resurrection path clears errored).
+    if (forcePlay || !autoplayFlag || !playbackUrl || errored || !(nearStable || inView || coordActive)) { setBufferSlot(false); return; }
     let held = false;
-    const grab = () => { if (!held && acquireAttach()) { held = true; dlog("slot-acquired"); setBufferSlot(true); return true; } return false; };
-    if (grab()) return () => { held && dlog("slot-released"); if (held) releaseAttach(); };
-    const off = onAttachSlotFree(() => { if (grab()) off(); });
-    return () => { off(); held && dlog("slot-released"); if (held) releaseAttach(); };
-  }, [forcePlay, autoplayFlag, nearStable, inView, coordActive]);
+    let valve: number | null = null;
+    let off: (() => void) | null = null;
+    const grab = () => {
+      if (held || !acquireAttach()) return held;
+      held = true; dlog("slot-acquired"); setBufferSlot(true);
+      // Brief P1e §0 — ATTACH-OR-RELEASE VALVE. A slot must convert to a LOADING source: if the
+      // element hasn't reached metadata (readyState ≥ HAVE_METADATA) within ATTACH_VALVE_MS, the
+      // source is stuck → recycle the slot to a waiter. Keyed on readyState (not `playing`) so a
+      // healthy NEAR-prebuffer — which attaches+buffers WITHOUT playing by design — keeps its slot.
+      valve = window.setTimeout(() => {
+        valve = null;
+        const v = videoRef.current;
+        if (!held || (v && v.readyState >= 1)) return;
+        dlog("valve-release (no metadata in 1500ms)");
+        releaseAttach(); held = false; setBufferSlot(false);
+      }, ATTACH_VALVE_MS);
+      return true;
+    };
+    if (!grab()) off = onAttachSlotFree(() => { if (grab()) off?.(); });
+    return () => {
+      if (valve) clearTimeout(valve);
+      if (off) off();
+      if (held) { dlog("slot-released"); releaseAttach(); }
+    };
+  }, [forcePlay, autoplayFlag, playbackUrl, errored, nearStable, inView, coordActive]);
 
   // ── ATTACH (source + buffer, the NEAR tier) — NO play here. HLS: native <video src> on
   //    Safari/iOS (no lib); hls.js via DYNAMIC import elsewhere (its own chunk). Legacy:

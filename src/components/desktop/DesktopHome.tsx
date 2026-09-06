@@ -166,7 +166,14 @@ export default function DesktopHome() {
                 deterministic (a post's column is fixed by its feed index, so
                 load-more appends correctly), and it preserves the left-to-right
                 newest-first reading order across the top row. Cards unchanged. */}
-            <div ref={masonryRef} style={{ display: 'flex', gap: 20, alignItems: 'flex-start' }}>
+            {/* Brief P1e §3 — HARD-HIDE the masonry while desktop Mirage is open (mirrors the
+                mobile M10c fix in page.tsx). The masonry's PostItem cells are gridMode and hold
+                the GLOBAL attach budget (MAX_ATTACHED=3, a module singleton shared with Mirage);
+                left mounted they keep intersecting → pin all 3 slots → MirageView's desktop cells
+                get zero and never attach (the "no Mirage snippets autoplay" bug — theatre escaped
+                it because forcePlay is budget-exempt). display:none drops their layout boxes → the
+                IntersectionObservers fire not-intersecting → the slots release → Mirage acquires. */}
+            <div ref={masonryRef} style={{ display: mirageOpen ? 'none' : 'flex', gap: 20, alignItems: 'flex-start' }}>
               {Array.from({ length: masonryCols }, (_, col) => (
                 <div key={col} style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 20 }}>
                   {posts.map((p, i) => (i % masonryCols === col ? (
