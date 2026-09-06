@@ -11,11 +11,13 @@ import { motion } from 'framer-motion';
 import { usePrivy } from '@privy-io/react-auth';
 import { useEconomy, isCoinPost } from '@/components/EconomyProvider';
 import { getPostLikes, getPostComments, addComment, likePost, unlikePost } from '@/lib/postsService';
-import { getUserByPrivyId, getProfile } from '@/lib/userService';
+import { getUserByPrivyId, getProfile, isProMember } from '@/lib/userService';
 import { useFirstCutLedger } from '@/lib/firstCutLedger';
 import { getAspectRatio } from '@/lib/aspectRatio';
 import { feedImage } from '@/lib/mediaUrl';
 import GradedVideo from '@/components/finishing/GradedVideo';
+import VideoTransport from '@/components/finishing/VideoTransport';
+import { useUpsell } from '@/components/UpsellProvider';
 import { streamGradedProps } from "@/lib/editor/videoGrade";
 import CollectSheetGate from '@/components/economy/CollectSheetGate';
 import CommentList, { useCommentLikes, ReplyComposer, type UIComment } from '@/components/CommentList';
@@ -77,7 +79,12 @@ export default function DesktopPostView({
   const [likes, setLikes] = useState<{ user_id?: string }[]>([]);
   const [comments, setComments] = useState<{ id?: string; username?: string; content?: string; created_at?: string }[]>([]);
   const [market, setMarket] = useState<{ mcUsd: number; holders: number | null; live: boolean } | null>(null);
-  const [viewer, setViewer] = useState<{ uuid: string; name: string; avatar: string | null } | null>(null);
+  const [viewer, setViewer] = useState<{ uuid: string; name: string; avatar: string | null; isPro: boolean } | null>(null);
+  // Brief P3 — viewer-controls state (lightbox = FULL context). userPaused resets per post.
+  const [userPaused, setUserPaused] = useState(false);
+  const [videoEl, setVideoEl] = useState<HTMLVideoElement | null>(null);
+  const { goPro } = useUpsell();
+  useEffect(() => { setUserPaused(false); }, [postId]);
   // Brief Q1 — measure the stage box so the IMAGE requests a display-sized rendition (the
   // 2560 tier once the stage exceeds ~1600px; ≤ that stays 1600). Lightbox stage ≈ 1452 @1920
   // → 1600, ≈ 2092 @2560 → 2560; the profile framing's capped stage stays 1600. Poster path
@@ -112,7 +119,7 @@ export default function DesktopPostView({
     let dead = false;
     getUserByPrivyId(user.id)
       .then((su) => (su ? getProfile(su.id).then((p) => ({ su, p })) : null))
-      .then((r) => { if (!dead && r) setViewer({ uuid: r.su.id, name: (r.p as { username?: string })?.username ?? 'user', avatar: (r.p as { profile_image_url?: string })?.profile_image_url ?? null }); })
+      .then((r) => { if (!dead && r) setViewer({ uuid: r.su.id, name: (r.p as { username?: string })?.username ?? 'user', avatar: (r.p as { profile_image_url?: string })?.profile_image_url ?? null, isPro: isProMember(r.p as { is_paid_member?: boolean; paid_member_until?: string | null }) }); })
       .catch(() => {});
     return () => { dead = true; };
   }, [user?.id]);
@@ -224,9 +231,12 @@ export default function DesktopPostView({
               morph target. Each post sits at its own ratio within. 2.39 lets the
               common scope/pana posts FILL the width so the media hugs the arrows
               (the #8 binding-dimension fix — a 2.75 box pillarboxed them small). */}
-          <motion.div ref={stageRef} layoutId={`dpost-${postId}`} transition={{ layout: { duration: 0.18, ease: 'easeOut' } }} style={{ width: '100%', aspectRatio: '2.39 / 1', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-            <div style={{ ...(ar >= 2.39 ? { width: '100%' } : { height: '100%' }), aspectRatio: `${ar}`, overflow: 'hidden', background: '#0a0a0a' }}>
+          {/* Brief P3 §1 — click the stage toggles pause (desktop). No backdrop-close here, so
+              no collision; prev/next are separate absolute buttons. */}
+          <motion.div ref={stageRef} layoutId={`dpost-${postId}`} transition={{ layout: { duration: 0.18, ease: 'easeOut' } }} onClick={isVideo ? () => setUserPaused((p) => !p) : undefined} style={{ width: '100%', aspectRatio: '2.39 / 1', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', cursor: isVideo ? 'pointer' : 'default' }}>
+            <div style={{ position: 'relative', ...(ar >= 2.39 ? { width: '100%' } : { height: '100%' }), aspectRatio: `${ar}`, overflow: 'hidden', background: '#0a0a0a' }}>
               {isVideo ? (
+                <>
                 <GradedVideo
                   key={postId}
                   url={mediaUrl}
@@ -241,8 +251,12 @@ export default function DesktopPostView({
                   forcePlay
                   {...streamGradedProps(post as unknown as Record<string, unknown>)}
                   showSoundToggle
+                  onVideoEl={setVideoEl}
+                  userPaused={userPaused}
                   style={{ width: '100%', height: '100%' }}
                 />
+                <VideoTransport videoEl={videoEl} platform="desktop" paused={userPaused} onTogglePause={() => setUserPaused((p) => !p)} isPro={viewer?.isPro ?? false} onUpsell={goPro} />
+                </>
               ) : (
                 mediaUrl && <img src={feedImage(mediaUrl, Math.min(2560, Math.round(stageW)))} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} /> /* Brief Q1 — stage-sized rendition (2560 above ~1600px) */
               )}

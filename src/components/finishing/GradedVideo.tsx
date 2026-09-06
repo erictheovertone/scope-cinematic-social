@@ -102,6 +102,14 @@ interface Props {
    *  (Eric's rule "visible → plays", no top bias). Default 0 = any-visibility (grid/profile,
    *  unchanged). The feed passes 0.5. */
   minPlayRatio?: number;
+  /** Brief P3 §1/§2 — hand the live <video> element to a viewer-controls overlay (pause
+   *  indicator, progress hairline, the desktop Transport). Fired with the element on mount,
+   *  null on unmount/re-attach. Feed/grid/snippet surfaces pass nothing. */
+  onVideoEl?: (el: HTMLVideoElement | null) => void;
+  /** Brief P3 §1 — the viewer has paused (hold / click / Space). Suppresses autoplay and
+   *  pauses the element; false resumes. NEVER releases the V3d budget slot (attach is keyed
+   *  on visibility/NEAR, not playback). Full-context viewer surfaces only. */
+  userPaused?: boolean;
   /** Brief M10 §3 — MIRAGE ONLY. Loop just this [windowStart, windowStart+windowLength]
    *  slice (seconds), muted — the Mirage preview gesture. Mirage passes windowLength ALWAYS
    *  (the post's saved snippet, else the standard length from 0). Every OTHER surface
@@ -119,7 +127,7 @@ export default function GradedVideo({
   url, posterUrl, posterWidth, clipUrl, editParams, cropX = 0, cropY = 0, cropWidth = 1, cropHeight = 1,
   autoplayFlag = false, gridMode = false, forcePlay = false, fullPlayback = false, style, onClick, showSoundToggle = false,
   processing = false, hlsUrl = null, priority = false, minPlayRatio = 0,
-  windowStart = null, windowLength = null, context = 'full',
+  windowStart = null, windowLength = null, context = 'full', onVideoEl, userPaused = false,
 }: Props) {
   const isHls = !!hlsUrl; // Brief V3 — the dual-path branch: Stream HLS vs legacy source.
   const id = useId();
@@ -140,7 +148,11 @@ export default function GradedVideo({
   const [box, setBox] = useState({ w: 0, h: 0 });
 
   // Stable ref callback so the <video> isn't churned every render.
-  const setVideoRef = useCallback((el: HTMLVideoElement | null) => { videoRef.current = el; setVideoEl(el); }, []);
+  const onVideoElRef = useRef(onVideoEl);
+  onVideoElRef.current = onVideoEl;
+  // Brief P3 — hand the element to a viewer-controls overlay. Ref-called so the stable
+  // ref callback (deps []) never churns the <video>.
+  const setVideoRef = useCallback((el: HTMLVideoElement | null) => { videoRef.current = el; setVideoEl(el); onVideoElRef.current?.(el); }, []);
 
   // Brief P1a — lifecycle instrumentation (DEV ONLY; strip-safe via NODE_ENV). Names the
   // break in the attach→teardown→re-attach cycle per card.
@@ -185,7 +197,8 @@ export default function GradedVideo({
   //    autoplay tile that is NEAR-and-dwelt AND holds a budget slot. FAR = neither → nothing.
   //  · PLAY: forcePlay OR an autoplay tile IN-VIEW (gridMode) / coordinator-active (feed).
   const shouldAttach = !!playbackUrl && (effectiveForcePlay || (autoplayFlag && bufferSlot));
-  const shouldPlay = !!playbackUrl && (effectiveForcePlay || (autoplayFlag && (gridMode ? inView : coordActive)));
+  // Brief P3 §1 — userPaused suppresses PLAY (not ATTACH — the budget slot stays acquired).
+  const shouldPlay = !userPaused && !!playbackUrl && (effectiveForcePlay || (autoplayFlag && (gridMode ? inView : coordActive)));
   // HLS carries its grade via CSS filter (below), NOT the gl-react pipeline — so the
   // pipeline stays a legacy-only path (zero re-encode, keeps HLS cheap).
   const usePipeline = !isHls && effectiveForcePlay && playing && looked && !failed;
