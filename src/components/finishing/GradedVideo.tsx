@@ -327,25 +327,35 @@ export default function GradedVideo({
           // tight 8s buffer, no back-buffer. With V3d's 3-player cap → bounded memory
           // (~8s of ~360p × 3 ≈ a few MB). Theatre/modal (forcePlay): NO cap, generous
           // buffer — the work deserves full quality.
-          // Brief P2 §2 — QUALITY-FIRST forcePlay (lightbox / theatre / SR hero). Caps were
-          // already off here (D5 §4), but with no startLevel the player inherited hls.js's
-          // default ABR: a conservative abrEwmaDefaultEstimate (~500kbps) made it START on a
-          // LOW rung and climb over several seconds — the visible "poor quality." Now: trust
-          // the connection up front (5Mbps default estimate) and START AT THE TOP RUNG
-          // (startLevel set to levels.length-1 on MANIFEST_PARSED). ABR stays enabled, so it
-          // steps DOWN only on a genuine stall; the graded poster covers the 1-2s initial
-          // buffer (acceptable in a viewing context; a soft image is not). Feed config
-          // (instant-start-low, capped) is UNCHANGED — the P1 behaviour the feed needs.
+          // Brief P2 / P2a — QUALITY-FIRST forcePlay (lightbox / theatre / SR hero). Caps were
+          // already off (D5 §4). P2 raised startLevel to the top on MANIFEST_PARSED, but hls.js
+          // had ALREADY fetched the first (low) segment by then and played it out — the ~5s
+          // low-quality lead-in. P2a fixes the SEQUENCE: autoStartLoad:false holds ALL fragment
+          // loading until the manifest is parsed; then we set startLevel = top FIRST and only
+          // THEN startLoad(), so the very first fragment fetched is the top rung — nothing low
+          // ever enters the buffer. ABR stays enabled (steps DOWN only on a genuine stall);
+          // abrEwmaDefaultEstimate 5Mbps keeps it from dropping on a cold estimate. The graded
+          // poster covers the 1-2s first-segment buffer (reveal gates on `playing`). Feed config
+          // (instant-start-low, capped, autoStartLoad default) is UNCHANGED.
           hls = new Hls(feedMode
             ? { capLevelToPlayerSize: true, startLevel: 0, maxBufferLength: 8, backBufferLength: 0, enableWorker: true }
-            : { maxBufferLength: 30, enableWorker: true, startLevel: -1, abrEwmaDefaultEstimate: 5_000_000 });
+            : { maxBufferLength: 30, enableWorker: true, startLevel: -1, abrEwmaDefaultEstimate: 5_000_000, autoStartLoad: false });
           const h = hls;
           const forcePlayCtx = !feedMode;
           // Brief P1a — !cancelled so hls.destroy()'s own teardown error can't LATCH errored
           // (which would block the card from ever re-attaching on scroll-return).
           h.on(Hls.Events.ERROR, (_e: unknown, data: { fatal?: boolean }) => { if (!cancelled && data?.fatal) setErrored(true); });
           if (forcePlayCtx) {
-            h.on(Hls.Events.MANIFEST_PARSED, () => { try { h.startLevel = h.levels.length - 1; } catch { /* levels not ready */ } });
+            // startLevel = top BEFORE startLoad → the first fetched fragment IS the top rung.
+            // (Belt+suspenders per P2a §2 — the currentLevel setter, which FLUSHES the buffer
+            // and reloads, is NOT needed on this path: autoStartLoad:false guarantees no low
+            // fragment ever loaded, so there is nothing buffered to flush. It would only matter
+            // if loading had already begun — which this sequence prevents.)
+            h.on(Hls.Events.MANIFEST_PARSED, () => {
+              if (cancelled) return;
+              try { h.startLevel = h.levels.length - 1; } catch { /* levels not ready */ }
+              try { h.startLoad(); } catch { /* already loading */ }
+            });
           }
           // Brief P2 §1 — [hls] instrumentation (dev only, forcePlay): the ladder, the level
           // ACTUALLY playing at attach/2/5/10/20s, the bandwidth estimate, every switch.
