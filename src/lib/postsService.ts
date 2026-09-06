@@ -193,6 +193,28 @@ export const getAllPosts = async (
   });
 };
 
+// ── Brief D10 — owner edits the autoplay SNIPPET window on an EXISTING post. Writes ONLY
+// snippet_start + snippet_length (the M10 columns), scoped to the owner the same way
+// softDeletePost is (.eq('user_id', userId) → a non-owner matches no rows → returns false).
+// userId is the SUPABASE users.id (posts.user_id shape). No pipeline, no re-processing —
+// the window is pure metadata; snippet contexts pick it up on next mount.
+export const updateSnippetWindow = async (
+  postId: string,
+  userId: string,
+  start: number,
+  length: number,
+): Promise<boolean> => {
+  const { data, error } = await supabase
+    .from('posts')
+    .update({ snippet_start: Math.max(0, start), snippet_length: Math.max(0, length) })
+    .eq('id', postId)
+    .eq('user_id', userId)   // ownership guard (app-enforced, mirrors softDeletePost)
+    .select('id');
+  if (error) { console.error('[updateSnippetWindow] error:', error); return false; }
+  if (!data || data.length === 0) { console.error('[updateSnippetWindow] no rows — ownership mismatch', postId, userId); return false; }
+  return true;
+};
+
 // ── Brief M13 — CURSOR-paginated Discover feed (replaces getAllPosts' offset range).
 // Keyset on (created_at, id) DESC so pages never skip or duplicate as new posts arrive
 // (offset does both). WHERE is is_deleted=false ONLY — no following / media_type /

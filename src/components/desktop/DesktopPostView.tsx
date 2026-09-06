@@ -18,6 +18,10 @@ import { feedImage } from '@/lib/mediaUrl';
 import GradedVideo from '@/components/finishing/GradedVideo';
 import VideoTransport from '@/components/finishing/VideoTransport';
 import { useUpsell } from '@/components/UpsellProvider';
+import SnippetSelector from '@/components/finishing/SnippetSelector';
+import { updateSnippetWindow } from '@/lib/postsService';
+import { neutralGeometry } from '@/lib/editGeometry';
+import { DEFAULT_PARAMS, type EditParams } from '@/lib/editor/params';
 import { streamGradedProps } from "@/lib/editor/videoGrade";
 import CollectSheetGate from '@/components/economy/CollectSheetGate';
 import CommentList, { useCommentLikes, ReplyComposer, type UIComment } from '@/components/CommentList';
@@ -109,6 +113,9 @@ export default function DesktopPostView({
   const [showDeckPicker, setShowDeckPicker] = useState(false);
   const [showCreateCoin, setShowCreateCoin] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
+  const [showSnippet, setShowSnippet] = useState(false); // Brief D10 — edit-autoplay overlay
+  const [snippetWin, setSnippetWin] = useState<{ start: number; length: number } | null>(null);
+  const [savingSnippet, setSavingSnippet] = useState(false);
   const [deckToast, setDeckToast] = useState('');
   const commentInputRef = useRef<HTMLInputElement>(null);
   const { likeStates, toggleLike: toggleCommentLike } = useCommentLikes(comments as UIComment[], user?.id ?? null, viewer?.name ?? null);
@@ -318,6 +325,13 @@ export default function DesktopPostView({
                     <button role="menuitem" onClick={() => { setMenuOpen(false); setShowDeckPicker(true); }} style={{ display: 'block', width: '100%', textAlign: 'left', background: 'transparent', border: 'none', borderBottom: `1px solid ${HAIR}`, cursor: 'pointer', padding: '11px 14px' }}>
                       <span style={{ ...SKB, fontSize: 11, color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.06em' }}>ADD TO DECK</span>
                     </button>
+                    {/* Brief D10 — EDIT AUTOPLAY: video posts only (hidden on images). Opens the
+                        M10 SnippetSelector against the Stream HLS, seeded with the saved window. */}
+                    {isVideo && (
+                      <button role="menuitem" onClick={() => { setMenuOpen(false); setSnippetWin({ start: (post as { snippet_start?: number | null }).snippet_start ?? 0, length: (post as { snippet_length?: number | null }).snippet_length ?? 4 }); setShowSnippet(true); }} style={{ display: 'block', width: '100%', textAlign: 'left', background: 'transparent', border: 'none', borderBottom: `1px solid ${HAIR}`, cursor: 'pointer', padding: '11px 14px' }}>
+                        <span style={{ ...SKB, fontSize: 11, color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.06em' }}>EDIT AUTOPLAY</span>
+                      </button>
+                    )}
                     {coinPending && (
                       <button role="menuitem" onClick={() => { setMenuOpen(false); setShowCreateCoin(true); }} style={{ display: 'block', width: '100%', textAlign: 'left', background: 'transparent', border: 'none', borderBottom: `1px solid ${HAIR}`, cursor: 'pointer', padding: '11px 14px' }}>
                         <span style={{ ...SKB, fontSize: 11, color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.06em' }}>CREATE COIN</span>
@@ -481,6 +495,40 @@ export default function DesktopPostView({
       {deckToast && (
         <div style={{ position: 'fixed', left: '50%', bottom: 'calc(28px + var(--safe-bottom))', transform: 'translateX(-50%)', zIndex: 700, background: 'var(--canvas)', border: `1px solid ${HAIR}`, padding: '10px 16px', pointerEvents: 'none' }}>
           <span style={{ ...SKB, fontSize: 11, color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.06em' }}>ADDED TO {deckToast}</span>
+        </div>
+      )}
+
+      {/* Brief D10 — EDIT AUTOPLAY overlay: the M10 SnippetSelector against the Stream HLS,
+          seeded with the saved window; SAVE writes snippet_start/length (owner-scoped). */}
+      {showSnippet && isVideo && (
+        <div data-swipe-exclude onClick={() => setShowSnippet(false)}
+          style={{ position: 'fixed', inset: 0, zIndex: 650, background: 'rgba(5,5,5,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ width: 'min(680px, 92vw)', maxHeight: '88vh', overflowY: 'auto', background: 'var(--canvas)', border: `1px solid ${HAIR}`, padding: 22 }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 14 }}>
+              <span style={{ ...SKB, fontSize: 13, color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Edit autoplay</span>
+              <button onClick={() => setShowSnippet(false)} aria-label="Close" style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 16, color: 'rgba(229,225,219,0.5)', lineHeight: 1, padding: 2 }}>×</button>
+            </div>
+            <SnippetSelector
+              videoUrl={((post?.stream_playback_url as string) ?? mediaUrl) || ''}
+              heroFrameTime={snippetWin?.start ?? 0}
+              onChange={(w) => setSnippetWin(w)}
+              params={(post?.edit_params as EditParams) ?? DEFAULT_PARAMS}
+              geometry={neutralGeometry(String(getAspectRatio((post?.layout_id as string) ?? '')))}
+              layoutId={(post?.layout_id as string) ?? ''}
+            />
+            <div style={{ display: 'flex', gap: 10, marginTop: 18, justifyContent: 'flex-end' }}>
+              <button onClick={() => setShowSnippet(false)} style={{ ...SKB, fontSize: 11, color: 'rgba(229,225,219,0.6)', textTransform: 'uppercase', letterSpacing: '0.08em', background: 'transparent', border: `1px solid ${HAIR}`, cursor: 'pointer', padding: '10px 18px' }}>CANCEL</button>
+              <button disabled={savingSnippet || !viewer || !snippetWin}
+                onClick={async () => {
+                  if (!viewer || !snippetWin) return;
+                  setSavingSnippet(true);
+                  const ok = await updateSnippetWindow(postId, viewer.uuid, snippetWin.start, snippetWin.length);
+                  setSavingSnippet(false);
+                  if (ok) setShowSnippet(false); // snippet contexts re-read the window on next mount
+                }}
+                style={{ ...SKB, fontSize: 11, color: 'var(--on-ink)', textTransform: 'uppercase', letterSpacing: '0.08em', background: '#E5E1DB', border: 'none', cursor: savingSnippet ? 'default' : 'pointer', padding: '10px 22px', opacity: savingSnippet || !snippetWin ? 0.6 : 1 }}>{savingSnippet ? 'SAVING…' : 'SAVE'}</button>
+            </div>
+          </div>
         </div>
       )}
     </div>

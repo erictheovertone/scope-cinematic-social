@@ -54,15 +54,26 @@ export default function SnippetSelector({ videoUrl, heroFrameTime, onChange, par
   // Read duration; seed the window at the hero frame (clamped so the clip fits).
   useEffect(() => {
     const v = document.createElement("video");
-    v.preload = "metadata"; v.muted = true; v.src = videoUrl;
+    v.preload = "metadata"; v.muted = true;
+    let hls: { destroy: () => void } | null = null;
     v.onloadedmetadata = () => {
       const d = isFinite(v.duration) ? v.duration : 0;
       setDuration(d);
       const maxStart = Math.max(0, d - CLIP_LEN);
-      const seed = Math.min(Math.max(heroFrameTime ?? 0, 0), maxStart);
-      setStart(seed);
+      setStart(Math.min(Math.max(heroFrameTime ?? 0, 0), maxStart));
     };
-    return () => { v.src = ""; };
+    // Brief D10 — an EXISTING Stream post's source is HLS (.m3u8), which a plain <video> can't
+    // decode in Chrome (P2d) → no duration. Attach hls.js where supported (desktop/Android);
+    // fall back to a native src on iOS Safari (where hls.js/MSE is absent and native HLS works).
+    if (/\.m3u8(\?|$)/i.test(videoUrl)) {
+      import("hls.js").then(({ default: Hls }) => {
+        if (Hls.isSupported()) { const h = new Hls(); h.loadSource(videoUrl); h.attachMedia(v); hls = h; }
+        else { v.src = videoUrl; }
+      }).catch(() => { v.src = videoUrl; });
+    } else {
+      v.src = videoUrl;
+    }
+    return () => { try { v.onloadedmetadata = null; if (hls) hls.destroy(); v.removeAttribute("src"); v.load(); } catch { /* ignore */ } };
   }, [videoUrl, heroFrameTime]);
 
   const len = Math.min(CLIP_LEN, duration || CLIP_LEN);
