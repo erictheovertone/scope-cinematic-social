@@ -19,6 +19,15 @@ const HAIR = 'rgba(229,225,219,0.12)';
 const RED = '#E5E1DB';
 const TOTAL_BADGES = 7;
 
+// ── Brief D11 — auto-banner portrait geometry ────────────────────────────────
+const BANNER_H = 460;                 // band height
+const PORTRAIT_TARGET = 420;          // square edge = BANNER_H − 40 vertical breathing (§1)
+const PORTRAIT_FEATHER = 68;          // rectangular-feather falloff, ~60–80px (§2)
+// §2 — TWO intersecting linear-gradient masks = a soft-cornered RECTANGLE feather (a photograph
+// dissolving into the band), never a radial spotlight. `intersect`/`source-in` so a pixel shows
+// only where BOTH axes are opaque (default `add` would union into a plus shape).
+const PORTRAIT_MASK = `linear-gradient(to right, transparent 0, #000 ${PORTRAIT_FEATHER}px, #000 calc(100% - ${PORTRAIT_FEATHER}px), transparent 100%), linear-gradient(to bottom, transparent 0, #000 ${PORTRAIT_FEATHER}px, #000 calc(100% - ${PORTRAIT_FEATHER}px), transparent 100%)`;
+
 type P = Record<string, unknown>;
 const usd = (n: number) => (n >= 1000 ? `$${Math.round(n).toLocaleString()}` : `$${n.toFixed(2)}`);
 
@@ -56,10 +65,15 @@ export default function DesktopBioSheet({ profile, isOwn, links, badges, posts, 
   const router = useRouter();
   const economy = useEconomy();
   const [portfolioMc, setPortfolioMc] = useState<number | null>(null);
+  // Brief D11 §1 — the loaded avatar's native px, read on <img> load. Caps the portrait render
+  // size at native × 1.25 so a small master never upscales to softness (avatars have no rendition
+  // tiers and top out at a 512 master — see report; a truly sharp large PFP is a Q1 follow-up).
+  const [pfpNat, setPfpNat] = useState<number | null>(null);
 
   const name = String(profile?.display_name ?? profile?.username ?? '');
   const handle = String(profile?.username ?? '');
   const pfp = profile?.profile_image_url ? String(profile.profile_image_url) : null;
+  const portraitSize = pfpNat ? Math.min(PORTRAIT_TARGET, Math.round(pfpNat * 1.25)) : PORTRAIT_TARGET;
   const shortBio = String(profile?.short_bio ?? '');
   const longBio = String(profile?.bio ?? '');
   const kit = [
@@ -108,28 +122,42 @@ export default function DesktopBioSheet({ profile, isOwn, links, badges, posts, 
 
       <div style={{ maxWidth: 'var(--shell-narrow)', margin: '0 auto', padding: '0 40px 80px' }}>{/* Brief R1 — reading/detail width = --shell-narrow (1180), intentionally tighter than the grid --shell-max */}
 
-        {/* ═══ 1. AUTO-BANNER HERO — the album-art treatment ═══ */}
-        {/* Blurred cover-fill of the PFP gives the WHOLE band the portrait's color
-            atmosphere; the sharp portrait floats over it, LARGER, radial-MASKED so
-            its edges dissolve into the underlay (no rectangular boundary anywhere).
-            One composition: atmosphere across the width, a clear subject emerging. */}
-        <div style={{ position: 'relative', height: 460, margin: '0 -40px', overflow: 'hidden', background: '#000' }}>
+        {/* ═══ 1. AUTO-BANNER HERO — the portrait-composition model (Brief D11) ═══ */}
+        {/* One composition, layered bottom→top: a heavily-blurred underlay carries the portrait's
+            colour across the whole band (letterbox-via-blur); text-zone scrims darken the sides
+            UNDER the portrait (so its opaque pixels never dim — only its feathered edges blend);
+            the sharp 1:1 square portrait sits between the columns, its rectangular edges feathering
+            into the band. A photograph dissolving into the banner — never a spotlight. */}
+        <div style={{ position: 'relative', height: BANNER_H, margin: '0 -40px', overflow: 'hidden', background: '#000' }}>
+          {/* §3 — LETTERBOX-VIA-BLUR underlay: same PFP, heavily blurred + dimmed to ~30% luminance
+              (blur 64 · brightness 0.55 · opacity 0.42), scale 1.2 hides the blur's soft band edges. */}
           {pfp && (
-            <>
-              {/* 1. BLURRED ATMOSPHERE UNDERLAY (full band) */}
-              <img src={feedImage(pfp, 720)} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', filter: 'blur(70px) brightness(0.85)', opacity: 0.4, transform: 'scale(1.18)' }} />
-              {/* 2. SHARP PORTRAIT — large, right-of-center, edges masked into the underlay */}
-              <div style={{ position: 'absolute', top: '50%', right: '20%', transform: 'translateY(-50%)', width: 460, height: 460 }}>
-                <img src={feedImage(pfp, 900)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', filter: 'brightness(1.2)', WebkitMaskImage: 'radial-gradient(closest-side at 50% 46%, #000 52%, transparent 90%)', maskImage: 'radial-gradient(closest-side at 50% 46%, #000 52%, transparent 90%)' }} />
-              </div>
-            </>
+            <img src={feedImage(pfp, 720)} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', filter: 'blur(64px) brightness(0.55)', opacity: 0.42, transform: 'scale(1.2)' }} />
           )}
-          {/* 3. deep left data-zone gradient — name on a darkened zone */}
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, #000 0%, rgba(0,0,0,0.86) 28%, rgba(0,0,0,0.28) 52%, transparent 72%)' }} />
-          {/* 4. right stats scrim — a LOCAL dark zone for the stats, clear of the face */}
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(270deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.45) 22%, transparent 42%)' }} />
-          {/* 5. soft top/bottom edge feather */}
+          {/* Text-zone scrims — BELOW the portrait so the face never dims; they only darken the
+              underlay behind the header text (left identity zone, right stats zone) + edge feather. */}
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, #000 0%, rgba(0,0,0,0.82) 26%, rgba(0,0,0,0.22) 50%, transparent 70%)' }} />
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(270deg, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.4) 20%, transparent 40%)' }} />
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.4) 0%, transparent 18%, transparent 82%, #000 100%)' }} />
+          {/* §1/§2 — the SHARP square portrait at its OWN 1:1 aspect (never cover-stretched into a
+              non-square zone), sized to the band height − breathing (portraitSize, ≤420²), centred
+              right-of-band-centre (calc(50%+90px)) between the text (ends ~x480) and stats (starts
+              ~x880) columns. object-position center 30% keeps a face (upper third) framed for a
+              non-square source. Edges FEATHER via PORTRAIT_MASK; render caps at native×1.25. */}
+          {pfp && (
+            <div style={{ position: 'absolute', top: '50%', left: 'calc(50% + 90px)', transform: 'translate(-50%, -50%)', width: portraitSize, height: portraitSize }}>
+              <img
+                src={feedImage(pfp, 900)}
+                alt=""
+                onLoad={(e) => setPfpNat(e.currentTarget.naturalWidth || null)}
+                style={{
+                  width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 30%', display: 'block', filter: 'brightness(1.04)',
+                  WebkitMaskImage: PORTRAIT_MASK, maskImage: PORTRAIT_MASK,
+                  WebkitMaskComposite: 'source-in', maskComposite: 'intersect',
+                }}
+              />
+            </div>
+          )}
 
           {/* left overlay — identity */}
           <div style={{ position: 'absolute', left: 40, top: 0, bottom: 0, width: 440, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
