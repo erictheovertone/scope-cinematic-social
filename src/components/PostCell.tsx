@@ -96,6 +96,10 @@ export default function PostCell({ post, layoutId, index, onClick, showSoundTogg
               editParams={post.edit_params}
               autoplayFlag={post.autoplay !== false}
               gridMode
+              /* Brief M15 §1 — profile grid is SNIPPET: loop the creator's window (default 0..4s). */
+              context="snippet"
+              windowStart={(post as { snippet_start?: number | null }).snippet_start ?? 0}
+              windowLength={(post as { snippet_length?: number | null }).snippet_length ?? null}
               processing={(post as { video_status?: string | null }).video_status === 'processing'}
               hlsUrl={(post as { video_status?: string | null; stream_playback_url?: string | null }).video_status === 'ready' ? (post as { stream_playback_url?: string | null }).stream_playback_url : null}
               cropX={post.crop_x ?? 0}

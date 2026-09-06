@@ -569,6 +569,10 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
                       editParams={p.edit_params}
                       autoplayFlag={p.autoplay !== false}
                       gridMode
+                      /* Brief M15 §1 — desktop profile grid is SNIPPET. */
+                      context="snippet"
+                      windowStart={(p as { snippet_start?: number | null }).snippet_start ?? 0}
+                      windowLength={(p as { snippet_length?: number | null }).snippet_length ?? null}
                       {...streamGradedProps(p as unknown as Record<string, unknown>)}
                       cropX={(p.crop_x as number) ?? 0}
                       cropY={(p.crop_y as number) ?? 0}

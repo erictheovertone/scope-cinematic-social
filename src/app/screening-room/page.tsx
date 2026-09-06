@@ -234,6 +234,10 @@ function MobileScreeningRoom() {
                 autoplayFlag={p.autoplay !== false}
                 fullPlayback
                 gridMode
+                /* Brief M15 §1 — SR lineup is SNIPPET (full source windowed to the creator's slice). */
+                context="snippet"
+                windowStart={(p as { snippet_start?: number | null }).snippet_start ?? 0}
+                windowLength={(p as { snippet_length?: number | null }).snippet_length ?? null}
                 processing={(p as { video_status?: string | null }).video_status === 'processing'}
                 hlsUrl={(p as { video_status?: string | null; stream_playback_url?: string | null }).video_status === 'ready' ? (p as { stream_playback_url?: string | null }).stream_playback_url : null}
                 style={{ width: '100%', height: '100%' }}

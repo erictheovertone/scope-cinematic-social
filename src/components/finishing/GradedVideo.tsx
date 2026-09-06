@@ -51,6 +51,17 @@ class PipelineBoundary extends Component<{ onError: () => void; children: React.
   render() { return this.state.failed ? null : this.props.children; }
 }
 
+// Brief M15 §1 — THE CONTEXT RULE. Two playback contexts, defined ONCE here; every
+// video-mounting surface picks one deliberately (a new surface must choose):
+//   'full'    — home feed, lightbox, theatre, collect preview: the WHOLE video, looping.
+//   'snippet' — Mirage, profile grids (own+public), decks grids, SR lineup: the creator's
+//               window [snippet_start, +snippet_length], default 0..SNIPPET_WINDOW_LEN when
+//               the post has none, looping WITHIN the window.
+// The SR hero stage stays 'full' via forcePlay. The window loop + the ended→loop are one
+// shared mechanism below (§2) — no surface can lack it.
+export type VideoContext = 'full' | 'snippet';
+export const SNIPPET_WINDOW_LEN = 4; // seconds — default snippet length when a post has none
+
 interface Props {
   url: string;
   posterUrl?: string | null;
@@ -98,13 +109,17 @@ interface Props {
    *  This is a preview window, NOT a playback cap — it lives only in Mirage. */
   windowStart?: number | null;
   windowLength?: number | null;
+  /** Brief M15 §1 — 'full' (default) or 'snippet' (loop the creator's window). SNIPPET
+   *  surfaces should also pass windowStart/windowLength from the post's snippet_start/
+   *  snippet_length; when absent, SNIPPET defaults to 0..SNIPPET_WINDOW_LEN. */
+  context?: VideoContext;
 }
 
 export default function GradedVideo({
   url, posterUrl, posterWidth, clipUrl, editParams, cropX = 0, cropY = 0, cropWidth = 1, cropHeight = 1,
   autoplayFlag = false, gridMode = false, forcePlay = false, fullPlayback = false, style, onClick, showSoundToggle = false,
   processing = false, hlsUrl = null, priority = false, minPlayRatio = 0,
-  windowStart = null, windowLength = null,
+  windowStart = null, windowLength = null, context = 'full',
 }: Props) {
   const isHls = !!hlsUrl; // Brief V3 — the dual-path branch: Stream HLS vs legacy source.
   const id = useId();
@@ -147,9 +162,12 @@ export default function GradedVideo({
   // never re-runs the ATTACH effect — windows are stable per post, and the media event
   // handlers read the latest here. Null → no window → full playback (every non-Mirage
   // surface passes nothing). windowLength ≤ 0 is treated as no window.
+  // Brief M15 §1 — the active loop window is driven by CONTEXT. 'snippet' → the post's
+  // window (default 0..SNIPPET_WINDOW_LEN); 'full' → null (loop the whole video). Mirage +
+  // every grid pass context='snippet'; feed/lightbox/theatre leave it 'full'.
   const windowRef = useRef<{ start: number; end: number } | null>(null);
-  windowRef.current = windowLength != null && windowLength > 0
-    ? { start: Math.max(0, windowStart ?? 0), end: Math.max(0, windowStart ?? 0) + windowLength }
+  windowRef.current = context === 'snippet'
+    ? (() => { const s = Math.max(0, windowStart ?? 0); const len = windowLength != null && windowLength > 0 ? windowLength : SNIPPET_WINDOW_LEN; return { start: s, end: s + len }; })()
     : null;
 
   // Autoplay plays the pre-baked GRADED CLIP (plain <video>, already graded — no
@@ -429,13 +447,17 @@ export default function GradedVideo({
           pipeline); for forcePlay it's the full video (the pipeline canvas covers it
           when graded). crossOrigin set before src. Visible whenever playing AND the
           pipeline isn't covering it (i.e. always for the autoplay clip). src assigned
-          imperatively in the play effect — NOT a prop here. */}
+          imperatively in the play effect — NOT a prop here.
+          Brief M15 §2 — NO `loop` attribute: with hls.js / native-HLS on iOS the attribute
+          silently fails to loop AND suppresses the 'ended' event, so the video froze at the
+          end (the grid never looped — P1c's feed-only fix). The shared onEnded handler
+          (seek → window-start for SNIPPET, else 0, then play) is now the SOLE loop for EVERY
+          surface — feed, grid, decks, SR lineup, Mirage — so none can lack it. */}
       {shouldAttach && !errored && (
         <video
           ref={setVideoRef}
           crossOrigin="anonymous"
           muted={muted}
-          loop
           playsInline
           preload="auto"
           onError={() => { console.warn("[GradedVideo] video element error → poster:", playbackUrl); setErrored(true); }}

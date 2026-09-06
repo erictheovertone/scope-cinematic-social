@@ -379,6 +379,7 @@ export default function MirageView({ onClose }: { onClose: () => void }) {
                         editParams={post.edit_params}
                         autoplayFlag={post.autoplay !== false}
                         gridMode
+                        context="snippet"
                         windowStart={post.snippet_start ?? 0}
                         windowLength={post.snippet_length ?? SNIPPET_WINDOW_LEN}
                         {...streamGradedProps(post as unknown as Record<string, unknown>)}
@@ -395,6 +396,7 @@ export default function MirageView({ onClose }: { onClose: () => void }) {
                       editParams={post.edit_params}
                       autoplayFlag={post.autoplay !== false}
                       gridMode
+                      context="snippet"
                       windowStart={post.snippet_start ?? 0}
                       windowLength={post.snippet_length ?? SNIPPET_WINDOW_LEN}
                       {...streamGradedProps(post as unknown as Record<string, unknown>)}
