@@ -308,7 +308,7 @@ export default function GradedVideo({
         ttffLogged = true;
         if (isVideoDebug() && attachAt) {
           const path = isHls ? (v.canPlayType("application/vnd.apple.mpegurl") ? "hls-native" : "hls.js") : "legacy";
-          console.log(`[TTFF] ${Math.round(performance.now() - attachAt)}ms · ${feedMode ? "feed" : "theatre"} · ${path}`);
+          console.log(`[TTFF] ${Math.round(performance.now() - attachAt)}ms · ${feedMode ? "feed" : "forceplay"} · ${path}`);/* Brief P2d — was mislabelled "theatre": feedMode=!forcePlay tags EVERY forcePlay context (lightbox/theatre/SR-hero) the same. The lightbox correctly resolves to forcePlay (FULL) — this was a log label, not a context bug. */
         }
       }
     };
@@ -331,11 +331,23 @@ export default function GradedVideo({
     v.addEventListener("ended", onEnded);
     v.addEventListener("loadedmetadata", onLoadedMeta);
     v.addEventListener("timeupdate", onTimeUpdate);
-    const nativeHls = !!v.canPlayType("application/vnd.apple.mpegurl");
-    if (isHls && !nativeHls) {
+    // Brief P2d — ENGINE BY PLATFORM, not by canPlayType. macOS/Windows Chrome return a
+    // truthy "maybe" for the HLS MIME yet CANNOT truly play it natively — that "maybe" sent
+    // Chrome down the native branch and BYPASSED all the hls.js config (P2/P2a). Native HLS
+    // is now used ONLY on iOS/iPadOS (WebKit — Safari's player is correct there and hls.js/MSE
+    // is heavier/unreliable on the phone); everywhere else (desktop Chrome/Firefox/Edge/Safari,
+    // Android) → hls.js, with OUR config governing quality. Native is otherwise only a fallback
+    // when hls.js genuinely can't run. iPadOS 13+ masquerades as MacIntel → the touch check.
+    const nav = typeof navigator !== "undefined" ? navigator : ({ userAgent: "", platform: "", maxTouchPoints: 0 } as Navigator);
+    const appleMobile = /iPad|iPhone|iPod/.test(nav.userAgent) || (nav.platform === "MacIntel" && (nav.maxTouchPoints || 0) > 1);
+    if (isHls && isVideoDebug()) {
+      console.log(`[engine] appleMobile=${appleMobile} canPlayType(vnd.apple.mpegurl)="${v.canPlayType("application/vnd.apple.mpegurl")}" canPlayType(x-mpegURL)="${v.canPlayType("application/x-mpegURL")}" platform=${nav.platform} maxTouchPoints=${nav.maxTouchPoints} ua=${nav.userAgent.slice(0, 90)}`);
+    }
+    if (isHls && !appleMobile) {
       import("hls.js").then(({ default: Hls }) => {
         if (cancelled) return;
         if (Hls.isSupported()) {
+          if (isVideoDebug()) console.log("[engine] → hls.js");
           // Brief P1 §1/§2 — rendition + buffer discipline SPLIT BY CONTEXT. Feed players:
           // cap segments to the rendered card size (~360p on a 375px card, never 1080p),
           // start at the LOWEST level for instant first frame (ABR upgrades during play),
@@ -384,13 +396,23 @@ export default function GradedVideo({
           h.loadSource(playbackUrl);
           h.attachMedia(v);
           dlog("attached (hls.js)");
-        } else { setErrored(true); }
-      }).catch(() => setErrored(true));
+        } else {
+          // Brief P2d — GENUINE fallback: hls.js can't run (no MSE) → native src. Rare on
+          // desktop; not an error (native still plays via the element).
+          if (isVideoDebug()) console.log("[engine] → native (hls.js unsupported)");
+          if (v.getAttribute("src") !== playbackUrl) v.src = playbackUrl;
+          dlog("attached (native · hls.js-unsupported)");
+        }
+      }).catch(() => { if (!cancelled) { if (v.getAttribute("src") !== playbackUrl) v.src = playbackUrl; dlog("attached (native · hls.js import failed)"); } });
     } else {
-      // Native HLS (Safari/iOS): Safari runs its OWN ABR keyed to the element size — we
-      // don't fight it (no per-level API here); the card size already governs its choice.
+      // Native element playback. Two cases land here:
+      //  · iOS/iPadOS Safari HLS (appleMobile) — Safari's ABR keyed to the element size; we
+      //    don't fight it (no per-level API). hls.js/MSE is heavier/unreliable on iOS.
+      //  · Legacy NON-HLS source (!isHls) — a plain mp4 clip/url, always native. (Brief P2d:
+      //    this branch must NOT swallow legacy — the previous `else` covered it and still does.)
+      if (isVideoDebug()) console.log(`[engine] → native (${isHls ? "apple-mobile" : "legacy non-hls"})`);
       if (v.getAttribute("src") !== playbackUrl) v.src = playbackUrl;
-      dlog("attached (native)");
+      dlog(`attached (native · ${isHls ? "apple-mobile" : "legacy"})`);
     }
     return () => {
       cancelled = true; // set FIRST so onError/hls-ERROR during teardown can't latch errored
