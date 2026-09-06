@@ -407,7 +407,7 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
                 )}
               </div>
               <div style={{ flex: 1 }}>
-                <p style={{ ...BOLD, fontSize: 'var(--fs-12)', color: tier.color, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 6px', display: 'flex', alignItems: 'center', gap: 8 }}>
+                <p style={{ ...BOLD, fontSize: 'var(--fs-12)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 6px', display: 'flex', alignItems: 'center', gap: 8 }/* Brief M14 — badge titles at full ivory (--ink-100), no accent-color/opacity step. Was tier.color (gold/pink/blue/0.6-ivory per badge). Matches desktop's #E5E1DB. Descriptions / YOURS-NOT-YET labels / LEARN MORE / art keep their values. */}>
                   <span>{tier.title}</span>
                   {/* Real earned status per the viewer's flags — every tier they
                       hold reads YOURS; the rest read NOT YET YOURS. */}
