@@ -27,7 +27,7 @@ export interface VmodeCardData {
 export const VMODE_CARDS: VmodeCardData[] = [
   { mode: 'theatre',   name: 'Theatre',         desc: 'Full-screen theatrical viewing.',                      preview: '/viewing-modes-v2/theatre-preview.png',   aria: 'Theatre — full-screen theatrical viewing' },
   { mode: 'screening', name: 'Screening\nRoom', desc: 'The best work on Scope. Chosen by you.',               preview: '/viewing-modes-v2/screening-preview.png', aria: 'Screening Room — the best work on Scope, chosen by you' },
-  { mode: 'mirage',    name: 'Mirage',          desc: 'Everything in a collage. See what catches your eye.',  preview: '/viewing-modes-v2/mirage-preview.png',    aria: 'Mirage — everything in a collage', coming: true },
+  { mode: 'mirage',    name: 'Mirage',          desc: 'Everything in a collage. See what catches your eye.',  preview: '/viewing-modes-v2/mirage-preview.png',    aria: 'Mirage — everything in a collage' }, /* Brief M15 §3 — built on desktop now (was coming:true) */
   { mode: 'feed',      name: 'Feed',            desc: 'The standard home feed.',                              preview: '/viewing-modes-v2/feed-preview.png',      aria: 'Feed — the standard home feed' },
 ];
 

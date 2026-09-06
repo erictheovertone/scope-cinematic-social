@@ -17,6 +17,7 @@ import { getFeedPage, type FeedCursor } from '@/lib/postsService';
 import PostItem from '@/components/PostItem';
 import DesktopHomeLightbox from '@/components/desktop/DesktopHomeLightbox';
 import DesktopViewingModes, { type ViewingMode } from '@/components/desktop/DesktopViewingModes';
+import MirageView from '@/components/MirageView';
 import TheatreMode from '@/components/TheatreMode';
 import DesktopShell from '@/components/desktop/DesktopShell';
 import CreatorSearch from '@/components/desktop/CreatorSearch';
@@ -33,6 +34,7 @@ export default function DesktopHome() {
   const [modesOpen, setModesOpen] = useState(false);
   const [view, setView] = useState<number | null>(null); // home-feed lightbox
   const [theatreOpen, setTheatreOpen] = useState(false); // theatre on the feed posts
+  const [mirageOpen, setMirageOpen] = useState(false); // Brief M15 §3 — desktop Mirage overlay
   // Brief D5 §1 — theatre origin continuity (desktop echo of mobile M3c). Capture the
   // lightbox's open index on entry so theatre STARTS on that post (not index 0), track the
   // index the user ends on, and — when theatre was entered FROM the lightbox — return to
@@ -126,6 +128,7 @@ export default function DesktopHome() {
       }
       else if (mode === 'lightbox') { setTheatreOpen(false); setView((v) => (v == null ? 0 : v)); }
       else if (mode === 'screening') { setView(null); router.push('/screening-room'); }
+      else if (mode === 'mirage') { setView(null); setMirageOpen(true); } // Brief M15 §3 — desktop Mirage
       else { setView(null); } // feed → back to the grid
     });
   };
@@ -192,6 +195,10 @@ export default function DesktopHome() {
       {modesOpen && (
         <DesktopViewingModes currentMode={theatreOpen ? 'theatre' : view != null ? 'lightbox' : 'feed'} onClose={() => setModesOpen(false)} onSelect={onSelectMode} />
       )}
+
+      {/* Brief M15 §3 — desktop Mirage (the SAME MirageView, desktop layout+input). Fills the
+          shell minus the rail; Escape / tap-away dismiss; snippet autoplay under the Mirage budget. */}
+      {mirageOpen && <MirageView desktop onClose={() => setMirageOpen(false)} />}
 
       {/* THEATRE on the feed's posts (desktop theatre — arrows/keyboard; the rail
           stands down via the theatre-mode takeover). */}

@@ -189,7 +189,11 @@ function MirageLightbox({
 
 // ── Main MirageView ──────────────────────────────────────────────────────────
 
-export default function MirageView({ onClose }: { onClose: () => void }) {
+// Brief M15 §3 — `desktop` adapts LAYOUT + INPUT only (mouse hover instead of touch, fills
+// the shell minus the rail, denser fluid collage). Default false → mobile Mirage byte-
+// unchanged. Everything else (data fetch, focus lightbox, snippet autoplay under the Mirage
+// budget, PostModal) is the SAME mobile component, reused.
+export default function MirageView({ onClose, desktop = false }: { onClose: () => void; desktop?: boolean }) {
   const [posts, setPosts] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [lightboxPost, setLightboxPost] = useState<any>(null);
@@ -275,6 +279,18 @@ export default function MirageView({ onClose }: { onClose: () => void }) {
     setTimeout(onClose, 380);
   };
 
+  // Brief M15 §3 — Escape dismiss (focus view first, else exit Mirage). Harmless on mobile
+  // (adds keyboard parity); the primary desktop dismiss. PostModal owns its own Escape.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape' || modalPost) return;
+      if (lightboxPost) setLightboxPost(null);
+      else handleClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [lightboxPost, modalPost]); // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
     <>
       <style>{`
@@ -293,7 +309,9 @@ export default function MirageView({ onClose }: { onClose: () => void }) {
         className="bg-black"
         style={{
           position: "fixed",
-          inset: 0,
+          // Brief M15 §3 — desktop fills the shell MINUS the global rail (rail stays visible);
+          // mobile is full-bleed inset:0 (unchanged).
+          top: 0, right: 0, bottom: 0, left: desktop ? 'var(--rail-w)' : 0,
           zIndex: 45,
           background: "#000",
           overflowY: "auto",
@@ -346,7 +364,7 @@ export default function MirageView({ onClose }: { onClose: () => void }) {
         {/* Masonry grid (CSS multi-column — preserves natural aspect ratios). Brief M10 §1 —
             columns 3→2: doubles the cell footprint (≈124px→≈187px wide @375; ≈2.25× area)
             so thumbnails read legibly while the 2-wide masonry keeps the collage character. */}
-        <div style={{ columnCount: 2, columnGap: 1, padding: 0 }}>
+        <div style={{ ...(desktop ? { columnWidth: 240 } : { columnCount: 2 }), columnGap: 1, padding: 0 }/* Brief M15 §3 — desktop: fluid columnWidth so the collage GROWS denser with the shell (media-surface growth); mobile: fixed 2-up (unchanged). */}>
           {posts.map((post, index) =>
             (post.media_urls?.[0] || (post as { stream_uid?: string | null }).stream_uid) ? (
               <div
