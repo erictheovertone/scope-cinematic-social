@@ -340,14 +340,19 @@ const userLayoutId = stableLayoutId;
     setStableLayoutId(legacyLayoutId(R.aspect, R.mobileCount));
   }, [rawProfile]);
 
+  // Brief W11 §1 — load decks on MOUNT, not gated on the decks pull-up. The bio-sheet's
+  // expanded Decks stat reads userDecks.length (via analytics.decks → ProfileHeader), so the
+  // old `!showDecks` gate meant the sheet showed 0 for anyone who hadn't opened the decks tab
+  // yet. ONE source (userDecks) now feeds both the tab list and the stat count (anti-fork).
+  // getUserDecks keys on the Privy DID = decks.user_id (createDeck's shape) — identity intact.
   useEffect(() => {
-    if (!showDecks || !user) return;
+    if (!user) return;
     setDecksLoading(true);
     getUserDecks(user.id)
       .then(setUserDecks)
       .catch(console.error)
       .finally(() => setDecksLoading(false));
-  }, [showDecks, user?.id]);
+  }, [user?.id]);
 
   // Footer pill stands down while the DECKS pull-up is open (the takeover discipline
   // — same as collect/theatre/create). This inline sheet, NOT DeckPickerSheet, is the

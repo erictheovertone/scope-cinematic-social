@@ -125,11 +125,14 @@ export default function PublicProfilePage() {
   const { tabAnchor, tabCap, gridSpacer, tabRowOffset } = profileTabFlow(headerH, gridScrollY);
   const headerOpacity = Math.max(0, 1 - gridScrollY / 20);
 
+  // Brief W11 §1 — load on MOUNT (was gated on the decks pull-up), so the bio-sheet's Decks
+  // stat (analytics.decks = publicDecks.length → ProfileHeader) is correct without first
+  // opening the decks tab. Same source feeds the tab + the stat (anti-fork).
   useEffect(() => {
-    if (!showDecks || !username) return;
+    if (!username) return;
     setDecksLoading(true);
     getDecksByUsername(username).then(d => setPublicDecks(d as any)).catch(console.error).finally(() => setDecksLoading(false));
-  }, [showDecks, username]);
+  }, [username]);
 
   // Footer pill stands down while the DECKS pull-up is open (takeover discipline —
   // the hide-list must cover EVERY decks sheet, this public one included).

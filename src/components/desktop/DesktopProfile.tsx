@@ -793,6 +793,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
           following={following}
           collectors={collectors}
           totalPosts={posts.length}
+          decks={decks.length}
           firstCutCount={fcCount}
           onClose={() => setInfoOpen(false)}
           onViewBadges={() => { setInfoOpen(false); setBadgesOpen(true); }}

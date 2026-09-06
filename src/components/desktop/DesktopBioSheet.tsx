@@ -29,6 +29,7 @@ interface Props {
   badges: BadgeMeta[];
   posts: P[];
   followers: number; following: number; collectors: number; totalPosts: number;
+  decks: number; // Brief W11 §2 — decks count (desktop parity with the mobile bio sheet)
   firstCutCount: number;
   onClose: () => void;
   onViewBadges: () => void;
@@ -51,7 +52,7 @@ function Band({ label, sub, action, children }: { label: string; sub?: string; a
   );
 }
 
-export default function DesktopBioSheet({ profile, isOwn, links, badges, posts, followers, following, collectors, totalPosts, firstCutCount, onClose, onViewBadges, onMessage }: Props) {
+export default function DesktopBioSheet({ profile, isOwn, links, badges, posts, followers, following, collectors, totalPosts, decks, firstCutCount, onClose, onViewBadges, onMessage }: Props) {
   const router = useRouter();
   const economy = useEconomy();
   const [portfolioMc, setPortfolioMc] = useState<number | null>(null);
@@ -145,6 +146,8 @@ export default function DesktopBioSheet({ profile, isOwn, links, badges, posts, 
             {stat('FOLLOWING', following)}
             {stat('COLLECTORS', collectors)}
             {stat('TOTAL POSTS', totalPosts)}
+            {/* Brief W11 §2 — DECKS column (was absent on desktop); same source as mobile. */}
+            {stat('DECKS', decks)}
             <div style={{ height: 1, background: HAIR, margin: '10px 0' }} />
             {stat('PORTFOLIO MC', portfolioMc == null ? '…' : usd(portfolioMc))}
           </div>
