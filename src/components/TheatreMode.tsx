@@ -86,6 +86,12 @@ export default function TheatreMode({
 }) {
   const isFeed = source === 'feed';
   const isScreening = source === 'screening';
+  // Brief M7c §1 — [rotate] mount/unmount trace (gated by ?debug=video). Distinguishes case
+  // (c) "entry fires but theatre never mounts" from (d) "mounts then immediately unmounts".
+  useEffect(() => {
+    if (typeof window !== 'undefined') { import('@/lib/debugFlags').then(({ isVideoDebug }) => { if (isVideoDebug()) console.log(`[rotate] TheatreMode MOUNT source=${source} posts=${posts.length} start=${startIndex}`); }); }
+    return () => { if (typeof window !== 'undefined') { import('@/lib/debugFlags').then(({ isVideoDebug }) => { if (isVideoDebug()) console.log(`[rotate] TheatreMode UNMOUNT source=${source}`); }); } };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const economy = useEconomy();
   const { user } = usePrivy();
   const [index, setIndex] = useState(() => Math.min(Math.max(0, startIndex), Math.max(0, posts.length - 1)));

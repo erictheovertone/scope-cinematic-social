@@ -86,6 +86,7 @@ export default function Home() {
     enabled: !isDesktop && !!lightboxPost,
     isOpen: theatreActive,
     onEnter: enterTheatreFromRotation,
+    name: 'feed-lightbox',
   });
   // Rotation-entered theatre close → land the lightbox on the navigated post. Eye-tap
   // entries leave the flag false (they null the lightbox on entry) → this no-ops.

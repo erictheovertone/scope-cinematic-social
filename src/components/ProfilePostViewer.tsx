@@ -553,7 +553,7 @@ export default function ProfilePostViewer({
   // theatre (scoped to this profile's posts, at the currently-viewed post). Brief M3a:
   // the mechanism now lives in the shared useRotateToTheatre hook (also wired to the SR
   // post view); the eye stays the tap path. `enteredViaRotation` is owned by the hook.
-  const { enteredViaRotation } = useRotateToTheatre({ isOpen: showTheatre, blocked: showDeleteSheet, onEnter: openTheatre });
+  const { enteredViaRotation } = useRotateToTheatre({ isOpen: showTheatre, blocked: showDeleteSheet, onEnter: openTheatre, name: 'profile-scroll' });
 
   // When a ROTATION-entered theatre closes (TheatreMode fires its own portrait exit),
   // land the post-scroll on whichever post was last viewed in theatre, then clear the

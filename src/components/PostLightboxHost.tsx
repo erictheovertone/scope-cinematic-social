@@ -30,6 +30,7 @@ export default function PostLightboxHost() {
     enabled: !isDesktop && !!post,
     isOpen: showTheatre,
     onEnter: () => setShowTheatre(true),
+    name: 'lightbox-host',
   });
 
   // Brief M3b — mark the DOM while a post view is up so the Screening Room's OWN main
