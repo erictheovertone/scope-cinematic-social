@@ -308,6 +308,24 @@ export const uploadImageWithRenditions = async (
   return masterUrl;
 }
 
+// ── Brief D13 — the ONE derivation for the profile MUSIC section ─────────────
+// Consumed by BOTH the mobile ProfileDataSheet and the desktop DesktopBioSheet (anti-fork:
+// a single query, one ordering rule, one cap). A composer's APPROVED tracks.
+// ORDERING FLAG: `created_at` DESC (most-recent). There is NO stored use/attach-count column
+// on `tracks`; true "most-attached to posts" ordering would need a posts(music_track_id)
+// aggregate — out of this read-only brief's scope. See D13 §2.
+export interface ComposerTrack { id: string; title: string; duration_seconds: number | null; }
+export const getComposerTopTracks = async (composerUserId: string, limit = 3): Promise<ComposerTrack[]> => {
+  const { data } = await supabase
+    .from('tracks')
+    .select('id, title, duration_seconds')
+    .eq('composer_user_id', composerUserId)
+    .eq('status', 'approved')
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  return (data as ComposerTrack[]) ?? [];
+};
+
 export const getUserByPrivyId = async (privyId: string): Promise<User | null> => {
   const cached = userCache.get(privyId)
   if (cached) return cached

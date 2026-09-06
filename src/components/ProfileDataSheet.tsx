@@ -3,13 +3,12 @@
 import { useState, useEffect, Fragment } from "react";
 import { createPortal } from "react-dom";
 import type { ProfileLink } from "@/lib/userService";
-import { isProMember } from "@/lib/userService";
+import { isProMember, getComposerTopTracks } from "@/lib/userService";
 import { feedImage } from "@/lib/mediaUrl";
 import { BADGES, resolveBadges, BADGE_SHORT_BLURB, BADGE_DISPLAY_NAME, type BadgeKey } from "@/lib/economy/badges";
 import { economyPreviewEnabled } from "@/lib/economy/flag";
 import { LedgerCard } from "@/components/Ledger";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase/client";
 
 /** Brief M11 §4b — seconds → m:ss for a track's micro-meta. */
 function fmtDuration(s: number): string {
@@ -129,17 +128,14 @@ export default function ProfileDataSheet({
   // #310 is a hook that runs on only SOME renders — placing it after the early return meant
   // it ran when open (7 hooks) but not when closed (6) → order/count mismatch → crash. It
   // no-ops internally when closed / non-composer, so running every render is free.
+  // Brief D13 — cap at 3 (was 5; the discography link carries the rest) and read through the
+  // ONE shared derivation (getComposerTopTracks) that the desktop DesktopBioSheet also uses.
   useEffect(() => {
     if (!isOpen || !hasComposerBadge || !profile?.user_id) { setTracks([]); return; }
     let cancelled = false;
-    supabase
-      .from('tracks')
-      .select('id, title, duration_seconds')
-      .eq('composer_user_id', profile.user_id)
-      .eq('status', 'approved')
-      .order('created_at', { ascending: false })
-      .limit(5)
-      .then(({ data }) => { if (!cancelled) setTracks((data as typeof tracks) ?? []); });
+    getComposerTopTracks(String(profile.user_id), 3)
+      .then((data) => { if (!cancelled) setTracks(data); })
+      .catch(() => { if (!cancelled) setTracks([]); });
     return () => { cancelled = true; };
   }, [isOpen, hasComposerBadge, profile?.user_id]);
 
