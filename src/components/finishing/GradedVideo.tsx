@@ -327,14 +327,36 @@ export default function GradedVideo({
           // tight 8s buffer, no back-buffer. With V3d's 3-player cap → bounded memory
           // (~8s of ~360p × 3 ≈ a few MB). Theatre/modal (forcePlay): NO cap, generous
           // buffer — the work deserves full quality.
+          // Brief P2 §2 — QUALITY-FIRST forcePlay (lightbox / theatre / SR hero). Caps were
+          // already off here (D5 §4), but with no startLevel the player inherited hls.js's
+          // default ABR: a conservative abrEwmaDefaultEstimate (~500kbps) made it START on a
+          // LOW rung and climb over several seconds — the visible "poor quality." Now: trust
+          // the connection up front (5Mbps default estimate) and START AT THE TOP RUNG
+          // (startLevel set to levels.length-1 on MANIFEST_PARSED). ABR stays enabled, so it
+          // steps DOWN only on a genuine stall; the graded poster covers the 1-2s initial
+          // buffer (acceptable in a viewing context; a soft image is not). Feed config
+          // (instant-start-low, capped) is UNCHANGED — the P1 behaviour the feed needs.
           hls = new Hls(feedMode
             ? { capLevelToPlayerSize: true, startLevel: 0, maxBufferLength: 8, backBufferLength: 0, enableWorker: true }
-            : { maxBufferLength: 30, enableWorker: true });
+            : { maxBufferLength: 30, enableWorker: true, startLevel: -1, abrEwmaDefaultEstimate: 5_000_000 });
+          const h = hls;
+          const forcePlayCtx = !feedMode;
           // Brief P1a — !cancelled so hls.destroy()'s own teardown error can't LATCH errored
           // (which would block the card from ever re-attaching on scroll-return).
-          hls.on(Hls.Events.ERROR, (_e: unknown, data: { fatal?: boolean }) => { if (!cancelled && data?.fatal) setErrored(true); });
-          hls.loadSource(playbackUrl);
-          hls.attachMedia(v);
+          h.on(Hls.Events.ERROR, (_e: unknown, data: { fatal?: boolean }) => { if (!cancelled && data?.fatal) setErrored(true); });
+          if (forcePlayCtx) {
+            h.on(Hls.Events.MANIFEST_PARSED, () => { try { h.startLevel = h.levels.length - 1; } catch { /* levels not ready */ } });
+          }
+          // Brief P2 §1 — [hls] instrumentation (dev only, forcePlay): the ladder, the level
+          // ACTUALLY playing at attach/2/5/10/20s, the bandwidth estimate, every switch.
+          if (forcePlayCtx && process.env.NODE_ENV !== "production") {
+            const fmt = (i: number) => { const l = h.levels?.[i]; return l ? `${i}:${l.width}x${l.height}@${Math.round((l.bitrate || 0) / 1000)}k` : `${i}:?`; };
+            h.on(Hls.Events.MANIFEST_PARSED, () => console.log("[hls] ladder", h.levels.map((_l, i) => fmt(i)).join(" | ")));
+            h.on(Hls.Events.LEVEL_SWITCHED, (_e: unknown, d: { level: number }) => console.log(`[hls] switch → ${fmt(d.level)} est=${Math.round(h.bandwidthEstimate / 1000)}k`));
+            [0, 2000, 5000, 10000, 20000].forEach((ms) => setTimeout(() => { if (!cancelled) console.log(`[hls] +${ms}ms current=${fmt(h.currentLevel)} est=${Math.round(h.bandwidthEstimate / 1000)}k`); }, ms));
+          }
+          h.loadSource(playbackUrl);
+          h.attachMedia(v);
           dlog("attached (hls.js)");
         } else { setErrored(true); }
       }).catch(() => setErrored(true));
