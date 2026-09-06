@@ -58,6 +58,13 @@ export async function bakeRenditionsFromUrl(
       const webp = await sharp(input)
         .rotate() // honor EXIF orientation before resize
         .resize({ width: w, withoutEnlargement: true, fit: 'inside' })
+        // Brief X5 §2 — ICC-aware convert to sRGB. iPhone masters are Display-P3; sharp
+        // otherwise resized in P3 and dropped the profile → an UNTAGGED WebP whose P3
+        // values browsers read as sRGB = washed out (matching the suite's old bug).
+        // .toColorspace('srgb') gamut-maps P3→sRGB using the embedded profile, so the
+        // output is genuinely sRGB (untagged is then correct + universal + smaller, and
+        // matches §1's preview space exactly). Applies to all three tiers (this loop body).
+        .toColorspace('srgb')
         .webp({ quality: 78 })
         .toBuffer();
       const { error } = await supabase.storage.from(bucket).upload(`${path}.${w}.webp`, webp, {

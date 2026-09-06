@@ -105,21 +105,53 @@ export default function Pipeline({ source, params, width, height, surfaceRef, pr
   // draw the decoded image onto a canvas (a source the loader DOES accept) once
   // per image; video elements are passed through directly (the RAF loop above
   // re-uploads each frame).
+  // Brief X5 §1 — COLOR-MANAGED image texture. iPhone photos are Display-P3; a plain
+  // ctx.drawImage(P3 <img>) onto a default (sRGB) 2D canvas is NOT reliably converted on
+  // iOS Safari, so the raw P3 values land in an sRGB texture and read desaturated (the
+  // wash). createImageBitmap(img, { colorSpaceConversion: 'default' }) applies the image's
+  // ICC conversion during decode → the bitmap is faithful sRGB (matching the color-managed
+  // <img> preview). 'none' would be the anti-pattern. This is ASYNC, so the image texture
+  // now lives in state; video stays synchronous (the RAF loop re-uploads each frame).
+  // Render gates on texSource (line below) exactly as before → the async gap shows nothing,
+  // then the correct frame; the catch falls back to the old raw drawImage so a browser
+  // without the option degrades to prior behaviour, never a blank preview.
+  const [imgCanvas, setImgCanvas] = useState<HTMLCanvasElement | null>(null);
+  useEffect(() => {
+    const isVideo = typeof HTMLVideoElement !== 'undefined' && source instanceof HTMLVideoElement;
+    if (!source || isVideo) { setImgCanvas(null); return; }
+    const img = source as HTMLImageElement;
+    const w = img.naturalWidth, h = img.naturalHeight;
+    if (!w || !h) { setImgCanvas(null); return; } // FinishingStep only sets source once decoded, so this is a safety no-op
+    let cancelled = false;
+    let bmp: ImageBitmap | null = null;
+    const drawTo = (src: CanvasImageSource) => {
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      ctx.drawImage(src, 0, 0);
+      if (!cancelled) setImgCanvas(canvas);
+    };
+    (async () => {
+      try {
+        bmp = await createImageBitmap(img, { colorSpaceConversion: 'default' });
+        if (cancelled) { bmp.close(); return; }
+        drawTo(bmp);
+        bmp.close(); bmp = null;
+      } catch {
+        // createImageBitmap / the option unsupported → prior behaviour (never blank).
+        if (!cancelled) { try { drawTo(img); } catch { /* leave gated */ } }
+      }
+    })();
+    return () => { cancelled = true; if (bmp) { try { bmp.close(); } catch { /* noop */ } } };
+  }, [source]);
+
   const texSource = useMemo<HTMLCanvasElement | HTMLVideoElement | null>(() => {
     if (!source) return null;
     const isVideo = typeof HTMLVideoElement !== 'undefined' && source instanceof HTMLVideoElement;
     if (isVideo) return source as HTMLVideoElement;
-    const img = source as HTMLImageElement;
-    const w = img.naturalWidth, h = img.naturalHeight;
-    if (!w || !h) return null; // not decoded yet — gate render
-    const canvas = document.createElement('canvas');
-    canvas.width = w;
-    canvas.height = h;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return null;
-    ctx.drawImage(img, 0, 0);
-    return canvas;
-  }, [source]);
+    return imgCanvas; // color-managed canvas from the effect above; null until ready → gates render
+  }, [source, imgCanvas]);
 
   // Luma curve → a 256×1 grayscale LUT texture (R=G=B=lut). Null = identity →
   // the curve node is skipped. Rebuilt only when its control points change.
