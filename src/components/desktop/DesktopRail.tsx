@@ -11,6 +11,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { usePrivy } from '@privy-io/react-auth';
 import { motion, useReducedMotion } from 'framer-motion';
 import { getInbox } from '@/lib/dm';
+import HomeLogomarkCue from '@/components/desktop/HomeLogomarkCue';
 
 // Brief R1 — the rail width is the --rail-w token (globals). Every surface's scroller
 // offsets its left by the same token, so the rail is the single source of truth.
@@ -72,6 +73,14 @@ export default function DesktopRail() {
     window.addEventListener('scope:dm-updated', load);
     return () => window.removeEventListener('scope:dm-updated', load);
   }, [user?.id, pathname]);
+  // Brief D14 — pause the home logomark cue while the viewing-modes menu is open (it
+  // doesn't raise suiteOpen, so the rail stays mounted). The feed broadcasts its state.
+  const [menuOpen, setMenuOpen] = useState(false);
+  useEffect(() => {
+    const onModes = (e: Event) => setMenuOpen(!!(e as CustomEvent<{ open?: boolean }>).detail?.open);
+    window.addEventListener('scope:viewing-modes', onModes);
+    return () => window.removeEventListener('scope:viewing-modes', onModes);
+  }, []);
   // Takeover standdown — the same attribute mechanism as BottomToolbar.
   const [takeover, setTakeover] = useState(false);
   useEffect(() => {
@@ -95,13 +104,19 @@ export default function DesktopRail() {
     >
       {/* The ONE Scope logomark. On the home feed it opens VIEWING MODES (the
           feed listens for this event); elsewhere it navigates Home (the bottom
-          rail also has a Home glyph). */}
+          rail also has a Home glyph). Brief D14 — on the home feed the mark wears the
+          "sweep + grow" attract cue (it IS the menu trigger); the cue idles only while
+          the menu/sheets are closed (menuOpen from the feed's broadcast; the whole rail
+          already unmounts on any suiteOpen takeover) and honours reduced-motion. */}
       <button
+        className="d14-logobtn"
         onClick={() => { if (pathname === '/') window.dispatchEvent(new CustomEvent('scope:open-viewing-modes')); else router.push('/'); }}
         aria-label={pathname === '/' ? 'Viewing modes' : 'Home'}
         style={{ display: 'block', padding: '18px 0 26px', background: 'transparent', border: 'none', cursor: 'pointer' }}
       >
-        <img src="/logomark-plain-white.png" alt="Scope" style={{ width: 41, height: 26, objectFit: 'contain', display: 'block' }} />
+        {pathname === '/'
+          ? <HomeLogomarkCue animated={!reduced && !menuOpen} />
+          : <img src="/logomark-plain-white.png" alt="Scope" style={{ width: 41, height: 26, objectFit: 'contain', display: 'block' }} />}
       </button>
       {/* BOTTOM-ANCHORED icon stack (the frame's rhythm); the active marker is
           ONE shared element that SLIDES between rows (layoutId), icons

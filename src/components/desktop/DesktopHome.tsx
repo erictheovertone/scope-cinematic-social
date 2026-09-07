@@ -32,6 +32,9 @@ export default function DesktopHome() {
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [modesOpen, setModesOpen] = useState(false);
+  // Brief D14 — broadcast the viewing-modes menu state so the rail can PAUSE the home
+  // logomark's attract cue while the menu is open (the menu doesn't raise suiteOpen).
+  useEffect(() => { window.dispatchEvent(new CustomEvent('scope:viewing-modes', { detail: { open: modesOpen } })); }, [modesOpen]);
   const [view, setView] = useState<number | null>(null); // home-feed lightbox
   const [theatreOpen, setTheatreOpen] = useState(false); // theatre on the feed posts
   const [mirageOpen, setMirageOpen] = useState(false); // Brief M15 §3 — desktop Mirage overlay
