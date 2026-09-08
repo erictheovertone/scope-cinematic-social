@@ -31,17 +31,43 @@ import SwapSheet, { type SwapInitial } from '@/components/SwapSheet';
 import { GAS_FLOOR_ETH } from '@/lib/economy/preflight';
 import { openPostLightbox } from '@/lib/postLightbox';
 import { getEmbeddedAddress } from '@/lib/embeddedWallet';
+import PageTitle from '@/components/PageTitle';
+import { LedgerCard, DottedLeader } from '@/components/Ledger';
+import ImportAssetSheet from '@/components/ImportAssetSheet';
 
+// Brief D17 — the ledger design's type tokens (75 Bold / 65 Medium / 55 Roman via the house
+// font vars), replacing the desktop wallet's hardcoded SK-Modernist. SKB/SKR remain for the
+// SEND modal only.
+const FD: React.CSSProperties = { fontFamily: 'var(--font-display)', fontWeight: 700 };
+const FM: React.CSSProperties = { fontFamily: 'var(--font-medium)', fontWeight: 500 };
+const FB: React.CSSProperties = { fontFamily: 'var(--font-body)', fontWeight: 400 };
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
-const HAIR = 'rgba(229,225,219,0.12)';
+const HAIR = 'var(--hairline)';
 const RED = '#E5E1DB';
 const GREEN = '#00E08A';
 const USDC = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
+const TICON = '/design-updates-071526/token-icons';
+
+// Brief D17 — action-card arrows: inline SVG (W2 §4 — centered + sized ~25% larger).
+const ARROWS: Record<string, React.ReactNode> = {
+  DEPOSIT: <svg width="28" height="28" viewBox="0 0 22 22" fill="none" stroke="rgba(229,225,219,0.82)" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"><line x1="11" y1="3" x2="11" y2="18" /><path d="M5 12 L11 18 L17 12" /></svg>,
+  SWAP: <svg width="33" height="23" viewBox="0 0 26 18" fill="none" stroke="rgba(229,225,219,0.82)" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6 H21 M17 2 L21 6 L17 10" /><path d="M23 12 H5 M9 8 L5 12 L9 16" /></svg>,
+  SEND: <svg width="25" height="25" viewBox="0 0 20 20" fill="none" stroke="rgba(229,225,219,0.82)" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"><line x1="4" y1="16" x2="15" y2="5" /><path d="M6 5 H15 V14" /></svg>,
+};
+
+// Brief D17 — the ledger right-aligned fiat value: 65 Medium "$" (0.14em gap) + 75 Bold tabular number.
+const Fiat = ({ n, o = 0.9 }: { n: number | null; o?: number }) => (
+  <span style={{ display: 'inline-flex', alignItems: 'baseline', flexShrink: 0 }}>
+    <span style={{ ...FM, fontSize: 13, color: `rgba(229,225,219,${o})`, marginRight: '0.14em' }}>$</span>
+    <span style={{ ...FD, fontSize: 13, color: `rgba(229,225,219,${o})`, fontVariantNumeric: 'tabular-nums' }}>{n != null ? n.toFixed(2) : '—'}</span>
+  </span>
+);
+const TROW: React.CSSProperties = { display: 'flex', alignItems: 'center', height: 62, padding: '0 14px', boxSizing: 'border-box', borderBottom: '1px solid var(--hairline)', width: '100%' };
 
 const usd = (n: number | null) => (n == null ? '$—' : `$${n.toFixed(2)}`);
 
-type Tab = 'holdings' | 'earnings' | 'activity';
+type Tab = 'balances' | 'holdings' | 'earnings' | 'activity';
 type FcRewardPost = { postId: string; coinAddress: string; accruedUsd: number; unpaidUsd: number; ticker: string | null; thumb: string | null };
 
 export default function DesktopWallet() {
@@ -62,9 +88,10 @@ export default function DesktopWallet() {
   const [fcRewards, setFcRewards] = useState<{ posts: FcRewardPost[]; totalUsd: number; unpaidUsd: number } | null>(null);
   const [activity, setActivity] = useState<ActivityRow[] | null>(null);
   const [activityFailed, setActivityFailed] = useState(false);
-  const [tab, setTab] = useState<Tab>('holdings');
+  const [tab, setTab] = useState<Tab>('balances');
   const [openCat, setOpenCat] = useState<'portfolio' | 'collected' | null>('portfolio');
   const [uuid, setUuid] = useState<string | null>(null);
+  const [showImport, setShowImport] = useState(false);
 
   const [showSwap, setShowSwap] = useState(false);
   const [swapInitial, setSwapInitial] = useState<SwapInitial | null>(null);
@@ -130,139 +157,143 @@ export default function DesktopWallet() {
     <div className="bg-black" style={{ position: 'fixed', inset: 0, left: 'var(--rail-w)', overflowY: 'auto' }}>
       <div style={{ maxWidth: 'var(--shell-narrow)', margin: '0 auto', padding: '40px 24px 80px' }}/* Brief R1a §2 — capped reading surface (--shell-narrow) */>
 
-        {/* ═══ 1. HEADER BAND ═══ */}
-        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', paddingBottom: 22 }}>
-          <div>
-            <h1 style={{ ...SKB, fontSize: 22, color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 14px' }}>WALLET</h1>
-            <p style={{ ...SKB, fontSize: 11, color: 'rgba(229,225,219,0.45)', textTransform: 'uppercase', letterSpacing: '0.14em', margin: '0 0 4px' }}>TOTAL BALANCE</p>
-            <p style={{ ...SKB, fontSize: 'calc(40px * var(--type-scale))', color: '#E5E1DB', margin: 0, fontVariantNumeric: 'tabular-nums' }}>{usd(animatedTotal)}</p>
-          </div>
-          <div style={{ display: 'flex', gap: 44 }}>
-            <div>
-              <p style={{ ...SKB, fontSize: 10, color: 'rgba(229,225,219,0.45)', textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 0 5px' }}>AVAILABLE</p>
-              <p style={{ ...SKB, fontSize: 15, color: '#E5E1DB', margin: 0, fontVariantNumeric: 'tabular-nums' }}>{usd(availableUsd)}</p>
-            </div>
-            <div>
-              <p style={{ ...SKB, fontSize: 10, color: 'rgba(229,225,219,0.45)', textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 0 5px' }}>HOLDINGS</p>
-              <p style={{ ...SKB, fontSize: 15, color: RED, margin: 0, fontVariantNumeric: 'tabular-nums' }}>{usd(holdingsUsd)}</p>
-            </div>
-            <button onClick={() => earnings && setEarnOpen(true)} style={{ background: 'transparent', border: 'none', cursor: earnings ? 'pointer' : 'default', textAlign: 'left', padding: 0 }}>
-              <p style={{ ...SKB, fontSize: 10, color: 'rgba(229,225,219,0.45)', textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 0 5px' }}>SCOPE EARNINGS ⓘ</p>
-              <p style={{ ...SKB, fontSize: 15, color: '#E5E1DB', margin: 0, fontVariantNumeric: 'tabular-nums' }}>{usd(earnedUsd)}</p>
+        {/* ═══ 1. HEADER — Brief D17: PageTitle (32px, return-home logomark top-right, no bell)
+            + truncated address & copy control beneath (parity with the mobile ledger header). ═══ */}
+        <PageTitle title="Wallet" paddingBottom={20}>
+          {walletAddress && (
+            <button
+              onClick={() => { navigator.clipboard?.writeText(walletAddress); setCopied(true); window.setTimeout(() => setCopied(false), 1800); }}
+              aria-label="Copy wallet address"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', padding: '6px 0 0', margin: 0, cursor: 'pointer' }}
+            >
+              <span style={{ ...FM, fontSize: 11, letterSpacing: 'var(--track-body)', color: copied ? GREEN : 'rgba(229,225,219,0.5)', fontVariantNumeric: 'tabular-nums' }}>
+                {copied ? 'ADDRESS COPIED ✓' : <>{walletAddress.slice(0, 6)}<span style={{ letterSpacing: '0.18em' }}>…</span>{walletAddress.slice(-4)}</>}
+              </span>
+              {!copied && (
+                <span style={{ position: 'relative', width: 11, height: 11, flexShrink: 0, display: 'block' }}>
+                  <span style={{ position: 'absolute', top: 0, left: 0, width: 7, height: 7, border: '0.5px solid rgba(229,225,219,0.5)' }} />
+                  <span style={{ position: 'absolute', top: 3, left: 3, width: 7, height: 7, border: '0.5px solid rgba(229,225,219,0.5)' }} />
+                </span>
+              )}
             </button>
-          </div>
-        </div>
-        <div style={{ height: 1, background: HAIR }} />
+          )}
+        </PageTitle>
 
         {/* ═══ 2. TWO COLUMNS ═══ */}
         <div style={{ display: 'flex', gap: 40, marginTop: 28 }}>
           {/* ── LEFT: money ── */}
           <div style={{ width: 420, flexShrink: 0 }}>
-            {/* Cards — MOBILE'S EXACT ANATOMY: glow circle + directional arrows
-                (the same SVG files/rotations) + label + mobile's exact subtext. */}
-            <div style={{ display: 'flex', gap: 10 }}>
+            {/* Brief D17 — TOTAL BALANCE ledger card (border variant): the 36px "$ 86.40" amount
+                (65 Medium, space after $) over Available / Holdings / Earnings DottedLeader rows. */}
+            <LedgerCard variant="border" radius={10} style={{ padding: '18px 24px 22px' }}>
+              <div style={{ textAlign: 'center' }}>
+                <p style={{ ...FD, fontSize: 14, color: 'rgba(229,225,219,0.6)', letterSpacing: 'var(--track-body)', margin: 0 }}>Total Balance</p>
+                <p style={{ margin: '8px 0 0', lineHeight: 1, whiteSpace: 'nowrap' }}>
+                  <span style={{ ...FM, fontSize: 36, color: 'var(--ink-100)', letterSpacing: '-1.8px', marginRight: '0.12em' }}>$</span>
+                  <span style={{ ...FM, fontSize: 36, color: 'var(--ink-100)', letterSpacing: '-1.8px', fontVariantNumeric: 'tabular-nums' }}>{animatedTotal != null ? animatedTotal.toFixed(2) : '…'}</span>
+                </p>
+                <div style={{ width: 107, height: 1, background: 'var(--hairline)', margin: '12px auto 0' }} />
+              </div>
+              <div style={{ margin: '18px 0 0', display: 'flex', flexDirection: 'column', gap: 22 }}>
+                {([
+                  ['Available', availableUsd, () => setTab('balances'), false] as const,
+                  ['Holdings', holdingsUsd, () => setTab('holdings'), false] as const,
+                  ['Earnings', earnedUsd, () => { earnings ? setEarnOpen(true) : setTab('earnings'); }, true] as const,
+                ]).map(([label, value, onClick, info]) => (
+                  <button key={label} onClick={onClick} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'none', border: 'none', padding: 0, cursor: 'pointer', width: '100%' }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'baseline', gap: 4, flexShrink: 0 }}>
+                      <span style={{ ...FM, fontSize: 11.8, color: 'rgba(229,225,219,0.75)', letterSpacing: 'var(--track-body)', whiteSpace: 'nowrap' }}>{label}</span>
+                      {info && <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 8, height: 8, border: '0.5px solid rgba(229,225,219,0.5)', transform: 'translateY(-2px)', ...FM, fontSize: 6, color: 'rgba(229,225,219,0.5)' }}>i</span>}
+                    </span>
+                    <DottedLeader />
+                    <span style={{ display: 'inline-flex', alignItems: 'baseline', flexShrink: 0 }}>
+                      <span style={{ ...FM, fontSize: 13, color: 'rgba(229,225,219,0.79)', marginRight: '0.14em' }}>$</span>
+                      <span style={{ ...FD, fontSize: 13, color: 'rgba(229,225,219,0.79)', fontVariantNumeric: 'tabular-nums' }}>{value != null ? value.toFixed(2) : '—'}</span>
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </LedgerCard>
+
+            {/* Brief D17 — action cards (gradient variant), inline-SVG arrows centered (W2 §4). */}
+            <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
               {([
-                { label: 'DEPOSIT', sub: 'Add funds to your wallet', arrows: [{ src: '/wallet-redux/arrow-deposit.svg', rot: 'rotate(90deg)' }], onClick: () => walletAddress && fundWallet(walletAddress, { chain: base }) },
-                { label: 'SWAP', sub: 'USDC ⇄ ETH', arrows: [{ src: '/wallet-redux/arrow-swap-a.svg', rot: 'none' }, { src: '/wallet-redux/arrow-swap-b.svg', rot: 'rotate(180deg)' }], onClick: () => { setSwapInitial(null); setShowSwap(true); } },
-                { label: 'SEND', sub: 'Send to any address', arrows: [{ src: '/wallet-redux/arrow-send.svg', rot: 'rotate(-45deg)' }], onClick: () => setSendOpen(true) },
+                { label: 'DEPOSIT', sub: 'Add funds to your wallet', onClick: () => walletAddress && fundWallet(walletAddress, { chain: base }) },
+                { label: 'SWAP', sub: 'Convert money on scope', onClick: () => { setSwapInitial(null); setShowSwap(true); } },
+                { label: 'SEND', sub: 'Send to any address', onClick: () => setSendOpen(true) },
               ] as const).map((card) => (
-                <button key={card.label} onClick={card.onClick} style={{ position: 'relative', flex: 1, aspectRatio: '111 / 83', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 5, background: 'transparent', border: 'none', borderRadius: 3, cursor: 'pointer', padding: 0, overflow: 'hidden' }}>
-                  <img src="/wallet-redux/action-card-chrome.png" alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }} />
-                  <span style={{ position: 'relative', width: 26, height: 26, display: 'block' }}>
-                    <img src="/wallet-redux/icon-glow-circle.svg" alt="" style={{ position: 'absolute', inset: 0, width: 26, height: 26 }} />
-                    {card.arrows.length === 1 ? (
-                      <img src={card.arrows[0].src} alt="" style={{ position: 'absolute', left: '50%', top: '50%', width: 14, height: 8.2, transform: `translate(-50%,-50%) ${card.arrows[0].rot}` }} />
-                    ) : (
-                      <>
-                        <img src={card.arrows[0].src} alt="" style={{ position: 'absolute', left: '50%', top: 6.5, transform: 'translateX(-50%)', width: 13, height: 7.5 }} />
-                        <img src={card.arrows[1].src} alt="" style={{ position: 'absolute', left: '50%', bottom: 6.5, transform: 'translateX(-50%) rotate(180deg)', width: 13, height: 7.5 }} />
-                      </>
-                    )}
-                  </span>
-                  <span style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: 2 }}>
-                    <span style={{ ...SKB, fontSize: 11.5, color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.02em' }}>{card.label}</span>
-                    <span style={{ ...SKR, fontSize: 9.7, color: 'rgba(229,225,219,0.68)', letterSpacing: '-0.082px' }}>{card.sub}</span>
-                  </span>
-                </button>
+                <LedgerCard key={card.label} variant="gradient" radius={6} role="button" tabIndex={0} onClick={card.onClick} style={{ flex: 1, aspectRatio: '112 / 105', cursor: 'pointer', display: 'flex', flexDirection: 'column', padding: '12px 11px', boxSizing: 'border-box', overflow: 'hidden' }}>
+                  <span style={{ ...FD, fontSize: 14, letterSpacing: 'var(--track-display)', color: 'rgba(229,225,219,0.67)', textTransform: 'uppercase' }}>{card.label}</span>
+                  <span style={{ ...FM, fontSize: 9.5, color: 'rgba(229,225,219,0.43)', letterSpacing: 'var(--track-body)', marginTop: 3, lineHeight: 1.2 }}>{card.sub}</span>
+                  <span style={{ marginTop: 'auto', display: 'flex', justifyContent: 'center' }}>{ARROWS[card.label]}</span>
+                </LedgerCard>
               ))}
             </div>
 
-            {/* ASSETS — mobile's TOKEN PANEL anatomy: the custom token circles
-                (eth-token-circle + eth-logo overlay; usdc-token-circle + $),
-                scope-earnings badge, balance sub-lines @0.37, › disclosures. */}
-            <p style={{ ...SKB, fontSize: 10, color: 'rgba(229,225,219,0.45)', textTransform: 'uppercase', letterSpacing: '0.14em', margin: '26px 0 6px' }}>ASSETS</p>
-            <div style={{ borderTop: `1px solid ${HAIR}` }}>
-              <div style={{ display: 'flex', alignItems: 'center', height: 50, borderBottom: '1px solid rgba(229,225,219,0.08)' }}>
-                <span style={{ position: 'relative', width: 30, height: 30, flexShrink: 0, marginRight: 11 }}>
-                  <img src="/wallet-redux/eth-token-circle.svg" alt="" style={{ position: 'absolute', inset: 0, width: 30, height: 30 }} />
-                  <img src="/wallet-redux/eth-logo.png" alt="" style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%,-50%)', width: 13, height: 'auto' }} />
-                </span>
-                <span style={{ flex: 1, minWidth: 0 }}>
-                  <span style={{ ...SKR, fontSize: 13.5, color: '#E5E1DB', display: 'block' }}>ETH</span>
-                  <span style={{ ...SKR, fontSize: 10.5, color: '#E5E1DB', opacity: 0.37, display: 'block', marginTop: 1 }}>{eth != null ? `${eth.toFixed(4)} ETH` : '…'}</span>
-                </span>
-                <span style={{ ...SKR, fontSize: 13.5, color: '#E5E1DB', fontVariantNumeric: 'tabular-nums' }}>{eth != null && rate != null ? `$${(eth * rate).toFixed(2)}` : '$—'}</span>
-                <span style={{ fontFamily: 'Batang, serif', fontSize: 14.5, color: '#E5E1DB', opacity: 0.75, marginLeft: 10 }}>›</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', height: 50, borderBottom: '1px solid rgba(229,225,219,0.08)' }}>
-                <span style={{ position: 'relative', width: 30, height: 30, flexShrink: 0, marginRight: 11 }}>
-                  <img src="/wallet-redux/usdc-token-circle.svg" alt="" style={{ position: 'absolute', inset: 0, width: 30, height: 30 }} />
-                  <span style={{ ...SKB, position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14.5, color: '#E5E1DB' }}>$</span>
-                </span>
-                <span style={{ flex: 1, minWidth: 0 }}>
-                  <span style={{ ...SKR, fontSize: 13.5, color: '#E5E1DB', display: 'block' }}>USDC</span>
-                  <span style={{ ...SKR, fontSize: 10.5, color: '#E5E1DB', opacity: 0.37, display: 'block', marginTop: 1 }}>{usdc != null ? `${usdc.toFixed(2)} USDC` : '…'}</span>
-                </span>
-                <span style={{ ...SKR, fontSize: 13.5, color: '#E5E1DB', fontVariantNumeric: 'tabular-nums' }}>{usdc != null ? `$${usdc.toFixed(2)}` : '$—'}</span>
-                <span style={{ fontFamily: 'Batang, serif', fontSize: 14.5, color: '#E5E1DB', opacity: 0.75, marginLeft: 10 }}>›</span>
-              </div>
-              {/* CREATOR EARNINGS — hidden until earned (mobile parity); tap → CASH OUT */}
-              {zora != null && zora > 0 && (
-                <button
-                  onClick={() => { setSwapInitial({ sell: 'ZORA', buy: 'USDC', amount: (Math.floor(zora * 100) / 100).toFixed(2), cashOut: true }); setShowSwap(true); }}
-                  style={{ display: 'flex', width: '100%', alignItems: 'center', height: 50, borderBottom: '1px solid rgba(229,225,219,0.08)', background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0 }}
-                >
-                  <span style={{ width: 30, height: 30, flexShrink: 0, marginRight: 11, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <img src="/scope-earnings-icon.png" alt="" style={{ width: 30, height: 'auto', display: 'block' }} />
-                  </span>
-                  <span style={{ flex: 1, minWidth: 0 }}>
-                    <span style={{ ...SKR, fontSize: 13.5, color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.02em', display: 'block' }}>Creator Earnings</span>
-                    <span style={{ ...SKR, fontSize: 10.5, color: '#E5E1DB', opacity: 0.37, display: 'block', marginTop: 1 }}>{zora >= 1000 ? Math.round(zora).toLocaleString() : zora.toFixed(2)} ZORA</span>
-                  </span>
-                  <span style={{ ...SKR, fontSize: 13.5, color: '#E5E1DB', fontVariantNumeric: 'tabular-nums' }}>{zoraUsd != null ? `$${zoraUsd.toFixed(2)}` : '$—'}</span>
-                  <span style={{ fontFamily: 'Batang, serif', fontSize: 14.5, color: '#E5E1DB', opacity: 0.75, marginLeft: 10 }}>›</span>
-                </button>
-              )}
-            </div>
-
-            {/* DIRECT DEPOSIT — the full live address + copy (mobile parity) */}
-            {walletAddress && (
-              <button
-                onClick={() => { navigator.clipboard?.writeText(walletAddress); setCopied(true); window.setTimeout(() => setCopied(false), 1800); }}
-                style={{ display: 'flex', width: '100%', alignItems: 'center', gap: 10, marginTop: 16, background: 'rgba(229,225,219,0.03)', border: `1px solid ${HAIR}`, cursor: 'pointer', padding: '10px 12px', textAlign: 'left' }}
-              >
-                <span style={{ ...SKB, fontSize: 9.5, color: 'rgba(229,225,219,0.5)', textTransform: 'uppercase', letterSpacing: '0.1em', flexShrink: 0 }}>DIRECT DEPOSIT</span>
-                <span style={{ ...SKR, fontSize: 10, color: copied ? '#00E08A' : 'rgba(229,225,219,0.65)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, fontVariantNumeric: 'tabular-nums' }}>
-                  {copied ? 'COPIED ✓' : walletAddress}
-                </span>
-              </button>
-            )}
+            {/* Brief D17 — the ASSETS token rows moved to the RIGHT column's BALANCES segment
+                (the ledger panel); the address + copy moved into the header (PageTitle child). */}
           </div>
 
           {/* ── RIGHT: depth ── */}
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: 'flex', gap: 40, borderBottom: `1px solid ${HAIR}` }}>
-              {(['holdings', 'earnings', 'activity'] as Tab[]).map((t) => (
-                <button key={t} onClick={() => setTab(t)} style={{ position: 'relative', background: 'transparent', border: 'none', cursor: 'pointer', padding: '0 0 9px', ...SKB, fontSize: 10.5, letterSpacing: '0.1em', textTransform: 'uppercase', color: tab === t ? '#E5E1DB' : 'rgba(229,225,219,0.5)' }}>
-                  {t.toUpperCase()}
-                  {tab === t && <span style={{ position: 'absolute', left: 0, bottom: -1, width: 45, height: 1, background: `linear-gradient(90deg, ${RED} 0%, #E5E1DB 55%, ${RED} 100%)` }} />}
+            {/* Brief D17 — SEGMENT ROW (dot indicator + faint band): Balances · Holdings · Earnings · Activity. */}
+            <div style={{ background: 'rgba(229,225,219,0.035)', borderRadius: 6, padding: '0 10px', display: 'flex', alignItems: 'center', gap: 26 }}>
+              {(['balances', 'holdings', 'earnings', 'activity'] as Tab[]).map((t) => (
+                <button key={t} onClick={() => setTab(t)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '10px 0', display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                  <span style={{ width: 4, height: 4, borderRadius: '50%', background: tab === t ? 'var(--ink-100)' : 'transparent', flexShrink: 0 }} />
+                  <span style={{ ...FM, fontSize: 12, letterSpacing: 'var(--track-body)', color: tab === t ? 'var(--ink-100)' : 'rgba(229,225,219,0.67)' }}>{t.charAt(0).toUpperCase() + t.slice(1)}</span>
                 </button>
               ))}
             </div>
 
+            {/* Brief D17 — the large ledger PANEL (border variant, padding 0 so the .ledger-row
+                hover runs edge-to-edge). The active segment renders inside it. */}
+            <LedgerCard variant="border" radius={10} style={{ marginTop: 14, padding: 0, overflow: 'hidden' }}>
+
+            {/* BALANCES — token rows (monochrome token-icons) + empty ruled rows + ADD/IMPORT. */}
+            {tab === 'balances' && (
+              <>
+                <div className="ledger-row" style={TROW}>
+                  <img src={`${TICON}/ethereum.png`} alt="" style={{ width: 30, height: 30, objectFit: 'contain', flexShrink: 0, marginRight: 12 }} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ ...FD, fontSize: 12, color: 'rgba(229,225,219,0.74)', margin: 0, letterSpacing: 'var(--track-body)' }}>ETHEREUM</p>
+                    <p style={{ ...FB, fontSize: 10, color: 'rgba(229,225,219,0.74)', letterSpacing: '1.1px', margin: '2px 0 0' }}>{eth != null ? `${eth.toFixed(4)} ETH` : '…'}</p>
+                  </div>
+                  <Fiat n={eth != null && rate != null ? eth * rate : null} />
+                </div>
+                <div className="ledger-row" style={TROW}>
+                  <img src={`${TICON}/usdc.png`} alt="" style={{ width: 30, height: 30, objectFit: 'contain', flexShrink: 0, marginRight: 12 }} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ ...FD, fontSize: 12, color: 'rgba(229,225,219,0.74)', margin: 0, letterSpacing: 'var(--track-body)' }}>USDC</p>
+                    <p style={{ ...FB, fontSize: 10, color: 'rgba(229,225,219,0.74)', letterSpacing: '1.1px', margin: '2px 0 0' }}>{usdc != null ? `${usdc.toFixed(2)} USDC` : '…'}</p>
+                  </div>
+                  <Fiat n={usdc} />
+                </div>
+                {zora != null && zora > 0 && (
+                  <button
+                    className="ledger-row"
+                    onClick={() => { setSwapInitial({ sell: 'ZORA', buy: 'USDC', amount: (Math.floor(zora * 100) / 100).toFixed(2), cashOut: true }); setShowSwap(true); }}
+                    style={{ ...TROW, background: 'transparent', border: 'none', borderBottom: '1px solid var(--hairline)', cursor: 'pointer', textAlign: 'left' }}
+                  >
+                    <img src={`${TICON}/creator.png`} alt="" style={{ width: 30, height: 30, objectFit: 'contain', flexShrink: 0, marginRight: 12 }} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ ...FD, fontSize: 12, color: 'rgba(229,225,219,0.74)', margin: 0, letterSpacing: 'var(--track-body)', textTransform: 'uppercase' }}>Creator Earnings</p>
+                      <p style={{ ...FB, fontSize: 10, color: 'rgba(229,225,219,0.74)', letterSpacing: '1.1px', margin: '2px 0 0' }}>{zora >= 1000 ? Math.round(zora).toLocaleString() : zora.toFixed(2)} ZORA</p>
+                    </div>
+                    <Fiat n={zoraUsd} />
+                  </button>
+                )}
+                {[0, 1].map((i) => <div key={`empty-${i}`} style={{ height: 62, borderBottom: '1px solid var(--hairline)' }} />)}
+                {/* ADD / IMPORT — the final ruled row (D11's interim treatment). */}
+                <button className="ledger-row" onClick={() => setShowImport(true)} style={{ display: 'flex', alignItems: 'center', width: '100%', height: 62, padding: '0 14px', boxSizing: 'border-box', background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
+                  <span style={{ ...FM, fontSize: 10, color: 'rgba(229,225,219,0.45)', letterSpacing: 'var(--track-body)', textTransform: 'uppercase' }}>+ ADD / IMPORT ASSET</span>
+                </button>
+              </>
+            )}
+
             {/* HOLDINGS — larger thumbs (feedImage 600) */}
             {tab === 'holdings' && (
-              <div style={{ paddingTop: 6 }}>
+              <div style={{ padding: '4px 14px' }}>
                 {holdings === null ? (
                   <p style={{ ...SKR, fontSize: 11, color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase', padding: '18px 0' }}>LOADING…</p>
                 ) : holdings.length === 0 ? (
@@ -272,7 +303,7 @@ export default function DesktopWallet() {
                      holdings payload already carries postId (Holding.postId), so no query
                      addition/per-row fetch is needed. openPostLightbox is the app-wide
                      open-post-by-id path (PostLightboxHost, mounted in Providers). */
-                  <button key={h.postId} onClick={() => openPostLightbox(h.postId)} className="tappable" style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '11px 0', width: '100%', textAlign: 'left', background: 'transparent', border: 'none', borderBottom: `1px solid ${HAIR}`, cursor: 'pointer' }}>
+                  <button key={h.postId} onClick={() => openPostLightbox(h.postId)} className="tappable ledger-row" style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '11px 0', width: '100%', textAlign: 'left', background: 'transparent', border: 'none', borderBottom: `1px solid ${HAIR}`, cursor: 'pointer' }}>
                     {h.thumbUrl ? (
                       <img src={feedImage(h.thumbUrl, 600)} alt="" style={{ width: 108, height: 62, objectFit: 'cover', display: 'block', background: '#111', flexShrink: 0 }} />
                     ) : <div style={{ width: 108, height: 62, background: '#111', flexShrink: 0 }} />}
@@ -289,7 +320,7 @@ export default function DesktopWallet() {
             {/* EARNINGS — the mobile pane's content at width; the chart lives in
                 the earnings modal (the ⓘ stat), full column width here */}
             {tab === 'earnings' && (
-              <div style={{ paddingTop: 6 }}>
+              <div style={{ padding: '4px 14px' }}>
                 {([
                   ['portfolio', 'PORTFOLIO', 'CREATOR FEES', earnings ? sumAll(earnings.events) : null] as const,
                   ['collected', 'COLLECTED', fcRewards && fcRewards.unpaidUsd > 0.005 ? `$${fcRewards.unpaidUsd.toFixed(2)} PENDING` : 'FIRST CUT REWARDS', fcRewards?.totalUsd ?? null] as const,
@@ -351,7 +382,7 @@ export default function DesktopWallet() {
 
             {/* ACTIVITY */}
             {tab === 'activity' && (
-              <div style={{ paddingTop: 6 }}>
+              <div style={{ padding: '4px 14px' }}>
                 {activityFailed ? (
                   <button onClick={() => { setActivity(null); setActivityFailed(false); }} style={{ ...SKB, fontSize: 11, color: RED, textTransform: 'uppercase', background: 'transparent', border: `1px solid ${HAIR}`, cursor: 'pointer', padding: '10px 16px', margin: '16px 0' }}>
                     COULDN’T LOAD ACTIVITY — RETRY
@@ -380,6 +411,7 @@ export default function DesktopWallet() {
                 })}
               </div>
             )}
+            </LedgerCard>{/* Brief D17 — close the ledger panel */}
           </div>
         </div>
       </div>
@@ -408,6 +440,10 @@ export default function DesktopWallet() {
           onClose={() => setSendOpen(false)}
         />
       )}
+      {/* Brief D17 — ADD / IMPORT ASSET sheet (the interim treatment). Presentation only — the
+          persistent imported-asset LIST with live balances is the mobile's own data path; not
+          re-plumbed here (flagged), so the desktop row imports via the sheet without the list. */}
+      {showImport && <ImportAssetSheet visible={showImport} onClose={() => setShowImport(false)} userUuid={uuid} onAdded={() => refreshBalances()} />}
     </div>
   );
 }
