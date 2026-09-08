@@ -494,13 +494,18 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 80, padding: '20px 0 14px' }}>
           {(['portfolio', 'collected', 'decks'] as Tab[]).map((t) => {
             const active = tab === t;
+            // Brief D16 — the active-tab marker is ABSOLUTELY POSITIONED (zero-width in flow):
+            // a tab's column width derives from its LABEL alone, never from whether it's active.
+            // In-flow, the ~54px filmstrip was wider than short labels ("Decks") → the active
+            // column widened → later tabs shifted right (Theatre moved 15px when Decks was
+            // active). The 8px spacer stays ALWAYS to reserve the marker's height (row height
+            // constant); the filmstrip overlays it (Brief D3a §1 — still hidden while a post is
+            // open, postView != null).
             return (
-              <button key={t} onClick={() => setTab(t)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 8, background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>
+              <button key={t} onClick={() => setTab(t)} style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 8, background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>
                 <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 13, letterSpacing: 'var(--track-display)', color: active ? 'var(--ink-100)' : 'rgba(229,225,219,0.5)' }}>{t.charAt(0).toUpperCase() + t.slice(1)}</span>
-                {/* Brief D3a §1 — hide the active-tab marker while a post is open (postView
-                    != null); the tab row + labels stay. The 8px spacer holds the row height
-                    in both states, so the marker returns cleanly on close (no reflow/flicker). */}
-                {active && postView == null ? <FilmstripIndicator /> : <span style={{ height: 8, display: 'block' }} />}
+                <span style={{ height: 8, display: 'block' }} />
+                {active && postView == null && <FilmstripIndicator style={{ position: 'absolute', left: 0, bottom: 0 }} />}
               </button>
             );
           })}
