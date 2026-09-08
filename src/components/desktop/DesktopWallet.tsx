@@ -1,9 +1,10 @@
 'use client';
-// ── DESKTOP WALLET — the mobile wallet, configured for 1440 ──────────────────
-// No new features/data: header band (title · TOTAL hero · three stats), two
-// columns — money LEFT (baked action cards + ASSETS rows), depth RIGHT
-// (HOLDINGS · EARNINGS · ACTIVITY tabs). Everything reads through the
-// existing services; session caches carry over; receipt-true flows untouched.
+// ── DESKTOP WALLET — the mobile LEDGER design (2.3/2.3a), on the two-column shell ──
+// Brief D17: presentation adaptation of the shipped mobile wallet, reusing PageTitle +
+// LedgerCard/DottedLeader + the token-icons. LEFT = Total Balance ledger card + DEPOSIT/
+// SWAP/SEND action cards; RIGHT = a segment row (Balances · Holdings · Earnings · Activity)
+// over the ledger panel. No new features/data — everything reads through the existing
+// services; session caches carry over; receipt-true flows untouched.
 //
 // SHEETS: SwapSheet/EarningsSheet self-portal as bottom-anchored panels with
 // their own 30rem max width — on desktop they present as centered-bottom
@@ -295,9 +296,9 @@ export default function DesktopWallet() {
             {tab === 'holdings' && (
               <div style={{ padding: '4px 14px' }}>
                 {holdings === null ? (
-                  <p style={{ ...SKR, fontSize: 11, color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase', padding: '18px 0' }}>LOADING…</p>
+                  <p style={{ ...FB, fontSize: 11, color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase', padding: '18px 0' }}>LOADING…</p>
                 ) : holdings.length === 0 ? (
-                  <p style={{ ...SKR, fontSize: 11, color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase', padding: '18px 0' }}>NO POSITIONS YET</p>
+                  <p style={{ ...FB, fontSize: 11, color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase', padding: '18px 0' }}>NO POSITIONS YET</p>
                 ) : holdings.map((h) => (
                   /* Brief D5 §2 — the row navigates to the held post's canonical view. The
                      holdings payload already carries postId (Holding.postId), so no query
@@ -308,10 +309,10 @@ export default function DesktopWallet() {
                       <img src={feedImage(h.thumbUrl, 600)} alt="" style={{ width: 108, height: 62, objectFit: 'cover', display: 'block', background: '#111', flexShrink: 0 }} />
                     ) : <div style={{ width: 108, height: 62, background: '#111', flexShrink: 0 }} />}
                     <span style={{ flex: 1, minWidth: 0 }}>
-                      <span style={{ ...SKB, fontSize: 12.5, color: '#E5E1DB', textTransform: 'uppercase', display: 'block' }}>{h.ticker ? `[ ${h.ticker} ]` : '—'}</span>
-                      <span style={{ ...SKR, fontSize: 10.5, color: 'rgba(229,225,219,0.5)', display: 'block', marginTop: 3 }}>{h.pieces.toLocaleString()} FRAGMENTS · MC {h.priceUsd != null ? usd(h.priceUsd * 10_000) : '$—'}</span>
+                      <span style={{ ...FD, fontSize: 12.5, color: '#E5E1DB', textTransform: 'uppercase', display: 'block' }}>{h.ticker ? `[ ${h.ticker} ]` : '—'}</span>
+                      <span style={{ ...FB, fontSize: 10.5, color: 'rgba(229,225,219,0.5)', display: 'block', marginTop: 3 }}>{h.pieces.toLocaleString()} FRAGMENTS · MC {h.priceUsd != null ? usd(h.priceUsd * 10_000) : '$—'}</span>
                     </span>
-                    <span style={{ ...SKB, fontSize: 13.5, color: '#E5E1DB', fontVariantNumeric: 'tabular-nums' }}>{usd(h.valueUsd)}</span>
+                    <span style={{ ...FD, fontSize: 13.5, color: '#E5E1DB', fontVariantNumeric: 'tabular-nums' }}>{usd(h.valueUsd)}</span>
                   </button>
                 ))}
               </div>
@@ -327,32 +328,32 @@ export default function DesktopWallet() {
                 ]).map(([key, label, sub, total]) => (
                   <div key={key}>
                     <button onClick={() => setOpenCat(openCat === key ? null : key)} style={{ display: 'flex', width: '100%', alignItems: 'baseline', justifyContent: 'space-between', background: 'transparent', border: 'none', cursor: 'pointer', padding: '15px 2px 12px' }}>
-                      <span style={{ ...SKB, fontSize: 12, color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</span>
+                      <span style={{ ...FD, fontSize: 12, color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</span>
                       <span style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
-                        <span style={{ ...SKR, fontSize: 9.5, color: 'rgba(229,225,219,0.45)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{sub}</span>
-                        <span style={{ ...SKB, fontSize: 14, color: GREEN, fontVariantNumeric: 'tabular-nums' }}>{total != null ? `$${total.toFixed(2)}` : '…'}</span>
-                        <span style={{ ...SKR, fontSize: 11, color: 'rgba(229,225,219,0.4)' }}>{openCat === key ? '−' : '+'}</span>
+                        <span style={{ ...FB, fontSize: 9.5, color: 'rgba(229,225,219,0.45)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{sub}</span>
+                        <span style={{ ...FD, fontSize: 14, color: GREEN, fontVariantNumeric: 'tabular-nums' }}>{total != null ? `$${total.toFixed(2)}` : '…'}</span>
+                        <span style={{ ...FB, fontSize: 11, color: 'rgba(229,225,219,0.4)' }}>{openCat === key ? '−' : '+'}</span>
                       </span>
                     </button>
                     <div style={{ height: 1, background: HAIR }} />
                     {openCat === key && key === 'portfolio' && (
                       byPost.length === 0
-                        ? <p style={{ ...SKR, fontSize: 10.5, color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase', padding: '12px 2px' }}>{earnings ? 'NO CREATOR FEES YET' : 'LOADING…'}</p>
+                        ? <p style={{ ...FB, fontSize: 10.5, color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase', padding: '12px 2px' }}>{earnings ? 'NO CREATOR FEES YET' : 'LOADING…'}</p>
                         : byPost.map((p) => (
                           <div key={p.postId} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '9px 2px', borderBottom: `1px solid rgba(229,225,219,0.06)` }}>
                             {p.thumb ? <img src={feedImage(p.thumb, 96)} alt="" style={{ width: 62, height: 38, objectFit: 'cover', background: '#111', flexShrink: 0 }} /> : <div style={{ width: 62, height: 38, background: '#111', flexShrink: 0 }} />}
-                            <span style={{ ...SKB, fontSize: 11.5, color: '#E5E1DB', textTransform: 'uppercase', flex: 1 }}>{p.ticker ? `[ ${p.ticker} ]` : '—'}</span>
-                            <span style={{ ...SKB, fontSize: 12.5, color: GREEN, fontVariantNumeric: 'tabular-nums' }}>${p.usd.toFixed(2)}</span>
+                            <span style={{ ...FD, fontSize: 11.5, color: '#E5E1DB', textTransform: 'uppercase', flex: 1 }}>{p.ticker ? `[ ${p.ticker} ]` : '—'}</span>
+                            <span style={{ ...FD, fontSize: 12.5, color: GREEN, fontVariantNumeric: 'tabular-nums' }}>${p.usd.toFixed(2)}</span>
                           </div>
                         ))
                     )}
                     {openCat === key && key === 'collected' && (
                       !fcRewards || fcRewards.posts.length === 0
-                        ? <p style={{ ...SKR, fontSize: 10.5, color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase', padding: '12px 2px' }}>{fcRewards ? 'NO FIRST CUT REWARDS YET' : 'LOADING…'}</p>
+                        ? <p style={{ ...FB, fontSize: 10.5, color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase', padding: '12px 2px' }}>{fcRewards ? 'NO FIRST CUT REWARDS YET' : 'LOADING…'}</p>
                         : (
                           <>
                             {fcRewards.unpaidUsd > 0.005 && (
-                              <p style={{ ...SKR, fontSize: 9.5, color: 'rgba(229,225,219,0.45)', textTransform: 'uppercase', letterSpacing: '0.06em', padding: '10px 2px 0' }}>
+                              <p style={{ ...FB, fontSize: 9.5, color: 'rgba(229,225,219,0.45)', textTransform: 'uppercase', letterSpacing: '0.06em', padding: '10px 2px 0' }}>
                                 ${fcRewards.unpaidUsd.toFixed(2)} ACCRUED · PAYS OUT WEEKLY
                               </p>
                             )}
@@ -362,12 +363,12 @@ export default function DesktopWallet() {
                                 <div key={p.postId} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '9px 2px', borderBottom: `1px solid rgba(229,225,219,0.06)` }}>
                                   {p.thumb ? <img src={feedImage(p.thumb, 96)} alt="" style={{ width: 62, height: 38, objectFit: 'cover', background: '#111', flexShrink: 0 }} /> : <div style={{ width: 62, height: 38, background: '#111', flexShrink: 0 }} />}
                                   <span style={{ flex: 1, minWidth: 0 }}>
-                                    <span style={{ ...SKB, fontSize: 11.5, color: '#E5E1DB', textTransform: 'uppercase', display: 'block' }}>{p.ticker ? `[ ${p.ticker} ]` : '—'}</span>
-                                    <span style={{ ...SKR, fontSize: 9.5, color: 'rgba(229,225,219,0.45)', textTransform: 'uppercase' }}>{pos ? `POSITION $${pos.valueUsd.toFixed(2)}` : 'POSITION EXITED'}</span>
+                                    <span style={{ ...FD, fontSize: 11.5, color: '#E5E1DB', textTransform: 'uppercase', display: 'block' }}>{p.ticker ? `[ ${p.ticker} ]` : '—'}</span>
+                                    <span style={{ ...FB, fontSize: 9.5, color: 'rgba(229,225,219,0.45)', textTransform: 'uppercase' }}>{pos ? `POSITION $${pos.valueUsd.toFixed(2)}` : 'POSITION EXITED'}</span>
                                   </span>
                                   <span style={{ textAlign: 'right' }}>
-                                    <span style={{ ...SKB, fontSize: 12.5, color: p.accruedUsd - p.unpaidUsd > 0.005 ? GREEN : 'rgba(229,225,219,0.75)', fontVariantNumeric: 'tabular-nums', display: 'block' }}>${p.accruedUsd.toFixed(2)}</span>
-                                    {p.unpaidUsd > 0.005 && <span style={{ ...SKR, fontSize: 9, color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase', fontVariantNumeric: 'tabular-nums' }}>· ${p.unpaidUsd.toFixed(2)} PENDING</span>}
+                                    <span style={{ ...FD, fontSize: 12.5, color: p.accruedUsd - p.unpaidUsd > 0.005 ? GREEN : 'rgba(229,225,219,0.75)', fontVariantNumeric: 'tabular-nums', display: 'block' }}>${p.accruedUsd.toFixed(2)}</span>
+                                    {p.unpaidUsd > 0.005 && <span style={{ ...FB, fontSize: 9, color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase', fontVariantNumeric: 'tabular-nums' }}>· ${p.unpaidUsd.toFixed(2)} PENDING</span>}
                                   </span>
                                 </div>
                               );
@@ -384,13 +385,13 @@ export default function DesktopWallet() {
             {tab === 'activity' && (
               <div style={{ padding: '4px 14px' }}>
                 {activityFailed ? (
-                  <button onClick={() => { setActivity(null); setActivityFailed(false); }} style={{ ...SKB, fontSize: 11, color: RED, textTransform: 'uppercase', background: 'transparent', border: `1px solid ${HAIR}`, cursor: 'pointer', padding: '10px 16px', margin: '16px 0' }}>
+                  <button onClick={() => { setActivity(null); setActivityFailed(false); }} style={{ ...FD, fontSize: 11, color: RED, textTransform: 'uppercase', background: 'transparent', border: `1px solid ${HAIR}`, cursor: 'pointer', padding: '10px 16px', margin: '16px 0' }}>
                     COULDN’T LOAD ACTIVITY — RETRY
                   </button>
                 ) : activity === null ? (
-                  <p style={{ ...SKR, fontSize: 11, color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase', padding: '18px 0' }}>LOADING…</p>
+                  <p style={{ ...FB, fontSize: 11, color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase', padding: '18px 0' }}>LOADING…</p>
                 ) : activity.length === 0 ? (
-                  <p style={{ ...SKR, fontSize: 11, color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase', padding: '18px 0' }}>NO ACTIVITY YET</p>
+                  <p style={{ ...FB, fontSize: 11, color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase', padding: '18px 0' }}>NO ACTIVITY YET</p>
                 ) : activity.map((row) => {
                   const title = row.kind === 'buy' ? `COLLECTED${row.ticker ? ` [ ${row.ticker} ]` : ''}`
                     : row.kind === 'sell' ? `SOLD${row.ticker ? ` [ ${row.ticker} ]` : ''}`
@@ -402,10 +403,10 @@ export default function DesktopWallet() {
                   return (
                     <div key={row.hash} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 0', borderBottom: `1px solid ${HAIR}` }}>
                       <span style={{ flex: 1, minWidth: 0 }}>
-                        <span style={{ ...SKB, fontSize: 11.5, color: '#E5E1DB', textTransform: 'uppercase', display: 'block' }}>{title}</span>
-                        <span style={{ ...SKR, fontSize: 9.5, color: 'rgba(229,225,219,0.45)', display: 'block', marginTop: 2 }}>{sub}</span>
+                        <span style={{ ...FD, fontSize: 11.5, color: '#E5E1DB', textTransform: 'uppercase', display: 'block' }}>{title}</span>
+                        <span style={{ ...FB, fontSize: 9.5, color: 'rgba(229,225,219,0.45)', display: 'block', marginTop: 2 }}>{sub}</span>
                       </span>
-                      <span style={{ ...SKB, fontSize: 12.5, color: row.kind === 'receive' || row.kind === 'sell' ? GREEN : '#E5E1DB', fontVariantNumeric: 'tabular-nums' }}>{amount}</span>
+                      <span style={{ ...FD, fontSize: 12.5, color: row.kind === 'receive' || row.kind === 'sell' ? GREEN : '#E5E1DB', fontVariantNumeric: 'tabular-nums' }}>{amount}</span>
                     </div>
                   );
                 })}
