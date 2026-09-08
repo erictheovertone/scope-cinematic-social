@@ -162,7 +162,6 @@ export default function DesktopHomeLightbox({
   // ── MORE FROM row (bounded; each caption = creator avatar + @handle LINK + MC).
   //    The scan-arrow only appears when the row actually overflows (>4 cards fit;
   //    the cap is 6 → it can overflow), and is wired to scroll the row. ──
-  const goProfile = (e: React.MouseEvent) => { e.stopPropagation(); router.push(`/profile/${creatorHandle}`); };
   const moreFromRow = moreFrom.length > 0 ? (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '0 0 10px' }}>
@@ -177,19 +176,16 @@ export default function DesktopHomeLightbox({
       </div>
       <div ref={mfScroll} style={{ display: 'flex', gap: 12, overflowX: 'auto', scrollbarWidth: 'none' }}>
         {moreFrom.map((p) => (
-          <div key={String(p.id)} onClick={() => jumpTo(p)} style={{ flexShrink: 0, width: 208, cursor: 'pointer' }}>
-            <div style={{ position: 'relative', width: '100%', aspectRatio: '2.75 / 1', overflow: 'hidden', background: '#0d0d0d' }}>
+          <div key={String(p.id)} onClick={() => jumpTo(p)} role="button" aria-label={`Post by @${creatorHandle}${p.coin_address ? `, market cap ${mfMc.get(String(p.id)) ?? ''}` : ''}`} style={{ flexShrink: 0, width: 208, cursor: 'pointer' }}>
+            {/* Brief D15a §2 — the caption ROW (@handle + MC) is gone; it's now a HOVER-revealed
+                bottom-gradient overlay on the thumb (a11y: the info is in the card's aria-label). */}
+            <div className="d15a-thumb" style={{ position: 'relative', width: '100%', aspectRatio: '2.75 / 1', overflow: 'hidden', background: '#0d0d0d' }}>
               {thumbOf(p) && <img src={feedImage(thumbOf(p), 480)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
               {isVideoPost(p) && <StripPlayGlyph />}
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, margin: '7px 0 0' }}>
-              {/* creator avatar + @handle — LINKS to the profile (global button:hover brightens) */}
-              <span role="link" onClick={goProfile} style={{ display: 'flex', alignItems: 'center', gap: 5, minWidth: 0, cursor: 'pointer' }}>
-                {creatorAvatar ? <img src={feedImage(creatorAvatar, 96)} alt="" style={{ width: 14, height: 14, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} /> : <span style={{ width: 14, height: 14, borderRadius: '50%', background: '#2a2a2a', flexShrink: 0 }} />}
-                <span style={{ ...SKB, fontSize: 10, color: 'rgba(229,225,219,0.6)', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>@{creatorHandle}</span>
-              </span>
-              {/* Unminted (no coin) → quiet dash, never a fake MC. */}
-              <span style={{ ...SKB, fontSize: 9.5, color: 'rgba(229,225,219,0.55)', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>{p.coin_address ? `MC ${mfMc.get(String(p.id)) ?? '…'}` : '—'}</span>
+              <div className="d15a-ov">
+                <span style={{ ...SKB, fontSize: 10, color: '#E5E1DB', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0 }}>@{creatorHandle}</span>
+                {!!p.coin_address && <span style={{ ...SKB, fontSize: 9.5, color: 'rgba(229,225,219,0.9)', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>MC {mfMc.get(String(p.id)) ?? '…'}</span>}
+              </div>
             </div>
           </div>
         ))}
@@ -219,20 +215,30 @@ export default function DesktopHomeLightbox({
         </div>
 
         {/* ── TOP STRIP — the tab's posts, horizontal scroll, quiet handles ── */}
+        {/* Brief D15a §2 — the hover-reveal caption overlay, shared by BOTH strips (top + MORE
+            FROM): a bottom-anchored gradient carrying @handle (+ MC when minted), hidden until
+            the thumb is hovered (the info otherwise lives in each card's aria-label). */}
+        <style>{`
+          .d15a-thumb .d15a-ov{position:absolute;left:0;right:0;bottom:0;display:flex;align-items:flex-end;justify-content:space-between;gap:6px;padding:14px 7px 5px;background:linear-gradient(to top,rgba(5,5,5,0.9),rgba(5,5,5,0.45) 55%,transparent);opacity:0;transition:opacity 140ms ease;pointer-events:none}
+          .d15a-thumb:hover .d15a-ov{opacity:1}
+        `}</style>
+        {/* Brief D15a §3 — TOP STRIP tightened: thumb 164→124 wide (height ~52), caption row
+            removed → the strip drops from ~90px to ~60px. Active frame + play glyph unchanged. */}
         <div ref={stripRef} style={{ display: 'flex', gap: 9, overflowX: 'auto', paddingBottom: 8, marginBottom: 6, scrollbarWidth: 'none' }}>
           {strip.length === 0 ? (
-            <p style={{ ...SKR, fontSize: 11, color: 'rgba(229,225,219,0.35)', textTransform: 'uppercase', letterSpacing: '0.1em', padding: '40px 0' }}>{tab === 'following' ? 'NO POSTS FROM ACCOUNTS YOU FOLLOW' : 'NOTHING HERE YET'}</p>
+            <p style={{ ...SKR, fontSize: 11, color: 'rgba(229,225,219,0.35)', textTransform: 'uppercase', letterSpacing: '0.1em', padding: '30px 0' }}>{tab === 'following' ? 'NO POSTS FROM ACCOUNTS YOU FOLLOW' : 'NOTHING HERE YET'}</p>
           ) : strip.map((p) => {
             const isActive = String(p.id) === String(active?.id);
             return (
               <button key={String(p.id)} data-active={isActive ? '' : undefined} onClick={() => jumpTo(p)} aria-label={`Post by @${String(p.username ?? '')}`}
-                style={{ flexShrink: 0, width: 164, background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, opacity: isActive ? 1 : 0.6, transition: 'opacity 160ms ease' }}>
-                <div style={{ position: 'relative', width: '100%', aspectRatio: '2.39 / 1', overflow: 'hidden', background: '#0d0d0d', outline: isActive ? '1px solid rgba(229,225,219,0.7)' : 'none' }}>
-                  {thumbOf(p) && <img src={feedImage(thumbOf(p), 340)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
+                style={{ flexShrink: 0, width: 124, background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, opacity: isActive ? 1 : 0.6, transition: 'opacity 160ms ease' }}>
+                <div className="d15a-thumb" style={{ position: 'relative', width: '100%', aspectRatio: '2.39 / 1', overflow: 'hidden', background: '#0d0d0d', outline: isActive ? '1px solid rgba(229,225,219,0.7)' : 'none' }}>
+                  {thumbOf(p) && <img src={feedImage(thumbOf(p), 260)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
                   {isVideoPost(p) && <StripPlayGlyph />}
+                  <div className="d15a-ov">
+                    <span style={{ ...SKB, fontSize: 9, color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>@{String(p.username ?? '')}</span>
+                  </div>
                 </div>
-                {/* handle hugs the thumbnail (~5px), left-justified */}
-                <p style={{ ...SKB, fontSize: 9, color: 'rgba(229,225,219,0.5)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '5px 0 0', textAlign: 'left', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>@{String(p.username ?? '')}</p>
               </button>
             );
           })}

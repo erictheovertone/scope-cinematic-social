@@ -296,6 +296,16 @@ export default function DesktopPostView({
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(229,225,219,0.85)" strokeWidth="2" strokeLinejoin="round"><path d="M21 11.5a8.5 8.5 0 0 1-12.5 7.5L3 21l2-5.5A8.5 8.5 0 1 1 21 11.5z"/></svg>
             <span style={{ ...SKB, fontSize: 12, color: '#E5E1DB', fontVariantNumeric: 'tabular-nums' }}>{comments.length}</span>
           </button>
+          {/* Brief D15a §1 — lightbox: the byline (avatar + @HANDLE → profile) moves INLINE into
+              the action row (was a separate line below), collapsing the under-stage stack. */}
+          {lightbox && (post?.username as string) && (
+            <button onClick={() => router.push(`/profile/${post.username as string}`)} style={{ display: 'flex', alignItems: 'center', gap: 7, marginLeft: 4, background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, minWidth: 0 }}>
+              {(post?.profile_image_url as string) ? (
+                <img src={feedImage(post.profile_image_url as string, 96)} alt="" style={{ width: 20, height: 20, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+              ) : <span style={{ width: 20, height: 20, borderRadius: '50%', background: '#2a2a2a', flexShrink: 0 }} />}
+              <span style={{ ...SKB, fontSize: 12, color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>@{post.username as string}</span>
+            </button>
+          )}
           {coinAddr && (
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}>
               <span style={{ border: `1px solid ${HAIR}`, borderRadius: 3, padding: '2px 5px', display: 'inline-flex' }}>
@@ -311,11 +321,18 @@ export default function DesktopPostView({
             </button>
           )}
 
+          {/* Brief D15a §1 — lightbox: the date (SEP 5, 2026, micro-caps ~40%) sits at the right
+              end of the action row (was on a 4th line). marginLeft:auto right-aligns it when
+              there's no COLLECT to push the right cluster over. */}
+          {lightbox && !!post?.created_at && (
+            <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 9, color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase', letterSpacing: 'var(--track-body)', whiteSpace: 'nowrap', flexShrink: 0, marginLeft: coinAddr ? 12 : 'auto' }}>{new Date(post.created_at as string).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+          )}
+
           {/* Brief D6 — owner affordance: 3-dot beside COLLECT (or right-aligned when
               there's no COLLECT). Same action set as mobile's post-owner menu, wired to
               the same reused sheets. ≥44px effective target via the −11px hit inset. */}
           {isOwner && (
-            <div style={{ position: 'relative', marginLeft: coinAddr ? 14 : 'auto', display: 'inline-flex' }}>
+            <div style={{ position: 'relative', marginLeft: coinAddr ? 14 : (lightbox && post?.created_at ? 12 : 'auto'), display: 'inline-flex' }}>
               <button
                 onClick={() => setMenuOpen((o) => !o)}
                 aria-label="Post options"
@@ -362,29 +379,21 @@ export default function DesktopPostView({
           )}
         </div>
 
-        {/* CREATOR ROW (lightbox, frame order: actions → pfp+handle → caption →
-            location·date): avatar + @handle → the creator's profile. */}
-        {lightbox && (post?.username as string) && (
-          <button onClick={() => router.push(`/profile/${post.username as string}`)} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, margin: '12px 0 0' }}>
-            {(post?.profile_image_url as string) ? (
-              <img src={feedImage(post.profile_image_url as string, 96)} alt="" style={{ width: 22, height: 22, borderRadius: '50%', objectFit: 'cover' }} />
-            ) : <span style={{ width: 22, height: 22, borderRadius: '50%', background: '#2a2a2a' }} />}
-            <span style={{ ...SKB, fontSize: 12, color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.04em' }}>@{post.username as string}</span>
-          </button>
-        )}
-
-        {/* caption + location·date. Brief D15 §1 — lightbox: caption clamps to 2 lines so it's a FIXED zone in the height budget. */}
+        {/* Brief D15a §1 — LINE 2: caption only. Lightbox → ONE line + ellipsis (full text on
+            hover via the native title tooltip), with the location appended after a · when
+            present (the byline + date moved up into the action row). Profile → unchanged. */}
         {typeof post?.caption === 'string' && post.caption && (
-          <p style={{ ...SKR, fontSize: 12, color: 'rgba(229,225,219,0.5)', lineHeight: 1.07, letterSpacing: 'var(--track-body)', margin: lightbox ? '10px 0 0' : '12px 0 0', maxWidth: 440, ...(lightbox ? { display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' } : {}) }}>{post.caption}</p>
-        )}
-        {(location || (lightbox && !!post?.created_at)) && (
-          <p style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 8, color: 'rgba(229,225,219,0.5)', textTransform: 'uppercase', letterSpacing: 'var(--track-body)', margin: '10px 0 0', display: 'flex', alignItems: 'center', gap: 5 }}>
-            {location && <><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="rgba(229,225,219,0.45)" strokeWidth="1.8"><path d="M12 21s-6.5-5.4-6.5-10.5A6.5 6.5 0 0 1 12 4a6.5 6.5 0 0 1 6.5 6.5C18.5 15.6 12 21 12 21z" /><circle cx="12" cy="10.5" r="2.2" /></svg>{location}</>}
-            {!!location && lightbox && !!post?.created_at && <span style={{ opacity: 0.5 }}>·</span>}
-            {lightbox && !!post?.created_at && <span>{new Date(post.created_at as string).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>}
+          <p title={lightbox ? (post.caption + (location ? ` · ${location}` : '')) : undefined} style={{ ...SKR, fontSize: 12, color: 'rgba(229,225,219,0.5)', lineHeight: 1.07, letterSpacing: 'var(--track-body)', margin: lightbox ? '10px 0 0' : '12px 0 0', maxWidth: lightbox ? '100%' : 440, ...(lightbox ? { whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' } : {}) }}>
+            {post.caption}{lightbox && location && <span style={{ color: 'rgba(229,225,219,0.34)' }}> · {location}</span>}
           </p>
         )}
-        {belowLeft && <div style={{ paddingTop: 14, ...(lightbox ? { flexShrink: 0 } : {}) }}>{belowLeft}</div>}{/* Brief D15 §1 — lightbox: MORE FROM is a FIXED zone (the STAGE flex:1 above absorbs the surplus); was marginTop:auto which fought the flexible stage. */}
+        {/* Location line — PROFILE framing only (lightbox merges it into the caption line above). */}
+        {!lightbox && location && (
+          <p style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 8, color: 'rgba(229,225,219,0.5)', textTransform: 'uppercase', letterSpacing: 'var(--track-body)', margin: '10px 0 0', display: 'flex', alignItems: 'center', gap: 5 }}>
+            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="rgba(229,225,219,0.45)" strokeWidth="1.8"><path d="M12 21s-6.5-5.4-6.5-10.5A6.5 6.5 0 0 1 12 4a6.5 6.5 0 0 1 6.5 6.5C18.5 15.6 12 21 12 21z" /><circle cx="12" cy="10.5" r="2.2" /></svg>{location}
+          </p>
+        )}
+        {belowLeft && <div style={{ paddingTop: 14, ...(lightbox ? { flexShrink: 0, paddingBottom: 20 } : {}) }}>{belowLeft}</div>}{/* Brief D15 §1 / D15a §4 — lightbox: MORE FROM is a FIXED zone (the STAGE flex:1 above absorbs the surplus) with a hard 20px bottom margin so its handles/MC clear the viewport edge. */}
       </div>
 
       {/* ═══ RIGHT PANEL (node 69:196 — 309×573, transparent, softened hairline
