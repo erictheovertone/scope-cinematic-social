@@ -95,19 +95,38 @@ export default function DesktopPostView({
   // (posterWidth 1600) untouched.
   const stageRef = useRef<HTMLDivElement>(null);
   const [stageW, setStageW] = useState(1600);
-  // Brief D15 §1 — also measure the stage HEIGHT. In the lightbox the stage is the flexible
-  // zone (flex:1) that absorbs the height budget, so the media is fit to the MEASURED box
-  // (contain), not derived from its natural size.
-  const [stageH, setStageH] = useState(0);
   useEffect(() => {
     const el = stageRef.current;
     if (!el || typeof ResizeObserver === 'undefined') return;
-    const measure = () => { const w = el.clientWidth, h = el.clientHeight; if (w > 0) setStageW(w); if (h > 0) setStageH(h); };
+    const measure = () => { const w = el.clientWidth; if (w > 0) setStageW(w); };
     measure();
     const ro = new ResizeObserver(measure);
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
+  // Brief D15b — the media is sized to the COLUMN's available height (not a flex:1 stage zone),
+  // so the stage box hugs the media and the action row sits at the media's bottom + 14px (the
+  // profile gap) — never after a taller flex zone. Measure the column box + the fixed chrome
+  // (action+caption) + the MORE FROM strip; the media contains within (colW-pad) × (colH −
+  // chrome − MORE FROM). The leftover height goes to a spacer BELOW the caption. Lightbox only.
+  const colRef = useRef<HTMLDivElement>(null);
+  const chromeRef = useRef<HTMLDivElement>(null);
+  const moreRef = useRef<HTMLDivElement>(null);
+  const [colBox, setColBox] = useState({ w: 0, h: 0 });
+  const [chromeH, setChromeH] = useState(0);
+  const [moreH, setMoreH] = useState(0);
+  useEffect(() => {
+    if (!lightbox || typeof ResizeObserver === 'undefined') return;
+    const measure = () => {
+      const c = colRef.current; if (c) setColBox({ w: c.clientWidth, h: c.clientHeight });
+      if (chromeRef.current) setChromeH(chromeRef.current.clientHeight);
+      if (moreRef.current) setMoreH(moreRef.current.clientHeight);
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    [colRef.current, chromeRef.current, moreRef.current].forEach((el) => el && ro.observe(el));
+    return () => ro.disconnect();
+  }, [lightbox, belowLeft, postId]);
   const [avatars, setAvatars] = useState<Map<string, string>>(new Map());
   const [newComment, setNewComment] = useState('');
   const [replyingTo, setReplyingTo] = useState<UIComment | null>(null);
@@ -203,9 +222,17 @@ export default function DesktopPostView({
   // Brief D15 §1 — CONTAIN the media (AR = `ar`) inside the MEASURED lightbox stage box
   // (any AR): the largest AR-locked box that fits both dimensions. Deterministic, so it never
   // overflows the height budget. Profile framing keeps the width-driven 2.39 letterbox.
-  const fit = (lightbox && stageW > 0 && stageH > 0)
-    ? (() => { const w = Math.min(stageW, stageH * ar); return { width: Math.round(w), height: Math.round(w / ar) }; })()
-    : null;
+  // Brief D15b — CONTAIN the media in the column's AVAILABLE box: (colW − pad) × (colH − the
+  // action/caption chrome − the MORE FROM strip). So the stage box == the media, the row hugs
+  // it, and the leftover height falls into the spacer below the caption (never above the row).
+  const fit = (() => {
+    if (!lightbox) return null;
+    const availW = colBox.w - 28;                 // the lightbox column's '0 14px' padding
+    const availH = colBox.h - chromeH - moreH;    // minus the fixed rows + the MORE FROM strip
+    if (availW <= 0 || availH <= 0) return null;
+    const w = Math.min(availW, availH * ar);
+    return { width: Math.round(w), height: Math.round(w / ar) };
+  })();
 
   // Brief D6 — OWNERSHIP (the identity landmine): posts.user_id is the SUPABASE UUID,
   // and viewer.uuid is that same users.id (getUserByPrivyId → getProfile). Compare
@@ -228,8 +255,10 @@ export default function DesktopPostView({
       {/* FRAME GEOMETRY (round 3): narrow ~20px ARROW POCKETS hugging the media
           (frame x86/x1083 vs stage x103/1077); stage right edge ~30px from the
           panel (20px pocket + 12px gap). The media is the star. */}
-      <div style={{ flex: 1, minWidth: 0, padding: lightbox ? '0 14px' : '0 20px', marginTop: lightbox ? 0 : 60, ...(lightbox ? { display: 'flex', flexDirection: 'column', minHeight: 0 } : {}) }}> {/* Brief D15 §1 — lightbox: a height-bound flex column (minHeight:0 so the flexible STAGE can shrink); the fixed rows below take their natural height, the stage absorbs the rest. Profile: unchanged. */}
-        <div style={lightbox ? { position: 'relative', flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' } : { position: 'relative' }}>
+      <div ref={colRef} style={{ flex: 1, minWidth: 0, padding: lightbox ? '0 14px' : '0 20px', marginTop: lightbox ? 0 : 60, ...(lightbox ? { display: 'flex', flexDirection: 'column', minHeight: 0 } : {}) }}> {/* Brief D15/D15b — lightbox: a height-bound flex column; the stage hugs the media (measured), the fixed rows sit under it, and the leftover height goes to a spacer above MORE FROM. Profile: unchanged. */}
+        {/* Brief D15b — the stage wrapper HUGS the media (flexShrink:0, media-sized) so the arrows
+            centre on the media and the action row sits at the media's bottom, not a taller zone's. */}
+        <div style={lightbox ? { position: 'relative', flexShrink: 0 } : { position: 'relative' }}>
           {/* prev / next — Batang > glyphs, mid-media */}
           {/* HIT TARGET NEVER MOVES: 44px outer buttons, stage-anchored seats,
               data-no-pop (no press scale); feedback = brightness on the inner
@@ -253,9 +282,9 @@ export default function DesktopPostView({
               (the #8 binding-dimension fix — a 2.75 box pillarboxed them small). */}
           {/* Brief P3 §1 — click the stage toggles pause (desktop). No backdrop-close here, so
               no collision; prev/next are separate absolute buttons. */}
-          <motion.div ref={stageRef} layoutId={`dpost-${postId}`} transition={{ layout: { duration: 0.18, ease: 'easeOut' } }} onClick={isVideo ? () => setUserPaused((p) => !p) : undefined} style={{ ...(lightbox ? { flex: 1, minHeight: 0, width: '100%' } : { width: '100%', aspectRatio: '2.39 / 1' }), background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', cursor: isVideo ? 'pointer' : 'default' }}>{/* Brief D15 §1 — lightbox stage is the flexible zone (flex:1); the media is contained in the measured box. Profile: the fixed 2.39 letterbox, unchanged. */}
+          <motion.div ref={stageRef} layoutId={`dpost-${postId}`} transition={{ layout: { duration: 0.18, ease: 'easeOut' } }} onClick={isVideo ? () => setUserPaused((p) => !p) : undefined} style={{ ...(lightbox ? { width: fit ? fit.width : '100%', height: fit ? fit.height : undefined, margin: '0 auto', maxWidth: '100%' } : { width: '100%', aspectRatio: '2.39 / 1' }), background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', cursor: isVideo ? 'pointer' : 'default' }}>{/* Brief D15b — lightbox stage is SIZED TO THE MEDIA (measured fit), centred horizontally; the row below hugs it. Profile: the fixed 2.39 letterbox, unchanged. */}
             <div style={lightbox
-              ? (fit ? { position: 'relative', width: fit.width, height: fit.height, overflow: 'hidden', background: '#0a0a0a' } : { position: 'relative', ...(ar >= STAGE_AR ? { width: '100%' } : { height: '100%' }), aspectRatio: `${ar}`, overflow: 'hidden', background: '#0a0a0a' })
+              ? (fit ? { position: 'relative', width: '100%', height: '100%', overflow: 'hidden', background: '#0a0a0a' } : { position: 'relative', ...(ar >= STAGE_AR ? { width: '100%' } : { height: '100%' }), aspectRatio: `${ar}`, overflow: 'hidden', background: '#0a0a0a' })
               : { position: 'relative', ...(ar >= 2.39 ? { width: '100%' } : { height: '100%' }), aspectRatio: `${ar}`, overflow: 'hidden', background: '#0a0a0a' }}>
               {isVideo ? (
                 <>
@@ -286,6 +315,9 @@ export default function DesktopPostView({
           </motion.div>
         </div>
 
+        {/* Brief D15b — chrome wrapper (action row + caption): measured so the media's available
+            height excludes it. Its first child's 14px top margin is the media→row gap (== profile). */}
+        <div ref={chromeRef}>
         {/* ── Actions row ── */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 22, margin: '14px 0 0' }}>
           <button onClick={toggleLike} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>
@@ -393,7 +425,11 @@ export default function DesktopPostView({
             <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="rgba(229,225,219,0.45)" strokeWidth="1.8"><path d="M12 21s-6.5-5.4-6.5-10.5A6.5 6.5 0 0 1 12 4a6.5 6.5 0 0 1 6.5 6.5C18.5 15.6 12 21 12 21z" /><circle cx="12" cy="10.5" r="2.2" /></svg>{location}
           </p>
         )}
-        {belowLeft && <div style={{ paddingTop: 14, ...(lightbox ? { flexShrink: 0, paddingBottom: 20 } : {}) }}>{belowLeft}</div>}{/* Brief D15 §1 / D15a §4 — lightbox: MORE FROM is a FIXED zone (the STAGE flex:1 above absorbs the surplus) with a hard 20px bottom margin so its handles/MC clear the viewport edge. */}
+        </div>{/* Brief D15b — close the chrome wrapper */}
+        {/* Brief D15b — the leftover height goes HERE (between the caption and MORE FROM), never
+            between the media and the action row. MORE FROM then bottom-aligns (D15a). */}
+        {lightbox && <div style={{ flex: 1, minHeight: 0 }} />}
+        {belowLeft && <div ref={moreRef} style={{ paddingTop: 14, ...(lightbox ? { flexShrink: 0, paddingBottom: 20 } : {}) }}>{belowLeft}</div>}{/* Brief D15/D15a §4 — lightbox: MORE FROM is a FIXED zone with a hard 20px bottom margin so its handles/MC clear the viewport edge. */}
       </div>
 
       {/* ═══ RIGHT PANEL (node 69:196 — 309×573, transparent, softened hairline
