@@ -56,21 +56,18 @@ export default function VmodeCard({ card, index, reduced, selected, onSelect }: 
         border: selected ? '1px solid rgba(229,225,219,0.8)' : '1px solid rgba(229,225,219,0.49)',
         background: 'linear-gradient(90deg, rgba(229,225,219,0.07), rgba(33,31,31,0.08))',
         overflow: 'hidden', cursor: card.coming ? 'default' : 'pointer', textAlign: 'left',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '0 28px 0 40px', gap: 22, opacity: card.coming ? 0.72 : 1,
+        display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'flex-start',
+        padding: '26px 30px 28px', gap: 18, opacity: card.coming ? 0.72 : 1,
       }}
     >
-      {/* Brief D18 §1 — TEXT column with a guaranteed min-width; the preview lives in its OWN
-          fixed-max-width column so it can never grow into the copy (the old overlap: the image
-          was height-driven with `width:auto`, so its width ballooned past the card). */}
-      <span style={{ flex: '1 1 0', minWidth: 130, display: 'flex', flexDirection: 'column' }}>
+      {/* TEXT block — title + description, stacked at the top. */}
+      <span style={{ flexShrink: 0, width: '100%', display: 'flex', flexDirection: 'column' }}>
         <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 'calc(40px * var(--type-scale))', lineHeight: 0.82, letterSpacing: 'var(--track-display)', color: 'var(--ink-100)', whiteSpace: 'pre-line' }}>{card.name}</span>
         <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 13, lineHeight: 1.3, color: 'rgba(229,225,219,0.5)', marginTop: 10, maxWidth: 320 }}>{card.desc}</span>
       </span>
-      {/* PREVIEW column — ~40% of the card, right-aligned; the image contains at its OWN aspect
-          (no forced AR), bounded by both this column's width and 66% of the card height. */}
-      <span style={{ flex: '0 0 40%', maxWidth: '40%', minWidth: 0, alignSelf: 'stretch', display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
-        <img src={card.preview} alt="" aria-hidden style={{ maxWidth: '100%', maxHeight: '66%', width: 'auto', height: 'auto', objectFit: 'contain', opacity: 0.78, display: 'block' }} />
+      {/* PREVIEW — BELOW the text, ~3× larger: fills the remaining card space (contain, own aspect). */}
+      <span style={{ flex: 1, minHeight: 0, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
+        <img src={card.preview} alt="" aria-hidden style={{ maxWidth: '100%', maxHeight: '100%', width: 'auto', height: 'auto', objectFit: 'contain', opacity: 0.78, display: 'block' }} />
       </span>
       {card.coming && (
         <span style={{ position: 'absolute', top: 14, right: 16, fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 9, color: 'rgba(229,225,219,0.75)', textTransform: 'uppercase', letterSpacing: '0.14em', background: 'rgba(0,0,0,0.5)', padding: '3px 7px', borderRadius: 2 }}>Coming</span>
