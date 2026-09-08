@@ -133,28 +133,40 @@ html, body {
   --track-display: -0.06em;
   --track-body: -0.02em;
   --track-wide: 0.2em;
-  /* Canvas + ivory ink ladder (rgba of #E5E1DB) — the new highlight system: what
-     was red is now --ink-100 against a dimmer field. */
-  --canvas: #050505;
-  --ink: #E5E1DB;
-  --ink-30:  rgba(229,225,219,0.30);
-  --ink-45:  rgba(229,225,219,0.45);
-  --ink-55:  rgba(229,225,219,0.55);
-  --ink-65:  rgba(229,225,219,0.65);
-  --ink-72:  rgba(229,225,219,0.72);
-  --ink-80:  rgba(229,225,219,0.80);
-  --ink-100: #E5E1DB;
+  /* ── Brief T1 Stage 1 — SEMANTIC COLOR TOKENS ───────────────────────────────
+     ONE ink value (--ink-rgb) and one canvas value (--canvas-rgb) drive every step via
+     rgb(var(--…-rgb) / a), so a theme swap (Stage 2: [data-theme="light"]) redefines just
+     the two RGB triplets. The ladder values below are byte-identical to the old rgba()
+     literals they replace — Stage 1's gate is zero visual change. Arbitrary in-component
+     ivory alphas migrate to rgb(var(--ink-rgb) / a) with the same alpha. */
+  --ink-rgb: 229 225 219;     /* #E5E1DB — the one ivory value */
+  --canvas-rgb: 5 5 5;        /* #050505 — the one canvas value */
+  --canvas: rgb(var(--canvas-rgb) / 1);
+  --ink: rgb(var(--ink-rgb) / 1);
+  --ink-30:  rgb(var(--ink-rgb) / 0.30);
+  --ink-45:  rgb(var(--ink-rgb) / 0.45);
+  --ink-55:  rgb(var(--ink-rgb) / 0.55);
+  --ink-65:  rgb(var(--ink-rgb) / 0.65);
+  --ink-72:  rgb(var(--ink-rgb) / 0.72);
+  --ink-80:  rgb(var(--ink-rgb) / 0.80);
+  --ink-100: rgb(var(--ink-rgb) / 1);
+  /* Dark card/panel/inset surfaces (== the common #0a0a0a / #141414 fills). Stage 2 gives
+     these a light-paper counterpart; viewing surfaces force the dark set back. */
+  --surface-1: #0a0a0a;
+  --surface-2: #141414;
+  /* Glass/blend recipe (pill bar, sheet scrims): a black wash + the ivory hairline. */
+  --glass-fill: rgb(var(--canvas-rgb) / 0.5);
+  --glass-border: rgb(var(--ink-rgb) / 0.22);
   /* Brief D4 §1 — content color for text/icons sitting ON a light/ivory (--ink) FILL.
-     The Brief-1 white→ivory sweep recolored text globally, turning buttons with an ivory
-     fill + ivory text invisible. Charcoal (matches --canvas) reads cleanly on ivory. */
+     Charcoal (matches --canvas) reads cleanly on ivory. In light theme → paper. */
   --on-ink: #050505;
   /* Hairlines (ivory-alpha; widths unchanged elsewhere). */
-  --hairline: rgba(229,225,219,0.22);
-  --hairline-strong: rgba(229,225,219,0.30);
+  --hairline: rgb(var(--ink-rgb) / 0.22);
+  --hairline-strong: rgb(var(--ink-rgb) / 0.30);
   /* Brief 2.2b — shared avatar/PFP frame border (half the old --hairline-strong). */
-  --avatar-frame: rgba(229,225,219,0.15);
+  --avatar-frame: rgb(var(--ink-rgb) / 0.15);
   /* The ONLY red permitted in the app — muted/desaturated, destructive+error ONLY
-     (delete affordances, error text). Never an accent/active/economics color. */
+     (delete affordances, error text). Never an accent/active/economics color. Stays on paper. */
   --danger: #931212;
   /* (Brief W5 §3 — --text-soften-* tokens retired; text renders crisp everywhere.) */
 
