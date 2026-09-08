@@ -10,7 +10,7 @@
 
 import { motion } from 'framer-motion';
 
-export type VmodeMode = 'theatre' | 'screening' | 'mirage' | 'feed';
+export type VmodeMode = 'theatre' | 'screening' | 'lightbox' | 'mirage' | 'feed';
 
 export interface VmodeCardData {
   mode: VmodeMode;
@@ -24,9 +24,12 @@ export interface VmodeCardData {
 // The four modes (Theatre / Screening Room / Mirage / Feed). Descriptions are the
 // desktop-appropriate copy (the mobile "Turn your phone." doesn't apply on desktop);
 // the visual recipe and preview assets are the shared mobile ones.
+// Order (Brief D18 §2): Theatre · Screening Room · Lightbox · Mirage · Feed — the three
+// focused modes on the top row, the two browsing modes below (reads as a clean 3+2 grid).
 export const VMODE_CARDS: VmodeCardData[] = [
   { mode: 'theatre',   name: 'Theatre',         desc: 'Full-screen theatrical viewing.',                      preview: '/viewing-modes-v2/theatre-preview.png',   aria: 'Theatre — full-screen theatrical viewing' },
   { mode: 'screening', name: 'Screening\nRoom', desc: 'The best work on Scope. Chosen by you.',               preview: '/viewing-modes-v2/screening-preview.png', aria: 'Screening Room — the best work on Scope, chosen by you' },
+  { mode: 'lightbox',  name: 'Lightbox',        desc: 'One post at a time. Full frame.',                      preview: '/Lightbox-viewing-mode-image.png',        aria: 'Lightbox — one post at a time, full frame' }, /* Brief D18 §2 — routes to the desktop home lightbox (DesktopHome.onSelectMode 'lightbox', lands on the most-recent post) */
   { mode: 'mirage',    name: 'Mirage',          desc: 'Everything in a collage. See what catches your eye.',  preview: '/viewing-modes-v2/mirage-preview.png',    aria: 'Mirage — everything in a collage' }, /* Brief M15 §3 — built on desktop now (was coming:true) */
   { mode: 'feed',      name: 'Feed',            desc: 'The standard home feed.',                              preview: '/viewing-modes-v2/feed-preview.png',      aria: 'Feed — the standard home feed' },
 ];
@@ -57,11 +60,18 @@ export default function VmodeCard({ card, index, reduced, selected, onSelect }: 
         padding: '0 28px 0 40px', gap: 22, opacity: card.coming ? 0.72 : 1,
       }}
     >
-      <span style={{ flex: '1 1 auto', minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+      {/* Brief D18 §1 — TEXT column with a guaranteed min-width; the preview lives in its OWN
+          fixed-max-width column so it can never grow into the copy (the old overlap: the image
+          was height-driven with `width:auto`, so its width ballooned past the card). */}
+      <span style={{ flex: '1 1 0', minWidth: 130, display: 'flex', flexDirection: 'column' }}>
         <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 'calc(40px * var(--type-scale))', lineHeight: 0.82, letterSpacing: 'var(--track-display)', color: 'var(--ink-100)', whiteSpace: 'pre-line' }}>{card.name}</span>
         <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 13, lineHeight: 1.3, color: 'rgba(229,225,219,0.5)', marginTop: 10, maxWidth: 320 }}>{card.desc}</span>
       </span>
-      <img src={card.preview} alt="" aria-hidden style={{ height: '58%', maxHeight: 150, aspectRatio: '140 / 59', width: 'auto', objectFit: 'contain', opacity: 0.78, flexShrink: 0, display: 'block' }} />
+      {/* PREVIEW column — ~40% of the card, right-aligned; the image contains at its OWN aspect
+          (no forced AR), bounded by both this column's width and 66% of the card height. */}
+      <span style={{ flex: '0 0 40%', maxWidth: '40%', minWidth: 0, alignSelf: 'stretch', display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
+        <img src={card.preview} alt="" aria-hidden style={{ maxWidth: '100%', maxHeight: '66%', width: 'auto', height: 'auto', objectFit: 'contain', opacity: 0.78, display: 'block' }} />
+      </span>
       {card.coming && (
         <span style={{ position: 'absolute', top: 14, right: 16, fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 9, color: 'rgba(229,225,219,0.75)', textTransform: 'uppercase', letterSpacing: '0.14em', background: 'rgba(0,0,0,0.5)', padding: '3px 7px', borderRadius: 2 }}>Coming</span>
       )}

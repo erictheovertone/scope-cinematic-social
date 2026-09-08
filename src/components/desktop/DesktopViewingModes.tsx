@@ -51,10 +51,11 @@ export default function DesktopViewingModes({ currentMode, onClose, onSelect }: 
             </button>
           </div>
 
-          {/* 2×2 grid — four cards share the remaining height/width to fill the viewport
-              (chosen over a single row: on a wide desktop a row makes each card a thin
-              letterbox; 2×2 keeps them substantial and balanced). */}
-          <div style={{ flex: 1, minHeight: 440, display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr', gap: 18 }}>
+          {/* Brief D18 §2 — FIVE cards now. Responsive grid: auto-fill minmax(300,1fr) →
+              THREE columns at 1440/1920 (a clean 3 + 2, the last row left-aligned) and TWO at
+              the 1024 narrowest desktop (2 + 2 + 1). Uniform card widths (auto-fill keeps the
+              empty track, so row-2 cards don't stretch). Rows share the height to fill the view. */}
+          <div style={{ flex: 1, minHeight: 440, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gridAutoRows: 'minmax(150px, 1fr)', gap: 18 }}>
             {VMODE_CARDS.map((card, i) => (
               <VmodeCard
                 key={card.mode}
