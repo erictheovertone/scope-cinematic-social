@@ -16,6 +16,14 @@ import { feedImage } from '@/lib/mediaUrl';
 import { useEconomy } from '@/components/EconomyProvider';
 import DesktopPostView from '@/components/desktop/DesktopPostView';
 import CreatorSearch from '@/components/desktop/CreatorSearch';
+import { useDragScroll } from '@/lib/useDragScroll';
+import { useReducedMotion } from 'framer-motion';
+
+// Brief D15 §1 — below this viewport height the fixed zones + a usable stage would leave no
+// room for MORE FROM, so IT (never the action row) yields/hides. Unreachable on real laptops
+// (a docked 1440×760 keeps a ~330px stage WITH MORE FROM visible); the shortest common laptop
+// heights are ≥ 720–800. Flagged per §1.
+const MORE_FROM_MIN_VH = 640;
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -59,6 +67,18 @@ export default function DesktopHomeLightbox({
   const [mfMc, setMfMc] = useState<Map<string, string>>(new Map());
   const mfScroll = useRef<HTMLDivElement | null>(null);
   const stripRef = useRef<HTMLDivElement | null>(null);
+  const reduced = !!useReducedMotion();
+  // Brief D15 §2 — click-drag scrolling on BOTH horizontal strips (top strip + MORE FROM).
+  useDragScroll(stripRef, { reduced });
+  useDragScroll(mfScroll, { reduced });
+  // Brief D15 §1 — short-viewport guard: hide MORE FROM below the threshold (keeps the action
+  // row). Keyed on viewport height (a stable input) so it can't oscillate.
+  const [vh, setVh] = useState(typeof window !== 'undefined' ? window.innerHeight : 900);
+  useEffect(() => {
+    const onResize = () => setVh(window.innerHeight);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
 
   // The top strip tracks the ACTIVE post: whenever it changes (arrows/keyboard/
   // strip tap), scroll its thumbnail to center. inline:'center' (chosen over
@@ -182,7 +202,7 @@ export default function DesktopHomeLightbox({
     // overflow:hidden → everything fits one screen, no scroll (frame 775:4).
     <div data-swipe-exclude style={{ position: 'fixed', top: 0, right: 0, bottom: 0, left: 'var(--rail-w)', zIndex: 140, background: '#000', overflow: 'hidden' }}>
       {/* header row seated 8px higher (top padding 18→10) */}
-      <div style={{ maxWidth: 'var(--shell-fluid)', margin: '0 auto', padding: '10px 24px 0', height: '100%', boxSizing: 'border-box' }}/* Brief D4 §2 — VIEWING surface: fills the window (minus rail), no cap. DesktopPostView's stage is flex:1 so it TAKES THE SURPLUS (AR 2.39 preserved, media object-contained — never stretched/cropped); the side panel stays fixed width:309. Split at 1440/1920/2560 stage≈972/1452/2092 (height 407/607/875 — fits standard monitors). MORE FROM + top strip are overflow-x rows of fixed-width cards → MORE items visible as it widens (cards keep character). NOTE: on a SHORT ultrawide (3440×1440) the 2.39 stage height nears the viewport — acceptable per Eric's grow ruling; a maxHeight guard is the follow-up if it ever clips. */>
+      <div style={{ maxWidth: 'var(--shell-fluid)', margin: '0 auto', padding: '10px 24px 0', height: '100%', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}/* Brief D15 §1 — HEIGHT-BOUND column: header + top strip (fixed) + the DesktopPostView group (flex:1, absorbs the surplus). The stage inside is the only flexible zone (contain-fit to its measured box), so the whole composition fits one screen at every viewport — no vertical page scroll, MORE FROM always visible. */>
 
         {/* ── FEED heading (page-title, 40px) + FOR YOU / FOLLOWING tabs (frame ~y38) ── */}
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 20, marginBottom: 12 }}>
@@ -222,8 +242,8 @@ export default function DesktopHomeLightbox({
               marginTop = extra air above the stage / panel top (frame rhythm, #4). ── */}
         {/* group (stage/panel/actions/creator/caption/MORE FROM) sits 15px lower
             than round 3 — marginTop 24→39; internal positioning unchanged. */}
-        <div style={{ marginTop: 39 }}>
-          <DesktopPostView posts={nav} index={pos} onStep={step} location={null} framing="lightbox" belowLeft={moreFromRow}
+        <div style={{ marginTop: 39, flex: 1, minHeight: 0 }}>{/* Brief D15 §1 — the flexible group: the stage inside absorbs the height budget. */}
+          <DesktopPostView posts={nav} index={pos} onStep={step} location={null} framing="lightbox" belowLeft={vh >= MORE_FROM_MIN_VH ? moreFromRow : undefined}
             /* Brief D6 — owner deleted this post: drop it from nav; close if it was the last. */
             onPostDeleted={(id) => {
               setNav((cur) => {

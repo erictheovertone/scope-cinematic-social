@@ -95,10 +95,14 @@ export default function DesktopPostView({
   // (posterWidth 1600) untouched.
   const stageRef = useRef<HTMLDivElement>(null);
   const [stageW, setStageW] = useState(1600);
+  // Brief D15 §1 — also measure the stage HEIGHT. In the lightbox the stage is the flexible
+  // zone (flex:1) that absorbs the height budget, so the media is fit to the MEASURED box
+  // (contain), not derived from its natural size.
+  const [stageH, setStageH] = useState(0);
   useEffect(() => {
     const el = stageRef.current;
     if (!el || typeof ResizeObserver === 'undefined') return;
-    const measure = () => { const w = el.clientWidth; if (w > 0) setStageW(w); };
+    const measure = () => { const w = el.clientWidth, h = el.clientHeight; if (w > 0) setStageW(w); if (h > 0) setStageH(h); };
     measure();
     const ro = new ResizeObserver(measure);
     ro.observe(el);
@@ -193,6 +197,12 @@ export default function DesktopPostView({
   const isVideo = post?.media_type === 'video';
   const fcCount = fcHolders?.length ?? 0;
   const STAGE_AR = 2.39;
+  // Brief D15 §1 — CONTAIN the media (AR = `ar`) inside the MEASURED lightbox stage box
+  // (any AR): the largest AR-locked box that fits both dimensions. Deterministic, so it never
+  // overflows the height budget. Profile framing keeps the width-driven 2.39 letterbox.
+  const fit = (lightbox && stageW > 0 && stageH > 0)
+    ? (() => { const w = Math.min(stageW, stageH * ar); return { width: Math.round(w), height: Math.round(w / ar) }; })()
+    : null;
 
   // Brief D6 — OWNERSHIP (the identity landmine): posts.user_id is the SUPABASE UUID,
   // and viewer.uuid is that same users.id (getUserByPrivyId → getProfile). Compare
@@ -210,13 +220,13 @@ export default function DesktopPostView({
   // width (3C's media-anchoring moved them between ratios, under the cursor).
 
   return (
-    <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', paddingBottom: lightbox ? 0 : 80, marginTop: 0 }}> {/* frame seat ~y299 (measured 319 at mt12 — the last 20 trimmed here + the 3-box row) */}
+    <div style={{ display: 'flex', gap: 12, alignItems: lightbox ? 'stretch' : 'flex-start', paddingBottom: lightbox ? 0 : 80, marginTop: 0, ...(lightbox ? { height: '100%', minHeight: 0 } : {}) }}> {/* Brief D15 §1 — lightbox: the row fills the height budget (stretch) so both columns run its full height; profile: unchanged. */}
       {/* ═══ LEFT: the stage + below-media rows ═══ */}
       {/* FRAME GEOMETRY (round 3): narrow ~20px ARROW POCKETS hugging the media
           (frame x86/x1083 vs stage x103/1077); stage right edge ~30px from the
           panel (20px pocket + 12px gap). The media is the star. */}
-      <div style={{ flex: 1, minWidth: 0, padding: lightbox ? '0 14px' : '0 20px', marginTop: lightbox ? 0 : 60, ...(lightbox ? { display: 'flex', flexDirection: 'column', minHeight: 600 } : {}) }}> {/* profile: media midline = panel midline (+60). lightbox: tighter pockets (wider stage), stage TOP = panel top, column runs the full panel height (600) so MORE FROM bottom-aligns lower. */}
-        <div style={{ position: 'relative' }}>
+      <div style={{ flex: 1, minWidth: 0, padding: lightbox ? '0 14px' : '0 20px', marginTop: lightbox ? 0 : 60, ...(lightbox ? { display: 'flex', flexDirection: 'column', minHeight: 0 } : {}) }}> {/* Brief D15 §1 — lightbox: a height-bound flex column (minHeight:0 so the flexible STAGE can shrink); the fixed rows below take their natural height, the stage absorbs the rest. Profile: unchanged. */}
+        <div style={lightbox ? { position: 'relative', flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' } : { position: 'relative' }}>
           {/* prev / next — Batang > glyphs, mid-media */}
           {/* HIT TARGET NEVER MOVES: 44px outer buttons, stage-anchored seats,
               data-no-pop (no press scale); feedback = brightness on the inner
@@ -240,8 +250,10 @@ export default function DesktopPostView({
               (the #8 binding-dimension fix — a 2.75 box pillarboxed them small). */}
           {/* Brief P3 §1 — click the stage toggles pause (desktop). No backdrop-close here, so
               no collision; prev/next are separate absolute buttons. */}
-          <motion.div ref={stageRef} layoutId={`dpost-${postId}`} transition={{ layout: { duration: 0.18, ease: 'easeOut' } }} onClick={isVideo ? () => setUserPaused((p) => !p) : undefined} style={{ width: '100%', aspectRatio: '2.39 / 1', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', cursor: isVideo ? 'pointer' : 'default' }}>
-            <div style={{ position: 'relative', ...(ar >= 2.39 ? { width: '100%' } : { height: '100%' }), aspectRatio: `${ar}`, overflow: 'hidden', background: '#0a0a0a' }}>
+          <motion.div ref={stageRef} layoutId={`dpost-${postId}`} transition={{ layout: { duration: 0.18, ease: 'easeOut' } }} onClick={isVideo ? () => setUserPaused((p) => !p) : undefined} style={{ ...(lightbox ? { flex: 1, minHeight: 0, width: '100%' } : { width: '100%', aspectRatio: '2.39 / 1' }), background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', cursor: isVideo ? 'pointer' : 'default' }}>{/* Brief D15 §1 — lightbox stage is the flexible zone (flex:1); the media is contained in the measured box. Profile: the fixed 2.39 letterbox, unchanged. */}
+            <div style={lightbox
+              ? (fit ? { position: 'relative', width: fit.width, height: fit.height, overflow: 'hidden', background: '#0a0a0a' } : { position: 'relative', ...(ar >= STAGE_AR ? { width: '100%' } : { height: '100%' }), aspectRatio: `${ar}`, overflow: 'hidden', background: '#0a0a0a' })
+              : { position: 'relative', ...(ar >= 2.39 ? { width: '100%' } : { height: '100%' }), aspectRatio: `${ar}`, overflow: 'hidden', background: '#0a0a0a' }}>
               {isVideo ? (
                 <>
                 <GradedVideo
@@ -358,9 +370,9 @@ export default function DesktopPostView({
           </button>
         )}
 
-        {/* caption + location·date */}
+        {/* caption + location·date. Brief D15 §1 — lightbox: caption clamps to 2 lines so it's a FIXED zone in the height budget. */}
         {typeof post?.caption === 'string' && post.caption && (
-          <p style={{ ...SKR, fontSize: 12, color: 'rgba(229,225,219,0.5)', lineHeight: 1.07, letterSpacing: 'var(--track-body)', margin: lightbox ? '10px 0 0' : '12px 0 0', maxWidth: 440 }}>{post.caption}</p>
+          <p style={{ ...SKR, fontSize: 12, color: 'rgba(229,225,219,0.5)', lineHeight: 1.07, letterSpacing: 'var(--track-body)', margin: lightbox ? '10px 0 0' : '12px 0 0', maxWidth: 440, ...(lightbox ? { display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' } : {}) }}>{post.caption}</p>
         )}
         {(location || (lightbox && !!post?.created_at)) && (
           <p style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 8, color: 'rgba(229,225,219,0.5)', textTransform: 'uppercase', letterSpacing: 'var(--track-body)', margin: '10px 0 0', display: 'flex', alignItems: 'center', gap: 5 }}>
@@ -369,12 +381,12 @@ export default function DesktopPostView({
             {lightbox && !!post?.created_at && <span>{new Date(post.created_at as string).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>}
           </p>
         )}
-        {belowLeft && <div style={{ marginTop: lightbox ? 'auto' : undefined, paddingTop: 14 }}>{belowLeft}</div>}
+        {belowLeft && <div style={{ paddingTop: 14, ...(lightbox ? { flexShrink: 0 } : {}) }}>{belowLeft}</div>}{/* Brief D15 §1 — lightbox: MORE FROM is a FIXED zone (the STAGE flex:1 above absorbs the surplus); was marginTop:auto which fought the flexible stage. */}
       </div>
 
       {/* ═══ RIGHT PANEL (node 69:196 — 309×573, transparent, softened hairline
           border, no radius) ═══ */}
-      <div style={{ position: 'relative', width: 309, flexShrink: 0, height: lightbox ? 600 : 573, marginTop: lightbox ? 0 : -25, background: 'transparent', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ position: 'relative', width: 309, flexShrink: 0, height: lightbox ? '100%' : 573, marginTop: lightbox ? 0 : -25, background: 'transparent', display: 'flex', flexDirection: 'column' }}>{/* Brief D15 §1 — lightbox: the panel fills the row height (stretch) and its comments body (flex:1 overflowY:auto) scrolls internally, so it never drives page height. Was a fixed 600. */}
         {/* Border layer — 0.25px ivory, ~30%, softened 0.9px (ledger-recipe kin, no radius). */}
         <div aria-hidden style={{ position: 'absolute', inset: 0, border: '0.25px solid #E5E1DB', opacity: 0.3, filter: 'blur(0.9px)', pointerEvents: 'none' }} />
 
