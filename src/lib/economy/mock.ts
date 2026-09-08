@@ -53,54 +53,26 @@ const HANDLES = [
   'kit', 'ozu', 'wren', 'iko', 'pax', 'juno', 'echo', 'cira',
 ];
 
-function avatarFor(seed: number): string {
-  // Stable placeholder avatar; later replaced by real profile_image_url.
-  return `https://api.dicebear.com/7.x/thumbs/svg?seed=${seed}`;
-}
-
-function buildSlots(postId: string): { slots: Slot[]; openCount: number } {
-  const r = rng(hash('slots:' + postId));
-  // 4..10 founding slots filled; the rest open.
-  const filled = 4 + Math.floor(r() * 7);
-  const slots: Slot[] = [];
-  for (let i = 0; i < filled; i++) {
-    const s = hash(`${postId}:${i}`);
-    slots.push({
-      position: i + 1,
-      userId: `mock-user-${s % 100000}`,
-      handle: HANDLES[s % HANDLES.length],
-      avatarUrl: avatarFor(s),
-      // ~75% still holding; the rest departed (dimmed in UI).
-      holding: r() > 0.25,
-    });
-  }
-  return { slots, openCount: 10 - filled };
-}
+// Brief X6 — buildSlots/avatarFor (fabricated founder positions for getPostMarket) were
+// REMOVED with the fake market. Founder/provenance data is real-indexer-only; never mocked.
 
 function money(r: () => number, min: number, max: number): number {
   return Math.round((min + r() * (max - min)) * 100) / 100;
 }
 
 export const mockEconomy: EconomyApi = {
-  async getPostMarket(postId: string): Promise<PostMarket> {
-    const r = rng(hash('market:' + postId));
-    const priceUsd = money(r, 0.4, 9.5);
-    // ~35% of the time the viewer holds a founding position (≥ FOUNDING_AMOUNT
-    // pieces); otherwise a small/zero casual holding.
-    const viewerFounding = r() > 0.65;
-    const collectedByViewer = viewerFounding
-      ? FOUNDING_AMOUNT + Math.floor(r() * 30)
-      : (r() > 0.6 ? 1 + Math.floor(r() * 6) : 0);
+  // Brief X6 — NO FABRICATED MARKET. This used to return price × supply as a market cap,
+  // random holders, and random founder slots — fabricated financial values on a live-money
+  // app. It now returns the honest EMPTY market (the dash-rule state) so nothing reachable
+  // through this boundary — the live real-economy's unminted branch, the default context, or
+  // tests — can ever put a fake market cap / holder count / founder position on screen. Real
+  // markets come only from realPostMarket (live Zora reads) for minted coins.
+  async getPostMarket(_postId: string): Promise<PostMarket> {
     return {
-      priceUsd,
-      mcUsd: Math.round(priceUsd * PIECE_SUPPLY),
-      live: false, // mocked preview data — keeps the MOCK DATA banner on
-      supply: PIECE_SUPPLY,
-      holders: 8 + Math.floor(r() * 240),
-      collectedByViewer,
-      foundingAmount: FOUNDING_AMOUNT,
-      viewerFounding,
-      firstCut: buildSlots(postId),
+      priceUsd: null, mcUsd: 0, live: false, marketResolved: true,
+      supply: PIECE_SUPPLY, holders: 0, collectedByViewer: 0,
+      foundingAmount: FOUNDING_AMOUNT, viewerFounding: false,
+      firstCut: { slots: [], openCount: FOUNDING_AMOUNT },
     };
   },
 

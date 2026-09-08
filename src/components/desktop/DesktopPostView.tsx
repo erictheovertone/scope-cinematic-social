@@ -151,9 +151,12 @@ export default function DesktopPostView({
         if (!dead) setAvatars(new Map((data ?? []).filter((p) => p.profile_image_url).map((p) => [p.username as string, p.profile_image_url as string])));
       }
     }).catch(() => {});
-    economy.getPostMarket(postId).then((m) => { if (!dead) setMarket({ mcUsd: m.mcUsd, holders: m.holders, live: m.live }); }).catch(() => {});
+    // Brief X6 — gate the market read on the COIN (the dash rule): unminted posts have no
+    // economic data, so we never even fetch. The render sites below already gate on coinAddr;
+    // this stops a wasted read (and, defensively, any fabricated value) for unminted posts.
+    if (coinAddr) economy.getPostMarket(postId).then((m) => { if (!dead) setMarket({ mcUsd: m.mcUsd, holders: m.holders, live: m.live }); }).catch(() => {});
     return () => { dead = true; };
-  }, [postId, economy]);
+  }, [postId, economy, coinAddr]);
 
   // likes.user_id holds the PRIVY DID (the mobile comparison) — NOT the uuid.
   const isLiked = useMemo(() => !!user && likes.some((l) => l.user_id === user.id), [likes, user]);

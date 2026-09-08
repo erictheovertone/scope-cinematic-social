@@ -315,7 +315,16 @@ export function createRealEconomy(
     ...mockEconomy,
     async getPostMarket(postId: string): Promise<PostMarket> {
       const coinAddress = await coinAddressFor(postId);
-      if (!coinAddress) return mockEconomy.getPostMarket(postId);
+      // Brief X6 — UNMINTED posts have NO economic data (the dash rule). NEVER delegate to
+      // the mock here: mockEconomy.getPostMarket fabricated a market cap ($price × supply),
+      // holders, and founder slots — fabricated financials on a live-money app. An unminted
+      // post now returns the honest EMPTY market (mcUsd 0, price null → surfaces show "—").
+      if (!coinAddress) return {
+        priceUsd: null, mcUsd: 0, live: false, marketResolved: true,
+        supply: PIECE_SUPPLY, holders: 0, collectedByViewer: 0,
+        foundingAmount: FOUNDING_AMOUNT, viewerFounding: false,
+        firstCut: { slots: [], openCount: FOUNDING_AMOUNT },
+      };
       return realPostMarket(coinAddress, viewerAddress);
     },
 
