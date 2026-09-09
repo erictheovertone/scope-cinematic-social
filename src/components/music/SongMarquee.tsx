@@ -14,7 +14,7 @@ import { useState, useRef, useLayoutEffect } from "react";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const EDGE_FADE =
-  "linear-gradient(to right, transparent 0, #000 12px, #000 calc(100% - 12px), transparent 100%)";
+  "linear-gradient(to right, transparent 0, var(--black) 12px, var(--black) calc(100% - 12px), transparent 100%)";
 const MARQUEE_GAP = 28;    // px between the two title copies (the seamless-wrap gap)
 const MARQUEE_PXPS = 20;   // ~20px/s scroll speed
 const MARQUEE_DELAY_S = 1; // settle before the scroll starts

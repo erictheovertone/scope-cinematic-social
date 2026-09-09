@@ -256,8 +256,8 @@ export default function MembershipSheet({ visible, onClose, onSuccess, isPaidMem
           child; a dedicated NON-fixed flex child does the scrolling. The
           iframe auto-sizes to content and fills the centred column cleanly. */}
       {embeddedOpen && typeof document !== "undefined" && createPortal(
-        <div data-swipe-exclude style={{ position: "fixed", inset: 0, width: "100dvw", height: "100dvh", zIndex: 600, backgroundColor: "#000", display: "flex", flexDirection: "column", overflow: "hidden", paddingTop: "env(safe-area-inset-top, 0px)" }}>
-          <div style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 18px", borderBottom: "1px solid rgb(var(--ink-rgb) / 0.08)", background: "#000" }}>
+        <div data-swipe-exclude style={{ position: "fixed", inset: 0, width: "100dvw", height: "100dvh", zIndex: 600, backgroundColor: "var(--black)", display: "flex", flexDirection: "column", overflow: "hidden", paddingTop: "env(safe-area-inset-top, 0px)" }}>
+          <div style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 18px", borderBottom: "1px solid rgb(var(--ink-rgb) / 0.08)", background: "var(--black)" }}>
             <span style={{ ...BOLD, fontSize: 'var(--fs-12)', color: "var(--ink-100)", textTransform: "uppercase", letterSpacing: "0.06em" }}>SCOPE PRO</span>
             <button onClick={closeEmbedded} aria-label="Cancel" style={{ background: "transparent", border: "none", cursor: "pointer", padding: 6, lineHeight: 0 }}>
               <svg width="19.5" height="19.5" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="var(--ink-100)" strokeWidth="1.5" strokeLinecap="round" /></svg>
@@ -282,7 +282,7 @@ export default function MembershipSheet({ visible, onClose, onSuccess, isPaidMem
         onClick={resetAndClose}
         style={{
           position: "fixed", inset: 0,
-          backgroundColor: "rgba(0,0,0,0.9)",
+          backgroundColor: "rgb(var(--black-rgb) / 0.9)",
           zIndex: 500,
           opacity: visible ? 1 : 0,
           pointerEvents: visible ? "auto" : "none",

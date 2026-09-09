@@ -61,7 +61,7 @@ function MirageLightbox({
         zIndex: 70,
         // Brief M10a §2 — focus dim lightened ~×0.8 (0.96 → 0.77) so the collage stays
         // legible behind the focused item: the visible collage IS the return affordance.
-        background: visible ? "rgba(0,0,0,0.77)" : "rgba(0,0,0,0)",
+        background: visible ? "rgb(var(--black-rgb) / 0.77)" : "rgb(var(--black-rgb) / 0)",
         transition: "background 200ms ease",
         overflowY: "auto",
       }}
@@ -313,7 +313,7 @@ export default function MirageView({ onClose, desktop = false }: { onClose: () =
           // mobile is full-bleed inset:0 (unchanged).
           top: 0, right: 0, bottom: 0, left: desktop ? 'var(--rail-w)' : 0,
           zIndex: 45,
-          background: "#000",
+          background: "var(--black)",
           overflowY: "auto",
           animation: exiting ? "mirage-view-out 380ms ease-in both" : "none",
         }}
@@ -354,7 +354,7 @@ export default function MirageView({ onClose, desktop = false }: { onClose: () =
                 objectFit: "contain",
                 flexShrink: 0,
                 display: "block",
-                filter: "drop-shadow(0 0 4px rgba(0,0,0,0.6))",
+                filter: "drop-shadow(0 0 4px rgb(var(--black-rgb) / 0.6))",
                 opacity: 1,
               }}
             />

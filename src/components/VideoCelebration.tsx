@@ -48,7 +48,7 @@ export default function VideoCelebration({ videoSrc, badgeSrc, onDone, renderFal
   if (typeof document === 'undefined') return null;
 
   return createPortal(
-    <div data-swipe-exclude style={{ position: 'fixed', inset: 0, zIndex: 1200, background: '#000', overflow: 'hidden' }}>
+    <div data-swipe-exclude style={{ position: 'fixed', inset: 0, zIndex: 1200, background: 'var(--black)', overflow: 'hidden' }}>
       {/* Mounted from the gate onward with preload="auto" so the reveal starts with no
           buffering pause after the tap. Shown only once playing. */}
       <video
@@ -58,7 +58,7 @@ export default function VideoCelebration({ videoSrc, badgeSrc, onDone, renderFal
         preload="auto"
         onEnded={done}
         onError={() => setMode('fallback')}
-        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', background: '#000', opacity: mode === 'playing' ? 1 : 0 }}
+        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', background: 'var(--black)', opacity: mode === 'playing' ? 1 : 0 }}
       />
 
       {mode === 'gate' && (

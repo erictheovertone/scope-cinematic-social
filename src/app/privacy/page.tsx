@@ -26,7 +26,7 @@ export default function PrivacyPage() {
     // the same fixed/inset-0/overflow-y-auto pattern Settings uses. bg-black
     // class required (the globals rule hides fixed divs without it).
     <div className="bg-black" style={{ position: "fixed", inset: 0, overflowY: "auto", WebkitOverflowScrolling: "touch" }}>
-      <div style={{ background: "#000", minHeight: "100%", padding: "calc(20px + env(safe-area-inset-top, 0px)) 20px calc(60px + env(safe-area-inset-bottom, 0px))", maxWidth: 640, margin: "0 auto" }}>
+      <div style={{ background: "var(--black)", minHeight: "100%", padding: "calc(20px + env(safe-area-inset-top, 0px)) 20px calc(60px + env(safe-area-inset-bottom, 0px))", maxWidth: 640, margin: "0 auto" }}>
       <Link href="/" style={{ ...SKR, fontSize: 12, color: "rgb(var(--ink-rgb) / 0.5)", textDecoration: "none", textTransform: "uppercase", letterSpacing: "0.08em" }}>← SCOPE</Link>
       <h1 style={{ ...SKB, fontSize: 22, color: "var(--ink-100)", textTransform: "uppercase", letterSpacing: "0.06em", margin: "22px 0 4px" }}>Privacy Policy</h1>
       <p style={{ ...SKR, fontSize: 11, color: "rgb(var(--ink-rgb) / 0.4)", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 28px" }}>DRAFT · LAST UPDATED JULY 2026</p>

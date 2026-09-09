@@ -98,7 +98,7 @@ export default function DesktopRail() {
       aria-label="Primary"
       style={{
         position: 'fixed', left: 0, top: 0, bottom: 0, width: 'var(--rail-w)', zIndex: 80,
-        background: '#000', borderRight: '0.25px solid rgb(var(--ink-rgb) / 0.35)',
+        background: 'var(--black)', borderRight: '0.25px solid rgb(var(--ink-rgb) / 0.35)',
         display: 'flex', flexDirection: 'column', alignItems: 'center',
       }}
     >

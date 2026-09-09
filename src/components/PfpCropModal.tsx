@@ -163,7 +163,7 @@ export default function PfpCropModal({ file, onCancel, onConfirm }: Props) {
   return createPortal(
     <div
       data-swipe-exclude
-      style={{ position: 'fixed', inset: 0, zIndex: 700, background: 'rgba(0,0,0,0.94)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 'calc(env(safe-area-inset-top,0px) + 20px) 20px calc(env(safe-area-inset-bottom,0px) + 20px)' }}
+      style={{ position: 'fixed', inset: 0, zIndex: 700, background: 'rgb(var(--black-rgb) / 0.94)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 'calc(env(safe-area-inset-top,0px) + 20px) 20px calc(env(safe-area-inset-bottom,0px) + 20px)' }}
     >
       <p style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'rgb(var(--ink-rgb) / 0.6)', textTransform: 'uppercase', letterSpacing: '0.14em', margin: '0 0 18px' }}>DRAG & PINCH TO FRAME</p>
 
@@ -172,7 +172,7 @@ export default function PfpCropModal({ file, onCancel, onConfirm }: Props) {
         onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}
         onMouseDown={onMouseDown} onMouseMove={onMouseMove} onMouseUp={onMouseUp} onMouseLeave={onMouseUp}
         onWheel={onWheel}
-        style={{ position: 'relative', width: FRAME, height: FRAME, overflow: 'hidden', touchAction: 'none', cursor: 'grab', background: '#000', border: '1px solid rgb(var(--ink-rgb) / 0.25)' }}
+        style={{ position: 'relative', width: FRAME, height: FRAME, overflow: 'hidden', touchAction: 'none', cursor: 'grab', background: 'var(--black)', border: '1px solid rgb(var(--ink-rgb) / 0.25)' }}
       >
         {nat && (
           <img
@@ -183,7 +183,7 @@ export default function PfpCropModal({ file, onCancel, onConfirm }: Props) {
           />
         )}
         {/* circular guide so the user frames for the round avatar */}
-        <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', boxShadow: '0 0 0 9999px rgba(0,0,0,0.35)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', boxShadow: '0 0 0 9999px rgb(var(--black-rgb) / 0.35)', pointerEvents: 'none' }} />
       </div>
 
       <div style={{ display: 'flex', gap: 12, marginTop: 22, width: FRAME }}>

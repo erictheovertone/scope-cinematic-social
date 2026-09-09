@@ -38,7 +38,7 @@ export default function DesktopViewingModes({ currentMode, onClose, onSelect }: 
 
   return createPortal(
     <div data-swipe-exclude style={{ position: 'fixed', inset: 0, zIndex: 200 }}>
-      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.92)', opacity: mounted ? 1 : 0, transition: reduced ? 'none' : 'opacity 220ms ease' }} />
+      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgb(var(--black-rgb) / 0.92)', opacity: mounted ? 1 : 0, transition: reduced ? 'none' : 'opacity 220ms ease' }} />
       {/* content panel — offset right of the rail (rail stays visible), scrollable */}
       <div style={{ position: 'absolute', top: 0, left: 'var(--rail-w)', right: 0, bottom: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
         <div style={{ flex: 1, width: '100%', maxWidth: 1200, margin: '0 auto', padding: '56px 56px 64px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', opacity: mounted ? 1 : 0, transform: mounted ? 'translateY(0)' : 'translateY(10px)', transition: reduced ? 'none' : 'opacity 320ms ease, transform 320ms cubic-bezier(0.16,0.84,0.3,1)' }}>

@@ -29,7 +29,7 @@ export default function FramesPreview({ selectedItems, layoutConfig, previewWidt
       style={{
         width: previewWidth,
         height: previewHeight,
-        background: "#000",
+        background: "var(--black)",
         position: "relative",
         overflow: "hidden",
         flexShrink: 0,
@@ -50,7 +50,7 @@ export default function FramesPreview({ selectedItems, layoutConfig, previewWidt
                 style={{
                   width: cellW,
                   height: cellH,
-                  background: "#1A1A1A",
+                  background: "var(--surface-3)",
                   border: "0.5px solid rgb(var(--ink-rgb) / 0.12)",
                   overflow: "hidden",
                   flexShrink: 0,
@@ -78,7 +78,7 @@ export default function FramesPreview({ selectedItems, layoutConfig, previewWidt
           left: 0,
           width: previewWidth,
           height: bandH,
-          background: "#000",
+          background: "var(--black)",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",

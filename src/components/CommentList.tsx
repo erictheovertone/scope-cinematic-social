@@ -561,7 +561,7 @@ export function ReplyComposer({
       }}
     >
       {/* Light dim over the still-visible page — tap-above dismisses. */}
-      <div onClick={attemptClose} style={{ position: "absolute", inset: 0, background: `rgba(0,0,0,${isDesktop ? 0.28 : 0.35})`, opacity: mounted ? 1 : 0, transition: "opacity 0.26s ease", pointerEvents: "auto" }} />
+      <div onClick={attemptClose} style={{ position: "absolute", inset: 0, background: `rgb(var(--black-rgb) / ${isDesktop ? 0.28 : 0.35})`, opacity: mounted ? 1 : 0, transition: "opacity 0.26s ease", pointerEvents: "auto" }} />
 
       {/* The sheet */}
       <div
@@ -572,7 +572,7 @@ export function ReplyComposer({
           background: "#0c0c0c",
           borderTop: isDesktop ? "1px solid rgb(var(--ink-rgb) / 0.1)" : "1px solid rgb(var(--ink-rgb) / 0.1)",
           border: isDesktop ? "1px solid rgb(var(--ink-rgb) / 0.1)" : undefined,
-          boxShadow: "0 -18px 60px rgba(0,0,0,0.6)",
+          boxShadow: "0 -18px 60px rgb(var(--black-rgb) / 0.6)",
           padding: isDesktop ? "14px 18px 18px" : "8px 18px calc(18px + env(safe-area-inset-bottom))",
           display: "flex", flexDirection: "column", gap: 12,
           transform: sheetTransform,

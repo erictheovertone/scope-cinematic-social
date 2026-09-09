@@ -146,7 +146,7 @@ export default function FramesSheet({
       {/* Overlay */}
       <div
         onClick={onClose}
-        style={{ position: "fixed", inset: 0, zIndex: 90, background: "rgba(0,0,0,0.75)" }}
+        style={{ position: "fixed", inset: 0, zIndex: 90, background: "rgb(var(--black-rgb) / 0.75)" }}
       />
 
       {/* Sheet */}
@@ -219,7 +219,7 @@ export default function FramesSheet({
                     style={{
                       position: "relative",
                       aspectRatio: "1 / 1",
-                      background: "#1A1A1A",
+                      background: "var(--surface-3)",
                       overflow: "hidden",
                       cursor: "pointer",
                       outline: isSelected ? "2px solid var(--ink-100)" : "none",
@@ -285,7 +285,7 @@ export default function FramesSheet({
         {exporting && (
           <div
             style={{
-              position: "absolute", inset: 0, background: "rgba(0,0,0,0.85)",
+              position: "absolute", inset: 0, background: "rgb(var(--black-rgb) / 0.85)",
               display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
               gap: 12, zIndex: 10,
             }}

@@ -126,7 +126,7 @@ export default function MusicPicker({
   const pick = (t: LibraryTrack) => { try { audioRef.current?.pause(); } catch {} onSelect(t); };
 
   return createPortal(
-    <div style={{ position: "fixed", inset: 0, zIndex: 1300, background: "#000", display: "flex", flexDirection: "column", maxWidth: "30rem", margin: "0 auto" }}>
+    <div style={{ position: "fixed", inset: 0, zIndex: 1300, background: "var(--black)", display: "flex", flexDirection: "column", maxWidth: "30rem", margin: "0 auto" }}>
       {/* audio engine (one, single-at-a-time) */}
       <audio ref={audioRef} onEnded={() => { setPlaying(null); setProgress(0); }} onTimeUpdate={() => { const a = audioRef.current; if (a && a.duration && isFinite(a.duration)) setProgress(a.currentTime / a.duration); }} />
 
@@ -150,7 +150,7 @@ export default function MusicPicker({
             const on = chips.includes(w);
             return (
               <button key={w} onClick={() => toggleChip(w)}
-                style={{ ...SKR, fontSize: "var(--fs-7)", color: on ? "#000" : "rgb(var(--ink-rgb) / 0.7)", background: on ? "var(--ink-100)" : "transparent", border: `1px solid ${on ? "var(--ink-100)" : HAIR}`, padding: "4px 9px", cursor: "pointer", textTransform: "lowercase" }}>
+                style={{ ...SKR, fontSize: "var(--fs-7)", color: on ? "var(--black)" : "rgb(var(--ink-rgb) / 0.7)", background: on ? "var(--ink-100)" : "transparent", border: `1px solid ${on ? "var(--ink-100)" : HAIR}`, padding: "4px 9px", cursor: "pointer", textTransform: "lowercase" }}>
                 {w}
               </button>
             );

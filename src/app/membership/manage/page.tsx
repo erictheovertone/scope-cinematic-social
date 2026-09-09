@@ -94,7 +94,7 @@ export default function ManageMembershipPage() {
 
   if (cancelled) {
     return (
-      <div style={{ backgroundColor: '#000', minHeight: '100dvh', padding: '48px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ backgroundColor: 'var(--black)', minHeight: '100dvh', padding: '48px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
         <p style={{ ...SKB, fontSize: 'var(--fs-18)', color: 'var(--ink-100)', textTransform: 'uppercase', textAlign: 'center', margin: '0 0 12px' }}>MEMBERSHIP CANCELLED</p>
         <p style={{ ...SKR, fontSize: 'var(--fs-12)', color: 'rgb(var(--ink-rgb) / 0.5)', textAlign: 'center', margin: '0 0 32px', lineHeight: 1.6 }}>
           Your Pro access continues until the end of your billing period.
@@ -107,7 +107,7 @@ export default function ManageMembershipPage() {
   }
 
   return (
-    <div style={{ backgroundColor: '#000', minHeight: '100dvh', padding: '0 0 80px' }}>
+    <div style={{ backgroundColor: 'var(--black)', minHeight: '100dvh', padding: '0 0 80px' }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', padding: '16px', borderBottom: '1px solid rgb(var(--ink-rgb) / 0.08)' }}>
         <button onClick={() => router.back()} style={{ background: 'transparent', border: 'none', cursor: 'pointer', marginRight: 12, padding: 4 }}>

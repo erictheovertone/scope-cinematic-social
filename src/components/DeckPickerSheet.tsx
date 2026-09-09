@@ -107,7 +107,7 @@ export default function DeckPickerSheet({ postId, onClose, onAdded }: Props) {
         className="bg-black"
         style={{
           position: "fixed", inset: 0, zIndex: 120,
-          background: "rgba(0,0,0,0.6)",
+          background: "rgb(var(--black-rgb) / 0.6)",
           opacity: visible ? 1 : 0,
           transition: "opacity 250ms ease",
         }}
@@ -120,7 +120,7 @@ export default function DeckPickerSheet({ postId, onClose, onAdded }: Props) {
         style={{
           position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 121,
           maxWidth: '30rem', margin: "0 auto",
-          background: "#000",
+          background: "var(--black)",
           borderTop: "1px solid rgb(var(--ink-rgb) / 0.1)",
           padding: "16px 0 calc(40px + var(--safe-bottom))", /* X3 §3 — bottom sheet: clear the home indicator */
           maxHeight: "60vh",
@@ -167,7 +167,7 @@ export default function DeckPickerSheet({ postId, onClose, onAdded }: Props) {
                 }}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <div style={{ width: 32, height: 32, background: "#1a1a1a", flexShrink: 0, overflow: "hidden" }}>
+                  <div style={{ width: 32, height: 32, background: "var(--surface-3)", flexShrink: 0, overflow: "hidden" }}>
                     {deck.cover_image_url && (
                       <img src={deck.cover_image_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                     )}

@@ -52,7 +52,7 @@ export default function FirstCutPage() {
   // Off-flag: this surface does not exist.
   if (!economyPreviewEnabled()) {
     return (
-      <div style={{ minHeight: '100dvh', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ minHeight: '100dvh', background: 'var(--black)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <button onClick={() => router.push('/')} style={{ ...SKB, fontSize: 'var(--fs-11)', color: 'rgb(var(--ink-rgb) / 0.5)', background: 'transparent', border: 'none', textTransform: 'uppercase', letterSpacing: '0.1em', cursor: 'pointer' }}>
           ← HOME
         </button>
@@ -64,7 +64,7 @@ export default function FirstCutPage() {
   const holding = positions.filter((p) => p.active).length;
 
   return (
-    <div style={{ minHeight: '100dvh', background: '#000', maxWidth: '30rem', margin: '0 auto', padding: '20px 18px 60px' }}>
+    <div style={{ minHeight: '100dvh', background: 'var(--black)', maxWidth: '30rem', margin: '0 auto', padding: '20px 18px 60px' }}>
       <div style={{ ...SKB, fontSize: 'var(--fs-7)', letterSpacing: '0.2em', color: 'var(--ink-100)', textTransform: 'uppercase', marginBottom: 16 }}>
         ECONOMY PREVIEW · MOCK DATA
       </div>

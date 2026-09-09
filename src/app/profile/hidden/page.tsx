@@ -69,7 +69,7 @@ export default function HiddenPosts() {
             {hiddenPosts.map((post) => (
               <div
                 key={post.id}
-                className="bg-[#1A1A1A] border border-[#333333] rounded-lg p-4 mb-4"
+                className="bg-[var(--surface-3)] border border-[#333333] rounded-lg p-4 mb-4"
               >
                 <div className="flex items-start space-x-4">
                   <div className="w-16 h-16 bg-[#333333] rounded-lg flex-shrink-0 flex items-center justify-center">
@@ -118,7 +118,7 @@ export default function HiddenPosts() {
 
       {/* Info */}
       <div className="border-t border-[#333333] p-6">
-        <div className="bg-[#1A1A1A] border border-[#333333] rounded-lg p-4">
+        <div className="bg-[var(--surface-3)] border border-[#333333] rounded-lg p-4">
           <p className="font-['IBM_Plex_Mono'] font-medium text-[var(--ink-100)] text-[var(--fs-12)] mb-2">
             About Hidden Posts:
           </p>

@@ -112,7 +112,7 @@ export default function ViewportDebug() {
       aria-hidden
       style={{
         position: 'fixed', top: 4, left: 4, zIndex: 2147483647,
-        background: 'rgba(0,0,0,0.86)', color: '#39ff88',
+        background: 'rgb(var(--black-rgb) / 0.86)', color: '#39ff88',
         font: '9px/1.35 ui-monospace, "SF Mono", monospace',
         padding: '6px 8px', borderRadius: 3, pointerEvents: 'none',
         whiteSpace: 'pre', letterSpacing: 0,

@@ -71,7 +71,7 @@ export default function Invite() {
         ) : (
           <div className="space-y-4">
             {/* Invite Link Display */}
-            <div className="bg-[#1A1A1A] border border-[#333333] rounded-lg p-4">
+            <div className="bg-[var(--surface-3)] border border-[#333333] rounded-lg p-4">
               <p className="font-['IBM_Plex_Mono'] font-medium text-[var(--ink-100)] text-[var(--fs-12)] mb-2">
                 Your Invite Link:
               </p>
@@ -103,7 +103,7 @@ export default function Invite() {
         )}
 
         {/* Info */}
-        <div className="mt-12 p-4 bg-[#1A1A1A] border border-[#333333] rounded-lg">
+        <div className="mt-12 p-4 bg-[var(--surface-3)] border border-[#333333] rounded-lg">
           <p className="font-['IBM_Plex_Mono'] font-medium text-[var(--ink-100)] text-[var(--fs-12)] mb-2">
             How it works:
           </p>

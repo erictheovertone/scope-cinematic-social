@@ -195,14 +195,14 @@ export default function BadgeDetailPage() {
 
   if (!detail) {
     return (
-      <div style={{ backgroundColor: '#000', minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ backgroundColor: 'var(--black)', minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <p style={{ ...BOLD, color: 'var(--ink-100)', fontSize: 'var(--fs-11)' }}>BADGE NOT FOUND</p>
       </div>
     );
   }
 
   return (
-    <div style={{ backgroundColor: '#000', minHeight: '100dvh', padding: '0 0 80px' }}>
+    <div style={{ backgroundColor: 'var(--black)', minHeight: '100dvh', padding: '0 0 80px' }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '24px 20px 0' }}>
         <button

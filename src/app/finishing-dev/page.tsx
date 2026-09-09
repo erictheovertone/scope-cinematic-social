@@ -154,7 +154,7 @@ export default function FinishingDevPage() {
             return (
               <button key={g} onClick={() => setMockGridLayout(g)}
                 style={{ background: active ? RED : 'transparent', border: '1px solid #555', cursor: 'pointer', padding: '3px 7px' }}>
-                <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: active ? '#000' : '#aaa', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{g}</span>
+                <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: active ? 'var(--black)' : '#aaa', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{g}</span>
               </button>
             );
           })}
@@ -164,7 +164,7 @@ export default function FinishingDevPage() {
             return (
               <button key={m} onClick={() => applySeed(m)}
                 style={{ background: active ? RED : 'transparent', border: '1px solid #555', cursor: 'pointer', padding: '3px 7px' }}>
-                <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: active ? '#000' : '#aaa', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{m}</span>
+                <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: active ? 'var(--black)' : '#aaa', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{m}</span>
               </button>
             );
           })}
@@ -174,7 +174,7 @@ export default function FinishingDevPage() {
             return (
               <button key={lbl} onClick={() => setMockIsPro(val)}
                 style={{ background: active ? RED : 'transparent', border: '1px solid #555', cursor: 'pointer', padding: '3px 7px' }}>
-                <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: active ? '#000' : '#aaa', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{lbl}</span>
+                <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: active ? 'var(--black)' : '#aaa', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{lbl}</span>
               </button>
             );
           })}

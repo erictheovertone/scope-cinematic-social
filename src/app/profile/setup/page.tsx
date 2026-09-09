@@ -198,7 +198,7 @@ export default function ProfileSetup() {
           </>
         )}
         {imageUploading && (
-          <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ position: 'absolute', inset: 0, background: 'rgb(var(--black-rgb) / 0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <ScopeLoader size="md" />
           </div>
         )}

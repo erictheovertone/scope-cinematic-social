@@ -202,7 +202,7 @@ export default function CollectSheet({ post, visible, onClose }: CollectSheetPro
         style={{
           position: "fixed",
           inset: 0,
-          backgroundColor: "rgba(0,0,0,0.85)",
+          backgroundColor: "rgb(var(--black-rgb) / 0.85)",
           zIndex: 300,
           opacity: visible ? 1 : 0,
           pointerEvents: visible ? "auto" : "none",
@@ -239,7 +239,7 @@ export default function CollectSheet({ post, visible, onClose }: CollectSheetPro
             touchAction: "manipulation",
           }}
         >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ink-100)" strokeWidth="2" strokeLinecap="round" style={{ filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.8))" }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ink-100)" strokeWidth="2" strokeLinecap="round" style={{ filter: "drop-shadow(0 1px 3px rgb(var(--black-rgb) / 0.8))" }}>
             <line x1="5" y1="5" x2="19" y2="19" />
             <line x1="19" y1="5" x2="5" y2="19" />
           </svg>

@@ -1295,7 +1295,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
             <button
               onClick={() => fileInputRef.current?.click()}
               className="tappable"
-              style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-12)', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--ink-100)', border: '1.5px solid transparent', background: 'linear-gradient(#000, #000) padding-box, linear-gradient(135deg, var(--ink-100), rgb(var(--ink-rgb) / 0.5)) border-box', padding: '14px 28px', cursor: 'pointer' }}
+              style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-12)', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--ink-100)', border: '1.5px solid transparent', background: 'linear-gradient(var(--black), var(--black)) padding-box, linear-gradient(135deg, var(--ink-100), rgb(var(--ink-rgb) / 0.5)) border-box', padding: '14px 28px', cursor: 'pointer' }}
             >
               Choose from Library
             </button>
@@ -1319,7 +1319,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
                 onClick={() => handleRemoveMedia(selectedMedia[0].id)}
                 aria-label="Remove"
                 className="tappable"
-                style={{ position: 'absolute', top: 6, right: 6, width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--ink-100)', fontSize: 'var(--fs-20)', lineHeight: 1, textShadow: '0 1px 4px rgba(0,0,0,0.9)' }}
+                style={{ position: 'absolute', top: 6, right: 6, width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--ink-100)', fontSize: 'var(--fs-20)', lineHeight: 1, textShadow: '0 1px 4px rgb(var(--black-rgb) / 0.9)' }}
               >×</button>
             </div>
             <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-9)', color: 'rgb(var(--ink-rgb) / 0.3)', textTransform: 'uppercase', letterSpacing: '0.06em', textAlign: 'center', marginTop: 12 }}>
@@ -1352,11 +1352,11 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
             a SCROLLABLE ancestor or iOS can't focus it / raise the keyboard — the deck
             step works because ITS container is overflow-y-auto; this one wasn't. */}
         <div className="flex-1 overflow-y-auto p-4 flex flex-col" style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}>
-          <div style={{ position: 'relative', width: '100%', marginBottom: 16, backgroundColor: '#000', flexShrink: 0 }}>
+          <div style={{ position: 'relative', width: '100%', marginBottom: 16, backgroundColor: 'var(--black)', flexShrink: 0 }}>
             {/* WYSIWYG preview — live gl-react render of geometry + ALL look params
                 (matches FINISHING; no preview bake → no generational loss; works for
                 video too). The single publish bake stays in handlePost. */}
-            <div style={{ position: 'relative', width: '100%', aspectRatio: getAspectRatio(chosenLayoutId || userLayoutId), background: '#000', overflow: 'hidden' }}>
+            <div style={{ position: 'relative', width: '100%', aspectRatio: getAspectRatio(chosenLayoutId || userLayoutId), background: 'var(--black)', overflow: 'hidden' }}>
               {selectedMedia[0] && (
                 <FinishingPreview
                   mediaUrl={selectedMedia[0].url}
@@ -1369,7 +1369,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
             </div>
             <button
               onClick={() => setStep('crop')}
-              style={{ position: 'absolute', bottom: 8, right: 8, background: 'rgba(0,0,0,0.6)', border: '1px solid rgb(var(--ink-rgb) / 0.25)', cursor: 'pointer', padding: '5px 9px' }}
+              style={{ position: 'absolute', bottom: 8, right: 8, background: 'rgb(var(--black-rgb) / 0.6)', border: '1px solid rgb(var(--ink-rgb) / 0.25)', cursor: 'pointer', padding: '5px 9px' }}
             >
               <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-8)', color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>ADJUST CROP</span>
             </button>
@@ -1476,7 +1476,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
                     {(['bed', 'music_only'] as const).map((m) => {
                       const on = musicMode === m;
                       return (
-                        <button key={m} onClick={() => setMusicMode(m)} style={{ flex: 1, background: on ? 'var(--ink-100)' : 'transparent', border: `1px solid ${on ? 'var(--ink-100)' : 'rgb(var(--ink-rgb) / 0.2)'}`, cursor: 'pointer', padding: '8px 6px', fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-8)', color: on ? '#000' : 'rgb(var(--ink-rgb) / 0.7)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                        <button key={m} onClick={() => setMusicMode(m)} style={{ flex: 1, background: on ? 'var(--ink-100)' : 'transparent', border: `1px solid ${on ? 'var(--ink-100)' : 'rgb(var(--ink-rgb) / 0.2)'}`, cursor: 'pointer', padding: '8px 6px', fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-8)', color: on ? 'var(--black)' : 'rgb(var(--ink-rgb) / 0.7)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                           {m === 'bed' ? 'MUSIC AS BED' : 'MUSIC ONLY'}
                         </button>
                       );
@@ -1518,7 +1518,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
     const MONO_S: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
     return (
       <div className="h-full flex flex-col">
-        <div className="flex items-center justify-between p-4 border-b border-[#1a1a1a]" style={{ paddingTop: 'calc(1rem + env(safe-area-inset-top, 0px))' }}>
+        <div className="flex items-center justify-between p-4 border-b border-[var(--surface-3)]" style={{ paddingTop: 'calc(1rem + env(safe-area-inset-top, 0px))' }}>
           <button onClick={() => setStep('edit')} className="text-[var(--ink-100)] text-lg">←</button>
           <span style={{ ...MONO_S, fontSize: 'var(--fs-11)', color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Add to a deck?</span>
           <button
@@ -1554,7 +1554,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
                     borderBottom: '1px solid rgb(var(--ink-rgb) / 0.05)',
                   }}
                 >
-                  <div style={{ width: 32, height: 32, background: '#1a1a1a', flexShrink: 0, overflow: 'hidden' }}>
+                  <div style={{ width: 32, height: 32, background: 'var(--surface-3)', flexShrink: 0, overflow: 'hidden' }}>
                     {deck.cover_image_url && (
                       <img src={deck.cover_image_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                     )}
@@ -1615,7 +1615,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
           )}
         </div>
 
-        <div className="border-t border-[#1a1a1a] p-4">
+        <div className="border-t border-[var(--surface-3)] p-4">
           {postError && (
             <p style={{ ...MONO_S, fontSize: 'var(--fs-10)', color: 'var(--danger)', marginBottom: 10 }}>{postError}</p>
           )}
@@ -1668,7 +1668,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
 
   return (
     <>
-      <div onClick={handleBackdropDismiss} style={{ position: 'fixed', inset: 0, backgroundColor: '#000000', opacity: 1, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div onClick={handleBackdropDismiss} style={{ position: 'fixed', inset: 0, backgroundColor: 'var(--black)', opacity: 1, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div onClick={(e) => e.stopPropagation()} className="bg-black w-[375px] h-[600px] relative overflow-hidden">
           {step === 'media' && renderMediaStep()}
           {step === 'edit' && renderEditStep()}
@@ -1679,8 +1679,8 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
       {/* Discard-edits confirm — intercepts the OS back/edge-swipe so progress is
           never silently lost (see the history guard above). */}
       {discardConfirm && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 32px' }}>
-          <div style={{ width: '100%', maxWidth: 340, background: '#0a0a0a', border: '1px solid rgb(var(--ink-rgb) / 0.14)', padding: '26px 24px' }}>
+        <div style={{ position: 'fixed', inset: 0, zIndex: 300, background: 'rgb(var(--black-rgb) / 0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 32px' }}>
+          <div style={{ width: '100%', maxWidth: 340, background: 'var(--surface-1)', border: '1px solid rgb(var(--ink-rgb) / 0.14)', padding: '26px 24px' }}>
             <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 15, color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.04em', margin: '0 0 10px' }}>DISCARD THIS POST?</p>
             <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: 13, color: 'rgb(var(--ink-rgb) / 0.55)', lineHeight: 1.5, margin: '0 0 22px' }}>Your edits will be lost.</p>
             <div style={{ display: 'flex', gap: 10 }}>
@@ -1775,7 +1775,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
       {isPosting && !showMintPrompt && (
         <div style={{
           position: 'fixed', inset: 0, zIndex: 600,
-          backgroundColor: '#000',
+          backgroundColor: 'var(--black)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           animation: 'fadeInBlack 0.2s ease forwards',
         }}>

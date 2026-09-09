@@ -39,12 +39,12 @@ function CreatorCelebration({ onDone }: { onDone: () => void }) {
   }, [phase]);
 
   return (
-    <div style={{ position: "fixed", inset: 0, backgroundColor: "#000", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", overflow: "hidden", opacity: exiting ? 0 : 1, transition: exiting ? "opacity 0.8s ease" : "none" }}>
+    <div style={{ position: "fixed", inset: 0, backgroundColor: "var(--black)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", overflow: "hidden", opacity: exiting ? 0 : 1, transition: exiting ? "opacity 0.8s ease" : "none" }}>
       <div style={{ position: "absolute", inset: 0, backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.08'/%3E%3C/svg%3E\")", opacity: phase === "loading" ? 0 : 0.4, transition: "opacity 1s ease", pointerEvents: "none" }} />
       {phase !== "loading" && (
         <>
-          <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 48, background: "linear-gradient(to bottom, rgba(0,0,0,0.95) 0%, transparent 100%)", animation: "fadeIn 0.8s ease forwards" }} />
-          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 48, background: "linear-gradient(to top, rgba(0,0,0,0.95) 0%, transparent 100%)", animation: "fadeIn 0.8s ease forwards" }} />
+          <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 48, background: "linear-gradient(to bottom, rgb(var(--black-rgb) / 0.95) 0%, transparent 100%)", animation: "fadeIn 0.8s ease forwards" }} />
+          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 48, background: "linear-gradient(to top, rgb(var(--black-rgb) / 0.95) 0%, transparent 100%)", animation: "fadeIn 0.8s ease forwards" }} />
           <div style={{ position: "absolute", top: 16, left: 16, right: 16, height: 2, backgroundColor: "rgb(var(--ink-rgb) / 0.15)", animation: "expandWidth 0.8s ease forwards" }} />
           <div style={{ position: "absolute", bottom: 16, left: 16, right: 16, height: 2, backgroundColor: "rgb(var(--ink-rgb) / 0.15)", animation: "expandWidth 0.8s ease forwards" }} />
           <div style={{ position: "absolute", top: 24, left: 24, width: 40, height: 40, borderTop: "2px solid var(--ink-100)", borderLeft: "2px solid var(--ink-100)", animation: "cornerReveal 0.4s ease forwards, flicker 4s ease 1s infinite", opacity: 0 }} />
@@ -108,7 +108,7 @@ function Top1kCelebration({ onDone }: { onDone: () => void }) {
   }, [phase]);
 
   return (
-    <div style={{ position: "fixed", inset: 0, backgroundColor: "#000", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", overflow: "hidden", opacity: exiting ? 0 : 1, transition: exiting ? "opacity 0.8s ease" : "none" }}>
+    <div style={{ position: "fixed", inset: 0, backgroundColor: "var(--black)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", overflow: "hidden", opacity: exiting ? 0 : 1, transition: exiting ? "opacity 0.8s ease" : "none" }}>
       {particles.map((p, i) => (
         <div key={i} style={{ position: "absolute", left: `${p.x}%`, top: "-10px", width: p.size, height: p.size * 3, backgroundColor: `rgba(201,168,76,${0.4 + Math.random() * 0.6})`, borderRadius: 1, animation: `particleFall ${3 + p.delay}s linear ${p.delay}s infinite`, opacity: phase === "loading" ? 0 : 1, transition: "opacity 0.5s ease" }} />
       ))}
@@ -168,7 +168,7 @@ function FoundingCelebration({ foundingNumber, onDone }: { foundingNumber?: numb
   return (
     <div style={{
       position: "fixed", inset: 0,
-      backgroundColor: "#000",
+      backgroundColor: "var(--black)",
       display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
       overflow: "hidden",
       opacity: exiting ? 0 : 1,
@@ -178,7 +178,7 @@ function FoundingCelebration({ foundingNumber, onDone }: { foundingNumber?: numb
       {/* Deep space bg */}
       <div style={{
         position: "absolute", inset: 0,
-        background: "radial-gradient(ellipse at center, #080018 0%, #020008 40%, #000 100%)",
+        background: "radial-gradient(ellipse at center, #080018 0%, #020008 40%, var(--black) 100%)",
         opacity: isActive ? 1 : 0,
         transition: "opacity 1.5s ease",
       }} />

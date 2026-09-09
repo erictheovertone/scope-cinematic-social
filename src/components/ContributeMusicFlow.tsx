@@ -386,7 +386,7 @@ export default function ContributeMusicFlow({ onClose }: { onClose: () => void }
                             {group.words.map((w) => {
                               const on = r.keywords.includes(w);
                               return (
-                                <button key={w} onClick={() => toggleChip(r.localId, w)} style={{ ...SKR, fontSize: "var(--fs-7)", color: on ? "#000" : "var(--ink-100)", background: on ? "var(--ink-100)" : "transparent", border: `1px solid ${on ? "var(--ink-100)" : HAIR}`, padding: "4px 9px", cursor: "pointer", textTransform: "lowercase" }}>{w}</button>
+                                <button key={w} onClick={() => toggleChip(r.localId, w)} style={{ ...SKR, fontSize: "var(--fs-7)", color: on ? "var(--black)" : "var(--ink-100)", background: on ? "var(--ink-100)" : "transparent", border: `1px solid ${on ? "var(--ink-100)" : HAIR}`, padding: "4px 9px", cursor: "pointer", textTransform: "lowercase" }}>{w}</button>
                               );
                             })}
                           </div>
@@ -408,7 +408,7 @@ export default function ContributeMusicFlow({ onClose }: { onClose: () => void }
           <label style={{ ...SKB, fontSize: "var(--fs-8)", color: "rgb(var(--ink-rgb) / 0.45)", textTransform: "uppercase", letterSpacing: "0.12em" }}>License</label>
           <p style={{ ...SKR, fontSize: "var(--fs-9)", color: "rgb(var(--ink-rgb) / 0.65)", lineHeight: 1.5, margin: 0 }}>{MUSIC_LICENSE_COPY}</p>
           <button onClick={() => setLicensed((v) => !v)} style={{ display: "flex", alignItems: "flex-start", gap: 10, background: "none", border: "none", cursor: "pointer", padding: 0, textAlign: "left" }}>
-            <span style={{ width: 18, height: 18, flexShrink: 0, border: `1px solid ${licensed ? RED : "rgb(var(--ink-rgb) / 0.4)"}`, background: licensed ? RED : "transparent", display: "flex", alignItems: "center", justifyContent: "center", ...SKB, fontSize: 12, color: "#000" }}>{licensed ? "✓" : ""}</span>
+            <span style={{ width: 18, height: 18, flexShrink: 0, border: `1px solid ${licensed ? RED : "rgb(var(--ink-rgb) / 0.4)"}`, background: licensed ? RED : "transparent", display: "flex", alignItems: "center", justifyContent: "center", ...SKB, fontSize: 12, color: "var(--black)" }}>{licensed ? "✓" : ""}</span>
             <span style={{ ...SKR, fontSize: "var(--fs-8)", color: "rgb(var(--ink-rgb) / 0.7)" }}>I own {doneRows.length > 1 ? "these tracks" : "this track"} and agree to the license above.</span>
           </button>
           <StepNav onBack={() => setStep("table")} onNext={submitAll} nextLabel={submitting ? "Submitting…" : `Submit ${doneRows.length}`} nextDisabled={!licensed || submitting} />
@@ -431,8 +431,8 @@ export default function ContributeMusicFlow({ onClose }: { onClose: () => void }
   if (isDesktop) {
     return createPortal(
       <div style={{ position: "fixed", inset: 0, zIndex: 680, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
-        <div onClick={close} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.9)" }} />
-        <div style={{ position: "relative", width: 560, maxWidth: "100%", maxHeight: "86vh", overflowY: "auto", background: "#000", border: `1px solid ${HAIR}`, boxSizing: "border-box", padding: "28px 30px" }}>
+        <div onClick={close} style={{ position: "absolute", inset: 0, background: "rgb(var(--black-rgb) / 0.9)" }} />
+        <div style={{ position: "relative", width: 560, maxWidth: "100%", maxHeight: "86vh", overflowY: "auto", background: "var(--black)", border: `1px solid ${HAIR}`, boxSizing: "border-box", padding: "28px 30px" }}>
           {Body}
         </div>
       </div>,
@@ -441,7 +441,7 @@ export default function ContributeMusicFlow({ onClose }: { onClose: () => void }
   }
   // Brief F5 §7 — FULL-PAGE takeover matching the bio-sheet pattern (ProfileDataSheet):
   // one full-viewport scroll container (not a bottom-anchored 90vh sheet), opaque
-  // #050505 canvas faded via background (not a translateY slide), safe-area padded,
+  // var(--canvas) canvas faded via background (not a translateY slide), safe-area padded,
   // pill hidden via the suiteOpen flag above. The inner nested scroll caps (§ upload /
   // table lists) are lifted on mobile so the page scrolls as ONE — no double-scroll.
   return createPortal(

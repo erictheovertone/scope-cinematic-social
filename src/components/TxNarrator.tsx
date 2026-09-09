@@ -103,7 +103,7 @@ export function TxNarratorProvider({ children }: { children: ReactNode }) {
             left: '50%',
             transform: 'translateX(-50%)',
             zIndex: 700,
-            background: '#000',
+            background: 'var(--black)',
             border: `1px solid ${status.phase === 'failed' ? 'var(--ink-100)' : 'rgb(var(--ink-rgb) / 0.55)'}`,
             padding: '9px 16px',
             cursor: 'pointer',

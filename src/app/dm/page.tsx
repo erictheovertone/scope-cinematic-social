@@ -56,7 +56,7 @@ function MobileDMInbox() {
   }, [load]);
 
   return (
-    <main style={{ minHeight: '100dvh', background: '#000', paddingBottom: 'calc(72px + env(safe-area-inset-bottom, 0px))' }}>
+    <main style={{ minHeight: '100dvh', background: 'var(--black)', paddingBottom: 'calc(72px + env(safe-area-inset-bottom, 0px))' }}>
       {/* Header — Brief M3: now consumes the shared PageTitle primitive (extracted this
           brief). Same 32px / return-home treatment as before; ~24px to the first row. */}
       <PageTitle title="Messages" onTitleTap={debugTap} paddingBottom={24} />

@@ -8,7 +8,7 @@
 //
 // The dividing-line gradients are a DELIBERATE exception to the no-gradients
 // rule. Stops are EXACT from Eric's reference ("2. banner-dividing-line-
-// reference"), top→bottom. Default = solid black (#000000) = invisible against
+// reference"), top→bottom. Default = solid black (var(--black)) = invisible against
 // the black header (the no-customization default).
 
 import type { BadgeTierFlags } from './badges';
@@ -26,7 +26,7 @@ export interface DividerLine {
 }
 
 export const DIVIDER_LINES: Record<DividerLineKey, DividerLine> = {
-  default: { key: 'default', name: 'DEFAULT', gradient: '#000000', tier: 0 },
+  default: { key: 'default', name: 'DEFAULT', gradient: 'var(--black)', tier: 0 },
   slate:   { key: 'slate',   name: 'SLATE',   gradient: 'linear-gradient(180deg, #483D3D 0%, #919191 100%)', tier: 1 },
   splice:  { key: 'splice',  name: 'SPLICE',  gradient: 'linear-gradient(180deg, #959595 0%, #CC0000 50%, #8A8A8A 100%)', tier: 1 },
   drip:    { key: 'drip',    name: 'DRIP',    gradient: 'linear-gradient(180deg, var(--ink-100) 0%, #A42424 32%, #212121 100%)', tier: 2 },
@@ -71,8 +71,8 @@ export function isDividerUnlocked(key: DividerLineKey, tier: 0 | 1 | 2 | 3): boo
   return DIVIDER_LINES[key].tier <= tier;
 }
 
-/** The CSS background for a persisted line key — '#000000' (invisible) by default. */
+/** The CSS background for a persisted line key — 'var(--black)' (invisible) by default. */
 export function dividerBackground(key: string | null | undefined): string {
   const line = key ? DIVIDER_LINES[key as DividerLineKey] : undefined;
-  return line?.gradient ?? '#000000';
+  return line?.gradient ?? 'var(--black)';
 }

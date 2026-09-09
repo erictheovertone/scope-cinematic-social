@@ -117,7 +117,7 @@ export default function SnippetSelector({ videoUrl, heroFrameTime, onChange, par
       {/* Audition thumbnail — small, GRADED (reflects current edits), not full-post. */}
       <div
         ref={thumbRef}
-        style={{ position: "relative", width: SNIPPET_W, aspectRatio: getAspectRatio(layoutId), background: "#000", overflow: "hidden", marginBottom: 8 }}
+        style={{ position: "relative", width: SNIPPET_W, aspectRatio: getAspectRatio(layoutId), background: "var(--black)", overflow: "hidden", marginBottom: 8 }}
       >
         {visible && (
           <FinishingPreview
@@ -129,7 +129,7 @@ export default function SnippetSelector({ videoUrl, heroFrameTime, onChange, par
             clipWindow={{ start, length: len }}
           />
         )}
-        <span style={{ position: "absolute", bottom: 4, left: 5, ...SKB, fontSize: 'var(--fs-6_5)', color: "rgb(var(--ink-rgb) / 0.75)", letterSpacing: "0.14em", textTransform: "uppercase", textShadow: "0 1px 2px rgba(0,0,0,0.9)" }}>AUDITION</span>
+        <span style={{ position: "absolute", bottom: 4, left: 5, ...SKB, fontSize: 'var(--fs-6_5)', color: "rgb(var(--ink-rgb) / 0.75)", letterSpacing: "0.14em", textTransform: "uppercase", textShadow: "0 1px 2px rgb(var(--black-rgb) / 0.9)" }}>AUDITION</span>
       </div>
       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
         <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: "rgb(var(--ink-rgb) / 0.5)", textTransform: "uppercase", letterSpacing: "0.1em" }}>AUTOPLAY CLIP · {Math.round(len)}s</span>

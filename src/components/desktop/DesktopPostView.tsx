@@ -282,10 +282,10 @@ export default function DesktopPostView({
               (the #8 binding-dimension fix — a 2.75 box pillarboxed them small). */}
           {/* Brief P3 §1 — click the stage toggles pause (desktop). No backdrop-close here, so
               no collision; prev/next are separate absolute buttons. */}
-          <motion.div ref={stageRef} layoutId={`dpost-${postId}`} transition={{ layout: { duration: 0.18, ease: 'easeOut' } }} onClick={isVideo ? () => setUserPaused((p) => !p) : undefined} style={{ ...(lightbox ? { width: fit ? fit.width : '100%', height: fit ? fit.height : undefined, margin: '0 auto', maxWidth: '100%' } : { width: '100%', aspectRatio: '2.39 / 1' }), background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', cursor: isVideo ? 'pointer' : 'default' }}>{/* Brief D15b — lightbox stage is SIZED TO THE MEDIA (measured fit), centred horizontally; the row below hugs it. Profile: the fixed 2.39 letterbox, unchanged. */}
+          <motion.div ref={stageRef} layoutId={`dpost-${postId}`} transition={{ layout: { duration: 0.18, ease: 'easeOut' } }} onClick={isVideo ? () => setUserPaused((p) => !p) : undefined} style={{ ...(lightbox ? { width: fit ? fit.width : '100%', height: fit ? fit.height : undefined, margin: '0 auto', maxWidth: '100%' } : { width: '100%', aspectRatio: '2.39 / 1' }), background: 'var(--black)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', cursor: isVideo ? 'pointer' : 'default' }}>{/* Brief D15b — lightbox stage is SIZED TO THE MEDIA (measured fit), centred horizontally; the row below hugs it. Profile: the fixed 2.39 letterbox, unchanged. */}
             <div style={lightbox
-              ? (fit ? { position: 'relative', width: '100%', height: '100%', overflow: 'hidden', background: '#0a0a0a' } : { position: 'relative', ...(ar >= STAGE_AR ? { width: '100%' } : { height: '100%' }), aspectRatio: `${ar}`, overflow: 'hidden', background: '#0a0a0a' })
-              : { position: 'relative', ...(ar >= 2.39 ? { width: '100%' } : { height: '100%' }), aspectRatio: `${ar}`, overflow: 'hidden', background: '#0a0a0a' }}>
+              ? (fit ? { position: 'relative', width: '100%', height: '100%', overflow: 'hidden', background: 'var(--surface-1)' } : { position: 'relative', ...(ar >= STAGE_AR ? { width: '100%' } : { height: '100%' }), aspectRatio: `${ar}`, overflow: 'hidden', background: 'var(--surface-1)' })
+              : { position: 'relative', ...(ar >= 2.39 ? { width: '100%' } : { height: '100%' }), aspectRatio: `${ar}`, overflow: 'hidden', background: 'var(--surface-1)' }}>
               {isVideo ? (
                 <>
                 <GradedVideo

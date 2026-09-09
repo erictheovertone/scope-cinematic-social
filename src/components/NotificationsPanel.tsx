@@ -78,7 +78,7 @@ export default function NotificationsPanel({ onClose }: Props) {
   return (
     <div
       className="fixed inset-0 z-[100] flex flex-col"
-      style={{ background: "#000", maxWidth: '30rem', margin: "0 auto" }}
+      style={{ background: "var(--black)", maxWidth: '30rem', margin: "0 auto" }}
     >
       {/* Header */}
       <div className="relative flex items-center px-[4px] pt-[12px] pb-[10px]">

@@ -112,16 +112,16 @@ export default function TrackSheet({ trackId, onClose }: { trackId: string; onCl
   if (isDesktop) {
     return createPortal(
       <div style={{ position: "fixed", inset: 0, zIndex: 1250, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
-        <div onClick={close} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.85)" }} />
-        <div style={{ position: "relative", width: 460, maxWidth: "100%", maxHeight: "86vh", overflowY: "auto", background: "#0a0a0a", border: `1px solid ${HAIR}`, boxSizing: "border-box", padding: "24px 26px" }}>{Body}</div>
+        <div onClick={close} style={{ position: "absolute", inset: 0, background: "rgb(var(--black-rgb) / 0.85)" }} />
+        <div style={{ position: "relative", width: 460, maxWidth: "100%", maxHeight: "86vh", overflowY: "auto", background: "var(--surface-1)", border: `1px solid ${HAIR}`, boxSizing: "border-box", padding: "24px 26px" }}>{Body}</div>
       </div>,
       document.body,
     );
   }
   return createPortal(
     <>
-      <div onClick={close} style={{ position: "fixed", inset: 0, zIndex: 1250, background: "rgba(0,0,0,0.7)", opacity: visible ? 1 : 0, transition: "opacity 220ms ease" }} />
-      <div style={{ position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 1251, maxWidth: "30rem", margin: "0 auto", background: "#0a0a0a", borderTop: `1px solid ${HAIR}`, padding: "16px 20px calc(28px + env(safe-area-inset-bottom))", maxHeight: "90vh", overflowY: "auto", transform: visible ? "translateY(0)" : "translateY(100%)", transition: "transform 220ms cubic-bezier(0.32,0.72,0,1)" }}>{Body}</div>
+      <div onClick={close} style={{ position: "fixed", inset: 0, zIndex: 1250, background: "rgb(var(--black-rgb) / 0.7)", opacity: visible ? 1 : 0, transition: "opacity 220ms ease" }} />
+      <div style={{ position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 1251, maxWidth: "30rem", margin: "0 auto", background: "var(--surface-1)", borderTop: `1px solid ${HAIR}`, padding: "16px 20px calc(28px + env(safe-area-inset-bottom))", maxHeight: "90vh", overflowY: "auto", transform: visible ? "translateY(0)" : "translateY(100%)", transition: "transform 220ms cubic-bezier(0.32,0.72,0,1)" }}>{Body}</div>
     </>,
     document.body,
   );

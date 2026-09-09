@@ -76,7 +76,7 @@ export default function DeleteAccount() {
             </div>
 
             {/* What will be deleted */}
-            <div className="bg-[#1A1A1A] border border-[var(--ink-100)] border-opacity-30 rounded-lg p-6 mb-8">
+            <div className="bg-[var(--surface-3)] border border-[var(--ink-100)] border-opacity-30 rounded-lg p-6 mb-8">
               <h3 className="font-['IBM_Plex_Mono'] font-medium text-[var(--ink-100)] text-[var(--fs-16)] mb-4">
                 What will be deleted:
               </h3>
@@ -114,7 +114,7 @@ export default function DeleteAccount() {
                   type="text"
                   value={confirmText}
                   onChange={(e) => setConfirmText(e.target.value)}
-                  className="w-full bg-[#1A1A1A] border border-[#333333] rounded-lg px-4 py-3 font-['IBM_Plex_Mono'] text-[var(--ink-100)] text-[var(--fs-14)] focus:border-[var(--ink-100)] focus:outline-none"
+                  className="w-full bg-[var(--surface-3)] border border-[#333333] rounded-lg px-4 py-3 font-['IBM_Plex_Mono'] text-[var(--ink-100)] text-[var(--fs-14)] focus:border-[var(--ink-100)] focus:outline-none"
                   placeholder="Type DELETE here"
                 />
               </div>
@@ -140,7 +140,7 @@ export default function DeleteAccount() {
             </div>
 
             {/* Final warning */}
-            <div className="mt-8 p-4 bg-[#1A1A1A] border border-[#333333] rounded-lg">
+            <div className="mt-8 p-4 bg-[var(--surface-3)] border border-[#333333] rounded-lg">
               <p className="font-['IBM_Plex_Mono'] font-medium text-[var(--ink-100)] text-[var(--fs-12)] mb-2">
                 ⚠️ Final Warning
               </p>

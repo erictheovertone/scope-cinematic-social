@@ -86,7 +86,7 @@ export default function AdminMusicPage() {
     // the body is position:fixed/overflow:hidden (iOS lock), so the document can't
     // scroll; the queue scrolls here with momentum, a 12-track batch reachable end-
     // to-end. Inner div keeps the centered 720 column + padding.
-    <div className="screen-min" style={{ background: "#000" }}>
+    <div className="screen-min" style={{ background: "var(--black)" }}>
     <div style={{ color: "var(--ink-100)", padding: "40px 20px 80px", maxWidth: 720, margin: "0 auto" }}>
       <h1 style={{ ...SKB, fontSize: 15, textTransform: "uppercase", letterSpacing: "0.14em", margin: "0 0 24px" }}>Music · Approval Queue</h1>
 

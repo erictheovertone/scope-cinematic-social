@@ -32,7 +32,7 @@ export default function Error({
     <div
       style={{
         minHeight: '100dvh',
-        background: '#000',
+        background: 'var(--black)',
         color: 'var(--ink-100)',
         fontFamily: mono,
         display: 'flex',

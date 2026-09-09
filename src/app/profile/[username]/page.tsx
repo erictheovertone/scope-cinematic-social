@@ -277,12 +277,12 @@ export default function PublicProfilePage() {
   const resolvedBadges = resolveBadges({ isFoundingMember, isTopCollector, isScreeningRoomHolder, isPaidMember, isInHouseCreator, firstCutCount, composerTrackCount });
 
   return (
-    <div className="bg-black relative w-full app-shell screen-min mx-auto pb-[60px]" style={{ background: 'var(--canvas)', overscrollBehavior: 'none' }}>{/* Brief F6 — canvas #050505 (matches own). Brief F6b §4a — overscroll-behavior:none on the app-shell root kills the rubber-band scroll-chain (the F5 §4a / decks-page pattern). */}
+    <div className="bg-black relative w-full app-shell screen-min mx-auto pb-[60px]" style={{ background: 'var(--canvas)', overscrollBehavior: 'none' }}>{/* Brief F6 — canvas var(--canvas) (matches own). Brief F6b §4a — overscroll-behavior:none on the app-shell root kills the rubber-band scroll-chain (the F5 §4a / decks-page pattern). */}
 
       {/* Brief F6 — the public header now MATCHES own-profile: the shared
           <ProfileHeader> composition (square PFP + ivory frame, name step-down, PRO,
           tight handle, stats + Market Cap + dash + divider, badge cluster) on canvas
-          #050505. onMeasure → headerH drives the tab anchor + grid spacer below.
+          var(--canvas). onMeasure → headerH drives the tab anchor + grid spacer below.
           Public-specific chrome (ⓘ +2px · mail DM · FOLLOW text) is the controls slot. */}
       <div
         onClick={profileDataOpen ? () => setProfileDataOpen(false) : undefined}
@@ -397,7 +397,7 @@ export default function PublicProfilePage() {
             pointerEvents: 'auto',
             opacity: Math.min(1, (gridScrollY - 20) / 20),
             transition: 'opacity 0.2s ease',
-            filter: 'drop-shadow(0 0 8px rgba(0,0,0,0.9)) drop-shadow(0 2px 12px rgba(0,0,0,0.75))',
+            filter: 'drop-shadow(0 0 8px rgb(var(--black-rgb) / 0.9)) drop-shadow(0 2px 12px rgb(var(--black-rgb) / 0.75))',
           }}
         >
           <img src="/logomark-plain-white.png" alt="" style={{ width: 32, height: 20, objectFit: 'contain', display: 'block' }} />
@@ -415,7 +415,7 @@ export default function PublicProfilePage() {
         maxWidth: '30rem',
         zIndex: 40,
         background: (headerSnapped || headerUnsnapping)
-          ? 'linear-gradient(to bottom, rgba(0,0,0,0.31) 0%, rgba(0,0,0,0.14) 80%, transparent 100%)'
+          ? 'linear-gradient(to bottom, rgb(var(--black-rgb) / 0.31) 0%, rgb(var(--black-rgb) / 0.14) 80%, transparent 100%)'
           : 'transparent',
         paddingTop: (headerSnapped || headerUnsnapping) ? 6 : 10,
         paddingBottom: (headerSnapped || headerUnsnapping) ? 8 : 12,
@@ -512,10 +512,10 @@ export default function PublicProfilePage() {
       {showFollowingModal && targetPrivyId && <FollowListModal type="following" privyUserId={targetPrivyId} onClose={() => setShowFollowingModal(false)} />}
 
       {/* Decks overlay */}
-      {showDecks && <div onClick={() => { setShowDecks(false); setActiveTab('main'); }} style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.75)', zIndex: 59 }} />}
+      {showDecks && <div onClick={() => { setShowDecks(false); setActiveTab('main'); }} style={{ position: 'fixed', inset: 0, backgroundColor: 'rgb(var(--black-rgb) / 0.75)', zIndex: 59 }} />}
 
       {/* Decks sheet */}
-      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, height: '70vh', backgroundColor: '#000', borderTop: '1px solid white', zIndex: 60, transform: showDecks ? 'translateY(0)' : 'translateY(100%)', transition: 'transform 300ms ease', display: 'flex', flexDirection: 'column', paddingBottom: 'var(--safe-bottom)' }/* X3 §3 — 70vh decks sheet: clear the home indicator */}>
+      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, height: '70vh', backgroundColor: 'var(--black)', borderTop: '1px solid white', zIndex: 60, transform: showDecks ? 'translateY(0)' : 'translateY(100%)', transition: 'transform 300ms ease', display: 'flex', flexDirection: 'column', paddingBottom: 'var(--safe-bottom)' }/* X3 §3 — 70vh decks sheet: clear the home indicator */}>
         <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px 16px 10px', flexShrink: 0 }}>
           <div style={{ position: 'absolute', top: 8, left: '50%', transform: 'translateX(-50%)', width: 40, height: 3, backgroundColor: 'rgb(var(--ink-rgb) / 0.3)' }} />
           <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: 'var(--ink-100)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>DECKS</span>
@@ -526,7 +526,7 @@ export default function PublicProfilePage() {
           : publicDecks.length === 0 ? <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '50%' }}><span style={{ ...SKB, fontSize: 'var(--fs-11)', color: 'var(--ink-100)', textTransform: 'uppercase' }}>NO DECKS YET</span></div>
           : publicDecks.map(deck => (
             <div key={deck.id} onClick={() => { setShowDecks(false); router.push(`/profile/${username}/decks/${deck.id}`); }} style={{ marginBottom: 12, cursor: 'pointer' }}>
-              <div style={{ width: '100%', aspectRatio: getDeckAspect(deck.grid_layout), overflow: 'hidden', background: '#1a1a1a' }}>
+              <div style={{ width: '100%', aspectRatio: getDeckAspect(deck.grid_layout), overflow: 'hidden', background: 'var(--surface-3)' }}>
                 {/* Baked collage cover (one ~600px WebP), not the live N-image composite. */}
                 {deck.thumbnail_url
                   ? <img src={deck.thumbnail_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />

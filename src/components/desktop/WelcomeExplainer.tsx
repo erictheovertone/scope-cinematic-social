@@ -51,8 +51,8 @@ export default function WelcomeExplainer({ onDone, onSkip }: { onDone: () => voi
 
   const slide = EXPLAINER_SLIDES[i];
   return (
-    <div className="bg-black" style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000' }}>
-      <div style={{ position: 'relative', width: 820, height: 520, background: '#000', border: '1px solid #1a1a1a', boxSizing: 'border-box' }}>
+    <div className="bg-black" style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--black)' }}>
+      <div style={{ position: 'relative', width: 820, height: 520, background: 'var(--black)', border: '1px solid var(--surface-3)', boxSizing: 'border-box' }}>
         <RedBrackets inset={0} />
 
         {/* chrome: counter (top-left) · SKIP (top-right) */}
@@ -77,7 +77,7 @@ export default function WelcomeExplainer({ onDone, onSkip }: { onDone: () => voi
         </div>
 
         {/* NEXT / BEGIN (bottom-right) */}
-        <button onClick={() => go(1)} style={{ position: 'absolute', right: 30, bottom: 26, ...INTER_B, fontSize: 12, color: '#000', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'var(--ink-100)', border: 'none', cursor: 'pointer', width: 140, height: 48 }}>
+        <button onClick={() => go(1)} style={{ position: 'absolute', right: 30, bottom: 26, ...INTER_B, fontSize: 12, color: 'var(--black)', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'var(--ink-100)', border: 'none', cursor: 'pointer', width: 140, height: 48 }}>
           {last ? 'BEGIN' : 'NEXT'}
         </button>
       </div>

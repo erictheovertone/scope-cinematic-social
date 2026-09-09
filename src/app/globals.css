@@ -154,6 +154,11 @@ html, body {
      these a light-paper counterpart; viewing surfaces force the dark set back. */
   --surface-1: #0a0a0a;
   --surface-2: #141414;
+  --surface-3: #1a1a1a;   /* the common mid-dark fill (inputs, dividers, deep insets) */
+  /* Pure black — media letterbox + full-black scrims. Distinct from --canvas (#050505):
+     black STAYS black in both themes (a viewing/scrim color), never flips to paper. */
+  --black: #000;
+  --black-rgb: 0 0 0;
   /* Glass/blend recipe (pill bar, sheet scrims): a black wash + the ivory hairline. */
   --glass-fill: rgb(var(--canvas-rgb) / 0.5);
   --glass-border: rgb(var(--ink-rgb) / 0.22);

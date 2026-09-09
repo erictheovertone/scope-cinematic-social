@@ -294,7 +294,7 @@ export default function DesktopSettings() {
           <div style={{ maxWidth: 520 }}>
             {/* avatar + CHANGE PHOTO */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 16, margin: '0 0 26px' }}>
-              <div style={{ width: 72, height: 72, borderRadius: '50%', overflow: 'hidden', background: '#141414', flexShrink: 0 }}>
+              <div style={{ width: 72, height: 72, borderRadius: '50%', overflow: 'hidden', background: 'var(--surface-2)', flexShrink: 0 }}>
                 {pfp && <img src={feedImage(pfp, 160)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
               </div>
               <button onClick={() => photoInputRef.current?.click()} style={{ ...SKB, fontSize: 11, color: RED, textTransform: 'uppercase', letterSpacing: '0.1em', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>
@@ -378,7 +378,7 @@ export default function DesktopSettings() {
                 decision (gear lists on profiles), not a settings pass. */}
 
             <button onClick={save} style={{ display: 'block', width: '100%', background: saveState === 'error' ? RED : 'var(--ink-100)', border: 'none', cursor: 'pointer', padding: '13px 0' }}>
-              <span style={{ ...SKB, fontSize: 12, color: saveState === 'error' ? 'var(--ink-100)' : '#000', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+              <span style={{ ...SKB, fontSize: 12, color: saveState === 'error' ? 'var(--ink-100)' : 'var(--black)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
                 {saveState === 'saving' ? 'SAVING…' : saveState === 'saved' ? 'SAVED ✓' : saveState === 'error' ? 'SAVE FAILED — RETRY' : 'SAVE CHANGES'}
               </span>
             </button>
@@ -547,8 +547,8 @@ export default function DesktopSettings() {
       {/* ── MORE FROM picker — multi-select up to 6 own posts for the lightbox shelf ── */}
       {moreFromOpen && createPortal(
         <div data-swipe-exclude style={{ position: 'fixed', inset: 0, zIndex: 680, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div onClick={() => setMoreFromOpen(false)} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.9)' }} />
-          <div style={{ position: 'relative', width: 760, maxHeight: '82vh', display: 'flex', flexDirection: 'column', background: '#000', border: '1px solid #1a1a1a', padding: '32px 34px' }}>
+          <div onClick={() => setMoreFromOpen(false)} style={{ position: 'absolute', inset: 0, background: 'rgb(var(--black-rgb) / 0.9)' }} />
+          <div style={{ position: 'relative', width: 760, maxHeight: '82vh', display: 'flex', flexDirection: 'column', background: 'var(--black)', border: '1px solid var(--surface-3)', padding: '32px 34px' }}>
             <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 6 }}>
               <h2 style={{ ...SKB, fontSize: 16, color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>MORE FROM</h2>
               <span style={{ ...SKB, fontSize: 11, color: moreFrom.length >= MORE_FROM_CAP ? RED : 'rgb(var(--ink-rgb) / 0.5)', letterSpacing: '0.08em' }}>{moreFrom.length}/{MORE_FROM_CAP}</span>
@@ -573,7 +573,7 @@ export default function DesktopSettings() {
             </div>
             <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
               <button onClick={() => setMoreFromOpen(false)} style={{ ...SKB, flex: 1, fontSize: 11, color: 'rgb(var(--ink-rgb) / 0.6)', textTransform: 'uppercase', letterSpacing: '0.08em', background: 'transparent', border: `1px solid ${HAIR}`, cursor: 'pointer', padding: '12px 0' }}>CANCEL</button>
-              <button onClick={() => { void saveMoreFrom(); }} style={{ ...SKB, flex: 1, fontSize: 11, color: '#000', textTransform: 'uppercase', letterSpacing: '0.08em', background: 'var(--ink-100)', border: 'none', cursor: 'pointer', padding: '12px 0' }}>SAVE</button>
+              <button onClick={() => { void saveMoreFrom(); }} style={{ ...SKB, flex: 1, fontSize: 11, color: 'var(--black)', textTransform: 'uppercase', letterSpacing: '0.08em', background: 'var(--ink-100)', border: 'none', cursor: 'pointer', padding: '12px 0' }}>SAVE</button>
             </div>
           </div>
         </div>,

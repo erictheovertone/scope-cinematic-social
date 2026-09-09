@@ -68,8 +68,8 @@ export default function EditMusicSheet({
 
   return createPortal(
     <>
-      <div onClick={close} style={{ position: "fixed", inset: 0, zIndex: 560, background: "rgba(0,0,0,0.7)", opacity: visible ? 1 : 0, transition: "opacity 220ms ease" }} />
-      <div style={{ position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 561, maxWidth: "30rem", margin: "0 auto", background: "#000", borderTop: `1px solid ${HAIR}`, padding: "16px 20px calc(28px + env(safe-area-inset-bottom))", transform: visible ? "translateY(0)" : "translateY(100%)", transition: "transform 220ms cubic-bezier(0.32,0.72,0,1)" }}>
+      <div onClick={close} style={{ position: "fixed", inset: 0, zIndex: 560, background: "rgb(var(--black-rgb) / 0.7)", opacity: visible ? 1 : 0, transition: "opacity 220ms ease" }} />
+      <div style={{ position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 561, maxWidth: "30rem", margin: "0 auto", background: "var(--black)", borderTop: `1px solid ${HAIR}`, padding: "16px 20px calc(28px + env(safe-area-inset-bottom))", transform: visible ? "translateY(0)" : "translateY(100%)", transition: "transform 220ms cubic-bezier(0.32,0.72,0,1)" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
           <span style={{ ...SKB, fontSize: "var(--fs-11)", color: "var(--ink-100)", textTransform: "uppercase", letterSpacing: "0.1em" }}>Edit Music</span>
           <button onClick={close} aria-label="Close" style={{ background: "none", border: "none", cursor: "pointer", ...SKR, fontSize: 20, color: "rgb(var(--ink-rgb) / 0.55)", lineHeight: 1, padding: 4 }}>✕</button>
@@ -88,7 +88,7 @@ export default function EditMusicSheet({
                 {(['bed', 'music_only'] as const).map((m) => {
                   const on = mode === m;
                   return (
-                    <button key={m} onClick={() => persist(trackId, m)} disabled={saving} style={{ flex: 1, background: on ? "var(--ink-100)" : "transparent", border: `1px solid ${on ? "var(--ink-100)" : "rgb(var(--ink-rgb) / 0.2)"}`, cursor: "pointer", padding: "9px 6px", ...SKB, fontSize: "var(--fs-8)", color: on ? "#000" : "rgb(var(--ink-rgb) / 0.7)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                    <button key={m} onClick={() => persist(trackId, m)} disabled={saving} style={{ flex: 1, background: on ? "var(--ink-100)" : "transparent", border: `1px solid ${on ? "var(--ink-100)" : "rgb(var(--ink-rgb) / 0.2)"}`, cursor: "pointer", padding: "9px 6px", ...SKB, fontSize: "var(--fs-8)", color: on ? "var(--black)" : "rgb(var(--ink-rgb) / 0.7)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
                       {m === "bed" ? "Music as bed" : "Music only"}
                     </button>
                   );

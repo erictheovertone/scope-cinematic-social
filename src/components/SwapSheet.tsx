@@ -226,7 +226,7 @@ export default function SwapSheet({ visible, onClose, ethBalance, usdcBalance, z
   if (typeof document === 'undefined') return null;
 
   const panel: React.CSSProperties = {
-    background: 'linear-gradient(180deg, #101010 0%, #0a0a0a 100%)',
+    background: 'linear-gradient(180deg, #101010 0%, var(--surface-1) 100%)',
     border: '0.5px solid #1f1f1f', borderRadius: 2, padding: '14px 14px 12px',
   };
   // Rate line: dollar-anchored — per-ETH for the ETH pair, per-1K ZORA for the earnings pair.
@@ -239,7 +239,7 @@ export default function SwapSheet({ visible, onClose, ethBalance, usdcBalance, z
     <>
       <div
         onClick={phase === 'swapping' ? undefined : onClose}
-        style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.72)', zIndex: 1100, opacity: visible ? 1 : 0, pointerEvents: visible ? 'auto' : 'none', transition: 'opacity 0.3s ease' }}
+        style={{ position: 'fixed', inset: 0, background: 'rgb(var(--black-rgb) / 0.72)', zIndex: 1100, opacity: visible ? 1 : 0, pointerEvents: visible ? 'auto' : 'none', transition: 'opacity 0.3s ease' }}
       />
       <div
         data-swipe-exclude
@@ -355,7 +355,7 @@ export default function SwapSheet({ visible, onClose, ethBalance, usdcBalance, z
 
             {/* FLIP */}
             <div style={{ display: 'flex', justifyContent: 'center', margin: '10px 0' }}>
-              <button onClick={flip} disabled={phase === 'swapping'} style={{ background: '#0a0a0a', border: '1px solid #1f1f1f', cursor: 'pointer', width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <button onClick={flip} disabled={phase === 'swapping'} style={{ background: 'var(--surface-1)', border: '1px solid #1f1f1f', cursor: 'pointer', width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <span style={{ fontSize: 'var(--fs-14)', color: 'var(--ink-100)', lineHeight: 1 }}>⇅</span>
               </button>
             </div>

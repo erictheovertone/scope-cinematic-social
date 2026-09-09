@@ -372,7 +372,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
           <div style={{ position: 'absolute', left: 0, top: 14, width: 168, height: 168, border: '1px solid var(--avatar-frame)', boxSizing: 'border-box', overflow: 'hidden' }}>
             {pfp ? (
               <img src={feedImage(pfp, 400)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-            ) : <div style={{ width: '100%', height: '100%', background: '#141414' }} />}
+            ) : <div style={{ width: '100%', height: '100%', background: 'var(--surface-2)' }} />}
           </div>
 
           {/* Text block — name x288 (frame). Brief D3 §3 — adopt mobile's NAME-EDGE SYSTEM
@@ -590,7 +590,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
                   )}
                   {/* Pinned indicator — small white push-pin, top-right (mirrors mobile PostCell). */}
                   {!!p.is_pinned && (
-                    <div style={{ position: 'absolute', top: 8, right: 8, zIndex: 3, pointerEvents: 'none', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.75))' }}>
+                    <div style={{ position: 'absolute', top: 8, right: 8, zIndex: 3, pointerEvents: 'none', filter: 'drop-shadow(0 1px 2px rgb(var(--black-rgb) / 0.75))' }}>
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="var(--ink-100)" aria-hidden="true">
                         <path d="M16 9V4h1c.55 0 1-.45 1-1s-.45-1-1-1H7c-.55 0-1 .45-1 1s.45 1 1 1h1v5c0 1.66-1.34 3-3 3v2h5.97v7l1 1 1-1v-7H19v-2c-1.66 0-3-1.34-3-3z" />
                       </svg>
@@ -709,7 +709,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8, margin: '0 0 16px' }}>
                 <span style={{ ...SKB, fontSize: 9, color: 'rgb(var(--ink-rgb) / 0.4)', textTransform: 'uppercase', letterSpacing: '0.14em' }}>ACROSS</span>
                 {[3, 4, 5].map((n) => (
-                  <button key={n} onClick={() => changeDecksCount(n)} style={{ ...SKB, fontSize: 11, width: 24, height: 24, color: decksCount === n ? '#000' : 'rgb(var(--ink-rgb) / 0.6)', background: decksCount === n ? 'var(--ink-100)' : 'transparent', border: `1px solid ${decksCount === n ? 'var(--ink-100)' : HAIR}`, cursor: 'pointer', fontVariantNumeric: 'tabular-nums' }}>{n}</button>
+                  <button key={n} onClick={() => changeDecksCount(n)} style={{ ...SKB, fontSize: 11, width: 24, height: 24, color: decksCount === n ? 'var(--black)' : 'rgb(var(--ink-rgb) / 0.6)', background: decksCount === n ? 'var(--ink-100)' : 'transparent', border: `1px solid ${decksCount === n ? 'var(--ink-100)' : HAIR}`, cursor: 'pointer', fontVariantNumeric: 'tabular-nums' }}>{n}</button>
                 ))}
               </div>
             )}
@@ -747,8 +747,8 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
           then straight into the new deck (matches mobile's create entry). */}
       {deckCreateOpen && createPortal(
         <div data-swipe-exclude style={{ position: 'fixed', inset: 0, zIndex: 680, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div onClick={() => setDeckCreateOpen(false)} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.88)' }} />
-          <div style={{ position: 'relative', width: 460, background: '#000', border: '1px solid #1a1a1a', padding: '30px 32px' }}>
+          <div onClick={() => setDeckCreateOpen(false)} style={{ position: 'absolute', inset: 0, background: 'rgb(var(--black-rgb) / 0.88)' }} />
+          <div style={{ position: 'relative', width: 460, background: 'var(--black)', border: '1px solid var(--surface-3)', padding: '30px 32px' }}>
             <h2 style={{ ...SKB, fontSize: 15, color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 18px' }}>NEW DECK</h2>
             <input
               autoFocus value={newDeckTitle} onChange={(e) => setNewDeckTitle(e.target.value)}
@@ -764,7 +764,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
             />
             <div style={{ display: 'flex', gap: 10, marginTop: 24 }}>
               <button onClick={() => setDeckCreateOpen(false)} style={{ ...SKB, flex: 1, fontSize: 11, color: 'rgb(var(--ink-rgb) / 0.6)', textTransform: 'uppercase', letterSpacing: '0.08em', background: 'transparent', border: `1px solid ${HAIR}`, cursor: 'pointer', padding: '12px 0' }}>CANCEL</button>
-              <button onClick={() => void submitDeck()} disabled={!newDeckTitle.trim() || creatingDeck} style={{ ...SKB, flex: 1, fontSize: 11, color: '#000', textTransform: 'uppercase', letterSpacing: '0.08em', background: newDeckTitle.trim() ? 'var(--ink-100)' : 'rgb(var(--ink-rgb) / 0.3)', border: 'none', cursor: newDeckTitle.trim() ? 'pointer' : 'default', padding: '12px 0' }}>{creatingDeck ? 'CREATING…' : 'CREATE'}</button>
+              <button onClick={() => void submitDeck()} disabled={!newDeckTitle.trim() || creatingDeck} style={{ ...SKB, flex: 1, fontSize: 11, color: 'var(--black)', textTransform: 'uppercase', letterSpacing: '0.08em', background: newDeckTitle.trim() ? 'var(--ink-100)' : 'rgb(var(--ink-rgb) / 0.3)', border: 'none', cursor: newDeckTitle.trim() ? 'pointer' : 'default', padding: '12px 0' }}>{creatingDeck ? 'CREATING…' : 'CREATE'}</button>
             </div>
           </div>
         </div>,

@@ -196,7 +196,7 @@ export default function DesktopHomeLightbox({
   return createPortal(
     // left:var(--rail-w) keeps the global rail (z80) VISIBLE beneath this z140 overlay.
     // overflow:hidden → everything fits one screen, no scroll (frame 775:4).
-    <div data-swipe-exclude style={{ position: 'fixed', top: 0, right: 0, bottom: 0, left: 'var(--rail-w)', zIndex: 140, background: '#000', overflow: 'hidden' }}>
+    <div data-swipe-exclude style={{ position: 'fixed', top: 0, right: 0, bottom: 0, left: 'var(--rail-w)', zIndex: 140, background: 'var(--black)', overflow: 'hidden' }}>
       {/* header row seated 8px higher (top padding 18→10) */}
       <div style={{ maxWidth: 'var(--shell-fluid)', margin: '0 auto', padding: '10px 24px 0', height: '100%', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}/* Brief D15 §1 — HEIGHT-BOUND column: header + top strip (fixed) + the DesktopPostView group (flex:1, absorbs the surplus). The stage inside is the only flexible zone (contain-fit to its measured box), so the whole composition fits one screen at every viewport — no vertical page scroll, MORE FROM always visible. */>
 

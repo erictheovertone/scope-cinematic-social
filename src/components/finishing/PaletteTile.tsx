@@ -56,7 +56,7 @@ export default function PaletteTile({ look, selected = false, onTap }: { look: S
         border: `1px solid ${selected ? 'var(--ink-100)' : 'rgb(var(--ink-rgb) / 0.18)'}`,
         // Neutral gradient backdrop so the tile is NEVER a black box, even before
         // a fallback preview finishes baking (or if it fails).
-        background: 'linear-gradient(135deg, #1a1a1a 0%, #555 50%, #c9c9c9 100%)',
+        background: 'linear-gradient(135deg, var(--surface-3) 0%, #555 50%, #c9c9c9 100%)',
       }}>
         {src && <img src={src} alt={look.name} draggable={false} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
       </div>

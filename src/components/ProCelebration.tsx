@@ -25,7 +25,7 @@ export default function ProCelebration({ onDone }: { onDone: () => void }) {
   }, [onDone]);
 
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 1200, backgroundColor: "#000", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", overflow: "hidden", opacity: exiting ? 0 : 1, transition: exiting ? "opacity 0.8s ease" : "none" }}>
+    <div style={{ position: "fixed", inset: 0, zIndex: 1200, backgroundColor: "var(--black)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", overflow: "hidden", opacity: exiting ? 0 : 1, transition: exiting ? "opacity 0.8s ease" : "none" }}>
       {phase === "reveal" && (
         <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 1, backgroundColor: "var(--ink-100)", animation: "scanDown 1.2s ease-in-out forwards" }} />
       )}

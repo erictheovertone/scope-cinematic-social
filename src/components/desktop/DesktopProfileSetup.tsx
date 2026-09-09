@@ -65,7 +65,7 @@ export default function DesktopProfileSetup({ onComplete }: { onComplete: (userI
 
   return (
     <div className="bg-black" style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{ position: 'relative', width: 820, minHeight: 520, background: '#000', border: '1px solid #1a1a1a', boxSizing: 'border-box', padding: '54px 60px' }}>
+      <div style={{ position: 'relative', width: 820, minHeight: 520, background: 'var(--black)', border: '1px solid var(--surface-3)', boxSizing: 'border-box', padding: '54px 60px' }}>
         <RedBrackets inset={0} />
         <h1 style={{ ...SKB, fontSize: 'calc(34px * var(--type-scale))', color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '-0.01em', margin: '0 0 4px' }}>SET UP YOUR PROFILE</h1>
         <p style={{ ...SKB, fontWeight: 400, fontSize: 13, color: '#9e9e9e', margin: '0 0 30px' }}>This is how the world sees you on Scope.</p>
@@ -73,7 +73,7 @@ export default function DesktopProfileSetup({ onComplete }: { onComplete: (userI
         <div style={{ display: 'flex', gap: 30, alignItems: 'flex-start' }}>
           {/* PFP */}
           <div style={{ flexShrink: 0 }}>
-            <button onClick={() => fileRef.current?.click()} style={{ width: 120, height: 120, borderRadius: '50%', overflow: 'hidden', background: '#141414', border: `1px solid ${HAIR}`, cursor: 'pointer', padding: 0, position: 'relative' }}>
+            <button onClick={() => fileRef.current?.click()} style={{ width: 120, height: 120, borderRadius: '50%', overflow: 'hidden', background: 'var(--surface-2)', border: `1px solid ${HAIR}`, cursor: 'pointer', padding: 0, position: 'relative' }}>
               {pfp ? <img src={feedImage(pfp, 240)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} /> : (
                 <span style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', ...SKB, fontSize: 10, color: 'rgb(var(--ink-rgb) / 0.4)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{uploading ? '…' : 'ADD PHOTO'}</span>
               )}
@@ -94,7 +94,7 @@ export default function DesktopProfileSetup({ onComplete }: { onComplete: (userI
 
         {error && <p style={{ ...SKB, fontWeight: 400, fontSize: 12, color: RED, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '22px 0 0' }}>{error}</p>}
 
-        <button onClick={submit} disabled={saving} style={{ position: 'absolute', right: 60, bottom: 44, ...SKB, fontSize: 12, color: '#000', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'var(--ink-100)', border: 'none', cursor: 'pointer', width: 160, height: 48, opacity: saving ? 0.6 : 1 }}>
+        <button onClick={submit} disabled={saving} style={{ position: 'absolute', right: 60, bottom: 44, ...SKB, fontSize: 12, color: 'var(--black)', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'var(--ink-100)', border: 'none', cursor: 'pointer', width: 160, height: 48, opacity: saving ? 0.6 : 1 }}>
           {saving ? 'SAVING…' : 'CONTINUE'}
         </button>
       </div>

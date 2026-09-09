@@ -182,8 +182,8 @@ export default function VideoTransport({ videoEl, platform, paused, onTogglePaus
       {paused && (
         <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
           <div style={{ display: "flex", gap: 6, opacity: pausePulse ? 0.85 : 0.32, transition: "opacity 600ms ease" }}>
-            <span style={{ width: 4, height: 30, background: "var(--ink-100)", filter: "drop-shadow(0 1px 4px rgba(0,0,0,0.7))" }} />
-            <span style={{ width: 4, height: 30, background: "var(--ink-100)", filter: "drop-shadow(0 1px 4px rgba(0,0,0,0.7))" }} />
+            <span style={{ width: 4, height: 30, background: "var(--ink-100)", filter: "drop-shadow(0 1px 4px rgb(var(--black-rgb) / 0.7))" }} />
+            <span style={{ width: 4, height: 30, background: "var(--ink-100)", filter: "drop-shadow(0 1px 4px rgb(var(--black-rgb) / 0.7))" }} />
           </div>
         </div>
       )}
@@ -211,7 +211,7 @@ export default function VideoTransport({ videoEl, platform, paused, onTogglePaus
             {/* IN mark — [ bracket + × clear */}
             {aSet && (
               <div style={{ position: "absolute", left: `${pct(ab.a as number)}%`, top: -3, bottom: -3, display: "flex", flexDirection: "column", alignItems: "center", transform: "translateX(-50%)" }}>
-                <span style={{ ...SKB, fontSize: 11, lineHeight: 1, color: "var(--ink-100)", filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.8))" }}>[</span>
+                <span style={{ ...SKB, fontSize: 11, lineHeight: 1, color: "var(--ink-100)", filter: "drop-shadow(0 1px 3px rgb(var(--black-rgb) / 0.8))" }}>[</span>
                 <button onClick={(e) => { e.stopPropagation(); setAb((p) => ({ ...p, a: null })); reveal(IDLE_MS); }} aria-label="Clear IN"
                   style={{ position: "absolute", top: -12, background: "transparent", border: "none", cursor: "pointer", padding: 2, ...SKB, fontSize: 8, color: "rgb(var(--ink-rgb) / 0.6)", lineHeight: 1 }}>×</button>
               </div>
@@ -219,13 +219,13 @@ export default function VideoTransport({ videoEl, platform, paused, onTogglePaus
             {/* OUT mark — ] bracket + × clear */}
             {bSet && (
               <div style={{ position: "absolute", left: `${pct(ab.b as number)}%`, top: -3, bottom: -3, display: "flex", flexDirection: "column", alignItems: "center", transform: "translateX(-50%)" }}>
-                <span style={{ ...SKB, fontSize: 11, lineHeight: 1, color: "var(--ink-100)", filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.8))" }}>]</span>
+                <span style={{ ...SKB, fontSize: 11, lineHeight: 1, color: "var(--ink-100)", filter: "drop-shadow(0 1px 3px rgb(var(--black-rgb) / 0.8))" }}>]</span>
                 <button onClick={(e) => { e.stopPropagation(); setAb((p) => ({ ...p, b: null })); reveal(IDLE_MS); }} aria-label="Clear OUT"
                   style={{ position: "absolute", top: -12, background: "transparent", border: "none", cursor: "pointer", padding: 2, ...SKB, fontSize: 8, color: "rgb(var(--ink-rgb) / 0.6)", lineHeight: 1 }}>×</button>
               </div>
             )}
             {/* playhead */}
-            <div style={{ position: "absolute", left: `${frac * 100}%`, width: 9, height: 9, borderRadius: "50%", background: "var(--ink-100)", transform: "translateX(-50%)", boxShadow: "0 1px 4px rgba(0,0,0,0.6)" }} />
+            <div style={{ position: "absolute", left: `${frac * 100}%`, width: 9, height: 9, borderRadius: "50%", background: "var(--ink-100)", transform: "translateX(-50%)", boxShadow: "0 1px 4px rgb(var(--black-rgb) / 0.6)" }} />
           </div>
           {/* readout: timecode · speed · A–B state */}
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>

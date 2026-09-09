@@ -148,7 +148,7 @@ export default function FinishingPreview({ mediaUrl, mediaType, params, geometry
   }, [source, box, geometry, layoutId]);
 
   return (
-    <div ref={boxRef} style={{ position: 'absolute', inset: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000' }}>
+    <div ref={boxRef} style={{ position: 'absolute', inset: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--black)' }}>
       {source && geom && (
         <div style={{ position: 'relative', width: geom.fw, height: geom.fh, overflow: 'hidden' }}>
           <div style={{

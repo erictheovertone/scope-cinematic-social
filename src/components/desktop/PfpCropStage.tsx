@@ -113,7 +113,7 @@ export default function PfpCropStage({
   if (typeof document === 'undefined') return null;
   return createPortal(
     <div data-swipe-exclude style={{ position: 'fixed', inset: 0, zIndex: 640 }}>
-      <div onClick={onCancel} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.88)' }} />
+      <div onClick={onCancel} style={{ position: 'absolute', inset: 0, background: 'rgb(var(--black-rgb) / 0.88)' }} />
       <div style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', background: '#080808', border: '1px solid rgb(var(--ink-rgb) / 0.14)', padding: 22 }}>
         <p style={{ ...SKB, fontSize: 12, color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 0 14px' }}>FRAME YOUR PHOTO</p>
 
@@ -128,7 +128,7 @@ export default function PfpCropStage({
             onPointerUp={onPointerUp}
             onPointerCancel={onPointerUp}
             onWheel={onWheel}
-            style={{ position: 'relative', width: CROP, height: CROP, overflow: 'hidden', background: '#000', cursor: 'grab', touchAction: 'none' }}
+            style={{ position: 'relative', width: CROP, height: CROP, overflow: 'hidden', background: 'var(--black)', cursor: 'grab', touchAction: 'none' }}
           >
             {img && (
               <canvas
@@ -144,7 +144,7 @@ export default function PfpCropStage({
             )}
             {/* circle guide over the square crop — protects both presentations */}
             <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', boxShadow: `inset 0 0 0 1px rgb(var(--ink-rgb) / 0.25)` }} />
-            <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', borderRadius: '50%', boxShadow: '0 0 0 9999px rgba(0,0,0,0.45)' }} />
+            <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', borderRadius: '50%', boxShadow: '0 0 0 9999px rgb(var(--black-rgb) / 0.45)' }} />
           </div>
         )}
 
@@ -162,7 +162,7 @@ export default function PfpCropStage({
           <button onClick={onCancel} style={{ ...SKB, flex: 1, fontSize: 11, color: 'rgb(var(--ink-rgb) / 0.6)', textTransform: 'uppercase', letterSpacing: '0.08em', background: 'transparent', border: '1px solid rgb(var(--ink-rgb) / 0.18)', cursor: 'pointer', padding: '11px 0' }}>
             CANCEL
           </button>
-          <button onClick={apply} disabled={!!error || !img || busy} style={{ ...SKB, flex: 1, fontSize: 11, color: '#000', textTransform: 'uppercase', letterSpacing: '0.08em', background: 'var(--ink-100)', border: 'none', cursor: error || !img ? 'default' : 'pointer', padding: '11px 0', opacity: error || !img ? 0.4 : 1 }}>
+          <button onClick={apply} disabled={!!error || !img || busy} style={{ ...SKB, flex: 1, fontSize: 11, color: 'var(--black)', textTransform: 'uppercase', letterSpacing: '0.08em', background: 'var(--ink-100)', border: 'none', cursor: error || !img ? 'default' : 'pointer', padding: '11px 0', opacity: error || !img ? 0.4 : 1 }}>
             {busy ? 'APPLYING…' : 'APPLY'}
           </button>
         </div>

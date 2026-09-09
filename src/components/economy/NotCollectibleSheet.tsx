@@ -25,7 +25,7 @@ export default function NotCollectibleSheet({ visible, onClose }: { visible: boo
       <div
         onClick={onClose}
         style={{
-          position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 300,
+          position: 'fixed', inset: 0, backgroundColor: 'rgb(var(--black-rgb) / 0.85)', zIndex: 300,
           opacity: visible ? 1 : 0, pointerEvents: visible ? 'auto' : 'none',
           transition: 'opacity 0.35s ease',
         }}

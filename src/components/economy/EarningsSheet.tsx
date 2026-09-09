@@ -150,7 +150,7 @@ export default function EarningsSheet({ data, onClose }: Props) {
         initial={{ opacity: 0 }} animate={{ opacity: 1 }}
         transition={{ duration: reduced ? 0 : 0.25 }}
         onClick={onClose}
-        style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.72)' }}
+        style={{ position: 'absolute', inset: 0, background: 'rgb(var(--black-rgb) / 0.72)' }}
       />
       {/* Sheet — slide-up, quick spring settle; drag down to dismiss. */}
       <motion.div
@@ -211,7 +211,7 @@ export default function EarningsSheet({ data, onClose }: Props) {
           transition={{ duration: reduced ? 0 : 0.3, delay: reduced ? 0 : 0.18 }}
           style={{
             marginTop: 22,
-            background: 'linear-gradient(180deg, #101010 0%, #0a0a0a 100%)',
+            background: 'linear-gradient(180deg, #101010 0%, var(--surface-1) 100%)',
             border: '0.5px solid #1f1f1f', borderRadius: 2,
             padding: '16px 12px 10px',
           }}

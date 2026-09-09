@@ -430,7 +430,7 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
           position: "fixed",
           inset: 0,
           zIndex,
-          backgroundColor: "#000000",
+          backgroundColor: "var(--black)",
           display: "flex",
           flexDirection: "column",
           transform: visible ? "translateY(0)" : "translateY(100%)",
@@ -551,7 +551,7 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
                 </span>
               )}
             </div>
-            <div key={post.id} style={{ position: "relative", width: "92%", margin: "0 auto", aspectRatio: getAspectRatio(post.layout_id ?? ''), overflow: "hidden", background: "#0a0a0a" }}>{/* Brief M1 §2 — key remounts media per swiped post: frees the outgoing decoder, re-inits GradedVideo's forcePlay + iOS decode watchdog for the incoming (W3 pause/play handoff) */}
+            <div key={post.id} style={{ position: "relative", width: "92%", margin: "0 auto", aspectRatio: getAspectRatio(post.layout_id ?? ''), overflow: "hidden", background: "var(--surface-1)" }}>{/* Brief M1 §2 — key remounts media per swiped post: frees the outgoing decoder, re-inits GradedVideo's forcePlay + iOS decode watchdog for the incoming (W3 pause/play handoff) */}
               <MusicWaveButton post={post as { music_track_id?: string | null; music_mode?: string | null; music_start_seconds?: number | null; media_type?: string | null }} />
               {/* Brief V3 §2/§3 — a Stream video has EMPTY media_urls, so it must render on
                   stream_uid too (empty-media-safe). Ready → HLS; processing → poster+label;
@@ -586,7 +586,7 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
                   />
                 )
               ) : (
-                <div style={{ width: "100%", height: "100%", background: "#0a0a0a" }} />
+                <div style={{ width: "100%", height: "100%", background: "var(--surface-1)" }} />
               )}
             </div>
             {/* Profile-grid extra: tap-through to the scroll viewer. */}

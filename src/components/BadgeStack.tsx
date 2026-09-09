@@ -69,7 +69,7 @@ export default function BadgeStack({
             display: 'block',
             // Higher-rarity coin (earlier) sits on top of the next.
             zIndex: visible.length - i,
-            filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.9)) drop-shadow(0 0 3px rgba(0,0,0,0.8))',
+            filter: 'drop-shadow(0 2px 6px rgb(var(--black-rgb) / 0.9)) drop-shadow(0 0 3px rgb(var(--black-rgb) / 0.8))',
           }}
         />
       ))}
@@ -85,9 +85,9 @@ export default function BadgeStack({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            background: '#000',
+            background: 'var(--black)',
             border: '1px solid rgb(var(--ink-rgb) / 0.22)', // hairline, on-brand
-            boxShadow: '0 2px 6px rgba(0,0,0,0.9)',
+            boxShadow: '0 2px 6px rgb(var(--black-rgb) / 0.9)',
           }}
         >
           <span style={{ ...SKB, fontSize: Math.max(6, size * 0.42), color: 'var(--ink-100)', lineHeight: 1 }}>

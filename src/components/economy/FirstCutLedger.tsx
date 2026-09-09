@@ -80,7 +80,7 @@ export default function FirstCutLedger({
   const shown = fly && frozen.current !== null ? frozen.current : filled; // frozen during flight
 
   return (
-    <div style={{ background: '#000', width: '100%' }}>
+    <div style={{ background: 'var(--black)', width: '100%' }}>
       {/* Header — tappable to expand/collapse (inline); in 'sheet' it's a static title
           (the sheet is already the expanded detail). The count is the whip target. */}
       <div
@@ -156,7 +156,7 @@ export default function FirstCutLedger({
                 {h ? (
                   h.avatarUrl
                     ? <img src={feedImage(h.avatarUrl, 96)} alt="" style={{ width: 22, height: 22, objectFit: 'cover', display: 'block', flexShrink: 0 }} />
-                    : <div style={{ width: 22, height: 22, background: '#1a1a1a', flexShrink: 0 }} />
+                    : <div style={{ width: 22, height: 22, background: 'var(--surface-3)', flexShrink: 0 }} />
                 ) : (
                   <div style={{ width: 22, height: 22, borderRadius: '50%', border: '1px solid rgb(var(--ink-rgb) / 0.25)', flexShrink: 0 }} />
                 )}

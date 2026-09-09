@@ -297,7 +297,7 @@ export default function EditProfilePage() {
     <div className="bg-black" style={{ position: 'fixed', inset: 0, overflowY: 'auto' }}>
 
       {isDirty && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 200, background: '#000', borderBottom: '1px solid rgb(var(--ink-rgb) / 0.15)', padding: 'calc(10px + var(--safe-top)) 20px 10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 200, background: 'var(--black)', borderBottom: '1px solid rgb(var(--ink-rgb) / 0.15)', padding: 'calc(10px + var(--safe-top)) 20px 10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'rgb(var(--ink-rgb) / 0.4)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>UNSAVED CHANGES</span>
           <button
             onClick={handleSaveAll}
@@ -419,7 +419,7 @@ export default function EditProfilePage() {
             fill for the badge backdrop. Default OFF. Persists on SAVE. */}
         {lineFlags.isFoundingMember && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 18 }}>
-            <div style={{ width: 20, height: 60, position: 'relative', overflow: 'hidden', border: '1px solid rgb(var(--ink-rgb) / 0.18)', boxSizing: 'border-box', background: '#000', flexShrink: 0 }}>
+            <div style={{ width: 20, height: 60, position: 'relative', overflow: 'hidden', border: '1px solid rgb(var(--ink-rgb) / 0.18)', boxSizing: 'border-box', background: 'var(--black)', flexShrink: 0 }}>
               {holoBanner && (
                 <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(160deg, #FF0DBF 0%, #991F77 22%, #7F2366 38%, #FF9AD0 55%, #B14FD6 72%, #FF0DBF 100%)', backgroundSize: '100% 300%', opacity: 0.6, animation: 'holoDrift 14s ease-in-out infinite' }} />
               )}

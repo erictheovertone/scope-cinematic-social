@@ -406,7 +406,7 @@ const userLayoutId = stableLayoutId;
 
   return (
     <div className="relative">{/* Non-scrolling viewport root — fixed chrome (footer + snapped frame) is lifted OUT below as SIBLINGS of the scroller, so on iOS standalone it anchors to the VIEWPORT, not the .screen-min scroll container (which floated the footer above the screen bottom). */}
-    <div className="bg-black relative w-full app-shell screen-min mx-auto" style={{ background: 'var(--canvas)', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>{/* Brief 2.2c note 1 — page canvas #050505. Brief W2 §3 — was pb-[60px] pill-clearance → safe-bottom only, so grid content scrolls under the pill glass. */}
+    <div className="bg-black relative w-full app-shell screen-min mx-auto" style={{ background: 'var(--canvas)', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>{/* Brief 2.2c note 1 — page canvas var(--canvas). Brief W2 §3 — was pb-[60px] pill-clearance → safe-bottom only, so grid content scrolls under the pill glass. */}
       <OnboardingModal
         onComplete={() => {
           if (user?.id && shouldShowA2HS(user.id)) {
@@ -431,13 +431,13 @@ const userLayoutId = stableLayoutId;
         WebkitBackdropFilter: 'blur(12px)',
         maskImage: 'linear-gradient(to bottom, black 0%, black 45%, transparent 100%)',
         WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 45%, transparent 100%)',
-        background: 'linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0) 100%)',
+        background: 'linear-gradient(to bottom, rgb(var(--black-rgb) / 0.35) 0%, rgb(var(--black-rgb) / 0) 100%)',
         zIndex: 5, pointerEvents: 'none',
       }} />
 
       {/* ══ HEADER — Brief 2.2c scorched-earth rebuild. ONE flow composition whose
           HEIGHT DERIVES FROM CONTENT (headerRef measured → tab row + grid spacers
-          follow). Canvas = --canvas (#050505); the residual #000 is killed. */}
+          follow). Canvas = --canvas (var(--canvas)); the residual var(--black) is killed. */}
       <div
         onClick={profileDataOpen ? () => setProfileDataOpen(false) : undefined}
         style={{
@@ -493,7 +493,7 @@ const userLayoutId = stableLayoutId;
         maxWidth: '30rem',
         zIndex: 40,
         background: (headerSnapped || headerUnsnapping)
-          ? 'linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.25) 80%, transparent 100%)'
+          ? 'linear-gradient(to bottom, rgb(var(--black-rgb) / 0.55) 0%, rgb(var(--black-rgb) / 0.25) 80%, transparent 100%)'
           : 'transparent',
         paddingTop: (headerSnapped || headerUnsnapping) ? 6 : 10,
         paddingBottom: (headerSnapped || headerUnsnapping) ? 8 : 12,
@@ -697,7 +697,7 @@ const userLayoutId = stableLayoutId;
         <div
           className="bg-black"
           onClick={() => { setShowDecks(false); setActiveTab('main'); setShowNewDeckForm(false); setNewDeckTitle(''); setNewDeckDesc(''); }}
-          style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.75)', zIndex: 200 }}
+          style={{ position: 'fixed', inset: 0, backgroundColor: 'rgb(var(--black-rgb) / 0.75)', zIndex: 200 }}
         />
       )}
 
@@ -707,7 +707,7 @@ const userLayoutId = stableLayoutId;
         style={{
           position: 'fixed', bottom: 0, left: 0, right: 0,
           height: '70vh',
-          backgroundColor: '#000000',
+          backgroundColor: 'var(--black)',
           borderTop: '1px solid white',
           zIndex: 201,
           transform: showDecks ? 'translateY(0)' : 'translateY(100%)',
@@ -755,7 +755,7 @@ const userLayoutId = stableLayoutId;
                     (feedImage 600-class, video posters included via getUserDecks); else the
                     quiet placeholder tile (DeckThumbnail n===0). */}
                 {deck.thumbnail_url ? (
-                  <div style={{ width: '100%', aspectRatio: getDeckAspect(deck.grid_layout), overflow: 'hidden', background: '#1a1a1a' }}>
+                  <div style={{ width: '100%', aspectRatio: getDeckAspect(deck.grid_layout), overflow: 'hidden', background: 'var(--surface-3)' }}>
                     <img src={deck.thumbnail_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                   </div>
                 ) : (
@@ -900,7 +900,7 @@ const userLayoutId = stableLayoutId;
             pointerEvents: 'auto',
             opacity: Math.min(1, (gridScrollY - 20) / 20),
             transition: 'opacity 0.2s ease',
-            filter: 'drop-shadow(0 0 8px rgba(0,0,0,0.9)) drop-shadow(0 2px 12px rgba(0,0,0,0.75))',
+            filter: 'drop-shadow(0 0 8px rgb(var(--black-rgb) / 0.9)) drop-shadow(0 2px 12px rgb(var(--black-rgb) / 0.75))',
           }}
         >
           <img src="/logomark-plain-white.png" alt="" style={{ width: 32, height: 20, objectFit: 'contain', display: 'block' }} />

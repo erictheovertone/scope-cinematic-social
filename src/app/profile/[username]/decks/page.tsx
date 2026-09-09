@@ -185,7 +185,7 @@ export default function DecksPage() {
       {showCreate && (
         <>
           <div
-            style={{ position: "fixed", inset: 0, zIndex: 80, background: "rgba(0,0,0,0.7)" }}
+            style={{ position: "fixed", inset: 0, zIndex: 80, background: "rgb(var(--black-rgb) / 0.7)" }}
             onClick={() => setShowCreate(false)}
           />
           <div

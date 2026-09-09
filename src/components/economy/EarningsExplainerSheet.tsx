@@ -50,7 +50,7 @@ export default function EarningsExplainerSheet({ onClose }: Props) {
         animate={{ opacity: 1 }}
         transition={{ duration: reduced ? 0 : 0.2 }}
         onClick={onClose}
-        style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)' }}
+        style={{ position: 'absolute', inset: 0, background: 'rgb(var(--black-rgb) / 0.6)' }}
       />
       <motion.div
         initial={reduced ? { y: 0 } : { y: '100%' }}

@@ -38,9 +38,9 @@ function ModeIcon({ mode, size = ICON }: { mode: Mode; size?: number }) {
       return (
         <svg {...common}>
           <path d="M3 7h18M3 12h18M3 17h18" />
-          <circle cx="8" cy="7" r="2" fill="#000" />
-          <circle cx="16" cy="12" r="2" fill="#000" />
-          <circle cx="11" cy="17" r="2" fill="#000" />
+          <circle cx="8" cy="7" r="2" fill="var(--black)" />
+          <circle cx="16" cy="12" r="2" fill="var(--black)" />
+          <circle cx="11" cy="17" r="2" fill="var(--black)" />
         </svg>
       );
     case 'fx': // "FX" lettermark
@@ -86,7 +86,7 @@ export default function Tier1Modes({ active, onSelect, orientation = 'horizontal
           // none clip at top/bottom; overflow hidden guards the shortest rails.
           ? { borderLeft: '1px solid rgb(var(--ink-rgb) / 0.08)', height: '100%', justifyContent: 'space-between', padding: compact ? '4px 0' : '8px 0', overflow: 'hidden' }
           : { borderTop: '1px solid rgb(var(--ink-rgb) / 0.08)' }),
-        background: '#000',
+        background: 'var(--black)',
       }}
     >
       {MODES.map((m) => {

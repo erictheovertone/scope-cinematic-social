@@ -77,7 +77,7 @@ export default function AddToHomeScreenSheet({ isOpen, onClose, privyId, forceSh
         onClick={handleSnooze}
         style={{
           position: 'fixed', inset: 0,
-          backgroundColor: 'rgba(0,0,0,0.75)',
+          backgroundColor: 'rgb(var(--black-rgb) / 0.75)',
           zIndex: 800,
           opacity: canShow ? 1 : 0,
           pointerEvents: canShow ? 'auto' : 'none',

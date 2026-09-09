@@ -103,7 +103,7 @@ function CellOverlay({
             background: "var(--ink-100)", height: 13, padding: "0 5px",
             display: "flex", alignItems: "center",
             fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 'var(--fs-8)',
-            color: "#050505", letterSpacing: "-0.16px", whiteSpace: "nowrap", lineHeight: 1, zIndex: 1,
+            color: "var(--canvas)", letterSpacing: "-0.16px", whiteSpace: "nowrap", lineHeight: 1, zIndex: 1,
           }}>
             {layout.label}
           </span>
@@ -159,7 +159,7 @@ function LayoutSection({
             <div key={i} style={{ position: "absolute", left: cell.left, top: cell.top, width: cell.width, height: cell.height, border, background: "transparent" }}>
               {i === 0 && (
                 <>
-                  <span style={{ position: "absolute", top: 8, left: 9, background: "var(--ink-100)", height: 13, padding: "0 5px", display: "flex", alignItems: "center", fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 'var(--fs-8)', color: "#050505", letterSpacing: "-0.16px", whiteSpace: "nowrap", lineHeight: 1 }}>
+                  <span style={{ position: "absolute", top: 8, left: 9, background: "var(--ink-100)", height: 13, padding: "0 5px", display: "flex", alignItems: "center", fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 'var(--fs-8)', color: "var(--canvas)", letterSpacing: "-0.16px", whiteSpace: "nowrap", lineHeight: 1 }}>
                     {layout.label}
                   </span>
                   <div style={{ position: "absolute", top: 26, left: 9, display: "flex", alignItems: "center" }}>
@@ -262,18 +262,18 @@ function ConfirmationView({
   };
 
   return (
-    <div style={{ background: "#000", position: "fixed", inset: 0, zIndex: 50, overflow: "hidden" }}>
+    <div style={{ background: "var(--black)", position: "fixed", inset: 0, zIndex: 50, overflow: "hidden" }}>
       {renderGrid()}
 
       {/* Header — floats over grid. Brief M2 §2 — step-2 data was buried under the notch
           (F1 safe-area missed this step); pad the header zone by --safe-top. */}
       <div style={{
         position: "absolute", top: 0, left: 0, right: 0, zIndex: 10,
-        background: "rgba(0,0,0,0.6)",
+        background: "rgb(var(--black-rgb) / 0.6)",
         display: "flex", justifyContent: "space-between", alignItems: "center",
         padding: "calc(14px + var(--safe-top)) 8px 10px",
       }}>
-        <span style={{ ...SKB, background: "var(--ink-100)", padding: "2px 6px", fontSize: 'var(--fs-9)', color: "#050505", letterSpacing: "-0.16px" }}>
+        <span style={{ ...SKB, background: "var(--ink-100)", padding: "2px 6px", fontSize: 'var(--fs-9)', color: "var(--canvas)", letterSpacing: "-0.16px" }}>
           {layout.label}
         </span>
         <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
@@ -286,7 +286,7 @@ function ConfirmationView({
       <div style={{
         position: "absolute", bottom: 40, left: "50%", transform: "translateX(-50%)",
         display: "flex", flexDirection: "row", gap: 12, zIndex: 10,
-        background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%)",
+        background: "linear-gradient(to top, rgb(var(--black-rgb) / 0.7) 0%, transparent 100%)",
         padding: "24px 32px 0",
       }}>
         <button
@@ -300,7 +300,7 @@ function ConfirmationView({
           disabled={saving}
           style={{ background: saving ? "rgb(var(--ink-rgb) / 0.4)" : "var(--ink-100)", border: "none", cursor: saving ? "default" : "pointer", padding: "8px 24px" }}
         >
-          <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "#050505", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+          <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "var(--canvas)", textTransform: "uppercase", letterSpacing: "0.1em" }}>
             {saving ? "SAVING..." : "CONFIRM"}
           </span>
         </button>
@@ -405,7 +405,7 @@ export default function GridLayoutPage() {
   // Layout selection list
   return (
     <>
-      <div className="screen-min" style={{ background: "#000000", width: 375, minHeight: "100dvh", margin: "0 auto", position: "relative", overflowX: "hidden", paddingBottom: "calc(24px + var(--safe-bottom))" }}>
+      <div className="screen-min" style={{ background: "var(--black)", width: 375, minHeight: "100dvh", margin: "0 auto", position: "relative", overflowX: "hidden", paddingBottom: "calc(24px + var(--safe-bottom))" }}>
         {/* Brief M2 §1 — header per frame 241:1375: title top-left (Haas 75 Bold 16px) +
             logomark top-right (39×24, 78%). Replaces the F1 WELCOME/CHOOSE treatment. */}
         <div style={{ position: "relative", display: "flex", alignItems: "center", paddingTop: "calc(20px + var(--safe-top))", paddingBottom: 14, paddingLeft: 10, paddingRight: 10 }}>
@@ -439,7 +439,7 @@ export default function GridLayoutPage() {
       {animating && animatingLayout && (
         <div style={{
           position: "fixed", inset: 0, zIndex: 200,
-          backgroundColor: "#000", overflow: "hidden",
+          backgroundColor: "var(--black)", overflow: "hidden",
           animation: "fadeInBlack 0.3s ease forwards",
         }}>
           {/* Grid fills full screen */}
@@ -516,14 +516,14 @@ export default function GridLayoutPage() {
           {/* AR label — floats over grid */}
           <div style={{
             position: "absolute", top: 0, left: 0, right: 0, zIndex: 10,
-            background: "rgba(0,0,0,0.6)",
+            background: "rgb(var(--black-rgb) / 0.6)",
             display: "flex", alignItems: "center", justifyContent: "space-between",
             padding: "calc(14px + var(--safe-top)) 12px 10px",
             animation: "slideDown 0.4s cubic-bezier(0.16,1,0.3,1) 0.15s both",
             opacity: 0,
           }}>
             <div style={{ backgroundColor: "var(--ink-100)", padding: "6px 14px" }}>
-              <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: "#000", textTransform: "uppercase" }}>
+              <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: "var(--black)", textTransform: "uppercase" }}>
                 {animatingLayout.label}
               </span>
             </div>

@@ -154,7 +154,7 @@ export default function MediaRenderer({
           onClick={(e) => { e.stopPropagation(); setMuted(m => !m); }}
           style={{
             position: 'absolute', top: 8, right: 8,
-            background: 'rgba(0,0,0,0.5)', border: 'none', borderRadius: '50%',
+            background: 'rgb(var(--black-rgb) / 0.5)', border: 'none', borderRadius: '50%',
             width: 28, height: 28, cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10,
           }}
@@ -176,7 +176,7 @@ export default function MediaRenderer({
       {!autoplay && !isPlaying && (
         <div
           aria-label="Play"
-          style={{ position: 'absolute', bottom: 8, right: 8, lineHeight: 0, pointerEvents: 'none', filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.9))' }}
+          style={{ position: 'absolute', bottom: 8, right: 8, lineHeight: 0, pointerEvents: 'none', filter: 'drop-shadow(0 1px 3px rgb(var(--black-rgb) / 0.9))' }}
         >
           <svg width="16.5" height="18.5" viewBox="0 0 13 15" fill="var(--ink-100)"><path d="M1 1l11 6.5L1 14z"/></svg>
         </div>

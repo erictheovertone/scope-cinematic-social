@@ -131,7 +131,7 @@ export default function ProfileMenu({ isOpen, onClose }: ProfileMenuProps) {
       />
       
       {/* Menu */}
-      <div className="fixed top-[160px] right-[15px] bg-[#1A1A1A] border border-[#333333] rounded-lg shadow-lg z-[101] w-[200px]">
+      <div className="fixed top-[160px] right-[15px] bg-[var(--surface-3)] border border-[#333333] rounded-lg shadow-lg z-[101] w-[200px]">
         {/* Invite Link Popup */}
         {showInviteLink && (
           <div className="absolute -top-[60px] left-0 right-0 bg-[var(--ink-100)] text-[var(--on-ink)] p-2 rounded-lg text-center"/* X2c — ivory toast bg; text → --on-ink (was ivory-on-ivory) */>

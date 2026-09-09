@@ -57,7 +57,7 @@ export default function FirstCutSheet({
       <div
         style={{
           position: 'fixed', inset: 0, zIndex: 130,
-          background: 'rgba(0,0,0,0.6)',
+          background: 'rgb(var(--black-rgb) / 0.6)',
           opacity: visible ? 1 : 0,
           transition: 'opacity 250ms ease',
         }}
@@ -69,7 +69,7 @@ export default function FirstCutSheet({
         style={{
           position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 131,
           maxWidth: '30rem', margin: '0 auto',
-          background: '#000',
+          background: 'var(--black)',
           borderTop: '1px solid rgb(var(--ink-rgb) / 0.1)',
           padding: '16px 16px calc(28px + env(safe-area-inset-bottom, 0px))',
           maxHeight: '70vh',

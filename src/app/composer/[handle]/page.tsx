@@ -156,7 +156,7 @@ export default function ComposerDiscographyPage() {
   const empty = tracks !== null && tracks.length === 0;
 
   return (
-    <div style={{ minHeight: "100vh", background: "#000", color: "var(--ink-100)" }}>
+    <div style={{ minHeight: "100vh", background: "var(--black)", color: "var(--ink-100)" }}>
       <audio ref={audioRef} onEnded={() => { setPlaying(null); setProgress(0); }} onTimeUpdate={() => { const a = audioRef.current; if (a && a.duration && isFinite(a.duration)) setProgress(a.currentTime / a.duration); }} />
 
       {/* ── BANNER — album-art-style blurred underlay + sharp portrait ─────────
@@ -166,7 +166,7 @@ export default function ComposerDiscographyPage() {
         {profile?.profile_image_url && (
           <>
             <img src={feedImage(profile.profile_image_url, 400)} alt="" aria-hidden style={{ position: "absolute", inset: "-40px", width: "calc(100% + 80px)", height: "calc(100% + 80px)", objectFit: "cover", filter: "blur(34px) brightness(0.5)", transform: "scale(1.15)" }} />
-            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.35), rgba(0,0,0,0.9))" }} />
+            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgb(var(--black-rgb) / 0.35), rgb(var(--black-rgb) / 0.9))" }} />
           </>
         )}
         <button onClick={() => history.back()} style={{ position: "relative", ...SKR, fontSize: 12, color: "rgb(var(--ink-rgb) / 0.55)", background: "none", border: "none", cursor: "pointer", padding: 0, marginBottom: 18 }}>← Back</button>

@@ -64,7 +64,7 @@ export default function LinksSheet({ username, links, visible, onClose }: LinksS
         style={{
           position: "fixed",
           inset: 0,
-          backgroundColor: "rgba(0,0,0,0.85)",
+          backgroundColor: "rgb(var(--black-rgb) / 0.85)",
           zIndex: 200,
           opacity: visible ? 1 : 0,
           pointerEvents: visible ? "auto" : "none",
@@ -80,7 +80,7 @@ export default function LinksSheet({ username, links, visible, onClose }: LinksS
           left: 0,
           right: 0,
           height: "75vh",
-          backgroundColor: "#0a0a0a",
+          backgroundColor: "var(--surface-1)",
           borderTop: "1px solid rgb(var(--ink-rgb) / 0.1)",
           zIndex: 201,
           display: "flex",
@@ -106,7 +106,7 @@ export default function LinksSheet({ username, links, visible, onClose }: LinksS
 
         {/* Full-screen video player overlay */}
         {activeVideo && (
-          <div style={{ position: "absolute", inset: 0, backgroundColor: "#000", zIndex: 10, display: "flex", flexDirection: "column" }}>
+          <div style={{ position: "absolute", inset: 0, backgroundColor: "var(--black)", zIndex: 10, display: "flex", flexDirection: "column" }}>
             <div style={{ display: "flex", justifyContent: "flex-end", padding: "8px 12px", flexShrink: 0 }}>
               <button
                 onClick={() => setActiveVideo(null)}
@@ -177,7 +177,7 @@ export default function LinksSheet({ username, links, visible, onClose }: LinksS
                         allow="autoplay; muted"
                       />
                       {/* Bottom gradient */}
-                      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 50%)", pointerEvents: "none" }} />
+                      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgb(var(--black-rgb) / 0.6) 0%, transparent 50%)", pointerEvents: "none" }} />
                       {/* ↗ arrow */}
                       <span style={{ position: "absolute", top: 8, right: 8, fontSize: 'var(--fs-14)', color: "var(--ink-100)", opacity: 0.7, lineHeight: 1, pointerEvents: "none" }}>↗</span>
                     </div>
@@ -221,7 +221,7 @@ export default function LinksSheet({ username, links, visible, onClose }: LinksS
                         alt=""
                         style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
                       />
-                      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 50%)", pointerEvents: "none" }} />
+                      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgb(var(--black-rgb) / 0.6) 0%, transparent 50%)", pointerEvents: "none" }} />
                       <span style={{ position: "absolute", top: 8, right: 8, fontSize: 'var(--fs-14)', color: "var(--ink-100)", opacity: 0.7, lineHeight: 1 }}>↗</span>
                     </div>
                     <div style={{ padding: "8px 0" }}>
@@ -260,11 +260,11 @@ export default function LinksSheet({ username, links, visible, onClose }: LinksS
                   }}
                 >
                   {/* Thumbnail 56x56 */}
-                  <div style={{ width: 56, height: 56, flexShrink: 0, overflow: "hidden", background: "#1a1a1a" }}>
+                  <div style={{ width: 56, height: 56, flexShrink: 0, overflow: "hidden", background: "var(--surface-3)" }}>
                     {link.thumbnail_url ? (
                       <img src={link.thumbnail_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                     ) : (
-                      <div style={{ width: "100%", height: "100%", background: "#1a1a1a" }} />
+                      <div style={{ width: "100%", height: "100%", background: "var(--surface-3)" }} />
                     )}
                   </div>
 

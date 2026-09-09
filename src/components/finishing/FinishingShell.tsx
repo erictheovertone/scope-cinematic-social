@@ -548,7 +548,7 @@ export default function FinishingShell({
       )}
       {showingOriginal && (
         <div style={{ position: 'absolute', top: 10, left: 10, background: RED, padding: '3px 7px' }}>
-          <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: '#000', textTransform: 'uppercase', letterSpacing: '0.1em' }}>BEFORE</span>
+          <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'var(--black)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>BEFORE</span>
         </div>
       )}
     </>
@@ -627,7 +627,7 @@ export default function FinishingShell({
   //    (back · name · track · value); curve/compound tools present their existing
   //    panel here. Same params/pipeline as the portrait editor. ──
   const adjustingBar = activeTool && (
-    <div style={{ borderTop: '1px solid rgb(var(--ink-rgb) / 0.08)', background: '#000', padding: activeTool.kind === 'slider' ? '7px 14px 9px' : '9px 14px 14px' }}>
+    <div style={{ borderTop: '1px solid rgb(var(--ink-rgb) / 0.08)', background: 'var(--black)', padding: activeTool.kind === 'slider' ? '7px 14px 9px' : '9px 14px 14px' }}>
       {activeTool.kind === 'slider' ? (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {backToBrowsing}
@@ -669,7 +669,7 @@ export default function FinishingShell({
   const railW = compactRail ? 58 : 86;
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: '#000', display: 'flex', flexDirection: 'column',
+    <div style={{ position: 'fixed', inset: 0, background: 'var(--black)', display: 'flex', flexDirection: 'column',
       // Hold-to-compare is a long-press → iOS fires text-selection/callout (the screen
       // goes blue). Kill selection across the whole suite surface; inputs opt back in.
       userSelect: 'none', WebkitUserSelect: 'none', WebkitTouchCallout: 'none' }}>
@@ -693,7 +693,7 @@ export default function FinishingShell({
               <button onClick={() => setMenuOpen((o) => !o)} aria-label="Viewing options" style={{ width: 24, height: 24, background: 'transparent', cursor: 'pointer', lineHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${menuOpen ? RED : 'rgb(var(--ink-rgb) / 0.25)'}`, color: menuOpen || zoom.active ? RED : 'var(--ink-100)', transition: `border-color 0.3s ${SNAP}, color 0.3s ${SNAP}` }}>
                 <svg width="14.5" height="14.5" viewBox="0 0 12 12" fill="none" style={{ transform: menuOpen ? 'rotate(45deg)' : 'rotate(0deg)', transition: `transform 0.3s ${SNAP}` }}><path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
               </button>
-              <div style={{ position: 'absolute', top: 'calc(100% + 6px)', right: 0, zIndex: 30, minWidth: 150, background: '#000', border: '1px solid rgb(var(--ink-rgb) / 0.18)', transformOrigin: 'top right', transform: menuOpen ? 'scale(1)' : 'scale(0.7)', opacity: menuOpen ? 1 : 0, pointerEvents: menuOpen ? 'auto' : 'none', transition: `transform ${menuOpen ? 0.3 : 0.2}s ${SNAP}, opacity ${menuOpen ? 0.3 : 0.2}s ${SNAP}` }}>
+              <div style={{ position: 'absolute', top: 'calc(100% + 6px)', right: 0, zIndex: 30, minWidth: 150, background: 'var(--black)', border: '1px solid rgb(var(--ink-rgb) / 0.18)', transformOrigin: 'top right', transform: menuOpen ? 'scale(1)' : 'scale(0.7)', opacity: menuOpen ? 1 : 0, pointerEvents: menuOpen ? 'auto' : 'none', transition: `transform ${menuOpen ? 0.3 : 0.2}s ${SNAP}, opacity ${menuOpen ? 0.3 : 0.2}s ${SNAP}` }}>
                 {menuItemsContent}
               </div>
             </div>
@@ -722,7 +722,7 @@ export default function FinishingShell({
                   {/* Bare glyph — no box border (the repositioning wrapper's white box removed). */}
                   <svg width="18" height="18" viewBox="0 0 12 12" fill="none" style={{ transform: menuOpen ? 'rotate(45deg)' : 'rotate(0deg)', transition: `transform 0.3s ${SNAP}` }}><path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
                 </button>
-                <div style={{ position: 'absolute', top: 'calc(100% + 2px)', right: 0, zIndex: 30, minWidth: 150, background: '#000', border: '1px solid rgb(var(--ink-rgb) / 0.18)', transformOrigin: 'top right', transform: menuOpen ? 'scale(1)' : 'scale(0.7)', opacity: menuOpen ? 1 : 0, pointerEvents: menuOpen ? 'auto' : 'none', transition: `transform ${menuOpen ? 0.3 : 0.2}s ${SNAP}, opacity ${menuOpen ? 0.3 : 0.2}s ${SNAP}` }}>
+                <div style={{ position: 'absolute', top: 'calc(100% + 2px)', right: 0, zIndex: 30, minWidth: 150, background: 'var(--black)', border: '1px solid rgb(var(--ink-rgb) / 0.18)', transformOrigin: 'top right', transform: menuOpen ? 'scale(1)' : 'scale(0.7)', opacity: menuOpen ? 1 : 0, pointerEvents: menuOpen ? 'auto' : 'none', transition: `transform ${menuOpen ? 0.3 : 0.2}s ${SNAP}, opacity ${menuOpen ? 0.3 : 0.2}s ${SNAP}` }}>
                   {menuItemsContent}
                 </div>
               </div>
@@ -747,7 +747,7 @@ export default function FinishingShell({
           onPointerMove={onStagePointerMove}
           onPointerUp={onStagePointerUp}
           onPointerLeave={onStagePointerUp}
-          style={{ flex: 1, position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000', cursor: zoom.active ? 'grab' : 'default', touchAction: zoom.active ? 'none' : 'auto' }}
+          style={{ flex: 1, position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--black)', cursor: zoom.active ? 'grab' : 'default', touchAction: zoom.active ? 'none' : 'auto' }}
         >
           {stageInner}
           {/* Adjusting: small ‹ back over the image (top-left) — mirror of tapping
@@ -779,7 +779,7 @@ export default function FinishingShell({
 
       {/* ── Zoom level slider — only while Zoom is active ── */}
       {zoom.active && (
-        <div key="zoom" style={{ flexShrink: 0, padding: theatre ? '8px 18px' : '10px 18px', borderTop: '1px solid rgb(var(--ink-rgb) / 0.08)', background: '#000', display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div key="zoom" style={{ flexShrink: 0, padding: theatre ? '8px 18px' : '10px 18px', borderTop: '1px solid rgb(var(--ink-rgb) / 0.08)', background: 'var(--black)', display: 'flex', alignItems: 'center', gap: 12 }}>
           <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: RED, textTransform: 'uppercase', letterSpacing: '0.08em', whiteSpace: 'nowrap' }}>ZOOM {zoom.level.toFixed(1)}×</span>
           <input
             type="range" min={1} max={8} step={0.1} value={zoom.level}
@@ -794,7 +794,7 @@ export default function FinishingShell({
 
       {/* ── BOTTOM — Theatre contextual band (lean tool row) OR portrait stacked dock ── */}
       {theatre ? (
-        <div key="bottom" style={{ flexShrink: 0, position: 'relative', borderTop: '1px solid rgb(var(--ink-rgb) / 0.08)', background: '#000', maxHeight: '46vh', overflowY: 'auto' }}>
+        <div key="bottom" style={{ flexShrink: 0, position: 'relative', borderTop: '1px solid rgb(var(--ink-rgb) / 0.08)', background: 'var(--black)', maxHeight: '46vh', overflowY: 'auto' }}>
           {/* BROWSING chrome — Tier-2 subcats + Tier-3 tool row. Collapses to 0 in
               the adjusting state (grid-rows fr→0fr animates to the exact height) so
               the image expands into the reclaimed space. */}
@@ -818,7 +818,7 @@ export default function FinishingShell({
           )}
         </div>
       ) : (
-        <div key="bottom" style={{ flexShrink: 0, borderTop: '1px solid rgb(var(--ink-rgb) / 0.08)', background: '#000' }}>
+        <div key="bottom" style={{ flexShrink: 0, borderTop: '1px solid rgb(var(--ink-rgb) / 0.08)', background: 'var(--black)' }}>
           {/* TIER 2 — subcategories. Hidden for HISTORY and LOOKS (those render their own sections). */}
           {showSubcats && (
             <Tier2Subcats subcats={modeDef(activeMode).subcats} active={activeSubcat} onSelect={setActiveSubcat} />
@@ -836,7 +836,7 @@ export default function FinishingShell({
           key="sheet"
           style={{
             position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 10,
-            background: '#0a0a0a', borderTop: `1px solid rgb(var(--ink-rgb) / 0.1)`,
+            background: 'var(--surface-1)', borderTop: `1px solid rgb(var(--ink-rgb) / 0.1)`,
             transform: activeTool ? 'translateY(0)' : 'translateY(110%)',
             transition: `transform 0.42s ${SNAP}`,
             padding: '16px 18px calc(28px + var(--safe-bottom))', /* X3 §3 — bottom sheet: clear the home indicator */
@@ -862,10 +862,10 @@ export default function FinishingShell({
       {/* ── Theatre mobile-landscape: lower-left "+" → ripple-reveal subcats UPWARD (edit/fx) ── */}
       {theatre && compactRail && !adjusting && (activeMode === 'edit' || activeMode === 'fx') && (
         <div key="ml-subcat" style={{ position: 'fixed', left: 10, bottom: 10, zIndex: 31, display: 'flex', flexDirection: 'column-reverse', alignItems: 'flex-start', gap: 6, pointerEvents: 'none' }}>
-          <button onClick={() => setSubcatMenuOpen((o) => !o)} aria-label="Filter" style={{ width: 26, height: 26, background: '#000', cursor: 'pointer', lineHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'auto', border: `1px solid ${subcatMenuOpen ? RED : 'rgb(var(--ink-rgb) / 0.25)'}`, color: subcatMenuOpen ? RED : 'var(--ink-100)', transition: `border-color 0.3s ${SNAP}, color 0.3s ${SNAP}` }}>
+          <button onClick={() => setSubcatMenuOpen((o) => !o)} aria-label="Filter" style={{ width: 26, height: 26, background: 'var(--black)', cursor: 'pointer', lineHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'auto', border: `1px solid ${subcatMenuOpen ? RED : 'rgb(var(--ink-rgb) / 0.25)'}`, color: subcatMenuOpen ? RED : 'var(--ink-100)', transition: `border-color 0.3s ${SNAP}, color 0.3s ${SNAP}` }}>
             <svg width="15.5" height="15.5" viewBox="0 0 12 12" fill="none" style={{ transform: subcatMenuOpen ? 'rotate(45deg)' : 'rotate(0deg)', transition: `transform 0.3s ${SNAP}` }}><path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
           </button>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 2, background: '#000', border: subcatMenuOpen ? '1px solid rgb(var(--ink-rgb) / 0.18)' : '1px solid transparent', transformOrigin: 'bottom left', transform: subcatMenuOpen ? 'scale(1)' : 'scale(0.7)', opacity: subcatMenuOpen ? 1 : 0, pointerEvents: subcatMenuOpen ? 'auto' : 'none', transition: `transform ${subcatMenuOpen ? 0.3 : 0.2}s ${SNAP}, opacity ${subcatMenuOpen ? 0.3 : 0.2}s ${SNAP}` }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 2, background: 'var(--black)', border: subcatMenuOpen ? '1px solid rgb(var(--ink-rgb) / 0.18)' : '1px solid transparent', transformOrigin: 'bottom left', transform: subcatMenuOpen ? 'scale(1)' : 'scale(0.7)', opacity: subcatMenuOpen ? 1 : 0, pointerEvents: subcatMenuOpen ? 'auto' : 'none', transition: `transform ${subcatMenuOpen ? 0.3 : 0.2}s ${SNAP}, opacity ${subcatMenuOpen ? 0.3 : 0.2}s ${SNAP}` }}>
             {modeDef(activeMode).subcats.map((s) => (
               <button key={s.key} onClick={() => { setActiveSubcat(s.key); setSubcatMenuOpen(false); }} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '8px 14px', textAlign: 'left' }}>
                 <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: s.key === activeSubcat ? RED : 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{s.label}</span>

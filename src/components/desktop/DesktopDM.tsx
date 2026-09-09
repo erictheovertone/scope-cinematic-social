@@ -68,7 +68,7 @@ export default function DesktopDM({ initialUsername }: { initialUsername?: strin
   const activeConvId = active ? (convs.find((c) => c.otherUserId === active.userId)?.conversationId ?? null) : null;
 
   return (
-    <div style={{ position: 'fixed', inset: 0, left: 'var(--rail-w)', background: '#000' }}>
+    <div style={{ position: 'fixed', inset: 0, left: 'var(--rail-w)', background: 'var(--black)' }}>
       {/* Brief R1 §4 — the two-pane composition is bounded by <DesktopShell> (centered at
           --shell-max) so at 1920/2560 the thread + composer no longer stretch edge-to-edge;
           the message bubbles' 68% max-width now reads against a sane column, not the window. */}

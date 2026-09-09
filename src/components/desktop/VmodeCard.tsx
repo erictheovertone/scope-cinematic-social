@@ -70,7 +70,7 @@ export default function VmodeCard({ card, index, reduced, selected, onSelect }: 
         <img src={card.preview} alt="" aria-hidden style={{ maxWidth: '100%', maxHeight: '100%', width: 'auto', height: 'auto', objectFit: 'contain', opacity: 0.78, display: 'block' }} />
       </span>
       {card.coming && (
-        <span style={{ position: 'absolute', top: 14, right: 16, fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 9, color: 'rgb(var(--ink-rgb) / 0.75)', textTransform: 'uppercase', letterSpacing: '0.14em', background: 'rgba(0,0,0,0.5)', padding: '3px 7px', borderRadius: 2 }}>Coming</span>
+        <span style={{ position: 'absolute', top: 14, right: 16, fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 9, color: 'rgb(var(--ink-rgb) / 0.75)', textTransform: 'uppercase', letterSpacing: '0.14em', background: 'rgb(var(--black-rgb) / 0.5)', padding: '3px 7px', borderRadius: 2 }}>Coming</span>
       )}
     </motion.button>
   );

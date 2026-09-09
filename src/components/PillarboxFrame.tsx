@@ -26,7 +26,7 @@ export default function PillarboxFrame({
         position: 'relative',
         width: '100%',
         aspectRatio: '1.85 / 1',
-        backgroundColor: '#000000',
+        backgroundColor: 'var(--black)',
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',

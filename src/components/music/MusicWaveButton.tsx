@@ -90,7 +90,7 @@ export default function MusicWaveButton({
         background: "none", border: "none", padding: 8, cursor: "pointer",
       }}
     >
-      <span style={{ position: "relative", width: W, height: H, overflow: "hidden", display: "block", filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.7))" }}>
+      <span style={{ position: "relative", width: W, height: H, overflow: "hidden", display: "block", filter: "drop-shadow(0 1px 2px rgb(var(--black-rgb) / 0.7))" }}>
         <svg
           width={W * 2} height={H} viewBox={`0 0 ${W * 2} ${H}`}
           className={playing && !reduce ? "music-undulate" : undefined}

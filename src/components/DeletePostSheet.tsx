@@ -44,7 +44,7 @@ export default function DeletePostSheet({ visible, postId, userId, onClose, onDe
         onClick={handleClose}
         style={{
           position: 'fixed', inset: 0,
-          backgroundColor: 'rgba(0,0,0,0.85)',
+          backgroundColor: 'rgb(var(--black-rgb) / 0.85)',
           zIndex: 500,
           opacity: visible ? 1 : 0,
           pointerEvents: visible ? 'auto' : 'none',

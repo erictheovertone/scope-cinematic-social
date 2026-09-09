@@ -17,7 +17,7 @@ export default function FramesProUpsellSheet({ isOpen, onClose, onUpgrade }: Pro
       {/* Overlay */}
       <div
         onClick={onClose}
-        style={{ position: "fixed", inset: 0, zIndex: 90, background: "rgba(0,0,0,0.6)" }}
+        style={{ position: "fixed", inset: 0, zIndex: 90, background: "rgb(var(--black-rgb) / 0.6)" }}
       />
 
       {/* Sheet */}

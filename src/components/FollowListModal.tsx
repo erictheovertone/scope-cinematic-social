@@ -39,7 +39,7 @@ export default function FollowListModal({ type, privyUserId, onClose }: Props) {
   return (
     <div
       className="fixed inset-0 z-50 flex flex-col"
-      style={{ background: "#000", maxWidth: '30rem', margin: "0 auto" }}
+      style={{ background: "var(--black)", maxWidth: '30rem', margin: "0 auto" }}
     >
       {/* Header */}
       <div className="flex items-center gap-4 px-[4px] pt-[12px] pb-[10px]">

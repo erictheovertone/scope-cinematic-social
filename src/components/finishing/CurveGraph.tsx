@@ -167,7 +167,7 @@ export default function CurveGraph({ points, onChange, config }: CurveGraphProps
       ref={svgRef}
       viewBox={`0 0 ${GW} ${GH}`}
       width="100%"
-      style={{ display: 'block', touchAction: 'none', userSelect: 'none', aspectRatio: `${GW} / ${GH}`, background: '#000' }}
+      style={{ display: 'block', touchAction: 'none', userSelect: 'none', aspectRatio: `${GW} / ${GH}`, background: 'var(--black)' }}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
@@ -183,7 +183,7 @@ export default function CurveGraph({ points, onChange, config }: CurveGraphProps
       <line x1={ref.x1} y1={ref.y1} x2={ref.x2} y2={ref.y2} stroke="rgb(var(--ink-rgb) / 0.25)" strokeWidth={1} strokeDasharray="3 3" />
       <path d={path} fill="none" stroke={config.line} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
       {sorted.map((p, i) => (
-        <circle key={i} cx={toPx(p.x)} cy={toPy(p.y)} r={5} fill="#000" stroke={RED} strokeWidth={2} />
+        <circle key={i} cx={toPx(p.x)} cy={toPy(p.y)} r={5} fill="var(--black)" stroke={RED} strokeWidth={2} />
       ))}
     </svg>
   );

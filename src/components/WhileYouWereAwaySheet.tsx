@@ -167,7 +167,7 @@ export default function WhileYouWereAwaySheet({ visible, recap, username, onClos
     <div
       data-swipe-exclude
       style={{
-        position: 'fixed', inset: 0, zIndex: 600, background: '#000', overflow: 'hidden',
+        position: 'fixed', inset: 0, zIndex: 600, background: 'var(--black)', overflow: 'hidden',
         pointerEvents: visible ? 'auto' : 'none',
         transform: visible ? `translateY(${dragY}px)` : 'translateY(100%)',
         transition: dragging ? 'none' : 'transform 0.36s cubic-bezier(0.32,0.72,0,1)',
@@ -192,7 +192,7 @@ export default function WhileYouWereAwaySheet({ visible, recap, username, onClos
           {/* N DAYS pill — dark gradient, ivory label, radius 2. Brief M12: the border was
               dark-red #7a2e2e (a red-kill survivor on this page) → ivory hairline @30%, which
               keeps subtle definition on the dark gradient and pairs with the ghost ENTER CTA. */}
-          <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: RED, background: 'linear-gradient(93.77deg, #181818 24.12%, #000 64.5%)', border: '0.5px solid rgb(var(--ink-rgb) / 0.3)', borderRadius: 2, padding: '3px 8px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{recap.sinceDays} DAYS</span>
+          <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: RED, background: 'linear-gradient(93.77deg, #181818 24.12%, var(--black) 64.5%)', border: '0.5px solid rgb(var(--ink-rgb) / 0.3)', borderRadius: 2, padding: '3px 8px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{recap.sinceDays} DAYS</span>
         </div>
 
         {/* HERO / EARNED CARD — baked PNG background (fills + scales), radius 2, h 127,
@@ -224,7 +224,7 @@ export default function WhileYouWereAwaySheet({ visible, recap, username, onClos
               key={row.postId}
               onClick={() => { onClose(); openPostLightbox(row.postId); }}
               className="tap-target"
-              style={{ width: '100%', display: 'flex', alignItems: 'flex-start', gap: 12, padding: '13px 0', background: 'transparent', border: 'none', borderBottom: '0.5px solid #141414', cursor: 'pointer', textAlign: 'left' }}
+              style={{ width: '100%', display: 'flex', alignItems: 'flex-start', gap: 12, padding: '13px 0', background: 'transparent', border: 'none', borderBottom: '0.5px solid var(--surface-2)', cursor: 'pointer', textAlign: 'left' }}
             >
               <div style={{ width: 133, height: 48, flexShrink: 0, background: '#0d0d0d', overflow: 'hidden' }}>
                 {row.thumbnailUrl && <img src={row.thumbnailUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}

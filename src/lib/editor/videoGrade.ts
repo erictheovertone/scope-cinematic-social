@@ -77,7 +77,7 @@ export function videoOverlays(params: EditParams | null | undefined): CSSPropert
   const vig = num(p.vignette), fade = num(p.fade), tint = num(p.whiteBalance?.tint);
   if (vig > 0) {
     const a = (Math.min(vig, 6) / 6 * VIDEO_GRADE.vignetteMaxAlpha).toFixed(3);
-    layers.push({ background: `radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,${a}) 100%)` });
+    layers.push({ background: `radial-gradient(ellipse at center, transparent 45%, rgb(var(--black-rgb) / ${a}) 100%)` });
   }
   if (fade > 0) {
     const a = (Math.min(fade, 12) / 12 * VIDEO_GRADE.fadeMaxAlpha).toFixed(3);

@@ -165,7 +165,7 @@ export default function LinkManager() {
     <div className="bg-black" style={{ position: "fixed", inset: 0, overflowY: "auto" }}>
 
       {isDirty && !addingLink && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 200, background: '#000', borderBottom: '1px solid rgb(var(--ink-rgb) / 0.15)', padding: 'calc(10px + var(--safe-top)) 20px 10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }/* Brief X3 §3 — fixed top:0 unsaved-changes bar; pad top by --safe-top so it clears the notch */}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 200, background: 'var(--black)', borderBottom: '1px solid rgb(var(--ink-rgb) / 0.15)', padding: 'calc(10px + var(--safe-top)) 20px 10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }/* Brief X3 §3 — fixed top:0 unsaved-changes bar; pad top by --safe-top so it clears the notch */}>
           <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'rgb(var(--ink-rgb) / 0.4)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>UNSAVED CHANGES</span>
           <button
             onClick={handleFloatingSave}
@@ -215,7 +215,7 @@ export default function LinkManager() {
               <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px" }}>
                 <div
                   onClick={() => setExpandedIdx(isExpanded ? null : i)}
-                  style={{ width: 36, height: 36, flexShrink: 0, overflow: "hidden", background: "#1a1a1a", cursor: "pointer" }}
+                  style={{ width: 36, height: 36, flexShrink: 0, overflow: "hidden", background: "var(--surface-3)", cursor: "pointer" }}
                 >
                   {thumbSrc
                     ? <img src={thumbSrc} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
@@ -340,7 +340,7 @@ export default function LinkManager() {
             )}
             {pendingLink && (
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
-                <div style={{ width: 40, height: 40, flexShrink: 0, overflow: "hidden", background: "#1a1a1a" }}>
+                <div style={{ width: 40, height: 40, flexShrink: 0, overflow: "hidden", background: "var(--surface-3)" }}>
                   {pendingLink.thumbnail_url
                     ? <img src={pendingLink.thumbnail_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                     : <div style={{ width: "100%", height: "100%" }} />}

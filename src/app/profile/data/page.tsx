@@ -107,15 +107,15 @@ export default function DataPage() {
                 Account Statistics
               </h2>
               <div className="space-y-4">
-                <div className="flex justify-between items-center p-4 bg-[#1A1A1A] border border-[#333333] rounded-lg">
+                <div className="flex justify-between items-center p-4 bg-[var(--surface-3)] border border-[#333333] rounded-lg">
                   <span className="font-['IBM_Plex_Mono'] text-[var(--ink-100)] text-[var(--fs-14)]">Total Posts</span>
                   <span className="font-['IBM_Plex_Mono'] font-medium text-[var(--ink-100)] text-[var(--fs-14)]">{userData.totalPosts}</span>
                 </div>
-                <div className="flex justify-between items-center p-4 bg-[#1A1A1A] border border-[#333333] rounded-lg">
+                <div className="flex justify-between items-center p-4 bg-[var(--surface-3)] border border-[#333333] rounded-lg">
                   <span className="font-['IBM_Plex_Mono'] text-[var(--ink-100)] text-[var(--fs-14)]">Total Likes Given</span>
                   <span className="font-['IBM_Plex_Mono'] font-medium text-[var(--ink-100)] text-[var(--fs-14)]">{userData.totalLikes}</span>
                 </div>
-                <div className="flex justify-between items-center p-4 bg-[#1A1A1A] border border-[#333333] rounded-lg">
+                <div className="flex justify-between items-center p-4 bg-[var(--surface-3)] border border-[#333333] rounded-lg">
                   <span className="font-['IBM_Plex_Mono'] text-[var(--ink-100)] text-[var(--fs-14)]">Total Comments</span>
                   <span className="font-['IBM_Plex_Mono'] font-medium text-[var(--ink-100)] text-[var(--fs-14)]">{userData.totalComments}</span>
                 </div>
@@ -128,15 +128,15 @@ export default function DataPage() {
                 Account Information
               </h2>
               <div className="space-y-4">
-                <div className="flex justify-between items-center p-4 bg-[#1A1A1A] border border-[#333333] rounded-lg">
+                <div className="flex justify-between items-center p-4 bg-[var(--surface-3)] border border-[#333333] rounded-lg">
                   <span className="font-['IBM_Plex_Mono'] text-[var(--ink-100)] text-[var(--fs-14)]">Join Date</span>
                   <span className="font-['IBM_Plex_Mono'] text-[#888888] text-[var(--fs-14)]">{userData.joinDate}</span>
                 </div>
-                <div className="flex justify-between items-center p-4 bg-[#1A1A1A] border border-[#333333] rounded-lg">
+                <div className="flex justify-between items-center p-4 bg-[var(--surface-3)] border border-[#333333] rounded-lg">
                   <span className="font-['IBM_Plex_Mono'] text-[var(--ink-100)] text-[var(--fs-14)]">Last Active</span>
                   <span className="font-['IBM_Plex_Mono'] text-[#888888] text-[var(--fs-14)]">{userData.lastActive}</span>
                 </div>
-                <div className="flex justify-between items-center p-4 bg-[#1A1A1A] border border-[#333333] rounded-lg">
+                <div className="flex justify-between items-center p-4 bg-[var(--surface-3)] border border-[#333333] rounded-lg">
                   <span className="font-['IBM_Plex_Mono'] text-[var(--ink-100)] text-[var(--fs-14)]">Storage Used</span>
                   <span className="font-['IBM_Plex_Mono'] text-[#888888] text-[var(--fs-14)]">{userData.storageUsed}</span>
                 </div>
@@ -149,7 +149,7 @@ export default function DataPage() {
                 Data Export
               </h2>
               <div className="space-y-3">
-                <button className="w-full text-left p-4 bg-[#1A1A1A] border border-[#333333] rounded-lg hover:bg-[#222222] transition-colors">
+                <button className="w-full text-left p-4 bg-[var(--surface-3)] border border-[#333333] rounded-lg hover:bg-[#222222] transition-colors">
                   <p className="font-['IBM_Plex_Mono'] font-medium text-[var(--ink-100)] text-[var(--fs-14)] mb-1">
                     Download My Data
                   </p>
@@ -157,7 +157,7 @@ export default function DataPage() {
                     Export all your posts, comments, and account data
                   </p>
                 </button>
-                <button className="w-full text-left p-4 bg-[#1A1A1A] border border-[#333333] rounded-lg hover:bg-[#222222] transition-colors">
+                <button className="w-full text-left p-4 bg-[var(--surface-3)] border border-[#333333] rounded-lg hover:bg-[#222222] transition-colors">
                   <p className="font-['IBM_Plex_Mono'] font-medium text-[var(--ink-100)] text-[var(--fs-14)] mb-1">
                     Request Account Report
                   </p>
@@ -174,7 +174,7 @@ export default function DataPage() {
                 Privacy Controls
               </h2>
               <div className="space-y-3">
-                <button className="w-full text-left p-4 bg-[#1A1A1A] border border-[#333333] rounded-lg hover:bg-[#222222] transition-colors">
+                <button className="w-full text-left p-4 bg-[var(--surface-3)] border border-[#333333] rounded-lg hover:bg-[#222222] transition-colors">
                   <p className="font-['IBM_Plex_Mono'] font-medium text-[var(--ink-100)] text-[var(--fs-14)] mb-1">
                     Data Sharing Settings
                   </p>
@@ -182,7 +182,7 @@ export default function DataPage() {
                     Control how your data is used and shared
                   </p>
                 </button>
-                <button className="w-full text-left p-4 bg-[#1A1A1A] border border-[#333333] rounded-lg hover:bg-[#222222] transition-colors">
+                <button className="w-full text-left p-4 bg-[var(--surface-3)] border border-[#333333] rounded-lg hover:bg-[#222222] transition-colors">
                   <p className="font-['IBM_Plex_Mono'] font-medium text-[var(--ink-100)] text-[var(--fs-14)] mb-1">
                     Analytics Preferences
                   </p>

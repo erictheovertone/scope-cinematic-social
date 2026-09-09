@@ -283,7 +283,7 @@ function PostViewerItem({
                 {mediaEl}
               </PillarboxFrame>
             ) : (
-              <div style={{ position: "relative", width: "100%", aspectRatio: getAspectRatio(post.layout_id ?? ''), overflow: "hidden", background: "#0a0a0a" }}>
+              <div style={{ position: "relative", width: "100%", aspectRatio: getAspectRatio(post.layout_id ?? ''), overflow: "hidden", background: "var(--surface-1)" }}>
                 {mediaEl}
                 <MusicWaveButton post={post as { music_track_id?: string | null; music_mode?: string | null; music_start_seconds?: number | null; media_type?: string | null }} />
               </div>
@@ -381,7 +381,7 @@ function PostViewerItem({
                       right: 0,
                       zIndex: 121,
                       minWidth: 132,
-                      background: "#0a0a0a",
+                      background: "var(--surface-1)",
                       border: "1px solid rgb(var(--ink-rgb) / 0.12)",
                     }}
                   >
@@ -624,7 +624,7 @@ export default function ProfilePostViewer({
         position: "fixed",
         inset: 0,
         zIndex: 110,
-        backgroundColor: "#000000",
+        backgroundColor: "var(--black)",
         display: "flex",
         flexDirection: "column",
         transform: visible ? "translateY(0)" : "translateY(100%)",

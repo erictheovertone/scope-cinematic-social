@@ -126,11 +126,11 @@ export default function DesktopScreeningRoom() {
         autoplayFlag={p.autoplay !== false} forcePlay {...streamGradedProps(p as unknown as Record<string, unknown>)} style={{ width: '100%', height: '100%' }} />;
     }
     const src = mediaSrc(p);
-    return src ? <img src={feedImage(src, 1600)} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} /> : <div style={{ width: '100%', height: '100%', background: '#0a0a0a' }} />;
+    return src ? <img src={feedImage(src, 1600)} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} /> : <div style={{ width: '100%', height: '100%', background: 'var(--surface-1)' }} />;
   };
 
   return (
-    <div className="bg-black" style={{ position: 'fixed', inset: 0, left: 'var(--rail-w)', overflowY: 'auto', WebkitOverflowScrolling: 'touch', background: '#000' }}>
+    <div className="bg-black" style={{ position: 'fixed', inset: 0, left: 'var(--rail-w)', overflowY: 'auto', WebkitOverflowScrolling: 'touch', background: 'var(--black)' }}>
       <DesktopShell width="fluid" padding="0 58px 40px" style={{ position: 'relative', minHeight: '100%' }}>{/* Brief R1a — media stage grows to fill */}
 
         {/* ═══ 1. HEADER ═══ */}
@@ -151,7 +151,7 @@ export default function DesktopScreeningRoom() {
         {current && post && (
           <>
             {/* ═══ 2. THE STAGE (1227×343 letterbox) ═══ */}
-            <div style={{ width: '100%', maxWidth: 'var(--shell-fluid)', aspectRatio: '1227 / 343', background: '#000', overflow: 'hidden', position: 'relative', margin: '0 auto' }}>
+            <div style={{ width: '100%', maxWidth: 'var(--shell-fluid)', aspectRatio: '1227 / 343', background: 'var(--black)', overflow: 'hidden', position: 'relative', margin: '0 auto' }}>
               <div key={swapKey} style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'sr-stage-in 180ms ease-out both' }}>
                 {stageMedia(post)}
               </div>
@@ -216,9 +216,9 @@ export default function DesktopScreeningRoom() {
                   const isActive = i === active;
                   return (
                     <button key={r.rank} onClick={() => selectRank(i)} className="tappable" style={{ flexShrink: 0, width: 301, background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, textAlign: 'left' }}>
-                      <div style={{ position: 'relative', width: 301, height: 162, overflow: 'hidden', background: '#0a0a0a', border: `0.6px solid rgb(var(--ink-rgb) / ${isActive ? 1 : 0.58})`, boxSizing: 'border-box', transition: 'border-color 160ms ease' }}>
+                      <div style={{ position: 'relative', width: 301, height: 162, overflow: 'hidden', background: 'var(--surface-1)', border: `0.6px solid rgb(var(--ink-rgb) / ${isActive ? 1 : 0.58})`, boxSizing: 'border-box', transition: 'border-color 160ms ease' }}>
                         {src ? <img src={feedImage(src, 600)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} /> : <div style={{ width: '100%', height: '100%', background: '#111' }} />}
-                        <span style={{ position: 'absolute', top: 6, left: 8, ...SKB, fontSize: 22, color: 'var(--ink-100)', lineHeight: 1, textShadow: '0 1px 6px rgba(0,0,0,0.8)' }}>{two(r.rank)}</span>
+                        <span style={{ position: 'absolute', top: 6, left: 8, ...SKB, fontSize: 22, color: 'var(--ink-100)', lineHeight: 1, textShadow: '0 1px 6px rgb(var(--black-rgb) / 0.8)' }}>{two(r.rank)}</span>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginTop: 6, whiteSpace: 'nowrap', overflow: 'hidden' }}>
                         <span style={{ ...SKB, fontSize: 8, color: 'rgb(var(--ink-rgb) / 0.8)', textTransform: 'uppercase', textOverflow: 'ellipsis', overflow: 'hidden' }}>@{rp?.username ?? '—'}</span>

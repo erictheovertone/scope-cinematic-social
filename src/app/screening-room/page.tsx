@@ -171,7 +171,7 @@ function MobileScreeningRoom() {
 
   return (
     <>
-    <div className="screen-min" style={{ minHeight: '100dvh', background: '#000', maxWidth: '30rem', margin: '0 auto', position: 'relative' }}>
+    <div className="screen-min" style={{ minHeight: '100dvh', background: 'var(--black)', maxWidth: '30rem', margin: '0 auto', position: 'relative' }}>
       {/* Header — Brief M3: the established PageTitle treatment (32px sentence-case title
           + return-home logomark). Replaces the old ‹ back button, the RED temp logo
           (screening-room-logo-temp-01.png — removed), and the uppercase label. The
@@ -251,7 +251,7 @@ function MobileScreeningRoom() {
             // container for legacy, matching how the feed places its overlays).
             const rankChip = (
               <div style={{ position: 'absolute', top: 0, left: 0, background: 'var(--ink-100)', padding: '2px 7px', zIndex: 10 }}>
-                <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: '#000', letterSpacing: '0.04em' }}>{r.rank}</span>
+                <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: 'var(--black)', letterSpacing: '0.04em' }}>{r.rank}</span>
               </div>
             );
             return (
@@ -267,7 +267,7 @@ function MobileScreeningRoom() {
                 {is43 ? (
                   <PillarboxFrame overlays={rankChip}>{media}</PillarboxFrame>
                 ) : (
-                  <div style={{ position: 'relative', width: '100%', paddingTop: `${paddingPercent}%`, overflow: 'hidden', background: '#0A0A0A' }}>
+                  <div style={{ position: 'relative', width: '100%', paddingTop: `${paddingPercent}%`, overflow: 'hidden', background: 'var(--surface-1)' }}>
                     <div style={{ position: 'absolute', inset: 0 }}>{media}</div>
                     {rankChip}
                   </div>

@@ -37,7 +37,7 @@ export default function GlobalError({
 
   return (
     <html lang="en">
-      <body style={{ margin: 0, background: '#000', color: 'var(--ink-100)', fontFamily: mono }}>
+      <body style={{ margin: 0, background: 'var(--black)', color: 'var(--ink-100)', fontFamily: mono }}>
         <div
           style={{
             minHeight: '100dvh',

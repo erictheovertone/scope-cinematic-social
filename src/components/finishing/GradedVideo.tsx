@@ -530,7 +530,7 @@ export default function GradedVideo({
   }, [box, cropX, cropY, cropWidth, cropHeight]);
 
   return (
-    <div ref={boxRef} onClick={onClick} style={{ position: "relative", overflow: "hidden", cursor: onClick ? "pointer" : "default", background: "#0a0a0a", ...style }}>
+    <div ref={boxRef} onClick={onClick} style={{ position: "relative", overflow: "hidden", cursor: onClick ? "pointer" : "default", background: "var(--surface-1)", ...style }}>
       {/* Graded poster — the at-rest layer, and what shows until a tile actually plays.
           Brief V3c §2 — for HLS the poster is Stream's UNGRADED thumbnail, so it gets the
           SAME CSS grade (filter here + the overlay layers below cover it) → no ungraded
@@ -540,7 +540,7 @@ export default function GradedVideo({
         <img src={feedImage(posterUrl, posterWidth ?? 750)} alt="" draggable={false} loading={priority ? "eager" : "lazy"} fetchPriority={priority ? "high" : "auto"} decoding="async" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", display: "block", filter: isHls ? cssFilter : undefined }} />
       )}
 
-      {/* Brief V2 — Stream still encoding: poster (above) or the #0a0a0a placeholder (the
+      {/* Brief V2 — Stream still encoding: poster (above) or the var(--surface-1) placeholder (the
           box bg), with a quiet PROCESSING label. No playback is attempted (media_urls is
           empty for processing videos). Overlay only; playback logic untouched (V3). */}
       {processing && (
@@ -607,7 +607,7 @@ export default function GradedVideo({
         <button
           onClick={(e) => { e.stopPropagation(); setManualPlay(true); }}
           aria-label="Play"
-          style={{ position: "absolute", bottom: 8, right: 8, background: "transparent", border: "none", cursor: "pointer", padding: 0, lineHeight: 0, zIndex: 10, filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.9))" }}
+          style={{ position: "absolute", bottom: 8, right: 8, background: "transparent", border: "none", cursor: "pointer", padding: 0, lineHeight: 0, zIndex: 10, filter: "drop-shadow(0 1px 3px rgb(var(--black-rgb) / 0.9))" }}
         >
           <svg width="16.5" height="18.5" viewBox="0 0 13 15" fill="var(--ink-100)"><path d="M1 1l11 6.5L1 14z" /></svg>
         </button>
@@ -616,7 +616,7 @@ export default function GradedVideo({
       {showSoundToggle && playing && (
         <button
           onClick={(e) => { e.stopPropagation(); setMuted((m) => !m); }}
-          style={{ position: "absolute", top: 8, right: 8, background: "rgba(0,0,0,0.5)", border: "none", borderRadius: "50%", width: 28, height: 28, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10 }}
+          style={{ position: "absolute", top: 8, right: 8, background: "rgb(var(--black-rgb) / 0.5)", border: "none", borderRadius: "50%", width: 28, height: 28, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10 }}
           aria-label={muted ? "Unmute" : "Mute"}
         >
           {muted ? (

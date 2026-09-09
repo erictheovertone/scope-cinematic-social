@@ -38,10 +38,10 @@ export default function BannerBadgeStrip({
   width = 27,
   iconSize = 16,
   /** Piece 2 hook — colour/gradient of the 0.5px divider. DEFAULT = black
-      (#000000), i.e. effectively invisible against the black header. Piece 2
+      (var(--black)), i.e. effectively invisible against the black header. Piece 2
       lets badge holders / Pro users choose a custom line colour/gradient in
       Edit Profile; default stays black/none until they do. */
-  dividerColor = '#000000',
+  dividerColor = 'var(--black)',
   /** Piece 3 — Augmented-only holographic fill. When true, the backdrop becomes
       a living iridescent (magenta/pink/plum) shimmer instead of the static art.
       Icons stay above it (z-index) and legible. */
@@ -120,7 +120,7 @@ export default function BannerBadgeStrip({
           position: 'absolute',
           inset: 0,
           overflow: 'hidden',
-          backgroundColor: '#000',
+          backgroundColor: 'var(--black)',
           backgroundImage: holo ? 'none' : "url('/badges/profile-badge-banner-backdrop.png')",
           backgroundSize: 'cover',
           backgroundPosition: 'center',

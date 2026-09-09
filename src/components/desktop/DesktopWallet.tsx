@@ -501,12 +501,12 @@ function SendModal({
   if (typeof document === 'undefined') return null;
   return createPortal(
     <div data-swipe-exclude style={{ position: 'fixed', inset: 0, zIndex: 620 }}>
-      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.88)' }} />
+      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgb(var(--black-rgb) / 0.88)' }} />
       <div style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', width: 480, background: '#080808', border: '1px solid rgb(var(--ink-rgb) / 0.14)', padding: 24 }}>
         <p style={{ ...SKB, fontSize: 12, color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 0 16px' }}>SEND</p>
         <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
           {(['USDC', 'ETH'] as const).map((t) => (
-            <button key={t} onClick={() => setToken(t)} style={{ ...SKB, fontSize: 10.5, color: token === t ? '#000' : 'rgb(var(--ink-rgb) / 0.6)', background: token === t ? 'var(--ink-100)' : 'transparent', border: '1px solid rgb(var(--ink-rgb) / 0.2)', cursor: 'pointer', padding: '6px 14px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{t}</button>
+            <button key={t} onClick={() => setToken(t)} style={{ ...SKB, fontSize: 10.5, color: token === t ? 'var(--black)' : 'rgb(var(--ink-rgb) / 0.6)', background: token === t ? 'var(--ink-100)' : 'transparent', border: '1px solid rgb(var(--ink-rgb) / 0.2)', cursor: 'pointer', padding: '6px 14px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{t}</button>
           ))}
           <span style={{ marginLeft: 'auto', ...SKR, fontSize: 10, color: 'rgb(var(--ink-rgb) / 0.45)', alignSelf: 'center', fontVariantNumeric: 'tabular-nums' }}>
             MAX {token === 'ETH' ? `${max.toFixed(5)} ETH` : `$${max.toFixed(2)}`}
@@ -520,7 +520,7 @@ function SendModal({
         {error && <p style={{ ...SKR, fontSize: 10, color: RED, textTransform: 'uppercase', margin: '10px 0 0' }}>{error}</p>}
         <div style={{ display: 'flex', gap: 10, marginTop: 18 }}>
           <button onClick={onClose} style={{ ...SKB, flex: 1, fontSize: 11, color: 'rgb(var(--ink-rgb) / 0.6)', textTransform: 'uppercase', letterSpacing: '0.08em', background: 'transparent', border: '1px solid rgb(var(--ink-rgb) / 0.18)', cursor: 'pointer', padding: '11px 0' }}>CANCEL</button>
-          <button onClick={send} disabled={!validAddr || !validAmt || state === 'sending'} style={{ ...SKB, flex: 1, fontSize: 11, color: '#000', textTransform: 'uppercase', letterSpacing: '0.08em', background: 'var(--ink-100)', border: 'none', cursor: validAddr && validAmt ? 'pointer' : 'default', padding: '11px 0', opacity: validAddr && validAmt ? 1 : 0.4 }}>
+          <button onClick={send} disabled={!validAddr || !validAmt || state === 'sending'} style={{ ...SKB, flex: 1, fontSize: 11, color: 'var(--black)', textTransform: 'uppercase', letterSpacing: '0.08em', background: 'var(--ink-100)', border: 'none', cursor: validAddr && validAmt ? 'pointer' : 'default', padding: '11px 0', opacity: validAddr && validAmt ? 1 : 0.4 }}>
             {state === 'sending' ? 'SENDING…' : 'SEND'}
           </button>
         </div>

@@ -45,7 +45,7 @@ async function drawWatermarkBand(
   bandHeight: number,
   opts: { isOwnDeck: boolean; deckOwnerUsername: string; currentUserUsername: string },
 ) {
-  ctx.fillStyle = '#000000';
+  ctx.fillStyle = 'var(--black)';
   ctx.fillRect(0, bandY, FRAMES_CANVAS_WIDTH, bandHeight);
 
   try {
@@ -97,7 +97,7 @@ export async function generateFramesExport(params: {
   }
   console.log('[frames-export] B. Canvas created', FRAMES_CANVAS_WIDTH, 'x', FRAMES_CANVAS_HEIGHT);
 
-  ctx.fillStyle = '#000000';
+  ctx.fillStyle = 'var(--black)';
   ctx.fillRect(0, 0, FRAMES_CANVAS_WIDTH, FRAMES_CANVAS_HEIGHT);
   console.log('[frames-export] C. Background filled');
 

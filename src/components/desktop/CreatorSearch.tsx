@@ -67,7 +67,7 @@ export default function CreatorSearch({ width = 160, height = 34 }: { width?: nu
       </div>
 
       {showDrop && (
-        <div style={{ position: 'absolute', top: 'calc(100% + 6px)', right: 0, width: Math.max(240, width), maxHeight: 320, overflowY: 'auto', background: '#0a0a0a', border: '0.5px solid rgb(var(--ink-rgb) / 0.3)', borderRadius: 3, zIndex: 300, boxShadow: '0 12px 32px rgba(0,0,0,0.55)' }}>
+        <div style={{ position: 'absolute', top: 'calc(100% + 6px)', right: 0, width: Math.max(240, width), maxHeight: 320, overflowY: 'auto', background: 'var(--surface-1)', border: '0.5px solid rgb(var(--ink-rgb) / 0.3)', borderRadius: 3, zIndex: 300, boxShadow: '0 12px 32px rgb(var(--black-rgb) / 0.55)' }}>
           {loading && results.length === 0 ? (
             <p style={{ ...SKR, fontSize: 11, color: 'rgb(var(--ink-rgb) / 0.4)', textTransform: 'uppercase', letterSpacing: '0.12em', padding: '14px 12px', margin: 0 }}>Searching…</p>
           ) : results.length === 0 ? (
@@ -80,7 +80,7 @@ export default function CreatorSearch({ width = 160, height = 34 }: { width?: nu
                 className="press-row"
                 style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', background: 'transparent', border: 'none', borderBottom: '0.5px solid rgb(var(--ink-rgb) / 0.08)', cursor: 'pointer', textAlign: 'left' }}
               >
-                <span style={{ width: 28, height: 28, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, background: '#1a1a1a', display: 'block' }}>
+                <span style={{ width: 28, height: 28, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, background: 'var(--surface-3)', display: 'block' }}>
                   {r.profile_image_url && <img src={r.profile_image_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
                 </span>
                 <span style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>

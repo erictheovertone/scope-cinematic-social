@@ -81,7 +81,7 @@ export default function ReframeOverlay({ post, layoutId, onSave, onCancel }: Ref
   const isVideoPost = post.media_type === 'video';
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 600, backgroundColor: '#000', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 600, backgroundColor: 'var(--black)', display: 'flex', flexDirection: 'column' }}>
       {/* Header — Brief X3 §3: full-screen reframe takeover; header was un-inset.
           Pad top by --safe-top (F1) so CANCEL / RE-FRAME / SAVE clear the notch. */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 'calc(16px + var(--safe-top)) 16px 16px', flexShrink: 0 }}>
@@ -129,8 +129,8 @@ export default function ReframeOverlay({ post, layoutId, onSave, onCancel }: Ref
 
         {/* Dark overlay bars */}
         <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: `${cropY * 100}%`, background: 'rgba(0,0,0,0.72)' }} />
-          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: `${(1 - cropY - cropHeight) * 100}%`, background: 'rgba(0,0,0,0.72)' }} />
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: `${cropY * 100}%`, background: 'rgb(var(--black-rgb) / 0.72)' }} />
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: `${(1 - cropY - cropHeight) * 100}%`, background: 'rgb(var(--black-rgb) / 0.72)' }} />
         </div>
 
         {/* Draggable crop box */}

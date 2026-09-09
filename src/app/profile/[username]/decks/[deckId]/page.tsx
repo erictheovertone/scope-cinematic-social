@@ -115,7 +115,7 @@ function DeckCellOverlay({
     <div style={{ position: "relative", width, height, border, background: "transparent", flexShrink: 0, overflow: "visible" }}>
       {isFirst && (
         <>
-          <span style={{ position: "absolute", top: 5, left: 6, background: "#d9d9d9", height: 11, padding: "0 3px", display: "flex", alignItems: "center", fontFamily: "'Sk-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-8)', color: "#000000", letterSpacing: "-0.16px", whiteSpace: "nowrap", lineHeight: 1, zIndex: 1 }}>
+          <span style={{ position: "absolute", top: 5, left: 6, background: "#d9d9d9", height: 11, padding: "0 3px", display: "flex", alignItems: "center", fontFamily: "'Sk-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-8)', color: "var(--black)", letterSpacing: "-0.16px", whiteSpace: "nowrap", lineHeight: 1, zIndex: 1 }}>
             {layout.label}
           </span>
           <div style={{ position: "absolute", top: 19, left: 6, display: "flex", alignItems: "center" }}>
@@ -155,7 +155,7 @@ function DeckLayoutSection({
             <div key={i} style={{ position: "absolute", left: cell.left, top: cell.top, width: cell.width, height: cell.height, border, background: "transparent" }}>
               {i === 0 && (
                 <>
-                  <span style={{ position: "absolute", top: 5, left: 6, background: "#d9d9d9", height: 11, padding: "0 3px", display: "flex", alignItems: "center", fontFamily: "'Sk-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-8)', color: "#000000", letterSpacing: "-0.16px", whiteSpace: "nowrap", lineHeight: 1 }}>
+                  <span style={{ position: "absolute", top: 5, left: 6, background: "#d9d9d9", height: 11, padding: "0 3px", display: "flex", alignItems: "center", fontFamily: "'Sk-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-8)', color: "var(--black)", letterSpacing: "-0.16px", whiteSpace: "nowrap", lineHeight: 1 }}>
                     {layout.label}
                   </span>
                   <div style={{ position: "absolute", top: 18, left: 6, display: "flex", alignItems: "center" }}>
@@ -541,7 +541,7 @@ export default function DeckDetailPage() {
       <div
         style={{
           position: "relative", zIndex: 20,
-          background: "#000000",
+          background: "var(--black)",
           // Brief M5 §4 — pad the top by --safe-top (F1) so the deck title + "+" clear the
           // notch. minHeight keeps the 56px chrome height below the inset.
           minHeight: 56,
@@ -652,7 +652,7 @@ export default function DeckDetailPage() {
               transitionDelay: menuOpen ? "40ms" : "80ms",
             }}
           >
-            <span style={{ ...SKB, fontSize: 'var(--fs-10)', letterSpacing: "-0.04em", color: "#000000", textTransform: "uppercase", lineHeight: 1 }}>FRAMES</span>
+            <span style={{ ...SKB, fontSize: 'var(--fs-10)', letterSpacing: "-0.04em", color: "var(--black)", textTransform: "uppercase", lineHeight: 1 }}>FRAMES</span>
           </button>
 
           {/* Theatre icon — rightmost, closest to dots */}
@@ -686,7 +686,7 @@ export default function DeckDetailPage() {
             right: 0,
             minHeight: 437,
             zIndex: 16,
-            background: "rgba(0,0,0,0.74)",
+            background: "rgb(var(--black-rgb) / 0.74)",
             boxSizing: "border-box",
             paddingTop: 20,
             paddingLeft: 28,
@@ -783,7 +783,7 @@ export default function DeckDetailPage() {
       {/* ── Theatre toast ─────────────────────────────────────────────────── */}
 
       {theatreToast && (
-        <div style={{ position: "fixed", top: 64, left: "50%", transform: "translateX(-50%)", zIndex: 200, background: "rgba(0,0,0,0.85)", padding: "8px 16px", pointerEvents: "none" }}>
+        <div style={{ position: "fixed", top: 64, left: "50%", transform: "translateX(-50%)", zIndex: 200, background: "rgb(var(--black-rgb) / 0.85)", padding: "8px 16px", pointerEvents: "none" }}>
           <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "var(--ink-100)", letterSpacing: "0.08em", textTransform: "uppercase" }}>No frames to screen yet</span>
         </div>
       )}
@@ -808,7 +808,7 @@ export default function DeckDetailPage() {
               {item.media_url ? (
                 <MediaRenderer url={item.media_url} autoplay={true} width={600} />
               ) : (
-                <div className="w-full h-full bg-[#1a1a1a]" />
+                <div className="w-full h-full bg-[var(--surface-3)]" />
               )}
               {/* × icons are only rendered inside EditDeckDialog */}
             </div>
@@ -871,7 +871,7 @@ export default function DeckDetailPage() {
       {lightboxItem && (
         <>
           <div
-            style={{ position: "fixed", inset: 0, zIndex: 130, background: "rgba(0,0,0,0.96)" }}
+            style={{ position: "fixed", inset: 0, zIndex: 130, background: "rgb(var(--black-rgb) / 0.96)" }}
             onClick={() => setLightboxItem(null)}
           />
           <div
@@ -919,7 +919,7 @@ export default function DeckDetailPage() {
         <div
           style={{
             position: "fixed", inset: 0, zIndex: 100,
-            background: "#000000",
+            background: "var(--black)",
             display: "flex", flexDirection: "column",
           }}
         >
@@ -927,7 +927,7 @@ export default function DeckDetailPage() {
               was un-inset (fixed inset:0 takeover, missed by the .top-bar/PageTitle
               audit). Pad top by --safe-top (F1) — black paints under the notch, the
               56px row insets below it. */}
-          <div style={{ position: "sticky", top: 0, zIndex: 1, background: "#000000", flexShrink: 0, paddingTop: "var(--safe-top)" }}>
+          <div style={{ position: "sticky", top: 0, zIndex: 1, background: "var(--black)", flexShrink: 0, paddingTop: "var(--safe-top)" }}>
             <div
               style={{
                 maxWidth: '30rem', margin: "0 auto", width: "100%",
@@ -967,7 +967,7 @@ export default function DeckDetailPage() {
                 onChange={e => setEditTitle(e.target.value)}
                 placeholder="Deck name"
                 style={{
-                  display: "block", width: "100%", background: "#1A1A1A",
+                  display: "block", width: "100%", background: "var(--surface-3)",
                   border: "1px solid rgb(var(--ink-rgb) / 0.12)", outline: "none",
                   ...SKB, fontSize: 'max(16px, var(--fs-14))', color: "var(--ink-100)", textTransform: "uppercase",
                   padding: "10px 12px", marginBottom: 16, boxSizing: "border-box",
@@ -984,7 +984,7 @@ export default function DeckDetailPage() {
                 placeholder="Optional"
                 rows={3}
                 style={{
-                  display: "block", width: "100%", background: "#1A1A1A",
+                  display: "block", width: "100%", background: "var(--surface-3)",
                   border: "1px solid rgb(var(--ink-rgb) / 0.12)", outline: "none",
                   ...SKR, fontSize: 'max(16px, var(--fs-13))', color: "var(--ink-100)", lineHeight: 1.5,
                   padding: "10px 12px", marginBottom: 16, boxSizing: "border-box", resize: "none",
@@ -1002,7 +1002,7 @@ export default function DeckDetailPage() {
                 placeholder="Sony FX3"
                 maxLength={60}
                 style={{
-                  display: "block", width: "100%", background: "#1A1A1A",
+                  display: "block", width: "100%", background: "var(--surface-3)",
                   border: "1px solid rgb(var(--ink-rgb) / 0.12)", outline: "none",
                   ...SKR, fontSize: 'max(16px, var(--fs-13))', color: "var(--ink-100)",
                   padding: "10px 12px", marginBottom: 16, boxSizing: "border-box",
@@ -1020,7 +1020,7 @@ export default function DeckDetailPage() {
                 placeholder="Sony 24-70mm f/2.8 GM II"
                 maxLength={60}
                 style={{
-                  display: "block", width: "100%", background: "#1A1A1A",
+                  display: "block", width: "100%", background: "var(--surface-3)",
                   border: "1px solid rgb(var(--ink-rgb) / 0.12)", outline: "none",
                   ...SKR, fontSize: 'max(16px, var(--fs-13))', color: "var(--ink-100)",
                   padding: "10px 12px", marginBottom: 16, boxSizing: "border-box",
@@ -1037,7 +1037,7 @@ export default function DeckDetailPage() {
                 placeholder="Optional"
                 rows={3}
                 style={{
-                  display: "block", width: "100%", background: "#1A1A1A",
+                  display: "block", width: "100%", background: "var(--surface-3)",
                   border: "1px solid rgb(var(--ink-rgb) / 0.12)", outline: "none",
                   ...SKR, fontSize: 'max(16px, var(--fs-13))', color: "var(--ink-100)", lineHeight: 1.5,
                   padding: "10px 12px", marginBottom: 16, boxSizing: "border-box", resize: "none",
@@ -1093,7 +1093,7 @@ export default function DeckDetailPage() {
                       {item.media_url ? (
                         <MediaRenderer url={item.media_url} autoplay={false} width={600} />
                       ) : (
-                        <div className="w-full h-full bg-[#1a1a1a]" />
+                        <div className="w-full h-full bg-[var(--surface-3)]" />
                       )}
                       {/* × close icon — only inside edit dialog */}
                       <button
@@ -1101,7 +1101,7 @@ export default function DeckDetailPage() {
                         style={{
                           position: "absolute", top: 8, right: 8,
                           width: 24, height: 24,
-                          background: "rgba(0,0,0,0.6)", border: "none", cursor: "pointer",
+                          background: "rgb(var(--black-rgb) / 0.6)", border: "none", cursor: "pointer",
                           display: "flex", alignItems: "center", justifyContent: "center",
                           padding: 0,
                         }}

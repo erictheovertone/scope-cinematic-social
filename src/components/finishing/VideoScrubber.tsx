@@ -90,7 +90,7 @@ export default function VideoScrubber({ video, onHeroFrame, compact = false }: P
   const pct = duration > 0 ? (current / duration) * 100 : 0;
 
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 10, padding: compact ? "6px 14px" : "8px 18px", background: "#000" }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 10, padding: compact ? "6px 14px" : "8px 18px", background: "var(--black)" }}>
       {/* Play / pause */}
       <button onClick={togglePlay} aria-label={playing ? "Pause" : "Play"} style={{ background: "transparent", border: "none", cursor: "pointer", padding: 0, lineHeight: 0, flexShrink: 0 }}>
         {playing ? (

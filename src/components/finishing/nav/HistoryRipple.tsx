@@ -40,7 +40,7 @@ export default function HistoryRipple({ events }: HistoryRippleProps) {
               <div style={{ flex: 1, width: 1, background: isFirst ? 'transparent' : 'rgb(var(--ink-rgb) / 0.2)' }} />
               <div style={{
                 width: current ? 9 : 7, height: current ? 9 : 7, flexShrink: 0,
-                background: current ? RED : '#000',
+                background: current ? RED : 'var(--black)',
                 border: `1.5px solid ${nodeColor}`,
               }} />
               <div style={{ flex: 1, width: 1, background: isLast ? 'transparent' : 'rgb(var(--ink-rgb) / 0.2)' }} />

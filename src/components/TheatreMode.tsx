@@ -374,7 +374,7 @@ export default function TheatreMode({
     // Nothing to screen — a quiet explainer with an EXPLICIT way back. Tapping
     // anywhere also exits, but the button makes the escape obvious → never stuck.
     return (
-      <div onClick={() => handleClose()} style={{ position: 'fixed', inset: 0, zIndex: 900, background: '#000', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 22, padding: '0 40px' }}>
+      <div onClick={() => handleClose()} style={{ position: 'fixed', inset: 0, zIndex: 900, background: 'var(--black)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 22, padding: '0 40px' }}>
         <span style={{ ...SKR, fontSize: 'var(--fs-11)', color: 'rgb(var(--ink-rgb) / 0.55)', textTransform: 'uppercase', letterSpacing: '0.1em', textAlign: 'center', lineHeight: 1.6 }}>
           Nothing to screen yet<br />— post your first work
         </span>
@@ -447,7 +447,7 @@ export default function TheatreMode({
       >
         <div
           onClick={center ? (e) => { e.stopPropagation(); if (showData) setShowData(false); } : undefined}
-          style={{ position: 'relative', width: w, height: h, background: '#000', overflow: 'hidden', flexShrink: 0 }}
+          style={{ position: 'relative', width: w, height: h, background: 'var(--black)', overflow: 'hidden', flexShrink: 0 }}
         >
           {center && <MusicWaveButton post={p as { music_track_id?: string | null; music_mode?: string | null; music_start_seconds?: number | null; media_type?: string | null }} />}
           {vid ? (
@@ -506,7 +506,7 @@ export default function TheatreMode({
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
         style={{
-          position: 'absolute', inset: 0, background: portrait ? '#000' : 'rgba(0,0,0,0.92)',
+          position: 'absolute', inset: 0, background: portrait ? 'var(--black)' : 'rgb(var(--black-rgb) / 0.92)',
           opacity: shown ? 1 : 0, transition: `opacity ${reduceMotion.current ? 120 : 360}ms ${EASE}`,
           display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
         }}
@@ -540,7 +540,7 @@ export default function TheatreMode({
                 legibility over any media, ≥44px target, z-index above the scaled media
                 stacking context. MOBILE keeps the PNG glyph byte-for-byte (brightness 1.2). */}
             {isDesktopVp ? (
-              <svg width={Math.round(arrowH * ARROW_AR)} height={arrowH} viewBox="0 0 24 46" fill="none" stroke="rgb(var(--ink-rgb) / 0.75)" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block', filter: 'drop-shadow(0 1px 4px rgba(0,0,0,0.75))' }}>
+              <svg width={Math.round(arrowH * ARROW_AR)} height={arrowH} viewBox="0 0 24 46" fill="none" stroke="rgb(var(--ink-rgb) / 0.75)" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block', filter: 'drop-shadow(0 1px 4px rgb(var(--black-rgb) / 0.75))' }}>
                 <polyline points="15,6 7,23 15,40" />
               </svg>
             ) : (
@@ -556,7 +556,7 @@ export default function TheatreMode({
           >
             {/* Brief D7 §7 — desktop ivory-75% chevron (see Previous). Mobile PNG unchanged. */}
             {isDesktopVp ? (
-              <svg width={Math.round(arrowH * ARROW_AR)} height={arrowH} viewBox="0 0 24 46" fill="none" stroke="rgb(var(--ink-rgb) / 0.75)" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block', filter: 'drop-shadow(0 1px 4px rgba(0,0,0,0.75))' }}>
+              <svg width={Math.round(arrowH * ARROW_AR)} height={arrowH} viewBox="0 0 24 46" fill="none" stroke="rgb(var(--ink-rgb) / 0.75)" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block', filter: 'drop-shadow(0 1px 4px rgb(var(--black-rgb) / 0.75))' }}>
                 <polyline points="9,6 17,23 9,40" />
               </svg>
             ) : (
@@ -647,7 +647,7 @@ export default function TheatreMode({
           onClick={stop}
           style={{
             position: 'absolute', left: 0, right: 0, bottom: 0,
-            background: '#000', borderTop: '1px solid var(--ink-100)',
+            background: 'var(--black)', borderTop: '1px solid var(--ink-100)',
             padding: '9px 16px 11px', maxHeight: '40%', overflowY: 'auto',
             transform: showData ? 'translateY(0)' : 'translateY(101%)',
             transition: `transform ${reduceMotion.current ? 0 : 360}ms ${EASE}`,
@@ -672,22 +672,22 @@ export default function TheatreMode({
 
           {/* Stat shelf — LIKES (tap to like) · COMMENTS (tap → ripple up) · MC · price */}
           <div style={{ display: 'flex', gap: 1, background: 'rgb(var(--ink-rgb) / 0.08)' }}>
-            <button onClick={(e) => { stop(e); handleLike(); }} style={{ flex: 1, background: '#000', padding: '7px 6px', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
+            <button onClick={(e) => { stop(e); handleLike(); }} style={{ flex: 1, background: 'var(--black)', padding: '7px 6px', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
               <p style={{ ...SKB, fontSize: 'var(--fs-6_5)', color: 'rgb(var(--ink-rgb) / 0.4)', textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 0 5px' }}>LIKES</p>
               <p style={{ ...SKB, fontSize: 'var(--fs-13)', color: isLiked ? 'var(--ink-100)' : 'var(--ink-100)', margin: 0, fontVariantNumeric: 'tabular-nums' }}>{likes.length.toLocaleString()}</p>
             </button>
-            <button onClick={(e) => { stop(e); setShowComments((v) => !v); }} style={{ flex: 1, background: '#000', padding: '7px 6px', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
+            <button onClick={(e) => { stop(e); setShowComments((v) => !v); }} style={{ flex: 1, background: 'var(--black)', padding: '7px 6px', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
               <p style={{ ...SKB, fontSize: 'var(--fs-6_5)', color: 'rgb(var(--ink-rgb) / 0.4)', textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 0 5px' }}>COMMENTS</p>
               <p style={{ ...SKB, fontSize: 'var(--fs-13)', color: showComments ? 'var(--ink-100)' : 'var(--ink-100)', margin: 0, fontVariantNumeric: 'tabular-nums' }}>{comments.length.toLocaleString()}</p>
             </button>
             {isCoin && (
-              <div style={{ flex: 1, background: '#000', padding: '7px 6px' }}>
+              <div style={{ flex: 1, background: 'var(--black)', padding: '7px 6px' }}>
                 <p style={{ ...SKB, fontSize: 'var(--fs-6_5)', color: 'rgb(var(--ink-rgb) / 0.4)', textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 0 5px' }}>MARKET CAP</p>
                 <p style={{ ...SKB, fontSize: 'var(--fs-13)', color: 'var(--ink-100)', margin: 0, fontVariantNumeric: 'tabular-nums' }}>{market ? usd(market.mcUsd) : '…'}</p>
               </div>
             )}
             {isCoin && (
-              <div style={{ flex: 1, background: '#000', padding: '7px 6px' }}>
+              <div style={{ flex: 1, background: 'var(--black)', padding: '7px 6px' }}>
                 <p style={{ ...SKB, fontSize: 'var(--fs-6_5)', color: 'rgb(var(--ink-rgb) / 0.4)', textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 0 5px' }}>PRICE / FRAGMENT</p>
                 <p style={{ ...SKB, fontSize: 'var(--fs-13)', color: 'var(--ink-100)', margin: 0, fontVariantNumeric: 'tabular-nums' }}>{market ? (market.priceUsd != null ? usd(market.priceUsd) : '—') : '…'}</p>
               </div>

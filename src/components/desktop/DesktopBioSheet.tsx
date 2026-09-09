@@ -27,7 +27,7 @@ const PORTRAIT_FEATHER = 68;          // rectangular-feather falloff, ~60–80px
 // §2 — TWO intersecting linear-gradient masks = a soft-cornered RECTANGLE feather (a photograph
 // dissolving into the band), never a radial spotlight. `intersect`/`source-in` so a pixel shows
 // only where BOTH axes are opaque (default `add` would union into a plus shape).
-const PORTRAIT_MASK = `linear-gradient(to right, transparent 0, #000 ${PORTRAIT_FEATHER}px, #000 calc(100% - ${PORTRAIT_FEATHER}px), transparent 100%), linear-gradient(to bottom, transparent 0, #000 ${PORTRAIT_FEATHER}px, #000 calc(100% - ${PORTRAIT_FEATHER}px), transparent 100%)`;
+const PORTRAIT_MASK = `linear-gradient(to right, transparent 0, var(--black) ${PORTRAIT_FEATHER}px, var(--black) calc(100% - ${PORTRAIT_FEATHER}px), transparent 100%), linear-gradient(to bottom, transparent 0, var(--black) ${PORTRAIT_FEATHER}px, var(--black) calc(100% - ${PORTRAIT_FEATHER}px), transparent 100%)`;
 
 type P = Record<string, unknown>;
 const usd = (n: number) => (n >= 1000 ? `$${Math.round(n).toLocaleString()}` : `$${n.toFixed(2)}`);
@@ -136,7 +136,7 @@ export default function DesktopBioSheet({ profile, isOwn, links, badges, posts, 
   );
 
   return createPortal(
-    <div data-swipe-exclude style={{ position: 'fixed', top: 0, right: 0, bottom: 0, left: 'var(--rail-w)', zIndex: 150, background: '#000', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
+    <div data-swipe-exclude style={{ position: 'fixed', top: 0, right: 0, bottom: 0, left: 'var(--rail-w)', zIndex: 150, background: 'var(--black)', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
       <button onClick={onClose} aria-label="Close" style={{ position: 'fixed', top: 20, right: 30, zIndex: 4, background: 'transparent', border: 'none', cursor: 'pointer', ...SKR, fontSize: 22, color: 'rgb(var(--ink-rgb) / 0.6)', lineHeight: 1, padding: 4 }}>✕</button>
 
       <div style={{ maxWidth: 'var(--shell-narrow)', margin: '0 auto', padding: '0 40px 80px' }}>{/* Brief R1 — reading/detail width = --shell-narrow (1180), intentionally tighter than the grid --shell-max */}
@@ -147,7 +147,7 @@ export default function DesktopBioSheet({ profile, isOwn, links, badges, posts, 
             UNDER the portrait (so its opaque pixels never dim — only its feathered edges blend);
             the sharp 1:1 square portrait sits between the columns, its rectangular edges feathering
             into the band. A photograph dissolving into the banner — never a spotlight. */}
-        <div style={{ position: 'relative', height: BANNER_H, margin: '0 -40px', overflow: 'hidden', background: '#000' }}>
+        <div style={{ position: 'relative', height: BANNER_H, margin: '0 -40px', overflow: 'hidden', background: 'var(--black)' }}>
           {/* §3 — LETTERBOX-VIA-BLUR underlay: same PFP, heavily blurred + dimmed to ~30% luminance
               (blur 64 · brightness 0.55 · opacity 0.42), scale 1.2 hides the blur's soft band edges. */}
           {pfp && (
@@ -155,9 +155,9 @@ export default function DesktopBioSheet({ profile, isOwn, links, badges, posts, 
           )}
           {/* Text-zone scrims — BELOW the portrait so the face never dims; they only darken the
               underlay behind the header text (left identity zone, right stats zone) + edge feather. */}
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, #000 0%, rgba(0,0,0,0.82) 26%, rgba(0,0,0,0.22) 50%, transparent 70%)' }} />
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(270deg, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.4) 20%, transparent 40%)' }} />
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.4) 0%, transparent 18%, transparent 82%, #000 100%)' }} />
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, var(--black) 0%, rgb(var(--black-rgb) / 0.82) 26%, rgb(var(--black-rgb) / 0.22) 50%, transparent 70%)' }} />
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(270deg, rgb(var(--black-rgb) / 0.82) 0%, rgb(var(--black-rgb) / 0.4) 20%, transparent 40%)' }} />
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgb(var(--black-rgb) / 0.4) 0%, transparent 18%, transparent 82%, var(--black) 100%)' }} />
           {/* §1/§2 — the SHARP square portrait at its OWN 1:1 aspect (never cover-stretched into a
               non-square zone), sized to the band height − breathing (portraitSize, ≤420²), centred
               right-of-band-centre (calc(50%+90px)) between the text (ends ~x480) and stats (starts
@@ -271,7 +271,7 @@ export default function DesktopBioSheet({ profile, isOwn, links, badges, posts, 
           <Band label="KIT">
             <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
               {kit.map((k) => (
-                <div key={k.cat} style={{ width: 200, border: `1px solid ${HAIR}`, background: '#050505', padding: '18px 18px 20px' }}>
+                <div key={k.cat} style={{ width: 200, border: `1px solid ${HAIR}`, background: 'var(--canvas)', padding: '18px 18px 20px' }}>
                   <svg width="26" height="26" viewBox="0 0 24 24" fill="none" style={{ display: 'block', marginBottom: 14 }}><rect x="3" y="6.5" width="18" height="12" rx="1.5" stroke="rgb(var(--ink-rgb) / 0.55)" strokeWidth="1.3"/><circle cx="12" cy="12.5" r="3.2" stroke="rgb(var(--ink-rgb) / 0.55)" strokeWidth="1.3"/><path d="M8 6.5l1-2h6l1 2" stroke="rgb(var(--ink-rgb) / 0.55)" strokeWidth="1.3"/></svg>
                   <p style={{ ...SKB, fontSize: 9, color: 'rgb(var(--ink-rgb) / 0.4)', textTransform: 'uppercase', letterSpacing: '0.14em', margin: '0 0 6px' }}>{k.cat}</p>
                   <p style={{ ...SKB, fontSize: 13, color: 'var(--ink-100)', margin: 0 }}>{k.val}</p>
@@ -287,7 +287,7 @@ export default function DesktopBioSheet({ profile, isOwn, links, badges, posts, 
               {[...links].sort((a, b) => Number((b as { is_primary?: boolean }).is_primary) - Number((a as { is_primary?: boolean }).is_primary)).slice(0, 6).map((l) => {
                 const img = (l as { custom_thumbnail_url?: string }).custom_thumbnail_url || l.thumbnail_url || linkFallback;
                 return (
-                  <button key={l.id} onClick={() => window.open(l.url, '_blank')} style={{ width: 236, textAlign: 'left', background: '#050505', border: `1px solid ${HAIR}`, cursor: 'pointer', padding: 0, overflow: 'hidden' }}>
+                  <button key={l.id} onClick={() => window.open(l.url, '_blank')} style={{ width: 236, textAlign: 'left', background: 'var(--canvas)', border: `1px solid ${HAIR}`, cursor: 'pointer', padding: 0, overflow: 'hidden' }}>
                     <div style={{ width: '100%', aspectRatio: '16 / 9', background: '#0d0d0d', overflow: 'hidden' }}>
                       {img && <img src={feedImage(img as string, 480)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', opacity: 0.85 }} />}
                     </div>
@@ -307,12 +307,12 @@ export default function DesktopBioSheet({ profile, isOwn, links, badges, posts, 
 
         <Band label="CONTACT">
           <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-            <button onClick={onMessage} style={{ width: 260, textAlign: 'left', background: '#050505', border: `1px solid ${HAIR}`, cursor: 'pointer', padding: '18px 20px' }}>
+            <button onClick={onMessage} style={{ width: 260, textAlign: 'left', background: 'var(--canvas)', border: `1px solid ${HAIR}`, cursor: 'pointer', padding: '18px 20px' }}>
               <p style={{ ...SKB, fontSize: 9, color: 'rgb(var(--ink-rgb) / 0.4)', textTransform: 'uppercase', letterSpacing: '0.14em', margin: '0 0 6px' }}>DIRECT MESSAGE</p>
               <p style={{ ...SKB, fontSize: 13, color: 'var(--ink-100)', margin: 0 }}>MESSAGE {name.split(' ')[0]} →</p>
             </button>
             {email && (
-              <a href={`mailto:${email}`} style={{ width: 260, textDecoration: 'none', background: '#050505', border: `1px solid ${HAIR}`, padding: '18px 20px', display: 'block' }}>
+              <a href={`mailto:${email}`} style={{ width: 260, textDecoration: 'none', background: 'var(--canvas)', border: `1px solid ${HAIR}`, padding: '18px 20px', display: 'block' }}>
                 <p style={{ ...SKB, fontSize: 9, color: 'rgb(var(--ink-rgb) / 0.4)', textTransform: 'uppercase', letterSpacing: '0.14em', margin: '0 0 6px' }}>EMAIL</p>
                 <p style={{ ...SKB, fontSize: 13, color: 'var(--ink-100)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{email}</p>
               </a>

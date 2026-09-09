@@ -103,7 +103,7 @@ export async function bakeImageGeometry(
     canvas.height = exportH;
     const ctx = canvas.getContext('2d');
     if (!ctx) { src.close?.(); return file; }
-    ctx.fillStyle = '#000';
+    ctx.fillStyle = 'var(--black)';
     ctx.fillRect(0, 0, exportW, exportH);
 
     // Map the oriented crop window onto the full canvas.

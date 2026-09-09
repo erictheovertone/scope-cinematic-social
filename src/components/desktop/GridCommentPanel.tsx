@@ -109,7 +109,7 @@ export default function GridCommentPanel({
         position: 'fixed', left, top, width: GRID_PANEL_WIDTH, maxHeight: '70vh', zIndex: 400,
         display: 'flex', flexDirection: 'column', background: 'var(--canvas)',
         border: '0.5px solid rgb(var(--ink-rgb) / 0.3)', borderRadius: 3, overflow: 'hidden',
-        boxShadow: '0 16px 44px rgba(0,0,0,0.6)',
+        boxShadow: '0 16px 44px rgb(var(--black-rgb) / 0.6)',
         opacity: mounted ? 1 : 0, transform: mounted || reduced ? 'translateX(0)' : enterTransform,
         transition: reduced ? 'none' : 'opacity 150ms ease, transform 150ms cubic-bezier(0.16,0.84,0.3,1)',
       }}

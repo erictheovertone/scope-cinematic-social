@@ -19,7 +19,7 @@ export function neutralTestFrame(): Promise<HTMLImageElement> {
     const ctx = cv.getContext('2d')!;
     // Horizontal luminance ramp (dark → mid → light) — reads exposure/contrast.
     const g = ctx.createLinearGradient(0, 0, S, 0);
-    g.addColorStop(0, '#0a0a0a'); g.addColorStop(0.5, '#808080'); g.addColorStop(1, '#f2f2f2');
+    g.addColorStop(0, 'var(--surface-1)'); g.addColorStop(0.5, '#808080'); g.addColorStop(1, '#f2f2f2');
     ctx.fillStyle = g; ctx.fillRect(0, 0, S, S);
     // Colour patches — read white balance, saturation, and LUT colour response.
     const patches = ['#c08a6a', '#5a86b0', '#6f8f55', '#b04a4a'];

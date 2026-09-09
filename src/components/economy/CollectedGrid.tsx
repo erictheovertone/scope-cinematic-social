@@ -267,7 +267,7 @@ export default function CollectedGrid({
                 style={{
                   ...SKR, fontSize: 12, color: 'var(--ink-100)', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.1em',
                   padding: '7px 12px', border: '0.5px solid transparent',
-                  background: 'linear-gradient(#000, #000) padding-box, linear-gradient(135deg, rgb(var(--ink-rgb) / 0.7), rgb(var(--ink-rgb) / 0.15)) border-box',
+                  background: 'linear-gradient(var(--black), var(--black)) padding-box, linear-gradient(135deg, rgb(var(--ink-rgb) / 0.7), rgb(var(--ink-rgb) / 0.15)) border-box',
                 }}
               >
                 + NEW PROGRAM
@@ -308,9 +308,9 @@ export default function CollectedGrid({
                 )}
                 {/* side vignettes — soft black feathering in from BOTH edges so the
                     title (left) and chip/› (right) pop; the hero stays readable. */}
-                <span style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, rgba(0,0,0,0.52) 0%, rgba(0,0,0,0) 20%, rgba(0,0,0,0) 80%, rgba(0,0,0,0.52) 100%)' }} />
+                <span style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, rgb(var(--black-rgb) / 0.52) 0%, rgb(var(--black-rgb) / 0) 20%, rgb(var(--black-rgb) / 0) 80%, rgb(var(--black-rgb) / 0.52) 100%)' }} />
                 {/* left→right scrim for legibility */}
-                <span style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.35) 42%, rgba(0,0,0,0) 75%)' }} />
+                <span style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, rgb(var(--black-rgb) / 0.78) 0%, rgb(var(--black-rgb) / 0.35) 42%, rgb(var(--black-rgb) / 0) 75%)' }} />
                 <span style={{ position: 'absolute', left: 12, bottom: 8 }}>
                   <span style={{ ...SKR, fontSize: 'var(--fs-10)', color: 'rgb(var(--ink-rgb) / 0.75)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{s.title}</span>
                 </span>
@@ -411,7 +411,7 @@ export default function CollectedGrid({
         <div
           data-swipe-exclude
           style={{
-            position: 'fixed', inset: 0, zIndex: 540, background: '#000',
+            position: 'fixed', inset: 0, zIndex: 540, background: 'var(--black)',
             display: 'flex', flexDirection: 'column',
             animation: reducedMotion ? 'none' : fullscreen === 'closing' ? 'fsProgramOut 220ms ease both' : 'fsProgramIn 250ms ease both',
           }}
@@ -553,7 +553,7 @@ function ProgramSheet({
   if (typeof document === 'undefined') return null;
   return createPortal(
     <div data-swipe-exclude style={{ position: 'fixed', inset: 0, zIndex: 520 }}>
-      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.85)' }} />
+      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgb(var(--black-rgb) / 0.85)' }} />
       <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, maxHeight: '86dvh', overflowY: 'auto', background: '#080808', borderTop: '1px solid rgb(var(--ink-rgb) / 0.1)', padding: '18px 14px calc(22px + env(safe-area-inset-bottom, 0px))' }}>
         <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 14 }}>
           <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>NEW PROGRAM</span>
@@ -654,7 +654,7 @@ function ProgramDetail({
   if (typeof document === 'undefined') return null;
   return createPortal(
     <div data-swipe-exclude style={{ position: 'fixed', inset: 0, zIndex: 510 }}>
-      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.88)' }} />
+      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgb(var(--black-rgb) / 0.88)' }} />
       <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, maxHeight: '88dvh', overflowY: 'auto', background: '#080808', borderTop: '1px solid rgb(var(--ink-rgb) / 0.1)', padding: '18px 14px calc(22px + env(safe-area-inset-bottom, 0px))' }}>
         <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 4 }}>
           {renaming ? (
@@ -728,10 +728,10 @@ function ProgramDetail({
               />
               {isOwn && (
                 <span style={{ position: 'absolute', left: 4, bottom: 4, display: 'flex', gap: 6, zIndex: 7 }}>
-                  <button onClick={() => doSetHero(h)} disabled={busyHero !== null} style={{ ...SKB, fontSize: 8.5, color: stack.hero_post_id === h.postId ? 'var(--ink-100)' : 'rgb(var(--ink-rgb) / 0.8)', background: 'rgba(0,0,0,0.72)', border: '1px solid rgb(var(--ink-rgb) / 0.25)', cursor: 'pointer', padding: '2px 5px', textTransform: 'uppercase' }}>
+                  <button onClick={() => doSetHero(h)} disabled={busyHero !== null} style={{ ...SKB, fontSize: 8.5, color: stack.hero_post_id === h.postId ? 'var(--ink-100)' : 'rgb(var(--ink-rgb) / 0.8)', background: 'rgb(var(--black-rgb) / 0.72)', border: '1px solid rgb(var(--ink-rgb) / 0.25)', cursor: 'pointer', padding: '2px 5px', textTransform: 'uppercase' }}>
                     {busyHero === h.postId ? 'BAKING…' : stack.hero_post_id === h.postId ? 'HERO' : 'SET HERO'}
                   </button>
-                  <button onClick={async () => { if (await removeStackItem(stack.id, h.postId)) onChanged(); }} style={{ ...SKB, fontSize: 8.5, color: 'rgb(var(--ink-rgb) / 0.8)', background: 'rgba(0,0,0,0.72)', border: '1px solid rgb(var(--ink-rgb) / 0.25)', cursor: 'pointer', padding: '2px 5px' }}>✕</button>
+                  <button onClick={async () => { if (await removeStackItem(stack.id, h.postId)) onChanged(); }} style={{ ...SKB, fontSize: 8.5, color: 'rgb(var(--ink-rgb) / 0.8)', background: 'rgb(var(--black-rgb) / 0.72)', border: '1px solid rgb(var(--ink-rgb) / 0.25)', cursor: 'pointer', padding: '2px 5px' }}>✕</button>
                 </span>
               )}
             </div>

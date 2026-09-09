@@ -4,7 +4,7 @@
 // The cold-load destination for logged-out users (F5 §3 routes here). Revised frame:
 // the SCRIPT wordmark "scope" (Birds of Paradise, --font-script) upper-middle, with
 // "Login" then "Sign Up" stacked BELOW it, left-aligned to the wordmark's left edge.
-// Canvas #050505, safe-area padded. Both actions enter the SAME existing Privy useLogin
+// Canvas var(--canvas), safe-area padded. Both actions enter the SAME existing Privy useLogin
 // flow (the current auth setup does NOT distinguish login vs signup) → /auth/callback.
 // Auth logic is untouched — entry points only. Renders directly, no chrome flash.
 

@@ -91,7 +91,7 @@ export default function SpikePage() {
   };
 
   return (
-    <div style={{ minHeight: '100dvh', background: '#000', color: 'var(--ink-100)', fontFamily: "'SK-Modernist', sans-serif", padding: '40px 24px', maxWidth: 560, margin: '0 auto' }}>
+    <div style={{ minHeight: '100dvh', background: 'var(--black)', color: 'var(--ink-100)', fontFamily: "'SK-Modernist', sans-serif", padding: '40px 24px', maxWidth: 560, margin: '0 auto' }}>
       <div style={{ width: 15, height: 15, borderRadius: '50%', background: 'var(--ink-100)', marginBottom: 22 }} />
       <p style={{ ...SKB, fontSize: 'var(--fs-15)', letterSpacing: '0.06em', textTransform: 'uppercase', margin: '0 0 4px' }}>SPIKE · GASLESS createCoin</p>
       <p style={{ ...SKB, fontSize: 'var(--fs-13)', color: ARMED ? 'var(--ink-100)' : 'rgb(var(--ink-rgb) / 0.4)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 20px' }}>

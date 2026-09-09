@@ -20,7 +20,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       <EconomyProvider>
         <TxNarratorProvider>
           <UpsellProvider>
-            <Suspense fallback={<div style={{backgroundColor:'#000',minHeight:'100dvh'}}/>}>
+            <Suspense fallback={<div style={{backgroundColor:'var(--black)',minHeight:'100dvh'}}/>}>
               <SlideShell>{children}</SlideShell>
             </Suspense>
             <AppShell />

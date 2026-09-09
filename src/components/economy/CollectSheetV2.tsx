@@ -392,7 +392,7 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
         onClick={onClose}
         data-swipe-exclude
         style={{
-          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 500,
+          position: 'fixed', inset: 0, background: 'rgb(var(--black-rgb) / 0.85)', zIndex: 500,
           opacity: visible ? 1 : 0, pointerEvents: visible ? 'auto' : 'none',
           transition: 'opacity 0.3s ease',
         }}
@@ -616,7 +616,7 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
                       <button
                         key={c}
                         onClick={() => setBuyCurrency(c)}
-                        style={{ ...SKB, fontSize: 'var(--fs-10)', letterSpacing: '0.08em', padding: '6px 14px', cursor: 'pointer', border: 'none', color: buyCurrency === c ? '#000' : 'var(--ink-100)', background: buyCurrency === c ? 'var(--ink-100)' : '#080808' }}
+                        style={{ ...SKB, fontSize: 'var(--fs-10)', letterSpacing: '0.08em', padding: '6px 14px', cursor: 'pointer', border: 'none', color: buyCurrency === c ? 'var(--black)' : 'var(--ink-100)', background: buyCurrency === c ? 'var(--ink-100)' : '#080808' }}
                       >
                         {c}
                       </button>
@@ -737,7 +737,7 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
                           <button
                             key={c}
                             onClick={() => setSellCurrency(c)}
-                            style={{ ...SKB, fontSize: 'var(--fs-10)', letterSpacing: '0.08em', padding: '6px 14px', cursor: 'pointer', border: 'none', color: sellCurrency === c ? '#000' : 'var(--ink-100)', background: sellCurrency === c ? 'var(--ink-100)' : '#080808' }}
+                            style={{ ...SKB, fontSize: 'var(--fs-10)', letterSpacing: '0.08em', padding: '6px 14px', cursor: 'pointer', border: 'none', color: sellCurrency === c ? 'var(--black)' : 'var(--ink-100)', background: sellCurrency === c ? 'var(--ink-100)' : '#080808' }}
                           >
                             {c}
                           </button>

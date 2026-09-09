@@ -44,7 +44,7 @@ export default function AddToPalette({ isPro, onUpsell, onSave }: AddToPalettePr
           style={{ ...SKB, flex: 1, minWidth: 0, fontSize: 'max(16px, var(--fs-10))', color: 'var(--ink-100)', background: 'transparent', border: '1px solid rgb(var(--ink-rgb) / 0.25)', padding: '7px 9px', textTransform: 'uppercase', letterSpacing: '0.06em', outline: 'none', userSelect: 'text', WebkitUserSelect: 'text', WebkitTouchCallout: 'default' }}
         />
         <button onClick={save} style={{ background: RED, border: 'none', cursor: 'pointer', padding: '7px 12px' }}>
-          <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: '#000', textTransform: 'uppercase', letterSpacing: '0.08em' }}>SAVE</span>
+          <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'var(--black)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>SAVE</span>
         </button>
         <button onClick={cancel} style={{ background: 'transparent', border: '1px solid rgb(var(--ink-rgb) / 0.2)', cursor: 'pointer', padding: '7px 10px' }}>
           <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'rgb(var(--ink-rgb) / 0.6)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>✕</span>

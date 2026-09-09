@@ -50,7 +50,7 @@ export default function ImportAssetSheet({ visible, onClose, userUuid, onAdded }
     <>
       <div
         onClick={onClose}
-        style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.72)', zIndex: 1100, opacity: visible ? 1 : 0, pointerEvents: visible ? 'auto' : 'none', transition: 'opacity 0.3s ease' }}
+        style={{ position: 'fixed', inset: 0, background: 'rgb(var(--black-rgb) / 0.72)', zIndex: 1100, opacity: visible ? 1 : 0, pointerEvents: visible ? 'auto' : 'none', transition: 'opacity 0.3s ease' }}
       />
       <div
         data-swipe-exclude

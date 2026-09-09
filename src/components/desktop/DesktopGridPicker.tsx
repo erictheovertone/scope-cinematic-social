@@ -98,7 +98,7 @@ export default function DesktopGridPicker({
 
   if (typeof document === 'undefined') return null;
   return createPortal(
-    <div data-swipe-exclude style={{ position: 'fixed', inset: 0, zIndex: 700, background: '#000', overflowY: 'auto' }}>
+    <div data-swipe-exclude style={{ position: 'fixed', inset: 0, zIndex: 700, background: 'var(--black)', overflowY: 'auto' }}>
       {/* chrome: echo top-right, exit top-left, back between steps */}
       <div style={{ position: 'absolute', top: 22, left: 26, display: 'flex', gap: 22 }}>
         <button onClick={onClose} style={{ ...SKR, fontSize: 12, color: 'rgb(var(--ink-rgb) / 0.55)', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>× EXIT</button>
@@ -174,7 +174,7 @@ export default function DesktopGridPicker({
             <button
               onClick={confirm}
               disabled={saving}
-              style={{ ...SKB, fontSize: 13, color: '#000', textTransform: 'uppercase', letterSpacing: '0.12em', background: 'var(--ink-100)', border: 'none', cursor: 'pointer', padding: '14px 54px', marginTop: 22, opacity: saving ? 0.6 : 1 }}
+              style={{ ...SKB, fontSize: 13, color: 'var(--black)', textTransform: 'uppercase', letterSpacing: '0.12em', background: 'var(--ink-100)', border: 'none', cursor: 'pointer', padding: '14px 54px', marginTop: 22, opacity: saving ? 0.6 : 1 }}
             >
               {saving ? 'SAVING…' : saveError ? 'RETRY' : 'CONFIRM'}
             </button>

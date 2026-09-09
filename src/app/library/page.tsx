@@ -86,7 +86,7 @@ export default function LibraryPage() {
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: "#000", color: "var(--ink-100)", maxWidth: 720, margin: "0 auto" }}>
+    <div style={{ minHeight: "100vh", background: "var(--black)", color: "var(--ink-100)", maxWidth: 720, margin: "0 auto" }}>
       <audio ref={audioRef} onEnded={() => { setPlaying(null); setProgress(0); }} onTimeUpdate={() => { const a = audioRef.current; if (a && a.duration && isFinite(a.duration)) setProgress(a.currentTime / a.duration); }} />
 
       <div style={{ padding: "34px 20px 12px", borderBottom: `1px solid ${HAIR}` }}>
@@ -98,7 +98,7 @@ export default function LibraryPage() {
         <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 10, maxHeight: 92, overflowY: "auto" }}>
           {MUSIC_TAXONOMY.flatMap((g) => g.words).map((w) => {
             const on = chips.includes(w);
-            return <button key={w} onClick={() => toggleChip(w)} style={{ ...SKR, fontSize: 11, color: on ? "#000" : "rgb(var(--ink-rgb) / 0.7)", background: on ? "var(--ink-100)" : "transparent", border: `1px solid ${on ? "var(--ink-100)" : HAIR}`, padding: "4px 9px", cursor: "pointer", textTransform: "lowercase" }}>{w}</button>;
+            return <button key={w} onClick={() => toggleChip(w)} style={{ ...SKR, fontSize: 11, color: on ? "var(--black)" : "rgb(var(--ink-rgb) / 0.7)", background: on ? "var(--ink-100)" : "transparent", border: `1px solid ${on ? "var(--ink-100)" : HAIR}`, padding: "4px 9px", cursor: "pointer", textTransform: "lowercase" }}>{w}</button>;
           })}
         </div>
       </div>

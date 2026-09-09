@@ -301,7 +301,7 @@ export default function ProfileDataSheet({
                 <div style={{ position: 'relative', width: 185, height: 78, overflow: 'hidden', borderRadius: 4, background: '#111' }}>
                   <img src={thumb} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                   {link.is_video && (
-                    <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.35)' }}>
+                    <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgb(var(--black-rgb) / 0.35)' }}>
                       <div style={{ width: 0, height: 0, borderLeft: '12px solid white', borderTop: '7px solid transparent', borderBottom: '7px solid transparent' }} />
                     </div>
                   )}
@@ -425,9 +425,9 @@ export default function ProfileDataSheet({
     {activeBlurb && typeof document !== 'undefined' && createPortal(
       <div
         onClick={() => setActiveBlurb(null)}
-        style={{ position: 'fixed', inset: 0, zIndex: 900, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 22 }}
+        style={{ position: 'fixed', inset: 0, zIndex: 900, background: 'rgb(var(--black-rgb) / 0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 22 }}
       >
-        <div onClick={(e) => e.stopPropagation()} style={{ position: 'relative', width: '100%', maxWidth: 340, background: '#000', border: '1px solid var(--ink-100)', padding: '18px 18px', animation: 'blurbIn 240ms cubic-bezier(0.16,0.84,0.3,1)' }}>
+        <div onClick={(e) => e.stopPropagation()} style={{ position: 'relative', width: '100%', maxWidth: 340, background: 'var(--black)', border: '1px solid var(--ink-100)', padding: '18px 18px', animation: 'blurbIn 240ms cubic-bezier(0.16,0.84,0.3,1)' }}>
           <button onClick={(e) => { e.stopPropagation(); setActiveBlurb(null); }} aria-label="Close" style={{ position: 'absolute', top: 8, right: 10, ...SKB, fontSize: 'var(--fs-15)', lineHeight: 1, color: 'rgb(var(--ink-rgb) / 0.55)', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>×</button>
           <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
             <img

@@ -106,7 +106,7 @@ export default function DesktopDeck({ deckId }: { deckId: string }) {
   );
 
   return (
-    <div className="bg-black" style={{ position: 'fixed', inset: 0, left: 'var(--rail-w)', background: '#000', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
+    <div className="bg-black" style={{ position: 'fixed', inset: 0, left: 'var(--rail-w)', background: 'var(--black)', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
       <DesktopShell width="fluid" padding="28px 48px 96px">{/* Brief R1a — media surface: fills the window, deck grid grows columns */}
         {/* header */}
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, marginBottom: 26 }}>
@@ -120,7 +120,7 @@ export default function DesktopDeck({ deckId }: { deckId: string }) {
               <button onClick={(e) => { e.stopPropagation(); setMenuOpen((v) => !v); }} aria-label="Options" style={{ width: 36, height: 33, border: `0.5px solid rgb(var(--ink-rgb) / 0.3)`, background: 'transparent', cursor: 'pointer', ...SKB, fontSize: 16, color: 'rgb(var(--ink-rgb) / 0.7)', letterSpacing: '0.05em' }}>···</button>
               {/* anchored dropdown — app menu language (black, hairline, tracked) */}
               {menuOpen && (
-                <div style={{ position: 'absolute', top: 40, right: 0, width: 200, background: '#000', border: `1px solid ${HAIR}`, zIndex: 5 }}>
+                <div style={{ position: 'absolute', top: 40, right: 0, width: 200, background: 'var(--black)', border: `1px solid ${HAIR}`, zIndex: 5 }}>
                   {menuItem('EDIT DECK', () => { setEditTitle(deck.title); setEditDesc(deck.description ?? ''); setEditOpen(true); })}
                   {menuItem('ADD POSTS', () => fileRef.current?.click())}
                   {menuItem('DELETE DECK', removeDeck, true)}
@@ -145,7 +145,7 @@ export default function DesktopDeck({ deckId }: { deckId: string }) {
                 <div key={it.id} style={{ position: 'relative', aspectRatio: `${aspect}`, overflow: 'hidden', background: '#101010', border: `1px solid ${HAIR}` }} className="dk-deck-cell">
                   {src && <img src={feedImage(src, 700)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
                   {isOwn && (
-                    <button onClick={() => removeItem(it.id)} aria-label="Remove" style={{ position: 'absolute', top: 6, right: 6, width: 22, height: 22, borderRadius: '50%', background: 'rgba(0,0,0,0.6)', border: 'none', cursor: 'pointer', ...SKR, fontSize: 13, color: 'var(--ink-100)', lineHeight: 1 }}>×</button>
+                    <button onClick={() => removeItem(it.id)} aria-label="Remove" style={{ position: 'absolute', top: 6, right: 6, width: 22, height: 22, borderRadius: '50%', background: 'rgb(var(--black-rgb) / 0.6)', border: 'none', cursor: 'pointer', ...SKR, fontSize: 13, color: 'var(--ink-100)', lineHeight: 1 }}>×</button>
                   )}
                 </div>
               );
@@ -160,14 +160,14 @@ export default function DesktopDeck({ deckId }: { deckId: string }) {
       {/* EDIT modal — the creation-modal language */}
       {editOpen && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 690, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div onClick={() => setEditOpen(false)} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.88)' }} />
-          <div style={{ position: 'relative', width: 460, background: '#000', border: '1px solid #1a1a1a', padding: '30px 32px' }}>
+          <div onClick={() => setEditOpen(false)} style={{ position: 'absolute', inset: 0, background: 'rgb(var(--black-rgb) / 0.88)' }} />
+          <div style={{ position: 'relative', width: 460, background: 'var(--black)', border: '1px solid var(--surface-3)', padding: '30px 32px' }}>
             <h2 style={{ ...SKB, fontSize: 15, color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 18px' }}>EDIT DECK</h2>
             <input autoFocus value={editTitle} onChange={(e) => setEditTitle(e.target.value)} placeholder="DECK TITLE" style={{ ...SKR, width: '100%', fontSize: 14, color: 'var(--ink-100)', background: 'transparent', border: 'none', borderBottom: `1px solid ${HAIR}`, outline: 'none', padding: '8px 0', boxSizing: 'border-box' }} />
             <input value={editDesc} onChange={(e) => setEditDesc(e.target.value)} placeholder="DESCRIPTION (OPTIONAL)" style={{ ...SKR, width: '100%', fontSize: 13, color: 'rgb(var(--ink-rgb) / 0.75)', background: 'transparent', border: 'none', borderBottom: `1px solid ${HAIR}`, outline: 'none', padding: '8px 0', margin: '10px 0 0', boxSizing: 'border-box' }} />
             <div style={{ display: 'flex', gap: 10, marginTop: 24 }}>
               <button onClick={() => setEditOpen(false)} style={{ ...SKB, flex: 1, fontSize: 11, color: 'rgb(var(--ink-rgb) / 0.6)', textTransform: 'uppercase', letterSpacing: '0.08em', background: 'transparent', border: `1px solid ${HAIR}`, cursor: 'pointer', padding: '12px 0' }}>CANCEL</button>
-              <button onClick={() => void saveEdit()} disabled={!editTitle.trim() || busy} style={{ ...SKB, flex: 1, fontSize: 11, color: '#000', textTransform: 'uppercase', letterSpacing: '0.08em', background: editTitle.trim() ? 'var(--ink-100)' : 'rgb(var(--ink-rgb) / 0.3)', border: 'none', cursor: 'pointer', padding: '12px 0' }}>{busy ? 'SAVING…' : 'SAVE'}</button>
+              <button onClick={() => void saveEdit()} disabled={!editTitle.trim() || busy} style={{ ...SKB, flex: 1, fontSize: 11, color: 'var(--black)', textTransform: 'uppercase', letterSpacing: '0.08em', background: editTitle.trim() ? 'var(--ink-100)' : 'rgb(var(--ink-rgb) / 0.3)', border: 'none', cursor: 'pointer', padding: '12px 0' }}>{busy ? 'SAVING…' : 'SAVE'}</button>
             </div>
           </div>
         </div>

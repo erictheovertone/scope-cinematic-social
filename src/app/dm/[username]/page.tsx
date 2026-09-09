@@ -183,7 +183,7 @@ function MobileDMThread({ username }: { username: string }) {
   }, [items.length, loading]);
 
   return (
-    <div style={{ height: '100dvh', display: 'flex', flexDirection: 'column', background: '#000' }}>
+    <div style={{ height: '100dvh', display: 'flex', flexDirection: 'column', background: 'var(--black)' }}>
       {/* HEADER — back, avatar + @handle (tap → profile). */}
       <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 10, padding: 'calc(12px + env(safe-area-inset-top, 0px)) 14px 10px', borderBottom: '1px solid rgb(var(--ink-rgb) / 0.08)' }}>
         <button onClick={() => router.back()} aria-label="Back" className="tappable" style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4, lineHeight: 0, flexShrink: 0 }}>
@@ -251,7 +251,7 @@ function MobileDMThread({ username }: { username: string }) {
       </div>
 
       {/* COMPOSER — owns the bottom (pill hidden). ≥16px font = the iOS zoom floor. */}
-      <div style={{ flexShrink: 0, display: 'flex', alignItems: 'flex-end', gap: 8, padding: '10px 12px calc(10px + env(safe-area-inset-bottom, 0px))', borderTop: '1px solid rgb(var(--ink-rgb) / 0.08)', background: '#000' }}>
+      <div style={{ flexShrink: 0, display: 'flex', alignItems: 'flex-end', gap: 8, padding: '10px 12px calc(10px + env(safe-area-inset-bottom, 0px))', borderTop: '1px solid rgb(var(--ink-rgb) / 0.08)', background: 'var(--black)' }}>
         <textarea
           value={draft}
           onChange={(e) => setDraft(e.target.value)}

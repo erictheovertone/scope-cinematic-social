@@ -919,7 +919,7 @@ export default function WalletPage() {
             {/* Imported ERC-20 rows — same shape; balance-only when unpriced. */}
             {importedAssets.map((a) => (
               <div key={a.address} className="ledger-row" style={{ position: "relative", display: "flex", alignItems: "center", height: 62, padding: "0 14px", boxSizing: "border-box", borderBottom: "1px solid var(--hairline)" }}>
-                <span style={{ width: 30, height: 30, flexShrink: 0, marginRight: 12, borderRadius: "50%", background: "#141414", border: "0.5px solid rgb(var(--ink-rgb) / 0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <span style={{ width: 30, height: 30, flexShrink: 0, marginRight: 12, borderRadius: "50%", background: "var(--surface-2)", border: "0.5px solid rgb(var(--ink-rgb) / 0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                   <span style={{ ...SKB, fontSize: 13.5, color: "var(--ink-100)", opacity: 0.8 }}>{a.symbol.slice(0, 1)}</span>
                 </span>
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -1192,7 +1192,7 @@ export default function WalletPage() {
                 return (
                   <div
                     key={row.hash + i}
-                    style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 0", borderBottom: "1px solid #141414" }}
+                    style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 0", borderBottom: "1px solid var(--surface-2)" }}
                   >
                     {/* LEFT — tinted directional icon circle */}
                     <div style={{ width: 30, height: 30, borderRadius: "50%", background: cfg.tint, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
@@ -1231,7 +1231,7 @@ export default function WalletPage() {
         <div
           onClick={() => setShowSend(false)}
           style={{
-            position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.85)",
+            position: "fixed", inset: 0, backgroundColor: "rgb(var(--black-rgb) / 0.85)",
             zIndex: 300, opacity: showSend ? 1 : 0,
             pointerEvents: showSend ? "auto" : "none",
             transition: "opacity 0.35s ease",
@@ -1240,7 +1240,7 @@ export default function WalletPage() {
         <div
           style={{
             position: "fixed", bottom: 0, left: 0, right: 0, height: "60vh",
-            backgroundColor: "#0a0a0a", borderTop: "1px solid rgb(var(--ink-rgb) / 0.1)",
+            backgroundColor: "var(--surface-1)", borderTop: "1px solid rgb(var(--ink-rgb) / 0.1)",
             zIndex: 301, display: "flex", flexDirection: "column",
             paddingBottom: "var(--safe-bottom)", /* X3 §3 — SEND sheet: clear the home indicator */
             transform: showSend ? "translateY(0)" : "translateY(100%)",
