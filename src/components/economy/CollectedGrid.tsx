@@ -299,8 +299,8 @@ export default function CollectedGrid({
                   // a glow of selection, not an alert.
                   border: '0.5px solid transparent',
                   background: activeStackId === s.id
-                    ? 'linear-gradient(#0d0d0d, #0d0d0d) padding-box, linear-gradient(135deg, rgb(var(--ink-rgb) / 0.55), rgb(var(--ink-rgb) / 0.08)) border-box'
-                    : '#0d0d0d',
+                    ? 'linear-gradient(var(--surface-0d), var(--surface-0d)) padding-box, linear-gradient(135deg, rgb(var(--ink-rgb) / 0.55), rgb(var(--ink-rgb) / 0.08)) border-box'
+                    : 'var(--surface-0d)',
                 }}
               >
                 {bannerSrc && (
@@ -554,7 +554,7 @@ function ProgramSheet({
   return createPortal(
     <div data-swipe-exclude style={{ position: 'fixed', inset: 0, zIndex: 520 }}>
       <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgb(var(--black-rgb) / 0.85)' }} />
-      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, maxHeight: '86dvh', overflowY: 'auto', background: '#080808', borderTop: '1px solid rgb(var(--ink-rgb) / 0.1)', padding: '18px 14px calc(22px + env(safe-area-inset-bottom, 0px))' }}>
+      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, maxHeight: '86dvh', overflowY: 'auto', background: 'var(--surface-08)', borderTop: '1px solid rgb(var(--ink-rgb) / 0.1)', padding: '18px 14px calc(22px + env(safe-area-inset-bottom, 0px))' }}>
         <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 14 }}>
           <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>NEW PROGRAM</span>
           <button onClick={onClose} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 6 }}>
@@ -655,7 +655,7 @@ function ProgramDetail({
   return createPortal(
     <div data-swipe-exclude style={{ position: 'fixed', inset: 0, zIndex: 510 }}>
       <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgb(var(--black-rgb) / 0.88)' }} />
-      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, maxHeight: '88dvh', overflowY: 'auto', background: '#080808', borderTop: '1px solid rgb(var(--ink-rgb) / 0.1)', padding: '18px 14px calc(22px + env(safe-area-inset-bottom, 0px))' }}>
+      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, maxHeight: '88dvh', overflowY: 'auto', background: 'var(--surface-08)', borderTop: '1px solid rgb(var(--ink-rgb) / 0.1)', padding: '18px 14px calc(22px + env(safe-area-inset-bottom, 0px))' }}>
         <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 4 }}>
           {renaming ? (
             <span style={{ display: 'flex', alignItems: 'baseline', gap: 8, flex: 1 }}>

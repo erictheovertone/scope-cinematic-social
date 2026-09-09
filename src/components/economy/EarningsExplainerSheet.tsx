@@ -58,7 +58,7 @@ export default function EarningsExplainerSheet({ onClose }: Props) {
         transition={reduced ? { duration: 0 } : { type: 'spring', duration: 0.28, bounce: 0.14 }}
         style={{
           position: 'absolute', bottom: 0, left: 0, right: 0,
-          background: '#080808', borderTop: '1px solid rgb(var(--ink-rgb) / 0.08)',
+          background: 'var(--surface-08)', borderTop: '1px solid rgb(var(--ink-rgb) / 0.08)',
           padding: '20px 22px calc(30px + env(safe-area-inset-bottom, 0px))',
         }}
       >

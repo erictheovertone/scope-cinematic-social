@@ -159,6 +159,21 @@ html, body {
      black STAYS black in both themes (a viewing/scrim color), never flips to paper. */
   --black: #000;
   --black-rgb: 0 0 0;
+  /* Brief T1 Stage 1 (3/3) — the remaining recurring dark/grey/accent values, exact-match so
+     Stage 1 stays pixel-parity. The dark surfaces flip to paper in Stage 2; the greys darken;
+     positive/gold stay. */
+  --surface-08: #080808;  /* near-black between canvas and surface-1 */
+  --surface-0d: #0d0d0d;
+  --surface-10: #101010;
+  --surface-1f: #1f1f1f;
+  --surface-4:  #222222;   /* deepest ladder fill */
+  --surface-2a: #2a2a2a;
+  --mute-1: #333333;       /* dividers / disabled on dark */
+  --mute-2: #666666;       /* dim text */
+  --mute-3: #888888;       /* placeholder text */
+  --positive: #00E08A;     /* earnings / positive (stays green on paper) */
+  --positive-alt: #4ade80;
+  --gold: #c9a84c;         /* badge accent (stays) */
   /* Glass/blend recipe (pill bar, sheet scrims): a black wash + the ivory hairline. */
   --glass-fill: rgb(var(--canvas-rgb) / 0.5);
   --glass-border: rgb(var(--ink-rgb) / 0.22);

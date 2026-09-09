@@ -6,7 +6,7 @@
 // /api/recap shape. Earnings hero + per-post breakdown + social strip, all real.
 // Greeting fades in first; every number counts up 0→value together (easeOutExpo,
 // ~700ms). Read-only — row taps open the post via the global lightbox event.
-// Brand: black, red var(--ink-100), money-green #4ade80, SK-Modernist, sharp corners.
+// Brand: black, red var(--ink-100), money-green var(--positive-alt), SK-Modernist, sharp corners.
 
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -16,7 +16,7 @@ import { openPostLightbox } from '@/lib/postLightbox';
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
 const RED = 'var(--ink-100)';
-const GREEN = '#4ade80';
+const GREEN = 'var(--positive-alt)';
 const W65 = 'rgb(var(--ink-rgb) / 0.65)';
 
 const fmtMoney = (n: number) => `+$${(Number.isFinite(n) ? n : 0).toFixed(2)}`;
@@ -197,7 +197,7 @@ export default function WhileYouWereAwaySheet({ visible, recap, username, onClos
 
         {/* HERO / EARNED CARD — baked PNG background (fills + scales), radius 2, h 127,
             elements absolutely placed per Figma 787:248. */}
-        <div style={{ position: 'relative', overflow: 'hidden', border: '0.5px solid #1f1f1f', borderRadius: 2, height: 127, boxSizing: 'border-box', marginBottom: 28, flexShrink: 0 }}>
+        <div style={{ position: 'relative', overflow: 'hidden', border: '0.5px solid var(--surface-1f)', borderRadius: 2, height: 127, boxSizing: 'border-box', marginBottom: 28, flexShrink: 0 }}>
           {/* PNG background — behind all content, stretches to fill the card edge-to-edge */}
           <img src="/your-work-earned-rect.png" alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'fill', zIndex: 0, pointerEvents: 'none' }} />
           {/* Holo logo top-right (~19px from top, ~124×81) */}
@@ -226,7 +226,7 @@ export default function WhileYouWereAwaySheet({ visible, recap, username, onClos
               className="tap-target"
               style={{ width: '100%', display: 'flex', alignItems: 'flex-start', gap: 12, padding: '13px 0', background: 'transparent', border: 'none', borderBottom: '0.5px solid var(--surface-2)', cursor: 'pointer', textAlign: 'left' }}
             >
-              <div style={{ width: 133, height: 48, flexShrink: 0, background: '#0d0d0d', overflow: 'hidden' }}>
+              <div style={{ width: 133, height: 48, flexShrink: 0, background: 'var(--surface-0d)', overflow: 'hidden' }}>
                 {row.thumbnailUrl && <img src={row.thumbnailUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -242,7 +242,7 @@ export default function WhileYouWereAwaySheet({ visible, recap, username, onClos
 
         {/* STAT STRIP (audience) — baked PNG background (fills + scales), radius 2, h 98,
             3 equal columns above it. */}
-        <div style={{ position: 'relative', overflow: 'hidden', height: 98, flexShrink: 0, border: '0.5px solid #1f1f1f', borderRadius: 2 }}>
+        <div style={{ position: 'relative', overflow: 'hidden', height: 98, flexShrink: 0, border: '0.5px solid var(--surface-1f)', borderRadius: 2 }}>
           <img src="/audience-growth-rect.png" alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'fill', zIndex: 0, pointerEvents: 'none' }} />
           <div style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'stretch', height: '100%' }}>
             <div style={{ flex: 1, display: 'flex' }}>{stat(UserPlus, s.follows, 'NEW FOLLOWS')}</div>

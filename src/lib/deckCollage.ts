@@ -56,7 +56,7 @@ export async function bakeDeckCollage(thumbUrls: string[], ratio = 1.6): Promise
     canvas.width = OUT_W; canvas.height = OUT_H;
     const ctx = canvas.getContext('2d');
     if (!ctx) return null;
-    ctx.fillStyle = '#101010'; ctx.fillRect(0, 0, OUT_W, OUT_H);
+    ctx.fillStyle = 'var(--surface-10)'; ctx.fillRect(0, 0, OUT_W, OUT_H);
     const cs = cells(bitmaps.length, OUT_W, OUT_H);
     bitmaps.forEach((bm, i) => { drawCover(ctx, bm, cs[i]); bm.close?.(); });
     return await new Promise<Blob | null>((resolve) => canvas.toBlob((b) => resolve(b), 'image/webp', 0.82));

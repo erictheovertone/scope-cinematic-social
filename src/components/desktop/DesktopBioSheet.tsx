@@ -288,7 +288,7 @@ export default function DesktopBioSheet({ profile, isOwn, links, badges, posts, 
                 const img = (l as { custom_thumbnail_url?: string }).custom_thumbnail_url || l.thumbnail_url || linkFallback;
                 return (
                   <button key={l.id} onClick={() => window.open(l.url, '_blank')} style={{ width: 236, textAlign: 'left', background: 'var(--canvas)', border: `1px solid ${HAIR}`, cursor: 'pointer', padding: 0, overflow: 'hidden' }}>
-                    <div style={{ width: '100%', aspectRatio: '16 / 9', background: '#0d0d0d', overflow: 'hidden' }}>
+                    <div style={{ width: '100%', aspectRatio: '16 / 9', background: 'var(--surface-0d)', overflow: 'hidden' }}>
                       {img && <img src={feedImage(img as string, 480)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', opacity: 0.85 }} />}
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '11px 13px' }}>

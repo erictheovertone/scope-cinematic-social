@@ -8,7 +8,7 @@
 // count up (the established ~700ms easeOutExpo); the chart line DRAWS ITSELF
 // left→right (dashoffset), the fill fades in behind it, the end-dot pops last.
 // prefers-reduced-motion: everything lands at final state instantly.
-// Brand: black, money-green #4ade80, SK-Modernist, sharp corners; the chart
+// Brand: black, money-green var(--positive-alt), SK-Modernist, sharp corners; the chart
 // card's dark gradient is the established scoped exception.
 
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -19,7 +19,7 @@ import EarningsExplainerSheet from '@/components/economy/EarningsExplainerSheet'
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
-const GREEN = '#4ade80';
+const GREEN = 'var(--positive-alt)';
 const DAY_MS = 86_400_000;
 
 const RANGES = [
@@ -163,7 +163,7 @@ export default function EarningsSheet({ data, onClose }: Props) {
         onDragEnd={(_, info) => { if (info.offset.y > 110 || info.velocity.y > 600) onClose(); }}
         style={{
           position: 'absolute', bottom: 0, left: 0, right: 0,
-          background: '#080808', borderTop: '1px solid rgb(var(--ink-rgb) / 0.08)',
+          background: 'var(--surface-08)', borderTop: '1px solid rgb(var(--ink-rgb) / 0.08)',
           padding: '20px 20px calc(28px + env(safe-area-inset-bottom, 0px))',
         }}
       >
@@ -211,8 +211,8 @@ export default function EarningsSheet({ data, onClose }: Props) {
           transition={{ duration: reduced ? 0 : 0.3, delay: reduced ? 0 : 0.18 }}
           style={{
             marginTop: 22,
-            background: 'linear-gradient(180deg, #101010 0%, var(--surface-1) 100%)',
-            border: '0.5px solid #1f1f1f', borderRadius: 2,
+            background: 'linear-gradient(180deg, var(--surface-10) 0%, var(--surface-1) 100%)',
+            border: '0.5px solid var(--surface-1f)', borderRadius: 2,
             padding: '16px 12px 10px',
           }}
         >
@@ -242,7 +242,7 @@ export default function EarningsSheet({ data, onClose }: Props) {
                 style={{
                   ...SKB, fontSize: 'var(--fs-9)', letterSpacing: '0.1em',
                   padding: '7px 14px', cursor: 'pointer', background: 'transparent',
-                  border: `1px solid ${range === r.key ? '#2a2a2a' : 'rgb(var(--ink-rgb) / 0.07)'}`,
+                  border: `1px solid ${range === r.key ? 'var(--surface-2a)' : 'rgb(var(--ink-rgb) / 0.07)'}`,
                   color: range === r.key ? 'var(--ink-100)' : 'rgb(var(--ink-rgb) / 0.35)',
                 }}
               >

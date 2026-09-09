@@ -334,7 +334,7 @@ export default function DesktopPostView({
             <button onClick={() => router.push(`/profile/${post.username as string}`)} style={{ display: 'flex', alignItems: 'center', gap: 7, marginLeft: 4, background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, minWidth: 0 }}>
               {(post?.profile_image_url as string) ? (
                 <img src={feedImage(post.profile_image_url as string, 96)} alt="" style={{ width: 20, height: 20, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
-              ) : <span style={{ width: 20, height: 20, borderRadius: '50%', background: '#2a2a2a', flexShrink: 0 }} />}
+              ) : <span style={{ width: 20, height: 20, borderRadius: '50%', background: 'var(--surface-2a)', flexShrink: 0 }} />}
               <span style={{ ...SKB, fontSize: 12, color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>@{post.username as string}</span>
             </button>
           )}
@@ -476,7 +476,7 @@ export default function DesktopPostView({
                     <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 11, color: 'rgb(var(--ink-rgb) / 0.5)', width: 18, fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>{String(h.rank).padStart(2, '0')}</span>
                     {h.avatarUrl ? (
                       <img src={feedImage(h.avatarUrl, 48)} alt="" style={{ width: 12, height: 12, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
-                    ) : <span style={{ width: 12, height: 12, borderRadius: '50%', background: '#2a2a2a', display: 'inline-block', flexShrink: 0 }} />}
+                    ) : <span style={{ width: 12, height: 12, borderRadius: '50%', background: 'var(--surface-2a)', display: 'inline-block', flexShrink: 0 }} />}
                     <span style={{ fontFamily: 'var(--font-body)', fontWeight: 400, fontSize: 10, color: 'rgb(var(--ink-rgb) / 0.44)', textTransform: 'uppercase', letterSpacing: 'var(--track-wide)', flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>@ {h.username ?? '—'}</span>
                   </button>
                 ))}

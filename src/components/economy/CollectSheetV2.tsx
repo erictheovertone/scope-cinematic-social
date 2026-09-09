@@ -407,7 +407,7 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
         }}
         style={{
         position: 'fixed', bottom: 0, left: 0, right: 0, margin: '0 auto', maxWidth: '30rem',
-        background: '#080808', borderTop: '1px solid rgb(var(--ink-rgb) / 0.08)', zIndex: 501,
+        background: 'var(--surface-08)', borderTop: '1px solid rgb(var(--ink-rgb) / 0.08)', zIndex: 501,
         transform: visible ? 'translateY(0)' : 'translateY(100%)',
         transition: 'transform 0.4s cubic-bezier(0.32,0.72,0,1)',
         padding: '24px 22px calc(40px + var(--safe-bottom))', maxHeight: '90vh', overflowY: 'auto', /* X3 §3 — bottom sheet: clear the home indicator */
@@ -514,7 +514,7 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
             { k: 'MARKET CAP', v: market ? usd(market.mcUsd) : '—' },
             { k: 'FRAGMENTS', v: market ? market.supply.toLocaleString() : '10,000' },
           ].map((c) => (
-            <div key={c.k} style={{ flex: 1, background: '#080808', padding: '12px 10px' }}>
+            <div key={c.k} style={{ flex: 1, background: 'var(--surface-08)', padding: '12px 10px' }}>
               <p style={{ ...SKB, fontSize: 'var(--fs-6_5)', color: 'rgb(var(--ink-rgb) / 0.4)', textTransform: 'uppercase', letterSpacing: '0.14em', margin: '0 0 5px' }}>{c.k}</p>
               <p style={{ ...SKB, fontSize: 'var(--fs-13)', color: 'var(--ink-100)', margin: 0, fontVariantNumeric: 'tabular-nums' }}>{c.v}</p>
             </div>
@@ -616,7 +616,7 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
                       <button
                         key={c}
                         onClick={() => setBuyCurrency(c)}
-                        style={{ ...SKB, fontSize: 'var(--fs-10)', letterSpacing: '0.08em', padding: '6px 14px', cursor: 'pointer', border: 'none', color: buyCurrency === c ? 'var(--black)' : 'var(--ink-100)', background: buyCurrency === c ? 'var(--ink-100)' : '#080808' }}
+                        style={{ ...SKB, fontSize: 'var(--fs-10)', letterSpacing: '0.08em', padding: '6px 14px', cursor: 'pointer', border: 'none', color: buyCurrency === c ? 'var(--black)' : 'var(--ink-100)', background: buyCurrency === c ? 'var(--ink-100)' : 'var(--surface-08)' }}
                       >
                         {c}
                       </button>
@@ -737,7 +737,7 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
                           <button
                             key={c}
                             onClick={() => setSellCurrency(c)}
-                            style={{ ...SKB, fontSize: 'var(--fs-10)', letterSpacing: '0.08em', padding: '6px 14px', cursor: 'pointer', border: 'none', color: sellCurrency === c ? 'var(--black)' : 'var(--ink-100)', background: sellCurrency === c ? 'var(--ink-100)' : '#080808' }}
+                            style={{ ...SKB, fontSize: 'var(--fs-10)', letterSpacing: '0.08em', padding: '6px 14px', cursor: 'pointer', border: 'none', color: sellCurrency === c ? 'var(--black)' : 'var(--ink-100)', background: sellCurrency === c ? 'var(--ink-100)' : 'var(--surface-08)' }}
                           >
                             {c}
                           </button>
@@ -815,7 +815,7 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
               return (
                 <div key={i} style={{ marginLeft: i === 0 ? 0 : -7 }}>
                   {slot && slot.avatarUrl ? (
-                    <img src={feedImage(slot.avatarUrl, 96)} alt={slot.handle} style={{ width: 18, height: 18, borderRadius: '50%', border: '1px solid #080808', display: 'block', opacity: slot.holding ? 1 : 0.3, filter: slot.holding ? 'none' : 'grayscale(1)' }} />
+                    <img src={feedImage(slot.avatarUrl, 96)} alt={slot.handle} style={{ width: 18, height: 18, borderRadius: '50%', border: '1px solid var(--surface-08)', display: 'block', opacity: slot.holding ? 1 : 0.3, filter: slot.holding ? 'none' : 'grayscale(1)' }} />
                   ) : (
                     <div style={{ width: 18, height: 18, borderRadius: '50%', border: '1px dashed rgb(var(--ink-rgb) / 0.25)', background: 'transparent' }} />
                   )}

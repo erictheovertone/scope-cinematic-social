@@ -25,7 +25,7 @@ import ScopeLoader from '@/components/ScopeLoader';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
-const GREEN = '#4ade80';
+const GREEN = 'var(--positive-alt)';
 const QUOTE_STALE_MS = 20_000;
 const QUOTE_DEBOUNCE_MS = 400;
 
@@ -226,8 +226,8 @@ export default function SwapSheet({ visible, onClose, ethBalance, usdcBalance, z
   if (typeof document === 'undefined') return null;
 
   const panel: React.CSSProperties = {
-    background: 'linear-gradient(180deg, #101010 0%, var(--surface-1) 100%)',
-    border: '0.5px solid #1f1f1f', borderRadius: 2, padding: '14px 14px 12px',
+    background: 'linear-gradient(180deg, var(--surface-10) 0%, var(--surface-1) 100%)',
+    border: '0.5px solid var(--surface-1f)', borderRadius: 2, padding: '14px 14px 12px',
   };
   // Rate line: dollar-anchored — per-ETH for the ETH pair, per-1K ZORA for the earnings pair.
   const usdSide = quoteOut != null && validAmount ? (buyToken === 'USDC' ? quoteOut : payNum) : null;
@@ -245,7 +245,7 @@ export default function SwapSheet({ visible, onClose, ethBalance, usdcBalance, z
         data-swipe-exclude
         style={{
           position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 1101,
-          background: '#080808', borderTop: '1px solid rgb(var(--ink-rgb) / 0.08)',
+          background: 'var(--surface-08)', borderTop: '1px solid rgb(var(--ink-rgb) / 0.08)',
           transform: visible ? 'translateY(0)' : 'translateY(100%)',
           transition: 'transform 0.4s cubic-bezier(0.32, 0.72, 0, 1)',
           padding: '20px 20px calc(28px + env(safe-area-inset-bottom, 0px))',
@@ -285,7 +285,7 @@ export default function SwapSheet({ visible, onClose, ethBalance, usdcBalance, z
                     disabled={phase === 'swapping'}
                     style={{
                       ...SKB, fontSize: 'var(--fs-9)', letterSpacing: '0.08em', padding: '7px 12px', cursor: 'pointer',
-                      background: 'transparent', border: `1px solid ${active ? '#2a2a2a' : 'rgb(var(--ink-rgb) / 0.07)'}`,
+                      background: 'transparent', border: `1px solid ${active ? 'var(--surface-2a)' : 'rgb(var(--ink-rgb) / 0.07)'}`,
                       color: active ? 'var(--ink-100)' : 'rgb(var(--ink-rgb) / 0.35)',
                     }}
                   >
@@ -355,7 +355,7 @@ export default function SwapSheet({ visible, onClose, ethBalance, usdcBalance, z
 
             {/* FLIP */}
             <div style={{ display: 'flex', justifyContent: 'center', margin: '10px 0' }}>
-              <button onClick={flip} disabled={phase === 'swapping'} style={{ background: 'var(--surface-1)', border: '1px solid #1f1f1f', cursor: 'pointer', width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <button onClick={flip} disabled={phase === 'swapping'} style={{ background: 'var(--surface-1)', border: '1px solid var(--surface-1f)', cursor: 'pointer', width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <span style={{ fontSize: 'var(--fs-14)', color: 'var(--ink-100)', lineHeight: 1 }}>⇅</span>
               </button>
             </div>

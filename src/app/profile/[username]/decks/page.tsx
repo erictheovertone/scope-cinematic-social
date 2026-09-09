@@ -192,7 +192,7 @@ export default function DecksPage() {
             style={{
               position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 81,
               maxWidth: '30rem', margin: "0 auto",
-              background: "#080808",
+              background: "var(--surface-08)",
               borderTop: "1px solid rgb(var(--ink-rgb) / 0.12)",
               padding: "20px 20px calc(36px + var(--safe-bottom))", /* X3 §3 — bottom sheet: clear the home indicator */
             }}

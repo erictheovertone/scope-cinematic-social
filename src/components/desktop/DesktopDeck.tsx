@@ -142,7 +142,7 @@ export default function DesktopDeck({ deckId }: { deckId: string }) {
             {deck.items.map((it) => {
               const src = itemMedia(it);
               return (
-                <div key={it.id} style={{ position: 'relative', aspectRatio: `${aspect}`, overflow: 'hidden', background: '#101010', border: `1px solid ${HAIR}` }} className="dk-deck-cell">
+                <div key={it.id} style={{ position: 'relative', aspectRatio: `${aspect}`, overflow: 'hidden', background: 'var(--surface-10)', border: `1px solid ${HAIR}` }} className="dk-deck-cell">
                   {src && <img src={feedImage(src, 700)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
                   {isOwn && (
                     <button onClick={() => removeItem(it.id)} aria-label="Remove" style={{ position: 'absolute', top: 6, right: 6, width: 22, height: 22, borderRadius: '50%', background: 'rgb(var(--black-rgb) / 0.6)', border: 'none', cursor: 'pointer', ...SKR, fontSize: 13, color: 'var(--ink-100)', lineHeight: 1 }}>×</button>

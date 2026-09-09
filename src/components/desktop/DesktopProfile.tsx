@@ -561,7 +561,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.96, transition: { duration: 0.12 } }}
                   onClick={() => openPostView(i)}
-                  style={{ position: 'relative', aspectRatio: `${ratioForAspect(gridConf.aspect)}`, overflow: 'hidden', background: '#101010', border: 'none', cursor: 'pointer', padding: 0, outline: returnHighlight === pid ? '1px solid rgb(var(--ink-rgb) / 0.65)' : 'none', transition: 'outline-color 400ms ease' }}
+                  style={{ position: 'relative', aspectRatio: `${ratioForAspect(gridConf.aspect)}`, overflow: 'hidden', background: 'var(--surface-10)', border: 'none', cursor: 'pointer', padding: 0, outline: returnHighlight === pid ? '1px solid rgb(var(--ink-rgb) / 0.65)' : 'none', transition: 'outline-color 400ms ease' }}
                 >
                   {p.media_type === 'video' ? (
                     /* living tile — the established treatment (was a static poster:
@@ -725,7 +725,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
                 const coverSrc = d.thumbnail_url || (fallback ? feedImage(fallback as string, 600) : null); // baked WebP is already display-sized
                 return (
                   <button key={d.id} onClick={() => router.push(`/profile/${handle}/decks/${d.id}`)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, textAlign: 'left', display: 'block' }}>
-                    <div style={{ aspectRatio: `${ratioForAspect(gridConf.aspect)}`, overflow: 'hidden', background: '#101010', border: `1px solid ${HAIR}` }}>
+                    <div style={{ aspectRatio: `${ratioForAspect(gridConf.aspect)}`, overflow: 'hidden', background: 'var(--surface-10)', border: `1px solid ${HAIR}` }}>
                       {coverSrc && <img src={coverSrc} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
                     </div>
                     <p style={{ ...SKB, fontSize: 12, color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '9px 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.title}</p>

@@ -131,7 +131,7 @@ export default function ProfileMenu({ isOpen, onClose }: ProfileMenuProps) {
       />
       
       {/* Menu */}
-      <div className="fixed top-[160px] right-[15px] bg-[var(--surface-3)] border border-[#333333] rounded-lg shadow-lg z-[101] w-[200px]">
+      <div className="fixed top-[160px] right-[15px] bg-[var(--surface-3)] border border-[var(--mute-1)] rounded-lg shadow-lg z-[101] w-[200px]">
         {/* Invite Link Popup */}
         {showInviteLink && (
           <div className="absolute -top-[60px] left-0 right-0 bg-[var(--ink-100)] text-[var(--on-ink)] p-2 rounded-lg text-center"/* X2c — ivory toast bg; text → --on-ink (was ivory-on-ivory) */>
@@ -154,7 +154,7 @@ export default function ProfileMenu({ isOpen, onClose }: ProfileMenuProps) {
                 <Link
                   href={item.href}
                   onClick={onClose}
-                  className={`flex items-center px-4 py-3 hover:bg-[#333333] transition-colors ${
+                  className={`flex items-center px-4 py-3 hover:bg-[var(--mute-1)] transition-colors ${
                     item.danger ? 'text-[var(--ink-100)]' : 'text-[var(--ink-100)]'
                   }`}
                 >
@@ -169,7 +169,7 @@ export default function ProfileMenu({ isOpen, onClose }: ProfileMenuProps) {
                     item.onClick?.();
                     if (item.label !== '+Invite') onClose();
                   }}
-                  className={`w-full flex items-center px-4 py-3 hover:bg-[#333333] transition-colors text-left ${
+                  className={`w-full flex items-center px-4 py-3 hover:bg-[var(--mute-1)] transition-colors text-left ${
                     item.danger ? 'text-[var(--ink-100)]' : 'text-[var(--ink-100)]'
                   }`}
                 >
@@ -182,7 +182,7 @@ export default function ProfileMenu({ isOpen, onClose }: ProfileMenuProps) {
               
               {/* Separator line (except for last item) */}
               {index < menuItems.length - 1 && (
-                <div className="border-b border-[#333333] mx-2" />
+                <div className="border-b border-[var(--mute-1)] mx-2" />
               )}
             </div>
           ))}

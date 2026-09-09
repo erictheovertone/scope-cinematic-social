@@ -324,7 +324,7 @@ export default function MembershipSheet({ visible, onClose, onSuccess, isPaidMem
       {/* Sheet */}
       <div data-swipe-exclude style={{
         position: "fixed", bottom: 0, left: 0, right: 0,
-        backgroundColor: "#080808",
+        backgroundColor: "var(--surface-08)",
         borderTop: "1px solid rgb(var(--ink-rgb) / 0.08)",
         zIndex: 501,
         transform: visible ? "translateY(0)" : "translateY(100%)",

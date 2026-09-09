@@ -25,7 +25,7 @@ export default function Invite() {
   return (
     <div className="bg-black relative w-[375px] h-[812px] mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between p-6 border-b border-[#333333]">
+      <div className="flex items-center justify-between p-6 border-b border-[var(--mute-1)]">
         <button 
           onClick={() => router.back()} 
           className="text-[var(--ink-100)] text-lg"
@@ -55,7 +55,7 @@ export default function Invite() {
             Share Scope
           </h2>
           
-          <p className="font-['IBM_Plex_Mono'] font-normal text-[#888888] text-[var(--fs-14)] leading-relaxed mb-8">
+          <p className="font-['IBM_Plex_Mono'] font-normal text-[var(--mute-3)] text-[var(--fs-14)] leading-relaxed mb-8">
             Invite your friends to join Scope and discover amazing visual content together. Share your unique invite link below.
           </p>
         </div>
@@ -71,11 +71,11 @@ export default function Invite() {
         ) : (
           <div className="space-y-4">
             {/* Invite Link Display */}
-            <div className="bg-[var(--surface-3)] border border-[#333333] rounded-lg p-4">
+            <div className="bg-[var(--surface-3)] border border-[var(--mute-1)] rounded-lg p-4">
               <p className="font-['IBM_Plex_Mono'] font-medium text-[var(--ink-100)] text-[var(--fs-12)] mb-2">
                 Your Invite Link:
               </p>
-              <p className="font-['IBM_Plex_Mono'] font-normal text-[#888888] text-[var(--fs-11)] break-all">
+              <p className="font-['IBM_Plex_Mono'] font-normal text-[var(--mute-3)] text-[var(--fs-11)] break-all">
                 {inviteLink}
               </p>
             </div>
@@ -86,7 +86,7 @@ export default function Invite() {
               className={`w-full py-4 rounded-lg font-['IBM_Plex_Mono'] font-medium text-[var(--fs-16)] transition-colors ${
                 copied 
                   ? 'bg-green-600 text-[var(--ink-100)]' 
-                  : 'bg-[#333333] text-[var(--ink-100)] hover:bg-[#444444]'
+                  : 'bg-[var(--mute-1)] text-[var(--ink-100)] hover:bg-[#444444]'
               }`}
             >
               {copied ? 'Copied!' : 'Copy Link'}
@@ -95,7 +95,7 @@ export default function Invite() {
             {/* Generate New Link */}
             <button
               onClick={generateInviteLink}
-              className="w-full bg-transparent border border-[#333333] text-[#888888] py-3 rounded-lg font-['IBM_Plex_Mono'] font-medium text-[var(--fs-14)] hover:border-[#555555] transition-colors"
+              className="w-full bg-transparent border border-[var(--mute-1)] text-[var(--mute-3)] py-3 rounded-lg font-['IBM_Plex_Mono'] font-medium text-[var(--fs-14)] hover:border-[#555555] transition-colors"
             >
               Generate New Link
             </button>
@@ -103,20 +103,20 @@ export default function Invite() {
         )}
 
         {/* Info */}
-        <div className="mt-12 p-4 bg-[var(--surface-3)] border border-[#333333] rounded-lg">
+        <div className="mt-12 p-4 bg-[var(--surface-3)] border border-[var(--mute-1)] rounded-lg">
           <p className="font-['IBM_Plex_Mono'] font-medium text-[var(--ink-100)] text-[var(--fs-12)] mb-2">
             How it works:
           </p>
           <ul className="space-y-2">
-            <li className="font-['IBM_Plex_Mono'] font-normal text-[#888888] text-[var(--fs-11)] flex items-start">
+            <li className="font-['IBM_Plex_Mono'] font-normal text-[var(--mute-3)] text-[var(--fs-11)] flex items-start">
               <span className="text-[var(--ink-100)] mr-2">•</span>
               Share your unique invite link with friends
             </li>
-            <li className="font-['IBM_Plex_Mono'] font-normal text-[#888888] text-[var(--fs-11)] flex items-start">
+            <li className="font-['IBM_Plex_Mono'] font-normal text-[var(--mute-3)] text-[var(--fs-11)] flex items-start">
               <span className="text-[var(--ink-100)] mr-2">•</span>
               They'll be directed to sign up for Scope
             </li>
-            <li className="font-['IBM_Plex_Mono'] font-normal text-[#888888] text-[var(--fs-11)] flex items-start">
+            <li className="font-['IBM_Plex_Mono'] font-normal text-[var(--mute-3)] text-[var(--fs-11)] flex items-start">
               <span className="text-[var(--ink-100)] mr-2">•</span>
               You'll both get connected automatically
             </li>

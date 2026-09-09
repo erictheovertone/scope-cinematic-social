@@ -273,7 +273,7 @@ function Row({
         <div
           ref={avatarRef}
           onClick={canProfile ? (e) => { e.stopPropagation(); onProfile!(c.username as string); } : undefined}
-          style={{ width: avSize, height: avSize, borderRadius: "50%", background: "#2a2a2a", overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", transform: `translateY(${offset}px)`, cursor: canProfile ? "pointer" : "default" }}
+          style={{ width: avSize, height: avSize, borderRadius: "50%", background: "var(--surface-2a)", overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", transform: `translateY(${offset}px)`, cursor: canProfile ? "pointer" : "default" }}
         >
           {avatarUrl ? (
             <img src={feedImage(avatarUrl, 96)} alt={c.username ?? ""} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />

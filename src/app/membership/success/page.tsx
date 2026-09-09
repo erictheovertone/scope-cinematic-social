@@ -123,7 +123,7 @@ function Top1kCelebration({ onDone }: { onDone: () => void }) {
         </div>
       </div>
       {phase !== "loading" && (
-        <p style={{ ...BOLD, fontSize: 'var(--fs-22)', color: "#C9A84C", textTransform: "uppercase", letterSpacing: "-0.02em", margin: "0 0 8px", animation: "fadeUp 0.8s ease forwards" }}>TOP 1000 COLLECTOR</p>
+        <p style={{ ...BOLD, fontSize: 'var(--fs-22)', color: "var(--gold)", textTransform: "uppercase", letterSpacing: "-0.02em", margin: "0 0 8px", animation: "fadeUp 0.8s ease forwards" }}>TOP 1000 COLLECTOR</p>
       )}
       {(phase === "counter" || phase === "done") && (
         <p style={{ ...BOLD, fontSize: 48, color: "var(--ink-100)", margin: "0 0 4px", animation: "fadeUp 0.5s ease forwards", lineHeight: 1 }}>#{count}</p>

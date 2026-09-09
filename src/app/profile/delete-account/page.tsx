@@ -29,7 +29,7 @@ export default function DeleteAccount() {
   return (
     <div className="bg-black relative w-[375px] h-[812px] mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between p-6 border-b border-[#333333]">
+      <div className="flex items-center justify-between p-6 border-b border-[var(--mute-1)]">
         <button 
           onClick={() => router.back()} 
           className="text-[var(--ink-100)] text-lg"
@@ -50,7 +50,7 @@ export default function DeleteAccount() {
             <h2 className="font-['IBM_Plex_Mono'] font-medium text-[var(--ink-100)] text-[var(--fs-18)] mb-4 text-center">
               Deleting Account...
             </h2>
-            <p className="font-['IBM_Plex_Mono'] font-normal text-[#888888] text-[var(--fs-14)] text-center">
+            <p className="font-['IBM_Plex_Mono'] font-normal text-[var(--mute-3)] text-[var(--fs-14)] text-center">
               This may take a few moments.
             </p>
           </div>
@@ -58,8 +58,8 @@ export default function DeleteAccount() {
           <>
             {/* Warning Icon */}
             <div className="text-center mb-8">
-              <div className="w-20 h-20 bg-[#931212] bg-opacity-20 border-2 border-[#931212] rounded-full mx-auto mb-6 flex items-center justify-center">
-                <svg width="35.5" height="35.5" viewBox="0 0 24 24" fill="none" stroke="#931212" strokeWidth="2">
+              <div className="w-20 h-20 bg-[var(--danger)] bg-opacity-20 border-2 border-[var(--danger)] rounded-full mx-auto mb-6 flex items-center justify-center">
+                <svg width="35.5" height="35.5" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" strokeWidth="2">
                   <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
                   <line x1="12" y1="9" x2="12" y2="13"/>
                   <line x1="12" y1="17" x2="12.01" y2="17"/>
@@ -70,7 +70,7 @@ export default function DeleteAccount() {
                 Delete Your Account
               </h2>
               
-              <p className="font-['IBM_Plex_Mono'] font-normal text-[#888888] text-[var(--fs-14)] leading-relaxed">
+              <p className="font-['IBM_Plex_Mono'] font-normal text-[var(--mute-3)] text-[var(--fs-14)] leading-relaxed">
                 This action cannot be undone. All your data will be permanently deleted.
               </p>
             </div>
@@ -81,23 +81,23 @@ export default function DeleteAccount() {
                 What will be deleted:
               </h3>
               <ul className="space-y-3">
-                <li className="font-['IBM_Plex_Mono'] font-normal text-[#888888] text-[var(--fs-13)] flex items-start">
+                <li className="font-['IBM_Plex_Mono'] font-normal text-[var(--mute-3)] text-[var(--fs-13)] flex items-start">
                   <span className="text-[var(--ink-100)] mr-3">•</span>
                   All your posts and media content
                 </li>
-                <li className="font-['IBM_Plex_Mono'] font-normal text-[#888888] text-[var(--fs-13)] flex items-start">
+                <li className="font-['IBM_Plex_Mono'] font-normal text-[var(--mute-3)] text-[var(--fs-13)] flex items-start">
                   <span className="text-[var(--ink-100)] mr-3">•</span>
                   Your profile information and settings
                 </li>
-                <li className="font-['IBM_Plex_Mono'] font-normal text-[#888888] text-[var(--fs-13)] flex items-start">
+                <li className="font-['IBM_Plex_Mono'] font-normal text-[var(--mute-3)] text-[var(--fs-13)] flex items-start">
                   <span className="text-[var(--ink-100)] mr-3">•</span>
                   All trading history and transactions
                 </li>
-                <li className="font-['IBM_Plex_Mono'] font-normal text-[#888888] text-[var(--fs-13)] flex items-start">
+                <li className="font-['IBM_Plex_Mono'] font-normal text-[var(--mute-3)] text-[var(--fs-13)] flex items-start">
                   <span className="text-[var(--ink-100)] mr-3">•</span>
                   Connections with other users
                 </li>
-                <li className="font-['IBM_Plex_Mono'] font-normal text-[#888888] text-[var(--fs-13)] flex items-start">
+                <li className="font-['IBM_Plex_Mono'] font-normal text-[var(--mute-3)] text-[var(--fs-13)] flex items-start">
                   <span className="text-[var(--ink-100)] mr-3">•</span>
                   All notifications and messages
                 </li>
@@ -114,7 +114,7 @@ export default function DeleteAccount() {
                   type="text"
                   value={confirmText}
                   onChange={(e) => setConfirmText(e.target.value)}
-                  className="w-full bg-[var(--surface-3)] border border-[#333333] rounded-lg px-4 py-3 font-['IBM_Plex_Mono'] text-[var(--ink-100)] text-[var(--fs-14)] focus:border-[var(--ink-100)] focus:outline-none"
+                  className="w-full bg-[var(--surface-3)] border border-[var(--mute-1)] rounded-lg px-4 py-3 font-['IBM_Plex_Mono'] text-[var(--ink-100)] text-[var(--fs-14)] focus:border-[var(--ink-100)] focus:outline-none"
                   placeholder="Type DELETE here"
                 />
               </div>
@@ -124,8 +124,8 @@ export default function DeleteAccount() {
                 disabled={!isConfirmValid}
                 className={`w-full py-4 rounded-lg font-['IBM_Plex_Mono'] font-medium text-[var(--fs-16)] transition-colors ${
                   isConfirmValid
-                    ? 'bg-[#931212] text-[var(--ink-100)] hover:bg-[#7a0f0f]'
-                    : 'bg-[#333333] text-[#666666] cursor-not-allowed'
+                    ? 'bg-[var(--danger)] text-[var(--ink-100)] hover:bg-[#7a0f0f]'
+                    : 'bg-[var(--mute-1)] text-[var(--mute-2)] cursor-not-allowed'
                 }`}
               >
                 Delete My Account Permanently
@@ -133,18 +133,18 @@ export default function DeleteAccount() {
 
               <button
                 onClick={() => router.back()}
-                className="w-full bg-transparent border border-[#333333] text-[var(--ink-100)] py-3 rounded-lg font-['IBM_Plex_Mono'] font-medium text-[var(--fs-14)] hover:border-[#555555] transition-colors"
+                className="w-full bg-transparent border border-[var(--mute-1)] text-[var(--ink-100)] py-3 rounded-lg font-['IBM_Plex_Mono'] font-medium text-[var(--fs-14)] hover:border-[#555555] transition-colors"
               >
                 Cancel
               </button>
             </div>
 
             {/* Final warning */}
-            <div className="mt-8 p-4 bg-[var(--surface-3)] border border-[#333333] rounded-lg">
+            <div className="mt-8 p-4 bg-[var(--surface-3)] border border-[var(--mute-1)] rounded-lg">
               <p className="font-['IBM_Plex_Mono'] font-medium text-[var(--ink-100)] text-[var(--fs-12)] mb-2">
                 ⚠️ Final Warning
               </p>
-              <p className="font-['IBM_Plex_Mono'] font-normal text-[#888888] text-[var(--fs-11)] leading-relaxed">
+              <p className="font-['IBM_Plex_Mono'] font-normal text-[var(--mute-3)] text-[var(--fs-11)] leading-relaxed">
                 Account deletion is immediate and irreversible. We cannot recover your data once deleted. Consider downloading your content first if you want to keep it.
               </p>
             </div>

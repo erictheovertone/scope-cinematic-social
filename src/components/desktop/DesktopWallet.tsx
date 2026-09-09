@@ -46,7 +46,7 @@ const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fon
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
 const HAIR = 'var(--hairline)';
 const RED = 'var(--ink-100)';
-const GREEN = '#00E08A';
+const GREEN = 'var(--positive)';
 const USDC = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
 const TICON = '/design-updates-071526/token-icons';
 
@@ -502,7 +502,7 @@ function SendModal({
   return createPortal(
     <div data-swipe-exclude style={{ position: 'fixed', inset: 0, zIndex: 620 }}>
       <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgb(var(--black-rgb) / 0.88)' }} />
-      <div style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', width: 480, background: '#080808', border: '1px solid rgb(var(--ink-rgb) / 0.14)', padding: 24 }}>
+      <div style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', width: 480, background: 'var(--surface-08)', border: '1px solid rgb(var(--ink-rgb) / 0.14)', padding: 24 }}>
         <p style={{ ...SKB, fontSize: 12, color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 0 16px' }}>SEND</p>
         <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
           {(['USDC', 'ETH'] as const).map((t) => (

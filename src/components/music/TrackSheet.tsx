@@ -67,7 +67,7 @@ export default function TrackSheet({ trackId, onClose }: { trackId: string; onCl
           <p style={{ ...SKB, fontSize: 17, color: "var(--ink-100)", margin: "2px 0 8px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{track?.title ?? "…"}</p>
           {track?.composer_handle && (
             <button onClick={() => go(`/composer/${track.composer_handle}`)} style={{ display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", cursor: "pointer", padding: 0 }}>
-              <span style={{ width: 22, height: 22, borderRadius: "50%", overflow: "hidden", background: "#2a2a2a", flexShrink: 0, display: "block" }}>
+              <span style={{ width: 22, height: 22, borderRadius: "50%", overflow: "hidden", background: "var(--surface-2a)", flexShrink: 0, display: "block" }}>
                 {track.composer_avatar && <img src={feedImage(track.composer_avatar, 96)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />}
               </span>
               <span style={{ ...SKR, fontSize: 12, color: "rgb(var(--ink-rgb) / 0.65)" }}>@{track.composer_handle}</span>

@@ -47,9 +47,9 @@ export interface BadgeMeta {
 const NEW = '/design-updates-071526/new-badges';
 export const BADGES: Record<BadgeKey, BadgeMeta> = {
   augmented: { key: 'augmented', src: `${NEW}/augmented.png`,  title: 'AUGMENTED', color: '#ff0080',            bannerSrc: `${NEW}/augmented.png`,  framedSrc: `${NEW}/augmented.png` },
-  firstCut:  { key: 'firstCut',  src: `${NEW}/first-cut.png`,  title: 'FIRST CUT', color: '#00E08A',            bannerSrc: `${NEW}/first-cut.png`,  framedSrc: `${NEW}/first-cut.png` },
-  top1k:     { key: 'top1k',     src: `${NEW}/collector.png`,  title: 'TOP 1K',    color: '#C9A84C',            bannerSrc: `${NEW}/collector.png`,  framedSrc: `${NEW}/collector.png` },
-  srh:       { key: 'srh',       src: `${NEW}/srh.png`,        title: 'SRH',       color: '#C9A84C',            bannerSrc: `${NEW}/srh.png`,        framedSrc: `${NEW}/srh.png` },
+  firstCut:  { key: 'firstCut',  src: `${NEW}/first-cut.png`,  title: 'FIRST CUT', color: 'var(--positive)',            bannerSrc: `${NEW}/first-cut.png`,  framedSrc: `${NEW}/first-cut.png` },
+  top1k:     { key: 'top1k',     src: `${NEW}/collector.png`,  title: 'TOP 1K',    color: 'var(--gold)',            bannerSrc: `${NEW}/collector.png`,  framedSrc: `${NEW}/collector.png` },
+  srh:       { key: 'srh',       src: `${NEW}/srh.png`,        title: 'SRH',       color: 'var(--gold)',            bannerSrc: `${NEW}/srh.png`,        framedSrc: `${NEW}/srh.png` },
   composer:  { key: 'composer',  src: `${NEW}/composer.png`,   title: 'COMPOSER',  color: '#7FB2FF',            bannerSrc: `${NEW}/composer.png`,   framedSrc: `${NEW}/composer.png` },
   pro:       { key: 'pro',       src: `${NEW}/scope-pro.png`,  title: 'SCOPE PRO', color: 'var(--ink-100)',            bannerSrc: `${NEW}/scope-pro.png`,  framedSrc: `${NEW}/scope-pro.png` },
   inHouse:   { key: 'inHouse',   src: `${NEW}/in-house.png`,   title: 'IN-HOUSE',  color: 'rgb(var(--ink-rgb) / 0.6)', bannerSrc: `${NEW}/in-house.png`,   framedSrc: `${NEW}/in-house.png` },

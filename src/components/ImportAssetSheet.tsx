@@ -56,7 +56,7 @@ export default function ImportAssetSheet({ visible, onClose, userUuid, onAdded }
         data-swipe-exclude
         style={{
           position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 1101,
-          background: '#080808', borderTop: '1px solid rgb(var(--ink-rgb) / 0.08)',
+          background: 'var(--surface-08)', borderTop: '1px solid rgb(var(--ink-rgb) / 0.08)',
           transform: visible ? 'translateY(0)' : 'translateY(100%)',
           transition: 'transform 0.4s cubic-bezier(0.32, 0.72, 0, 1)',
           padding: '20px 20px calc(28px + env(safe-area-inset-bottom, 0px))',

@@ -37,7 +37,7 @@ export default function ContactUs() {
   return (
     <div className="bg-black relative w-[375px] h-[812px] mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between p-6 border-b border-[#333333]">
+      <div className="flex items-center justify-between p-6 border-b border-[var(--mute-1)]">
         <button 
           onClick={() => router.back()} 
           className="text-[var(--ink-100)] text-lg"
@@ -62,7 +62,7 @@ export default function ContactUs() {
             <h2 className="font-['IBM_Plex_Mono'] font-medium text-[var(--ink-100)] text-[var(--fs-18)] mb-4 text-center">
               Message Sent!
             </h2>
-            <p className="font-['IBM_Plex_Mono'] font-normal text-[#888888] text-[var(--fs-14)] text-center">
+            <p className="font-['IBM_Plex_Mono'] font-normal text-[var(--mute-3)] text-[var(--fs-14)] text-center">
               We'll get back to you within 24 hours.
             </p>
           </div>
@@ -78,7 +78,7 @@ export default function ContactUs() {
                   <button
                     key={topic.id}
                     onClick={() => handleChange('subject', topic.label)}
-                    className="p-4 bg-[var(--surface-3)] border border-[#333333] rounded-lg hover:bg-[#222222] transition-colors text-left"
+                    className="p-4 bg-[var(--surface-3)] border border-[var(--mute-1)] rounded-lg hover:bg-[var(--surface-4)] transition-colors text-left"
                   >
                     <div className="text-2xl mb-2">{topic.icon}</div>
                     <p className="font-['IBM_Plex_Mono'] font-medium text-[var(--ink-100)] text-[var(--fs-12)]">
@@ -100,7 +100,7 @@ export default function ContactUs() {
                   value={formData.email}
                   onChange={(e) => handleChange('email', e.target.value)}
                   required
-                  className="w-full bg-[var(--surface-3)] border border-[#333333] rounded-lg px-4 py-3 font-['IBM_Plex_Mono'] text-[var(--ink-100)] text-[var(--fs-14)] focus:border-[var(--ink-100)] focus:outline-none"
+                  className="w-full bg-[var(--surface-3)] border border-[var(--mute-1)] rounded-lg px-4 py-3 font-['IBM_Plex_Mono'] text-[var(--ink-100)] text-[var(--fs-14)] focus:border-[var(--ink-100)] focus:outline-none"
                   placeholder="your@email.com"
                 />
               </div>
@@ -114,7 +114,7 @@ export default function ContactUs() {
                   value={formData.subject}
                   onChange={(e) => handleChange('subject', e.target.value)}
                   required
-                  className="w-full bg-[var(--surface-3)] border border-[#333333] rounded-lg px-4 py-3 font-['IBM_Plex_Mono'] text-[var(--ink-100)] text-[var(--fs-14)] focus:border-[var(--ink-100)] focus:outline-none"
+                  className="w-full bg-[var(--surface-3)] border border-[var(--mute-1)] rounded-lg px-4 py-3 font-['IBM_Plex_Mono'] text-[var(--ink-100)] text-[var(--fs-14)] focus:border-[var(--ink-100)] focus:outline-none"
                   placeholder="How can we help?"
                 />
               </div>
@@ -128,7 +128,7 @@ export default function ContactUs() {
                   onChange={(e) => handleChange('message', e.target.value)}
                   required
                   rows={6}
-                  className="w-full bg-[var(--surface-3)] border border-[#333333] rounded-lg px-4 py-3 font-['IBM_Plex_Mono'] text-[var(--ink-100)] text-[var(--fs-14)] resize-none focus:border-[var(--ink-100)] focus:outline-none"
+                  className="w-full bg-[var(--surface-3)] border border-[var(--mute-1)] rounded-lg px-4 py-3 font-['IBM_Plex_Mono'] text-[var(--ink-100)] text-[var(--fs-14)] resize-none focus:border-[var(--ink-100)] focus:outline-none"
                   placeholder="Tell us more about your issue or question..."
                 />
               </div>
@@ -142,18 +142,18 @@ export default function ContactUs() {
             </form>
 
             {/* Additional Support */}
-            <div className="mt-8 p-4 bg-[var(--surface-3)] border border-[#333333] rounded-lg">
+            <div className="mt-8 p-4 bg-[var(--surface-3)] border border-[var(--mute-1)] rounded-lg">
               <p className="font-['IBM_Plex_Mono'] font-medium text-[var(--ink-100)] text-[var(--fs-12)] mb-3">
                 Other ways to reach us:
               </p>
               <div className="space-y-2">
-                <p className="font-['IBM_Plex_Mono'] font-normal text-[#888888] text-[var(--fs-11)]">
+                <p className="font-['IBM_Plex_Mono'] font-normal text-[var(--mute-3)] text-[var(--fs-11)]">
                   📧 support@scopeapp.world
                 </p>
-                <p className="font-['IBM_Plex_Mono'] font-normal text-[#888888] text-[var(--fs-11)]">
+                <p className="font-['IBM_Plex_Mono'] font-normal text-[var(--mute-3)] text-[var(--fs-11)]">
                   🐦 @ScopeSupport
                 </p>
-                <p className="font-['IBM_Plex_Mono'] font-normal text-[#888888] text-[var(--fs-11)]">
+                <p className="font-['IBM_Plex_Mono'] font-normal text-[var(--mute-3)] text-[var(--fs-11)]">
                   ⏰ Response time: Usually within 24 hours
                 </p>
               </div>

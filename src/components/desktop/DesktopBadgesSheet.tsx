@@ -136,7 +136,7 @@ export default function DesktopBadgesSheet({
           const b = BADGES[k];
           const state = badgeState(k, flags); // 'held' | 'buyable' | 'locked'
           const src = b.bannerSrc ?? b.src;
-          const chip = state === 'held' ? { t: 'HELD', c: '#00E08A' } : state === 'buyable' ? { t: 'AVAILABLE', c: 'var(--ink-100)' } : { t: 'LOCKED', c: 'rgb(var(--ink-rgb) / 0.4)' };
+          const chip = state === 'held' ? { t: 'HELD', c: 'var(--positive)' } : state === 'buyable' ? { t: 'AVAILABLE', c: 'var(--ink-100)' } : { t: 'LOCKED', c: 'rgb(var(--ink-rgb) / 0.4)' };
           // Brief F7 §4 — FRAME-FREEZE FIX: fill-mode was `both`, whose BACKWARDS fill
           // pinned each not-yet-started row to badgeRippleIn's from{opacity:0} — a
           // stalled/offscreen entrance left the lower ~1/3 of cards frozen invisible

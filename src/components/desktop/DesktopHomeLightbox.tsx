@@ -179,7 +179,7 @@ export default function DesktopHomeLightbox({
           <div key={String(p.id)} onClick={() => jumpTo(p)} role="button" aria-label={`Post by @${creatorHandle}${p.coin_address ? `, market cap ${mfMc.get(String(p.id)) ?? ''}` : ''}`} style={{ flexShrink: 0, width: 208, cursor: 'pointer' }}>
             {/* Brief D15a §2 — the caption ROW (@handle + MC) is gone; it's now a HOVER-revealed
                 bottom-gradient overlay on the thumb (a11y: the info is in the card's aria-label). */}
-            <div className="d15a-thumb" style={{ position: 'relative', width: '100%', aspectRatio: '2.75 / 1', overflow: 'hidden', background: '#0d0d0d' }}>
+            <div className="d15a-thumb" style={{ position: 'relative', width: '100%', aspectRatio: '2.75 / 1', overflow: 'hidden', background: 'var(--surface-0d)' }}>
               {thumbOf(p) && <img src={feedImage(thumbOf(p), 480)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
               {isVideoPost(p) && <StripPlayGlyph />}
               <div className="d15a-ov">
@@ -232,7 +232,7 @@ export default function DesktopHomeLightbox({
             return (
               <button key={String(p.id)} data-active={isActive ? '' : undefined} onClick={() => jumpTo(p)} aria-label={`Post by @${String(p.username ?? '')}`}
                 style={{ flexShrink: 0, width: 124, background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, opacity: isActive ? 1 : 0.6, transition: 'opacity 160ms ease' }}>
-                <div className="d15a-thumb" style={{ position: 'relative', width: '100%', aspectRatio: '2.39 / 1', overflow: 'hidden', background: '#0d0d0d', outline: isActive ? '1px solid rgb(var(--ink-rgb) / 0.7)' : 'none' }}>
+                <div className="d15a-thumb" style={{ position: 'relative', width: '100%', aspectRatio: '2.39 / 1', overflow: 'hidden', background: 'var(--surface-0d)', outline: isActive ? '1px solid rgb(var(--ink-rgb) / 0.7)' : 'none' }}>
                   {thumbOf(p) && <img src={feedImage(thumbOf(p), 260)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
                   {isVideoPost(p) && <StripPlayGlyph />}
                   <div className="d15a-ov">

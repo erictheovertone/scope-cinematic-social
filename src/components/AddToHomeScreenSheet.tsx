@@ -88,7 +88,7 @@ export default function AddToHomeScreenSheet({ isOpen, onClose, privyId, forceSh
       {/* Sheet */}
       <div style={{
         position: 'fixed', bottom: 0, left: 0, right: 0,
-        backgroundColor: '#080808',
+        backgroundColor: 'var(--surface-08)',
         borderTop: '1px solid rgb(var(--ink-rgb) / 0.12)',
         zIndex: 801,
         transform: canShow ? 'translateY(0)' : 'translateY(100%)',

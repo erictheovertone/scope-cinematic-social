@@ -80,7 +80,7 @@ export const TIER_DETAILS: Record<string, {
     img: '/design-updates-071526/new-badges/collector.png',
     size: 64,
     label: 'TOP 1000 COLLECTOR',
-    color: '#C9A84C',
+    color: 'var(--gold)',
     tagline: 'The more you collect, the more you earn. Every single day.',
     sections: [
       {
@@ -147,7 +147,7 @@ export const TIER_DETAILS: Record<string, {
     img: '/badges/first-cut-badge-min-design-01.png',
     size: 64,
     label: 'FIRST CUT',
-    color: '#00E08A',
+    color: 'var(--positive)',
     tagline: 'Be early. Stay first.',
     sections: [
       {
@@ -168,7 +168,7 @@ export const TIER_DETAILS: Record<string, {
     img: '/badges/srh-badge-min-design-01.png',
     size: 64,
     label: 'SCREENING ROOM HOLDER',
-    color: '#C9A84C',
+    color: 'var(--gold)',
     tagline: 'Hold the room.',
     sections: [
       {

@@ -1052,7 +1052,7 @@ export default function WalletPage() {
             Brand: earnings-sheet language — hairlines, SK-Modernist, money-
             green for received, muted for accrued-unpaid. */}
         {activeTab === "earnings" && (() => {
-          const green = '#00E08A';
+          const green = 'var(--positive)';
           const portfolioTotal = earnings ? sumAll(earnings.events) : null;
           const byPost = earnings?.byPost ?? [];
           const held = new Map((holdings ?? []).map((h) => [h.postId, h]));
@@ -1160,9 +1160,9 @@ export default function WalletPage() {
                 // Directional icon circle: tint + glyph + color by action.
                 const cfg = ({
                   buy:     { tint: 'rgb(var(--ink-rgb) / 0.10)',     glyph: '↓', color: '#ff4d4d' },
-                  sell:    { tint: 'rgba(74,222,128,0.10)',  glyph: '↑', color: '#4ade80' },
-                  mint:    { tint: 'rgb(var(--ink-rgb) / 0.06)', glyph: '✦', color: '#888888' },
-                  receive: { tint: 'rgba(74,222,128,0.10)',  glyph: '↓', color: '#4ade80' },
+                  sell:    { tint: 'rgba(74,222,128,0.10)',  glyph: '↑', color: 'var(--positive-alt)' },
+                  mint:    { tint: 'rgb(var(--ink-rgb) / 0.06)', glyph: '✦', color: 'var(--mute-3)' },
+                  receive: { tint: 'rgba(74,222,128,0.10)',  glyph: '↓', color: 'var(--positive-alt)' },
                   send:    { tint: 'rgb(var(--ink-rgb) / 0.10)',     glyph: '↑', color: '#ff4d4d' },
                 } as const)[row.kind];
 
@@ -1187,7 +1187,7 @@ export default function WalletPage() {
                 const rightText = row.kind === 'mint'
                   ? 'CREATED'
                   : rightVal ? `${positive ? '+' : '−'}${rightVal}` : '';
-                const rightColor = row.kind === 'mint' ? '#5a5a5a' : positive ? '#4ade80' : 'var(--ink-100)';
+                const rightColor = row.kind === 'mint' ? '#5a5a5a' : positive ? 'var(--positive-alt)' : 'var(--ink-100)';
 
                 return (
                   <div

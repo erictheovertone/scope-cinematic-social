@@ -1260,7 +1260,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
         <button
           onClick={() => setStep('crop')}
           disabled={selectedMedia.length === 0}
-          style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-13)', textTransform: 'uppercase', letterSpacing: '0.04em', background: 'none', border: 'none', cursor: selectedMedia.length > 0 ? 'pointer' : 'default', color: selectedMedia.length > 0 ? 'var(--ink-100)' : '#666666' }}
+          style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-13)', textTransform: 'uppercase', letterSpacing: '0.04em', background: 'none', border: 'none', cursor: selectedMedia.length > 0 ? 'pointer' : 'default', color: selectedMedia.length > 0 ? 'var(--ink-100)' : 'var(--mute-2)' }}
         >
           Next
         </button>
@@ -1269,7 +1269,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
       <div className="flex-1 p-4 flex flex-col">
         {/* Optimising indicator */}
         {isOptimising && (
-          <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-11)', color: '#888888', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 12, textAlign: 'center' }}>
+          <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-11)', color: 'var(--mute-3)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 12, textAlign: 'center' }}>
             Optimising…
           </p>
         )}
@@ -1340,7 +1340,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
         <button
           onClick={() => { setStep('deck'); loadDecksForStep(); }}
           disabled={isUploading}
-          style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-13)', textTransform: 'uppercase', letterSpacing: '0.04em', background: 'none', border: 'none', cursor: isUploading ? 'default' : 'pointer', color: isUploading ? '#666666' : 'var(--ink-100)' }}
+          style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-13)', textTransform: 'uppercase', letterSpacing: '0.04em', background: 'none', border: 'none', cursor: isUploading ? 'default' : 'pointer', color: isUploading ? 'var(--mute-2)' : 'var(--ink-100)' }}
         >
           Next
         </button>

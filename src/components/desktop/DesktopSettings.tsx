@@ -564,7 +564,7 @@ export default function DesktopSettings() {
                 const sel = moreFrom.indexOf(id);
                 const src = (p.poster_url as string) || (p.thumbnail_url as string) || ((p.media_urls as string[])?.[0] ?? '');
                 return (
-                  <button key={id} onClick={() => toggleMoreFrom(id)} style={{ position: 'relative', aspectRatio: '2.39 / 1', overflow: 'hidden', background: '#0d0d0d', border: sel >= 0 ? `2px solid ${RED}` : `1px solid ${HAIR}`, cursor: 'pointer', padding: 0 }}>
+                  <button key={id} onClick={() => toggleMoreFrom(id)} style={{ position: 'relative', aspectRatio: '2.39 / 1', overflow: 'hidden', background: 'var(--surface-0d)', border: sel >= 0 ? `2px solid ${RED}` : `1px solid ${HAIR}`, cursor: 'pointer', padding: 0 }}>
                     {src && <img src={feedImage(src, 320)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', opacity: sel >= 0 ? 1 : 0.7 }} />}
                     {sel >= 0 && <span style={{ position: 'absolute', top: 5, right: 6, ...SKB, fontSize: 10, color: 'var(--ink-100)', background: RED, width: 17, height: 17, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}>{sel + 1}</span>}
                   </button>

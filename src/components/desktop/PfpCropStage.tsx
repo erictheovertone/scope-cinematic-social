@@ -114,7 +114,7 @@ export default function PfpCropStage({
   return createPortal(
     <div data-swipe-exclude style={{ position: 'fixed', inset: 0, zIndex: 640 }}>
       <div onClick={onCancel} style={{ position: 'absolute', inset: 0, background: 'rgb(var(--black-rgb) / 0.88)' }} />
-      <div style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', background: '#080808', border: '1px solid rgb(var(--ink-rgb) / 0.14)', padding: 22 }}>
+      <div style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', background: 'var(--surface-08)', border: '1px solid rgb(var(--ink-rgb) / 0.14)', padding: 22 }}>
         <p style={{ ...SKB, fontSize: 12, color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 0 14px' }}>FRAME YOUR PHOTO</p>
 
         {error ? (
