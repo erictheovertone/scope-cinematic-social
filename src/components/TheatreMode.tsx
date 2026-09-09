@@ -492,7 +492,7 @@ export default function TheatreMode({
         independent of the suiteOpen flag's timing. Theatre owns its own queue-swipe, so
         it must opt out — its ABSENCE let a horizontal swipe over theatre reach SwipeNav →
         the next tab (Create Post). This makes tab-nav impossible while theatre is open. */}
-    <div data-swipe-exclude style={{ ...stageStyle, zIndex: zBase }}>
+    <div data-swipe-exclude data-force-dark style={{ ...stageStyle, zIndex: zBase }}>{/* Brief T1 Stage 2 — theatre is a VIEWING SURFACE: forces the dark token set in light theme. */}
       {/* Black field — tapping the empty space (not the image / panel) exits. On
           desktop a near-opaque dim lets the profile bleed ~8% (matches the ref);
           on a rotated phone the field is solid so the portrait profile behind

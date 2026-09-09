@@ -257,8 +257,10 @@ export default function DesktopPostView({
           panel (20px pocket + 12px gap). The media is the star. */}
       <div ref={colRef} style={{ flex: 1, minWidth: 0, padding: lightbox ? '0 14px' : '0 20px', marginTop: lightbox ? 0 : 60, ...(lightbox ? { display: 'flex', flexDirection: 'column', minHeight: 0 } : {}) }}> {/* Brief D15/D15b — lightbox: a height-bound flex column; the stage hugs the media (measured), the fixed rows sit under it, and the leftover height goes to a spacer above MORE FROM. Profile: unchanged. */}
         {/* Brief D15b — the stage wrapper HUGS the media (flexShrink:0, media-sized) so the arrows
-            centre on the media and the action row sits at the media's bottom, not a taller zone's. */}
-        <div style={lightbox ? { position: 'relative', flexShrink: 0 } : { position: 'relative' }}>
+            centre on the media and the action row sits at the media's bottom, not a taller zone's.
+            Brief T1 Stage 2 — the lightbox STAGE + frame is a viewing surface: force the dark
+            token set (media on charcoal, arrows stay ivory) even under the light theme. */}
+        <div {...(lightbox ? { 'data-force-dark': '' } : {})} style={lightbox ? { position: 'relative', flexShrink: 0 } : { position: 'relative' }}>
           {/* prev / next — Batang > glyphs, mid-media */}
           {/* HIT TARGET NEVER MOVES: 44px outer buttons, stage-anchored seats,
               data-no-pop (no press scale); feedback = brightness on the inner

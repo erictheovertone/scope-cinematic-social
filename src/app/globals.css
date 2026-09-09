@@ -37,13 +37,13 @@
   html {
     font-family: 'Neue Haas Grotesk Display', 'SK-Modernist', sans-serif;
     letter-spacing: var(--track-body);
-    background-color: #050505;
+    background-color: var(--canvas);
   }
 
   body {
     font-family: 'Neue Haas Grotesk Display', 'SK-Modernist', sans-serif;
     font-weight: 700;
-    background-color: #050505;
+    background-color: var(--canvas);
     color: var(--ink-100);
   }
 }
@@ -236,6 +236,70 @@ html, body {
   --sp-4: clamp(16px, calc(16px + 4*(100vw - 320px)/320), 20px);
   --sp-5: clamp(20px, calc(20px + 4*(100vw - 320px)/320), 24px);
   --sp-6: clamp(24px, calc(24px + 8*(100vw - 320px)/320), 32px);
+}
+
+/* ── Brief T1 Stage 2 — THE LIGHT THEME ──────────────────────────────────────
+   [data-theme="light"] on <html> (set by the Stage-4 setting, before first paint). Because
+   Stage 1 routed every color through the tokens, the theme swap is JUST this block: redefine
+   the two RGB triplets + the surface/mute/glass tokens for warm paper. --danger, --black(-rgb),
+   --positive/-alt, --gold are theme-invariant (they read on paper) and are NOT redefined.
+   INERT until the attribute is set — default (dark) is byte-unchanged. */
+:root[data-theme="light"] {
+  --ink-rgb: 10 10 10;            /* #0A0A0A — the ink flips to charcoal; the whole ladder derives */
+  --canvas-rgb: 244 241 236;      /* #F4F1EC — warm paper (ivory family, NOT pure white) */
+  --canvas: rgb(var(--canvas-rgb) / 1);
+  --ink: rgb(var(--ink-rgb) / 1);
+  /* surfaces = slightly-deeper paper (a card sits a touch below the page) */
+  --surface-08: #F0ECE4;
+  --surface-1:  #ECE7DF;
+  --surface-0d: #EAE5DC;
+  --surface-10: #E7E2D8;
+  --surface-2:  #E3DDD3;
+  --surface-3:  #DCD5CA;
+  --surface-1f: #D6CFC3;
+  --surface-4:  #CFC8BB;
+  --surface-2a: #C8C0B2;
+  /* greys become dark-on-paper text / paper dividers (first-pass — tune on device) */
+  --mute-1: #C7C0B4;             /* faint divider on paper (was a dark divider) */
+  --mute-2: #6E6A62;             /* dim text */
+  --mute-3: #8C867C;             /* placeholder text */
+  --hairline: rgb(var(--ink-rgb) / 0.18);
+  --hairline-strong: rgb(var(--ink-rgb) / 0.26);
+  --avatar-frame: rgb(var(--ink-rgb) / 0.12);
+  --on-ink: #F4F1EC;             /* content ON a now-charcoal ink fill → paper */
+  --glass-fill: rgb(255 255 255 / 0.55);   /* light glass */
+  --glass-border: rgb(var(--ink-rgb) / 0.22);
+}
+
+/* ── VIEWING SURFACES STAY DARK regardless of theme ──────────────────────────
+   Theatre, the lightbox stage zone + its immediate frame, the Mirage focus view, and the
+   finishing preview canvas force the FULL dark token set (media reads against charcoal, not
+   paper; posters/graded overlays are untouched). A container marks itself [data-force-dark];
+   these declarations re-assert the dark values so descendants resolve dark under either theme.
+   (In dark theme this is a harmless re-declaration.) */
+[data-force-dark] {
+  --ink-rgb: 229 225 219;
+  --canvas-rgb: 5 5 5;
+  --canvas: rgb(var(--canvas-rgb) / 1);
+  --ink: rgb(var(--ink-rgb) / 1);
+  --surface-08: #080808;
+  --surface-1:  #0a0a0a;
+  --surface-0d: #0d0d0d;
+  --surface-10: #101010;
+  --surface-2:  #141414;
+  --surface-3:  #1a1a1a;
+  --surface-1f: #1f1f1f;
+  --surface-4:  #222222;
+  --surface-2a: #2a2a2a;
+  --mute-1: #333333;
+  --mute-2: #666666;
+  --mute-3: #888888;
+  --hairline: rgb(var(--ink-rgb) / 0.22);
+  --hairline-strong: rgb(var(--ink-rgb) / 0.30);
+  --avatar-frame: rgb(var(--ink-rgb) / 0.15);
+  --on-ink: #050505;
+  --glass-fill: rgb(var(--canvas-rgb) / 0.5);
+  --glass-border: rgb(var(--ink-rgb) / 0.22);
 }
 
 /* Capped + centered mobile column. Edge-to-edge below ~480px; centered above it on
