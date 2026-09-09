@@ -158,7 +158,7 @@ export default function ProfileSetup() {
   const disabled = isLoading || imageUploading || !!imageUploadError;
   const fieldStyle: React.CSSProperties = {
     width: '100%', boxSizing: 'border-box', background: 'transparent',
-    border: '1px solid rgba(229,225,219,0.19)', borderRadius: 0, outline: 'none',
+    border: '1px solid rgb(var(--ink-rgb) / 0.19)', borderRadius: 0, outline: 'none',
     fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 16,
     color: 'var(--ink-100)', letterSpacing: 'var(--track-body)',
   };
@@ -176,7 +176,7 @@ export default function ProfileSetup() {
         .s3-input::placeholder {
           font-family: var(--font-display); font-weight: 700;
           font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase;
-          color: rgba(229,225,219,0.28);
+          color: rgb(var(--ink-rgb) / 0.28);
         }
       `}</style>
 
@@ -188,13 +188,13 @@ export default function ProfileSetup() {
 
       {/* PFP upload — 130×130 hairline, "+" trigger. On selected image the preview covers
           and the + disappears. Upload flow (picker → compress → upload) unchanged. */}
-      <div onClick={triggerFileInput} style={{ position: 'relative', width: 130, height: 130, alignSelf: 'center', marginTop: 16, border: '1px solid rgba(229,225,219,0.15)', boxSizing: 'border-box', background: 'transparent', cursor: 'pointer', overflow: 'hidden' }}>
+      <div onClick={triggerFileInput} style={{ position: 'relative', width: 130, height: 130, alignSelf: 'center', marginTop: 16, border: '1px solid rgb(var(--ink-rgb) / 0.15)', boxSizing: 'border-box', background: 'transparent', cursor: 'pointer', overflow: 'hidden' }}>
         {profileImage ? (
           <img src={feedImage(profileImage, 320)} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
         ) : (
           <>
-            <div style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', width: 1, height: 82, background: 'rgba(229,225,219,0.52)' }} />
-            <div style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', width: 82, height: 1, background: 'rgba(229,225,219,0.52)' }} />
+            <div style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', width: 1, height: 82, background: 'rgb(var(--ink-rgb) / 0.52)' }} />
+            <div style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', width: 82, height: 1, background: 'rgb(var(--ink-rgb) / 0.52)' }} />
           </>
         )}
         {imageUploading && (
@@ -218,7 +218,7 @@ export default function ProfileSetup() {
       </div>
 
       {/* Continue — bottom-right, 24px 75 Bold ~67%. Same submit handler; disabled = dimmed. */}
-      <button onClick={handleContinue} disabled={disabled} className="tap-target" style={{ marginTop: 'auto', alignSelf: 'flex-end', background: 'transparent', border: 'none', cursor: disabled ? 'default' : 'pointer', padding: '10px 2px', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 24, letterSpacing: 'var(--track-display)', color: 'rgba(229,225,219,0.67)', opacity: disabled ? 0.4 : 1 }}>
+      <button onClick={handleContinue} disabled={disabled} className="tap-target" style={{ marginTop: 'auto', alignSelf: 'flex-end', background: 'transparent', border: 'none', cursor: disabled ? 'default' : 'pointer', padding: '10px 2px', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 24, letterSpacing: 'var(--track-display)', color: 'rgb(var(--ink-rgb) / 0.67)', opacity: disabled ? 0.4 : 1 }}>
         {isLoading ? 'Saving…' : 'Continue'}
       </button>
     </div>

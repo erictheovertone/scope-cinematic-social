@@ -9,8 +9,8 @@ const MONO: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fo
 const INPUT: React.CSSProperties = {
   width: '100%',
   background: 'transparent',
-  border: '1px solid rgba(229,225,219,0.8)',
-  color: '#E5E1DB',
+  border: '1px solid rgb(var(--ink-rgb) / 0.8)',
+  color: 'var(--ink-100)',
   fontFamily: "'SK-Modernist', sans-serif",
   fontWeight: 700,
   fontSize: 'max(16px, var(--fs-13))', // iOS zoom floor
@@ -86,23 +86,23 @@ export default function AccountSettings() {
 
       {/* Header */}
       <div style={{ position: 'relative', display: 'flex', alignItems: 'center', padding: '14px 16px' }}>
-        <div style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: '#E5E1DB', flexShrink: 0, marginRight: 10 }} />
+        <div style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: 'var(--ink-100)', flexShrink: 0, marginRight: 10 }} />
         <button
           onClick={() => router.back()}
-          style={{ ...MONO, fontSize: 'var(--fs-11)', color: '#E5E1DB', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textTransform: 'uppercase', letterSpacing: '0.06em' }}
+          style={{ ...MONO, fontSize: 'var(--fs-11)', color: 'var(--ink-100)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textTransform: 'uppercase', letterSpacing: '0.06em' }}
         >
           ← Back
         </button>
-        <span style={{ ...MONO, fontSize: 'var(--fs-11)', color: '#E5E1DB', position: 'absolute', left: '50%', transform: 'translateX(-50%)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+        <span style={{ ...MONO, fontSize: 'var(--fs-11)', color: 'var(--ink-100)', position: 'absolute', left: '50%', transform: 'translateX(-50%)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
           EDIT PROFILE
         </span>
       </div>
-      <div style={{ height: 1, backgroundColor: 'rgba(229,225,219,0.12)' }} />
+      <div style={{ height: 1, backgroundColor: 'rgb(var(--ink-rgb) / 0.12)' }} />
 
       <div style={{ padding: '24px 20px' }}>
 
         <div style={{ marginBottom: 20 }}>
-          <label style={{ ...MONO, fontSize: 'var(--fs-10)', color: 'rgba(229,225,219,0.5)', display: 'block', marginBottom: 6 }}>DISPLAY NAME</label>
+          <label style={{ ...MONO, fontSize: 'var(--fs-10)', color: 'rgb(var(--ink-rgb) / 0.5)', display: 'block', marginBottom: 6 }}>DISPLAY NAME</label>
           <input
             className="edit-input"
             value={form.displayName}
@@ -113,7 +113,7 @@ export default function AccountSettings() {
         </div>
 
         <div style={{ marginBottom: 20 }}>
-          <label style={{ ...MONO, fontSize: 'var(--fs-10)', color: 'rgba(229,225,219,0.5)', display: 'block', marginBottom: 6 }}>USERNAME</label>
+          <label style={{ ...MONO, fontSize: 'var(--fs-10)', color: 'rgb(var(--ink-rgb) / 0.5)', display: 'block', marginBottom: 6 }}>USERNAME</label>
           <input
             className="edit-input"
             value={form.username}
@@ -124,7 +124,7 @@ export default function AccountSettings() {
         </div>
 
         <div style={{ marginBottom: 20 }}>
-          <label style={{ ...MONO, fontSize: 'var(--fs-10)', color: 'rgba(229,225,219,0.5)', display: 'block', marginBottom: 6 }}>BIO</label>
+          <label style={{ ...MONO, fontSize: 'var(--fs-10)', color: 'rgb(var(--ink-rgb) / 0.5)', display: 'block', marginBottom: 6 }}>BIO</label>
           <textarea
             className="edit-input"
             value={form.bio}
@@ -136,7 +136,7 @@ export default function AccountSettings() {
         </div>
 
         <div style={{ marginBottom: 32 }}>
-          <label style={{ ...MONO, fontSize: 'var(--fs-10)', color: 'rgba(229,225,219,0.5)', display: 'block', marginBottom: 6 }}>WEBSITE</label>
+          <label style={{ ...MONO, fontSize: 'var(--fs-10)', color: 'rgb(var(--ink-rgb) / 0.5)', display: 'block', marginBottom: 6 }}>WEBSITE</label>
           <input
             className="edit-input"
             value={form.websiteUrl}
@@ -156,9 +156,9 @@ export default function AccountSettings() {
           disabled={saving || saved}
           style={{
             ...MONO, fontSize: 'var(--fs-12)',
-            color: saved ? '#4CAF50' : '#E5E1DB',
+            color: saved ? '#4CAF50' : 'var(--ink-100)',
             background: 'transparent',
-            border: `1px solid ${saved ? '#4CAF50' : '#E5E1DB'}`,
+            border: `1px solid ${saved ? '#4CAF50' : 'var(--ink-100)'}`,
             padding: '12px',
             width: '100%',
             cursor: saving || saved ? 'default' : 'pointer',

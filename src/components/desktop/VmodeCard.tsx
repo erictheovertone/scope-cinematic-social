@@ -53,8 +53,8 @@ export default function VmodeCard({ card, index, reduced, selected, onSelect }: 
       aria-pressed={selected}
       style={{
         position: 'relative', width: '100%', height: '100%', minHeight: 150, borderRadius: 13,
-        border: selected ? '1px solid rgba(229,225,219,0.8)' : '1px solid rgba(229,225,219,0.49)',
-        background: 'linear-gradient(90deg, rgba(229,225,219,0.07), rgba(33,31,31,0.08))',
+        border: selected ? '1px solid rgb(var(--ink-rgb) / 0.8)' : '1px solid rgb(var(--ink-rgb) / 0.49)',
+        background: 'linear-gradient(90deg, rgb(var(--ink-rgb) / 0.07), rgba(33,31,31,0.08))',
         overflow: 'hidden', cursor: card.coming ? 'default' : 'pointer', textAlign: 'left',
         display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'flex-start',
         padding: '26px 30px 28px', gap: 18, opacity: card.coming ? 0.72 : 1,
@@ -63,14 +63,14 @@ export default function VmodeCard({ card, index, reduced, selected, onSelect }: 
       {/* TEXT block — title + description, stacked at the top. */}
       <span style={{ flexShrink: 0, width: '100%', display: 'flex', flexDirection: 'column' }}>
         <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 'calc(40px * var(--type-scale))', lineHeight: 0.82, letterSpacing: 'var(--track-display)', color: 'var(--ink-100)', whiteSpace: 'pre-line' }}>{card.name}</span>
-        <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 13, lineHeight: 1.3, color: 'rgba(229,225,219,0.5)', marginTop: 10, maxWidth: 320 }}>{card.desc}</span>
+        <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 13, lineHeight: 1.3, color: 'rgb(var(--ink-rgb) / 0.5)', marginTop: 10, maxWidth: 320 }}>{card.desc}</span>
       </span>
       {/* PREVIEW — BELOW the text, ~3× larger: fills the remaining card space (contain, own aspect). */}
       <span style={{ flex: 1, minHeight: 0, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
         <img src={card.preview} alt="" aria-hidden style={{ maxWidth: '100%', maxHeight: '100%', width: 'auto', height: 'auto', objectFit: 'contain', opacity: 0.78, display: 'block' }} />
       </span>
       {card.coming && (
-        <span style={{ position: 'absolute', top: 14, right: 16, fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 9, color: 'rgba(229,225,219,0.75)', textTransform: 'uppercase', letterSpacing: '0.14em', background: 'rgba(0,0,0,0.5)', padding: '3px 7px', borderRadius: 2 }}>Coming</span>
+        <span style={{ position: 'absolute', top: 14, right: 16, fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 9, color: 'rgb(var(--ink-rgb) / 0.75)', textTransform: 'uppercase', letterSpacing: '0.14em', background: 'rgba(0,0,0,0.5)', padding: '3px 7px', borderRadius: 2 }}>Coming</span>
       )}
     </motion.button>
   );

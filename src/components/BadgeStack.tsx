@@ -86,11 +86,11 @@ export default function BadgeStack({
             alignItems: 'center',
             justifyContent: 'center',
             background: '#000',
-            border: '1px solid rgba(229,225,219,0.22)', // hairline, on-brand
+            border: '1px solid rgb(var(--ink-rgb) / 0.22)', // hairline, on-brand
             boxShadow: '0 2px 6px rgba(0,0,0,0.9)',
           }}
         >
-          <span style={{ ...SKB, fontSize: Math.max(6, size * 0.42), color: '#E5E1DB', lineHeight: 1 }}>
+          <span style={{ ...SKB, fontSize: Math.max(6, size * 0.42), color: 'var(--ink-100)', lineHeight: 1 }}>
             +{overflow}
           </span>
         </div>

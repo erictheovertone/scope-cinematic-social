@@ -86,12 +86,12 @@ export default function ReframeOverlay({ post, layoutId, onSave, onCancel }: Ref
           Pad top by --safe-top (F1) so CANCEL / RE-FRAME / SAVE clear the notch. */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 'calc(16px + var(--safe-top)) 16px 16px', flexShrink: 0 }}>
         <button onClick={onCancel} style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}>
-          <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-10)', color: 'rgba(229,225,219,0.5)', textTransform: 'uppercase' }}>CANCEL</span>
+          <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-10)', color: 'rgb(var(--ink-rgb) / 0.5)', textTransform: 'uppercase' }}>CANCEL</span>
         </button>
-        <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-10)', color: '#E5E1DB', textTransform: 'uppercase' }}>RE-FRAME</span>
+        <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-10)', color: 'var(--ink-100)', textTransform: 'uppercase' }}>RE-FRAME</span>
         <button
           onClick={() => onSave(cropX, cropY, cropWidth, cropHeight)}
-          style={{ background: '#E5E1DB', border: 'none', cursor: 'pointer', padding: '6px 14px' }}
+          style={{ background: 'var(--ink-100)', border: 'none', cursor: 'pointer', padding: '6px 14px' }}
         >
           <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-10)', color: 'var(--on-ink)', textTransform: 'uppercase' }}>SAVE</span>
         </button>
@@ -148,21 +148,21 @@ export default function ReframeOverlay({ post, layoutId, onSave, onCancel }: Ref
             onPointerDown={(e) => handlePointerDown(e, 'top')}
             style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 28, cursor: 'ns-resize', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'auto' }}
           >
-            <div style={{ width: 36, height: 1.5, backgroundColor: 'rgba(229,225,219,0.7)', borderRadius: 1 }} />
+            <div style={{ width: 36, height: 1.5, backgroundColor: 'rgb(var(--ink-rgb) / 0.7)', borderRadius: 1 }} />
           </div>
           {/* Bottom handle */}
           <div
             onPointerDown={(e) => handlePointerDown(e, 'bottom')}
             style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 28, cursor: 'ns-resize', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'auto' }}
           >
-            <div style={{ width: 36, height: 1.5, backgroundColor: 'rgba(229,225,219,0.7)', borderRadius: 1 }} />
+            <div style={{ width: 36, height: 1.5, backgroundColor: 'rgb(var(--ink-rgb) / 0.7)', borderRadius: 1 }} />
           </div>
           {/* Corner markers */}
           {([
-            { top: 0, left: 0, borderTop: '1px solid rgba(229,225,219,0.8)', borderLeft: '1px solid rgba(229,225,219,0.8)' },
-            { top: 0, right: 0, borderTop: '1px solid rgba(229,225,219,0.8)', borderRight: '1px solid rgba(229,225,219,0.8)' },
-            { bottom: 0, left: 0, borderBottom: '1px solid rgba(229,225,219,0.8)', borderLeft: '1px solid rgba(229,225,219,0.8)' },
-            { bottom: 0, right: 0, borderBottom: '1px solid rgba(229,225,219,0.8)', borderRight: '1px solid rgba(229,225,219,0.8)' },
+            { top: 0, left: 0, borderTop: '1px solid rgb(var(--ink-rgb) / 0.8)', borderLeft: '1px solid rgb(var(--ink-rgb) / 0.8)' },
+            { top: 0, right: 0, borderTop: '1px solid rgb(var(--ink-rgb) / 0.8)', borderRight: '1px solid rgb(var(--ink-rgb) / 0.8)' },
+            { bottom: 0, left: 0, borderBottom: '1px solid rgb(var(--ink-rgb) / 0.8)', borderLeft: '1px solid rgb(var(--ink-rgb) / 0.8)' },
+            { bottom: 0, right: 0, borderBottom: '1px solid rgb(var(--ink-rgb) / 0.8)', borderRight: '1px solid rgb(var(--ink-rgb) / 0.8)' },
           ] as React.CSSProperties[]).map((corner, i) => (
             <div key={i} style={{ position: 'absolute', width: 14, height: 14, ...corner }} />
           ))}
@@ -170,7 +170,7 @@ export default function ReframeOverlay({ post, layoutId, onSave, onCancel }: Ref
       </div>
 
       <div style={{ padding: '12px 16px 40px', flexShrink: 0 }}>
-        <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: 'var(--fs-9)', color: 'rgba(229,225,219,0.3)', textTransform: 'uppercase', letterSpacing: '0.08em', textAlign: 'center', margin: 0 }}>
+        <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: 'var(--fs-9)', color: 'rgb(var(--ink-rgb) / 0.3)', textTransform: 'uppercase', letterSpacing: '0.08em', textAlign: 'center', margin: 0 }}>
           DRAG TO REPOSITION · HANDLES TO RESIZE
         </p>
       </div>

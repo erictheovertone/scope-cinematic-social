@@ -155,7 +155,7 @@ export default function DesktopHome() {
         {posts == null ? (
           <div style={{ minHeight: '40vh' }} />
         ) : posts.length === 0 ? (
-          <p style={{ ...SKB, textAlign: 'center', fontSize: 12, color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase', letterSpacing: '0.14em', padding: '80px 0' }}>NOTHING SCREENING YET</p>
+          <p style={{ ...SKB, textAlign: 'center', fontSize: 12, color: 'rgb(var(--ink-rgb) / 0.4)', textTransform: 'uppercase', letterSpacing: '0.14em', padding: '80px 0' }}>NOTHING SCREENING YET</p>
         ) : (
           <>
             {/* HOME FEED = the house design: FIXED 3-across, severed from user

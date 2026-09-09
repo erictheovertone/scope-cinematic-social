@@ -51,7 +51,7 @@ import { useFluidColumns } from '@/lib/useFluidColumns';
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
 const SKL: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 300 };
-const HAIR = 'rgba(229,225,219,0.14)';
+const HAIR = 'rgb(var(--ink-rgb) / 0.14)';
 
 // DM button: rendered DISABLED behind this flag (Eric decides on sight —
 // flip to false to hide entirely). DMs are their own upcoming build.
@@ -396,7 +396,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
               </div>
               {/* PRO — independent absolute chip just beyond the name; never in the edge math. */}
               {profile && isProMember(profile as { is_paid_member?: boolean; paid_member_until?: string | null }) && (
-                <span style={{ position: 'absolute', left: '100%', top: 2, marginLeft: 6, whiteSpace: 'nowrap', fontFamily: 'var(--font-black)', fontWeight: 900, fontSize: 6.7, color: 'rgba(229,225,219,0.64)', letterSpacing: 'var(--track-wide)' }}>PRO</span>
+                <span style={{ position: 'absolute', left: '100%', top: 2, marginLeft: 6, whiteSpace: 'nowrap', fontFamily: 'var(--font-black)', fontWeight: 900, fontSize: 6.7, color: 'rgb(var(--ink-rgb) / 0.64)', letterSpacing: 'var(--track-wide)' }}>PRO</span>
               )}
               {/* handle — RIGHT edge == the name's right edge (justify flex-end in the shrink column). */}
               <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'flex-end', gap: 4, opacity: 0.64, marginTop: 6 }}>
@@ -406,28 +406,28 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
             </div>
 
             {/* Bio — single line (frame y71) */}
-            {bio && <p style={{ fontFamily: 'var(--font-body)', fontWeight: 400, fontSize: 13, color: 'rgba(229,225,219,0.5)', lineHeight: 1.07, margin: '20px 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 600 }}>{bio}</p>}
+            {bio && <p style={{ fontFamily: 'var(--font-body)', fontWeight: 400, fontSize: 13, color: 'rgb(var(--ink-rgb) / 0.5)', lineHeight: 1.07, margin: '20px 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 600 }}>{bio}</p>}
 
             {/* META ROW — location · website · JOINED (frame y95). 10px, values 75
                 Bold, JOINED prefix 55 Roman, all ~58%. Absent fields omitted. */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 22, margin: '14px 0 0' }}>
               {location && (
-                <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 10, color: 'rgba(229,225,219,0.58)', textTransform: 'uppercase', letterSpacing: 'var(--track-body)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(229,225,219,0.58)" strokeWidth="1.6"><path d="M12 21s-6.5-5.4-6.5-10.5A6.5 6.5 0 0 1 12 4a6.5 6.5 0 0 1 6.5 6.5C18.5 15.6 12 21 12 21z" /><circle cx="12" cy="10.5" r="2.2" /></svg>
+                <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 10, color: 'rgb(var(--ink-rgb) / 0.58)', textTransform: 'uppercase', letterSpacing: 'var(--track-body)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgb(var(--ink-rgb) / 0.58)" strokeWidth="1.6"><path d="M12 21s-6.5-5.4-6.5-10.5A6.5 6.5 0 0 1 12 4a6.5 6.5 0 0 1 6.5 6.5C18.5 15.6 12 21 12 21z" /><circle cx="12" cy="10.5" r="2.2" /></svg>
                   {location}
                 </span>
               )}
               {primaryLink && (
-                <a href={primaryLink.url} target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 10, color: 'rgba(229,225,219,0.58)', textTransform: 'uppercase', letterSpacing: 'var(--track-body)', display: 'inline-flex', alignItems: 'center', gap: 6, textDecoration: 'none' }}>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(229,225,219,0.58)" strokeWidth="1.6"><path d="M10 14l7-7M13 5h6v6M11 6H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5" /></svg>
+                <a href={primaryLink.url} target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 10, color: 'rgb(var(--ink-rgb) / 0.58)', textTransform: 'uppercase', letterSpacing: 'var(--track-body)', display: 'inline-flex', alignItems: 'center', gap: 6, textDecoration: 'none' }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgb(var(--ink-rgb) / 0.58)" strokeWidth="1.6"><path d="M10 14l7-7M13 5h6v6M11 6H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5" /></svg>
                   {primaryLink.title || primaryLink.url.replace(/^https?:\/\/(www\.)?/, '').slice(0, 28)}
                 </a>
               )}
               {joined && (
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, textTransform: 'uppercase' }}>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(229,225,219,0.58)" strokeWidth="1.6"><rect x="3.5" y="5" width="17" height="16" rx="1.5" /><path d="M3.5 9h17M8 3v4M16 3v4" /></svg>
-                  <span style={{ fontFamily: 'var(--font-body)', fontWeight: 400, fontSize: 10, color: 'rgba(229,225,219,0.58)', letterSpacing: 'var(--track-body)' }}>JOINED </span>
-                  <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 10, color: 'rgba(229,225,219,0.58)', letterSpacing: 'var(--track-body)' }}>{joined}</span>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgb(var(--ink-rgb) / 0.58)" strokeWidth="1.6"><rect x="3.5" y="5" width="17" height="16" rx="1.5" /><path d="M3.5 9h17M8 3v4M16 3v4" /></svg>
+                  <span style={{ fontFamily: 'var(--font-body)', fontWeight: 400, fontSize: 10, color: 'rgb(var(--ink-rgb) / 0.58)', letterSpacing: 'var(--track-body)' }}>JOINED </span>
+                  <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 10, color: 'rgb(var(--ink-rgb) / 0.58)', letterSpacing: 'var(--track-body)' }}>{joined}</span>
                 </span>
               )}
             </div>
@@ -442,8 +442,8 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
                 <div key={label} style={{ display: 'flex', alignItems: 'stretch' }}>
                   {i > 0 && <div style={{ width: 1, height: 23, background: 'var(--hairline)', margin: '2px 26px 0' }} />}
                   <div>
-                    <p style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 14, color: 'rgba(229,225,219,0.85)', margin: 0, fontVariantNumeric: 'tabular-nums' }}>{value}</p>
-                    <p style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 12, color: 'rgba(229,225,219,0.58)', letterSpacing: 'var(--track-body)', margin: '4px 0 0' }}>{label.charAt(0) + label.slice(1).toLowerCase()}</p>
+                    <p style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 14, color: 'rgb(var(--ink-rgb) / 0.85)', margin: 0, fontVariantNumeric: 'tabular-nums' }}>{value}</p>
+                    <p style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 12, color: 'rgb(var(--ink-rgb) / 0.58)', letterSpacing: 'var(--track-body)', margin: '4px 0 0' }}>{label.charAt(0) + label.slice(1).toLowerCase()}</p>
                   </div>
                 </div>
               ))}
@@ -454,7 +454,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
           {/* TOP-RIGHT — MESSAGE (other-user only) + BIO (frame y11–34). */}
           <div style={{ position: 'absolute', right: 0, top: 8, display: 'flex', alignItems: 'center', gap: 20 }}>
             {!isOwn && SHOW_MESSAGE_BUTTON && (
-              <button onClick={() => router.push(`/dm/${encodeURIComponent(handle)}`)} aria-label={`Message @${handle}`} style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 12, color: 'rgba(229,225,219,0.74)', textTransform: 'uppercase', letterSpacing: 'var(--track-body)', width: 123, height: 33, borderRadius: 4, border: '0.5px solid rgba(229,225,219,0.3)', background: 'transparent', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+              <button onClick={() => router.push(`/dm/${encodeURIComponent(handle)}`)} aria-label={`Message @${handle}`} style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 12, color: 'rgb(var(--ink-rgb) / 0.74)', textTransform: 'uppercase', letterSpacing: 'var(--track-body)', width: 123, height: 33, borderRadius: 4, border: '0.5px solid rgb(var(--ink-rgb) / 0.3)', background: 'transparent', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
                 MESSAGE
               </button>
             )}
@@ -465,7 +465,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
 
           {/* ═══ BADGES (Brief 1a, integrated as-is) — right zone, frame y135–190. */}
           <div style={{ position: 'absolute', right: 0, top: 121, textAlign: 'right' }}>
-            <button onClick={() => setBadgesOpen(true)} style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 15, color: 'rgba(229,225,219,0.76)', letterSpacing: 'var(--track-body)', margin: '0 0 10px', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, display: 'block', marginLeft: 'auto' }}>Badges</button>
+            <button onClick={() => setBadgesOpen(true)} style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 15, color: 'rgb(var(--ink-rgb) / 0.76)', letterSpacing: 'var(--track-body)', margin: '0 0 10px', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, display: 'block', marginLeft: 'auto' }}>Badges</button>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8 }}>
               {badges.slice(0, 4).map((b, i) => (
                 <img
@@ -478,7 +478,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
                 />
               ))}
               {badges.length > 4 && (
-                <button onClick={() => setBadgesOpen(true)} style={{ fontFamily: 'var(--font-black)', fontWeight: 900, fontSize: 15, color: 'rgba(229,225,219,0.76)', letterSpacing: 'var(--track-display)', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, marginLeft: 2 }}>+{badges.length - 4}</button>
+                <button onClick={() => setBadgesOpen(true)} style={{ fontFamily: 'var(--font-black)', fontWeight: 900, fontSize: 15, color: 'rgb(var(--ink-rgb) / 0.76)', letterSpacing: 'var(--track-display)', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, marginLeft: 2 }}>+{badges.length - 4}</button>
               )}
             </div>
           </div>
@@ -503,14 +503,14 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
             // open, postView != null).
             return (
               <button key={t} onClick={() => setTab(t)} style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 8, background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>
-                <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 13, letterSpacing: 'var(--track-display)', color: active ? 'var(--ink-100)' : 'rgba(229,225,219,0.5)' }}>{t.charAt(0).toUpperCase() + t.slice(1)}</span>
+                <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 13, letterSpacing: 'var(--track-display)', color: active ? 'var(--ink-100)' : 'rgb(var(--ink-rgb) / 0.5)' }}>{t.charAt(0).toUpperCase() + t.slice(1)}</span>
                 <span style={{ height: 8, display: 'block' }} />
                 {active && postView == null && <FilmstripIndicator style={{ position: 'absolute', left: 0, bottom: 0 }} />}
               </button>
             );
           })}
           <button onClick={() => setTheatreOpen(true)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 8, background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>
-            <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 13, letterSpacing: 'var(--track-display)', color: 'rgba(229,225,219,0.5)' }}>Theatre</span>
+            <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 13, letterSpacing: 'var(--track-display)', color: 'rgb(var(--ink-rgb) / 0.5)' }}>Theatre</span>
             <span style={{ height: 8, display: 'block' }} />
           </button>
         </div>
@@ -521,7 +521,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
           <div style={{ margin: '-6px 0 2px' }}>
             <button onClick={closePostView} aria-label="Back to grid" style={{ display: 'inline-flex', gap: 3, background: 'transparent', border: 'none', cursor: 'pointer', padding: 2 }}>
               {[0, 1, 2].map((i) => (
-                <span key={i} style={{ width: 18, height: 12, border: '0.5px solid #E5E1DB', display: 'inline-block' }} />
+                <span key={i} style={{ width: 18, height: 12, border: '0.5px solid var(--ink-100)', display: 'inline-block' }} />
               ))}
             </button>
           </div>
@@ -561,7 +561,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.96, transition: { duration: 0.12 } }}
                   onClick={() => openPostView(i)}
-                  style={{ position: 'relative', aspectRatio: `${ratioForAspect(gridConf.aspect)}`, overflow: 'hidden', background: '#101010', border: 'none', cursor: 'pointer', padding: 0, outline: returnHighlight === pid ? '1px solid rgba(229,225,219,0.65)' : 'none', transition: 'outline-color 400ms ease' }}
+                  style={{ position: 'relative', aspectRatio: `${ratioForAspect(gridConf.aspect)}`, overflow: 'hidden', background: '#101010', border: 'none', cursor: 'pointer', padding: 0, outline: returnHighlight === pid ? '1px solid rgb(var(--ink-rgb) / 0.65)' : 'none', transition: 'outline-color 400ms ease' }}
                 >
                   {p.media_type === 'video' ? (
                     /* living tile — the established treatment (was a static poster:
@@ -591,7 +591,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
                   {/* Pinned indicator — small white push-pin, top-right (mirrors mobile PostCell). */}
                   {!!p.is_pinned && (
                     <div style={{ position: 'absolute', top: 8, right: 8, zIndex: 3, pointerEvents: 'none', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.75))' }}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="#E5E1DB" aria-hidden="true">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="var(--ink-100)" aria-hidden="true">
                         <path d="M16 9V4h1c.55 0 1-.45 1-1s-.45-1-1-1H7c-.55 0-1 .45-1 1s.45 1 1 1h1v5c0 1.66-1.34 3-3 3v2h5.97v7l1 1 1-1v-7H19v-2c-1.66 0-3-1.34-3-3z" />
                       </svg>
                     </div>
@@ -606,7 +606,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
                     const minted = !!p.coin_address;
                     const liked = likedSet.has(pid);
                     const pinned = panel?.postId === pid; // Brief D8 §2 — keep the gradient up while its panel is open
-                    const ico: React.CSSProperties = { color: 'rgba(229,225,219,0.7)', flexShrink: 0 };
+                    const ico: React.CSSProperties = { color: 'rgb(var(--ink-rgb) / 0.7)', flexShrink: 0 };
                     const val: React.CSSProperties = { fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 11, color: 'var(--ink-100)', fontVariantNumeric: 'tabular-nums', lineHeight: 1 };
                     // Brief D8 §2a/b — ≥44px hit area (padding), pointer-events re-enabled on the
                     // control only (the gradient stays none so empty areas still open the lightbox),
@@ -622,7 +622,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
                             onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); toggleGridLike(pid); } }}
                             style={hit}
                           >
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill={liked ? '#E5E1DB' : 'none'} stroke={liked ? '#E5E1DB' : 'currentColor'} strokeWidth="2" style={ico}><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" /></svg>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill={liked ? 'var(--ink-100)' : 'none'} stroke={liked ? 'var(--ink-100)' : 'currentColor'} strokeWidth="2" style={ico}><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" /></svg>
                             <span style={val}>{s.likes}</span>
                           </span>
                           <span
@@ -646,7 +646,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
                               likes/comments/fc). "MC" label + compact USD, appended as the 4th stat. */}
                           {minted && s.mc != null && (
                             <span style={{ display: 'inline-flex', alignItems: 'baseline', gap: 4 }}>
-                              <span style={{ ...val, fontSize: 8.5, color: 'rgba(229,225,219,0.55)' }}>MC</span>
+                              <span style={{ ...val, fontSize: 8.5, color: 'rgb(var(--ink-rgb) / 0.55)' }}>MC</span>
                               <span style={val}>{mcCompact(s.mc)}</span>
                             </span>
                           )}
@@ -662,12 +662,12 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
                 <button onClick={() => router.push('/create')} style={{ gridColumn: `span ${gridCols}`, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 24, background: 'transparent', border: 'none', cursor: 'pointer', padding: '90px 0 100px' }}>
                   {/* large, delicate crosshair plus — 1px stroke, viewfinder-thin */}
                   <svg width="88" height="88" viewBox="0 0 88 88" fill="none" style={{ display: 'block' }}>
-                    <path d="M44 6V82M6 44H82" stroke="rgba(229,225,219,0.8)" strokeWidth="1" />
+                    <path d="M44 6V82M6 44H82" stroke="rgb(var(--ink-rgb) / 0.8)" strokeWidth="1" />
                   </svg>
-                  <span style={{ ...SKB, fontSize: 12, color: 'rgba(229,225,219,0.7)', textTransform: 'uppercase', letterSpacing: '0.16em' }}>CREATE YOUR FIRST POST</span>
+                  <span style={{ ...SKB, fontSize: 12, color: 'rgb(var(--ink-rgb) / 0.7)', textTransform: 'uppercase', letterSpacing: '0.16em' }}>CREATE YOUR FIRST POST</span>
                 </button>
               ) : (
-                <p style={{ ...SKR, fontSize: 12, color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase', gridColumn: `span ${gridCols}`, padding: '40px 0', textAlign: 'center' }}>NO POSTS YET</p>
+                <p style={{ ...SKR, fontSize: 12, color: 'rgb(var(--ink-rgb) / 0.4)', textTransform: 'uppercase', gridColumn: `span ${gridCols}`, padding: '40px 0', textAlign: 'center' }}>NO POSTS YET</p>
               )
             )}
           </div>
@@ -707,17 +707,17 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
             {/* count control (own profile only) — the decks-tab header */}
             {isOwn && (
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8, margin: '0 0 16px' }}>
-                <span style={{ ...SKB, fontSize: 9, color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase', letterSpacing: '0.14em' }}>ACROSS</span>
+                <span style={{ ...SKB, fontSize: 9, color: 'rgb(var(--ink-rgb) / 0.4)', textTransform: 'uppercase', letterSpacing: '0.14em' }}>ACROSS</span>
                 {[3, 4, 5].map((n) => (
-                  <button key={n} onClick={() => changeDecksCount(n)} style={{ ...SKB, fontSize: 11, width: 24, height: 24, color: decksCount === n ? '#000' : 'rgba(229,225,219,0.6)', background: decksCount === n ? '#E5E1DB' : 'transparent', border: `1px solid ${decksCount === n ? '#E5E1DB' : HAIR}`, cursor: 'pointer', fontVariantNumeric: 'tabular-nums' }}>{n}</button>
+                  <button key={n} onClick={() => changeDecksCount(n)} style={{ ...SKB, fontSize: 11, width: 24, height: 24, color: decksCount === n ? '#000' : 'rgb(var(--ink-rgb) / 0.6)', background: decksCount === n ? 'var(--ink-100)' : 'transparent', border: `1px solid ${decksCount === n ? 'var(--ink-100)' : HAIR}`, cursor: 'pointer', fontVariantNumeric: 'tabular-nums' }}>{n}</button>
                 ))}
               </div>
             )}
             <div ref={decksGridRef} style={{ display: 'grid', gridTemplateColumns: `repeat(${decksGridCols}, 1fr)`, gap: 16 }}>
               {isOwn && (
                 <button onClick={() => setDeckCreateOpen(true)} style={{ aspectRatio: `${ratioForAspect(gridConf.aspect)}`, border: `1px dashed ${HAIR}`, background: 'transparent', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
-                  <svg width="34" height="34" viewBox="0 0 34 34" fill="none"><path d="M17 6v22M6 17h22" stroke="rgba(229,225,219,0.7)" strokeWidth="1" /></svg>
-                  <span style={{ ...SKB, fontSize: 11, color: 'rgba(229,225,219,0.7)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>CREATE DECK</span>
+                  <svg width="34" height="34" viewBox="0 0 34 34" fill="none"><path d="M17 6v22M6 17h22" stroke="rgb(var(--ink-rgb) / 0.7)" strokeWidth="1" /></svg>
+                  <span style={{ ...SKB, fontSize: 11, color: 'rgb(var(--ink-rgb) / 0.7)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>CREATE DECK</span>
                 </button>
               )}
               {decks.map((d) => {
@@ -728,12 +728,12 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
                     <div style={{ aspectRatio: `${ratioForAspect(gridConf.aspect)}`, overflow: 'hidden', background: '#101010', border: `1px solid ${HAIR}` }}>
                       {coverSrc && <img src={coverSrc} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
                     </div>
-                    <p style={{ ...SKB, fontSize: 12, color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '9px 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.title}</p>
-                    <p style={{ ...SKR, fontSize: 10, color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '3px 0 0' }}>{d.item_count} {d.item_count === 1 ? 'POST' : 'POSTS'}</p>
+                    <p style={{ ...SKB, fontSize: 12, color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '9px 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.title}</p>
+                    <p style={{ ...SKR, fontSize: 10, color: 'rgb(var(--ink-rgb) / 0.4)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '3px 0 0' }}>{d.item_count} {d.item_count === 1 ? 'POST' : 'POSTS'}</p>
                   </button>
                 );
               })}
-              {decks.length === 0 && !isOwn && <p style={{ ...SKR, fontSize: 12, color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase', gridColumn: `span ${decksGridCols}`, padding: '40px 0', textAlign: 'center' }}>NO DECKS YET</p>}
+              {decks.length === 0 && !isOwn && <p style={{ ...SKR, fontSize: 12, color: 'rgb(var(--ink-rgb) / 0.4)', textTransform: 'uppercase', gridColumn: `span ${decksGridCols}`, padding: '40px 0', textAlign: 'center' }}>NO DECKS YET</p>}
             </div>
           </div>
         )}
@@ -749,22 +749,22 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
         <div data-swipe-exclude style={{ position: 'fixed', inset: 0, zIndex: 680, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div onClick={() => setDeckCreateOpen(false)} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.88)' }} />
           <div style={{ position: 'relative', width: 460, background: '#000', border: '1px solid #1a1a1a', padding: '30px 32px' }}>
-            <h2 style={{ ...SKB, fontSize: 15, color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 18px' }}>NEW DECK</h2>
+            <h2 style={{ ...SKB, fontSize: 15, color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 18px' }}>NEW DECK</h2>
             <input
               autoFocus value={newDeckTitle} onChange={(e) => setNewDeckTitle(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') void submitDeck(); }}
               placeholder="DECK TITLE"
-              style={{ ...SKR, width: '100%', fontSize: 14, color: '#E5E1DB', background: 'transparent', border: 'none', borderBottom: `1px solid ${HAIR}`, outline: 'none', padding: '8px 0', letterSpacing: '0.04em', boxSizing: 'border-box' }}
+              style={{ ...SKR, width: '100%', fontSize: 14, color: 'var(--ink-100)', background: 'transparent', border: 'none', borderBottom: `1px solid ${HAIR}`, outline: 'none', padding: '8px 0', letterSpacing: '0.04em', boxSizing: 'border-box' }}
             />
             <input
               value={newDeckDesc} onChange={(e) => setNewDeckDesc(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') void submitDeck(); }}
               placeholder="DESCRIPTION (OPTIONAL)"
-              style={{ ...SKR, width: '100%', fontSize: 13, color: 'rgba(229,225,219,0.75)', background: 'transparent', border: 'none', borderBottom: `1px solid ${HAIR}`, outline: 'none', padding: '8px 0', margin: '10px 0 0', letterSpacing: '0.04em', boxSizing: 'border-box' }}
+              style={{ ...SKR, width: '100%', fontSize: 13, color: 'rgb(var(--ink-rgb) / 0.75)', background: 'transparent', border: 'none', borderBottom: `1px solid ${HAIR}`, outline: 'none', padding: '8px 0', margin: '10px 0 0', letterSpacing: '0.04em', boxSizing: 'border-box' }}
             />
             <div style={{ display: 'flex', gap: 10, marginTop: 24 }}>
-              <button onClick={() => setDeckCreateOpen(false)} style={{ ...SKB, flex: 1, fontSize: 11, color: 'rgba(229,225,219,0.6)', textTransform: 'uppercase', letterSpacing: '0.08em', background: 'transparent', border: `1px solid ${HAIR}`, cursor: 'pointer', padding: '12px 0' }}>CANCEL</button>
-              <button onClick={() => void submitDeck()} disabled={!newDeckTitle.trim() || creatingDeck} style={{ ...SKB, flex: 1, fontSize: 11, color: '#000', textTransform: 'uppercase', letterSpacing: '0.08em', background: newDeckTitle.trim() ? '#E5E1DB' : 'rgba(229,225,219,0.3)', border: 'none', cursor: newDeckTitle.trim() ? 'pointer' : 'default', padding: '12px 0' }}>{creatingDeck ? 'CREATING…' : 'CREATE'}</button>
+              <button onClick={() => setDeckCreateOpen(false)} style={{ ...SKB, flex: 1, fontSize: 11, color: 'rgb(var(--ink-rgb) / 0.6)', textTransform: 'uppercase', letterSpacing: '0.08em', background: 'transparent', border: `1px solid ${HAIR}`, cursor: 'pointer', padding: '12px 0' }}>CANCEL</button>
+              <button onClick={() => void submitDeck()} disabled={!newDeckTitle.trim() || creatingDeck} style={{ ...SKB, flex: 1, fontSize: 11, color: '#000', textTransform: 'uppercase', letterSpacing: '0.08em', background: newDeckTitle.trim() ? 'var(--ink-100)' : 'rgb(var(--ink-rgb) / 0.3)', border: 'none', cursor: newDeckTitle.trim() ? 'pointer' : 'default', padding: '12px 0' }}>{creatingDeck ? 'CREATING…' : 'CREATE'}</button>
             </div>
           </div>
         </div>,

@@ -25,7 +25,7 @@ import DesktopShell from '@/components/desktop/DesktopShell';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
-const RED = '#E5E1DB';
+const RED = 'var(--ink-100)';
 
 const usdMc = (n: number | null | undefined): string => {
   if (n == null || !isFinite(n) || n <= 0) return '—';
@@ -139,14 +139,14 @@ export default function DesktopScreeningRoom() {
               75 Bold, --track-display, --ink-100. Desktop hero scale (58px). */}
           <h1 style={{ ...SKB, fontSize: 'calc(58px * var(--type-scale))', letterSpacing: 'var(--track-display)', color: 'var(--ink-100)', margin: 0, lineHeight: 1 }}>Screening Room</h1>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            <span style={{ ...SKB, fontSize: 12, color: '#E5E1DB', letterSpacing: '0.14em', textTransform: 'uppercase' }}>Top 50 Market Cap Content</span>
+            <span style={{ ...SKB, fontSize: 12, color: 'var(--ink-100)', letterSpacing: '0.14em', textTransform: 'uppercase' }}>Top 50 Market Cap Content</span>
             {/* The 172×31 top-right control (Figma x1192): v1 ships RANK-ORDER ONLY — the
                 mock's element reads as a search/sort control; deferred to a later pass. */}
           </div>
         </div>
 
-        {rows === null && <p style={{ ...SKR, fontSize: 12, color: 'rgba(229,225,219,0.4)', textAlign: 'center', padding: '120px 0', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Assembling the room…</p>}
-        {rows !== null && rows.length === 0 && <p style={{ ...SKR, fontSize: 12, color: 'rgba(229,225,219,0.4)', textAlign: 'center', padding: '120px 0', letterSpacing: '0.1em', textTransform: 'uppercase' }}>The room is being assembled — check back soon.</p>}
+        {rows === null && <p style={{ ...SKR, fontSize: 12, color: 'rgb(var(--ink-rgb) / 0.4)', textAlign: 'center', padding: '120px 0', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Assembling the room…</p>}
+        {rows !== null && rows.length === 0 && <p style={{ ...SKR, fontSize: 12, color: 'rgb(var(--ink-rgb) / 0.4)', textAlign: 'center', padding: '120px 0', letterSpacing: '0.1em', textTransform: 'uppercase' }}>The room is being assembled — check back soon.</p>}
 
         {current && post && (
           <>
@@ -161,8 +161,8 @@ export default function DesktopScreeningRoom() {
             <div style={{ position: 'relative', display: 'flex', alignItems: 'flex-start', gap: 24, padding: '22px 0 0', maxWidth: 'var(--shell-fluid)', margin: '0 auto' }}>
               {/* rank numeral + underline */}
               <div style={{ flexShrink: 0 }}>
-                <span style={{ ...SKB, fontSize: 'calc(75px * var(--type-scale))', color: '#E5E1DB', lineHeight: 0.9, letterSpacing: '-0.04em', display: 'block' }}>{two(current.rank)}</span>
-                <div style={{ width: 48, height: 2, background: '#E5E1DB', marginTop: 10 }} />
+                <span style={{ ...SKB, fontSize: 'calc(75px * var(--type-scale))', color: 'var(--ink-100)', lineHeight: 0.9, letterSpacing: '-0.04em', display: 'block' }}>{two(current.rank)}</span>
+                <div style={{ width: 48, height: 2, background: 'var(--ink-100)', marginTop: 10 }} />
               </div>
 
               {/* identity + data + top comment */}
@@ -171,7 +171,7 @@ export default function DesktopScreeningRoom() {
                   <div style={{ width: 36, height: 36, borderRadius: '50%', overflow: 'hidden', background: '#222', flexShrink: 0 }}>
                     {post.profile_image_url && <img src={feedImage(post.profile_image_url, 96)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
                   </div>
-                  <span style={{ ...SKB, fontSize: 16, color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.02em' }}>@{post.username ?? 'unknown'}</span>
+                  <span style={{ ...SKB, fontSize: 16, color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.02em' }}>@{post.username ?? 'unknown'}</span>
                 </button>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginTop: 14 }}>
                   {(post.ticker || current.symbol) && <span style={{ ...SKB, fontSize: 14, color: RED, letterSpacing: '0.08em' }}>[ {post.ticker || current.symbol} ]</span>}
@@ -183,20 +183,20 @@ export default function DesktopScreeningRoom() {
               </div>
 
               {/* actions right of the 92px vertical hairline */}
-              <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 20, alignSelf: 'center', borderLeft: '1px solid rgba(229,225,219,0.18)', paddingLeft: 24, minHeight: 92 }}>
+              <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 20, alignSelf: 'center', borderLeft: '1px solid rgb(var(--ink-rgb) / 0.18)', paddingLeft: 24, minHeight: 92 }}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 6 }} aria-label="likes">
-                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M12 20.5l-7.5-7.4a5 5 0 1 1 7.5-6.6a5 5 0 1 1 7.5 6.6z" stroke="rgba(229,225,219,0.75)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                  <span style={{ ...SKR, fontSize: 12, color: 'rgba(229,225,219,0.7)', fontVariantNumeric: 'tabular-nums' }}>{meta.likes}</span>
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M12 20.5l-7.5-7.4a5 5 0 1 1 7.5-6.6a5 5 0 1 1 7.5 6.6z" stroke="rgb(var(--ink-rgb) / 0.75)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                  <span style={{ ...SKR, fontSize: 12, color: 'rgb(var(--ink-rgb) / 0.7)', fontVariantNumeric: 'tabular-nums' }}>{meta.likes}</span>
                 </span>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 6 }} aria-label="comments">
-                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="rgba(229,225,219,0.75)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                  <span style={{ ...SKR, fontSize: 12, color: 'rgba(229,225,219,0.7)', fontVariantNumeric: 'tabular-nums' }}>{meta.comments}</span>
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="rgb(var(--ink-rgb) / 0.75)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                  <span style={{ ...SKR, fontSize: 12, color: 'rgb(var(--ink-rgb) / 0.7)', fontVariantNumeric: 'tabular-nums' }}>{meta.comments}</span>
                 </span>
                 {/* Brief M8 — icon only, inline with like/comment (no count). */}
                 {current.coin_address && <FirstCutChip iconOnly size={18} coinAddress={current.coin_address} postId={post.id} />}
                 {/* Standard #525252-bordered COLLECT (the frame's x1266 gradient variant is a
                     mock exploration — shipped the standard one). */}
-                <button onClick={() => setCollectOpen(true)} className="tappable" style={{ ...SKB, fontSize: 12, color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.08em', background: 'transparent', border: '1px solid #525252', cursor: 'pointer', padding: '9px 18px' }}>Collect</button>
+                <button onClick={() => setCollectOpen(true)} className="tappable" style={{ ...SKB, fontSize: 12, color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.08em', background: 'transparent', border: '1px solid #525252', cursor: 'pointer', padding: '9px 18px' }}>Collect</button>
                 <button onClick={() => setTheatreOpen(true)} aria-label="Theatre mode" className="tappable" style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4, lineHeight: 0 }}>
                   <img src="/theatre-mode-eye-solo.png" alt="" style={{ height: 22, width: 'auto', display: 'block', opacity: 0.92 }} />
                 </button>
@@ -207,7 +207,7 @@ export default function DesktopScreeningRoom() {
             <div style={{ margin: '52px auto 0', maxWidth: 'var(--shell-fluid)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 14 }}>
                 <span style={{ ...SKB, fontSize: 13, color: '#808080', letterSpacing: '9.1px', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>The Lineup</span>
-                <div style={{ flex: 1, height: 1, background: 'rgba(229,225,219,0.12)' }} />
+                <div style={{ flex: 1, height: 1, background: 'rgb(var(--ink-rgb) / 0.12)' }} />
               </div>
               <div ref={railRef} style={{ display: 'flex', gap: 24, overflowX: 'auto', paddingBottom: 10, scrollBehavior: 'smooth' }}>
                 {(rows ?? []).map((r, i) => {
@@ -216,14 +216,14 @@ export default function DesktopScreeningRoom() {
                   const isActive = i === active;
                   return (
                     <button key={r.rank} onClick={() => selectRank(i)} className="tappable" style={{ flexShrink: 0, width: 301, background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, textAlign: 'left' }}>
-                      <div style={{ position: 'relative', width: 301, height: 162, overflow: 'hidden', background: '#0a0a0a', border: `0.6px solid rgba(229,225,219,${isActive ? 1 : 0.58})`, boxSizing: 'border-box', transition: 'border-color 160ms ease' }}>
+                      <div style={{ position: 'relative', width: 301, height: 162, overflow: 'hidden', background: '#0a0a0a', border: `0.6px solid rgb(var(--ink-rgb) / ${isActive ? 1 : 0.58})`, boxSizing: 'border-box', transition: 'border-color 160ms ease' }}>
                         {src ? <img src={feedImage(src, 600)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} /> : <div style={{ width: '100%', height: '100%', background: '#111' }} />}
-                        <span style={{ position: 'absolute', top: 6, left: 8, ...SKB, fontSize: 22, color: '#E5E1DB', lineHeight: 1, textShadow: '0 1px 6px rgba(0,0,0,0.8)' }}>{two(r.rank)}</span>
+                        <span style={{ position: 'absolute', top: 6, left: 8, ...SKB, fontSize: 22, color: 'var(--ink-100)', lineHeight: 1, textShadow: '0 1px 6px rgba(0,0,0,0.8)' }}>{two(r.rank)}</span>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginTop: 6, whiteSpace: 'nowrap', overflow: 'hidden' }}>
-                        <span style={{ ...SKB, fontSize: 8, color: 'rgba(229,225,219,0.8)', textTransform: 'uppercase', textOverflow: 'ellipsis', overflow: 'hidden' }}>@{rp?.username ?? '—'}</span>
+                        <span style={{ ...SKB, fontSize: 8, color: 'rgb(var(--ink-rgb) / 0.8)', textTransform: 'uppercase', textOverflow: 'ellipsis', overflow: 'hidden' }}>@{rp?.username ?? '—'}</span>
                         {(rp?.ticker || r.symbol) && <span style={{ ...SKB, fontSize: 8, color: RED, letterSpacing: '0.06em' }}>[ {rp?.ticker || r.symbol} ]</span>}
-                        <span style={{ ...SKB, fontSize: 8, color: 'rgba(229,225,219,0.48)', marginLeft: 'auto', fontVariantNumeric: 'tabular-nums' }}>{usdMc(r.market_cap)}</span>
+                        <span style={{ ...SKB, fontSize: 8, color: 'rgb(var(--ink-rgb) / 0.48)', marginLeft: 'auto', fontVariantNumeric: 'tabular-nums' }}>{usdMc(r.market_cap)}</span>
                       </div>
                     </button>
                   );

@@ -198,7 +198,7 @@ export default function ProfileDataSheet({
   if (hasBio) sectionNodes.push(
     <div key="bio" style={{ ...sectionPad, ...sec(80) }}>
       <div style={titleStyle}>Bio</div>
-      <div style={{ flex: 1, fontFamily: 'var(--font-body)', fontWeight: 400, fontSize: 10, color: 'rgba(229,225,219,0.8)', lineHeight: 1.12, letterSpacing: 'var(--track-body)', whiteSpace: 'pre-wrap' }}>
+      <div style={{ flex: 1, fontFamily: 'var(--font-body)', fontWeight: 400, fontSize: 10, color: 'rgb(var(--ink-rgb) / 0.8)', lineHeight: 1.12, letterSpacing: 'var(--track-body)', whiteSpace: 'pre-wrap' }}>
         {profile.bio}
       </div>
     </div>
@@ -228,7 +228,7 @@ export default function ProfileDataSheet({
             {/* Brief W10 §4 — no CSS container frame: the new badge PNG carries its own
                 rounded frame in the art. Render the image + label, nothing else. */}
             <img src={(b.framedSrc ?? b.bannerSrc ?? b.src) as string} alt={BADGE_DISPLAY_NAME[b.key]} style={{ width: '100%', height: 'auto', objectFit: 'contain', display: 'block' }} />
-            <span style={{ fontFamily: 'var(--font-body)', fontWeight: 400, fontSize: 7.5, letterSpacing: '0.12em', color: 'rgba(229,225,219,0.46)', textTransform: 'uppercase', textAlign: 'center', lineHeight: 1.1 }}>{BADGE_DISPLAY_NAME[b.key]}</span>
+            <span style={{ fontFamily: 'var(--font-body)', fontWeight: 400, fontSize: 7.5, letterSpacing: '0.12em', color: 'rgb(var(--ink-rgb) / 0.46)', textTransform: 'uppercase', textAlign: 'center', lineHeight: 1.1 }}>{BADGE_DISPLAY_NAME[b.key]}</span>
           </button>
         ))}
       </div>
@@ -251,15 +251,15 @@ export default function ProfileDataSheet({
             onClick={(e) => { e.stopPropagation(); if (profile?.username) router.push(`/composer/${profile.username}`); }}
             style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 12, width: '100%', background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left', marginBottom: i < tracks.length - 1 ? 10 : 0 }}
           >
-            <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 10, color: 'rgba(229,225,219,0.79)', letterSpacing: 'var(--track-body)', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.title}</span>
+            <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 10, color: 'rgb(var(--ink-rgb) / 0.79)', letterSpacing: 'var(--track-body)', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.title}</span>
             {t.duration_seconds != null && (
-              <span style={{ fontFamily: 'var(--font-body)', fontWeight: 400, fontSize: 9, color: 'rgba(229,225,219,0.4)', letterSpacing: 'var(--track-body)', flexShrink: 0 }}>{fmtDuration(t.duration_seconds)}</span>
+              <span style={{ fontFamily: 'var(--font-body)', fontWeight: 400, fontSize: 9, color: 'rgb(var(--ink-rgb) / 0.4)', letterSpacing: 'var(--track-body)', flexShrink: 0 }}>{fmtDuration(t.duration_seconds)}</span>
             )}
           </button>
         ))}
         <button
           onClick={(e) => { e.stopPropagation(); if (profile?.username) router.push(`/composer/${profile.username}`); }}
-          style={{ display: 'block', marginTop: 14, background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 9, letterSpacing: 'var(--track-wide)', color: 'rgba(229,225,219,0.6)', textTransform: 'uppercase' }}
+          style={{ display: 'block', marginTop: 14, background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 9, letterSpacing: 'var(--track-wide)', color: 'rgb(var(--ink-rgb) / 0.6)', textTransform: 'uppercase' }}
         >
           View Discography →
         </button>
@@ -275,8 +275,8 @@ export default function ProfileDataSheet({
       <div style={{ flex: 1 }}>
         {kitRows.map((row, i) => (
           <div key={row.label} style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 12, marginBottom: i < kitRows.length - 1 ? 10 : 0 }}>
-            <span style={{ fontFamily: 'var(--font-body)', fontWeight: 400, fontSize: 10, color: 'rgba(229,225,219,0.53)', letterSpacing: 'var(--track-body)', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{row.label}</span>
-            <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 10, color: 'rgba(229,225,219,0.79)', letterSpacing: 'var(--track-body)', textTransform: 'uppercase', textAlign: 'right' }}>{row.value}</span>
+            <span style={{ fontFamily: 'var(--font-body)', fontWeight: 400, fontSize: 10, color: 'rgb(var(--ink-rgb) / 0.53)', letterSpacing: 'var(--track-body)', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{row.label}</span>
+            <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 10, color: 'rgb(var(--ink-rgb) / 0.79)', letterSpacing: 'var(--track-body)', textTransform: 'uppercase', textAlign: 'right' }}>{row.value}</span>
           </div>
         ))}
       </div>
@@ -294,7 +294,7 @@ export default function ProfileDataSheet({
           const domain = getDomain(link.url);
           return (
             <div key={link.id} onClick={(e) => { e.stopPropagation(); window.open(link.url, '_blank', 'noopener,noreferrer'); }} style={{ width: 185, cursor: 'pointer' }}>
-              <div style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 10, color: 'rgba(229,225,219,0.65)', letterSpacing: 'var(--track-body)', textAlign: 'right', marginBottom: 5 }}>
+              <div style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 10, color: 'rgb(var(--ink-rgb) / 0.65)', letterSpacing: 'var(--track-body)', textAlign: 'right', marginBottom: 5 }}>
                 {link.title || domain}
               </div>
               {thumb ? (
@@ -308,7 +308,7 @@ export default function ProfileDataSheet({
                 </div>
               ) : (
                 <LedgerCard variant="border" radius={6} style={{ width: 185, height: 78, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 9, color: 'rgba(229,225,219,0.35)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{domain}</span>
+                  <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 9, color: 'rgb(var(--ink-rgb) / 0.35)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{domain}</span>
                 </LedgerCard>
               )}
             </div>
@@ -325,7 +325,7 @@ export default function ProfileDataSheet({
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 11, textAlign: 'right' as const }}>
         {profile?.contact_email_public && profile?.contact_email && (
           <div>
-            <span style={{ fontFamily: 'var(--font-body)', fontWeight: 400, fontSize: 10, color: 'rgba(229,225,219,0.31)', letterSpacing: 'var(--track-body)', textTransform: 'uppercase' }}>EMAIL </span>
+            <span style={{ fontFamily: 'var(--font-body)', fontWeight: 400, fontSize: 10, color: 'rgb(var(--ink-rgb) / 0.31)', letterSpacing: 'var(--track-body)', textTransform: 'uppercase' }}>EMAIL </span>
             <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 10, color: 'var(--ink-100)', letterSpacing: 'var(--track-body)', textTransform: 'uppercase' }}>{profile.contact_email.toUpperCase()}</span>
           </div>
         )}
@@ -374,14 +374,14 @@ export default function ProfileDataSheet({
              bottom 6→13); the Bio section title + everything below reflows down by 14. */
           <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 18, padding: '7px 12px 13px' }}>
             {metaLoc && (
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 10, color: 'rgba(229,225,219,0.58)', textTransform: 'uppercase', letterSpacing: 'var(--track-body)' }}>
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(229,225,219,0.58)" strokeWidth="1.6"><path d="M12 21s-6.5-5.4-6.5-10.5A6.5 6.5 0 0 1 12 4a6.5 6.5 0 0 1 6.5 6.5C18.5 15.6 12 21 12 21z" /><circle cx="12" cy="10.5" r="2.2" /></svg>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 10, color: 'rgb(var(--ink-rgb) / 0.58)', textTransform: 'uppercase', letterSpacing: 'var(--track-body)' }}>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgb(var(--ink-rgb) / 0.58)" strokeWidth="1.6"><path d="M12 21s-6.5-5.4-6.5-10.5A6.5 6.5 0 0 1 12 4a6.5 6.5 0 0 1 6.5 6.5C18.5 15.6 12 21 12 21z" /><circle cx="12" cy="10.5" r="2.2" /></svg>
                 {metaLoc}
               </span>
             )}
             {metaPrimary && (
-              <a href={metaPrimary.url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 10, color: 'rgba(229,225,219,0.58)', textTransform: 'uppercase', letterSpacing: 'var(--track-body)', textDecoration: 'none' }}>
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(229,225,219,0.58)" strokeWidth="1.6"><path d="M10 14l7-7M13 5h6v6M11 6H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5" /></svg>
+              <a href={metaPrimary.url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 10, color: 'rgb(var(--ink-rgb) / 0.58)', textTransform: 'uppercase', letterSpacing: 'var(--track-body)', textDecoration: 'none' }}>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgb(var(--ink-rgb) / 0.58)" strokeWidth="1.6"><path d="M10 14l7-7M13 5h6v6M11 6H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5" /></svg>
                 {metaPrimary.title || getDomain(metaPrimary.url)}
               </a>
             )}
@@ -401,7 +401,7 @@ export default function ProfileDataSheet({
             <button
               onClick={(e) => { e.stopPropagation(); if (!followBusy) onUnfollow(); }}
               disabled={followBusy}
-              style={{ background: 'transparent', border: '1px solid var(--hairline-strong)', cursor: followBusy ? 'default' : 'pointer', padding: '7px 14px', fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 'var(--fs-10)', letterSpacing: '0.04em', color: 'rgba(229,225,219,0.7)', textTransform: 'uppercase' }}
+              style={{ background: 'transparent', border: '1px solid var(--hairline-strong)', cursor: followBusy ? 'default' : 'pointer', padding: '7px 14px', fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 'var(--fs-10)', letterSpacing: '0.04em', color: 'rgb(var(--ink-rgb) / 0.7)', textTransform: 'uppercase' }}
             >
               UNFOLLOW
             </button>
@@ -409,7 +409,7 @@ export default function ProfileDataSheet({
           <button
             onClick={(e) => { e.stopPropagation(); onClose(); }}
             aria-label="Close bio sheet"
-            style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '10px 4px', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 20, letterSpacing: 'var(--track-display)', color: 'rgba(229,225,219,0.67)', lineHeight: 1 }}
+            style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '10px 4px', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 20, letterSpacing: 'var(--track-display)', color: 'rgb(var(--ink-rgb) / 0.67)', lineHeight: 1 }}
           >
             Return
           </button>
@@ -427,8 +427,8 @@ export default function ProfileDataSheet({
         onClick={() => setActiveBlurb(null)}
         style={{ position: 'fixed', inset: 0, zIndex: 900, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 22 }}
       >
-        <div onClick={(e) => e.stopPropagation()} style={{ position: 'relative', width: '100%', maxWidth: 340, background: '#000', border: '1px solid #E5E1DB', padding: '18px 18px', animation: 'blurbIn 240ms cubic-bezier(0.16,0.84,0.3,1)' }}>
-          <button onClick={(e) => { e.stopPropagation(); setActiveBlurb(null); }} aria-label="Close" style={{ position: 'absolute', top: 8, right: 10, ...SKB, fontSize: 'var(--fs-15)', lineHeight: 1, color: 'rgba(229,225,219,0.55)', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>×</button>
+        <div onClick={(e) => e.stopPropagation()} style={{ position: 'relative', width: '100%', maxWidth: 340, background: '#000', border: '1px solid var(--ink-100)', padding: '18px 18px', animation: 'blurbIn 240ms cubic-bezier(0.16,0.84,0.3,1)' }}>
+          <button onClick={(e) => { e.stopPropagation(); setActiveBlurb(null); }} aria-label="Close" style={{ position: 'absolute', top: 8, right: 10, ...SKB, fontSize: 'var(--fs-15)', lineHeight: 1, color: 'rgb(var(--ink-rgb) / 0.55)', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>×</button>
           <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
             <img
               key={activeBlurb}
@@ -438,8 +438,8 @@ export default function ProfileDataSheet({
               style={{ width: 60, height: 60, objectFit: 'contain', flexShrink: 0, animation: 'focusPull 1.2s cubic-bezier(0.16,0.84,0.3,1) both' }}
             />
             <div style={{ flex: 1, minWidth: 0, paddingRight: 12 }}>
-              <p style={{ ...SKB, fontSize: 'var(--fs-10)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.16em', margin: '0 0 6px' }}>{BADGE_DISPLAY_NAME[activeBlurb]}</p>
-              <p style={{ ...SKR, fontSize: 'var(--fs-11)', color: 'rgba(229,225,219,0.70)', lineHeight: 1.45, margin: 0 }}>{BADGE_SHORT_BLURB[activeBlurb]}</p>
+              <p style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.16em', margin: '0 0 6px' }}>{BADGE_DISPLAY_NAME[activeBlurb]}</p>
+              <p style={{ ...SKR, fontSize: 'var(--fs-11)', color: 'rgb(var(--ink-rgb) / 0.70)', lineHeight: 1.45, margin: 0 }}>{BADGE_SHORT_BLURB[activeBlurb]}</p>
             </div>
           </div>
 
@@ -447,7 +447,7 @@ export default function ProfileDataSheet({
               (BadgeExplainerSheet) via the parent; falls back to the /badges route. */}
           <button
             onClick={(e) => { e.stopPropagation(); setActiveBlurb(null); if (onExploreBadges) { onClose(); onExploreBadges(); } else { onClose(); router.push('/badges'); } }}
-            style={{ ...SKB, fontSize: 'var(--fs-9)', letterSpacing: '0.12em', color: '#E5E1DB', textTransform: 'uppercase', background: 'transparent', border: '1px solid #E5E1DB', cursor: 'pointer', padding: '9px 14px', marginTop: 14, width: '100%' }}
+            style={{ ...SKB, fontSize: 'var(--fs-9)', letterSpacing: '0.12em', color: 'var(--ink-100)', textTransform: 'uppercase', background: 'transparent', border: '1px solid var(--ink-100)', cursor: 'pointer', padding: '9px 14px', marginTop: 14, width: '100%' }}
           >
             EXPLORE SCOPE BADGES →
           </button>
@@ -455,7 +455,7 @@ export default function ProfileDataSheet({
           {activeBlurb === 'firstCut' && economyPreviewEnabled() && profile?.username && (
             <button
               onClick={(e) => { e.stopPropagation(); setActiveBlurb(null); onClose(); router.push(`/first-cut/${profile.username}`); }}
-              style={{ ...SKB, fontSize: 'var(--fs-9)', letterSpacing: '0.12em', color: 'rgba(229,225,219,0.6)', textTransform: 'uppercase', background: 'transparent', border: '1px solid rgba(229,225,219,0.25)', cursor: 'pointer', padding: '8px 14px', marginTop: 8, width: '100%' }}
+              style={{ ...SKB, fontSize: 'var(--fs-9)', letterSpacing: '0.12em', color: 'rgb(var(--ink-rgb) / 0.6)', textTransform: 'uppercase', background: 'transparent', border: '1px solid rgb(var(--ink-rgb) / 0.25)', cursor: 'pointer', padding: '8px 14px', marginTop: 8, width: '100%' }}
             >
               VIEW FIRST CUT →
             </button>

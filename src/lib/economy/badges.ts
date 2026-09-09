@@ -51,9 +51,9 @@ export const BADGES: Record<BadgeKey, BadgeMeta> = {
   top1k:     { key: 'top1k',     src: `${NEW}/collector.png`,  title: 'TOP 1K',    color: '#C9A84C',            bannerSrc: `${NEW}/collector.png`,  framedSrc: `${NEW}/collector.png` },
   srh:       { key: 'srh',       src: `${NEW}/srh.png`,        title: 'SRH',       color: '#C9A84C',            bannerSrc: `${NEW}/srh.png`,        framedSrc: `${NEW}/srh.png` },
   composer:  { key: 'composer',  src: `${NEW}/composer.png`,   title: 'COMPOSER',  color: '#7FB2FF',            bannerSrc: `${NEW}/composer.png`,   framedSrc: `${NEW}/composer.png` },
-  pro:       { key: 'pro',       src: `${NEW}/scope-pro.png`,  title: 'SCOPE PRO', color: '#E5E1DB',            bannerSrc: `${NEW}/scope-pro.png`,  framedSrc: `${NEW}/scope-pro.png` },
-  inHouse:   { key: 'inHouse',   src: `${NEW}/in-house.png`,   title: 'IN-HOUSE',  color: 'rgba(229,225,219,0.6)', bannerSrc: `${NEW}/in-house.png`,   framedSrc: `${NEW}/in-house.png` },
-  free:      { key: 'free',      src: '/free-tier-aperture-logo-red.png',            title: 'FREE TIER', color: '#E5E1DB' },
+  pro:       { key: 'pro',       src: `${NEW}/scope-pro.png`,  title: 'SCOPE PRO', color: 'var(--ink-100)',            bannerSrc: `${NEW}/scope-pro.png`,  framedSrc: `${NEW}/scope-pro.png` },
+  inHouse:   { key: 'inHouse',   src: `${NEW}/in-house.png`,   title: 'IN-HOUSE',  color: 'rgb(var(--ink-rgb) / 0.6)', bannerSrc: `${NEW}/in-house.png`,   framedSrc: `${NEW}/in-house.png` },
+  free:      { key: 'free',      src: '/free-tier-aperture-logo-red.png',            title: 'FREE TIER', color: 'var(--ink-100)' },
 };
 
 // Brief M8a — the FRAMELESS First Cut mark. ACTION-ROW ONLY: the icon-only FC in

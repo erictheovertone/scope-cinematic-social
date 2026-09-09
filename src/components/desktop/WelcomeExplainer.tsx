@@ -10,7 +10,7 @@ import { useEffect, useState } from 'react';
 import RedBrackets from '@/components/desktop/RedBrackets';
 
 const INTER_B: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
-const RED = '#E5E1DB';
+const RED = 'var(--ink-100)';
 
 // COPY = the MOBILE welcome slides VERBATIM (source of truth:
 // OnboardingModal.tsx SCREENS) — same order, same count (4).
@@ -65,7 +65,7 @@ export default function WelcomeExplainer({ onDone, onSkip }: { onDone: () => voi
 
         {/* content */}
         <div key={i} style={{ position: 'absolute', left: 50, top: 150, right: 50, animation: reduced ? 'none' : `explainerIn 200ms ease both`, ['--exd' as string]: dir === 1 ? '24px' : '-24px' }}>
-          <h1 style={{ ...INTER_B, fontSize: 'calc(54px * var(--type-scale))', lineHeight: '56px', color: '#E5E1DB', margin: 0, whiteSpace: 'pre-line', letterSpacing: '-0.01em' }}>{slide.title}</h1>
+          <h1 style={{ ...INTER_B, fontSize: 'calc(54px * var(--type-scale))', lineHeight: '56px', color: 'var(--ink-100)', margin: 0, whiteSpace: 'pre-line', letterSpacing: '-0.01em' }}>{slide.title}</h1>
           <p style={{ ...INTER_B, fontWeight: 400, fontSize: 16, color: '#9e9e9e', lineHeight: 1.5, margin: '22px 0 0', maxWidth: 600 }}>{slide.subtitle}</p>
         </div>
 
@@ -77,7 +77,7 @@ export default function WelcomeExplainer({ onDone, onSkip }: { onDone: () => voi
         </div>
 
         {/* NEXT / BEGIN (bottom-right) */}
-        <button onClick={() => go(1)} style={{ position: 'absolute', right: 30, bottom: 26, ...INTER_B, fontSize: 12, color: '#000', textTransform: 'uppercase', letterSpacing: '0.1em', background: '#E5E1DB', border: 'none', cursor: 'pointer', width: 140, height: 48 }}>
+        <button onClick={() => go(1)} style={{ position: 'absolute', right: 30, bottom: 26, ...INTER_B, fontSize: 12, color: '#000', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'var(--ink-100)', border: 'none', cursor: 'pointer', width: 140, height: 48 }}>
           {last ? 'BEGIN' : 'NEXT'}
         </button>
       </div>

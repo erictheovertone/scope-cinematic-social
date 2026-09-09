@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
  * Replaces FrameLoader everywhere.
  *
  * Technique: six absolutely-positioned layers, each the SAME logomark PNG used as
- * a mask over a solid --ink (#E5E1DB) fill, then clip-pathed to one arc "blade" of
+ * a mask over a solid --ink (var(--ink-100)) fill, then clip-pathed to one arc "blade" of
  * the mark. No vector tracing. The mark is symmetric — three blades per side — so
  * the six layers are (left|right) × (inner|mid|outer). Each pulses opacity
  * .2 → 1 → .2; the stagger (inner 0s · mid .2s · outer .4s) makes the pulse travel
@@ -26,7 +26,7 @@ import { useEffect, useState } from "react";
  */
 
 const ASSET = "/design-updates-071526/scope-logomark-offwhite.png";
-const INK = "var(--ink)"; // #E5E1DB
+const INK = "var(--ink)"; // var(--ink-100)
 const ASPECT = "594 / 375"; // the asset's native ratio; height follows width
 
 // Timing (all named per brief) ------------------------------------------------

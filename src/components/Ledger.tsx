@@ -51,7 +51,7 @@ export function LedgerCard({
           position: "absolute",
           inset: 0,
           borderRadius: radius,
-          border: "1px solid #E5E1DB",
+          border: "1px solid var(--ink-100)",
           opacity: borderOpacity,
           filter: "blur(0.7px)",
           pointerEvents: "none",
@@ -66,7 +66,7 @@ export function LedgerCard({
 // flex-1 clip, lifted to sit on the row's vertical centre (periods otherwise ride
 // the baseline). Purely decorative → aria-hidden.
 export function DottedLeader({
-  color = "rgba(229,225,219,0.60)",
+  color = "rgb(var(--ink-rgb) / 0.60)",
   size = 11.8,
   tracking = 2.6,
   style,

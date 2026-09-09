@@ -70,7 +70,7 @@ interface PostItemProps {
   commentsOpen?: boolean;
   /** Receives the post id so the feed can pass a STABLE handler (memo holds). */
   onToggleComments?: (postId: string) => void;
-  /** DESKTOP ONLY — wrap the card in the #030303/rgba(229,225,219,0.22) backdrop. Mobile never
+  /** DESKTOP ONLY — wrap the card in the #030303/rgb(var(--ink-rgb) / 0.22) backdrop. Mobile never
    *  passes it → its floating-post feed is unchanged. */
   card?: boolean;
   /** Clamp the caption to 2 lines + a "… more" that opens the lightbox
@@ -271,18 +271,18 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
           <span
             className="tappable"
             onClick={(e) => { e.stopPropagation(); router.push('/profile/' + post.username); }}
-            style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-8)', color: '#E5E1DB', cursor: 'pointer', textTransform: 'uppercase', display: 'inline-block' }}
+            style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-8)', color: 'var(--ink-100)', cursor: 'pointer', textTransform: 'uppercase', display: 'inline-block' }}
           >
             @{post.username}
           </span>
         </div>
         {/* Brief W7 §2a — song title UNDER the handle (mirrors mobile feed), marquee, sentence case.
             Chrome zone (byline), NOT the media wrapper → never scales with hoverGrow. */}
-        <MusicTitleChip post={post as { music_track_id?: string | null }} marquee uppercase={false} fontSize={11} weight={400} color="rgba(229,225,219,0.55)" glyphW={12} glyphH={9} windowPx={240} />
+        <MusicTitleChip post={post as { music_track_id?: string | null }} marquee uppercase={false} fontSize={11} weight={400} color="rgb(var(--ink-rgb) / 0.55)" glyphW={12} glyphH={9} windowPx={240} />
       </div>
       {/* Market chrome — coin posts only; legacy 1155 tiles show none. */}
       {post.token_standard === 'coin' && post.coin_address && (
-        <span style={{ display: 'flex', alignItems: 'baseline', gap: 5, fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: 'var(--fs-8)', color: '#E5E1DB', opacity: 0.85 }}>
+        <span style={{ display: 'flex', alignItems: 'baseline', gap: 5, fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: 'var(--fs-8)', color: 'var(--ink-100)', opacity: 0.85 }}>
           {post.ticker && <TickerMark ticker={post.ticker} size={11.5} />}
           <span>MC: {mc ?? '…'}</span>
         </span>
@@ -301,7 +301,7 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 7, padding: '0 5px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 7, minWidth: 0 }}>
         <button className="tappable" onClick={(e) => { e.stopPropagation(); router.push('/profile/' + post.username); }} style={{ display: 'block', flexShrink: 0, background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
-          <span style={{ width: 17, height: 17, flexShrink: 0, border: '0.75px solid rgba(229,225,219,0.5)', overflow: 'hidden', display: 'block', background: '#222' }}>
+          <span style={{ width: 17, height: 17, flexShrink: 0, border: '0.75px solid rgb(var(--ink-rgb) / 0.5)', overflow: 'hidden', display: 'block', background: '#222' }}>
             {post.profile_image_url && <img src={feedImage(post.profile_image_url, 96)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
           </span>
         </button>
@@ -314,17 +314,17 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
               wave glyph, capped 28 chars/one line; renders ONLY when a track is
               attached (no reserved space otherwise). Resolves via the module-cached
               useTrackForPost — no new per-card fetch. */}
-          <MusicTitleChip post={post as { music_track_id?: string | null }} uppercase={false} fontSize={11} weight={400} color="rgba(229,225,219,0.55)" glyphW={12} glyphH={9} marquee />
+          <MusicTitleChip post={post as { music_track_id?: string | null }} uppercase={false} fontSize={11} weight={400} color="rgb(var(--ink-rgb) / 0.55)" glyphW={12} glyphH={9} marquee />
         </div>
       </div>
       {post.token_standard === 'coin' && post.coin_address ? (
         <span style={{ display: 'inline-flex', alignItems: 'baseline', gap: 4, flexShrink: 0 }}>
-          <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 12.5, color: 'rgba(229,225,219,0.34)', letterSpacing: 'var(--track-body)' }}>MC</span>
-          <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 12.5, color: 'rgba(229,225,219,0.71)', letterSpacing: 'var(--track-body)' }}>{mc ?? '…'}</span>
+          <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 12.5, color: 'rgb(var(--ink-rgb) / 0.34)', letterSpacing: 'var(--track-body)' }}>MC</span>
+          <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 12.5, color: 'rgb(var(--ink-rgb) / 0.71)', letterSpacing: 'var(--track-body)' }}>{mc ?? '…'}</span>
         </span>
       ) : (
         /* dash rule — unminted posts carry NO economics; a single dash holds the slot. */
-        <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 12.5, color: 'rgba(229,225,219,0.34)', letterSpacing: 'var(--track-body)', flexShrink: 0 }}>—</span>
+        <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 12.5, color: 'rgb(var(--ink-rgb) / 0.34)', letterSpacing: 'var(--track-body)', flexShrink: 0 }}>—</span>
       )}
     </div>
   );
@@ -371,7 +371,7 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
   );
 
   return (
-    <div className="feed-card" onClick={card ? openLightbox : undefined} style={{ marginBottom: card ? 0 : FEED_POST_GAP_PX, ...(card ? { background: '#030303', border: '1px solid rgba(229,225,219,0.22)', borderRadius: 3, padding: '10px 10px 12px', boxSizing: 'border-box', cursor: onImageClick ? 'pointer' : undefined } : {}) }}>{/* Brief F7 §2 — desktop masonry: the whole bordered cell opens the lightbox, incl. the padding ring between artwork and border. Interactive zones (byline links, action row) stopPropagation below so they keep their own behaviour. */}
+    <div className="feed-card" onClick={card ? openLightbox : undefined} style={{ marginBottom: card ? 0 : FEED_POST_GAP_PX, ...(card ? { background: '#030303', border: '1px solid rgb(var(--ink-rgb) / 0.22)', borderRadius: 3, padding: '10px 10px 12px', boxSizing: 'border-box', cursor: onImageClick ? 'pointer' : undefined } : {}) }}>{/* Brief F7 §2 — desktop masonry: the whole bordered cell opens the lightbox, incl. the padding ring between artwork and border. Interactive zones (byline links, action row) stopPropagation below so they keep their own behaviour. */}
 
       {/* ── Metadata above the frame; the media below is clean ── */}
       {/* card (desktop feed) keeps the original byline byte-for-byte; the mobile
@@ -416,7 +416,7 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
           className="tap-target-x6"
           onClick={handleLike}
           disabled={loading || !user}
-          style={{ background: "transparent", border: "none", cursor: user ? "pointer" : "default", display: "flex", alignItems: "center", gap: 4, padding: 0, color: isLiked ? "#E5E1DB" : "rgba(229,225,219,0.6)" }}
+          style={{ background: "transparent", border: "none", cursor: user ? "pointer" : "default", display: "flex", alignItems: "center", gap: 4, padding: 0, color: isLiked ? "var(--ink-100)" : "rgb(var(--ink-rgb) / 0.6)" }}
         >
           <svg width="18.7" height="18.7" viewBox="0 0 24 24" fill={isLiked ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
@@ -429,7 +429,7 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
         <button
           className="tap-target-x6"
           onClick={(e) => { e.stopPropagation(); toggleComments(); }}
-          style={{ background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 4, padding: 0, color: "rgba(229,225,219,0.6)" }}
+          style={{ background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 4, padding: 0, color: "rgb(var(--ink-rgb) / 0.6)" }}
         >
           <svg width="18.7" height="18.7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
@@ -448,7 +448,7 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
             onClick={(e) => { e.stopPropagation(); setShowCollectSheet(true); }}
             style={{
               background: "transparent",
-              border: `1px solid ${showCollectSheet ? "#E5E1DB" : "rgba(229,225,219,0.7)"}`,
+              border: `1px solid ${showCollectSheet ? "var(--ink-100)" : "rgb(var(--ink-rgb) / 0.7)"}`,
               cursor: "pointer",
               padding: "1px 5px",
               lineHeight: 1,
@@ -457,7 +457,7 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
               justifyContent: "center",
             }}
           >
-            <span style={{ ...SKB, fontSize: 'var(--fs-7)', color: showCollectSheet ? "#E5E1DB" : "rgba(229,225,219,0.7)", lineHeight: 1 }}>COLLECT</span>
+            <span style={{ ...SKB, fontSize: 'var(--fs-7)', color: showCollectSheet ? "var(--ink-100)" : "rgb(var(--ink-rgb) / 0.7)", lineHeight: 1 }}>COLLECT</span>
           </button>
         </div>
       </div>
@@ -468,7 +468,7 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
           className="tap-target-x6"
           onClick={handleLike}
           disabled={loading || !user}
-          style={{ background: "transparent", border: "none", cursor: user ? "pointer" : "default", display: "flex", alignItems: "center", gap: 4, padding: 0, color: isLiked ? "#E5E1DB" : "rgba(229,225,219,0.51)" }}
+          style={{ background: "transparent", border: "none", cursor: user ? "pointer" : "default", display: "flex", alignItems: "center", gap: 4, padding: 0, color: isLiked ? "var(--ink-100)" : "rgb(var(--ink-rgb) / 0.51)" }}
         >
           <svg width="17" height="17" viewBox="0 0 24 24" fill={isLiked ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
@@ -481,7 +481,7 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
         <button
           className="tap-target-x6"
           onClick={(e) => { e.stopPropagation(); toggleComments(); }}
-          style={{ background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 4, padding: 0, color: "rgba(229,225,219,0.51)" }}
+          style={{ background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 4, padding: 0, color: "rgb(var(--ink-rgb) / 0.51)" }}
         >
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
@@ -502,7 +502,7 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
             onClick={(e) => { e.stopPropagation(); setShowCollectSheet(true); }}
             style={{ background: "transparent", border: "none", cursor: "pointer", padding: 0, lineHeight: 1 }}
           >
-            <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 13, letterSpacing: 'var(--track-display)', color: showCollectSheet ? "#E5E1DB" : "rgba(229,225,219,0.42)", lineHeight: 1 }}>COLLECT</span>{/* Brief M1 §1 — opacity 0.49 → 0.42 (−15%); font 14.5 → 13 (−1.5px) */}
+            <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 13, letterSpacing: 'var(--track-display)', color: showCollectSheet ? "var(--ink-100)" : "rgb(var(--ink-rgb) / 0.42)", lineHeight: 1 }}>COLLECT</span>{/* Brief M1 §1 — opacity 0.49 → 0.42 (−15%); font 14.5 → 13 (−1.5px) */}
           </button>
         </div>
       </div>
@@ -513,15 +513,15 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
           <p
             ref={captionRef}
             style={{ ...SKR, ...(card
-              ? { fontSize: 'var(--fs-11)', color: "rgba(229,225,219,0.75)", letterSpacing: "-0.1px", lineHeight: 1.5 }/* Brief D7 §4 — desktop masonry caption −25% (was solid #E5E1DB @1.0 → 0.75). card branch = desktop only; mobile (!card) unaffected. */
-              : { fontSize: 12.5, color: "rgba(229,225,219,0.75)", letterSpacing: 'var(--track-body)', lineHeight: 1.16 }), margin: 0,
+              ? { fontSize: 'var(--fs-11)', color: "rgb(var(--ink-rgb) / 0.75)", letterSpacing: "-0.1px", lineHeight: 1.5 }/* Brief D7 §4 — desktop masonry caption −25% (was solid var(--ink-100) @1.0 → 0.75). card branch = desktop only; mobile (!card) unaffected. */
+              : { fontSize: 12.5, color: "rgb(var(--ink-rgb) / 0.75)", letterSpacing: 'var(--track-body)', lineHeight: 1.16 }), margin: 0,
               ...(clampCaption ? ({ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' } as React.CSSProperties) : {}) }}
           >
             {post.caption}
           </p>
           {/* display-only "more" → opens the full caption in the lightbox */}
           {clampCaption && captionClamped && openLightbox && (
-            <button onClick={(e) => { e.stopPropagation(); openLightbox(); }} style={{ ...SKR, fontSize: 'var(--fs-10)', color: "rgba(229,225,219,0.45)", background: "transparent", border: "none", cursor: "pointer", padding: "2px 0 0" }}>
+            <button onClick={(e) => { e.stopPropagation(); openLightbox(); }} style={{ ...SKR, fontSize: 'var(--fs-10)', color: "rgb(var(--ink-rgb) / 0.45)", background: "transparent", border: "none", cursor: "pointer", padding: "2px 0 0" }}>
               … more
             </button>
           )}
@@ -548,7 +548,7 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
         }}
       >
         <div style={{ overflow: "hidden", minHeight: 0 }}>
-          <div onClick={(e) => e.stopPropagation()} style={{ marginTop: 10, borderTop: "1px solid rgba(229,225,219,0.08)", paddingTop: 10 }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ marginTop: 10, borderTop: "1px solid rgb(var(--ink-rgb) / 0.08)", paddingTop: 10 }}>
             {user && (
               <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
                 <input
@@ -558,12 +558,12 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
                   onChange={(e) => setNewComment(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleAddComment()}
                   placeholder="add a comment..."
-                  style={{ flex: 1, background: "transparent", border: "none", borderBottom: "1px solid rgba(229,225,219,0.15)", outline: "none", ...SKR, fontSize: 'max(16px, var(--fs-8))', color: "#E5E1DB", padding: "2px 0" }}
+                  style={{ flex: 1, background: "transparent", border: "none", borderBottom: "1px solid rgb(var(--ink-rgb) / 0.15)", outline: "none", ...SKR, fontSize: 'max(16px, var(--fs-8))', color: "var(--ink-100)", padding: "2px 0" }}
                 />
                 <button
                   onClick={handleAddComment}
                   disabled={loading || !newComment.trim()}
-                  style={{ background: "transparent", border: "none", cursor: "pointer", ...SKB, fontSize: 'var(--fs-8)', color: newComment.trim() ? "#E5E1DB" : "rgba(229,225,219,0.25)", padding: 0 }}
+                  style={{ background: "transparent", border: "none", cursor: "pointer", ...SKB, fontSize: 'var(--fs-8)', color: newComment.trim() ? "var(--ink-100)" : "rgb(var(--ink-rgb) / 0.25)", padding: 0 }}
                 >
                   post
                 </button>

@@ -92,8 +92,8 @@ export default function ViewingModesMenu({ onClose, onSelect }: Props) {
             aria-label={card.aria}
             style={{
               position: 'relative', width: '100%', flex: '1 1 0', minHeight: 110, borderRadius: 13,
-              border: '1px solid rgba(229,225,219,0.49)',
-              background: 'linear-gradient(90deg, rgba(229,225,219,0.07), rgba(33,31,31,0.08))',
+              border: '1px solid rgb(var(--ink-rgb) / 0.49)',
+              background: 'linear-gradient(90deg, rgb(var(--ink-rgb) / 0.07), rgba(33,31,31,0.08))',
               overflow: 'hidden', cursor: 'pointer', textAlign: 'left',
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
               padding: '0 16px 0 32px', gap: 14,
@@ -103,7 +103,7 @@ export default function ViewingModesMenu({ onClose, onSelect }: Props) {
               <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 25, lineHeight: 0.82, letterSpacing: 'var(--track-display)', color: 'var(--ink-100)', whiteSpace: 'pre-line' }}>{card.name}</span>
               {/* Brief M11 §2 — description +2px from M10c's 7.5px → 9.5px. Group stays
                   vertically centered via the card's alignItems:center (S1a). */}
-              <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 9.5, lineHeight: 1.25, color: 'rgba(229,225,219,0.5)', marginTop: 5 }}>{card.desc}</span>
+              <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 9.5, lineHeight: 1.25, color: 'rgb(var(--ink-rgb) / 0.5)', marginTop: 5 }}>{card.desc}</span>
             </span>
             {/* Brief S1a — preview scales WITH the card: height = 53% of the card height
                 (preserves the original 59/110 ratio), aspect locked 140:59, capped at 82px

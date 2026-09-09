@@ -53,7 +53,7 @@ export default function CreatorSearch({ width = 160, height = 34 }: { width?: nu
 
   return (
     <div ref={boxRef} style={{ position: 'relative', width, flexShrink: 0 }}>
-      <div style={{ width: '100%', height, border: '0.5px solid rgba(229,225,219,0.3)', display: 'flex', alignItems: 'center', gap: 6, padding: '0 10px', boxSizing: 'border-box' }}>
+      <div style={{ width: '100%', height, border: '0.5px solid rgb(var(--ink-rgb) / 0.3)', display: 'flex', alignItems: 'center', gap: 6, padding: '0 10px', boxSizing: 'border-box' }}>
         <input
           value={q}
           onChange={(e) => { setQ(e.target.value); setOpen(true); }}
@@ -61,31 +61,31 @@ export default function CreatorSearch({ width = 160, height = 34 }: { width?: nu
           onKeyDown={(e) => { if (e.key === 'Escape') { setOpen(false); (e.target as HTMLInputElement).blur(); } }}
           placeholder="SEARCH"
           aria-label="Search creators"
-          style={{ flex: 1, minWidth: 0, background: 'transparent', border: 'none', outline: 'none', WebkitAppearance: 'none', appearance: 'none', ...SKB, fontSize: 11, color: '#E5E1DB', letterSpacing: '0.1em', textTransform: 'uppercase', caretColor: '#E5E1DB' }}
+          style={{ flex: 1, minWidth: 0, background: 'transparent', border: 'none', outline: 'none', WebkitAppearance: 'none', appearance: 'none', ...SKB, fontSize: 11, color: 'var(--ink-100)', letterSpacing: '0.1em', textTransform: 'uppercase', caretColor: 'var(--ink-100)' }}
         />
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(229,225,219,0.5)" strokeWidth="2" style={{ flexShrink: 0 }}><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" strokeLinecap="round" /></svg>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgb(var(--ink-rgb) / 0.5)" strokeWidth="2" style={{ flexShrink: 0 }}><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" strokeLinecap="round" /></svg>
       </div>
 
       {showDrop && (
-        <div style={{ position: 'absolute', top: 'calc(100% + 6px)', right: 0, width: Math.max(240, width), maxHeight: 320, overflowY: 'auto', background: '#0a0a0a', border: '0.5px solid rgba(229,225,219,0.3)', borderRadius: 3, zIndex: 300, boxShadow: '0 12px 32px rgba(0,0,0,0.55)' }}>
+        <div style={{ position: 'absolute', top: 'calc(100% + 6px)', right: 0, width: Math.max(240, width), maxHeight: 320, overflowY: 'auto', background: '#0a0a0a', border: '0.5px solid rgb(var(--ink-rgb) / 0.3)', borderRadius: 3, zIndex: 300, boxShadow: '0 12px 32px rgba(0,0,0,0.55)' }}>
           {loading && results.length === 0 ? (
-            <p style={{ ...SKR, fontSize: 11, color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase', letterSpacing: '0.12em', padding: '14px 12px', margin: 0 }}>Searching…</p>
+            <p style={{ ...SKR, fontSize: 11, color: 'rgb(var(--ink-rgb) / 0.4)', textTransform: 'uppercase', letterSpacing: '0.12em', padding: '14px 12px', margin: 0 }}>Searching…</p>
           ) : results.length === 0 ? (
-            <p style={{ ...SKR, fontSize: 11, color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase', letterSpacing: '0.12em', padding: '14px 12px', margin: 0 }}>No creators found</p>
+            <p style={{ ...SKR, fontSize: 11, color: 'rgb(var(--ink-rgb) / 0.4)', textTransform: 'uppercase', letterSpacing: '0.12em', padding: '14px 12px', margin: 0 }}>No creators found</p>
           ) : (
             results.map((r) => (
               <button
                 key={r.user_id}
                 onClick={() => go(r.username)}
                 className="press-row"
-                style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', background: 'transparent', border: 'none', borderBottom: '0.5px solid rgba(229,225,219,0.08)', cursor: 'pointer', textAlign: 'left' }}
+                style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', background: 'transparent', border: 'none', borderBottom: '0.5px solid rgb(var(--ink-rgb) / 0.08)', cursor: 'pointer', textAlign: 'left' }}
               >
                 <span style={{ width: 28, height: 28, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, background: '#1a1a1a', display: 'block' }}>
                   {r.profile_image_url && <img src={r.profile_image_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
                 </span>
                 <span style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
-                  <span style={{ ...SKB, fontSize: 12, color: '#E5E1DB', letterSpacing: 'var(--track-display)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.display_name || r.username}</span>
-                  <span style={{ ...SKR, fontSize: 10.5, color: 'rgba(229,225,219,0.5)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>@{r.username}</span>
+                  <span style={{ ...SKB, fontSize: 12, color: 'var(--ink-100)', letterSpacing: 'var(--track-display)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.display_name || r.username}</span>
+                  <span style={{ ...SKR, fontSize: 10.5, color: 'rgb(var(--ink-rgb) / 0.5)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>@{r.username}</span>
                 </span>
               </button>
             ))

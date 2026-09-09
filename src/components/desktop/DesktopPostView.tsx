@@ -35,7 +35,7 @@ import DeletePostSheet from '@/components/DeletePostSheet';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
-const HAIR = 'rgba(229,225,219,0.14)';
+const HAIR = 'rgb(var(--ink-rgb) / 0.14)';
 
 const usd = (n: number) => (n >= 1000 ? `$${Math.round(n).toLocaleString()}` : `$${n.toFixed(2)}`);
 
@@ -48,7 +48,7 @@ function Chevron({ dir }: { dir: 1 | -1 }) {
       width="11" height="24" viewBox="0 0 11 24" fill="none"
       style={{ display: 'block', transform: dir === -1 ? 'scaleX(-1)' : undefined, filter: 'blur(0.3px)' }}
     >
-      <path d="M1 1L9.4 12L1 23" stroke="#E5E1DB" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M1 1L9.4 12L1 23" stroke="var(--ink-100)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -321,12 +321,12 @@ export default function DesktopPostView({
         {/* ── Actions row ── */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 22, margin: '14px 0 0' }}>
           <button onClick={toggleLike} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill={isLiked ? '#E5E1DB' : 'none'} stroke={isLiked ? '#E5E1DB' : 'rgba(229,225,219,0.85)'} strokeWidth="2" strokeLinejoin="round"><path d="M12 21s-7-4.5-9.5-9C1 9 2.5 5.5 6 5.5c2 0 3.2 1.2 4 2.3.8-1.1 2-2.3 4-2.3 3.5 0 5 3.5 3.5 6.5C19 16.5 12 21 12 21z"/></svg>
-            <span style={{ ...SKB, fontSize: 12, color: '#E5E1DB', fontVariantNumeric: 'tabular-nums' }}>{likes.length}</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill={isLiked ? 'var(--ink-100)' : 'none'} stroke={isLiked ? 'var(--ink-100)' : 'rgb(var(--ink-rgb) / 0.85)'} strokeWidth="2" strokeLinejoin="round"><path d="M12 21s-7-4.5-9.5-9C1 9 2.5 5.5 6 5.5c2 0 3.2 1.2 4 2.3.8-1.1 2-2.3 4-2.3 3.5 0 5 3.5 3.5 6.5C19 16.5 12 21 12 21z"/></svg>
+            <span style={{ ...SKB, fontSize: 12, color: 'var(--ink-100)', fontVariantNumeric: 'tabular-nums' }}>{likes.length}</span>
           </button>
           <button onClick={() => { commentInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }); commentInputRef.current?.focus(); }} aria-label="Comment" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(229,225,219,0.85)" strokeWidth="2" strokeLinejoin="round"><path d="M21 11.5a8.5 8.5 0 0 1-12.5 7.5L3 21l2-5.5A8.5 8.5 0 1 1 21 11.5z"/></svg>
-            <span style={{ ...SKB, fontSize: 12, color: '#E5E1DB', fontVariantNumeric: 'tabular-nums' }}>{comments.length}</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgb(var(--ink-rgb) / 0.85)" strokeWidth="2" strokeLinejoin="round"><path d="M21 11.5a8.5 8.5 0 0 1-12.5 7.5L3 21l2-5.5A8.5 8.5 0 1 1 21 11.5z"/></svg>
+            <span style={{ ...SKB, fontSize: 12, color: 'var(--ink-100)', fontVariantNumeric: 'tabular-nums' }}>{comments.length}</span>
           </button>
           {/* Brief D15a §1 — lightbox: the byline (avatar + @HANDLE → profile) moves INLINE into
               the action row (was a separate line below), collapsing the under-stage stack. */}
@@ -335,7 +335,7 @@ export default function DesktopPostView({
               {(post?.profile_image_url as string) ? (
                 <img src={feedImage(post.profile_image_url as string, 96)} alt="" style={{ width: 20, height: 20, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
               ) : <span style={{ width: 20, height: 20, borderRadius: '50%', background: '#2a2a2a', flexShrink: 0 }} />}
-              <span style={{ ...SKB, fontSize: 12, color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>@{post.username as string}</span>
+              <span style={{ ...SKB, fontSize: 12, color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>@{post.username as string}</span>
             </button>
           )}
           {coinAddr && (
@@ -344,11 +344,11 @@ export default function DesktopPostView({
                 <img src="/badges/first-cut-badge-min-design-01.png" alt="" style={{ width: 13, height: 13, objectFit: 'contain', display: 'block' }} />
               </span>
               {/* numerals 95 Black per frame */}
-              <span style={{ fontFamily: 'var(--font-black)', fontWeight: 900, fontSize: 11.5, color: fcCount > 0 ? '#E5E1DB' : 'rgba(229,225,219,0.6)', fontVariantNumeric: 'tabular-nums', letterSpacing: '0.02em' }}>{fcCount} / 10</span>
+              <span style={{ fontFamily: 'var(--font-black)', fontWeight: 900, fontSize: 11.5, color: fcCount > 0 ? 'var(--ink-100)' : 'rgb(var(--ink-rgb) / 0.6)', fontVariantNumeric: 'tabular-nums', letterSpacing: '0.02em' }}>{fcCount} / 10</span>
             </span>
           )}
           {coinAddr && (
-            <button onClick={() => setCollectOpen(true)} style={{ marginLeft: 'auto', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 13.5, letterSpacing: 'var(--track-display)', color: 'rgba(229,225,219,0.7)', textTransform: 'uppercase' }}>
+            <button onClick={() => setCollectOpen(true)} style={{ marginLeft: 'auto', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 13.5, letterSpacing: 'var(--track-display)', color: 'rgb(var(--ink-rgb) / 0.7)', textTransform: 'uppercase' }}>
               COLLECT
             </button>
           )}
@@ -357,7 +357,7 @@ export default function DesktopPostView({
               end of the action row (was on a 4th line). marginLeft:auto right-aligns it when
               there's no COLLECT to push the right cluster over. */}
           {lightbox && !!post?.created_at && (
-            <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 9, color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase', letterSpacing: 'var(--track-body)', whiteSpace: 'nowrap', flexShrink: 0, marginLeft: coinAddr ? 12 : 'auto' }}>{new Date(post.created_at as string).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+            <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 9, color: 'rgb(var(--ink-rgb) / 0.4)', textTransform: 'uppercase', letterSpacing: 'var(--track-body)', whiteSpace: 'nowrap', flexShrink: 0, marginLeft: coinAddr ? 12 : 'auto' }}>{new Date(post.created_at as string).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
           )}
 
           {/* Brief D6 — owner affordance: 3-dot beside COLLECT (or right-aligned when
@@ -373,9 +373,9 @@ export default function DesktopPostView({
                 style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '13px 8px', margin: '-13px -8px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', lineHeight: 0 }}
               >
                 <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden style={{ display: 'block' }}>
-                  <circle cx="3" cy="9" r="1.5" fill="#E5E1DB" opacity="0.7" />
-                  <circle cx="9" cy="9" r="1.5" fill="#E5E1DB" opacity="0.7" />
-                  <circle cx="15" cy="9" r="1.5" fill="#E5E1DB" opacity="0.7" />
+                  <circle cx="3" cy="9" r="1.5" fill="var(--ink-100)" opacity="0.7" />
+                  <circle cx="9" cy="9" r="1.5" fill="var(--ink-100)" opacity="0.7" />
+                  <circle cx="15" cy="9" r="1.5" fill="var(--ink-100)" opacity="0.7" />
                 </svg>
               </button>
 
@@ -387,22 +387,22 @@ export default function DesktopPostView({
                       clear of the media). House vocabulary; no new component. */}
                   <div role="menu" style={{ position: 'absolute', top: 'calc(100% + 8px)', right: 0, zIndex: 121, minWidth: 148, background: 'var(--canvas)', border: `1px solid ${HAIR}` }}>
                     <button role="menuitem" onClick={() => { setMenuOpen(false); setShowDeckPicker(true); }} style={{ display: 'block', width: '100%', textAlign: 'left', background: 'transparent', border: 'none', borderBottom: `1px solid ${HAIR}`, cursor: 'pointer', padding: '11px 14px' }}>
-                      <span style={{ ...SKB, fontSize: 11, color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.06em' }}>ADD TO DECK</span>
+                      <span style={{ ...SKB, fontSize: 11, color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>ADD TO DECK</span>
                     </button>
                     {/* Brief D10 — EDIT AUTOPLAY: video posts only (hidden on images). Opens the
                         M10 SnippetSelector against the Stream HLS, seeded with the saved window. */}
                     {isVideo && (
                       <button role="menuitem" onClick={() => { setMenuOpen(false); setSnippetWin({ start: (post as { snippet_start?: number | null }).snippet_start ?? 0, length: (post as { snippet_length?: number | null }).snippet_length ?? 4 }); setShowSnippet(true); }} style={{ display: 'block', width: '100%', textAlign: 'left', background: 'transparent', border: 'none', borderBottom: `1px solid ${HAIR}`, cursor: 'pointer', padding: '11px 14px' }}>
-                        <span style={{ ...SKB, fontSize: 11, color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.06em' }}>EDIT AUTOPLAY</span>
+                        <span style={{ ...SKB, fontSize: 11, color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>EDIT AUTOPLAY</span>
                       </button>
                     )}
                     {coinPending && (
                       <button role="menuitem" onClick={() => { setMenuOpen(false); setShowCreateCoin(true); }} style={{ display: 'block', width: '100%', textAlign: 'left', background: 'transparent', border: 'none', borderBottom: `1px solid ${HAIR}`, cursor: 'pointer', padding: '11px 14px' }}>
-                        <span style={{ ...SKB, fontSize: 11, color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.06em' }}>CREATE COIN</span>
+                        <span style={{ ...SKB, fontSize: 11, color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>CREATE COIN</span>
                       </button>
                     )}
                     <button role="menuitem" onClick={() => { setMenuOpen(false); setShowDelete(true); }} style={{ display: 'block', width: '100%', textAlign: 'left', background: 'transparent', border: 'none', cursor: 'pointer', padding: '11px 14px' }}>
-                      <span style={{ ...SKB, fontSize: 11, color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.06em' }}>DELETE</span>
+                      <span style={{ ...SKB, fontSize: 11, color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>DELETE</span>
                     </button>
                   </div>
                 </>
@@ -415,14 +415,14 @@ export default function DesktopPostView({
             hover via the native title tooltip), with the location appended after a · when
             present (the byline + date moved up into the action row). Profile → unchanged. */}
         {typeof post?.caption === 'string' && post.caption && (
-          <p title={lightbox ? (post.caption + (location ? ` · ${location}` : '')) : undefined} style={{ ...SKR, fontSize: 12, color: 'rgba(229,225,219,0.5)', lineHeight: 1.07, letterSpacing: 'var(--track-body)', margin: lightbox ? '10px 0 0' : '12px 0 0', maxWidth: lightbox ? '100%' : 440, ...(lightbox ? { whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' } : {}) }}>
-            {post.caption}{lightbox && location && <span style={{ color: 'rgba(229,225,219,0.34)' }}> · {location}</span>}
+          <p title={lightbox ? (post.caption + (location ? ` · ${location}` : '')) : undefined} style={{ ...SKR, fontSize: 12, color: 'rgb(var(--ink-rgb) / 0.5)', lineHeight: 1.07, letterSpacing: 'var(--track-body)', margin: lightbox ? '10px 0 0' : '12px 0 0', maxWidth: lightbox ? '100%' : 440, ...(lightbox ? { whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' } : {}) }}>
+            {post.caption}{lightbox && location && <span style={{ color: 'rgb(var(--ink-rgb) / 0.34)' }}> · {location}</span>}
           </p>
         )}
         {/* Location line — PROFILE framing only (lightbox merges it into the caption line above). */}
         {!lightbox && location && (
-          <p style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 8, color: 'rgba(229,225,219,0.5)', textTransform: 'uppercase', letterSpacing: 'var(--track-body)', margin: '10px 0 0', display: 'flex', alignItems: 'center', gap: 5 }}>
-            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="rgba(229,225,219,0.45)" strokeWidth="1.8"><path d="M12 21s-6.5-5.4-6.5-10.5A6.5 6.5 0 0 1 12 4a6.5 6.5 0 0 1 6.5 6.5C18.5 15.6 12 21 12 21z" /><circle cx="12" cy="10.5" r="2.2" /></svg>{location}
+          <p style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 8, color: 'rgb(var(--ink-rgb) / 0.5)', textTransform: 'uppercase', letterSpacing: 'var(--track-body)', margin: '10px 0 0', display: 'flex', alignItems: 'center', gap: 5 }}>
+            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="rgb(var(--ink-rgb) / 0.45)" strokeWidth="1.8"><path d="M12 21s-6.5-5.4-6.5-10.5A6.5 6.5 0 0 1 12 4a6.5 6.5 0 0 1 6.5 6.5C18.5 15.6 12 21 12 21z" /><circle cx="12" cy="10.5" r="2.2" /></svg>{location}
           </p>
         )}
         </div>{/* Brief D15b — close the chrome wrapper */}
@@ -436,22 +436,22 @@ export default function DesktopPostView({
           border, no radius) ═══ */}
       <div style={{ position: 'relative', width: 309, flexShrink: 0, height: lightbox ? '100%' : 573, marginTop: lightbox ? 0 : -25, background: 'transparent', display: 'flex', flexDirection: 'column' }}>{/* Brief D15 §1 — lightbox: the panel fills the row height (stretch) and its comments body (flex:1 overflowY:auto) scrolls internally, so it never drives page height. Was a fixed 600. */}
         {/* Border layer — 0.25px ivory, ~30%, softened 0.9px (ledger-recipe kin, no radius). */}
-        <div aria-hidden style={{ position: 'absolute', inset: 0, border: '0.25px solid #E5E1DB', opacity: 0.3, filter: 'blur(0.9px)', pointerEvents: 'none' }} />
+        <div aria-hidden style={{ position: 'absolute', inset: 0, border: '0.25px solid var(--ink-100)', opacity: 0.3, filter: 'blur(0.9px)', pointerEvents: 'none' }} />
 
         {/* Ticker header — [ TICKER ] left · MC + COLLECTORS right. Dash rule for
             unminted (no coin) across ticker + both values. */}
         <div style={{ position: 'relative', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '15px 12px 11px' }}>
-          <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 11, letterSpacing: 'var(--track-wide)', color: 'rgba(229,225,219,0.8)', marginTop: 6 }}>
+          <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 11, letterSpacing: 'var(--track-wide)', color: 'rgb(var(--ink-rgb) / 0.8)', marginTop: 6 }}>
             {coinAddr && (post?.ticker as string) ? `[ ${String(post.ticker).toUpperCase()} ]` : '[ — ]'}
           </span>
           <div style={{ display: 'flex', gap: 22 }}>
             <div>
-              <p style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 10, color: 'rgba(229,225,219,0.46)', textTransform: 'uppercase', letterSpacing: 'var(--track-body)', margin: 0 }}>MC</p>
-              <p style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 11, color: 'rgba(229,225,219,0.67)', margin: '3px 0 0', fontVariantNumeric: 'tabular-nums' }}>{coinAddr ? (market ? usd(market.mcUsd) : '…') : '—'}</p>
+              <p style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 10, color: 'rgb(var(--ink-rgb) / 0.46)', textTransform: 'uppercase', letterSpacing: 'var(--track-body)', margin: 0 }}>MC</p>
+              <p style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 11, color: 'rgb(var(--ink-rgb) / 0.67)', margin: '3px 0 0', fontVariantNumeric: 'tabular-nums' }}>{coinAddr ? (market ? usd(market.mcUsd) : '…') : '—'}</p>
             </div>
             <div>
-              <p style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 10, color: 'rgba(229,225,219,0.46)', textTransform: 'uppercase', letterSpacing: 'var(--track-body)', margin: 0 }}>COLLECTORS</p>
-              <p style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 11, color: 'rgba(229,225,219,0.67)', margin: '3px 0 0', fontVariantNumeric: 'tabular-nums' }}>{coinAddr ? (market?.holders ?? '…') : '—'}</p>
+              <p style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 10, color: 'rgb(var(--ink-rgb) / 0.46)', textTransform: 'uppercase', letterSpacing: 'var(--track-body)', margin: 0 }}>COLLECTORS</p>
+              <p style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 11, color: 'rgb(var(--ink-rgb) / 0.67)', margin: '3px 0 0', fontVariantNumeric: 'tabular-nums' }}>{coinAddr ? (market?.holders ?? '…') : '—'}</p>
             </div>
           </div>
         </div>
@@ -465,23 +465,23 @@ export default function DesktopPostView({
                 <span style={{ border: `1px solid ${HAIR}`, borderRadius: 4, width: 28, height: 22, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
                   <img src="/badges/first-cut-badge-min-design-01.png" alt="" style={{ width: 14, height: 14, objectFit: 'contain' }} />
                 </span>
-                <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 13, color: 'rgba(229,225,219,0.5)', textTransform: 'uppercase', letterSpacing: 'var(--track-body)', flex: 1 }}>FIRST CUT</span>
-                <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 11, color: fcCount > 0 ? 'rgba(229,225,219,0.7)' : 'rgba(229,225,219,0.5)', fontVariantNumeric: 'tabular-nums' }}>{fcCount} / 10</span>
+                <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 13, color: 'rgb(var(--ink-rgb) / 0.5)', textTransform: 'uppercase', letterSpacing: 'var(--track-body)', flex: 1 }}>FIRST CUT</span>
+                <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 11, color: fcCount > 0 ? 'rgb(var(--ink-rgb) / 0.7)' : 'rgb(var(--ink-rgb) / 0.5)', fontVariantNumeric: 'tabular-nums' }}>{fcCount} / 10</span>
               </div>
               {/* ranked list — rank · avatar · @handle. Per-holder PRICE is FLAGGED
                   out: the FC ledger carries no price field (adding it = FC-logic). */}
               <div style={{ margin: '12px 0 0' }}>
                 {(fcHolders ?? []).map((h) => (
                   <button key={h.rank} onClick={() => h.username && router.push('/profile/' + h.username)} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '6px 0', width: '100%', background: 'none', border: 'none', cursor: h.username ? 'pointer' : 'default', textAlign: 'left' }}>
-                    <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 11, color: 'rgba(229,225,219,0.5)', width: 18, fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>{String(h.rank).padStart(2, '0')}</span>
+                    <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 11, color: 'rgb(var(--ink-rgb) / 0.5)', width: 18, fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>{String(h.rank).padStart(2, '0')}</span>
                     {h.avatarUrl ? (
                       <img src={feedImage(h.avatarUrl, 48)} alt="" style={{ width: 12, height: 12, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
                     ) : <span style={{ width: 12, height: 12, borderRadius: '50%', background: '#2a2a2a', display: 'inline-block', flexShrink: 0 }} />}
-                    <span style={{ fontFamily: 'var(--font-body)', fontWeight: 400, fontSize: 10, color: 'rgba(229,225,219,0.44)', textTransform: 'uppercase', letterSpacing: 'var(--track-wide)', flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>@ {h.username ?? '—'}</span>
+                    <span style={{ fontFamily: 'var(--font-body)', fontWeight: 400, fontSize: 10, color: 'rgb(var(--ink-rgb) / 0.44)', textTransform: 'uppercase', letterSpacing: 'var(--track-wide)', flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>@ {h.username ?? '—'}</span>
                   </button>
                 ))}
                 {fcHolders && fcHolders.length === 0 && (
-                  <p style={{ ...SKR, fontSize: 10, color: 'rgba(229,225,219,0.35)', textTransform: 'uppercase', margin: '4px 0 0' }}>ALL 10 SLOTS OPEN</p>
+                  <p style={{ ...SKR, fontSize: 10, color: 'rgb(var(--ink-rgb) / 0.35)', textTransform: 'uppercase', margin: '4px 0 0' }}>ALL 10 SLOTS OPEN</p>
                 )}
               </div>
             </div>
@@ -491,7 +491,7 @@ export default function DesktopPostView({
           {/* COMMENTS — retheme + relayout of the presentation; CommentList engine
               (likes, one-level replies) unchanged. */}
           <div style={{ padding: '6px 12px 12px' }}>
-            <p style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 11, color: 'rgba(229,225,219,0.5)', textTransform: 'uppercase', letterSpacing: 'var(--track-body)', margin: '0 0 8px' }}>COMMENTS ( {comments.length} )</p>
+            <p style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 11, color: 'rgb(var(--ink-rgb) / 0.5)', textTransform: 'uppercase', letterSpacing: 'var(--track-body)', margin: '0 0 8px' }}>COMMENTS ( {comments.length} )</p>
             <CommentList
               comments={comments as UIComment[]}
               variant="desktop"
@@ -509,17 +509,17 @@ export default function DesktopPostView({
         {/* COMPOSER — ivory ~5% fill strip, no border (node 69:196). Input font-size
             kept at 13px (desktop sanity — the frame's 8px placeholder is display-only). */}
         <div style={{ position: 'relative', padding: '8px 12px 12px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(229,225,219,0.05)', padding: '0 8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgb(var(--ink-rgb) / 0.05)', padding: '0 8px' }}>
             <input
               ref={commentInputRef}
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') submitComment(); e.stopPropagation(); }}
               placeholder="Add a comment..."
-              style={{ ...SKR, flex: 1, fontSize: 13, color: '#E5E1DB', background: 'transparent', border: 'none', outline: 'none', padding: '8px 2px', letterSpacing: 'var(--track-body)' }}
+              style={{ ...SKR, flex: 1, fontSize: 13, color: 'var(--ink-100)', background: 'transparent', border: 'none', outline: 'none', padding: '8px 2px', letterSpacing: 'var(--track-body)' }}
             />
             <button onClick={submitComment} aria-label="Send" style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4, lineHeight: 0 }}>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(229,225,219,0.7)" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" /></svg>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgb(var(--ink-rgb) / 0.7)" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" /></svg>
             </button>
           </div>
         </div>
@@ -554,7 +554,7 @@ export default function DesktopPostView({
       />
       {deckToast && (
         <div style={{ position: 'fixed', left: '50%', bottom: 'calc(28px + var(--safe-bottom))', transform: 'translateX(-50%)', zIndex: 700, background: 'var(--canvas)', border: `1px solid ${HAIR}`, padding: '10px 16px', pointerEvents: 'none' }}>
-          <span style={{ ...SKB, fontSize: 11, color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.06em' }}>ADDED TO {deckToast}</span>
+          <span style={{ ...SKB, fontSize: 11, color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>ADDED TO {deckToast}</span>
         </div>
       )}
 
@@ -565,8 +565,8 @@ export default function DesktopPostView({
           style={{ position: 'fixed', inset: 0, zIndex: 650, background: 'rgba(5,5,5,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div onClick={(e) => e.stopPropagation()} style={{ width: 'min(680px, 92vw)', maxHeight: '88vh', overflowY: 'auto', background: 'var(--canvas)', border: `1px solid ${HAIR}`, padding: 22 }}>
             <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 14 }}>
-              <span style={{ ...SKB, fontSize: 13, color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Edit autoplay</span>
-              <button onClick={() => setShowSnippet(false)} aria-label="Close" style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 16, color: 'rgba(229,225,219,0.5)', lineHeight: 1, padding: 2 }}>×</button>
+              <span style={{ ...SKB, fontSize: 13, color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Edit autoplay</span>
+              <button onClick={() => setShowSnippet(false)} aria-label="Close" style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 16, color: 'rgb(var(--ink-rgb) / 0.5)', lineHeight: 1, padding: 2 }}>×</button>
             </div>
             <SnippetSelector
               videoUrl={((post?.stream_playback_url as string) ?? mediaUrl) || ''}
@@ -577,7 +577,7 @@ export default function DesktopPostView({
               layoutId={(post?.layout_id as string) ?? ''}
             />
             <div style={{ display: 'flex', gap: 10, marginTop: 18, justifyContent: 'flex-end' }}>
-              <button onClick={() => setShowSnippet(false)} style={{ ...SKB, fontSize: 11, color: 'rgba(229,225,219,0.6)', textTransform: 'uppercase', letterSpacing: '0.08em', background: 'transparent', border: `1px solid ${HAIR}`, cursor: 'pointer', padding: '10px 18px' }}>CANCEL</button>
+              <button onClick={() => setShowSnippet(false)} style={{ ...SKB, fontSize: 11, color: 'rgb(var(--ink-rgb) / 0.6)', textTransform: 'uppercase', letterSpacing: '0.08em', background: 'transparent', border: `1px solid ${HAIR}`, cursor: 'pointer', padding: '10px 18px' }}>CANCEL</button>
               <button disabled={savingSnippet || !viewer || !snippetWin}
                 onClick={async () => {
                   if (!viewer || !snippetWin) return;
@@ -586,7 +586,7 @@ export default function DesktopPostView({
                   setSavingSnippet(false);
                   if (ok) setShowSnippet(false); // snippet contexts re-read the window on next mount
                 }}
-                style={{ ...SKB, fontSize: 11, color: 'var(--on-ink)', textTransform: 'uppercase', letterSpacing: '0.08em', background: '#E5E1DB', border: 'none', cursor: savingSnippet ? 'default' : 'pointer', padding: '10px 22px', opacity: savingSnippet || !snippetWin ? 0.6 : 1 }}>{savingSnippet ? 'SAVING…' : 'SAVE'}</button>
+                style={{ ...SKB, fontSize: 11, color: 'var(--on-ink)', textTransform: 'uppercase', letterSpacing: '0.08em', background: 'var(--ink-100)', border: 'none', cursor: savingSnippet ? 'default' : 'pointer', padding: '10px 22px', opacity: savingSnippet || !snippetWin ? 0.6 : 1 }}>{savingSnippet ? 'SAVING…' : 'SAVE'}</button>
             </div>
           </div>
         </div>

@@ -44,7 +44,7 @@
     font-family: 'Neue Haas Grotesk Display', 'SK-Modernist', sans-serif;
     font-weight: 700;
     background-color: #050505;
-    color: #E5E1DB;
+    color: var(--ink-100);
   }
 }
 
@@ -139,7 +139,7 @@ html, body {
      the two RGB triplets. The ladder values below are byte-identical to the old rgba()
      literals they replace — Stage 1's gate is zero visual change. Arbitrary in-component
      ivory alphas migrate to rgb(var(--ink-rgb) / a) with the same alpha. */
-  --ink-rgb: 229 225 219;     /* #E5E1DB — the one ivory value */
+  --ink-rgb: 229 225 219;     /* var(--ink-100) — the one ivory value */
   --canvas-rgb: 5 5 5;        /* #050505 — the one canvas value */
   --canvas: rgb(var(--canvas-rgb) / 1);
   --ink: rgb(var(--ink-rgb) / 1);
@@ -276,14 +276,14 @@ button:active,
 }
 
 /* Brief M12 — house GHOST CTA. Transparent in every state; a hairline ivory border
-   with an ivory label. The border is --ink @60% (rgba(229,225,219,0.6)) rather than
+   with an ivory label. The border is --ink @60% (rgb(var(--ink-rgb) / 0.6)) rather than
    --hairline-strong @30%: on the near-black --canvas (#050505) the 30% hairline reads
    too faint to anchor a page's PRIMARY action, while 60% stays clearly ghost (no fill)
    yet confident. Hover lifts only the border; the press dip is the global button:active
    rule above (never a fill). Used by the While-You-Were-Away ENTER button (was a red
    ivory→#990000 gradient — a red-kill survivor). */
-.ghost-cta { background: transparent; border: 0.5px solid rgba(229,225,219,0.6); transition: border-color 140ms ease; }
-.ghost-cta:hover { border-color: rgba(229,225,219,0.85); }
+.ghost-cta { background: transparent; border: 0.5px solid rgb(var(--ink-rgb) / 0.6); transition: border-color 140ms ease; }
+.ghost-cta:hover { border-color: rgb(var(--ink-rgb) / 0.85); }
 
 /* 1.3b Press-pop — JS-retriggered scale "pop" on tap (the <PressPop> primitive).
    transform-origin center, transform-only (GPU). The pop OWNS the scale on these
@@ -495,7 +495,7 @@ button:active,
 }
 
 .deck-gear-input::placeholder {
-  color: rgba(229,225,219, 0.3);
+  color: rgb(var(--ink-rgb) / 0.3);
 }
 
 @keyframes ripple-down {
@@ -595,9 +595,9 @@ button:active,
    increments on return from a buy, then settles. Resting is already red, so this
    is a glow + scale pop, not a colour change. */
 @keyframes fcTickUp {
-  0%   { transform: scale(1);    text-shadow: none; color: rgba(229,225,219,0.6); }
-  30%  { transform: scale(1.45); text-shadow: 0 0 10px rgba(229,225,219,0.9), 0 0 4px rgba(229,225,219,0.8); color: #E5E1DB; }
-  100% { transform: scale(1);    text-shadow: none; color: rgba(229,225,219,0.6); }
+  0%   { transform: scale(1);    text-shadow: none; color: rgb(var(--ink-rgb) / 0.6); }
+  30%  { transform: scale(1.45); text-shadow: 0 0 10px rgb(var(--ink-rgb) / 0.9), 0 0 4px rgb(var(--ink-rgb) / 0.8); color: var(--ink-100); }
+  100% { transform: scale(1);    text-shadow: none; color: rgb(var(--ink-rgb) / 0.6); }
 }
 @keyframes fcMarkPop { 0% { transform: scale(1); } 35% { transform: scale(1.22); } 100% { transform: scale(1); } }
 /* Ledger slots ripple down on expand — staggered via per-slot animation-delay. */
@@ -620,8 +620,8 @@ button:active,
 
 @keyframes stripeShine {
   0% { opacity: 0.3; box-shadow: none; }
-  30% { opacity: 1; box-shadow: 2px 0 12px 2px rgba(229,225,219,0.8); }
-  70% { opacity: 1; box-shadow: 2px 0 8px 1px rgba(229,225,219,0.4); }
+  30% { opacity: 1; box-shadow: 2px 0 12px 2px rgb(var(--ink-rgb) / 0.8); }
+  70% { opacity: 1; box-shadow: 2px 0 8px 1px rgb(var(--ink-rgb) / 0.4); }
   100% { opacity: 1; box-shadow: none; }
 }
 
@@ -756,10 +756,10 @@ input, textarea, select {
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus {
-  -webkit-text-fill-color: #E5E1DB;
+  -webkit-text-fill-color: var(--ink-100);
   -webkit-box-shadow: 0 0 0 1000px #050505 inset;
   box-shadow: 0 0 0 1000px #050505 inset;
-  caret-color: #E5E1DB;
+  caret-color: var(--ink-100);
   transition: background-color 100000s ease-in-out 0s;
 }
 
@@ -797,7 +797,7 @@ input:-webkit-autofill:focus {
   /* media CELLS — the image IS the content: brighten only, never scale/lift */
   [data-no-pop]:hover { filter: brightness(1.1); transform: none; }
   /* ROWS — background lift (the mobile row variant's hover sibling) */
-  .press-row:hover { background-color: rgba(229,225,219,0.045); }
+  .press-row:hover { background-color: rgb(var(--ink-rgb) / 0.045); }
 
   /* PRESS — recalibrated toward the mobile profile: round-trip ~280–300ms with a
      visible spring-back. icons 0.92 (was 0.976) · words 0.96 (0.984) · cards 0.985
@@ -808,7 +808,7 @@ input:-webkit-autofill:focus {
   .press-pop.pop-active.pop-dk-text { animation: dkPopText 270ms cubic-bezier(0.34,1.5,0.55,1); }
 
   button:focus-visible, a:focus-visible, [role="button"]:focus-visible {
-    outline: 1px solid rgba(229,225,219,0.6);
+    outline: 1px solid rgb(var(--ink-rgb) / 0.6);
     outline-offset: 2px;
   }
 }
@@ -866,7 +866,7 @@ input:-webkit-autofill:focus {
 }
 @keyframes badgeGlowPulse {
   0%   { filter: none; }
-  40%  { filter: drop-shadow(0 0 7px rgba(229,225,219,0.85)) drop-shadow(0 0 3px rgba(229,225,219,0.6)); }
+  40%  { filter: drop-shadow(0 0 7px rgb(var(--ink-rgb) / 0.85)) drop-shadow(0 0 3px rgb(var(--ink-rgb) / 0.6)); }
   100% { filter: none; }
 }
 
@@ -900,7 +900,7 @@ input:-webkit-autofill:focus {
    Shared recipe alongside <LedgerCard>/<DottedLeader>; used by wallet token rows. */
 .ledger-row { transition: background 120ms ease; }
 .ledger-row:hover,
-.ledger-row:active { background: rgba(229, 225, 219, 0.04); }
+.ledger-row:active { background: rgb(var(--ink-rgb) / 0.04); }
 
 /* ── Brief D8 §1 — 4K TYPE SCALE STEPS ───────────────────────────────────────
    The only rules that raise --type-scale above 1. Viewport-WIDTH gated, so they

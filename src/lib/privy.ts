@@ -8,7 +8,7 @@ export const privyConfig = {
   // Appearance configuration to match Scope branding
   appearance: {
     theme: 'dark' as const,
-    accentColor: '#E5E1DB' as `#${string}`,
+    accentColor: 'var(--ink-100)' as `#${string}`,
     showWalletLoginFirst: false,
   },
   

@@ -108,22 +108,22 @@ export default function GridCommentPanel({
       style={{
         position: 'fixed', left, top, width: GRID_PANEL_WIDTH, maxHeight: '70vh', zIndex: 400,
         display: 'flex', flexDirection: 'column', background: 'var(--canvas)',
-        border: '0.5px solid rgba(229,225,219,0.3)', borderRadius: 3, overflow: 'hidden',
+        border: '0.5px solid rgb(var(--ink-rgb) / 0.3)', borderRadius: 3, overflow: 'hidden',
         boxShadow: '0 16px 44px rgba(0,0,0,0.6)',
         opacity: mounted ? 1 : 0, transform: mounted || reduced ? 'translateX(0)' : enterTransform,
         transition: reduced ? 'none' : 'opacity 150ms ease, transform 150ms cubic-bezier(0.16,0.84,0.3,1)',
       }}
     >
       {/* header — COMMENTS (N) + close */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 12px 9px', borderBottom: '0.5px solid rgba(229,225,219,0.12)', flexShrink: 0 }}>
-        <p style={{ ...SKB, fontSize: 11, color: 'rgba(229,225,219,0.5)', textTransform: 'uppercase', letterSpacing: 'var(--track-body)', margin: 0 }}>COMMENTS ( {comments.length} )</p>
-        <button onClick={onClose} aria-label="Close comments" style={{ background: 'transparent', border: 'none', cursor: 'pointer', ...SKR, fontSize: 16, color: 'rgba(229,225,219,0.5)', lineHeight: 1, padding: 2 }}>×</button>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 12px 9px', borderBottom: '0.5px solid rgb(var(--ink-rgb) / 0.12)', flexShrink: 0 }}>
+        <p style={{ ...SKB, fontSize: 11, color: 'rgb(var(--ink-rgb) / 0.5)', textTransform: 'uppercase', letterSpacing: 'var(--track-body)', margin: 0 }}>COMMENTS ( {comments.length} )</p>
+        <button onClick={onClose} aria-label="Close comments" style={{ background: 'transparent', border: 'none', cursor: 'pointer', ...SKR, fontSize: 16, color: 'rgb(var(--ink-rgb) / 0.5)', lineHeight: 1, padding: 2 }}>×</button>
       </div>
 
       {/* scroll body — the reused CommentList engine */}
       <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '8px 12px' }}>
         {comments.length === 0 ? (
-          <p style={{ ...SKR, fontSize: 12, color: 'rgba(229,225,219,0.4)', margin: '10px 2px', letterSpacing: 'var(--track-body)' }}>No comments yet.</p>
+          <p style={{ ...SKR, fontSize: 12, color: 'rgb(var(--ink-rgb) / 0.4)', margin: '10px 2px', letterSpacing: 'var(--track-body)' }}>No comments yet.</p>
         ) : (
           <CommentList
             comments={comments as UIComment[]}
@@ -141,17 +141,17 @@ export default function GridCommentPanel({
 
       {/* composer */}
       <div style={{ padding: '8px 12px 12px', flexShrink: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(229,225,219,0.05)', padding: '0 8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgb(var(--ink-rgb) / 0.05)', padding: '0 8px' }}>
           <input
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') submitComment(); e.stopPropagation(); }}
             placeholder="Add a comment..."
             aria-label="Add a comment"
-            style={{ ...SKR, flex: 1, fontSize: 13, color: '#E5E1DB', background: 'transparent', border: 'none', outline: 'none', WebkitAppearance: 'none', appearance: 'none', padding: '8px 2px', letterSpacing: 'var(--track-body)', caretColor: '#E5E1DB' }}
+            style={{ ...SKR, flex: 1, fontSize: 13, color: 'var(--ink-100)', background: 'transparent', border: 'none', outline: 'none', WebkitAppearance: 'none', appearance: 'none', padding: '8px 2px', letterSpacing: 'var(--track-body)', caretColor: 'var(--ink-100)' }}
           />
           <button onClick={submitComment} aria-label="Send" style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4, lineHeight: 0 }}>
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(229,225,219,0.7)" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" /></svg>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgb(var(--ink-rgb) / 0.7)" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" /></svg>
           </button>
         </div>
       </div>

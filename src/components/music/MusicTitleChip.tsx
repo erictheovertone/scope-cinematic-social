@@ -18,7 +18,7 @@ import SongMarquee from "@/components/music/SongMarquee";
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 
 export default function MusicTitleChip({
-  post, color = "rgba(229,225,219,0.6)",
+  post, color = "rgb(var(--ink-rgb) / 0.6)",
   uppercase = true, fontSize = "var(--fs-7)", weight = 700, glyphW = 13, glyphH = 10,
   marquee = false, windowPx = 175,
 }: {

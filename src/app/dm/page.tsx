@@ -63,12 +63,12 @@ function MobileDMInbox() {
 
       {convs === null ? (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '40vh' }}>
-          <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>LOADING…</span>
+          <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'rgb(var(--ink-rgb) / 0.4)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>LOADING…</span>
         </div>
       ) : convs.length === 0 ? (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '50vh', gap: 12, padding: '0 40px', textAlign: 'center' }}>
-          <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: 'rgba(229,225,219,0.55)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>No messages yet</span>
-          <span style={{ ...SKR, fontSize: 'var(--fs-9)', color: 'rgba(229,225,219,0.35)', textTransform: 'uppercase', letterSpacing: '0.08em', lineHeight: 1.6 }}>
+          <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: 'rgb(var(--ink-rgb) / 0.55)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>No messages yet</span>
+          <span style={{ ...SKR, fontSize: 'var(--fs-9)', color: 'rgb(var(--ink-rgb) / 0.35)', textTransform: 'uppercase', letterSpacing: '0.08em', lineHeight: 1.6 }}>
             Start one from any profile — tap MESSAGE.
           </span>
         </div>
@@ -85,7 +85,7 @@ function MobileDMInbox() {
                 disabled={!handle}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 12, width: '100%',
-                  background: 'transparent', border: 'none', borderBottom: '1px solid rgba(229,225,219,0.06)',
+                  background: 'transparent', border: 'none', borderBottom: '1px solid rgb(var(--ink-rgb) / 0.06)',
                   cursor: handle ? 'pointer' : 'default', padding: '13px 20px', textAlign: 'left',
                 }}
               >
@@ -93,17 +93,17 @@ function MobileDMInbox() {
                 <div style={{ width: 44, height: 44, borderRadius: '50%', background: '#222', flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   {c.otherAvatar
                     ? <img src={feedImage(c.otherAvatar, 96)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    : <span style={{ ...SKB, fontSize: 'var(--fs-13)', color: '#E5E1DB' }}>{handle?.[0]?.toUpperCase() ?? '?'}</span>}
+                    : <span style={{ ...SKB, fontSize: 'var(--fs-13)', color: 'var(--ink-100)' }}>{handle?.[0]?.toUpperCase() ?? '?'}</span>}
                 </div>
                 {/* handle + preview */}
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.02em', display: 'block' }}>
+                  <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.02em', display: 'block' }}>
                     @{handle ?? 'unknown'}
                   </span>
                   <span style={{
                     ...(unread ? SKB : SKR),
                     fontSize: 'var(--fs-9)',
-                    color: unread ? 'rgba(229,225,219,0.9)' : 'rgba(229,225,219,0.45)',
+                    color: unread ? 'rgb(var(--ink-rgb) / 0.9)' : 'rgb(var(--ink-rgb) / 0.45)',
                     display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: 3,
                   }}>
                     {c.lastMessagePreview ?? ''}
@@ -111,8 +111,8 @@ function MobileDMInbox() {
                 </div>
                 {/* time + unread dot */}
                 <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
-                  <span style={{ ...SKR, fontSize: 'var(--fs-7)', color: 'rgba(229,225,219,0.4)', fontVariantNumeric: 'tabular-nums' }}>{dmTimeAgo(c.lastMessageAt)}</span>
-                  {unread && <span aria-label="unread" style={{ width: 8, height: 8, borderRadius: '50%', background: '#E5E1DB', display: 'block' }} />}
+                  <span style={{ ...SKR, fontSize: 'var(--fs-7)', color: 'rgb(var(--ink-rgb) / 0.4)', fontVariantNumeric: 'tabular-nums' }}>{dmTimeAgo(c.lastMessageAt)}</span>
+                  {unread && <span aria-label="unread" style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--ink-100)', display: 'block' }} />}
                 </div>
               </button>
             );

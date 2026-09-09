@@ -34,7 +34,7 @@ export default function DeckThumbnail({ imageUrls, title, aspectRatio = '2.4 / 1
     return (
       <div style={wrap}>
         <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <span style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgba(229,225,219,0.2)' }}>{title ?? ''}</span>
+          <span style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgb(var(--ink-rgb) / 0.2)' }}>{title ?? ''}</span>
         </div>
       </div>
     );

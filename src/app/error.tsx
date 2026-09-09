@@ -33,7 +33,7 @@ export default function Error({
       style={{
         minHeight: '100dvh',
         background: '#000',
-        color: '#E5E1DB',
+        color: 'var(--ink-100)',
         fontFamily: mono,
         display: 'flex',
         flexDirection: 'column',
@@ -48,7 +48,7 @@ export default function Error({
       <p style={{ fontSize: 'var(--fs-13)', letterSpacing: '0.14em', textTransform: 'uppercase', margin: 0, color: '#931212' }}>
         This screen broke
       </p>
-      <p style={{ fontSize: 'var(--fs-11)', lineHeight: 1.6, color: 'rgba(229,225,219,0.55)', maxWidth: 320, margin: 0 }}>
+      <p style={{ fontSize: 'var(--fs-11)', lineHeight: 1.6, color: 'rgb(var(--ink-rgb) / 0.55)', maxWidth: 320, margin: 0 }}>
         Something on this page hit an error. Try again, or head back.
       </p>
 
@@ -57,9 +57,9 @@ export default function Error({
           style={{
             fontSize: 'var(--fs-10)',
             lineHeight: 1.5,
-            color: '#E5E1DB',
-            background: 'rgba(229,225,219,0.06)',
-            border: '1px solid rgba(229,225,219,0.25)',
+            color: 'var(--ink-100)',
+            background: 'rgb(var(--ink-rgb) / 0.06)',
+            border: '1px solid rgb(var(--ink-rgb) / 0.25)',
             padding: '10px 12px',
             margin: 0,
             maxWidth: '92vw',
@@ -78,8 +78,8 @@ export default function Error({
           onClick={() => reset()}
           style={{
             background: 'transparent',
-            color: '#E5E1DB',
-            border: '1px solid rgba(229,225,219,0.4)',
+            color: 'var(--ink-100)',
+            border: '1px solid rgb(var(--ink-rgb) / 0.4)',
             padding: '9px 18px',
             fontFamily: mono,
             fontSize: 'var(--fs-11)',
@@ -100,8 +100,8 @@ export default function Error({
           }}
           style={{
             background: 'transparent',
-            color: 'rgba(229,225,219,0.6)',
-            border: '1px solid rgba(229,225,219,0.2)',
+            color: 'rgb(var(--ink-rgb) / 0.6)',
+            border: '1px solid rgb(var(--ink-rgb) / 0.2)',
             padding: '9px 18px',
             fontFamily: mono,
             fontSize: 'var(--fs-11)',
@@ -121,7 +121,7 @@ export default function Error({
           fontSize: 'var(--fs-10)',
           letterSpacing: '0.1em',
           textTransform: 'uppercase',
-          color: 'rgba(229,225,219,0.4)',
+          color: 'rgb(var(--ink-rgb) / 0.4)',
           textDecoration: 'none',
         }}
       >

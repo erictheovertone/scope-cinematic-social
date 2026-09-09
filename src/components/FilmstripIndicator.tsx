@@ -25,7 +25,7 @@ export default function FilmstripIndicator({
   return (
     <span aria-hidden style={{ display: "inline-flex", gap, ...style }}>
       {Array.from({ length: cells }).map((_, i) => (
-        <span key={i} style={{ width: cellW, height: cellH, border: "0.5px solid #E5E1DB", opacity, display: "block", boxSizing: "border-box" }} />
+        <span key={i} style={{ width: cellW, height: cellH, border: "0.5px solid var(--ink-100)", opacity, display: "block", boxSizing: "border-box" }} />
       ))}
     </span>
   );

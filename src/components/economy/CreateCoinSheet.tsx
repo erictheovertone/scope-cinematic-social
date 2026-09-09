@@ -136,39 +136,39 @@ export default function CreateCoinSheet({
   return (
     <>
       <div onClick={working ? undefined : onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 560 }} />
-      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, margin: '0 auto', maxWidth: '30rem', background: '#080808', borderTop: '1px solid rgba(229,225,219,0.08)', zIndex: 561, padding: '24px 22px calc(40px + var(--safe-bottom))' }/* X3 §3 — bottom sheet: clear the home indicator */}>
-        <p style={{ ...SKB, fontSize: 'var(--fs-14)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.04em', margin: '0 0 4px' }}>CREATE YOUR COIN</p>
-        <p style={{ ...SKR, fontSize: 'var(--fs-11)', color: 'rgba(229,225,219,0.55)', margin: '0 0 18px', lineHeight: 1.5 }}>
+      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, margin: '0 auto', maxWidth: '30rem', background: '#080808', borderTop: '1px solid rgb(var(--ink-rgb) / 0.08)', zIndex: 561, padding: '24px 22px calc(40px + var(--safe-bottom))' }/* X3 §3 — bottom sheet: clear the home indicator */}>
+        <p style={{ ...SKB, fontSize: 'var(--fs-14)', color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.04em', margin: '0 0 4px' }}>CREATE YOUR COIN</p>
+        <p style={{ ...SKR, fontSize: 'var(--fs-11)', color: 'rgb(var(--ink-rgb) / 0.55)', margin: '0 0 18px', lineHeight: 1.5 }}>
           This post is live but has no coin yet. Create it to start earning on every trade.
         </p>
 
         {phase === 'done' ? (
           <div style={{ textAlign: 'center', padding: '14px 0' }}>
-            <p style={{ ...SKB, fontSize: 'var(--fs-12)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>[ FRAGMENTS CREATED ]</p>
+            <p style={{ ...SKB, fontSize: 'var(--fs-12)', color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>[ FRAGMENTS CREATED ]</p>
             {narration && (
-              <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: narration.startsWith('[') ? '#E5E1DB' : '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.12em', margin: '10px 0 0' }}>{narration}</p>
+              <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: narration.startsWith('[') ? 'var(--ink-100)' : 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.12em', margin: '10px 0 0' }}>{narration}</p>
             )}
           </div>
         ) : (
           <>
             <div style={{ marginBottom: 14 }}>
-              <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'rgba(229,225,219,0.5)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>TICKER</span>
+              <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'rgb(var(--ink-rgb) / 0.5)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>TICKER</span>
               {/* Bracket frame, not the $ cashtag — $ appears ONLY on money. */}
-              <div style={{ display: 'flex', alignItems: 'center', border: '1px solid rgba(229,225,219,0.18)', padding: '0 12px', marginTop: 6 }}>
-                <span style={{ ...SKB, fontSize: 'var(--fs-16)', color: '#E5E1DB' }}>[</span>
+              <div style={{ display: 'flex', alignItems: 'center', border: '1px solid rgb(var(--ink-rgb) / 0.18)', padding: '0 12px', marginTop: 6 }}>
+                <span style={{ ...SKB, fontSize: 'var(--fs-16)', color: 'var(--ink-100)' }}>[</span>
                 <input value={ticker} onChange={(e) => setTicker(normalizeTicker(e.target.value))} placeholder="TICKER" maxLength={6}
-                  style={{ ...SKB, fontSize: 'var(--fs-16)', color: '#E5E1DB', background: 'transparent', WebkitAppearance: 'none', appearance: 'none', caretColor: '#E5E1DB', border: 'none', outline: 'none', width: '100%', padding: '11px 8px', letterSpacing: '0.08em', textTransform: 'uppercase', textAlign: 'center' }} />
-                <span style={{ ...SKB, fontSize: 'var(--fs-16)', color: '#E5E1DB' }}>]</span>
+                  style={{ ...SKB, fontSize: 'var(--fs-16)', color: 'var(--ink-100)', background: 'transparent', WebkitAppearance: 'none', appearance: 'none', caretColor: 'var(--ink-100)', border: 'none', outline: 'none', width: '100%', padding: '11px 8px', letterSpacing: '0.08em', textTransform: 'uppercase', textAlign: 'center' }} />
+                <span style={{ ...SKB, fontSize: 'var(--fs-16)', color: 'var(--ink-100)' }}>]</span>
               </div>
-              {tickerError(ticker) && <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: '#E5E1DB', margin: '6px 0 0', textTransform: 'uppercase' }}>{tickerError(ticker)}</p>}
+              {tickerError(ticker) && <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: 'var(--ink-100)', margin: '6px 0 0', textTransform: 'uppercase' }}>{tickerError(ticker)}</p>}
             </div>
 
             <div style={{ marginBottom: 18 }}>
-              <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'rgba(229,225,219,0.5)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>BACK YOUR POST <span style={{ color: 'rgba(229,225,219,0.3)' }}>· OPTIONAL</span></span>
-              <div style={{ display: 'flex', alignItems: 'center', border: '1px solid rgba(229,225,219,0.18)', padding: '0 12px', marginTop: 6 }}>
-                <span style={{ ...SKB, fontSize: 'var(--fs-16)', color: selfBuyUsd ? '#E5E1DB' : 'rgba(229,225,219,0.3)' }}>$</span>
+              <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'rgb(var(--ink-rgb) / 0.5)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>BACK YOUR POST <span style={{ color: 'rgb(var(--ink-rgb) / 0.3)' }}>· OPTIONAL</span></span>
+              <div style={{ display: 'flex', alignItems: 'center', border: '1px solid rgb(var(--ink-rgb) / 0.18)', padding: '0 12px', marginTop: 6 }}>
+                <span style={{ ...SKB, fontSize: 'var(--fs-16)', color: selfBuyUsd ? 'var(--ink-100)' : 'rgb(var(--ink-rgb) / 0.3)' }}>$</span>
                 <input inputMode="decimal" value={selfBuyUsd} onChange={(e) => setSelfBuyUsd(e.target.value.replace(/[^0-9.]/g, ''))} placeholder="0"
-                  style={{ ...SKB, fontSize: 'var(--fs-16)', color: '#E5E1DB', background: 'transparent', WebkitAppearance: 'none', appearance: 'none', caretColor: '#E5E1DB', border: 'none', outline: 'none', width: '100%', padding: '11px 6px' }} />
+                  style={{ ...SKB, fontSize: 'var(--fs-16)', color: 'var(--ink-100)', background: 'transparent', WebkitAppearance: 'none', appearance: 'none', caretColor: 'var(--ink-100)', border: 'none', outline: 'none', width: '100%', padding: '11px 6px' }} />
               </div>
             </div>
 
@@ -176,26 +176,26 @@ export default function CreateCoinSheet({
 
             {working ? (
               /* THE WHEEL — pressed button transformed into live narration. */
-              <div style={{ width: '100%', border: '1px solid rgba(229,225,219,0.55)', padding: '13px 0', marginBottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, minHeight: 46 }}>
+              <div style={{ width: '100%', border: '1px solid rgb(var(--ink-rgb) / 0.55)', padding: '13px 0', marginBottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, minHeight: 46 }}>
                 <ScopeLoader size="sm" />
-                <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
                   {narration ?? 'CREATING YOUR COIN…'}
                 </span>
               </div>
             ) : (
               <button onClick={run} disabled={!isValidTicker(ticker)}
-                style={{ width: '100%', background: !isValidTicker(ticker) ? 'rgba(229,225,219,0.4)' : '#E5E1DB', border: 'none', cursor: !isValidTicker(ticker) ? 'default' : 'pointer', padding: '14px 0', marginBottom: 8 }}>
+                style={{ width: '100%', background: !isValidTicker(ticker) ? 'rgb(var(--ink-rgb) / 0.4)' : 'var(--ink-100)', border: 'none', cursor: !isValidTicker(ticker) ? 'default' : 'pointer', padding: '14px 0', marginBottom: 8 }}>
                 {/* Brief X2 §3 — the ENABLED state fills solid ivory → its label must go charcoal
                     (--on-ink); the disabled state is a translucent grey where ivory reads fine. */}
-                <span style={{ ...SKB, fontSize: 'var(--fs-12)', color: isValidTicker(ticker) ? 'var(--on-ink)' : '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                <span style={{ ...SKB, fontSize: 'var(--fs-12)', color: isValidTicker(ticker) ? 'var(--on-ink)' : 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                   {/* Amount = the consented spend; "BACK" banned from the button. */}
                   {!isValidTicker(ticker) ? 'ENTER A TICKER'
                     : (() => { const b = parseFloat(selfBuyUsd); return isFinite(b) && b > 0 ? `CREATE COIN · $${b.toFixed(2)}` : 'CREATE COIN'; })()}
                 </span>
               </button>
             )}
-            <button onClick={onClose} disabled={working} style={{ width: '100%', background: 'transparent', border: '1px solid rgba(229,225,219,0.12)', cursor: working ? 'default' : 'pointer', padding: '12px 0' }}>
-              <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{phase === 'failed' ? 'CLOSE' : 'NOT NOW'}</span>
+            <button onClick={onClose} disabled={working} style={{ width: '100%', background: 'transparent', border: '1px solid rgb(var(--ink-rgb) / 0.12)', cursor: working ? 'default' : 'pointer', padding: '12px 0' }}>
+              <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'rgb(var(--ink-rgb) / 0.4)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{phase === 'failed' ? 'CLOSE' : 'NOT NOW'}</span>
             </button>
           </>
         )}

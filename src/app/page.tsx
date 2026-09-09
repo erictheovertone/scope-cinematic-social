@@ -492,14 +492,14 @@ export default function Home() {
           {hasMore && posts.length > 0 && (
             <div ref={sentinelRef} style={{ height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               {loadingMore && (
-                <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: 'var(--fs-9)', color: 'rgba(229,225,219,0.35)', letterSpacing: '0.14em', textTransform: 'uppercase' }}>LOADING…</span>
+                <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: 'var(--fs-9)', color: 'rgb(var(--ink-rgb) / 0.35)', letterSpacing: '0.14em', textTransform: 'uppercase' }}>LOADING…</span>
               )}
             </div>
           )}
           {/* Brief M13 — end-of-feed state (cursor exhausted). */}
           {!hasMore && posts.length > 0 && (
             <div style={{ height: 48, display: 'flex', alignItems: 'center', justifyContent: 'center', paddingBottom: 'calc(12px + var(--safe-bottom))' }}>
-              <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: 'var(--fs-9)', color: 'rgba(229,225,219,0.28)', letterSpacing: '0.14em', textTransform: 'uppercase' }}>You’re all caught up</span>
+              <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: 'var(--fs-9)', color: 'rgb(var(--ink-rgb) / 0.28)', letterSpacing: '0.14em', textTransform: 'uppercase' }}>You’re all caught up</span>
             </div>
           )}
         </div>

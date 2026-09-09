@@ -89,7 +89,7 @@ function CellOverlay({
   height: number;
   isFirst: boolean;
 }) {
-  const border = selected ? "1px solid #E5E1DB" : "1px solid #E5E1DB";
+  const border = selected ? "1px solid var(--ink-100)" : "1px solid var(--ink-100)";
   const ratioLS = layout.ratioLabel === "4:3" ? "2.17px" : "1.33px";
 
   return (
@@ -100,7 +100,7 @@ function CellOverlay({
               "plain white box"). Ivory fill, dark legible text, both states. §3b cushion. */}
           <span style={{
             position: "absolute", top: 8, left: 9,
-            background: "#E5E1DB", height: 13, padding: "0 5px",
+            background: "var(--ink-100)", height: 13, padding: "0 5px",
             display: "flex", alignItems: "center",
             fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 'var(--fs-8)',
             color: "#050505", letterSpacing: "-0.16px", whiteSpace: "nowrap", lineHeight: 1, zIndex: 1,
@@ -109,10 +109,10 @@ function CellOverlay({
           </span>
 
           <div style={{ position: "absolute", top: 26, left: 9, display: "flex", alignItems: "center" }}>
-            <span style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 'var(--fs-7)', color: "#E5E1DB", letterSpacing: "-0.14px" }}>
+            <span style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 'var(--fs-7)', color: "var(--ink-100)", letterSpacing: "-0.14px" }}>
               {"AR     "}
             </span>
-            <span style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 'var(--fs-7)', color: "#E5E1DB", letterSpacing: ratioLS, marginLeft: 4 }}>
+            <span style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 'var(--fs-7)', color: "var(--ink-100)", letterSpacing: ratioLS, marginLeft: 4 }}>
               {layout.ratioLabel}
             </span>
           </div>
@@ -121,7 +121,7 @@ function CellOverlay({
             const [lp, rp] = layout.resolution.split("x");
             const ts: React.CSSProperties = {
               fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 'var(--fs-7)',
-              color: "rgba(229,225,219,0.5)", letterSpacing: "22px", whiteSpace: "nowrap", lineHeight: 1,
+              color: "rgb(var(--ink-rgb) / 0.5)", letterSpacing: "22px", whiteSpace: "nowrap", lineHeight: 1,
             };
             return (
               <div style={{ position: "absolute", top: "50%", transform: "translateY(-50%)", left: 7, width: 371, display: "flex", alignItems: "center", overflow: "visible" }}>
@@ -149,7 +149,7 @@ function LayoutSection({
   onSelect: () => void;
 }) {
   const cells = cellDimensions(layout);
-  const border = selected ? "1px solid #E5E1DB" : "1px solid #E5E1DB";
+  const border = selected ? "1px solid var(--ink-100)" : "1px solid var(--ink-100)";
 
   if (layout.id === "collage") {
     return (
@@ -159,12 +159,12 @@ function LayoutSection({
             <div key={i} style={{ position: "absolute", left: cell.left, top: cell.top, width: cell.width, height: cell.height, border, background: "transparent" }}>
               {i === 0 && (
                 <>
-                  <span style={{ position: "absolute", top: 8, left: 9, background: "#E5E1DB", height: 13, padding: "0 5px", display: "flex", alignItems: "center", fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 'var(--fs-8)', color: "#050505", letterSpacing: "-0.16px", whiteSpace: "nowrap", lineHeight: 1 }}>
+                  <span style={{ position: "absolute", top: 8, left: 9, background: "var(--ink-100)", height: 13, padding: "0 5px", display: "flex", alignItems: "center", fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 'var(--fs-8)', color: "#050505", letterSpacing: "-0.16px", whiteSpace: "nowrap", lineHeight: 1 }}>
                     {layout.label}
                   </span>
                   <div style={{ position: "absolute", top: 26, left: 9, display: "flex", alignItems: "center" }}>
-                    <span style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 'var(--fs-7)', color: "#E5E1DB", letterSpacing: "-0.14px" }}>AR{"     "}</span>
-                    <span style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 'var(--fs-7)', color: "#E5E1DB", letterSpacing: "1.33px", marginLeft: 4 }}>mixed</span>
+                    <span style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 'var(--fs-7)', color: "var(--ink-100)", letterSpacing: "-0.14px" }}>AR{"     "}</span>
+                    <span style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 'var(--fs-7)', color: "var(--ink-100)", letterSpacing: "1.33px", marginLeft: 4 }}>mixed</span>
                   </div>
                 </>
               )}
@@ -206,26 +206,26 @@ function ConfirmationView({
     if (layout.id === "collage") {
       return (
         <div style={{ position: "absolute", inset: 0, overflow: "hidden", display: "flex", flexDirection: "column", gap: 1 }}>
-          <div style={{ border: "1px solid #E5E1DB", aspectRatio: "2.39/1", flexShrink: 0 }} />
+          <div style={{ border: "1px solid var(--ink-100)", aspectRatio: "2.39/1", flexShrink: 0 }} />
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 1, flexShrink: 0 }}>
-            <div style={{ border: "1px solid #E5E1DB", aspectRatio: "1/1" }} />
-            <div style={{ border: "1px solid #E5E1DB", aspectRatio: "1/1" }} />
-            <div style={{ border: "1px solid #E5E1DB", aspectRatio: "1/1" }} />
+            <div style={{ border: "1px solid var(--ink-100)", aspectRatio: "1/1" }} />
+            <div style={{ border: "1px solid var(--ink-100)", aspectRatio: "1/1" }} />
+            <div style={{ border: "1px solid var(--ink-100)", aspectRatio: "1/1" }} />
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1, flexShrink: 0 }}>
-            <div style={{ border: "1px solid #E5E1DB", aspectRatio: "16/9" }} />
-            <div style={{ border: "1px solid #E5E1DB", aspectRatio: "16/9" }} />
+            <div style={{ border: "1px solid var(--ink-100)", aspectRatio: "16/9" }} />
+            <div style={{ border: "1px solid var(--ink-100)", aspectRatio: "16/9" }} />
           </div>
-          <div style={{ border: "1px solid #E5E1DB", aspectRatio: "1.85/1", flexShrink: 0 }} />
+          <div style={{ border: "1px solid var(--ink-100)", aspectRatio: "1.85/1", flexShrink: 0 }} />
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 1, flexShrink: 0 }}>
-            <div style={{ border: "1px solid #E5E1DB", aspectRatio: "1/1" }} />
-            <div style={{ border: "1px solid #E5E1DB", aspectRatio: "1/1" }} />
-            <div style={{ border: "1px solid #E5E1DB", aspectRatio: "1/1" }} />
-            <div style={{ border: "1px solid #E5E1DB", aspectRatio: "1/1" }} />
+            <div style={{ border: "1px solid var(--ink-100)", aspectRatio: "1/1" }} />
+            <div style={{ border: "1px solid var(--ink-100)", aspectRatio: "1/1" }} />
+            <div style={{ border: "1px solid var(--ink-100)", aspectRatio: "1/1" }} />
+            <div style={{ border: "1px solid var(--ink-100)", aspectRatio: "1/1" }} />
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 1, flexShrink: 0 }}>
-            <div style={{ border: "1px solid #E5E1DB", aspectRatio: "2.39/1" }} />
-            <div style={{ border: "1px solid #E5E1DB", aspectRatio: "1/1" }} />
+            <div style={{ border: "1px solid var(--ink-100)", aspectRatio: "2.39/1" }} />
+            <div style={{ border: "1px solid var(--ink-100)", aspectRatio: "1/1" }} />
           </div>
         </div>
       );
@@ -235,7 +235,7 @@ function ConfirmationView({
       return (
         <div style={{ position: "absolute", inset: 0, overflow: "hidden", display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 1, alignContent: "start" }}>
           {Array.from({ length: 30 }).map((_, i) => (
-            <div key={i} style={{ border: "1px solid #E5E1DB", aspectRatio: "4/3" }} />
+            <div key={i} style={{ border: "1px solid var(--ink-100)", aspectRatio: "4/3" }} />
           ))}
         </div>
       );
@@ -245,7 +245,7 @@ function ConfirmationView({
       return (
         <div style={{ position: "absolute", inset: 0, overflow: "hidden", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1, alignContent: "start" }}>
           {Array.from({ length: 30 }).map((_, i) => (
-            <div key={i} style={{ border: "1px solid #E5E1DB", aspectRatio: `${layout.ratio}/1` }} />
+            <div key={i} style={{ border: "1px solid var(--ink-100)", aspectRatio: `${layout.ratio}/1` }} />
           ))}
         </div>
       );
@@ -255,7 +255,7 @@ function ConfirmationView({
     return (
       <div style={{ position: "absolute", inset: 0, overflow: "hidden", display: "flex", flexDirection: "column", gap: 1, alignItems: "stretch", justifyContent: "flex-start" }}>
         {Array.from({ length: 8 }).map((_, i) => (
-          <div key={i} style={{ border: "1px solid #E5E1DB", width: "100%", aspectRatio: `${layout.ratio}/1`, flexShrink: 0 }} />
+          <div key={i} style={{ border: "1px solid var(--ink-100)", width: "100%", aspectRatio: `${layout.ratio}/1`, flexShrink: 0 }} />
         ))}
       </div>
     );
@@ -273,12 +273,12 @@ function ConfirmationView({
         display: "flex", justifyContent: "space-between", alignItems: "center",
         padding: "calc(14px + var(--safe-top)) 8px 10px",
       }}>
-        <span style={{ ...SKB, background: "#E5E1DB", padding: "2px 6px", fontSize: 'var(--fs-9)', color: "#050505", letterSpacing: "-0.16px" }}>
+        <span style={{ ...SKB, background: "var(--ink-100)", padding: "2px 6px", fontSize: 'var(--fs-9)', color: "#050505", letterSpacing: "-0.16px" }}>
           {layout.label}
         </span>
         <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-          <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "#E5E1DB" }}>AR</span>
-          <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "#E5E1DB" }}>{layout.ratioLabel}</span>
+          <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "var(--ink-100)" }}>AR</span>
+          <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "var(--ink-100)" }}>{layout.ratioLabel}</span>
         </div>
       </div>
 
@@ -291,14 +291,14 @@ function ConfirmationView({
       }}>
         <button
           onClick={onBack}
-          style={{ background: "transparent", border: "1px solid rgba(229,225,219,0.3)", cursor: "pointer", padding: "8px 20px" }}
+          style={{ background: "transparent", border: "1px solid rgb(var(--ink-rgb) / 0.3)", cursor: "pointer", padding: "8px 20px" }}
         >
-          <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "rgba(229,225,219,0.6)", textTransform: "uppercase", letterSpacing: "0.1em" }}>BACK</span>
+          <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "rgb(var(--ink-rgb) / 0.6)", textTransform: "uppercase", letterSpacing: "0.1em" }}>BACK</span>
         </button>
         <button
           onClick={onConfirm}
           disabled={saving}
-          style={{ background: saving ? "rgba(229,225,219,0.4)" : "#E5E1DB", border: "none", cursor: saving ? "default" : "pointer", padding: "8px 24px" }}
+          style={{ background: saving ? "rgb(var(--ink-rgb) / 0.4)" : "var(--ink-100)", border: "none", cursor: saving ? "default" : "pointer", padding: "8px 24px" }}
         >
           <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "#050505", textTransform: "uppercase", letterSpacing: "0.1em" }}>
             {saving ? "SAVING..." : "CONFIRM"}
@@ -447,7 +447,7 @@ export default function GridLayoutPage() {
             <div style={{ position: "absolute", inset: 0, overflow: "hidden", display: "flex", flexDirection: "column", gap: 1, alignItems: "stretch", justifyContent: "flex-start" }}>
               {Array.from({ length: 8 }).map((_, i) => (
                 <div key={i} style={{
-                  border: "1px solid #E5E1DB",
+                  border: "1px solid var(--ink-100)",
                   width: "100%",
                   aspectRatio: `${animatingLayout!.ratio}/1`,
                   flexShrink: 0,
@@ -463,7 +463,7 @@ export default function GridLayoutPage() {
             <div style={{ position: "absolute", inset: 0, overflow: "hidden", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1, alignContent: "start" }}>
               {Array.from({ length: 30 }).map((_, i) => (
                 <div key={i} style={{
-                  border: "1px solid #E5E1DB",
+                  border: "1px solid var(--ink-100)",
                   aspectRatio: `${animatingLayout!.ratio}/1`,
                   animation: `drawIn 0.25s ease ${0.05 + i * 0.025}s both`,
                   opacity: 0,
@@ -477,7 +477,7 @@ export default function GridLayoutPage() {
             <div style={{ position: "absolute", inset: 0, overflow: "hidden", display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 1, alignContent: "start" }}>
               {Array.from({ length: 30 }).map((_, i) => (
                 <div key={i} style={{
-                  border: "1px solid #E5E1DB",
+                  border: "1px solid var(--ink-100)",
                   aspectRatio: "4/3",
                   animation: `drawIn 0.25s ease ${0.05 + i * 0.02}s both`,
                   opacity: 0,
@@ -489,26 +489,26 @@ export default function GridLayoutPage() {
           )}
           {animType === "collage" && (
             <div style={{ position: "absolute", inset: 0, overflow: "hidden", display: "flex", flexDirection: "column", gap: 1 }}>
-              <div style={{ border: "1px solid #E5E1DB", aspectRatio: "2.39/1", flexShrink: 0, animation: "scatterInA 0.35s cubic-bezier(0.16,1,0.3,1) 0.05s both", opacity: 0 }} />
+              <div style={{ border: "1px solid var(--ink-100)", aspectRatio: "2.39/1", flexShrink: 0, animation: "scatterInA 0.35s cubic-bezier(0.16,1,0.3,1) 0.05s both", opacity: 0 }} />
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 1, flexShrink: 0 }}>
                 {["scatterInB", "scatterInC", "scatterInD"].map((anim, i) => (
-                  <div key={i} style={{ border: "1px solid #E5E1DB", aspectRatio: "1/1", animation: `${anim} 0.3s cubic-bezier(0.16,1,0.3,1) ${0.12 + i * 0.05}s both`, opacity: 0 }} />
+                  <div key={i} style={{ border: "1px solid var(--ink-100)", aspectRatio: "1/1", animation: `${anim} 0.3s cubic-bezier(0.16,1,0.3,1) ${0.12 + i * 0.05}s both`, opacity: 0 }} />
                 ))}
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1, flexShrink: 0 }}>
                 {["scatterInA", "scatterInB"].map((anim, i) => (
-                  <div key={i} style={{ border: "1px solid #E5E1DB", aspectRatio: "16/9", animation: `${anim} 0.3s cubic-bezier(0.16,1,0.3,1) ${0.27 + i * 0.05}s both`, opacity: 0 }} />
+                  <div key={i} style={{ border: "1px solid var(--ink-100)", aspectRatio: "16/9", animation: `${anim} 0.3s cubic-bezier(0.16,1,0.3,1) ${0.27 + i * 0.05}s both`, opacity: 0 }} />
                 ))}
               </div>
-              <div style={{ border: "1px solid #E5E1DB", aspectRatio: "1.85/1", flexShrink: 0, animation: "scatterInC 0.35s cubic-bezier(0.16,1,0.3,1) 0.37s both", opacity: 0 }} />
+              <div style={{ border: "1px solid var(--ink-100)", aspectRatio: "1.85/1", flexShrink: 0, animation: "scatterInC 0.35s cubic-bezier(0.16,1,0.3,1) 0.37s both", opacity: 0 }} />
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 1, flexShrink: 0 }}>
                 {["scatterInD", "scatterInA", "scatterInB", "scatterInC"].map((anim, i) => (
-                  <div key={i} style={{ border: "1px solid #E5E1DB", aspectRatio: "1/1", animation: `${anim} 0.25s cubic-bezier(0.16,1,0.3,1) ${0.42 + i * 0.04}s both`, opacity: 0 }} />
+                  <div key={i} style={{ border: "1px solid var(--ink-100)", aspectRatio: "1/1", animation: `${anim} 0.25s cubic-bezier(0.16,1,0.3,1) ${0.42 + i * 0.04}s both`, opacity: 0 }} />
                 ))}
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 1, flexShrink: 0 }}>
-                <div style={{ border: "1px solid #E5E1DB", aspectRatio: "2.39/1", animation: "scatterInD 0.3s cubic-bezier(0.16,1,0.3,1) 0.58s both", opacity: 0 }} />
-                <div style={{ border: "1px solid #E5E1DB", aspectRatio: "1/1", animation: "scatterInA 0.3s cubic-bezier(0.16,1,0.3,1) 0.62s both", opacity: 0 }} />
+                <div style={{ border: "1px solid var(--ink-100)", aspectRatio: "2.39/1", animation: "scatterInD 0.3s cubic-bezier(0.16,1,0.3,1) 0.58s both", opacity: 0 }} />
+                <div style={{ border: "1px solid var(--ink-100)", aspectRatio: "1/1", animation: "scatterInA 0.3s cubic-bezier(0.16,1,0.3,1) 0.62s both", opacity: 0 }} />
               </div>
             </div>
           )}
@@ -522,15 +522,15 @@ export default function GridLayoutPage() {
             animation: "slideDown 0.4s cubic-bezier(0.16,1,0.3,1) 0.15s both",
             opacity: 0,
           }}>
-            <div style={{ backgroundColor: "#E5E1DB", padding: "6px 14px" }}>
+            <div style={{ backgroundColor: "var(--ink-100)", padding: "6px 14px" }}>
               <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: "#000", textTransform: "uppercase" }}>
                 {animatingLayout.label}
               </span>
             </div>
             {animatingLayout.id !== "collage" && (
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <span style={{ ...SKB, fontSize: 'var(--fs-16)', color: "#E5E1DB" }}>AR</span>
-                <span style={{ ...SKB, fontSize: 'var(--fs-16)', color: "#E5E1DB" }}>{animatingLayout.ratioLabel}</span>
+                <span style={{ ...SKB, fontSize: 'var(--fs-16)', color: "var(--ink-100)" }}>AR</span>
+                <span style={{ ...SKB, fontSize: 'var(--fs-16)', color: "var(--ink-100)" }}>{animatingLayout.ratioLabel}</span>
               </div>
             )}
           </div>

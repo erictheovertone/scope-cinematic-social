@@ -24,7 +24,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 
 const SKB: React.CSSProperties = { fontFamily: "var(--font-display)", fontWeight: 700 };
 const FPS = 30; // assumed frame rate for frame-step + the :ff readout (HLS carries no exact fps)
-const INK = "rgba(229,225,219,0.4)";
+const INK = "rgb(var(--ink-rgb) / 0.4)";
 const HIDE_ON_PLAY_MS = 400; // P3a §1 — hide this long after playback starts
 const IDLE_MS = 3000;        // hover-idle hide
 
@@ -182,8 +182,8 @@ export default function VideoTransport({ videoEl, platform, paused, onTogglePaus
       {paused && (
         <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
           <div style={{ display: "flex", gap: 6, opacity: pausePulse ? 0.85 : 0.32, transition: "opacity 600ms ease" }}>
-            <span style={{ width: 4, height: 30, background: "#E5E1DB", filter: "drop-shadow(0 1px 4px rgba(0,0,0,0.7))" }} />
-            <span style={{ width: 4, height: 30, background: "#E5E1DB", filter: "drop-shadow(0 1px 4px rgba(0,0,0,0.7))" }} />
+            <span style={{ width: 4, height: 30, background: "var(--ink-100)", filter: "drop-shadow(0 1px 4px rgba(0,0,0,0.7))" }} />
+            <span style={{ width: 4, height: 30, background: "var(--ink-100)", filter: "drop-shadow(0 1px 4px rgba(0,0,0,0.7))" }} />
           </div>
         </div>
       )}
@@ -202,41 +202,41 @@ export default function VideoTransport({ videoEl, platform, paused, onTogglePaus
           {/* scrub bar + A–B marks/fill */}
           <div ref={barRef} onPointerDown={onScrubStart}
             style={{ position: "relative", height: 14, display: "flex", alignItems: "center", cursor: "pointer" }}>
-            <div style={{ position: "absolute", left: 0, right: 0, height: 2, background: "rgba(229,225,219,0.22)" }} />
+            <div style={{ position: "absolute", left: 0, right: 0, height: 2, background: "rgb(var(--ink-rgb) / 0.22)" }} />
             {/* A–B range fill (15% ivory) */}
             {lo != null && hi != null && (
-              <div style={{ position: "absolute", left: `${pct(lo)}%`, width: `${pct(hi) - pct(lo)}%`, top: 4, bottom: 4, background: "rgba(229,225,219,0.15)" }} />
+              <div style={{ position: "absolute", left: `${pct(lo)}%`, width: `${pct(hi) - pct(lo)}%`, top: 4, bottom: 4, background: "rgb(var(--ink-rgb) / 0.15)" }} />
             )}
-            <div style={{ position: "absolute", left: 0, width: `${frac * 100}%`, height: 2, background: "#E5E1DB" }} />
+            <div style={{ position: "absolute", left: 0, width: `${frac * 100}%`, height: 2, background: "var(--ink-100)" }} />
             {/* IN mark — [ bracket + × clear */}
             {aSet && (
               <div style={{ position: "absolute", left: `${pct(ab.a as number)}%`, top: -3, bottom: -3, display: "flex", flexDirection: "column", alignItems: "center", transform: "translateX(-50%)" }}>
-                <span style={{ ...SKB, fontSize: 11, lineHeight: 1, color: "#E5E1DB", filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.8))" }}>[</span>
+                <span style={{ ...SKB, fontSize: 11, lineHeight: 1, color: "var(--ink-100)", filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.8))" }}>[</span>
                 <button onClick={(e) => { e.stopPropagation(); setAb((p) => ({ ...p, a: null })); reveal(IDLE_MS); }} aria-label="Clear IN"
-                  style={{ position: "absolute", top: -12, background: "transparent", border: "none", cursor: "pointer", padding: 2, ...SKB, fontSize: 8, color: "rgba(229,225,219,0.6)", lineHeight: 1 }}>×</button>
+                  style={{ position: "absolute", top: -12, background: "transparent", border: "none", cursor: "pointer", padding: 2, ...SKB, fontSize: 8, color: "rgb(var(--ink-rgb) / 0.6)", lineHeight: 1 }}>×</button>
               </div>
             )}
             {/* OUT mark — ] bracket + × clear */}
             {bSet && (
               <div style={{ position: "absolute", left: `${pct(ab.b as number)}%`, top: -3, bottom: -3, display: "flex", flexDirection: "column", alignItems: "center", transform: "translateX(-50%)" }}>
-                <span style={{ ...SKB, fontSize: 11, lineHeight: 1, color: "#E5E1DB", filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.8))" }}>]</span>
+                <span style={{ ...SKB, fontSize: 11, lineHeight: 1, color: "var(--ink-100)", filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.8))" }}>]</span>
                 <button onClick={(e) => { e.stopPropagation(); setAb((p) => ({ ...p, b: null })); reveal(IDLE_MS); }} aria-label="Clear OUT"
-                  style={{ position: "absolute", top: -12, background: "transparent", border: "none", cursor: "pointer", padding: 2, ...SKB, fontSize: 8, color: "rgba(229,225,219,0.6)", lineHeight: 1 }}>×</button>
+                  style={{ position: "absolute", top: -12, background: "transparent", border: "none", cursor: "pointer", padding: 2, ...SKB, fontSize: 8, color: "rgb(var(--ink-rgb) / 0.6)", lineHeight: 1 }}>×</button>
               </div>
             )}
             {/* playhead */}
-            <div style={{ position: "absolute", left: `${frac * 100}%`, width: 9, height: 9, borderRadius: "50%", background: "#E5E1DB", transform: "translateX(-50%)", boxShadow: "0 1px 4px rgba(0,0,0,0.6)" }} />
+            <div style={{ position: "absolute", left: `${frac * 100}%`, width: 9, height: 9, borderRadius: "50%", background: "var(--ink-100)", transform: "translateX(-50%)", boxShadow: "0 1px 4px rgba(0,0,0,0.6)" }} />
           </div>
           {/* readout: timecode · speed · A–B state */}
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-            <span style={{ ...SKB, fontSize: 10, letterSpacing: "0.08em", color: "rgba(229,225,219,0.55)", fontVariantNumeric: "tabular-nums" }}>{fmtTC(cur)} / {fmtTC(dur)}</span>
+            <span style={{ ...SKB, fontSize: 10, letterSpacing: "0.08em", color: "rgb(var(--ink-rgb) / 0.55)", fontVariantNumeric: "tabular-nums" }}>{fmtTC(cur)} / {fmtTC(dur)}</span>
             <div style={{ display: "flex", gap: 4, marginLeft: "auto" }}>
               {[0.5, 1, 1.5, 2].map((s) => (
                 <button key={s} onClick={(e) => { e.stopPropagation(); setSpeed(s); reveal(IDLE_MS); }}
-                  style={{ ...SKB, fontSize: 9.5, letterSpacing: "0.04em", padding: "3px 6px", cursor: "pointer", border: "none", background: speed === s ? "#E5E1DB" : "transparent", color: speed === s ? "var(--on-ink)" : "rgba(229,225,219,0.5)" }}>{s}×</button>
+                  style={{ ...SKB, fontSize: 9.5, letterSpacing: "0.04em", padding: "3px 6px", cursor: "pointer", border: "none", background: speed === s ? "var(--ink-100)" : "transparent", color: speed === s ? "var(--on-ink)" : "rgb(var(--ink-rgb) / 0.5)" }}>{s}×</button>
               ))}
             </div>
-            <span style={{ ...SKB, fontSize: 9, letterSpacing: "0.1em", color: lo != null ? "rgba(229,225,219,0.7)" : "rgba(229,225,219,0.28)", textTransform: "uppercase" }}>
+            <span style={{ ...SKB, fontSize: 9, letterSpacing: "0.1em", color: lo != null ? "rgb(var(--ink-rgb) / 0.7)" : "rgb(var(--ink-rgb) / 0.28)", textTransform: "uppercase" }}>
               {lo != null ? "A–B LOOP" : "I / O  A–B"}
             </span>
           </div>
@@ -251,10 +251,10 @@ export default function VideoTransport({ videoEl, platform, paused, onTogglePaus
         >
           <div style={{ position: "relative", width: "100%", height: 1 }}>
             <div style={{ position: "absolute", left: 0, right: 0, height: 1, background: INK }} />
-            <div style={{ position: "absolute", left: 0, width: `${frac * 100}%`, height: 1, background: "#E5E1DB" }} />
+            <div style={{ position: "absolute", left: 0, width: `${frac * 100}%`, height: 1, background: "var(--ink-100)" }} />
             {desktop && !isPro && (
               <button onClick={(e) => { e.stopPropagation(); onUpsell(); }} aria-label="Scope Pro"
-                style={{ position: "absolute", right: 4, bottom: 3, background: "transparent", border: "none", cursor: "pointer", padding: 2, fontFamily: "var(--font-black)", fontWeight: 900, fontSize: 8, letterSpacing: "0.12em", color: "rgba(229,225,219,0.3)" }}>PRO</button>
+                style={{ position: "absolute", right: 4, bottom: 3, background: "transparent", border: "none", cursor: "pointer", padding: 2, fontFamily: "var(--font-black)", fontWeight: 900, fontSize: 8, letterSpacing: "0.12em", color: "rgb(var(--ink-rgb) / 0.3)" }}>PRO</button>
             )}
           </div>
         </div>

@@ -256,7 +256,7 @@ export default function PublicProfilePage() {
 
   if (loaded && notFound) return (
     <div className="bg-black w-full app-shell screen-min mx-auto flex items-center justify-center">
-      <p style={{ ...SKB, fontSize: 'var(--fs-11)', color: "#E5E1DB" }}>PROFILE NOT FOUND</p>
+      <p style={{ ...SKB, fontSize: 'var(--fs-11)', color: "var(--ink-100)" }}>PROFILE NOT FOUND</p>
     </div>
   );
 
@@ -336,8 +336,8 @@ export default function PublicProfilePage() {
                         triangular, pointing up-and-right), thin ivory stroke matching the
                         house-icon language (1.6 weight, round joins). Replaces the envelope. */}
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                      <path d="M21.5 3 L2.5 9.8 L11 13 L14 21.5 L21.5 3 Z" stroke="#E5E1DB" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-                      <path d="M11 13 L21.5 3" stroke="#E5E1DB" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M21.5 3 L2.5 9.8 L11 13 L14 21.5 L21.5 3 Z" stroke="var(--ink-100)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M11 13 L21.5 3" stroke="var(--ink-100)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   </button>
                 )}
@@ -371,7 +371,7 @@ export default function PublicProfilePage() {
         <div style={{ position: 'fixed', left: flyer.x, top: flyer.y, zIndex: 1300, pointerEvents: 'none' }}>
           <div style={{ animation: 'follow-fly-x 560ms cubic-bezier(0.2,0.7,0.3,1) both', ['--fx' as string]: `${flyer.dx}px` }}>
             <div style={{ animation: 'follow-fly-y 560ms cubic-bezier(0.55,0,0.85,0.55) both', ['--fy' as string]: `${flyer.dy}px` }}>
-              <div style={{ width: 11, height: 11, borderRadius: '50%', background: '#E5E1DB', boxShadow: '0 0 8px rgba(229,225,219,0.7)', transform: 'translate(-50%, -50%)' }} />
+              <div style={{ width: 11, height: 11, borderRadius: '50%', background: 'var(--ink-100)', boxShadow: '0 0 8px rgb(var(--ink-rgb) / 0.7)', transform: 'translate(-50%, -50%)' }} />
             </div>
           </div>
         </div>,
@@ -381,7 +381,7 @@ export default function PublicProfilePage() {
         @keyframes follow-fly-x { from { transform: translateX(0); } to { transform: translateX(var(--fx)); } }
         @keyframes follow-fly-y { from { transform: translateY(0) scale(1); opacity: 1; } to { transform: translateY(var(--fy)) scale(0.4); opacity: 0.15; } }
         @keyframes follow-pop { 0% { transform: scale(1); } 40% { transform: scale(1.08); } 100% { transform: scale(1); } }
-        @keyframes i-land-pulse { 0% { transform: scale(1); filter: none; } 40% { transform: scale(1.25); filter: drop-shadow(0 0 6px rgba(229,225,219,0.9)); } 100% { transform: scale(1); filter: none; } }
+        @keyframes i-land-pulse { 0% { transform: scale(1); filter: none; } 40% { transform: scale(1.25); filter: drop-shadow(0 0 6px rgb(var(--ink-rgb) / 0.9)); } 100% { transform: scale(1); filter: none; } }
       `}</style>
 
       {/* Frame icon — appears when header is hidden, tapping snaps header back */}
@@ -458,7 +458,7 @@ export default function PublicProfilePage() {
           </div>
         ) : posts.length === 0 ? (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', flex: 1, minHeight: '50vh', paddingTop: gridSpacerCss(gridSpacer) }}>
-            <p style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase' }}>NO POSTS YET</p>
+            <p style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'rgb(var(--ink-rgb) / 0.4)', textTransform: 'uppercase' }}>NO POSTS YET</p>
           </div>
         ) : (
           <div ref={gridScrollRef} className="overflow-y-auto h-full px-[1px]" onScroll={(e) => {
@@ -517,13 +517,13 @@ export default function PublicProfilePage() {
       {/* Decks sheet */}
       <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, height: '70vh', backgroundColor: '#000', borderTop: '1px solid white', zIndex: 60, transform: showDecks ? 'translateY(0)' : 'translateY(100%)', transition: 'transform 300ms ease', display: 'flex', flexDirection: 'column', paddingBottom: 'var(--safe-bottom)' }/* X3 §3 — 70vh decks sheet: clear the home indicator */}>
         <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px 16px 10px', flexShrink: 0 }}>
-          <div style={{ position: 'absolute', top: 8, left: '50%', transform: 'translateX(-50%)', width: 40, height: 3, backgroundColor: 'rgba(229,225,219,0.3)' }} />
-          <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: '#E5E1DB', letterSpacing: '0.05em', textTransform: 'uppercase' }}>DECKS</span>
-          <button onClick={() => { setShowDecks(false); setActiveTab('main'); }} style={{ position: 'absolute', right: 16, fontSize: 'var(--fs-18)', color: '#E5E1DB', background: 'none', border: 'none', cursor: 'pointer' }}>×</button>
+          <div style={{ position: 'absolute', top: 8, left: '50%', transform: 'translateX(-50%)', width: 40, height: 3, backgroundColor: 'rgb(var(--ink-rgb) / 0.3)' }} />
+          <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: 'var(--ink-100)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>DECKS</span>
+          <button onClick={() => { setShowDecks(false); setActiveTab('main'); }} style={{ position: 'absolute', right: 16, fontSize: 'var(--fs-18)', color: 'var(--ink-100)', background: 'none', border: 'none', cursor: 'pointer' }}>×</button>
         </div>
         <div style={{ flex: 1, overflowY: 'auto', padding: '0 16px' }}>
           {decksLoading ? <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '50%' }}><ScopeLoader size="md" /></div>
-          : publicDecks.length === 0 ? <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '50%' }}><span style={{ ...SKB, fontSize: 'var(--fs-11)', color: '#E5E1DB', textTransform: 'uppercase' }}>NO DECKS YET</span></div>
+          : publicDecks.length === 0 ? <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '50%' }}><span style={{ ...SKB, fontSize: 'var(--fs-11)', color: 'var(--ink-100)', textTransform: 'uppercase' }}>NO DECKS YET</span></div>
           : publicDecks.map(deck => (
             <div key={deck.id} onClick={() => { setShowDecks(false); router.push(`/profile/${username}/decks/${deck.id}`); }} style={{ marginBottom: 12, cursor: 'pointer' }}>
               <div style={{ width: '100%', aspectRatio: getDeckAspect(deck.grid_layout), overflow: 'hidden', background: '#1a1a1a' }}>
@@ -534,8 +534,8 @@ export default function PublicProfilePage() {
                   ? <img src={feedImage(deck.thumbnail_urls[0], 600)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                   : null}
               </div>
-              <p style={{ ...SKB, fontSize: 'var(--fs-10)', color: '#E5E1DB', margin: '4px 0 0', textTransform: 'uppercase' }}>{deck.title}</p>
-              <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'rgba(229,225,219,0.5)', margin: '2px 0 0', textTransform: 'uppercase' }}>{deck.item_count} FRAMES</p>
+              <p style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'var(--ink-100)', margin: '4px 0 0', textTransform: 'uppercase' }}>{deck.title}</p>
+              <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'rgb(var(--ink-rgb) / 0.5)', margin: '2px 0 0', textTransform: 'uppercase' }}>{deck.item_count} FRAMES</p>
             </div>
           ))}
         </div>

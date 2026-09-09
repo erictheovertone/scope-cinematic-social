@@ -8,7 +8,7 @@
 // — ticker/creator left, market cap as the focal USD number right. Tapping a row
 // opens that post via the shared post lightbox.
 //
-// Design: pure black, #E5E1DB, SK-Modernist, sharp corners, no shadows/blur.
+// Design: pure black, var(--ink-100), SK-Modernist, sharp corners, no shadows/blur.
 
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase/client';
@@ -177,14 +177,14 @@ function MobileScreeningRoom() {
           (screening-room-logo-temp-01.png — removed), and the uppercase label. The
           descriptor rides under the title as a child, filling the space cleanly. */}
       <PageTitle title="Screening Room" onTitleTap={debugTap} paddingBottom={16}>
-        <span style={{ ...SKR, display: 'block', fontSize: 'var(--fs-8)', color: 'rgba(229,225,219,0.45)', letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: 6 }}>
+        <span style={{ ...SKR, display: 'block', fontSize: 'var(--fs-8)', color: 'rgb(var(--ink-rgb) / 0.45)', letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: 6 }}>
           Top 50 · market cap · refreshed 6h
         </span>
       </PageTitle>
 
       {/* Loading */}
       {rows === null && (
-        <p style={{ ...SKR, fontSize: 'var(--fs-10)', color: 'rgba(229,225,219,0.4)', textAlign: 'center', padding: '60px 0', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+        <p style={{ ...SKR, fontSize: 'var(--fs-10)', color: 'rgb(var(--ink-rgb) / 0.4)', textAlign: 'center', padding: '60px 0', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
           Assembling the room…
         </p>
       )}
@@ -192,8 +192,8 @@ function MobileScreeningRoom() {
       {/* Empty / stale cache — graceful, never a broken list. */}
       {rows !== null && rows.length === 0 && (
         <div style={{ padding: '70px 24px', textAlign: 'center' }}>
-          <p style={{ ...SKB, fontSize: 'var(--fs-11)', color: '#E5E1DB', letterSpacing: '0.16em', textTransform: 'uppercase', margin: '0 0 8px' }}>The room is empty</p>
-          <p style={{ ...SKR, fontSize: 'var(--fs-10)', color: 'rgba(229,225,219,0.45)', lineHeight: 1.6, margin: 0 }}>
+          <p style={{ ...SKB, fontSize: 'var(--fs-11)', color: 'var(--ink-100)', letterSpacing: '0.16em', textTransform: 'uppercase', margin: '0 0 8px' }}>The room is empty</p>
+          <p style={{ ...SKR, fontSize: 'var(--fs-10)', color: 'rgb(var(--ink-rgb) / 0.45)', lineHeight: 1.6, margin: 0 }}>
             The top 50 are assembled every 6 hours. Check back shortly.
           </p>
         </div>
@@ -250,7 +250,7 @@ function MobileScreeningRoom() {
             // Rank chip — top-left of the frame, regardless of ratio (in the outer
             // container for legacy, matching how the feed places its overlays).
             const rankChip = (
-              <div style={{ position: 'absolute', top: 0, left: 0, background: '#E5E1DB', padding: '2px 7px', zIndex: 10 }}>
+              <div style={{ position: 'absolute', top: 0, left: 0, background: 'var(--ink-100)', padding: '2px 7px', zIndex: 10 }}>
                 <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: '#000', letterSpacing: '0.04em' }}>{r.rank}</span>
               </div>
             );
@@ -277,19 +277,19 @@ function MobileScreeningRoom() {
                 <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', padding: '8px 2px 0', gap: 12 }}>
                   <div style={{ minWidth: 0, flex: 1 }}>
                     {tickerMark && (
-                      <div style={{ ...SKB, fontSize: 'var(--fs-11)', color: '#E5E1DB', letterSpacing: '0.08em', marginBottom: 3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      <div style={{ ...SKB, fontSize: 'var(--fs-11)', color: 'var(--ink-100)', letterSpacing: '0.08em', marginBottom: 3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {tickerMark}
                       </div>
                     )}
                     {p?.username && (
-                      <div style={{ ...SKR, fontSize: 'var(--fs-10)', color: 'rgba(229,225,219,0.55)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      <div style={{ ...SKR, fontSize: 'var(--fs-10)', color: 'rgb(var(--ink-rgb) / 0.55)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         @{p.username}
                       </div>
                     )}
                   </div>
                   <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                    <div style={{ ...SKB, fontSize: 'var(--fs-18)', color: '#E5E1DB', lineHeight: 1 }}>{usdMc(r.market_cap)}</div>
-                    <div style={{ ...SKR, fontSize: 'var(--fs-7)', color: '#E5E1DB', letterSpacing: '0.2em', textTransform: 'uppercase', marginTop: 3 }}>Market Cap</div>
+                    <div style={{ ...SKB, fontSize: 'var(--fs-18)', color: 'var(--ink-100)', lineHeight: 1 }}>{usdMc(r.market_cap)}</div>
+                    <div style={{ ...SKR, fontSize: 'var(--fs-7)', color: 'var(--ink-100)', letterSpacing: '0.2em', textTransform: 'uppercase', marginTop: 3 }}>Market Cap</div>
                   </div>
                 </div>
               </div>

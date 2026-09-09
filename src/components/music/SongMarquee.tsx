@@ -24,7 +24,7 @@ export default function SongMarquee({
   uppercase = false,
   fontSize = 11,
   weight = 400,
-  color = "rgba(229,225,219,0.55)",
+  color = "rgb(var(--ink-rgb) / 0.55)",
   glyphW = 12, glyphH = 9,
   showGlyph = true,
   windowPx = 175,

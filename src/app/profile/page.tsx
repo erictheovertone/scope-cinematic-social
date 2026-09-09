@@ -718,11 +718,11 @@ const userLayoutId = stableLayoutId;
         {/* Header — Brief M5 §2: the shared PageTitle SHEET variant ("Decks", 26px, top-left,
             no logomark, clear space below). Drag handle + × close overlaid (sheet affordances). */}
         <div style={{ position: 'relative', flexShrink: 0 }}>
-          <div style={{ position: 'absolute', top: 8, left: '50%', transform: 'translateX(-50%)', width: 40, height: 3, backgroundColor: 'rgba(229,225,219,0.3)', zIndex: 1 }} />
+          <div style={{ position: 'absolute', top: 8, left: '50%', transform: 'translateX(-50%)', width: 40, height: 3, backgroundColor: 'rgb(var(--ink-rgb) / 0.3)', zIndex: 1 }} />
           <PageTitle title="Decks" variant="sheet" paddingBottom={14} />
           <button
             onClick={() => { setShowDecks(false); setActiveTab('main'); setShowNewDeckForm(false); setNewDeckTitle(''); setNewDeckDesc(''); }}
-            style={{ position: 'absolute', top: 10, right: 16, fontSize: 'var(--fs-18)', color: '#E5E1DB', background: 'none', border: 'none', cursor: 'pointer', lineHeight: 1, padding: 0 }}
+            style={{ position: 'absolute', top: 10, right: 16, fontSize: 'var(--fs-18)', color: 'var(--ink-100)', background: 'none', border: 'none', cursor: 'pointer', lineHeight: 1, padding: 0 }}
           >
             ×
           </button>
@@ -737,7 +737,7 @@ const userLayoutId = stableLayoutId;
             </div>
           ) : userDecks.length === 0 ? (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '50%' }}>
-              <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-11)', color: '#E5E1DB', textTransform: 'uppercase' }}>No decks yet</span>
+              <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-11)', color: 'var(--ink-100)', textTransform: 'uppercase' }}>No decks yet</span>
             </div>
           ) : (
             userDecks.map(deck => (
@@ -766,8 +766,8 @@ const userLayoutId = stableLayoutId;
                   />
                 )}
                 {/* Title + count */}
-                <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-10)', color: '#E5E1DB', margin: '4px 0 0', textTransform: 'uppercase' }}>{deck.title}</p>
-                <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: 'var(--fs-9)', color: 'rgba(229,225,219,0.5)', margin: '2px 0 0' }}>{deck.item_count} frames</p>
+                <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-10)', color: 'var(--ink-100)', margin: '4px 0 0', textTransform: 'uppercase' }}>{deck.title}</p>
+                <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: 'var(--fs-9)', color: 'rgb(var(--ink-rgb) / 0.5)', margin: '2px 0 0' }}>{deck.item_count} frames</p>
               </div>
             ))
           )}
@@ -775,11 +775,11 @@ const userLayoutId = stableLayoutId;
 
         {/* NEW DECK footer — own profile only. Bottom padding clears the home
             indicator + the app footer band so the button is never buried at the edge. */}
-        <div style={{ flexShrink: 0, padding: '12px 16px', paddingBottom: 'calc(12px + env(safe-area-inset-bottom, 0px))', borderTop: '1px solid rgba(229,225,219,0.12)' }}>
+        <div style={{ flexShrink: 0, padding: '12px 16px', paddingBottom: 'calc(12px + env(safe-area-inset-bottom, 0px))', borderTop: '1px solid rgb(var(--ink-rgb) / 0.12)' }}>
           {!showNewDeckForm ? (
             <button
               onClick={() => setShowNewDeckForm(true)}
-              style={{ display: 'block', width: '100%', border: '1px solid white', background: 'transparent', color: '#E5E1DB', fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-11)', textTransform: 'uppercase', padding: '8px', cursor: 'pointer', borderRadius: 0 }}
+              style={{ display: 'block', width: '100%', border: '1px solid white', background: 'transparent', color: 'var(--ink-100)', fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-11)', textTransform: 'uppercase', padding: '8px', cursor: 'pointer', borderRadius: 0 }}
             >
               ＋ NEW DECK
             </button>
@@ -791,14 +791,14 @@ const userLayoutId = stableLayoutId;
                 placeholder="Deck title"
                 value={newDeckTitle}
                 onChange={e => setNewDeckTitle(e.target.value)}
-                style={{ display: 'block', width: '100%', background: 'transparent', border: '1px solid white', color: '#E5E1DB', ...SKR, fontSize: 'max(16px, var(--fs-10))', padding: '8px', marginBottom: 8, outline: 'none', boxSizing: 'border-box' }}
+                style={{ display: 'block', width: '100%', background: 'transparent', border: '1px solid white', color: 'var(--ink-100)', ...SKR, fontSize: 'max(16px, var(--fs-10))', padding: '8px', marginBottom: 8, outline: 'none', boxSizing: 'border-box' }}
               />
               <input
                 type="text"
                 placeholder="Description (optional)"
                 value={newDeckDesc}
                 onChange={e => setNewDeckDesc(e.target.value)}
-                style={{ display: 'block', width: '100%', background: 'transparent', border: '1px solid white', color: '#E5E1DB', ...SKR, fontSize: 'max(16px, var(--fs-10))', padding: '8px', marginBottom: 8, outline: 'none', boxSizing: 'border-box' }}
+                style={{ display: 'block', width: '100%', background: 'transparent', border: '1px solid white', color: 'var(--ink-100)', ...SKR, fontSize: 'max(16px, var(--fs-10))', padding: '8px', marginBottom: 8, outline: 'none', boxSizing: 'border-box' }}
               />
               <div style={{ display: 'flex', gap: 8 }}>
                 <button
@@ -818,13 +818,13 @@ const userLayoutId = stableLayoutId;
                     } finally { setCreatingDeck(false); }
                   }}
                   disabled={!newDeckTitle.trim() || creatingDeck}
-                  style={{ flex: 1, border: '1px solid white', background: 'transparent', color: '#E5E1DB', ...SKR, fontSize: 'var(--fs-10)', padding: '8px', cursor: 'pointer', opacity: newDeckTitle.trim() ? 1 : 0.4, textTransform: 'uppercase' }}
+                  style={{ flex: 1, border: '1px solid white', background: 'transparent', color: 'var(--ink-100)', ...SKR, fontSize: 'var(--fs-10)', padding: '8px', cursor: 'pointer', opacity: newDeckTitle.trim() ? 1 : 0.4, textTransform: 'uppercase' }}
                 >
                   {creatingDeck ? 'Creating…' : 'CREATE'}
                 </button>
                 <button
                   onClick={() => { setShowNewDeckForm(false); setNewDeckTitle(''); setNewDeckDesc(''); }}
-                  style={{ flex: 1, border: '1px solid rgba(229,225,219,0.4)', background: 'transparent', color: 'rgba(229,225,219,0.6)', ...SKR, fontSize: 'var(--fs-10)', padding: '8px', cursor: 'pointer', textTransform: 'uppercase' }}
+                  style={{ flex: 1, border: '1px solid rgb(var(--ink-rgb) / 0.4)', background: 'transparent', color: 'rgb(var(--ink-rgb) / 0.6)', ...SKR, fontSize: 'var(--fs-10)', padding: '8px', cursor: 'pointer', textTransform: 'uppercase' }}
                 >
                   CANCEL
                 </button>

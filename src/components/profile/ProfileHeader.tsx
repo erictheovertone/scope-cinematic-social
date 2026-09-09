@@ -166,7 +166,7 @@ export default function ProfileHeader({
             {/* PRO — INDEPENDENT chip, absolute just beyond the name's last letter.
                 ONLY for pro members; never in the name flex or its width. */}
             {isPaidMember && (
-              <span style={{ position: "absolute", left: "100%", top: 1, marginLeft: 5, whiteSpace: "nowrap", fontFamily: "var(--font-black)", fontWeight: 900, fontSize: 4.85, color: "rgba(229,225,219,0.64)", letterSpacing: "var(--track-wide)" }}>PRO</span>
+              <span style={{ position: "absolute", left: "100%", top: 1, marginLeft: 5, whiteSpace: "nowrap", fontFamily: "var(--font-black)", fontWeight: 900, fontSize: 4.85, color: "rgb(var(--ink-rgb) / 0.64)", letterSpacing: "var(--track-wide)" }}>PRO</span>
             )}
             {/* handle — right-aligned to the name's last letter; tight + smaller */}
             <div style={{ display: "flex", alignItems: "baseline", justifyContent: "flex-end", gap: 3, opacity: 0.51, marginTop: 1 }}>{/* Brief W5 §2 — handle unit 0.64 → 0.51 (×0.8) */}
@@ -187,8 +187,8 @@ export default function ProfileHeader({
                 { label: "Market Cap", value: analytics.portfolioMc > 0 ? `$${analytics.portfolioMc.toLocaleString()}` : "—", gap: true },
               ] as const).map((row) => (
                 <div key={row.label} style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 14, marginTop: row.gap ? 4 : 0 }}>
-                  <span style={{ fontFamily: "var(--font-medium)", fontWeight: 500, fontSize: 11.2, color: "rgba(229,225,219,0.57)", letterSpacing: "var(--track-body)", whiteSpace: "nowrap", lineHeight: 1 }}>{row.label}</span>
-                  <span style={{ fontFamily: "var(--font-medium)", fontWeight: 500, fontSize: 11.5, color: "rgba(229,225,219,0.57)", letterSpacing: "var(--track-body)", whiteSpace: "nowrap", textAlign: "right", lineHeight: 1 }}>{row.value}</span>
+                  <span style={{ fontFamily: "var(--font-medium)", fontWeight: 500, fontSize: 11.2, color: "rgb(var(--ink-rgb) / 0.57)", letterSpacing: "var(--track-body)", whiteSpace: "nowrap", lineHeight: 1 }}>{row.label}</span>
+                  <span style={{ fontFamily: "var(--font-medium)", fontWeight: 500, fontSize: 11.5, color: "rgb(var(--ink-rgb) / 0.57)", letterSpacing: "var(--track-body)", whiteSpace: "nowrap", textAlign: "right", lineHeight: 1 }}>{row.value}</span>
                 </div>
               ))}
             </div>
@@ -211,8 +211,8 @@ export default function ProfileHeader({
                   <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                     {group.map((row) => (
                       <div key={row.label} style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, width: row.w }}>
-                        <span style={{ fontFamily: "var(--font-medium)", fontWeight: 500, fontSize: 11.2, color: "rgba(229,225,219,0.57)", letterSpacing: "var(--track-body)", whiteSpace: "nowrap", lineHeight: 1 }}>{row.label}</span>
-                        <span style={{ fontFamily: "var(--font-medium)", fontWeight: 500, fontSize: 11.5, color: "rgba(229,225,219,0.57)", letterSpacing: "var(--track-body)", whiteSpace: "nowrap", textAlign: "right", lineHeight: 1 }}>{row.value}</span>
+                        <span style={{ fontFamily: "var(--font-medium)", fontWeight: 500, fontSize: 11.2, color: "rgb(var(--ink-rgb) / 0.57)", letterSpacing: "var(--track-body)", whiteSpace: "nowrap", lineHeight: 1 }}>{row.label}</span>
+                        <span style={{ fontFamily: "var(--font-medium)", fontWeight: 500, fontSize: 11.5, color: "rgb(var(--ink-rgb) / 0.57)", letterSpacing: "var(--track-body)", whiteSpace: "nowrap", textAlign: "right", lineHeight: 1 }}>{row.value}</span>
                       </div>
                     ))}
                   </div>

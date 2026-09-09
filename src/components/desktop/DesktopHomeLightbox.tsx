@@ -40,7 +40,7 @@ const isVideoPost = (p: P): boolean => p.media_type === 'video';
 const StripPlayGlyph = () => (
   <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden
     style={{ position: 'absolute', top: 8, right: 8, opacity: 0.7, filter: 'drop-shadow(0 0 4px rgba(5,5,5,0.5))', pointerEvents: 'none' }}>
-    <path d="M4.5 3 L11 7 L4.5 11 Z" stroke="#E5E1DB" strokeWidth="1.2" strokeLinejoin="round" strokeLinecap="round" fill="none" />
+    <path d="M4.5 3 L11 7 L4.5 11 Z" stroke="var(--ink-100)" strokeWidth="1.2" strokeLinejoin="round" strokeLinecap="round" fill="none" />
   </svg>
 );
 
@@ -156,7 +156,7 @@ export default function DesktopHomeLightbox({
   const strip = tab === 'following' ? posts.filter((p) => followedIds.has(String(p.user_id))) : posts;
 
   const tabBtn = (label: string, key: 'foryou' | 'following') => (
-    <button onClick={() => setTab(key)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '0 0 4px', ...SKB, fontSize: 13, textTransform: 'uppercase', letterSpacing: '0.06em', color: tab === key ? '#E5E1DB' : 'rgba(229,225,219,0.4)', borderBottom: tab === key ? '2px solid #E5E1DB' : '2px solid transparent' }}>{label}</button>
+    <button onClick={() => setTab(key)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '0 0 4px', ...SKB, fontSize: 13, textTransform: 'uppercase', letterSpacing: '0.06em', color: tab === key ? 'var(--ink-100)' : 'rgb(var(--ink-rgb) / 0.4)', borderBottom: tab === key ? '2px solid var(--ink-100)' : '2px solid transparent' }}>{label}</button>
   );
 
   // ── MORE FROM row (bounded; each caption = creator avatar + @handle LINK + MC).
@@ -165,12 +165,12 @@ export default function DesktopHomeLightbox({
   const moreFromRow = moreFrom.length > 0 ? (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '0 0 10px' }}>
-        <p style={{ ...SKB, fontSize: 10, color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>
-          MORE FROM <span style={{ color: 'rgba(229,225,219,0.55)' }}>@{creatorHandle}</span>
+        <p style={{ ...SKB, fontSize: 10, color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>
+          MORE FROM <span style={{ color: 'rgb(var(--ink-rgb) / 0.55)' }}>@{creatorHandle}</span>
         </p>
         {moreFrom.length > 4 && (
           <button onClick={() => mfScroll.current?.scrollBy({ left: 240, behavior: 'smooth' })} aria-label="Scan more" style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4, lineHeight: 0 }}>
-            <svg width="9" height="16" viewBox="0 0 10 22" fill="none"><path d="M1 1L8.6 11L1 21" stroke="rgba(229,225,219,0.6)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            <svg width="9" height="16" viewBox="0 0 10 22" fill="none"><path d="M1 1L8.6 11L1 21" stroke="rgb(var(--ink-rgb) / 0.6)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
           </button>
         )}
       </div>
@@ -183,8 +183,8 @@ export default function DesktopHomeLightbox({
               {thumbOf(p) && <img src={feedImage(thumbOf(p), 480)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
               {isVideoPost(p) && <StripPlayGlyph />}
               <div className="d15a-ov">
-                <span style={{ ...SKB, fontSize: 10, color: '#E5E1DB', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0 }}>@{creatorHandle}</span>
-                {!!p.coin_address && <span style={{ ...SKB, fontSize: 9.5, color: 'rgba(229,225,219,0.9)', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>MC {mfMc.get(String(p.id)) ?? '…'}</span>}
+                <span style={{ ...SKB, fontSize: 10, color: 'var(--ink-100)', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0 }}>@{creatorHandle}</span>
+                {!!p.coin_address && <span style={{ ...SKB, fontSize: 9.5, color: 'rgb(var(--ink-rgb) / 0.9)', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>MC {mfMc.get(String(p.id)) ?? '…'}</span>}
               </div>
             </div>
           </div>
@@ -210,7 +210,7 @@ export default function DesktopHomeLightbox({
           <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
             {/* Brief D7 §3 — real creator search (was a dead placeholder div). */}
             <CreatorSearch width={123} height={30} />
-            <button onClick={onClose} aria-label="Close" style={{ width: 31, height: 30, border: '0.5px solid rgba(229,225,219,0.3)', background: 'transparent', cursor: 'pointer', ...SKR, fontSize: 15, color: 'rgba(229,225,219,0.6)', lineHeight: 1 }}>✕</button>
+            <button onClick={onClose} aria-label="Close" style={{ width: 31, height: 30, border: '0.5px solid rgb(var(--ink-rgb) / 0.3)', background: 'transparent', cursor: 'pointer', ...SKR, fontSize: 15, color: 'rgb(var(--ink-rgb) / 0.6)', lineHeight: 1 }}>✕</button>
           </div>
         </div>
 
@@ -226,17 +226,17 @@ export default function DesktopHomeLightbox({
             removed → the strip drops from ~90px to ~60px. Active frame + play glyph unchanged. */}
         <div ref={stripRef} style={{ display: 'flex', gap: 9, overflowX: 'auto', paddingBottom: 8, marginBottom: 6, scrollbarWidth: 'none' }}>
           {strip.length === 0 ? (
-            <p style={{ ...SKR, fontSize: 11, color: 'rgba(229,225,219,0.35)', textTransform: 'uppercase', letterSpacing: '0.1em', padding: '30px 0' }}>{tab === 'following' ? 'NO POSTS FROM ACCOUNTS YOU FOLLOW' : 'NOTHING HERE YET'}</p>
+            <p style={{ ...SKR, fontSize: 11, color: 'rgb(var(--ink-rgb) / 0.35)', textTransform: 'uppercase', letterSpacing: '0.1em', padding: '30px 0' }}>{tab === 'following' ? 'NO POSTS FROM ACCOUNTS YOU FOLLOW' : 'NOTHING HERE YET'}</p>
           ) : strip.map((p) => {
             const isActive = String(p.id) === String(active?.id);
             return (
               <button key={String(p.id)} data-active={isActive ? '' : undefined} onClick={() => jumpTo(p)} aria-label={`Post by @${String(p.username ?? '')}`}
                 style={{ flexShrink: 0, width: 124, background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, opacity: isActive ? 1 : 0.6, transition: 'opacity 160ms ease' }}>
-                <div className="d15a-thumb" style={{ position: 'relative', width: '100%', aspectRatio: '2.39 / 1', overflow: 'hidden', background: '#0d0d0d', outline: isActive ? '1px solid rgba(229,225,219,0.7)' : 'none' }}>
+                <div className="d15a-thumb" style={{ position: 'relative', width: '100%', aspectRatio: '2.39 / 1', overflow: 'hidden', background: '#0d0d0d', outline: isActive ? '1px solid rgb(var(--ink-rgb) / 0.7)' : 'none' }}>
                   {thumbOf(p) && <img src={feedImage(thumbOf(p), 260)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
                   {isVideoPost(p) && <StripPlayGlyph />}
                   <div className="d15a-ov">
-                    <span style={{ ...SKB, fontSize: 9, color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>@{String(p.username ?? '')}</span>
+                    <span style={{ ...SKB, fontSize: 9, color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>@{String(p.username ?? '')}</span>
                   </div>
                 </div>
               </button>

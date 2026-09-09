@@ -21,8 +21,8 @@ import { useFluidColumns } from '@/lib/useFluidColumns';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
-const HAIR = 'rgba(229,225,219,0.14)';
-const RED = '#E5E1DB';
+const HAIR = 'rgb(var(--ink-rgb) / 0.14)';
+const RED = 'var(--ink-100)';
 
 const itemMedia = (it: DeckWithItems['items'][number]): string =>
   (it.media_url as string) || it.post?.media_urls?.[0] || '';
@@ -102,7 +102,7 @@ export default function DesktopDeck({ deckId }: { deckId: string }) {
   };
 
   const menuItem = (label: string, fn: () => void, danger?: boolean) => (
-    <button onClick={() => { setMenuOpen(false); fn(); }} style={{ ...SKB, display: 'block', width: '100%', textAlign: 'left', fontSize: 11, color: danger ? RED : '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'transparent', border: 'none', borderBottom: `1px solid ${HAIR}`, cursor: 'pointer', padding: '12px 16px' }}>{label}</button>
+    <button onClick={() => { setMenuOpen(false); fn(); }} style={{ ...SKB, display: 'block', width: '100%', textAlign: 'left', fontSize: 11, color: danger ? RED : 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'transparent', border: 'none', borderBottom: `1px solid ${HAIR}`, cursor: 'pointer', padding: '12px 16px' }}>{label}</button>
   );
 
   return (
@@ -111,13 +111,13 @@ export default function DesktopDeck({ deckId }: { deckId: string }) {
         {/* header */}
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, marginBottom: 26 }}>
           <div style={{ minWidth: 0 }}>
-            <button onClick={() => router.back()} style={{ ...SKR, fontSize: 12, color: 'rgba(229,225,219,0.5)', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'transparent', border: 'none', cursor: 'pointer', padding: '0 0 12px' }}>← BACK</button>
-            <h1 style={{ ...SKB, fontSize: 'calc(34px * var(--type-scale))', lineHeight: 1, letterSpacing: '-0.02em', color: '#E5E1DB', textTransform: 'uppercase', margin: 0 }}>{loading ? '' : (deck?.title ?? 'DECK NOT FOUND')}</h1>
-            {deck && <p style={{ ...SKR, fontSize: 12, color: 'rgba(229,225,219,0.45)', margin: '8px 0 0' }}>{deck.item_count} {deck.item_count === 1 ? 'POST' : 'POSTS'}{deck.description ? ` · ${deck.description}` : ''}</p>}
+            <button onClick={() => router.back()} style={{ ...SKR, fontSize: 12, color: 'rgb(var(--ink-rgb) / 0.5)', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'transparent', border: 'none', cursor: 'pointer', padding: '0 0 12px' }}>← BACK</button>
+            <h1 style={{ ...SKB, fontSize: 'calc(34px * var(--type-scale))', lineHeight: 1, letterSpacing: '-0.02em', color: 'var(--ink-100)', textTransform: 'uppercase', margin: 0 }}>{loading ? '' : (deck?.title ?? 'DECK NOT FOUND')}</h1>
+            {deck && <p style={{ ...SKR, fontSize: 12, color: 'rgb(var(--ink-rgb) / 0.45)', margin: '8px 0 0' }}>{deck.item_count} {deck.item_count === 1 ? 'POST' : 'POSTS'}{deck.description ? ` · ${deck.description}` : ''}</p>}
           </div>
           {isOwn && deck && (
             <div data-deck-menu style={{ position: 'relative', flexShrink: 0 }}>
-              <button onClick={(e) => { e.stopPropagation(); setMenuOpen((v) => !v); }} aria-label="Options" style={{ width: 36, height: 33, border: `0.5px solid rgba(229,225,219,0.3)`, background: 'transparent', cursor: 'pointer', ...SKB, fontSize: 16, color: 'rgba(229,225,219,0.7)', letterSpacing: '0.05em' }}>···</button>
+              <button onClick={(e) => { e.stopPropagation(); setMenuOpen((v) => !v); }} aria-label="Options" style={{ width: 36, height: 33, border: `0.5px solid rgb(var(--ink-rgb) / 0.3)`, background: 'transparent', cursor: 'pointer', ...SKB, fontSize: 16, color: 'rgb(var(--ink-rgb) / 0.7)', letterSpacing: '0.05em' }}>···</button>
               {/* anchored dropdown — app menu language (black, hairline, tracked) */}
               {menuOpen && (
                 <div style={{ position: 'absolute', top: 40, right: 0, width: 200, background: '#000', border: `1px solid ${HAIR}`, zIndex: 5 }}>
@@ -135,8 +135,8 @@ export default function DesktopDeck({ deckId }: { deckId: string }) {
           <div ref={gridRef} style={{ display: 'grid', gridTemplateColumns: `repeat(${gridCols}, 1fr)`, gap: 6 }}>
             {isOwn && (
               <button onClick={() => fileRef.current?.click()} disabled={busy} style={{ aspectRatio: `${aspect}`, border: `1px dashed ${HAIR}`, background: 'transparent', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-                <svg width="30" height="30" viewBox="0 0 34 34" fill="none"><path d="M17 6v22M6 17h22" stroke="rgba(229,225,219,0.7)" strokeWidth="1" /></svg>
-                <span style={{ ...SKB, fontSize: 10, color: 'rgba(229,225,219,0.7)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>{busy ? 'ADDING…' : 'ADD POSTS'}</span>
+                <svg width="30" height="30" viewBox="0 0 34 34" fill="none"><path d="M17 6v22M6 17h22" stroke="rgb(var(--ink-rgb) / 0.7)" strokeWidth="1" /></svg>
+                <span style={{ ...SKB, fontSize: 10, color: 'rgb(var(--ink-rgb) / 0.7)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>{busy ? 'ADDING…' : 'ADD POSTS'}</span>
               </button>
             )}
             {deck.items.map((it) => {
@@ -145,12 +145,12 @@ export default function DesktopDeck({ deckId }: { deckId: string }) {
                 <div key={it.id} style={{ position: 'relative', aspectRatio: `${aspect}`, overflow: 'hidden', background: '#101010', border: `1px solid ${HAIR}` }} className="dk-deck-cell">
                   {src && <img src={feedImage(src, 700)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
                   {isOwn && (
-                    <button onClick={() => removeItem(it.id)} aria-label="Remove" style={{ position: 'absolute', top: 6, right: 6, width: 22, height: 22, borderRadius: '50%', background: 'rgba(0,0,0,0.6)', border: 'none', cursor: 'pointer', ...SKR, fontSize: 13, color: '#E5E1DB', lineHeight: 1 }}>×</button>
+                    <button onClick={() => removeItem(it.id)} aria-label="Remove" style={{ position: 'absolute', top: 6, right: 6, width: 22, height: 22, borderRadius: '50%', background: 'rgba(0,0,0,0.6)', border: 'none', cursor: 'pointer', ...SKR, fontSize: 13, color: 'var(--ink-100)', lineHeight: 1 }}>×</button>
                   )}
                 </div>
               );
             })}
-            {deck.items.length === 0 && !isOwn && <p style={{ ...SKR, gridColumn: `span ${count}`, fontSize: 12, color: 'rgba(229,225,219,0.4)', textTransform: 'uppercase', textAlign: 'center', padding: '60px 0' }}>EMPTY DECK</p>}
+            {deck.items.length === 0 && !isOwn && <p style={{ ...SKR, gridColumn: `span ${count}`, fontSize: 12, color: 'rgb(var(--ink-rgb) / 0.4)', textTransform: 'uppercase', textAlign: 'center', padding: '60px 0' }}>EMPTY DECK</p>}
           </div>
         )}
 
@@ -162,17 +162,17 @@ export default function DesktopDeck({ deckId }: { deckId: string }) {
         <div style={{ position: 'fixed', inset: 0, zIndex: 690, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div onClick={() => setEditOpen(false)} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.88)' }} />
           <div style={{ position: 'relative', width: 460, background: '#000', border: '1px solid #1a1a1a', padding: '30px 32px' }}>
-            <h2 style={{ ...SKB, fontSize: 15, color: '#E5E1DB', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 18px' }}>EDIT DECK</h2>
-            <input autoFocus value={editTitle} onChange={(e) => setEditTitle(e.target.value)} placeholder="DECK TITLE" style={{ ...SKR, width: '100%', fontSize: 14, color: '#E5E1DB', background: 'transparent', border: 'none', borderBottom: `1px solid ${HAIR}`, outline: 'none', padding: '8px 0', boxSizing: 'border-box' }} />
-            <input value={editDesc} onChange={(e) => setEditDesc(e.target.value)} placeholder="DESCRIPTION (OPTIONAL)" style={{ ...SKR, width: '100%', fontSize: 13, color: 'rgba(229,225,219,0.75)', background: 'transparent', border: 'none', borderBottom: `1px solid ${HAIR}`, outline: 'none', padding: '8px 0', margin: '10px 0 0', boxSizing: 'border-box' }} />
+            <h2 style={{ ...SKB, fontSize: 15, color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 18px' }}>EDIT DECK</h2>
+            <input autoFocus value={editTitle} onChange={(e) => setEditTitle(e.target.value)} placeholder="DECK TITLE" style={{ ...SKR, width: '100%', fontSize: 14, color: 'var(--ink-100)', background: 'transparent', border: 'none', borderBottom: `1px solid ${HAIR}`, outline: 'none', padding: '8px 0', boxSizing: 'border-box' }} />
+            <input value={editDesc} onChange={(e) => setEditDesc(e.target.value)} placeholder="DESCRIPTION (OPTIONAL)" style={{ ...SKR, width: '100%', fontSize: 13, color: 'rgb(var(--ink-rgb) / 0.75)', background: 'transparent', border: 'none', borderBottom: `1px solid ${HAIR}`, outline: 'none', padding: '8px 0', margin: '10px 0 0', boxSizing: 'border-box' }} />
             <div style={{ display: 'flex', gap: 10, marginTop: 24 }}>
-              <button onClick={() => setEditOpen(false)} style={{ ...SKB, flex: 1, fontSize: 11, color: 'rgba(229,225,219,0.6)', textTransform: 'uppercase', letterSpacing: '0.08em', background: 'transparent', border: `1px solid ${HAIR}`, cursor: 'pointer', padding: '12px 0' }}>CANCEL</button>
-              <button onClick={() => void saveEdit()} disabled={!editTitle.trim() || busy} style={{ ...SKB, flex: 1, fontSize: 11, color: '#000', textTransform: 'uppercase', letterSpacing: '0.08em', background: editTitle.trim() ? '#E5E1DB' : 'rgba(229,225,219,0.3)', border: 'none', cursor: 'pointer', padding: '12px 0' }}>{busy ? 'SAVING…' : 'SAVE'}</button>
+              <button onClick={() => setEditOpen(false)} style={{ ...SKB, flex: 1, fontSize: 11, color: 'rgb(var(--ink-rgb) / 0.6)', textTransform: 'uppercase', letterSpacing: '0.08em', background: 'transparent', border: `1px solid ${HAIR}`, cursor: 'pointer', padding: '12px 0' }}>CANCEL</button>
+              <button onClick={() => void saveEdit()} disabled={!editTitle.trim() || busy} style={{ ...SKB, flex: 1, fontSize: 11, color: '#000', textTransform: 'uppercase', letterSpacing: '0.08em', background: editTitle.trim() ? 'var(--ink-100)' : 'rgb(var(--ink-rgb) / 0.3)', border: 'none', cursor: 'pointer', padding: '12px 0' }}>{busy ? 'SAVING…' : 'SAVE'}</button>
             </div>
           </div>
         </div>
       )}
-      <style>{`.dk-deck-cell:hover { outline: 1px solid rgba(229,225,219,0.25); }`}</style>
+      <style>{`.dk-deck-cell:hover { outline: 1px solid rgb(var(--ink-rgb) / 0.25); }`}</style>
     </div>
   );
 }

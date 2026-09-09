@@ -104,7 +104,7 @@ export function TxNarratorProvider({ children }: { children: ReactNode }) {
             transform: 'translateX(-50%)',
             zIndex: 700,
             background: '#000',
-            border: `1px solid ${status.phase === 'failed' ? '#E5E1DB' : 'rgba(229,225,219,0.55)'}`,
+            border: `1px solid ${status.phase === 'failed' ? 'var(--ink-100)' : 'rgb(var(--ink-rgb) / 0.55)'}`,
             padding: '9px 16px',
             cursor: 'pointer',
             opacity: fading ? 0 : 1,
@@ -120,7 +120,7 @@ export function TxNarratorProvider({ children }: { children: ReactNode }) {
             fontSize: 'var(--fs-10)',
             letterSpacing: '0.12em',
             textTransform: 'uppercase',
-            color: status.phase === 'failed' ? '#E5E1DB' : status.phase === 'done' ? '#E5E1DB' : '#E5E1DB',
+            color: status.phase === 'failed' ? 'var(--ink-100)' : status.phase === 'done' ? 'var(--ink-100)' : 'var(--ink-100)',
             animation: status.phase === 'working' ? 'txn-pulse 1.6s ease-in-out infinite' : 'none',
           }}>
             {status.label}

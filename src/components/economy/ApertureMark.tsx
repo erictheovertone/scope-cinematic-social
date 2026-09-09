@@ -10,7 +10,7 @@ const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fon
 
 export default function ApertureMark({
   size = 11,
-  color = '#E5E1DB',
+  color = 'var(--ink-100)',
   title = 'First Cut founding position',
 }: {
   size?: number;

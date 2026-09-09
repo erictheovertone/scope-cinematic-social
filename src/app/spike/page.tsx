@@ -91,33 +91,33 @@ export default function SpikePage() {
   };
 
   return (
-    <div style={{ minHeight: '100dvh', background: '#000', color: '#E5E1DB', fontFamily: "'SK-Modernist', sans-serif", padding: '40px 24px', maxWidth: 560, margin: '0 auto' }}>
-      <div style={{ width: 15, height: 15, borderRadius: '50%', background: '#E5E1DB', marginBottom: 22 }} />
+    <div style={{ minHeight: '100dvh', background: '#000', color: 'var(--ink-100)', fontFamily: "'SK-Modernist', sans-serif", padding: '40px 24px', maxWidth: 560, margin: '0 auto' }}>
+      <div style={{ width: 15, height: 15, borderRadius: '50%', background: 'var(--ink-100)', marginBottom: 22 }} />
       <p style={{ ...SKB, fontSize: 'var(--fs-15)', letterSpacing: '0.06em', textTransform: 'uppercase', margin: '0 0 4px' }}>SPIKE · GASLESS createCoin</p>
-      <p style={{ ...SKB, fontSize: 'var(--fs-13)', color: ARMED ? '#E5E1DB' : 'rgba(229,225,219,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 20px' }}>
+      <p style={{ ...SKB, fontSize: 'var(--fs-13)', color: ARMED ? 'var(--ink-100)' : 'rgb(var(--ink-rgb) / 0.4)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 20px' }}>
         {ARMED ? '[ ARMED ]' : '[ PARKED ]'}
       </p>
-      <p style={{ ...SKR, fontSize: 'var(--fs-11)', color: 'rgba(229,225,219,0.55)', lineHeight: 1.6, margin: '0 0 24px' }}>
+      <p style={{ ...SKR, fontSize: 'var(--fs-11)', color: 'rgb(var(--ink-rgb) / 0.55)', lineHeight: 1.6, margin: '0 0 24px' }}>
         Proves a zero-ETH wallet can mint a Zora coin via a sponsored UserOp (Privy smart wallet + Base paymaster) on Base Sepolia. Parked until armed — see the arming checklist in this file&rsquo;s header. Onramp-ETH stays the shipped answer; the plain swap is shelved.
       </p>
 
       <button onClick={preflight} disabled={running}
-        style={{ ...SKB, fontSize: 'var(--fs-11)', letterSpacing: '0.08em', textTransform: 'uppercase', color: '#E5E1DB', background: 'transparent', border: '1px solid rgba(229,225,219,0.4)', padding: '10px 18px', cursor: running ? 'default' : 'pointer', marginRight: 10 }}>
+        style={{ ...SKB, fontSize: 'var(--fs-11)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-100)', background: 'transparent', border: '1px solid rgb(var(--ink-rgb) / 0.4)', padding: '10px 18px', cursor: running ? 'default' : 'pointer', marginRight: 10 }}>
         {running ? 'RUNNING…' : 'RUN PRE-FLIGHT'}
       </button>
       <button onClick={runSponsoredMint}
-        style={{ ...SKB, fontSize: 'var(--fs-11)', letterSpacing: '0.08em', textTransform: 'uppercase', color: ARMED ? 'var(--on-ink)' : 'rgba(229,225,219,0.35)', background: ARMED ? '#E5E1DB' : 'transparent', border: ARMED ? 'none' : '1px solid rgba(229,225,219,0.15)', padding: '10px 18px', cursor: 'pointer' }/* X2c — ARMED fills ivory; text → --on-ink (parked dev harness) */}>
+        style={{ ...SKB, fontSize: 'var(--fs-11)', letterSpacing: '0.08em', textTransform: 'uppercase', color: ARMED ? 'var(--on-ink)' : 'rgb(var(--ink-rgb) / 0.35)', background: ARMED ? 'var(--ink-100)' : 'transparent', border: ARMED ? 'none' : '1px solid rgb(var(--ink-rgb) / 0.15)', padding: '10px 18px', cursor: 'pointer' }/* X2c — ARMED fills ivory; text → --on-ink (parked dev harness) */}>
         RUN SPONSORED MINT
       </button>
 
       {lines.length > 0 && (
-        <div style={{ marginTop: 26, borderTop: '1px solid rgba(229,225,219,0.1)', paddingTop: 18 }}>
+        <div style={{ marginTop: 26, borderTop: '1px solid rgb(var(--ink-rgb) / 0.1)', paddingTop: 18 }}>
           {lines.map((l, i) => (
             <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'baseline', marginBottom: 10 }}>
-              <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: l.ok == null ? 'rgba(229,225,219,0.4)' : l.ok ? '#E5E1DB' : '#E5E1DB' }}>{l.ok == null ? '·' : l.ok ? '✓' : '✕'}</span>
+              <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: l.ok == null ? 'rgb(var(--ink-rgb) / 0.4)' : l.ok ? 'var(--ink-100)' : 'var(--ink-100)' }}>{l.ok == null ? '·' : l.ok ? '✓' : '✕'}</span>
               <span style={{ flex: 1 }}>
-                <span style={{ ...SKB, fontSize: 'var(--fs-11)', textTransform: 'uppercase', letterSpacing: '0.04em', color: '#E5E1DB' }}>{l.label}</span>
-                <span style={{ ...SKR, fontSize: 'var(--fs-10)', color: 'rgba(229,225,219,0.45)', display: 'block', marginTop: 2 }}>{l.detail}</span>
+                <span style={{ ...SKB, fontSize: 'var(--fs-11)', textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--ink-100)' }}>{l.label}</span>
+                <span style={{ ...SKR, fontSize: 'var(--fs-10)', color: 'rgb(var(--ink-rgb) / 0.45)', display: 'block', marginTop: 2 }}>{l.detail}</span>
               </span>
             </div>
           ))}
@@ -125,7 +125,7 @@ export default function SpikePage() {
       )}
 
       {mintNote && (
-        <pre style={{ ...SKR, fontSize: 'var(--fs-10)', color: '#E5E1DB', whiteSpace: 'pre-wrap', wordBreak: 'break-word', marginTop: 20, lineHeight: 1.5 }}>{mintNote}</pre>
+        <pre style={{ ...SKR, fontSize: 'var(--fs-10)', color: 'var(--ink-100)', whiteSpace: 'pre-wrap', wordBreak: 'break-word', marginTop: 20, lineHeight: 1.5 }}>{mintNote}</pre>
       )}
     </div>
   );
