@@ -30,8 +30,11 @@ export const LIGHT_VARIANT: Record<string, string> = {
   [`${TI}/ethereum.png`]: `${DV}/ethereum-dark.png`,
   [`${TI}/usdc.png`]: `${DV}/usdc-dark.png`,
   [`${TI}/creator.png`]: `${DV}/creator-rewards-dark.png`,
-  '/design-updates-071526/scope-logomark-offwhite.png': `${DV}/scope-logomark-charcoal.png`,
-  '/logomark-plain-white.png': `${DV}/scope-logomark-charcoal.png`,
+  // Brief T1-3b §1 — the logomark → the charcoal APERTURE mark (not the cursive wordmark).
+  // scope-logomark-charcoal.png (the wordmark) stays in the folder, unmapped: no script-wordmark
+  // PNG renders on a themed surface, so nothing points at it.
+  '/design-updates-071526/scope-logomark-offwhite.png': `${DV}/scope-logomark-aperture-charcoal.png`,
+  '/logomark-plain-white.png': `${DV}/scope-logomark-aperture-charcoal.png`,
   '/fragments-wordmark-v3.png': `${DV}/fragments-dark.png`,
 };
 

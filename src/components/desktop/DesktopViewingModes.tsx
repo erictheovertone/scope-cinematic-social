@@ -38,7 +38,7 @@ export default function DesktopViewingModes({ currentMode, onClose, onSelect }: 
   if (typeof document === 'undefined') return null;
 
   return createPortal(
-    <div data-swipe-exclude style={{ position: 'fixed', inset: 0, zIndex: 200 }}>
+    <div data-swipe-exclude data-force-dark style={{ position: 'fixed', inset: 0, zIndex: 200 }}>{/* T1-3b — dark-scrim menu is a viewing surface: keeps the close logomark ivory under light. */}
       <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgb(var(--black-rgb) / 0.92)', opacity: mounted ? 1 : 0, transition: reduced ? 'none' : 'opacity 220ms ease' }} />
       {/* content panel — offset right of the rail (rail stays visible), scrollable */}
       <div style={{ position: 'absolute', top: 0, left: 'var(--rail-w)', right: 0, bottom: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
