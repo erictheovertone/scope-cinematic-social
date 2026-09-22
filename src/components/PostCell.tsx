@@ -1,5 +1,6 @@
 "use client";
 
+import ThemedImg from "@/components/ThemedImg";
 import { getAspectRatio, ratioPadding } from "@/lib/aspectRatio";
 import MediaRenderer from "@/components/MediaRenderer";
 import GradedVideo from "@/components/finishing/GradedVideo";
@@ -60,7 +61,7 @@ export default function PostCell({ post, layoutId, index, onClick, showSoundTogg
           and the paddingTop AR container are untouched. onError hides until the
           asset ships. */}
       {fcMark && (
-        <img
+        <ThemedImg
           /* Brief 1a: swapped off the retired red insignia to the new First Cut asset
              (fit-preserving). The corner-insignia treatment vs the new landscape card
              is FLAGGED for the hero briefs — asset swapped, treatment not restyled. */

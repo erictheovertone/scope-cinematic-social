@@ -13,6 +13,7 @@
 // post whose count changed; no replay on scrolls/renders. Reduced-motion: the
 // count just updates, no flight/flash.
 
+import ThemedImg from "@/components/ThemedImg";
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useFirstCutLedger, FIRST_CUT_SLOTS, onFirstCutEarned } from '@/lib/firstCutLedger';
@@ -82,7 +83,7 @@ export default function FirstCutChip({
   // (matches today's chip, which had no tap).
   const markSrc = iconOnly ? FIRST_CUT_ACTION_MARK : FRAMED_MARK;
   const mark = (
-    <img
+    <ThemedImg
       src={markSrc}
       alt="First Cut"
       style={{ width: size, height: size, objectFit: 'contain', display: 'block', ...(pulse ? { animation: 'fcMarkPop 0.5s cubic-bezier(0.16,0.84,0.3,1) both' } : null) }}
@@ -127,7 +128,7 @@ export default function FirstCutChip({
       {/* The whip — portaled to body so `fixed` is viewport-true regardless of
           any transformed feed-tile ancestor. Lands centred on the counter. */}
       {fly && typeof document !== 'undefined' && createPortal(
-        <img
+        <ThemedImg
           src={markSrc}
           alt=""
           style={{

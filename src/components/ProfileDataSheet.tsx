@@ -1,5 +1,6 @@
 "use client";
 
+import ThemedImg from "@/components/ThemedImg";
 import { useState, useEffect, Fragment } from "react";
 import { createPortal } from "react-dom";
 import type { ProfileLink } from "@/lib/userService";
@@ -227,7 +228,7 @@ export default function ProfileDataSheet({
           >
             {/* Brief W10 §4 — no CSS container frame: the new badge PNG carries its own
                 rounded frame in the art. Render the image + label, nothing else. */}
-            <img src={(b.framedSrc ?? b.bannerSrc ?? b.src) as string} alt={BADGE_DISPLAY_NAME[b.key]} style={{ width: '100%', height: 'auto', objectFit: 'contain', display: 'block' }} />
+            <ThemedImg src={(b.framedSrc ?? b.bannerSrc ?? b.src) as string} alt={BADGE_DISPLAY_NAME[b.key]} style={{ width: '100%', height: 'auto', objectFit: 'contain', display: 'block' }} />
             <span style={{ fontFamily: 'var(--font-body)', fontWeight: 400, fontSize: 7.5, letterSpacing: '0.12em', color: 'rgb(var(--ink-rgb) / 0.46)', textTransform: 'uppercase', textAlign: 'center', lineHeight: 1.1 }}>{BADGE_DISPLAY_NAME[b.key]}</span>
           </button>
         ))}

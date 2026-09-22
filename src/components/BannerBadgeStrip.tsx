@@ -1,4 +1,5 @@
 'use client';
+import ThemedImg from "@/components/ThemedImg";
 import { useLayoutEffect, useRef } from 'react';
 // ── BannerBadgeStrip — PIECE 1 of the badge redesign ─────────────────────────
 //
@@ -159,7 +160,7 @@ export default function BannerBadgeStrip({
           const sz = b.key === 'srh' ? iconSize - 1 : iconSize;
           const arriving = !!arriveKeys?.includes(b.key);
           return (
-            <img
+            <ThemedImg
               key={b.key}
               ref={(el) => { if (el) iconRefs.current.set(b.key, el); else iconRefs.current.delete(b.key); }}
               src={b.src}

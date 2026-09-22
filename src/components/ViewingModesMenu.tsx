@@ -8,6 +8,7 @@
 // (onSelect) unchanged. No text blur (W5 retirement stands — the frame's soft look
 // is the low-opacity border/fill only; text inside stays crisp).
 
+import ThemedImg from "@/components/ThemedImg";
 import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, useReducedMotion } from 'framer-motion';
@@ -69,7 +70,7 @@ export default function ViewingModesMenu({ onClose, onSelect }: Props) {
           Viewing Modes
         </h1>
         <button onClick={onClose} aria-label="Close viewing modes" style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px 2px', marginTop: -2, lineHeight: 0 }}>
-          <img src="/design-updates-071526/scope-logomark-offwhite.png" alt="Close" style={{ width: 39, height: 'auto', objectFit: 'contain', display: 'block' }} />
+          <ThemedImg src="/design-updates-071526/scope-logomark-offwhite.png" alt="Close" style={{ width: 39, height: 'auto', objectFit: 'contain', display: 'block' }} />
         </button>
       </div>
 

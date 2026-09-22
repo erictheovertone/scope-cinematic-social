@@ -1,5 +1,6 @@
 "use client";
 
+import ThemedImg from "@/components/ThemedImg";
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
@@ -412,7 +413,7 @@ export default function GridLayoutPage() {
           <span style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 16, letterSpacing: "var(--track-display)", color: "var(--ink-100)" }}>
             Customize your grid.
           </span>
-          <img src="/design-updates-071526/scope-logomark-offwhite.png" alt="Scope" style={{ position: "absolute", top: "calc(11px + var(--safe-top))", right: 12, width: 39, height: "auto", opacity: 0.78 }} />
+          <ThemedImg src="/design-updates-071526/scope-logomark-offwhite.png" alt="Scope" style={{ position: "absolute", top: "calc(11px + var(--safe-top))", right: 12, width: 39, height: "auto", opacity: 0.78 }} />
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 4, paddingTop: 4 }}>

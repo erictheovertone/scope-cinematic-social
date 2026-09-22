@@ -1,5 +1,6 @@
 'use client';
 
+import ThemedImg from "@/components/ThemedImg";
 import Link from 'next/link';
 import { useState } from 'react';
 
@@ -47,7 +48,7 @@ export default function PageTitle({
           onPointerLeave={() => setLogoPressed(false)}
           style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '9px 6px', textDecoration: 'none', outline: 'none', transform: logoPressed ? 'scale(0.92)' : 'scale(1)', opacity: logoPressed ? 0.75 : 1, transition: 'transform 120ms ease, opacity 120ms ease' }}
         >
-          <img src="/design-updates-071526/scope-logomark-offwhite.png" alt="Scope" style={{ width: 39, height: 'auto', objectFit: 'contain', display: 'block' }} />
+          <ThemedImg src="/design-updates-071526/scope-logomark-offwhite.png" alt="Scope" style={{ width: 39, height: 'auto', objectFit: 'contain', display: 'block' }} />
         </Link>
       </div>}
     </div>

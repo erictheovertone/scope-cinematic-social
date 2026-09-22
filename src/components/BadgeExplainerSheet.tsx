@@ -1,5 +1,6 @@
 "use client";
 
+import ThemedImg from "@/components/ThemedImg";
 import {useEffect, useState, useRef} from 'react';
 import { useRouter } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
@@ -284,7 +285,7 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '36px 0 32px' }}>
                 <div style={{ width: d.size, height: d.size, marginBottom: 20, position: 'relative' }}>
                   <div className="badge-hero-glow" style={{ position: 'absolute', inset: -24, borderRadius: '50%', background: `radial-gradient(circle, ${d.color}55 0%, transparent 65%)`, animation: 'glowIn 2s ease 0.3s both', pointerEvents: 'none' }} />
-                  <img className="badge-hero-logo" src={d.img} alt={d.label} style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block', position: 'relative', animation: 'focusPull 2s cubic-bezier(0.16, 0.84, 0.3, 1) both' }} />
+                  <ThemedImg className="badge-hero-logo" src={d.img} alt={d.label} style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block', position: 'relative', animation: 'focusPull 2s cubic-bezier(0.16, 0.84, 0.3, 1) both' }} />
                 </div>
                 <p style={{ ...BOLD, fontSize: 'var(--fs-18)', color: d.color, textTransform: 'uppercase', letterSpacing: '-0.02em', margin: '0 0 12px', textAlign: 'center' }}>{d.label}</p>
                 <p style={{ ...REG, fontSize: 'var(--fs-13)', color: 'rgb(var(--ink-rgb) / 0.6)', textAlign: 'center', lineHeight: 1.6, margin: 0, maxWidth: 280 }}>{d.tagline}</p>
@@ -319,7 +320,7 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
             Scope Pro badge when Pro, the Free mark otherwise (CHANGE 3). */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid rgb(var(--ink-rgb) / 0.08)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <img src={vIsPaid ? '/design-updates-071526/new-badges/scope-pro.png' : '/free-tier-aperture-logo-red.png'} alt="" style={{ width: 16, height: 16, objectFit: 'contain' }} />
+            <ThemedImg src={vIsPaid ? '/design-updates-071526/new-badges/scope-pro.png' : '/free-tier-aperture-logo-red.png'} alt="" style={{ width: 16, height: 16, objectFit: 'contain' }} />
             <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               <span style={{ ...BOLD, fontSize: 'var(--fs-7)', color: 'rgb(var(--ink-rgb) / 0.4)', textTransform: 'uppercase', letterSpacing: '0.15em' }}>MY MEMBERSHIP</span>
               <span style={{ ...BOLD, fontSize: 'var(--fs-9)', color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
@@ -401,7 +402,7 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
               <div style={{ flexShrink: 0, marginTop: 2, position: 'relative', width: tier.size, height: tier.size }}>
                 {/* Flat min-design icon — consistent with the BADGES EARNED grid
                     above (no 3D/glow; the new flat assets don't suit a round coin). */}
-                <img src={tier.img} alt={tier.label} style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block', animation: visible ? `badgeGlowPulse 400ms ease-out ${i * 45 + 150}ms both` : undefined }} />
+                <ThemedImg src={tier.img} alt={tier.label} style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block', animation: visible ? `badgeGlowPulse 400ms ease-out ${i * 45 + 150}ms both` : undefined }} />
                 {tierEarned(tier.key, vTiers, vIsPaid, vComposerTrackCount) && (
                   <div style={{ position: 'absolute', top: -3, right: -3, width: 6, height: 6, borderRadius: '50%', backgroundColor: 'var(--ink-100)', zIndex: 2 }} />
                 )}

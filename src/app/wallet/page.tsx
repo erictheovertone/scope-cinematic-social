@@ -1,5 +1,6 @@
 "use client";
 
+import ThemedImg from "@/components/ThemedImg";
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import DesktopWallet from '@/components/desktop/DesktopWallet';
 import { useIsDesktop } from '@/lib/useIsDesktop';
@@ -865,7 +866,7 @@ export default function WalletPage() {
           <LedgerCard variant="border" radius={10} style={{ padding: "0" }}>
             {/* ETH row */}
             <div className="ledger-row" style={{ position: "relative", display: "flex", alignItems: "center", height: 62, padding: "0 14px", boxSizing: "border-box", borderBottom: "1px solid var(--hairline)" }}>
-              <img src="/design-updates-071526/token-icons/ethereum.png" alt="" style={{ width: 30, height: 30, objectFit: "contain", display: "block", flexShrink: 0, marginRight: 12 }} />
+              <ThemedImg src="/design-updates-071526/token-icons/ethereum.png" alt="" style={{ width: 30, height: 30, objectFit: "contain", display: "block", flexShrink: 0, marginRight: 12 }} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <p style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 12, color: "rgb(var(--ink-rgb) / 0.74)", margin: 0, letterSpacing: "var(--track-body)" }}>ETHEREUM</p>
                 <p style={{ fontFamily: "var(--font-body)", fontWeight: 400, fontSize: 10, color: "rgb(var(--ink-rgb) / 0.74)", letterSpacing: "1.1px", margin: "2px 0 0" }}>
@@ -880,7 +881,7 @@ export default function WalletPage() {
 
             {/* USDC row */}
             <div className="ledger-row" style={{ position: "relative", display: "flex", alignItems: "center", height: 62, padding: "0 14px", boxSizing: "border-box", borderBottom: "1px solid var(--hairline)" }}>
-              <img src="/design-updates-071526/token-icons/usdc.png" alt="" style={{ width: 30, height: 30, objectFit: "contain", display: "block", flexShrink: 0, marginRight: 12 }} />
+              <ThemedImg src="/design-updates-071526/token-icons/usdc.png" alt="" style={{ width: 30, height: 30, objectFit: "contain", display: "block", flexShrink: 0, marginRight: 12 }} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <p style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 12, color: "rgb(var(--ink-rgb) / 0.74)", margin: 0, letterSpacing: "var(--track-body)" }}>USDC</p>
                 <p style={{ fontFamily: "var(--font-body)", fontWeight: 400, fontSize: 10, color: "rgb(var(--ink-rgb) / 0.74)", letterSpacing: "1.1px", margin: "2px 0 0" }}>
@@ -902,7 +903,7 @@ export default function WalletPage() {
                 onClick={() => { setSwapInitial({ sell: "ZORA", buy: "USDC", amount: (Math.floor(parseFloat(zoraBalance) * 100) / 100).toFixed(2), cashOut: true }); setShowSwap(true); }}
                 style={{ position: "relative", display: "flex", alignItems: "center", height: 62, padding: "0 14px", boxSizing: "border-box", borderBottom: "1px solid var(--hairline)", cursor: "pointer" }}
               >
-                <img src="/design-updates-071526/token-icons/creator.png" alt="" style={{ width: 30, height: 30, objectFit: "contain", display: "block", flexShrink: 0, marginRight: 12 }} />
+                <ThemedImg src="/design-updates-071526/token-icons/creator.png" alt="" style={{ width: 30, height: 30, objectFit: "contain", display: "block", flexShrink: 0, marginRight: 12 }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 12, color: "rgb(var(--ink-rgb) / 0.74)", margin: 0, letterSpacing: "var(--track-body)" }}>CREATOR</p>
                   <p style={{ fontFamily: "var(--font-body)", fontWeight: 400, fontSize: 10, color: "rgb(var(--ink-rgb) / 0.74)", letterSpacing: "1.1px", margin: "2px 0 0" }}>

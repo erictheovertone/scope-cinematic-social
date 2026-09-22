@@ -1,5 +1,6 @@
 "use client";
 
+import ThemedImg from "@/components/ThemedImg";
 import { useState, useEffect, useRef } from "react";
 import { feedImage } from "@/lib/mediaUrl";
 import { useRouter } from "next/navigation";
@@ -648,7 +649,7 @@ export default function ProfilePostViewer({
           </svg>
           <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "var(--ink-100)", letterSpacing: "-0.1px", textTransform: "uppercase" }}>BACK</span>
         </button>
-        <img src="/logomark-plain-white.png" alt="Scope" style={{ height: 14, width: "auto", objectFit: "contain", display: "block", opacity: 0.9 }} />
+        <ThemedImg src="/logomark-plain-white.png" alt="Scope" style={{ height: 14, width: "auto", objectFit: "contain", display: "block", opacity: 0.9 }} />
         <button onClick={() => { enteredViaRotation.current = false; openTheatre(); }} aria-label="Theatre" style={{ background: "transparent", border: "none", cursor: "pointer", padding: 0, display: "flex", alignItems: "center" }}>
           <img src="/theatre-mode-eye-solo.png" alt="" style={{ height: 17, width: "auto", display: "block", opacity: 0.85 }} />
         </button>

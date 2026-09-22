@@ -1,4 +1,5 @@
 "use client";
+import ThemedImg from "@/components/ThemedImg";
 
 // ── ProfileTabRow — the SHARED mobile profile tab-row INNER content ──────────
 //
@@ -37,7 +38,7 @@ export default function ProfileTabRow({
           onClick={onDismissSnap}
           style={{ background: "transparent", border: "none", padding: 0, cursor: "pointer", display: "flex", alignItems: "center", animation: headerUnsnapping ? "snapOutLeft 0.28s cubic-bezier(0.16,1,0.3,1) 165ms both" : "snapInLeft 0.32s cubic-bezier(0.16,1,0.3,1) 0ms both" }}
         >
-          <img src="/logomark-plain-white.png" alt="" style={{ width: 32, height: 20, objectFit: "contain", display: "block" }} />
+          <ThemedImg src="/logomark-plain-white.png" alt="" style={{ width: 32, height: 20, objectFit: "contain", display: "block" }} />
         </button>
       ) : (
         <button

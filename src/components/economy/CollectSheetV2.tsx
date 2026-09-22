@@ -16,6 +16,7 @@
 //
 // Rendered in place of the real CollectSheet only when economyPreviewEnabled().
 
+import ThemedImg from "@/components/ThemedImg";
 import { useEffect, useState, useRef } from 'react';
 import { feedImage } from "@/lib/mediaUrl";
 import { usePrivy, useFundWallet } from '@privy-io/react-auth';
@@ -530,7 +531,7 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
             <span style={{ ...SKR, fontSize: 'var(--fs-9)', color: 'rgb(var(--ink-rgb) / 0.4)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>YOU HOLD</span>
             <span style={{ ...SKB, fontSize: 'var(--fs-13)', color: 'var(--ink-100)', fontVariantNumeric: 'tabular-nums' }}>
               {held.toLocaleString()}{' '}
-              <img
+              <ThemedImg
                 src="/fragments-wordmark-v3.png"
                 alt="FRAGMENTS"
                 style={{ height: '0.82em', width: 'auto', display: 'inline-block', verticalAlign: 'baseline', transform: 'translateY(0.06em)' }}
@@ -593,7 +594,7 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
                     <span style={{ ...SKR, fontSize: 'var(--fs-9)', color: 'rgb(var(--ink-rgb) / 0.4)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>YOU RECEIVE</span>
                     <span style={{ ...SKB, fontSize: 'var(--fs-18)', color: 'var(--ink-100)', fontVariantNumeric: 'tabular-nums' }}>
                       ≈ {buyQuote ? buyQuote.pieces.toLocaleString() : 0}{' '}
-                      <img
+                      <ThemedImg
                         src="/fragments-wordmark-v3.png"
                         alt="FRAGMENTS"
                         style={{ height: '0.82em', width: 'auto', display: 'inline-block', verticalAlign: 'baseline', transform: 'translateY(0.06em)' }}
@@ -662,7 +663,7 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
                     {held.toLocaleString()}{' '}
                     {/* Holographic wordmark replaces ONLY the word; cap-height matched to
                         the surrounding text, nudged onto the baseline. Scoped to this sell line. */}
-                    <img
+                    <ThemedImg
                       src="/fragments-wordmark-v3.png"
                       alt="FRAGMENTS"
                       style={{ height: '0.82em', width: 'auto', display: 'inline-block', verticalAlign: 'baseline', transform: 'translateY(0.06em)' }}

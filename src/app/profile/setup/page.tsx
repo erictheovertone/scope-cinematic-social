@@ -1,5 +1,6 @@
 "use client";
 
+import ThemedImg from "@/components/ThemedImg";
 import { useState, useRef, useEffect } from "react";
 import { feedImage } from "@/lib/mediaUrl";
 import { useRouter } from "next/navigation";
@@ -181,7 +182,7 @@ export default function ProfileSetup() {
       `}</style>
 
       {/* Logomark — top-right, 44×28, 60%. */}
-      <img src="/design-updates-071526/scope-logomark-offwhite.png" alt="Scope" style={{ position: 'absolute', top: 'calc(11px + var(--safe-top))', right: 13, width: 44, height: 'auto', opacity: 0.6 }} />
+      <ThemedImg src="/design-updates-071526/scope-logomark-offwhite.png" alt="Scope" style={{ position: 'absolute', top: 'calc(11px + var(--safe-top))', right: 13, width: 44, height: 'auto', opacity: 0.6 }} />
 
       {/* Title — centred, above the PFP. */}
       <p style={{ alignSelf: 'center', margin: '70px 0 0', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 14, letterSpacing: 'var(--track-display)', color: 'var(--ink-100)', textAlign: 'center' }}>Set up your profile</p>

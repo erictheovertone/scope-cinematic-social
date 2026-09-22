@@ -10,6 +10,7 @@
 // REAL/ungated. First Cut only enters the list when the economy boundary
 // supplies firstCutCount > 0, so nothing implies earnings off-flag.
 
+import ThemedImg from "@/components/ThemedImg";
 import type { BadgeMeta } from '@/lib/economy/badges';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
@@ -56,7 +57,7 @@ export default function BadgeStack({
       }}
     >
       {visible.map((b, i) => (
-        <img
+        <ThemedImg
           key={b.key}
           src={b.src}
           alt={b.title}

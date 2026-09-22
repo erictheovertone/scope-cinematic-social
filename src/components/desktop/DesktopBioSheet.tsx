@@ -5,6 +5,7 @@
 // scrollable personal site), black, hairline-separated bands. Every band hides
 // when its data is unset. All data from existing fields. Desktop only.
 
+import ThemedImg from "@/components/ThemedImg";
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
@@ -222,7 +223,7 @@ export default function DesktopBioSheet({ profile, isOwn, links, badges, posts, 
                   onClick={() => { if (b.key === 'composer' && handle) { onClose(); router.push(`/composer/${handle}`); } else { onViewBadges(); } }}
                   aria-label={`${b.key === 'top1k' ? 'Collector' : b.title} badge — view details`}
                 >
-                  <img src={b.bannerSrc ?? b.src} alt="" style={{ width: 60, height: 60, objectFit: 'contain' }} />
+                  <ThemedImg src={b.bannerSrc ?? b.src} alt="" style={{ width: 60, height: 60, objectFit: 'contain' }} />
                   <span style={{ ...SKB, fontSize: 10, color: 'rgb(var(--ink-rgb) / 0.65)', textTransform: 'uppercase', letterSpacing: '0.08em', textAlign: 'center' }}>{b.key === 'top1k' ? 'COLLECTOR' : b.title}</span>
                   {b.key === 'firstCut' && firstCutCount > 0 && <span style={{ ...SKB, fontSize: 9, color: RED }}>{firstCutCount} SLOTS</span>}
                   {b.key === 'srh' && srhCount > 0 && <span style={{ ...SKB, fontSize: 9, color: RED }}>×{srhCount}</span>}

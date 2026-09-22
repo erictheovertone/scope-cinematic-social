@@ -5,6 +5,7 @@
 // untouched. Icons are v1 equivalents of the app's nav set (Eric exports
 // finals later): home / create / notifications / wallet / profile.
 
+import ThemedImg from "@/components/ThemedImg";
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -116,7 +117,7 @@ export default function DesktopRail() {
       >
         {pathname === '/'
           ? <HomeLogomarkCue animated={!reduced && !menuOpen} />
-          : <img src="/logomark-plain-white.png" alt="Scope" style={{ width: 41, height: 26, objectFit: 'contain', display: 'block' }} />}
+          : <ThemedImg src="/logomark-plain-white.png" alt="Scope" style={{ width: 41, height: 26, objectFit: 'contain', display: 'block' }} />}
       </button>
       {/* BOTTOM-ANCHORED icon stack (the frame's rhythm); the active marker is
           ONE shared element that SLIDES between rows (layoutId), icons

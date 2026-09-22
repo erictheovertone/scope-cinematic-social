@@ -6,6 +6,7 @@
 // renders the content column. Static layout only — the grid→post-scroll
 // transform is BRIEF 2 (the grid-mode icon slot stays unbuilt).
 
+import ThemedImg from "@/components/ThemedImg";
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { usePrivy } from '@privy-io/react-auth';
@@ -468,7 +469,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
             <button onClick={() => setBadgesOpen(true)} style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 15, color: 'rgb(var(--ink-rgb) / 0.76)', letterSpacing: 'var(--track-body)', margin: '0 0 10px', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, display: 'block', marginLeft: 'auto' }}>Badges</button>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8 }}>
               {badges.slice(0, 4).map((b, i) => (
-                <img
+                <ThemedImg
                   key={b.key}
                   className="tappable"
                   onClick={() => b.key === 'composer' ? router.push(`/composer/${handle}`) : setBadgesOpen(true)}

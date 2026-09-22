@@ -13,6 +13,7 @@
 // DEPOSIT = Privy's own funding modal (already centered). SEND = a small
 // centered modal mirroring the mobile ops (validation via viem getAddress).
 
+import ThemedImg from "@/components/ThemedImg";
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { usePrivy, useFundWallet, useWallets } from '@privy-io/react-auth';
@@ -255,7 +256,7 @@ export default function DesktopWallet() {
             {tab === 'balances' && (
               <>
                 <div className="ledger-row" style={TROW}>
-                  <img src={`${TICON}/ethereum.png`} alt="" style={{ width: 30, height: 30, objectFit: 'contain', flexShrink: 0, marginRight: 12 }} />
+                  <ThemedImg src={`${TICON}/ethereum.png`} alt="" style={{ width: 30, height: 30, objectFit: 'contain', flexShrink: 0, marginRight: 12 }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{ ...FD, fontSize: 12, color: 'rgb(var(--ink-rgb) / 0.74)', margin: 0, letterSpacing: 'var(--track-body)' }}>ETHEREUM</p>
                     <p style={{ ...FB, fontSize: 10, color: 'rgb(var(--ink-rgb) / 0.74)', letterSpacing: '1.1px', margin: '2px 0 0' }}>{eth != null ? `${eth.toFixed(4)} ETH` : '…'}</p>
@@ -263,7 +264,7 @@ export default function DesktopWallet() {
                   <Fiat n={eth != null && rate != null ? eth * rate : null} />
                 </div>
                 <div className="ledger-row" style={TROW}>
-                  <img src={`${TICON}/usdc.png`} alt="" style={{ width: 30, height: 30, objectFit: 'contain', flexShrink: 0, marginRight: 12 }} />
+                  <ThemedImg src={`${TICON}/usdc.png`} alt="" style={{ width: 30, height: 30, objectFit: 'contain', flexShrink: 0, marginRight: 12 }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{ ...FD, fontSize: 12, color: 'rgb(var(--ink-rgb) / 0.74)', margin: 0, letterSpacing: 'var(--track-body)' }}>USDC</p>
                     <p style={{ ...FB, fontSize: 10, color: 'rgb(var(--ink-rgb) / 0.74)', letterSpacing: '1.1px', margin: '2px 0 0' }}>{usdc != null ? `${usdc.toFixed(2)} USDC` : '…'}</p>
@@ -276,7 +277,7 @@ export default function DesktopWallet() {
                     onClick={() => { setSwapInitial({ sell: 'ZORA', buy: 'USDC', amount: (Math.floor(zora * 100) / 100).toFixed(2), cashOut: true }); setShowSwap(true); }}
                     style={{ ...TROW, background: 'transparent', border: 'none', borderBottom: '1px solid var(--hairline)', cursor: 'pointer', textAlign: 'left' }}
                   >
-                    <img src={`${TICON}/creator.png`} alt="" style={{ width: 30, height: 30, objectFit: 'contain', flexShrink: 0, marginRight: 12 }} />
+                    <ThemedImg src={`${TICON}/creator.png`} alt="" style={{ width: 30, height: 30, objectFit: 'contain', flexShrink: 0, marginRight: 12 }} />
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <p style={{ ...FD, fontSize: 12, color: 'rgb(var(--ink-rgb) / 0.74)', margin: 0, letterSpacing: 'var(--track-body)', textTransform: 'uppercase' }}>Creator Earnings</p>
                       <p style={{ ...FB, fontSize: 10, color: 'rgb(var(--ink-rgb) / 0.74)', letterSpacing: '1.1px', margin: '2px 0 0' }}>{zora >= 1000 ? Math.round(zora).toLocaleString() : zora.toFixed(2)} ZORA</p>

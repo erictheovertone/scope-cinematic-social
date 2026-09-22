@@ -5,6 +5,7 @@
 // All badge types, HELD vs LOCKED via the badgeHoldings truth, the app's
 // modal language + red brackets.
 
+import ThemedImg from "@/components/ThemedImg";
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
@@ -86,7 +87,7 @@ export default function DesktopBadgesSheet({
             <div style={{ padding: '4px 0 8px' }}>
               <button onClick={() => setDetailKey(null)} style={{ ...SKB, fontSize: 11, color: 'rgb(var(--ink-rgb) / 0.5)', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>← BACK</button>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '26px 0 24px' }}>
-                <img src={d.img} alt={d.label} style={{ width: d.size, height: d.size, objectFit: 'contain', display: 'block', marginBottom: 16 }} />
+                <ThemedImg src={d.img} alt={d.label} style={{ width: d.size, height: d.size, objectFit: 'contain', display: 'block', marginBottom: 16 }} />
                 <p style={{ ...SKB, fontSize: 20, color: d.color, textTransform: 'uppercase', letterSpacing: '-0.01em', margin: '0 0 10px', textAlign: 'center' }}>{d.label}</p>
                 <p style={{ ...SKR, fontSize: 13, color: 'rgb(var(--ink-rgb) / 0.6)', textAlign: 'center', lineHeight: 1.6, margin: 0, maxWidth: 380 }}>{d.tagline}</p>
               </div>
@@ -120,7 +121,7 @@ export default function DesktopBadgesSheet({
         {membership && (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '14px 0 18px', borderBottom: `1px solid ${HAIR}`, marginBottom: 8 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
-              <img src={membership.isPaid ? '/design-updates-071526/new-badges/scope-pro.png' : '/free-tier-aperture-logo-red.png'} alt="" style={{ width: 22, height: 22, objectFit: 'contain', flexShrink: 0 }} />
+              <ThemedImg src={membership.isPaid ? '/design-updates-071526/new-badges/scope-pro.png' : '/free-tier-aperture-logo-red.png'} alt="" style={{ width: 22, height: 22, objectFit: 'contain', flexShrink: 0 }} />
               <div style={{ display: 'flex', flexDirection: 'column', gap: 3, minWidth: 0 }}>
                 <span style={{ ...SKB, fontSize: 9, color: 'rgb(var(--ink-rgb) / 0.4)', textTransform: 'uppercase', letterSpacing: '0.15em' }}>MY MEMBERSHIP</span>
                 <span style={{ ...SKB, fontSize: 13, color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{membershipBarLabel(membership)}</span>
@@ -151,7 +152,7 @@ export default function DesktopBadgesSheet({
                     100%{filter:none} frame overrode the inline grayscale on locked badges.
                     No fill-mode → the pulse plays, then the icon reverts to its inline
                     filter (grayscale for locked). */}
-                <img src={src} alt={b.title} style={{ width: 44, height: 44, objectFit: 'contain', display: 'block', filter: state === 'held' ? 'none' : 'grayscale(1)', opacity: state === 'held' ? 1 : 0.85, animation: reduced ? 'none' : `badgeGlowPulse 400ms ease-out ${ri * 45 + 150}ms` }} />
+                <ThemedImg src={src} alt={b.title} style={{ width: 44, height: 44, objectFit: 'contain', display: 'block', filter: state === 'held' ? 'none' : 'grayscale(1)', opacity: state === 'held' ? 1 : 0.85, animation: reduced ? 'none' : `badgeGlowPulse 400ms ease-out ${ri * 45 + 150}ms` }} />
               </span>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
