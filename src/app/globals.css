@@ -238,37 +238,42 @@ html, body {
   --sp-6: clamp(24px, calc(24px + 8*(100vw - 320px)/320), 32px);
 }
 
-/* ── Brief T1 Stage 2 — THE LIGHT THEME ──────────────────────────────────────
+/* ── Brief T1 Stage 2 / T1-2a — THE LIGHT THEME (true brand-pair inversion) ───
    [data-theme="light"] on <html> (set by the Stage-4 setting, before first paint). Because
-   Stage 1 routed every color through the tokens, the theme swap is JUST this block: redefine
-   the two RGB triplets + the surface/mute/glass tokens for warm paper. --danger, --black(-rgb),
-   --positive/-alt, --gold are theme-invariant (they read on paper) and are NOT redefined.
-   INERT until the attribute is set — default (dark) is byte-unchanged. */
+   Stage 1 routed every color through the tokens, the theme swap is JUST this block. T1-2a:
+   Eric's ruling — light mode is a TRUE INVERSION of the brand pair, NOT a lighter paper:
+   canvas = the ivory #E5E1DB, ink = the off-black #050505. Everything hung off the two
+   triplets is re-derived below. --danger, --black(-rgb), --gold stay; --positive is darkened
+   (the dark-theme mint washes out on ivory). INERT until the attribute is set — dark unchanged. */
 :root[data-theme="light"] {
-  --ink-rgb: 10 10 10;            /* #0A0A0A — the ink flips to charcoal; the whole ladder derives */
-  --canvas-rgb: 244 241 236;      /* #F4F1EC — warm paper (ivory family, NOT pure white) */
+  --ink-rgb: 5 5 5;               /* #050505 — the off-black ink; the whole ladder derives */
+  --canvas-rgb: 229 225 219;      /* #E5E1DB — the brand IVORY (the dark theme's ink, now the ground) */
   --canvas: rgb(var(--canvas-rgb) / 1);
   --ink: rgb(var(--ink-rgb) / 1);
-  /* surfaces = slightly-deeper paper (a card sits a touch below the page) */
-  --surface-08: #F0ECE4;
-  --surface-1:  #ECE7DF;
-  --surface-0d: #EAE5DC;
-  --surface-10: #E7E2D8;
-  --surface-2:  #E3DDD3;
-  --surface-3:  #DCD5CA;
-  --surface-1f: #D6CFC3;
-  --surface-4:  #CFC8BB;
-  --surface-2a: #C8C0B2;
-  /* greys become dark-on-paper text / paper dividers (first-pass — tune on device) */
-  --mute-1: #C7C0B4;             /* faint divider on paper (was a dark divider) */
-  --mute-2: #6E6A62;             /* dim text */
-  --mute-3: #8C867C;             /* placeholder text */
-  --hairline: rgb(var(--ink-rgb) / 0.18);
-  --hairline-strong: rgb(var(--ink-rgb) / 0.26);
-  --avatar-frame: rgb(var(--ink-rgb) / 0.12);
-  --on-ink: #F4F1EC;             /* content ON a now-charcoal ink fill → paper */
-  --glass-fill: rgb(255 255 255 / 0.55);   /* light glass */
+  /* SURFACES step DEEPER than the ivory canvas (the light twin of dark's lighter-than-canvas
+     surfaces): a card/sheet reads as raised against #E5E1DB by getting progressively warmer/
+     darker. Ramp from a hair-below-canvas to the deepest inset. */
+  --surface-08: #E0DBD3;         /* nearest the canvas (near-black in dark) */
+  --surface-1:  #DDD8D1;         /* card/sheet fill */
+  --surface-0d: #D9D3CB;
+  --surface-10: #D7D1C9;
+  --surface-2:  #D4CFC7;         /* panel / raised */
+  --surface-3:  #CBC5BC;         /* input / deeper inset */
+  --surface-1f: #C3BCB2;
+  --surface-4:  #BBB4A9;         /* deepest ladder fill */
+  --surface-2a: #B3AB9F;
+  /* the dark-theme greys → dark-on-ivory text + an ivory divider */
+  --mute-1: #C9C3BA;             /* faint divider on ivory (was a dark divider) */
+  --mute-2: #5A554D;             /* dim text */
+  --mute-3: #7C766A;             /* placeholder text */
+  --hairline: rgb(var(--ink-rgb) / 0.20);        /* visible on ivory */
+  --hairline-strong: rgb(var(--ink-rgb) / 0.28);
+  --avatar-frame: rgb(var(--ink-rgb) / 0.14);
+  --on-ink: #E5E1DB;             /* text/icons ON an --ink (off-black) fill → ivory (primary CTAs) */
+  --glass-fill: rgb(229 225 219 / 0.6);          /* IVORY glass + the call-site blur */
   --glass-border: rgb(var(--ink-rgb) / 0.22);
+  --positive: #0A8F54;           /* deep emerald — the dark-theme #00E08A mint washes out on ivory */
+  --positive-alt: #0A8F54;
 }
 
 /* ── VIEWING SURFACES STAY DARK regardless of theme ──────────────────────────
