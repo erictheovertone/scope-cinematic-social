@@ -22,7 +22,6 @@
 // decision (gear lists on profiles), not a settings pass.
 
 import AppearanceRow from "@/components/AppearanceRow";
-import { themePreviewAllowed } from "@/lib/theme";
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { usePrivy } from '@privy-io/react-auth';
@@ -452,8 +451,8 @@ export default function DesktopSettings() {
             {row('Contribute Music', () => setContributeMusicOpen(true), 'contribmusic')}
             {row('Browse the Library', () => router.push('/library'), 'browselib')}
             {row('Add to Home Screen', () => router.push('/profile/preferences'))}
-            {/* Brief T1-4a — Appearance control (self-gates to the theme-preview allowlist). */}
-            {themePreviewAllowed(username) && <div style={{ marginTop: 18 }}><AppearanceRow username={username} /></div>}
+            {/* Brief T1-4a-open — Appearance control, ships to every authed user. */}
+            <div style={{ marginTop: 18 }}><AppearanceRow /></div>
           </div>
         );
       case 'privacy':

@@ -1,7 +1,6 @@
 "use client";
 
 import AppearanceRow from "@/components/AppearanceRow";
-import { themePreviewAllowed } from "@/lib/theme";
 import { useState, useEffect, useRef } from "react";
 import DesktopSettings from '@/components/desktop/DesktopSettings';
 import { useIsDesktop } from '@/lib/useIsDesktop';
@@ -238,15 +237,13 @@ export default function Preferences() {
         </div>
       ))}
 
-      {/* Brief T1-4a — Appearance control, gated to the theme-preview allowlist. */}
-      {themePreviewAllowed(currentProfile.username) && (
-        <div style={{ padding: '26px 20px 0' }}>
-          <p style={{ ...MONO, fontSize: 'var(--fs-8)', color: 'rgb(var(--ink-rgb) / 0.38)', textTransform: 'uppercase', letterSpacing: '0.2em', margin: '0 0 10px' }}>
-            APPEARANCE
-          </p>
-          <AppearanceRow username={currentProfile.username} />
-        </div>
-      )}
+      {/* Brief T1-4a-open — Appearance control, ships to every authed user. */}
+      <div style={{ padding: '26px 20px 0' }}>
+        <p style={{ ...MONO, fontSize: 'var(--fs-8)', color: 'rgb(var(--ink-rgb) / 0.38)', textTransform: 'uppercase', letterSpacing: '0.2em', margin: '0 0 10px' }}>
+          APPEARANCE
+        </p>
+        <AppearanceRow />
+      </div>
 
       {/* LOG OUT — bottom, red, its own space below the last section */}
       <button

@@ -47,12 +47,3 @@ export function setThemePref(pref: ThemePref): void {
   try { window.dispatchEvent(new CustomEvent('scope:theme-pref')); } catch { /* ignore */ }
 }
 
-/** Gate for the preview control: NEXT_PUBLIC_THEME_PREVIEW_USERNAMES (comma list; '*' = everyone;
- *  absent = hidden). Baked at build (NEXT_PUBLIC) — ungating later is an env change, not code. */
-export function themePreviewAllowed(username: string | null | undefined): boolean {
-  const raw = process.env.NEXT_PUBLIC_THEME_PREVIEW_USERNAMES;
-  if (!raw) return false;
-  const list = raw.split(',').map((s) => s.trim()).filter(Boolean);
-  if (list.includes('*')) return true;
-  return !!username && list.includes(username);
-}

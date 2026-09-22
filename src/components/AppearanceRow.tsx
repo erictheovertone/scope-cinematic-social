@@ -3,12 +3,12 @@
 // The ONE shared appearance control, rendered in BOTH Settings twins (mobile Preferences +
 // DesktopSettings) — no fork. Dark · Light · System, built on the house LedgerCard. Selected
 // state is the ink-opacity ladder (full ink vs 40%) — no accent colour, no red. Switching is
-// instant (setThemePref writes localStorage + applies data-theme, no reload). Self-gating:
-// renders nothing unless the resolved username is allowlisted (NEXT_PUBLIC_THEME_PREVIEW_USERNAMES).
+// instant (setThemePref writes localStorage + applies data-theme, no reload). Ships to every
+// authed user (the T1-4a preview allowlist was removed in T1-4a-open).
 
 import { useEffect, useState } from 'react';
 import { LedgerCard } from '@/components/Ledger';
-import { getStoredPref, setThemePref, themePreviewAllowed, type ThemePref } from '@/lib/theme';
+import { getStoredPref, setThemePref, type ThemePref } from '@/lib/theme';
 
 const MONO: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const OPTIONS: { pref: ThemePref; label: string }[] = [
@@ -17,11 +17,9 @@ const OPTIONS: { pref: ThemePref; label: string }[] = [
   { pref: 'system', label: 'System' },
 ];
 
-export default function AppearanceRow({ username }: { username: string | null | undefined }) {
+export default function AppearanceRow() {
   const [pref, setPref] = useState<ThemePref>('dark');
   useEffect(() => { setPref(getStoredPref()); }, []);
-
-  if (!themePreviewAllowed(username)) return null;
 
   const choose = (p: ThemePref) => { setPref(p); setThemePref(p); };
 
