@@ -352,7 +352,7 @@ export default function ProfileDataSheet({
       onClick={() => { if (activeBlurb) { setActiveBlurb(null); return; } onClose(); }}
       style={{
         position: 'fixed', inset: 0, zIndex: 100,
-        background: `rgba(5,5,5,${bgVisible ? 0.95 : 0})`,
+        background: `rgb(var(--black-rgb) / ${bgVisible ? 0.95 : 0})`,
         transition: 'background 200ms ease',
         overflowY: 'auto', overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch',
       }}
@@ -428,7 +428,7 @@ export default function ProfileDataSheet({
         onClick={() => setActiveBlurb(null)}
         style={{ position: 'fixed', inset: 0, zIndex: 900, background: 'rgb(var(--black-rgb) / 0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 22 }}
       >
-        <div onClick={(e) => e.stopPropagation()} style={{ position: 'relative', width: '100%', maxWidth: 340, background: 'var(--black)', border: '1px solid var(--ink-100)', padding: '18px 18px', animation: 'blurbIn 240ms cubic-bezier(0.16,0.84,0.3,1)' }}>
+        <div onClick={(e) => e.stopPropagation()} style={{ position: 'relative', width: '100%', maxWidth: 340, background: 'var(--surface-1)', border: '1px solid var(--ink-100)', padding: '18px 18px', animation: 'blurbIn 240ms cubic-bezier(0.16,0.84,0.3,1)' }}>
           <button onClick={(e) => { e.stopPropagation(); setActiveBlurb(null); }} aria-label="Close" style={{ position: 'absolute', top: 8, right: 10, ...SKB, fontSize: 'var(--fs-15)', lineHeight: 1, color: 'rgb(var(--ink-rgb) / 0.55)', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>×</button>
           <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
             <img

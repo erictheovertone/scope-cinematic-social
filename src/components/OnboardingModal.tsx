@@ -86,7 +86,7 @@ export default function OnboardingModal({ onComplete }: Props) {
   return (
     <div style={{
       position: 'fixed', inset: 0, zIndex: 900,
-      backgroundColor: 'var(--black)',
+      backgroundColor: 'var(--surface-1)',
       display: 'flex', flexDirection: 'column',
       justifyContent: 'space-between',
       padding: '48px 28px 56px',

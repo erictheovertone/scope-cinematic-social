@@ -39,7 +39,7 @@ const usd = (n: number) => (n >= 1000 ? `$${Math.round(n).toLocaleString()}` : `
 const isVideoPost = (p: P): boolean => p.media_type === 'video';
 const StripPlayGlyph = () => (
   <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden
-    style={{ position: 'absolute', top: 8, right: 8, opacity: 0.7, filter: 'drop-shadow(0 0 4px rgba(5,5,5,0.5))', pointerEvents: 'none' }}>
+    style={{ position: 'absolute', top: 8, right: 8, opacity: 0.7, filter: 'drop-shadow(0 0 4px rgb(var(--black-rgb) / 0.5))', pointerEvents: 'none' }}>
     <path d="M4.5 3 L11 7 L4.5 11 Z" stroke="var(--ink-100)" strokeWidth="1.2" strokeLinejoin="round" strokeLinecap="round" fill="none" />
   </svg>
 );
@@ -219,7 +219,7 @@ export default function DesktopHomeLightbox({
             FROM): a bottom-anchored gradient carrying @handle (+ MC when minted), hidden until
             the thumb is hovered (the info otherwise lives in each card's aria-label). */}
         <style>{`
-          .d15a-thumb .d15a-ov{position:absolute;left:0;right:0;bottom:0;display:flex;align-items:flex-end;justify-content:space-between;gap:6px;padding:14px 7px 5px;background:linear-gradient(to top,rgba(5,5,5,0.9),rgba(5,5,5,0.45) 55%,transparent);opacity:0;transition:opacity 140ms ease;pointer-events:none}
+          .d15a-thumb .d15a-ov{position:absolute;left:0;right:0;bottom:0;display:flex;align-items:flex-end;justify-content:space-between;gap:6px;padding:14px 7px 5px;background:linear-gradient(to top,rgb(var(--black-rgb) / 0.9),rgb(var(--black-rgb) / 0.45) 55%,transparent);opacity:0;transition:opacity 140ms ease;pointer-events:none}
           .d15a-thumb:hover .d15a-ov{opacity:1}
         `}</style>
         {/* Brief D15a §3 — TOP STRIP tightened: thumb 164→124 wide (height ~52), caption row

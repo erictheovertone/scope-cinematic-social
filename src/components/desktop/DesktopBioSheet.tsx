@@ -137,7 +137,7 @@ export default function DesktopBioSheet({ profile, isOwn, links, badges, posts, 
   );
 
   return createPortal(
-    <div data-swipe-exclude style={{ position: 'fixed', top: 0, right: 0, bottom: 0, left: 'var(--rail-w)', zIndex: 150, background: 'var(--black)', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
+    <div data-swipe-exclude style={{ position: 'fixed', top: 0, right: 0, bottom: 0, left: 'var(--rail-w)', zIndex: 150, background: 'var(--surface-1)', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
       <button onClick={onClose} aria-label="Close" style={{ position: 'fixed', top: 20, right: 30, zIndex: 4, background: 'transparent', border: 'none', cursor: 'pointer', ...SKR, fontSize: 22, color: 'rgb(var(--ink-rgb) / 0.6)', lineHeight: 1, padding: 4 }}>✕</button>
 
       <div style={{ maxWidth: 'var(--shell-narrow)', margin: '0 auto', padding: '0 40px 80px' }}>{/* Brief R1 — reading/detail width = --shell-narrow (1180), intentionally tighter than the grid --shell-max */}
@@ -148,7 +148,7 @@ export default function DesktopBioSheet({ profile, isOwn, links, badges, posts, 
             UNDER the portrait (so its opaque pixels never dim — only its feathered edges blend);
             the sharp 1:1 square portrait sits between the columns, its rectangular edges feathering
             into the band. A photograph dissolving into the banner — never a spotlight. */}
-        <div style={{ position: 'relative', height: BANNER_H, margin: '0 -40px', overflow: 'hidden', background: 'var(--black)' }}>
+        <div style={{ position: 'relative', height: BANNER_H, margin: '0 -40px', overflow: 'hidden', background: 'var(--surface-1)' }}>
           {/* §3 — LETTERBOX-VIA-BLUR underlay: same PFP, heavily blurred + dimmed to ~30% luminance
               (blur 64 · brightness 0.55 · opacity 0.42), scale 1.2 hides the blur's soft band edges. */}
           {pfp && (

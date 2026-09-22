@@ -75,7 +75,7 @@ export default function DesktopBadgesSheet({
           (holds the brackets + close, anchored to the true visible box) and an inner
           scroller (the content + padding). Brackets now hit the real four corners and stay
           put on scroll. */}
-      <div style={{ position: 'relative', width: 720, maxHeight: '82vh', background: 'var(--black)', border: '1px solid var(--surface-3)', boxSizing: 'border-box', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ position: 'relative', width: 720, maxHeight: '82vh', background: 'var(--surface-1)', border: '1px solid var(--surface-3)', boxSizing: 'border-box', display: 'flex', flexDirection: 'column' }}>
         <RedBrackets inset={0} />
         <button onClick={onClose} aria-label="Close" style={{ position: 'absolute', top: 34, right: 40, background: 'transparent', border: 'none', cursor: 'pointer', ...SKR, fontSize: 20, color: 'rgb(var(--ink-rgb) / 0.5)', lineHeight: 1, padding: 4, zIndex: 2 }}>×</button>
         <div style={{ overflowY: 'auto', minHeight: 0, padding: '40px 44px 44px' }}>

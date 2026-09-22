@@ -88,7 +88,7 @@ export default function UpsellSheet({
       <style>{`
         .su-scrim{position:fixed;inset:0;z-index:1000;background:rgb(var(--black-rgb) / .86);display:flex;align-items:center;justify-content:center;animation:su-scrimIn .26s ease both;padding:20px}
         @keyframes su-scrimIn{from{opacity:0}to{opacity:1}}
-        .su-panel{position:relative;width:312px;max-width:100%;background:var(--black);padding:30px 26px 22px;animation:su-panelIn .34s cubic-bezier(.16,.84,.3,1) both;font-family:'SK-Modernist','Helvetica Neue',Arial,sans-serif}
+        .su-panel{position:relative;width:312px;max-width:100%;background:var(--surface-1);padding:30px 26px 22px;animation:su-panelIn .34s cubic-bezier(.16,.84,.3,1) both;font-family:'SK-Modernist','Helvetica Neue',Arial,sans-serif}
         @keyframes su-panelIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
         .su-bracket{position:absolute;width:18px;height:18px;animation:su-focus .5s cubic-bezier(.16,.84,.3,1) both;animation-delay:.12s}
         .su-bracket::before,.su-bracket::after{content:"";position:absolute;background:var(--ink-100)}

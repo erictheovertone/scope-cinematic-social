@@ -708,7 +708,7 @@ const userLayoutId = stableLayoutId;
         style={{
           position: 'fixed', bottom: 0, left: 0, right: 0,
           height: '70vh',
-          backgroundColor: 'var(--black)',
+          backgroundColor: 'var(--canvas)',
           borderTop: '1px solid white',
           zIndex: 201,
           transform: showDecks ? 'translateY(0)' : 'translateY(100%)',

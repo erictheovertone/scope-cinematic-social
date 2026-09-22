@@ -86,7 +86,7 @@ export default function BadgeStack({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            background: 'var(--black)',
+            background: 'var(--surface-1)',
             border: '1px solid rgb(var(--ink-rgb) / 0.22)', // hairline, on-brand
             boxShadow: '0 2px 6px rgb(var(--black-rgb) / 0.9)',
           }}

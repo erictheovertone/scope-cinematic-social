@@ -548,7 +548,7 @@ export default function DesktopSettings() {
       {moreFromOpen && createPortal(
         <div data-swipe-exclude style={{ position: 'fixed', inset: 0, zIndex: 680, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div onClick={() => setMoreFromOpen(false)} style={{ position: 'absolute', inset: 0, background: 'rgb(var(--black-rgb) / 0.9)' }} />
-          <div style={{ position: 'relative', width: 760, maxHeight: '82vh', display: 'flex', flexDirection: 'column', background: 'var(--black)', border: '1px solid var(--surface-3)', padding: '32px 34px' }}>
+          <div style={{ position: 'relative', width: 760, maxHeight: '82vh', display: 'flex', flexDirection: 'column', background: 'var(--surface-1)', border: '1px solid var(--surface-3)', padding: '32px 34px' }}>
             <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 6 }}>
               <h2 style={{ ...SKB, fontSize: 16, color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>MORE FROM</h2>
               <span style={{ ...SKB, fontSize: 11, color: moreFrom.length >= MORE_FROM_CAP ? RED : 'rgb(var(--ink-rgb) / 0.5)', letterSpacing: '0.08em' }}>{moreFrom.length}/{MORE_FROM_CAP}</span>

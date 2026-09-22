@@ -120,7 +120,7 @@ export default function DeckPickerSheet({ postId, onClose, onAdded }: Props) {
         style={{
           position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 121,
           maxWidth: '30rem', margin: "0 auto",
-          background: "var(--black)",
+          background: "var(--surface-1)",
           borderTop: "1px solid rgb(var(--ink-rgb) / 0.1)",
           padding: "16px 0 calc(40px + var(--safe-bottom))", /* X3 §3 — bottom sheet: clear the home indicator */
           maxHeight: "60vh",

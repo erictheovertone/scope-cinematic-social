@@ -106,7 +106,7 @@ export default function LinksSheet({ username, links, visible, onClose }: LinksS
 
         {/* Full-screen video player overlay */}
         {activeVideo && (
-          <div style={{ position: "absolute", inset: 0, backgroundColor: "var(--black)", zIndex: 10, display: "flex", flexDirection: "column" }}>
+          <div style={{ position: "absolute", inset: 0, backgroundColor: "var(--surface-1)", zIndex: 10, display: "flex", flexDirection: "column" }}>
             <div style={{ display: "flex", justifyContent: "flex-end", padding: "8px 12px", flexShrink: 0 }}>
               <button
                 onClick={() => setActiveVideo(null)}

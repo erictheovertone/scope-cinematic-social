@@ -120,7 +120,7 @@ export default function DesktopDeck({ deckId }: { deckId: string }) {
               <button onClick={(e) => { e.stopPropagation(); setMenuOpen((v) => !v); }} aria-label="Options" style={{ width: 36, height: 33, border: `0.5px solid rgb(var(--ink-rgb) / 0.3)`, background: 'transparent', cursor: 'pointer', ...SKB, fontSize: 16, color: 'rgb(var(--ink-rgb) / 0.7)', letterSpacing: '0.05em' }}>···</button>
               {/* anchored dropdown — app menu language (black, hairline, tracked) */}
               {menuOpen && (
-                <div style={{ position: 'absolute', top: 40, right: 0, width: 200, background: 'var(--black)', border: `1px solid ${HAIR}`, zIndex: 5 }}>
+                <div style={{ position: 'absolute', top: 40, right: 0, width: 200, background: 'var(--surface-1)', border: `1px solid ${HAIR}`, zIndex: 5 }}>
                   {menuItem('EDIT DECK', () => { setEditTitle(deck.title); setEditDesc(deck.description ?? ''); setEditOpen(true); })}
                   {menuItem('ADD POSTS', () => fileRef.current?.click())}
                   {menuItem('DELETE DECK', removeDeck, true)}
@@ -161,7 +161,7 @@ export default function DesktopDeck({ deckId }: { deckId: string }) {
       {editOpen && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 690, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div onClick={() => setEditOpen(false)} style={{ position: 'absolute', inset: 0, background: 'rgb(var(--black-rgb) / 0.88)' }} />
-          <div style={{ position: 'relative', width: 460, background: 'var(--black)', border: '1px solid var(--surface-3)', padding: '30px 32px' }}>
+          <div style={{ position: 'relative', width: 460, background: 'var(--surface-1)', border: '1px solid var(--surface-3)', padding: '30px 32px' }}>
             <h2 style={{ ...SKB, fontSize: 15, color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 18px' }}>EDIT DECK</h2>
             <input autoFocus value={editTitle} onChange={(e) => setEditTitle(e.target.value)} placeholder="DECK TITLE" style={{ ...SKR, width: '100%', fontSize: 14, color: 'var(--ink-100)', background: 'transparent', border: 'none', borderBottom: `1px solid ${HAIR}`, outline: 'none', padding: '8px 0', boxSizing: 'border-box' }} />
             <input value={editDesc} onChange={(e) => setEditDesc(e.target.value)} placeholder="DESCRIPTION (OPTIONAL)" style={{ ...SKR, width: '100%', fontSize: 13, color: 'rgb(var(--ink-rgb) / 0.75)', background: 'transparent', border: 'none', borderBottom: `1px solid ${HAIR}`, outline: 'none', padding: '8px 0', margin: '10px 0 0', boxSizing: 'border-box' }} />

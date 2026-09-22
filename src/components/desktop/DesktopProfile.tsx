@@ -615,7 +615,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
                     // cell's lightbox trigger never fires from an icon click.
                     const hit: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 4, pointerEvents: 'auto', cursor: 'pointer', padding: '16px 8px', margin: '-11px -6px', WebkitTapHighlightColor: 'transparent' };
                     return (
-                      <div className="dg-reveal" style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: '40%', pointerEvents: 'none', display: 'flex', alignItems: 'flex-end', padding: '0 9px 8px', zIndex: 2, background: 'linear-gradient(to top, rgba(5,5,5,0.85) 0%, rgba(5,5,5,0.55) 45%, transparent 100%)', ...(pinned ? { opacity: 1, transform: 'translateY(0)' } : {}) }}>
+                      <div className="dg-reveal" style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: '40%', pointerEvents: 'none', display: 'flex', alignItems: 'flex-end', padding: '0 9px 8px', zIndex: 2, background: 'linear-gradient(to top, rgb(var(--black-rgb) / 0.85) 0%, rgb(var(--black-rgb) / 0.55) 45%, transparent 100%)', ...(pinned ? { opacity: 1, transform: 'translateY(0)' } : {}) }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                           <span
                             role="button" tabIndex={0} aria-label={liked ? 'Unlike' : 'Like'} aria-pressed={liked}
@@ -749,7 +749,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
       {deckCreateOpen && createPortal(
         <div data-swipe-exclude style={{ position: 'fixed', inset: 0, zIndex: 680, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div onClick={() => setDeckCreateOpen(false)} style={{ position: 'absolute', inset: 0, background: 'rgb(var(--black-rgb) / 0.88)' }} />
-          <div style={{ position: 'relative', width: 460, background: 'var(--black)', border: '1px solid var(--surface-3)', padding: '30px 32px' }}>
+          <div style={{ position: 'relative', width: 460, background: 'var(--surface-1)', border: '1px solid var(--surface-3)', padding: '30px 32px' }}>
             <h2 style={{ ...SKB, fontSize: 15, color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 18px' }}>NEW DECK</h2>
             <input
               autoFocus value={newDeckTitle} onChange={(e) => setNewDeckTitle(e.target.value)}

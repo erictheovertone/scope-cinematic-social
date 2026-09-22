@@ -165,7 +165,7 @@ export default function LinkManager() {
     <div className="bg-canvas" style={{ position: "fixed", inset: 0, overflowY: "auto" }}>
 
       {isDirty && !addingLink && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 200, background: 'var(--black)', borderBottom: '1px solid rgb(var(--ink-rgb) / 0.15)', padding: 'calc(10px + var(--safe-top)) 20px 10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }/* Brief X3 §3 — fixed top:0 unsaved-changes bar; pad top by --safe-top so it clears the notch */}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 200, background: 'var(--canvas)', borderBottom: '1px solid rgb(var(--ink-rgb) / 0.15)', padding: 'calc(10px + var(--safe-top)) 20px 10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }/* Brief X3 §3 — fixed top:0 unsaved-changes bar; pad top by --safe-top so it clears the notch */}>
           <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'rgb(var(--ink-rgb) / 0.4)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>UNSAVED CHANGES</span>
           <button
             onClick={handleFloatingSave}

@@ -564,7 +564,7 @@ export default function DesktopPostView({
           seeded with the saved window; SAVE writes snippet_start/length (owner-scoped). */}
       {showSnippet && isVideo && (
         <div data-swipe-exclude onClick={() => setShowSnippet(false)}
-          style={{ position: 'fixed', inset: 0, zIndex: 650, background: 'rgba(5,5,5,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          style={{ position: 'fixed', inset: 0, zIndex: 650, background: 'rgb(var(--black-rgb) / 0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div onClick={(e) => e.stopPropagation()} style={{ width: 'min(680px, 92vw)', maxHeight: '88vh', overflowY: 'auto', background: 'var(--canvas)', border: `1px solid ${HAIR}`, padding: 22 }}>
             <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 14 }}>
               <span style={{ ...SKB, fontSize: 13, color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Edit autoplay</span>

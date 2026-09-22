@@ -432,7 +432,7 @@ export default function ContributeMusicFlow({ onClose }: { onClose: () => void }
     return createPortal(
       <div style={{ position: "fixed", inset: 0, zIndex: 680, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
         <div onClick={close} style={{ position: "absolute", inset: 0, background: "rgb(var(--black-rgb) / 0.9)" }} />
-        <div style={{ position: "relative", width: 560, maxWidth: "100%", maxHeight: "86vh", overflowY: "auto", background: "var(--black)", border: `1px solid ${HAIR}`, boxSizing: "border-box", padding: "28px 30px" }}>
+        <div style={{ position: "relative", width: 560, maxWidth: "100%", maxHeight: "86vh", overflowY: "auto", background: "var(--surface-1)", border: `1px solid ${HAIR}`, boxSizing: "border-box", padding: "28px 30px" }}>
           {Body}
         </div>
       </div>,
@@ -450,7 +450,7 @@ export default function ContributeMusicFlow({ onClose }: { onClose: () => void }
       onClick={close}
       style={{
         position: "fixed", inset: 0, zIndex: 500,
-        background: `rgba(5,5,5,${visible ? 0.95 : 0})`,
+        background: `rgb(var(--black-rgb) / ${visible ? 0.95 : 0})`,
         transition: "background 200ms ease",
         overflowY: "auto", overscrollBehavior: "contain", WebkitOverflowScrolling: "touch",
       }}

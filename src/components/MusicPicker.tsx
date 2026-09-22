@@ -126,7 +126,7 @@ export default function MusicPicker({
   const pick = (t: LibraryTrack) => { try { audioRef.current?.pause(); } catch {} onSelect(t); };
 
   return createPortal(
-    <div style={{ position: "fixed", inset: 0, zIndex: 1300, background: "var(--black)", display: "flex", flexDirection: "column", maxWidth: "30rem", margin: "0 auto" }}>
+    <div style={{ position: "fixed", inset: 0, zIndex: 1300, background: "var(--surface-1)", display: "flex", flexDirection: "column", maxWidth: "30rem", margin: "0 auto" }}>
       {/* audio engine (one, single-at-a-time) */}
       <audio ref={audioRef} onEnded={() => { setPlaying(null); setProgress(0); }} onTimeUpdate={() => { const a = audioRef.current; if (a && a.duration && isFinite(a.duration)) setProgress(a.currentTime / a.duration); }} />
 

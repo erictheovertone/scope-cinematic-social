@@ -541,7 +541,7 @@ export default function DeckDetailPage() {
       <div
         style={{
           position: "relative", zIndex: 20,
-          background: "var(--black)",
+          background: "var(--canvas)",
           // Brief M5 §4 — pad the top by --safe-top (F1) so the deck title + "+" clear the
           // notch. minHeight keeps the 56px chrome height below the inset.
           minHeight: 56,
@@ -801,7 +801,7 @@ export default function DeckDetailPage() {
           {deck.items.map((item, index) => (
             <div
               key={item.id}
-              className="relative bg-[#111] overflow-hidden"
+              className="relative bg-surface-2 overflow-hidden"
               style={{ cursor: "pointer", aspectRatio: getAspectRatio(layoutId, index) }}
               onClick={() => handleItemTap(item)}
             >
@@ -919,7 +919,7 @@ export default function DeckDetailPage() {
         <div
           style={{
             position: "fixed", inset: 0, zIndex: 100,
-            background: "var(--black)",
+            background: "var(--canvas)",
             display: "flex", flexDirection: "column",
           }}
         >
@@ -927,7 +927,7 @@ export default function DeckDetailPage() {
               was un-inset (fixed inset:0 takeover, missed by the .top-bar/PageTitle
               audit). Pad top by --safe-top (F1) — black paints under the notch, the
               56px row insets below it. */}
-          <div style={{ position: "sticky", top: 0, zIndex: 1, background: "var(--black)", flexShrink: 0, paddingTop: "var(--safe-top)" }}>
+          <div style={{ position: "sticky", top: 0, zIndex: 1, background: "var(--canvas)", flexShrink: 0, paddingTop: "var(--safe-top)" }}>
             <div
               style={{
                 maxWidth: '30rem', margin: "0 auto", width: "100%",
@@ -1087,7 +1087,7 @@ export default function DeckDetailPage() {
                   {deck.items.map((item, index) => (
                     <div
                       key={item.id}
-                      className="relative bg-[#111] overflow-hidden"
+                      className="relative bg-surface-2 overflow-hidden"
                       style={{ aspectRatio: getAspectRatio(layoutId, index) }}
                     >
                       {item.media_url ? (

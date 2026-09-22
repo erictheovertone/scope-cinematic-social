@@ -193,7 +193,7 @@ export default function VideoTransport({ videoEl, platform, paused, onTogglePaus
         <div
           style={{
             position: "absolute", left: 0, right: 0, bottom: 0, padding: "10px 14px 12px",
-            background: "linear-gradient(to top, rgba(5,5,5,0.72), rgba(5,5,5,0))",
+            background: "linear-gradient(to top, rgb(var(--black-rgb) / 0.72), rgb(var(--black-rgb) / 0))",
             opacity: visible ? 1 : 0, transition: "opacity 200ms ease", pointerEvents: visible ? "auto" : "none",
             display: "flex", flexDirection: "column", gap: 8,
           }}
