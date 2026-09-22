@@ -15,7 +15,7 @@ const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fon
 export default function BadgesStubPage() {
   const router = useRouter();
   return (
-    <div className="bg-black" style={{ position: 'fixed', inset: 0, overflowY: 'auto' }}>
+    <div className="bg-canvas" style={{ position: 'fixed', inset: 0, overflowY: 'auto' }}>
       <div style={{ maxWidth: '30rem', margin: '0 auto', padding: '16px 20px 60px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '4px 0 20px' }}>
           <button onClick={() => router.back()} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>

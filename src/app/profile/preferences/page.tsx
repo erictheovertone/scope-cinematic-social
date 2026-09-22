@@ -121,7 +121,7 @@ export default function Preferences() {
     }
   };
 
-  if (!mounted) return <div className="bg-black" style={{ position: 'fixed', inset: 0 }} />;
+  if (!mounted) return <div className="bg-canvas" style={{ position: 'fixed', inset: 0 }} />;
 
   // ── DESKTOP SEAM: ≥1024 renders the desktop settings page (same data/logic,
   // desktop presentation — its own component, zero mobile CSS threading). ──
@@ -193,7 +193,7 @@ export default function Preferences() {
 
   return (
     <>
-    <div className="bg-black" style={{ position: 'fixed', inset: 0, overflowY: 'auto' }}>
+    <div className="bg-canvas" style={{ position: 'fixed', inset: 0, overflowY: 'auto' }}>
 
       {/* Header — top padding rides the safe-area inset so the back button clears the
           status bar on notched devices (iPhone 12 etc.), not a hardcoded 14px. */}

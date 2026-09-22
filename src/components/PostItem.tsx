@@ -371,7 +371,7 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
   );
 
   return (
-    <div className="feed-card" onClick={card ? openLightbox : undefined} style={{ marginBottom: card ? 0 : FEED_POST_GAP_PX, ...(card ? { background: '#030303', border: '1px solid rgb(var(--ink-rgb) / 0.22)', borderRadius: 3, padding: '10px 10px 12px', boxSizing: 'border-box', cursor: onImageClick ? 'pointer' : undefined } : {}) }}>{/* Brief F7 §2 — desktop masonry: the whole bordered cell opens the lightbox, incl. the padding ring between artwork and border. Interactive zones (byline links, action row) stopPropagation below so they keep their own behaviour. */}
+    <div className="feed-card" onClick={card ? openLightbox : undefined} style={{ marginBottom: card ? 0 : FEED_POST_GAP_PX, ...(card ? { background: 'var(--surface-08)', border: '1px solid rgb(var(--ink-rgb) / 0.22)', borderRadius: 3, padding: '10px 10px 12px', boxSizing: 'border-box', cursor: onImageClick ? 'pointer' : undefined } : {}) }}>{/* Brief F7 §2 — desktop masonry: the whole bordered cell opens the lightbox, incl. the padding ring between artwork and border. Interactive zones (byline links, action row) stopPropagation below so they keep their own behaviour. */}
 
       {/* ── Metadata above the frame; the media below is clean ── */}
       {/* card (desktop feed) keeps the original byline byte-for-byte; the mobile

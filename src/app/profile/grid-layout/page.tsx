@@ -262,7 +262,7 @@ function ConfirmationView({
   };
 
   return (
-    <div style={{ background: "var(--black)", position: "fixed", inset: 0, zIndex: 50, overflow: "hidden" }}>
+    <div style={{ background: "var(--canvas)", position: "fixed", inset: 0, zIndex: 50, overflow: "hidden" }}>
       {renderGrid()}
 
       {/* Header — floats over grid. Brief M2 §2 — step-2 data was buried under the notch
@@ -405,7 +405,7 @@ export default function GridLayoutPage() {
   // Layout selection list
   return (
     <>
-      <div className="screen-min" style={{ background: "var(--black)", width: 375, minHeight: "100dvh", margin: "0 auto", position: "relative", overflowX: "hidden", paddingBottom: "calc(24px + var(--safe-bottom))" }}>
+      <div className="screen-min" style={{ background: "var(--canvas)", width: 375, minHeight: "100dvh", margin: "0 auto", position: "relative", overflowX: "hidden", paddingBottom: "calc(24px + var(--safe-bottom))" }}>
         {/* Brief M2 §1 — header per frame 241:1375: title top-left (Haas 75 Bold 16px) +
             logomark top-right (39×24, 78%). Replaces the F1 WELCOME/CHOOSE treatment. */}
         <div style={{ position: "relative", display: "flex", alignItems: "center", paddingTop: "calc(20px + var(--safe-top))", paddingBottom: 14, paddingLeft: 10, paddingRight: 10 }}>
@@ -439,7 +439,7 @@ export default function GridLayoutPage() {
       {animating && animatingLayout && (
         <div style={{
           position: "fixed", inset: 0, zIndex: 200,
-          backgroundColor: "var(--black)", overflow: "hidden",
+          backgroundColor: "var(--canvas)", overflow: "hidden",
           animation: "fadeInBlack 0.3s ease forwards",
         }}>
           {/* Grid fills full screen */}
@@ -523,7 +523,7 @@ export default function GridLayoutPage() {
             opacity: 0,
           }}>
             <div style={{ backgroundColor: "var(--ink-100)", padding: "6px 14px" }}>
-              <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: "var(--black)", textTransform: "uppercase" }}>
+              <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: "var(--canvas)", textTransform: "uppercase" }}>
                 {animatingLayout.label}
               </span>
             </div>

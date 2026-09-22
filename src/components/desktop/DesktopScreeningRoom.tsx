@@ -130,7 +130,7 @@ export default function DesktopScreeningRoom() {
   };
 
   return (
-    <div className="bg-black" style={{ position: 'fixed', inset: 0, left: 'var(--rail-w)', overflowY: 'auto', WebkitOverflowScrolling: 'touch', background: 'var(--black)' }}>
+    <div className="bg-canvas" style={{ position: 'fixed', inset: 0, left: 'var(--rail-w)', overflowY: 'auto', WebkitOverflowScrolling: 'touch', background: 'var(--canvas)' }}>
       <DesktopShell width="fluid" padding="0 58px 40px" style={{ position: 'relative', minHeight: '100%' }}>{/* Brief R1a — media stage grows to fill */}
 
         {/* ═══ 1. HEADER ═══ */}

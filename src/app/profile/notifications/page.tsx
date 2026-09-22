@@ -229,7 +229,7 @@ export default function NotificationsPage() {
   );
 
   return (
-    <div className="bg-black w-full app-shell screen-min mx-auto flex flex-col">
+    <div className="bg-canvas w-full app-shell screen-min mx-auto flex flex-col">
 
       {/* Header — Brief F1: pad the top by the safe-area so the back button clears
           the notch (was pt-[12px] only). */}

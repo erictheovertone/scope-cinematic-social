@@ -255,13 +255,13 @@ export default function PublicProfilePage() {
   const thumbCols = (n: number) => n <= 1 ? '1fr' : n <= 4 ? '1fr 1fr' : '1fr 1fr 1fr';
 
   if (loaded && notFound) return (
-    <div className="bg-black w-full app-shell screen-min mx-auto flex items-center justify-center">
+    <div className="bg-canvas w-full app-shell screen-min mx-auto flex items-center justify-center">
       <p style={{ ...SKB, fontSize: 'var(--fs-11)', color: "var(--ink-100)" }}>PROFILE NOT FOUND</p>
     </div>
   );
 
   if (!loaded) return (
-    <div className="bg-black w-full app-shell screen-min mx-auto flex items-center justify-center">
+    <div className="bg-canvas w-full app-shell screen-min mx-auto flex items-center justify-center">
       <ScopeLoader size="lg" label="Loading" />
     </div>
   );
@@ -270,14 +270,14 @@ export default function PublicProfilePage() {
   if (isDesktop) {
     return profile?.user_id && targetPrivyId
       ? <DesktopProfile userId={profile.user_id} privyId={targetPrivyId} isOwn={!!isOwnProfile} />
-      : <div className="bg-black" style={{ position: 'fixed', inset: 0 }} />;
+      : <div className="bg-canvas" style={{ position: 'fixed', inset: 0 }} />;
   }
 
   // Brief W8 §2 — ONE resolved held-badges list shared by the cluster + the bio sheet.
   const resolvedBadges = resolveBadges({ isFoundingMember, isTopCollector, isScreeningRoomHolder, isPaidMember, isInHouseCreator, firstCutCount, composerTrackCount });
 
   return (
-    <div className="bg-black relative w-full app-shell screen-min mx-auto pb-[60px]" style={{ background: 'var(--canvas)', overscrollBehavior: 'none' }}>{/* Brief F6 — canvas var(--canvas) (matches own). Brief F6b §4a — overscroll-behavior:none on the app-shell root kills the rubber-band scroll-chain (the F5 §4a / decks-page pattern). */}
+    <div className="bg-canvas relative w-full app-shell screen-min mx-auto pb-[60px]" style={{ background: 'var(--canvas)', overscrollBehavior: 'none' }}>{/* Brief F6 — canvas var(--canvas) (matches own). Brief F6b §4a — overscroll-behavior:none on the app-shell root kills the rubber-band scroll-chain (the F5 §4a / decks-page pattern). */}
 
       {/* Brief F6 — the public header now MATCHES own-profile: the shared
           <ProfileHeader> composition (square PFP + ivory frame, name step-down, PRO,

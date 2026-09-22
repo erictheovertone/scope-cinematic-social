@@ -362,7 +362,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
   // contain stops the bounce; overflow-x:hidden clips the bleed → scroll extent bounded by
   // content on both axes. scrollHeight == content (no true vertical inflation — it was the bounce).
   return (
-    <div ref={scrollerRef} className="bg-black" style={{ position: 'fixed', inset: 0, left: 'var(--rail-w)', overflowY: 'auto', overflowX: 'hidden', overscrollBehavior: 'contain' }}>
+    <div ref={scrollerRef} className="bg-canvas" style={{ position: 'fixed', inset: 0, left: 'var(--rail-w)', overflowY: 'auto', overflowX: 'hidden', overscrollBehavior: 'contain' }}>
       <DesktopShell width="fluid" padding="0 24px">
 
         {/* ═══ HEADER ZONE (node 38:88 — header band ends at the y205 hairline) ═══ */}

@@ -155,7 +155,7 @@ export default function DesktopWallet() {
   const heldMap = useMemo(() => new Map((holdings ?? []).map((h) => [h.postId, h])), [holdings]);
 
   return (
-    <div className="bg-black" style={{ position: 'fixed', inset: 0, left: 'var(--rail-w)', overflowY: 'auto' }}>
+    <div className="bg-canvas" style={{ position: 'fixed', inset: 0, left: 'var(--rail-w)', overflowY: 'auto' }}>
       <div style={{ maxWidth: 'var(--shell-narrow)', margin: '0 auto', padding: '40px 24px 80px' }}/* Brief R1a §2 — capped reading surface (--shell-narrow) */>
 
         {/* ═══ 1. HEADER — Brief D17: PageTitle (32px, return-home logomark top-right, no bell)

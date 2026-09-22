@@ -14,6 +14,6 @@ export default function OnboardingPage() {
     // confirmed a real narrow viewport (matchMedia synced on mount).
     if (typeof window !== 'undefined' && !window.matchMedia('(min-width: 1024px)').matches) router.replace('/');
   }, [router]);
-  if (!isDesktop) return <div className="bg-black" style={{ position: 'fixed', inset: 0 }} />;
+  if (!isDesktop) return <div className="bg-canvas" style={{ position: 'fixed', inset: 0 }} />;
   return <DesktopOnboarding />;
 }

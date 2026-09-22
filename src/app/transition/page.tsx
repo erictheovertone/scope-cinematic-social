@@ -19,7 +19,7 @@ export default function Transition() {
   }, [router]);
 
   return (
-    <div className="bg-black relative w-[375px] h-[812px] mx-auto flex items-center justify-center">
+    <div className="bg-canvas relative w-[375px] h-[812px] mx-auto flex items-center justify-center">
       
       <ScopeLoader size="lg" label="Loading" />
 

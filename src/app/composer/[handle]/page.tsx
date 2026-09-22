@@ -156,7 +156,7 @@ export default function ComposerDiscographyPage() {
   const empty = tracks !== null && tracks.length === 0;
 
   return (
-    <div style={{ minHeight: "100vh", background: "var(--black)", color: "var(--ink-100)" }}>
+    <div style={{ minHeight: "100vh", background: "var(--canvas)", color: "var(--ink-100)" }}>
       <audio ref={audioRef} onEnded={() => { setPlaying(null); setProgress(0); }} onTimeUpdate={() => { const a = audioRef.current; if (a && a.duration && isFinite(a.duration)) setProgress(a.currentTime / a.duration); }} />
 
       {/* ── BANNER — album-art-style blurred underlay + sharp portrait ─────────

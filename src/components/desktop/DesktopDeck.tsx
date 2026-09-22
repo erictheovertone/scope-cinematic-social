@@ -106,7 +106,7 @@ export default function DesktopDeck({ deckId }: { deckId: string }) {
   );
 
   return (
-    <div className="bg-black" style={{ position: 'fixed', inset: 0, left: 'var(--rail-w)', background: 'var(--black)', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
+    <div className="bg-canvas" style={{ position: 'fixed', inset: 0, left: 'var(--rail-w)', background: 'var(--canvas)', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
       <DesktopShell width="fluid" padding="28px 48px 96px">{/* Brief R1a — media surface: fills the window, deck grid grows columns */}
         {/* header */}
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, marginBottom: 26 }}>

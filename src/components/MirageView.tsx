@@ -54,7 +54,7 @@ function MirageLightbox({
 
   return (
     <div
-      className="bg-black"
+      className="bg-canvas"
       style={{
         position: "fixed",
         inset: 0,
@@ -306,7 +306,7 @@ export default function MirageView({ onClose, desktop = false }: { onClose: () =
 
       <div
         ref={containerRef}
-        className="bg-black"
+        className="bg-canvas"
         data-force-dark
         style={{
           position: "fixed",

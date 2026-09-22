@@ -482,7 +482,7 @@ export default function DesktopSettings() {
     // it) — the RIGHT panel now owns its own overflow-y scroller at full
     // height; the LEFT list stays fixed. Momentum scrolling included.
     <div
-      className="bg-black"
+      className="bg-canvas"
       style={{ position: 'fixed', inset: 0, left: 'var(--rail-w)', overflow: 'hidden' }}
       // WHEEL FORWARDING (round-2 evidence): the pane scrolls correctly when
       // content overflows, but the root is overflow:hidden — wheeling over the

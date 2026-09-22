@@ -78,7 +78,7 @@ export default function AccountSettings() {
   };
 
   return (
-    <div className="bg-black" style={{ position: 'fixed', inset: 0, overflowY: 'auto' }}>
+    <div className="bg-canvas" style={{ position: 'fixed', inset: 0, overflowY: 'auto' }}>
       <style>{`
         .edit-input::placeholder { color: #666; }
         .edit-input:focus { border-color: white; }

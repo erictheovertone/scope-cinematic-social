@@ -467,7 +467,7 @@ export default function DeckDetailPage() {
 
   if (loading) {
     return (
-      <div className="bg-black w-full app-shell min-h-[100dvh] mx-auto flex items-center justify-center">
+      <div className="bg-canvas w-full app-shell min-h-[100dvh] mx-auto flex items-center justify-center">
         <ScopeLoader size="lg" label="Loading" />
       </div>
     );
@@ -475,7 +475,7 @@ export default function DeckDetailPage() {
 
   if (!deck) {
     return (
-      <div className="bg-black w-full app-shell min-h-[100dvh] mx-auto flex items-center justify-center">
+      <div className="bg-canvas w-full app-shell min-h-[100dvh] mx-auto flex items-center justify-center">
         <p style={{ ...SKB, fontSize: 'var(--fs-10)', color: "var(--ink-100)" }}>Deck not found</p>
       </div>
     );
@@ -525,7 +525,7 @@ export default function DeckDetailPage() {
   // deck-grid trap. min-h-[100dvh] (document scroll) never scrolled here. screen-min =
   // 100dvh + overflow-y:auto + momentum + contained overscroll (the established pattern).
   return (
-    <div className="bg-black w-full app-shell screen-min mx-auto" style={{ paddingBottom: 'calc(80px + env(safe-area-inset-bottom, 0px))', overscrollBehavior: 'none' }}>
+    <div className="bg-canvas w-full app-shell screen-min mx-auto" style={{ paddingBottom: 'calc(80px + env(safe-area-inset-bottom, 0px))', overscrollBehavior: 'none' }}>
 
       {/* ── Backdrops ────────────────────────────────────────────────────── */}
 

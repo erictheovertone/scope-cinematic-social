@@ -82,7 +82,7 @@ export default function DecksPage() {
 
   if (loading) {
     return (
-      <div className="bg-black w-full app-shell screen-min mx-auto flex items-center justify-center">
+      <div className="bg-canvas w-full app-shell screen-min mx-auto flex items-center justify-center">
         <ScopeLoader size="lg" label="Loading" />
       </div>
     );
@@ -90,14 +90,14 @@ export default function DecksPage() {
 
   if (notFound) {
     return (
-      <div className="bg-black w-full app-shell screen-min mx-auto flex items-center justify-center">
+      <div className="bg-canvas w-full app-shell screen-min mx-auto flex items-center justify-center">
         <p style={{ ...SKB, fontSize: 'var(--fs-10)', color: "var(--ink-100)" }}>Profile not found</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-black w-full app-shell screen-min mx-auto pb-[80px]">
+    <div className="bg-canvas w-full app-shell screen-min mx-auto pb-[80px]">
 
       {/* Red dot — Brief M5 §4: cleared of the notch via --safe-top (F1 page-chrome rule). */}
       <div

@@ -658,7 +658,7 @@ export default function WalletPage() {
   return (
     <div
       ref={containerRef}
-      className="bg-black"
+      className="bg-canvas"
       style={{ position: "fixed", inset: 0, overflowY: "auto", color: "var(--ink-100)", paddingBottom: "env(safe-area-inset-bottom, 0px)", ...(skinOverlay ? { width: 375, right: "auto" } : {}) }}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}

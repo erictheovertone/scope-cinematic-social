@@ -30,7 +30,7 @@ export default function CreatePage() {
   };
 
   return (
-    <div className="bg-black relative w-[375px] h-[812px] mx-auto">
+    <div className="bg-canvas relative w-[375px] h-[812px] mx-auto">
       <CreatePostFlow
         isOpen={showCreateFlow}
         onClose={handleClose}

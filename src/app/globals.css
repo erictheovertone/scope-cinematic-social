@@ -32,6 +32,22 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Brief T1-2b — theme-aware Tailwind color utilities (Tailwind v4 @theme) ──
+   v4 is CSS-first: `theme.extend.colors` in tailwind.config.js is NOT applied here, so the
+   token colors are registered as --color-* here. This emits bg-canvas / bg-surface-1/2/3 /
+   text-ink / border-hairline that resolve to the runtime CSS vars → they flip with
+   [data-theme]. This is the Tailwind half of Stage 1 the literal sweep couldn't see (the
+   bg-black class strings). --color-ink is the solid ink; v4 opacity modifiers (text-ink/50)
+   color-mix off it. */
+@theme {
+  --color-canvas: var(--canvas);
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-ink: rgb(var(--ink-rgb) / 1);
+  --color-hairline: rgb(var(--ink-rgb) / 0.22);
+}
+
 
 @layer base {
   html {

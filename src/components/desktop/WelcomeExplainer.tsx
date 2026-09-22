@@ -51,7 +51,7 @@ export default function WelcomeExplainer({ onDone, onSkip }: { onDone: () => voi
 
   const slide = EXPLAINER_SLIDES[i];
   return (
-    <div className="bg-black" style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--black)' }}>
+    <div className="bg-canvas" style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--canvas)' }}>
       <div style={{ position: 'relative', width: 820, height: 520, background: 'var(--black)', border: '1px solid var(--surface-3)', boxSizing: 'border-box' }}>
         <RedBrackets inset={0} />
 

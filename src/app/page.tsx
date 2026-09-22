@@ -311,7 +311,7 @@ export default function Home() {
   };
 
   if (!ready || !authenticated) {
-    return <div style={{ position: 'fixed', inset: 0, background: 'var(--black)' }} />;
+    return <div style={{ position: 'fixed', inset: 0, background: 'var(--canvas)' }} />;
   }
 
   // Desktop seam — the mobile feed below is untouched; DesktopHome owns the
@@ -320,7 +320,7 @@ export default function Home() {
   if (isDesktop) return <DesktopHome />;
 
   return (
-    <div className="bg-black relative app-shell screen-min">
+    <div className="bg-canvas relative app-shell screen-min">
       <style>{`
         @keyframes feed-item-out {
           from { transform: scale(1)    translateY(0);    opacity: 1; }

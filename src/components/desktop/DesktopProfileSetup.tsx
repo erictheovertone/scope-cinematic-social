@@ -64,7 +64,7 @@ export default function DesktopProfileSetup({ onComplete }: { onComplete: (userI
   };
 
   return (
-    <div className="bg-black" style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <div className="bg-canvas" style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div style={{ position: 'relative', width: 820, minHeight: 520, background: 'var(--black)', border: '1px solid var(--surface-3)', boxSizing: 'border-box', padding: '54px 60px' }}>
         <RedBrackets inset={0} />
         <h1 style={{ ...SKB, fontSize: 'calc(34px * var(--type-scale))', color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '-0.01em', margin: '0 0 4px' }}>SET UP YOUR PROFILE</h1>

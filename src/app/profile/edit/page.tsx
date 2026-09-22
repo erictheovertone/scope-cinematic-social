@@ -288,13 +288,13 @@ export default function EditProfilePage() {
   };
 
   if (!loaded) return (
-    <div className="bg-black" style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <div className="bg-canvas" style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <ScopeLoader size="lg" label="Loading" />
     </div>
   );
 
   return (
-    <div className="bg-black" style={{ position: 'fixed', inset: 0, overflowY: 'auto' }}>
+    <div className="bg-canvas" style={{ position: 'fixed', inset: 0, overflowY: 'auto' }}>
 
       {isDirty && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 200, background: 'var(--black)', borderBottom: '1px solid rgb(var(--ink-rgb) / 0.15)', padding: 'calc(10px + var(--safe-top)) 20px 10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>

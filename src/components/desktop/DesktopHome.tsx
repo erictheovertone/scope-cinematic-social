@@ -140,7 +140,7 @@ export default function DesktopHome() {
     // The shell fixes html/body (overflow:hidden) — so the feed needs its OWN
     // full-height scroller, the same fixed/inset-0/overflow-y:auto pattern the
     // desktop profile page uses (cleared past the 71px rail).
-    <div ref={scrollRef} className="bg-black" style={{ position: 'fixed', inset: 0, left: 'var(--rail-w)', background: 'var(--black)', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
+    <div ref={scrollRef} className="bg-canvas" style={{ position: 'fixed', inset: 0, left: 'var(--rail-w)', background: 'var(--canvas)', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
       <DesktopShell width="fluid" padding="40px 48px 96px">{/* Brief R1a — media surface: fills the window, masonry grows columns */}
         {/* DISCOVER — the page title, top-left of the content column (mobile home's
             title, now on desktop). SK-Modernist Bold, −0.06em, 40px page-title scale. */}

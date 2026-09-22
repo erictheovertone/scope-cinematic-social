@@ -78,7 +78,7 @@ export default function DataPage() {
   };
 
   return (
-    <div className="bg-black relative w-[430px] h-[932px] mx-auto">
+    <div className="bg-canvas relative w-[430px] h-[932px] mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-6 border-b border-[var(--mute-1)]">
         <button 

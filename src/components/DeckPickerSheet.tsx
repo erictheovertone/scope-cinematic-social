@@ -104,7 +104,7 @@ export default function DeckPickerSheet({ postId, onClose, onAdded }: Props) {
     <>
       {/* Backdrop */}
       <div
-        className="bg-black"
+        className="bg-canvas"
         style={{
           position: "fixed", inset: 0, zIndex: 120,
           background: "rgb(var(--black-rgb) / 0.6)",
@@ -116,7 +116,7 @@ export default function DeckPickerSheet({ postId, onClose, onAdded }: Props) {
 
       {/* Sheet */}
       <div
-        className="bg-black"
+        className="bg-canvas"
         style={{
           position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 121,
           maxWidth: '30rem', margin: "0 auto",

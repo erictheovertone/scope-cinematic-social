@@ -70,7 +70,7 @@ export default function DesktopOnboarding() {
   const skip = async () => { await markSeen(); router.replace('/'); };
 
   if (phase === 'resolving') {
-    return <div className="bg-black" style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><ScopeLoader size="lg" label="Loading" /></div>;
+    return <div className="bg-canvas" style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><ScopeLoader size="lg" label="Loading" /></div>;
   }
   if (phase === 'explainer') return <WelcomeExplainer onDone={afterExplainer} onSkip={skip} />;
   if (phase === 'setup') {
