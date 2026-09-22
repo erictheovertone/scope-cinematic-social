@@ -1702,6 +1702,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
           // AND result≠selection, from one cause). Fallback to the prop only pre-finishCtx.
           allowArChoice={(finishCtx?.gridLayout ?? (userLayoutId === 'collage' ? 'collage' : 'standard')) === 'collage'}
           initialAr={chipForLayout(finishCtx?.layoutId ?? userLayoutId).id}
+          debugLayoutKey={`grid=${(finishCtx?.layoutId ?? userLayoutId)} (finishCtx=${finishCtx?.layoutId ?? 'null'} prop=${userLayoutId})`}
           onCancel={() => setStep('media')}
           onConfirm={(geom, layoutId) => {
             setEditGeometry(geom);
