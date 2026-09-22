@@ -103,14 +103,6 @@ export default function WalletPage() {
   // actually deliver), not a spot-price estimate.
   const [zoraBalance, setZoraBalance] = useState<string | null>(null);
   const [zoraUsd, setZoraUsd] = useState<number | null>(null);
-  // PIXEL-QA overlay (?skin=1) — DEV ONLY, never ships: the exported Figma skin
-  // at 50% over the live page for alignment work. NODE_ENV gate keeps it out of
-  // production builds even if the query param is passed.
-  const [skinOverlay, setSkinOverlay] = useState(false);
-  useEffect(() => {
-    if (process.env.NODE_ENV === "production") return;
-    setSkinOverlay(new URLSearchParams(window.location.search).get("skin") === "1");
-  }, []);
   const [sendToken, setSendToken] = useState<"ETH" | "USDC">("ETH");
   const [sendTo, setSendTo] = useState("");
   const [sendAmount, setSendAmount] = useState(""); // DOLLARS
@@ -660,26 +652,15 @@ export default function WalletPage() {
     <div
       ref={containerRef}
       className="bg-canvas"
-      style={{ position: "fixed", inset: 0, overflowY: "auto", color: "var(--ink-100)", paddingBottom: "env(safe-area-inset-bottom, 0px)", ...(skinOverlay ? { width: 375, right: "auto" } : {}) }}
+      style={{ position: "fixed", inset: 0, overflowY: "auto", color: "var(--ink-100)", paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      {/* PIXEL-QA skin overlay — dev-only (?skin=1), 375 reference, 50%.
-          Left-anchored (with the root pinned to 375 in skin mode) so alignment
-          holds regardless of the actual viewport width. */}
-      {skinOverlay && (
-        <img
-          src="/wallet-redux/wallet-redux-skin-ui.png"
-          alt=""
-          style={{ position: "fixed", top: 0, left: 0, width: 375, height: 812, opacity: 0.5, pointerEvents: "none", zIndex: 9999 }}
-        />
-      )}
-
       {/* Toast */}
       {toast && (
         <div style={{
           position: "fixed", top: 20, left: "50%", transform: "translateX(-50%)",
-          background: "#111", border: "1px solid rgb(var(--ink-rgb) / 0.15)",
+          background: "var(--surface-2)", border: "1px solid rgb(var(--ink-rgb) / 0.15)",
           padding: "8px 16px", zIndex: 999,
         }}>
           <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: "var(--ink-100)", textTransform: "uppercase" }}>{toast}</span>
@@ -985,8 +966,8 @@ export default function WalletPage() {
                   style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 0", borderBottom: "1px solid rgb(var(--ink-rgb) / 0.07)", cursor: "pointer" }}
                 >
                   {h.thumbUrl
-                    ? <img src={h.thumbUrl} alt="" style={{ width: 44, height: 30, objectFit: "cover", flexShrink: 0, background: "#111" }} />
-                    : <div style={{ width: 44, height: 30, background: "#111", flexShrink: 0 }} />}
+                    ? <img src={h.thumbUrl} alt="" style={{ width: 44, height: 30, objectFit: "cover", flexShrink: 0, background: "var(--surface-2)" }} />
+                    : <div style={{ width: 44, height: 30, background: "var(--surface-2)", flexShrink: 0 }} />}
                   <div style={{ flex: 1, minWidth: 0 }}>
                     {h.ticker ? <TickerMark ticker={h.ticker} size={13.5} /> : <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: "rgb(var(--ink-rgb) / 0.4)" }}>—</span>}
                     <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: "rgb(var(--ink-rgb) / 0.45)", margin: "3px 0 0", textTransform: "uppercase", letterSpacing: "0.06em" }}>
@@ -1068,7 +1049,7 @@ export default function WalletPage() {
             </button>
           );
           const rowStyle: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 10, padding: '8px 2px' };
-          const thumbStyle: React.CSSProperties = { width: 44, height: 28, objectFit: 'cover', display: 'block', background: '#111', flexShrink: 0 };
+          const thumbStyle: React.CSSProperties = { width: 44, height: 28, objectFit: 'cover', display: 'block', background: 'var(--surface-2)', flexShrink: 0 };
           return (
             <div>
               {/* ── PORTFOLIO — creator fees, per post ── */}
@@ -1160,11 +1141,11 @@ export default function WalletPage() {
 
                 // Directional icon circle: tint + glyph + color by action.
                 const cfg = ({
-                  buy:     { tint: 'rgb(var(--ink-rgb) / 0.10)',     glyph: '↓', color: '#ff4d4d' },
-                  sell:    { tint: 'rgba(74,222,128,0.10)',  glyph: '↑', color: 'var(--positive-alt)' },
+                  buy:     { tint: 'rgb(var(--ink-rgb) / 0.10)',     glyph: '↓', color: 'var(--danger)' },
+                  sell:    { tint: 'color-mix(in srgb, var(--positive) 10%, transparent)',  glyph: '↑', color: 'var(--positive)' },
                   mint:    { tint: 'rgb(var(--ink-rgb) / 0.06)', glyph: '✦', color: 'var(--mute-3)' },
-                  receive: { tint: 'rgba(74,222,128,0.10)',  glyph: '↓', color: 'var(--positive-alt)' },
-                  send:    { tint: 'rgb(var(--ink-rgb) / 0.10)',     glyph: '↑', color: '#ff4d4d' },
+                  receive: { tint: 'color-mix(in srgb, var(--positive) 10%, transparent)',  glyph: '↓', color: 'var(--positive)' },
+                  send:    { tint: 'rgb(var(--ink-rgb) / 0.10)',     glyph: '↑', color: 'var(--danger)' },
                 } as const)[row.kind];
 
                 // Hero verb + amount (white); ticker rendered red via TickerMark.
@@ -1188,7 +1169,7 @@ export default function WalletPage() {
                 const rightText = row.kind === 'mint'
                   ? 'CREATED'
                   : rightVal ? `${positive ? '+' : '−'}${rightVal}` : '';
-                const rightColor = row.kind === 'mint' ? '#5a5a5a' : positive ? 'var(--positive-alt)' : 'var(--ink-100)';
+                const rightColor = row.kind === 'mint' ? 'rgb(var(--ink-rgb) / 0.4)' : positive ? 'var(--positive)' : 'var(--ink-100)';
 
                 return (
                   <div
@@ -1210,7 +1191,7 @@ export default function WalletPage() {
                           </span>
                         )}
                       </p>
-                      <p style={{ ...SKR, fontSize: 12, color: "#5a5a5a", margin: "3px 0 0", lineHeight: 1, textTransform: "uppercase" }}>
+                      <p style={{ ...SKR, fontSize: 12, color: "rgb(var(--ink-rgb) / 0.4)", margin: "3px 0 0", lineHeight: 1, textTransform: "uppercase" }}>
                         {subParts.join(" · ")}
                       </p>
                     </div>
