@@ -49,11 +49,7 @@ export async function saveDesktopLayout(userId: string, layout: DesktopLayout): 
   // the profileCache lesson: without this, the profile re-reads STALE and the
   // new grid never shows even on a successful write.
   invalidateProfileCache(userId);
-  const { data: p } = await supabase.from('profiles').select('grid_layout').eq('user_id', userId).maybeSingle();
-  if (p && !p.grid_layout) {
-    // desktop-first: seed the mobile default aspect (the 2-col variant)
-    const seed = layout.aspect === 'legacy' ? '3x-legacy' : `2x-${layout.aspect.replace('-wide', '')}`;
-    await supabase.from('profiles').update({ grid_layout: seed }).eq('user_id', userId);
-  }
+  // C1c — the grid_layout mirror is retired; desktop no longer seeds it. resolveLayout derives
+  // the mobile aspect from desktop_layout when mobile is unset.
   return true;
 }

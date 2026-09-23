@@ -138,13 +138,7 @@ export const saveProfile = async (userId: string, profileData: {
   return data
 }
 
-export const saveGridLayout = async (userId: string, gridLayout: string): Promise<void> => {
-  const { error } = await supabase
-    .from('profiles')
-    .upsert({ user_id: userId, grid_layout: gridLayout }, { onConflict: 'user_id' })
-  if (error) throw error
-  invalidateProfileCache(userId)
-}
+// C1c — saveGridLayout (the profiles.grid_layout mirror writer) removed; the mirror is retired.
 
 export const getProfile = async (userId: string): Promise<Profile | null> => {
   const cached = profileCache.get(userId)

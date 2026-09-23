@@ -1,4 +1,3 @@
-import { getUserByPrivyId, saveGridLayout } from './userService';
 
 interface GridLayoutPreference {
   userId: string;
@@ -22,15 +21,8 @@ export const setUserGridLayout = async (userId: string, layoutId: string, layout
   if (typeof window !== 'undefined') {
     localStorage.setItem('scope_grid_preferences', JSON.stringify(userGridPreferences));
   }
-
-  try {
-    const user = await getUserByPrivyId(userId);
-    if (user) {
-      await saveGridLayout(user.id, layoutId);
-    }
-  } catch (error) {
-    console.error('Error saving grid layout to Supabase:', error);
-  }
+  // C1c — the profiles.grid_layout mirror is retired. The grid-layout page's canonical writes
+  // (setSharedAspect + setMobileCount) are the source of truth; this no longer writes the mirror.
 };
 
 export const getUserGridLayout = (userId: string): GridLayoutPreference | null => {

@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
 import { setUserGridLayout, getUserGridLayout } from "@/lib/gridLayoutService";
 import { getUserByPrivyId, getProfile } from "@/lib/userService";
-import { setSharedAspect, setMobileCount, type AspectId } from "@/lib/layoutModel";
+import { setSharedAspect, setMobileCount, resolveLayout, legacyLayoutId, type AspectId } from "@/lib/layoutModel";
 import WelcomeTransition from "@/components/WelcomeTransition";
 
 const SKB: React.CSSProperties = { fontFamily: "var(--font-display)", fontWeight: 700 };
@@ -345,9 +345,12 @@ export default function GridLayoutPage() {
       if (!dbUser) return;
       const profile = await getProfile(dbUser.id);
       // Also seed selectedLayout from DB (source of truth over localStorage)
-      if (profile?.grid_layout) {
-        const canonical = LEGACY_MAP[profile.grid_layout] ?? profile.grid_layout;
-        setSelectedLayout(canonical);
+      if (profile) {
+        // C1c — seed the picker from the CANONICAL source (aspect_ratio via resolveLayout), not
+        // the retired grid_layout mirror.
+        const R = resolveLayout(profile as Parameters<typeof resolveLayout>[0]);
+        const canonId = R.aspect === "collage" ? "collage" : legacyLayoutId(R.aspect, R.mobileCount);
+        setSelectedLayout(LEGACY_MAP[canonId] ?? canonId);
       }
     });
   }, [user?.id]);

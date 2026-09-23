@@ -429,10 +429,10 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
       try {
         const su = await getUserByPrivyId(user.id);
         if (!su) return;
-        const p = await getProfile(su.id) as { grid_layout?: string } | null;
-        const fresh = p?.grid_layout ?? null;
-        const canon = fresh ? (LEGACY_TO_CANONICAL[fresh] ?? fresh) : null;
-        setDebugFresh({ fresh, freshAr: canon ? chipForLayout(canon).id : null });
+        const p = await getProfile(su.id);
+        const R = p ? resolveLayout(p as Parameters<typeof resolveLayout>[0]) : null;
+        const canon = R ? (R.aspect === "collage" ? "collage" : legacyLayoutId(R.aspect, R.mobileCount)) : null;
+        setDebugFresh({ fresh: canon, freshAr: canon ? chipForLayout(canon).id : null });
       } catch { /* trace only */ }
     })();
   }, [step, user?.id]);
@@ -779,7 +779,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
       console.log('[handlePost] profile result — id:', profile?.id, '| user_id:', (profile as any)?.user_id, '| username:', profile?.username);
       if (!profile) throw new Error('Profile not found — please complete profile setup at /profile/setup');
       if (!profile.username) throw new Error('Username not set — please add a username at /profile/setup');
-      console.log('[handlePost] profile:', profile.username, 'grid_layout:', (profile as any).grid_layout);
+      console.log('[handlePost] profile:', profile.username, 'aspect_ratio:', (profile as any).aspect_ratio);
 
       // ── layout_id + geometry resolution ──
       // layout_id stays the canonical grid layout for non-collage users (existing

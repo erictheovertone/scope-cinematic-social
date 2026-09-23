@@ -1,4 +1,5 @@
 import { supabase } from './supabase/client';
+import { resolveLayout, legacyLayoutId } from "@/lib/layoutModel";
 
 // The IMAGE thumbnail for a post (notifications, previews): video posts use the
 // baked graded poster (never the .mp4, which renders blank as <img>); photos
@@ -175,7 +176,7 @@ export const getAllPosts = async (
 
   const { data: profiles } = await supabase
     .from('profiles')
-    .select('user_id, username, profile_image_url, grid_layout')
+    .select('user_id, username, profile_image_url, aspect_ratio, mobile_count, desktop_count, desktop_layout, grid_layout')
     .in('user_id', userIds);
 
   const profileMap = new Map(
@@ -188,7 +189,7 @@ export const getAllPosts = async (
       ...post,
       username: prof?.username ?? post.username,
       profile_image_url: prof?.profile_image_url ?? null,
-      grid_layout: prof?.grid_layout ?? null,
+      grid_layout: prof ? legacyLayoutId(resolveLayout(prof as Parameters<typeof resolveLayout>[0]).aspect, resolveLayout(prof as Parameters<typeof resolveLayout>[0]).mobileCount) : null,
     };
   });
 };
@@ -250,11 +251,11 @@ export const getFeedPage = async (
 
   // Batch-fetch author profiles by stable user_id (same as getAllPosts).
   const userIds = [...new Set(posts.map((p) => p.user_id).filter(Boolean))];
-  let profileMap = new Map<string, { username?: string; profile_image_url?: string | null; grid_layout?: string | null }>();
+  let profileMap = new Map<string, Record<string, unknown>>();
   if (userIds.length > 0) {
     const { data: profiles } = await supabase
       .from('profiles')
-      .select('user_id, username, profile_image_url, grid_layout')
+      .select('user_id, username, profile_image_url, aspect_ratio, mobile_count, desktop_count, desktop_layout, grid_layout')
       .in('user_id', userIds);
     profileMap = new Map((profiles || []).map((p) => [p.user_id, p]));
   }
@@ -265,7 +266,7 @@ export const getFeedPage = async (
       ...post,
       username: prof?.username ?? post.username,
       profile_image_url: prof?.profile_image_url ?? null,
-      grid_layout: prof?.grid_layout ?? null,
+      grid_layout: prof ? legacyLayoutId(resolveLayout(prof as Parameters<typeof resolveLayout>[0]).aspect, resolveLayout(prof as Parameters<typeof resolveLayout>[0]).mobileCount) : null,
     };
   });
 
@@ -630,7 +631,7 @@ export const getPostsPaginated = async (
 
   const { data: profiles } = await supabase
     .from('profiles')
-    .select('user_id, username, profile_image_url, grid_layout')
+    .select('user_id, username, profile_image_url, aspect_ratio, mobile_count, desktop_count, desktop_layout, grid_layout')
     .in('user_id', userIds);
 
   const profileMap = new Map(
@@ -643,7 +644,7 @@ export const getPostsPaginated = async (
       ...post,
       username: prof?.username ?? post.username,
       profile_image_url: prof?.profile_image_url ?? null,
-      grid_layout: prof?.grid_layout ?? null,
+      grid_layout: prof ? legacyLayoutId(resolveLayout(prof as Parameters<typeof resolveLayout>[0]).aspect, resolveLayout(prof as Parameters<typeof resolveLayout>[0]).mobileCount) : null,
     };
   });
 };

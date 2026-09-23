@@ -74,15 +74,11 @@ export default function DesktopGridPicker({
     // invalidates the cache + broadcasts 'scope:layout-changed' so grids re-read.
     const okA = await setSharedAspect(userId, aspect as AspectId);
     const okC = await setDesktopCount(userId, count);
-    // LEGACY MIRROR (fixes desktop→mobile): also write grid_layout so the many
-    // mobile readers still on it (public profile, PostItem, create) reflect the
-    // shared AR. Use the resolved MOBILE count (explicit ?? matrix) so the mobile
-    // grid's columns stay correct — mirroring both pickers' write shape.
-    try {
-      const prof = await getProfile(userId);
-      const R = resolveLayout({ ...(prof as object), aspect_ratio: aspect, desktop_count: count } as Parameters<typeof resolveLayout>[0]);
-      await updateProfileFields(userId, { grid_layout: legacyLayoutId(aspect as AspectId, R.mobileCount) });
-    } catch (e) { console.warn('[layout] legacy mirror write:', (e as Error)?.message); }
+    // C1c — the profiles.grid_layout mirror is RETIRED. This picker used to also write it via a
+    // resolveLayout(getProfile(...)) read — the one-save-lag site: it derived the mirror from a
+    // profile read that could serve pre-save state, so the mirror lagged one save behind the
+    // canonical aspect_ratio. Now aspect_ratio + desktop_count are the only writes; every reader
+    // resolves through resolveLayout(aspect_ratio, mobile_count).
     setSaving(false);
     if (okA && okC) {
       onApplied(layout);
