@@ -509,7 +509,7 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
       )}
 
       {post.caption && (
-        <div style={{ margin: card ? "5px 2px 0" : "7px 5px 0", maxWidth: card ? undefined : 158 }}>
+        <div style={{ margin: card ? "5px 2px 0" : "7px 5px 0", maxWidth: card ? undefined : "100%" }}>{/* mobile: caption spans the image edge-to-edge (was capped at 158px) */}
           <p
             ref={captionRef}
             style={{ ...SKR, ...(card
