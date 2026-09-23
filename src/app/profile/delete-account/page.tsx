@@ -133,7 +133,7 @@ export default function DeleteAccount() {
 
               <button
                 onClick={() => router.back()}
-                className="w-full bg-transparent border border-[var(--mute-1)] text-[var(--ink-100)] py-3 rounded-lg font-['IBM_Plex_Mono'] font-medium text-[var(--fs-14)] hover:border-[#555555] transition-colors"
+                className="w-full bg-transparent border border-[var(--mute-1)] text-[var(--ink-100)] py-3 rounded-lg font-['IBM_Plex_Mono'] font-medium text-[var(--fs-14)] hover:border-hairline transition-colors"
               >
                 Cancel
               </button>

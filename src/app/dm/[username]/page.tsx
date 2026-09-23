@@ -194,7 +194,7 @@ function MobileDMThread({ username }: { username: string }) {
           className="tappable"
           style={{ display: 'flex', alignItems: 'center', gap: 9, background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, minWidth: 0 }}
         >
-          <div style={{ width: 30, height: 30, borderRadius: '50%', background: '#222', flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'var(--surface-4)', flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             {other?.avatar
               ? <img src={feedImage(other.avatar, 96)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               : <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: 'var(--ink-100)' }}>{other?.handle?.[0]?.toUpperCase() ?? '?'}</span>}
@@ -231,7 +231,7 @@ function MobileDMThread({ username }: { username: string }) {
                     onClick={it.status === 'failed' && it.tempId ? () => doSend(it.body, it.tempId!) : undefined}
                     style={{
                       maxWidth: '76%', padding: '8px 11px', borderRadius: 2,
-                      background: it.mine ? '#242424' : '#0e0e0e',
+                      background: it.mine ? 'var(--surface-4)' : 'var(--surface-1)',
                       border: it.status === 'failed' ? '1px solid var(--ink-100)' : '1px solid rgb(var(--ink-rgb) / 0.06)',
                       cursor: it.status === 'failed' ? 'pointer' : 'default',
                       opacity: it.status === 'sending' ? 0.55 : 1,
@@ -262,7 +262,7 @@ function MobileDMThread({ username }: { username: string }) {
           disabled={notFound}
           style={{
             flex: 1, resize: 'none', maxHeight: 120, ...SKR, fontSize: 16, color: 'var(--ink-100)',
-            background: '#111', border: '1px solid rgb(var(--ink-rgb) / 0.14)', borderRadius: 2,
+            background: 'var(--surface-2)', border: '1px solid rgb(var(--ink-rgb) / 0.14)', borderRadius: 2,
             outline: 'none', padding: '9px 11px', lineHeight: 1.35,
           }}
         />

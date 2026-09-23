@@ -146,7 +146,7 @@ export default function DesktopRail() {
                 {ic.glyph}
                 {ic.key === 'dm' && dmUnread > 0 && (
                   // Framed-count badge (the notifications-tab language) on the DM icon.
-                  <span style={{ position: 'absolute', top: -6, right: -9, minWidth: 15, boxSizing: 'border-box', textAlign: 'center', padding: '0 4px', lineHeight: 1.5, background: '#0b0b0b', border: '1px solid rgb(var(--ink-rgb) / 0.28)', fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 9, color: 'var(--ink-100)', fontVariantNumeric: 'tabular-nums' }}>
+                  <span style={{ position: 'absolute', top: -6, right: -9, minWidth: 15, boxSizing: 'border-box', textAlign: 'center', padding: '0 4px', lineHeight: 1.5, background: 'var(--surface-1)', border: '1px solid rgb(var(--ink-rgb) / 0.28)', fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 9, color: 'var(--ink-100)', fontVariantNumeric: 'tabular-nums' }}>
                     {dmUnread > 99 ? '99+' : dmUnread}
                   </span>
                 )}

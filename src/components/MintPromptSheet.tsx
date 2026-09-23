@@ -208,7 +208,7 @@ export default function MintPromptSheet({ visible, onMint, onSkip, onCoinSkipped
                 CODIFICATION target: on coin confirmation the red corner
                 brackets snap onto it HERE, inside the flow. */}
             {mediaUrl && (
-              <div style={{ position: 'relative', width: '100%', aspectRatio: mediaAr || '2.39 / 1', background: '#111', overflow: 'hidden', marginBottom: 18 }}>
+              <div style={{ position: 'relative', width: '100%', aspectRatio: mediaAr || '2.39 / 1', background: 'var(--surface-2)', overflow: 'hidden', marginBottom: 18 }}>
                 <img src={mediaUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                 {codified && (
                   <>

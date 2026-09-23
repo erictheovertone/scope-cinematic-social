@@ -153,7 +153,7 @@ export default function DecksPage() {
                   (feedImage 600-class; video posters included). DeckThumbnail renders its
                   own quiet placeholder tile when there are no images (empty deck). */}
               {(deck.thumbnail_url || deck.cover_image_url) ? (
-                <div style={{ width: "100%", aspectRatio: "2.4 / 1", background: "#111", overflow: "hidden" }}>
+                <div style={{ width: "100%", aspectRatio: "2.4 / 1", background: "var(--surface-2)", overflow: "hidden" }}>
                   <img
                     src={deck.thumbnail_url ?? feedImage(deck.cover_image_url, 600)}
                     alt={deck.title}

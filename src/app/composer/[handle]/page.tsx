@@ -171,7 +171,7 @@ export default function ComposerDiscographyPage() {
         )}
         <button onClick={() => history.back()} style={{ position: "relative", ...SKR, fontSize: 12, color: "rgb(var(--ink-rgb) / 0.55)", background: "none", border: "none", cursor: "pointer", padding: 0, marginBottom: 18 }}>← Back</button>
         <div style={{ position: "relative", display: "flex", gap: 16, alignItems: "flex-start" }}>
-          <div style={{ width: 84, height: 84, flexShrink: 0, overflow: "hidden", background: "#222" }}>
+          <div style={{ width: 84, height: 84, flexShrink: 0, overflow: "hidden", background: "var(--surface-4)" }}>
             {profile?.profile_image_url && <img src={feedImage(profile.profile_image_url, 200)} alt={handle} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />}
           </div>
           <div style={{ minWidth: 0, flex: 1 }}>

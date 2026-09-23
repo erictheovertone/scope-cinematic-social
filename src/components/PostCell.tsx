@@ -51,7 +51,7 @@ export default function PostCell({ post, layoutId, index, onClick, showSoundTogg
         width: '100%',
         paddingTop: `${padding}%`,
         cursor: onClick ? 'pointer' : 'default',
-        backgroundColor: '#222',
+        backgroundColor: 'var(--surface-4)',
         overflow: 'hidden',
       }}
       onClick={onClick}

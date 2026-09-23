@@ -299,7 +299,7 @@ export default function ProfileDataSheet({
                 {link.title || domain}
               </div>
               {thumb ? (
-                <div style={{ position: 'relative', width: 185, height: 78, overflow: 'hidden', borderRadius: 4, background: '#111' }}>
+                <div style={{ position: 'relative', width: 185, height: 78, overflow: 'hidden', borderRadius: 4, background: 'var(--surface-2)' }}>
                   <img src={thumb} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                   {link.is_video && (
                     <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgb(var(--black-rgb) / 0.35)' }}>

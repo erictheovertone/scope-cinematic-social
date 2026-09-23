@@ -147,7 +147,7 @@ export default function NotificationsPanel({ onClose }: Props) {
 
               {/* Post thumbnail */}
               {(n.type === "like" || n.type === "comment") && n.post_image_url && (
-                <div style={{ width: 40, height: 40, flexShrink: 0, background: "#222", overflow: "hidden" }}>
+                <div style={{ width: 40, height: 40, flexShrink: 0, background: "var(--surface-4)", overflow: "hidden" }}>
                   <img src={n.post_image_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 </div>
               )}

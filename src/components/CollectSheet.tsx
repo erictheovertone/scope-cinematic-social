@@ -217,7 +217,7 @@ export default function CollectSheet({ post, visible, onClose }: CollectSheetPro
           left: 0,
           right: 0,
           height: "70vh",
-          backgroundColor: "#111111",
+          backgroundColor: "var(--surface-2)",
           borderTop: "1px solid rgb(var(--ink-rgb) / 0.12)",
           zIndex: 301,
           display: "flex",

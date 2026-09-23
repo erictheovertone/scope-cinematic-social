@@ -569,7 +569,7 @@ export function ReplyComposer({
         style={{
           position: "relative", pointerEvents: "auto",
           width: isDesktop ? 480 : "100%", maxWidth: isDesktop ? 480 : "none",
-          background: "#0c0c0c",
+          background: "var(--surface-1)",
           borderTop: isDesktop ? "1px solid rgb(var(--ink-rgb) / 0.1)" : "1px solid rgb(var(--ink-rgb) / 0.1)",
           border: isDesktop ? "1px solid rgb(var(--ink-rgb) / 0.1)" : undefined,
           boxShadow: "0 -18px 60px rgb(var(--black-rgb) / 0.6)",

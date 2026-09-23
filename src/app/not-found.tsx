@@ -10,7 +10,7 @@ export default function NotFound() {
         <h1 className="font-['IBM_Plex_Mono'] font-medium text-[var(--ink-100)] text-[var(--fs-14)] tracking-[-0.28px] leading-[140%] mb-2">
           Page Not Found
         </h1>
-        <Link href="/" className="font-['IBM_Plex_Mono'] font-normal text-[#CCCCCC] text-[var(--fs-11)] tracking-[-0.22px] leading-[140%] hover:text-[var(--ink-100)]">
+        <Link href="/" className="font-['IBM_Plex_Mono'] font-normal text-ink/90 text-[var(--fs-11)] tracking-[-0.22px] leading-[140%] hover:text-[var(--ink-100)]">
           Return Home
         </Link>
       </div>

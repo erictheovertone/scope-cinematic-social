@@ -101,7 +101,7 @@ export default function DesktopDM({ initialUsername }: { initialUsername?: strin
                 padding: '13px 18px', transition: 'background 120ms ease',
               }}
             >
-              <div style={{ width: 42, height: 42, borderRadius: '50%', background: '#222', flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ width: 42, height: 42, borderRadius: '50%', background: 'var(--surface-4)', flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 {c.otherAvatar
                   ? <img src={feedImage(c.otherAvatar, 96)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   : <span style={{ ...SKB, fontSize: 14, color: 'var(--ink-100)' }}>{c.otherHandle?.[0]?.toUpperCase() ?? '?'}</span>}
@@ -259,7 +259,7 @@ function DesktopThreadPane({
       {/* header */}
       <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 11, padding: '16px 22px', borderBottom: `1px solid ${HAIR}` }}>
         <button onClick={onOpenProfile} style={{ display: 'flex', alignItems: 'center', gap: 11, background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, minWidth: 0 }}>
-          <div style={{ width: 34, height: 34, borderRadius: '50%', background: '#222', flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'var(--surface-4)', flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             {other.avatar
               ? <img src={feedImage(other.avatar, 96)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               : <span style={{ ...SKB, fontSize: 13, color: 'var(--ink-100)' }}>{other.handle?.[0]?.toUpperCase() ?? '?'}</span>}
@@ -289,7 +289,7 @@ function DesktopThreadPane({
                   onClick={it.status === 'failed' && it.tempId ? () => doSend(it.body, it.tempId!) : undefined}
                   style={{
                     maxWidth: '68%', padding: '9px 13px', borderRadius: 2,
-                    background: it.mine ? '#242424' : '#0e0e0e',
+                    background: it.mine ? 'var(--surface-4)' : 'var(--surface-1)',
                     border: it.status === 'failed' ? '1px solid var(--ink-100)' : `1px solid rgb(var(--ink-rgb) / 0.06)`,
                     cursor: it.status === 'failed' ? 'pointer' : 'default',
                     opacity: it.status === 'sending' ? 0.55 : 1,

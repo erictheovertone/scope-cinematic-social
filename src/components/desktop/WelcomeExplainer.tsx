@@ -59,20 +59,20 @@ export default function WelcomeExplainer({ onDone, onSkip }: { onDone: () => voi
         <span style={{ position: 'absolute', top: 24, left: 30, ...INTER_B, fontSize: 13, color: RED, letterSpacing: '0.14em' }}>
           {String(i + 1).padStart(2, '0')} / {String(n).padStart(2, '0')}
         </span>
-        <button onClick={onSkip} style={{ position: 'absolute', top: 22, right: 28, ...INTER_B, fontSize: 12, color: '#808080', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'transparent', border: 'none', cursor: 'pointer', padding: 4 }}>
+        <button onClick={onSkip} style={{ position: 'absolute', top: 22, right: 28, ...INTER_B, fontSize: 12, color: 'rgb(var(--ink-rgb) / 0.55)', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'transparent', border: 'none', cursor: 'pointer', padding: 4 }}>
           SKIP
         </button>
 
         {/* content */}
         <div key={i} style={{ position: 'absolute', left: 50, top: 150, right: 50, animation: reduced ? 'none' : `explainerIn 200ms ease both`, ['--exd' as string]: dir === 1 ? '24px' : '-24px' }}>
           <h1 style={{ ...INTER_B, fontSize: 'calc(54px * var(--type-scale))', lineHeight: '56px', color: 'var(--ink-100)', margin: 0, whiteSpace: 'pre-line', letterSpacing: '-0.01em' }}>{slide.title}</h1>
-          <p style={{ ...INTER_B, fontWeight: 400, fontSize: 16, color: '#9e9e9e', lineHeight: 1.5, margin: '22px 0 0', maxWidth: 600 }}>{slide.subtitle}</p>
+          <p style={{ ...INTER_B, fontWeight: 400, fontSize: 16, color: 'rgb(var(--ink-rgb) / 0.6)', lineHeight: 1.5, margin: '22px 0 0', maxWidth: 600 }}>{slide.subtitle}</p>
         </div>
 
         {/* progress dots (bottom-left) */}
         <div style={{ position: 'absolute', left: 30, bottom: 30, display: 'flex', gap: 7 }}>
           {EXPLAINER_SLIDES.map((_, d) => (
-            <span key={d} style={{ width: 8, height: 8, background: d === i ? RED : '#4d4d4d' }} />
+            <span key={d} style={{ width: 8, height: 8, background: d === i ? RED : 'rgb(var(--ink-rgb) / 0.3)' }} />
           ))}
         </div>
 

@@ -90,7 +90,7 @@ function MobileDMInbox() {
                 }}
               >
                 {/* avatar */}
-                <div style={{ width: 44, height: 44, borderRadius: '50%', background: '#222', flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'var(--surface-4)', flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   {c.otherAvatar
                     ? <img src={feedImage(c.otherAvatar, 96)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     : <span style={{ ...SKB, fontSize: 'var(--fs-13)', color: 'var(--ink-100)' }}>{handle?.[0]?.toUpperCase() ?? '?'}</span>}

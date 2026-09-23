@@ -97,7 +97,7 @@ export default function HiddenPosts() {
                     <div className="flex space-x-3">
                       <button
                         onClick={() => unhidePost(post.id)}
-                        className="bg-[var(--mute-1)] text-[var(--ink-100)] px-4 py-2 rounded-lg font-['IBM_Plex_Mono'] text-[var(--fs-12)] hover:bg-[#444444] transition-colors"
+                        className="bg-[var(--mute-1)] text-[var(--ink-100)] px-4 py-2 rounded-lg font-['IBM_Plex_Mono'] text-[var(--fs-12)] hover:opacity-80 transition-colors"
                       >
                         Unhide
                       </button>

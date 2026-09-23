@@ -64,7 +64,7 @@ export default function Invite() {
         {!inviteLink ? (
           <button
             onClick={generateInviteLink}
-            className="w-full bg-[var(--ink-100)] text-[var(--on-ink)] py-4 rounded-lg font-['IBM_Plex_Mono'] font-medium text-[var(--fs-16)] hover:bg-[#d6d2cb] transition-colors mb-6"
+            className="w-full bg-[var(--ink-100)] text-[var(--on-ink)] py-4 rounded-lg font-['IBM_Plex_Mono'] font-medium text-[var(--fs-16)] hover:opacity-90 transition-colors mb-6"
           >
             Generate Invite Link
           </button>
@@ -86,7 +86,7 @@ export default function Invite() {
               className={`w-full py-4 rounded-lg font-['IBM_Plex_Mono'] font-medium text-[var(--fs-16)] transition-colors ${
                 copied 
                   ? 'bg-green-600 text-[var(--ink-100)]' 
-                  : 'bg-[var(--mute-1)] text-[var(--ink-100)] hover:bg-[#444444]'
+                  : 'bg-[var(--mute-1)] text-[var(--ink-100)] hover:opacity-80'
               }`}
             >
               {copied ? 'Copied!' : 'Copy Link'}
@@ -95,7 +95,7 @@ export default function Invite() {
             {/* Generate New Link */}
             <button
               onClick={generateInviteLink}
-              className="w-full bg-transparent border border-[var(--mute-1)] text-[var(--mute-3)] py-3 rounded-lg font-['IBM_Plex_Mono'] font-medium text-[var(--fs-14)] hover:border-[#555555] transition-colors"
+              className="w-full bg-transparent border border-[var(--mute-1)] text-[var(--mute-3)] py-3 rounded-lg font-['IBM_Plex_Mono'] font-medium text-[var(--fs-14)] hover:border-hairline transition-colors"
             >
               Generate New Link
             </button>

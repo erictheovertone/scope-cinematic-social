@@ -43,7 +43,7 @@ export function NotificationActorAvatar({ handle, avatar, size = 24, onNavigate 
     <div
       onClick={tappable ? (e) => { e.stopPropagation(); onNavigate(handle!); } : undefined}
       style={{
-        width: size, height: size, borderRadius: "50%", background: "#222",
+        width: size, height: size, borderRadius: "50%", background: "var(--surface-4)",
         flexShrink: 0, overflow: "hidden", display: "flex",
         alignItems: "center", justifyContent: "center",
         cursor: tappable ? "pointer" : "default",

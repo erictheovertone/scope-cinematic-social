@@ -144,7 +144,7 @@ export default function ProfileHeader({
           {profileImage ? (
             <img src={feedImage(profileImage, 172)} alt="Profile" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", display: "block" }} />
           ) : (
-            <div style={{ width: "100%", height: "100%", backgroundColor: "#222" }} />
+            <div style={{ width: "100%", height: "100%", backgroundColor: "var(--surface-4)" }} />
           )}
         </div>
 

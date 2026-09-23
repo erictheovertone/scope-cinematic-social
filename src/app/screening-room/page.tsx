@@ -245,7 +245,7 @@ function MobileScreeningRoom() {
             ) : src ? (
               <img src={feedImage(src, 750)} alt="" loading="lazy" decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
             ) : (
-              <div style={{ width: '100%', height: '100%', background: '#111' }} />
+              <div style={{ width: '100%', height: '100%', background: 'var(--surface-2)' }} />
             );
             // Rank chip — top-left of the frame, regardless of ratio (in the outer
             // container for legacy, matching how the feed places its overlays).

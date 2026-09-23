@@ -307,8 +307,8 @@ export default function DesktopWallet() {
                      open-post-by-id path (PostLightboxHost, mounted in Providers). */
                   <button key={h.postId} onClick={() => openPostLightbox(h.postId)} className="tappable ledger-row" style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '11px 0', width: '100%', textAlign: 'left', background: 'transparent', border: 'none', borderBottom: `1px solid ${HAIR}`, cursor: 'pointer' }}>
                     {h.thumbUrl ? (
-                      <img src={feedImage(h.thumbUrl, 600)} alt="" style={{ width: 108, height: 62, objectFit: 'cover', display: 'block', background: '#111', flexShrink: 0 }} />
-                    ) : <div style={{ width: 108, height: 62, background: '#111', flexShrink: 0 }} />}
+                      <img src={feedImage(h.thumbUrl, 600)} alt="" style={{ width: 108, height: 62, objectFit: 'cover', display: 'block', background: 'var(--surface-2)', flexShrink: 0 }} />
+                    ) : <div style={{ width: 108, height: 62, background: 'var(--surface-2)', flexShrink: 0 }} />}
                     <span style={{ flex: 1, minWidth: 0 }}>
                       <span style={{ ...FD, fontSize: 12.5, color: 'var(--ink-100)', textTransform: 'uppercase', display: 'block' }}>{h.ticker ? `[ ${h.ticker} ]` : '—'}</span>
                       <span style={{ ...FB, fontSize: 10.5, color: 'rgb(var(--ink-rgb) / 0.5)', display: 'block', marginTop: 3 }}>{h.pieces.toLocaleString()} FRAGMENTS · MC {h.priceUsd != null ? usd(h.priceUsd * 10_000) : '$—'}</span>
@@ -342,7 +342,7 @@ export default function DesktopWallet() {
                         ? <p style={{ ...FB, fontSize: 10.5, color: 'rgb(var(--ink-rgb) / 0.4)', textTransform: 'uppercase', padding: '12px 2px' }}>{earnings ? 'NO CREATOR FEES YET' : 'LOADING…'}</p>
                         : byPost.map((p) => (
                           <div key={p.postId} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '9px 2px', borderBottom: `1px solid rgb(var(--ink-rgb) / 0.06)` }}>
-                            {p.thumb ? <img src={feedImage(p.thumb, 96)} alt="" style={{ width: 62, height: 38, objectFit: 'cover', background: '#111', flexShrink: 0 }} /> : <div style={{ width: 62, height: 38, background: '#111', flexShrink: 0 }} />}
+                            {p.thumb ? <img src={feedImage(p.thumb, 96)} alt="" style={{ width: 62, height: 38, objectFit: 'cover', background: 'var(--surface-2)', flexShrink: 0 }} /> : <div style={{ width: 62, height: 38, background: 'var(--surface-2)', flexShrink: 0 }} />}
                             <span style={{ ...FD, fontSize: 11.5, color: 'var(--ink-100)', textTransform: 'uppercase', flex: 1 }}>{p.ticker ? `[ ${p.ticker} ]` : '—'}</span>
                             <span style={{ ...FD, fontSize: 12.5, color: GREEN, fontVariantNumeric: 'tabular-nums' }}>${p.usd.toFixed(2)}</span>
                           </div>
@@ -362,7 +362,7 @@ export default function DesktopWallet() {
                               const pos = heldMap.get(p.postId);
                               return (
                                 <div key={p.postId} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '9px 2px', borderBottom: `1px solid rgb(var(--ink-rgb) / 0.06)` }}>
-                                  {p.thumb ? <img src={feedImage(p.thumb, 96)} alt="" style={{ width: 62, height: 38, objectFit: 'cover', background: '#111', flexShrink: 0 }} /> : <div style={{ width: 62, height: 38, background: '#111', flexShrink: 0 }} />}
+                                  {p.thumb ? <img src={feedImage(p.thumb, 96)} alt="" style={{ width: 62, height: 38, objectFit: 'cover', background: 'var(--surface-2)', flexShrink: 0 }} /> : <div style={{ width: 62, height: 38, background: 'var(--surface-2)', flexShrink: 0 }} />}
                                   <span style={{ flex: 1, minWidth: 0 }}>
                                     <span style={{ ...FD, fontSize: 11.5, color: 'var(--ink-100)', textTransform: 'uppercase', display: 'block' }}>{p.ticker ? `[ ${p.ticker} ]` : '—'}</span>
                                     <span style={{ ...FB, fontSize: 9.5, color: 'rgb(var(--ink-rgb) / 0.45)', textTransform: 'uppercase' }}>{pos ? `POSITION $${pos.valueUsd.toFixed(2)}` : 'POSITION EXITED'}</span>

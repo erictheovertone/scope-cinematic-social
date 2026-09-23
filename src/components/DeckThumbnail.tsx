@@ -25,7 +25,7 @@ export default function DeckThumbnail({ imageUrls, title, aspectRatio = '2.4 / 1
     width: '100%',
     aspectRatio,
     overflow: 'hidden',
-    background: '#111',
+    background: 'var(--surface-2)',
     position: 'relative',
     display: 'block',
   };

@@ -60,7 +60,7 @@ export default function FramesProUpsellSheet({ isOpen, onClose, onUpgrade }: Pro
           <div
             style={{
               width: 90, height: 160,
-              background: "#111",
+              background: "var(--surface-2)",
               border: "1px solid rgb(var(--ink-rgb) / 0.12)",
               display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-end",
               padding: "0 0 10px",

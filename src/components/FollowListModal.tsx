@@ -74,7 +74,7 @@ export default function FollowListModal({ type, privyUserId, onClose }: Props) {
               onClick={() => { router.push(`/profile/${p.username}`); onClose(); }}
             >
               <div
-                className="flex-shrink-0 overflow-hidden bg-[#222] flex items-center justify-center"
+                className="flex-shrink-0 overflow-hidden bg-[var(--surface-4)] flex items-center justify-center"
                 style={{ width: 28, height: 28 }}
               >
                 {p.profile_image_url ? (

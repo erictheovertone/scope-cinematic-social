@@ -108,8 +108,8 @@ export default function FirstCutPage() {
               {String(p.slot).padStart(2, '0')}
             </span>
             {p.thumbUrl
-              ? <img src={p.thumbUrl} alt="" style={{ width: 64, height: 38, objectFit: 'cover', flexShrink: 0, background: '#111', filter: p.active ? 'none' : 'grayscale(1)' }} />
-              : <div style={{ width: 64, height: 38, background: '#111', flexShrink: 0 }} />}
+              ? <img src={p.thumbUrl} alt="" style={{ width: 64, height: 38, objectFit: 'cover', flexShrink: 0, background: 'var(--surface-2)', filter: p.active ? 'none' : 'grayscale(1)' }} />
+              : <div style={{ width: 64, height: 38, background: 'var(--surface-2)', flexShrink: 0 }} />}
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 7, margin: '0 0 3px', minWidth: 0 }}>
                 <p style={{ ...SKB, fontSize: 'var(--fs-11)', color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.03em', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>

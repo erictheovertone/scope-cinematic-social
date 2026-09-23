@@ -301,7 +301,7 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 7, padding: '0 5px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 7, minWidth: 0 }}>
         <button className="tappable" onClick={(e) => { e.stopPropagation(); router.push('/profile/' + post.username); }} style={{ display: 'block', flexShrink: 0, background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
-          <span style={{ width: 17, height: 17, flexShrink: 0, border: '0.75px solid rgb(var(--ink-rgb) / 0.5)', overflow: 'hidden', display: 'block', background: '#222' }}>
+          <span style={{ width: 17, height: 17, flexShrink: 0, border: '0.75px solid rgb(var(--ink-rgb) / 0.5)', overflow: 'hidden', display: 'block', background: 'var(--surface-4)' }}>
             {post.profile_image_url && <img src={feedImage(post.profile_image_url, 96)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
           </span>
         </button>
@@ -396,7 +396,7 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
             paddingTop: `${paddingPercent}%`,
             overflow: 'hidden',
             cursor: onImageClick ? "pointer" : "default",
-            backgroundColor: '#222',
+            backgroundColor: 'var(--surface-4)',
           }}
         >
           <div className={hoverGrow ? 'masonry-media-scale' : undefined} style={{ position: 'absolute', inset: 0 }}>

@@ -168,17 +168,17 @@ export default function DesktopScreeningRoom() {
               {/* identity + data + top comment */}
               <div style={{ flex: 1, minWidth: 0, paddingTop: 6 }}>
                 <button onClick={() => post.username && router.push(`/profile/${encodeURIComponent(post.username)}`)} className="tappable" style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>
-                  <div style={{ width: 36, height: 36, borderRadius: '50%', overflow: 'hidden', background: '#222', flexShrink: 0 }}>
+                  <div style={{ width: 36, height: 36, borderRadius: '50%', overflow: 'hidden', background: 'var(--surface-4)', flexShrink: 0 }}>
                     {post.profile_image_url && <img src={feedImage(post.profile_image_url, 96)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
                   </div>
                   <span style={{ ...SKB, fontSize: 16, color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.02em' }}>@{post.username ?? 'unknown'}</span>
                 </button>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginTop: 14 }}>
                   {(post.ticker || current.symbol) && <span style={{ ...SKB, fontSize: 14, color: RED, letterSpacing: '0.08em' }}>[ {post.ticker || current.symbol} ]</span>}
-                  <span style={{ ...SKB, fontSize: 13, color: '#ccc', fontVariantNumeric: 'tabular-nums' }}>{usdMc(current.market_cap)}</span>
+                  <span style={{ ...SKB, fontSize: 13, color: 'rgb(var(--ink-rgb) / 0.9)', fontVariantNumeric: 'tabular-nums' }}>{usdMc(current.market_cap)}</span>
                 </div>
                 {meta.topComment && (
-                  <p style={{ ...SKR, fontSize: 13, color: '#9e9e9e', margin: '18px 0 0', maxWidth: 403, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', lineHeight: 1.4 }}>{meta.topComment}</p>
+                  <p style={{ ...SKR, fontSize: 13, color: 'rgb(var(--ink-rgb) / 0.6)', margin: '18px 0 0', maxWidth: 403, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', lineHeight: 1.4 }}>{meta.topComment}</p>
                 )}
               </div>
 
@@ -206,7 +206,7 @@ export default function DesktopScreeningRoom() {
             {/* ═══ 3. THE LINEUP ═══ */}
             <div style={{ margin: '52px auto 0', maxWidth: 'var(--shell-fluid)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 14 }}>
-                <span style={{ ...SKB, fontSize: 13, color: '#808080', letterSpacing: '9.1px', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>The Lineup</span>
+                <span style={{ ...SKB, fontSize: 13, color: 'rgb(var(--ink-rgb) / 0.55)', letterSpacing: '9.1px', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>The Lineup</span>
                 <div style={{ flex: 1, height: 1, background: 'rgb(var(--ink-rgb) / 0.12)' }} />
               </div>
               <div ref={railRef} style={{ display: 'flex', gap: 24, overflowX: 'auto', paddingBottom: 10, scrollBehavior: 'smooth' }}>
@@ -217,7 +217,7 @@ export default function DesktopScreeningRoom() {
                   return (
                     <button key={r.rank} onClick={() => selectRank(i)} className="tappable" style={{ flexShrink: 0, width: 301, background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, textAlign: 'left' }}>
                       <div style={{ position: 'relative', width: 301, height: 162, overflow: 'hidden', background: 'var(--surface-1)', border: `0.6px solid rgb(var(--ink-rgb) / ${isActive ? 1 : 0.58})`, boxSizing: 'border-box', transition: 'border-color 160ms ease' }}>
-                        {src ? <img src={feedImage(src, 600)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} /> : <div style={{ width: '100%', height: '100%', background: '#111' }} />}
+                        {src ? <img src={feedImage(src, 600)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} /> : <div style={{ width: '100%', height: '100%', background: 'var(--surface-2)' }} />}
                         <span style={{ position: 'absolute', top: 6, left: 8, ...SKB, fontSize: 22, color: 'var(--ink-100)', lineHeight: 1, textShadow: '0 1px 6px rgb(var(--black-rgb) / 0.8)' }}>{two(r.rank)}</span>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginTop: 6, whiteSpace: 'nowrap', overflow: 'hidden' }}>
@@ -232,7 +232,7 @@ export default function DesktopScreeningRoom() {
             </div>
 
             {/* ═══ 4. FOOTER ═══ */}
-            <p style={{ ...SKB, fontSize: 12, color: '#808080', letterSpacing: '8.52px', textTransform: 'uppercase', textAlign: 'center', margin: '48px 0 0' }}>Chosen by you</p>
+            <p style={{ ...SKB, fontSize: 12, color: 'rgb(var(--ink-rgb) / 0.55)', letterSpacing: '8.52px', textTransform: 'uppercase', textAlign: 'center', margin: '48px 0 0' }}>Chosen by you</p>
           </>
         )}
       </DesktopShell>

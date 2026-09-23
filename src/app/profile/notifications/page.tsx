@@ -168,7 +168,7 @@ export default function NotificationsPage() {
   // family): thin muted border, dark fill, white number. Absent at zero.
   const CountChip = ({ n }: { n: number }) =>
     n > 0 ? (
-      <span style={{ ...SKB, fontSize: 9, color: 'var(--ink-100)', background: '#0b0b0b', border: '1px solid rgb(var(--ink-rgb) / 0.28)', padding: '1px 5px', marginLeft: 7, fontVariantNumeric: 'tabular-nums', lineHeight: 1.3, verticalAlign: 'baseline' }}>
+      <span style={{ ...SKB, fontSize: 9, color: 'var(--ink-100)', background: 'var(--surface-1)', border: '1px solid rgb(var(--ink-rgb) / 0.28)', padding: '1px 5px', marginLeft: 7, fontVariantNumeric: 'tabular-nums', lineHeight: 1.3, verticalAlign: 'baseline' }}>
         {n}
       </span>
     ) : null;
@@ -209,7 +209,7 @@ export default function NotificationsPage() {
           was why market rows looked thumbless — the data was always there).
           Sized to the post's TRUE aspect ratio; feedImage(96) like every thumb. */}
       {n.post_image_url && (
-        <div style={{ width: 60, aspectRatio: getAspectRatio(n.post_layout_id ?? ''), flexShrink: 0, background: "#222", overflow: "hidden" }}>
+        <div style={{ width: 60, aspectRatio: getAspectRatio(n.post_layout_id ?? ''), flexShrink: 0, background: "var(--surface-4)", overflow: "hidden" }}>
           <img src={feedImage(n.post_image_url, 96)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
         </div>
       )}

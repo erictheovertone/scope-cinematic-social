@@ -33,7 +33,7 @@ export default function NotCollectibleSheet({ visible, onClose }: { visible: boo
       <div
         style={{
           position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 301,
-          backgroundColor: '#111111', borderTop: '1px solid rgb(var(--ink-rgb) / 0.12)',
+          backgroundColor: 'var(--surface-2)', borderTop: '1px solid rgb(var(--ink-rgb) / 0.12)',
           padding: '26px 24px calc(30px + env(safe-area-inset-bottom, 0px))',
           transform: visible ? 'translateY(0)' : 'translateY(100%)',
           transition: 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)',

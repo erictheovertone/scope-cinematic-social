@@ -80,8 +80,8 @@ export default function AccountSettings() {
   return (
     <div className="bg-canvas" style={{ position: 'fixed', inset: 0, overflowY: 'auto' }}>
       <style>{`
-        .edit-input::placeholder { color: #666; }
-        .edit-input:focus { border-color: white; }
+        .edit-input::placeholder { color: var(--mute-2); }
+        .edit-input:focus { border-color: var(--ink-100); }
       `}</style>
 
       {/* Header */}
@@ -156,9 +156,9 @@ export default function AccountSettings() {
           disabled={saving || saved}
           style={{
             ...MONO, fontSize: 'var(--fs-12)',
-            color: saved ? '#4CAF50' : 'var(--ink-100)',
+            color: saved ? 'var(--positive)' : 'var(--ink-100)',
             background: 'transparent',
-            border: `1px solid ${saved ? '#4CAF50' : 'var(--ink-100)'}`,
+            border: `1px solid ${saved ? 'var(--positive)' : 'var(--ink-100)'}`,
             padding: '12px',
             width: '100%',
             cursor: saving || saved ? 'default' : 'pointer',

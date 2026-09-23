@@ -455,7 +455,7 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
           const media = (
             <div
               onClick={() => openPostLightbox(post.id)}
-              style={{ position: 'relative', width: stacked ? '100%' : '55%', aspectRatio: String(arCss), background: '#111', overflow: 'hidden', flexShrink: 0, cursor: 'pointer' }}
+              style={{ position: 'relative', width: stacked ? '100%' : '55%', aspectRatio: String(arCss), background: 'var(--surface-2)', overflow: 'hidden', flexShrink: 0, cursor: 'pointer' }}
             >
               {isVideo ? (
                 <GradedVideo

@@ -328,7 +328,7 @@ export default function EditProfilePage() {
 
         {/* PFP */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 20 }}>
-          <div style={{ width: 56, height: 56, flexShrink: 0, overflow: 'hidden', background: '#222', cursor: 'pointer' }} onClick={() => photoInputRef.current?.click()}>
+          <div style={{ width: 56, height: 56, flexShrink: 0, overflow: 'hidden', background: 'var(--surface-4)', cursor: 'pointer' }} onClick={() => photoInputRef.current?.click()}>
             {profileImageUrl
               ? <img src={feedImage(profileImageUrl, 160)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
               : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span style={{ ...SKB, fontSize: 'var(--fs-22)', color: 'var(--ink-100)' }}>{(displayName || username || '?')[0].toUpperCase()}</span></div>
