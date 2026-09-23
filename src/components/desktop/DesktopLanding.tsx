@@ -38,7 +38,11 @@ export default function DesktopLanding() {
     <div style={{ position: 'fixed', inset: 0, background: 'var(--canvas)', boxSizing: 'border-box' }}>
       {/* Placement — upper-middle-left, off-centre calm (NOT dead-centred): left ~10vw,
           top ~30vh. The lockup is left-aligned; the 0.4px blur is on THIS group only. */}
-      <div style={{ position: 'absolute', top: '30vh', left: 'max(calc(var(--safe-left) + 48px), 10vw)', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', filter: `blur(${WELCOME_BLUR})` }}>
+      {/* Brief S2e — the 0.4px blur (kept) rasterizes to THIS group's box, which used to start at
+          the wordmark's line-box top; the script "s" ascender overshoots that top → the filter
+          clipped it flat. paddingTop gives the filter room for the overshoot; top is compensated by
+          the same amount so the lockup stays at 30vh (the pad is transparent, above empty canvas). */}
+      <div style={{ position: 'absolute', top: 'calc(30vh - 40px)', paddingTop: 40, left: 'max(calc(var(--safe-left) + 48px), 10vw)', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', filter: `blur(${WELCOME_BLUR})` }}>
         {/* Brief S2c — pin 400 / normal / no-synthesis so the inherited body 700 can't
             synthesize bold on the single-cut script face (the thickening). */}
         <span style={{ fontFamily: 'var(--font-script)', fontWeight: 400, fontStyle: 'normal', fontSynthesis: 'none', fontSize: DESKTOP_WORDMARK, lineHeight: 0.85, letterSpacing: '1.5px', color: 'var(--ink-100)', display: 'block', opacity: wordmarkReady ? 1 : 0, transition: 'opacity 120ms ease' }}>
