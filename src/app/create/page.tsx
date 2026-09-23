@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
-import { getUserByPrivyId, getProfile } from "@/lib/userService";
+import { getUserByPrivyId, getProfile, invalidateProfileCache } from "@/lib/userService";
+import { resolveLayout, legacyLayoutId } from "@/lib/layoutModel";
 import CreatePostFlow from "@/components/CreatePostFlow";
 
 export default function CreatePage() {
@@ -17,9 +18,13 @@ export default function CreatePage() {
     (async () => {
       const supabaseUser = await getUserByPrivyId(user.id);
       if (!supabaseUser) return;
-      const profile = await getProfile(supabaseUser.id) as any;
-      if (profile?.grid_layout) {
-        setUserLayoutId(profile.grid_layout);
+      // Brief C1b — read the layout FRESH from the ONE canonical source (resolveLayout /
+      // aspect_ratio), not the raw grid_layout mirror, so the prop matches the create flow.
+      invalidateProfileCache(supabaseUser.id);
+      const profile = await getProfile(supabaseUser.id);
+      if (profile) {
+        const R = resolveLayout(profile as Parameters<typeof resolveLayout>[0]);
+        setUserLayoutId(R.aspect === 'collage' ? 'collage' : legacyLayoutId(R.aspect, R.mobileCount));
       }
     })();
   }, [user]);

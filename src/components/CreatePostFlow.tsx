@@ -18,7 +18,7 @@ import { useTxNarrator } from '@/components/TxNarrator';
 import { notifyTradeSettled } from '@/lib/economy/tradeEvents';
 import MintPromptSheet from '@/components/MintPromptSheet';
 import {
-  getUserByPrivyId, getProfile, uploadImage, uploadImageWithRenditions, isProMember,
+  getUserByPrivyId, getProfile, uploadImage, uploadImageWithRenditions, isProMember, invalidateProfileCache,
   getUserDecks, createDeck, addPostToDeck,
   type Deck,
 } from '@/lib/userService';
@@ -32,6 +32,7 @@ import CropTool from '@/components/CropTool';
 import { cropDebugOn } from "@/lib/cropDebug";
 import ScopeLoader from '@/components/ScopeLoader';
 import { chipForLayout, getAspectRatio } from '@/lib/aspectRatio';
+import { resolveLayout, legacyLayoutId } from "@/lib/layoutModel";
 import {
   neutralGeometry, bakeImageGeometry, type EditGeometry,
 } from '@/lib/editGeometry';
@@ -389,13 +390,21 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
       try {
         const supabaseUser = await getUserByPrivyId(user.id); // DID → users row (uuid)
         if (!supabaseUser || cancelled) return;
+        // Brief C1b — read the layout FRESH (bypass the no-TTL session profile cache) so a grid
+        // change made just before opening create is seen, not the previously-cached value.
+        invalidateProfileCache(supabaseUser.id);
         const profile = await getProfile(supabaseUser.id);     // uuid → profile
         if (!profile || cancelled) return;
-        const raw = (profile as any).grid_layout || userLayoutId;
-        const canonical = LEGACY_TO_CANONICAL[raw] ?? raw;
+        // Brief C1b — THE FIX: read the crop AR from the ONE canonical source (aspect_ratio, via
+        // resolveLayout — the same resolver the profile grid + desktop create use), NOT the raw
+        // profiles.grid_layout column. grid_layout is a LEGACY MIRROR that a surface can leave
+        // stale when it writes aspect_ratio without the mirror → the mobile-create off-by-one that
+        // survives reinstall (a data/column drift, not a device cache). One source of truth now.
+        const R = resolveLayout(profile as Parameters<typeof resolveLayout>[0]);
+        const canonical = R.aspect === 'collage' ? 'collage' : legacyLayoutId(R.aspect, R.mobileCount);
         setFinishCtx({
           isPro: isProMember(profile as any),
-          gridLayout: raw === 'collage' ? 'collage' : 'standard',
+          gridLayout: R.aspect === 'collage' ? 'collage' : 'standard',
           layoutId: canonical,
           userUuid: supabaseUser.id, // uuid for looksService (NEVER the DID)
         });
@@ -776,9 +785,12 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
       // layout_id stays the canonical grid layout for non-collage users (existing
       // write path, untouched). Collage users post per-AR: the chosen chip id
       // becomes layout_id. edit_geometry is additive — never replaces layout_id.
-      const rawLayoutId: string = (profile as any).grid_layout || userLayoutId;
-      const canonicalLayoutId = LEGACY_TO_CANONICAL[rawLayoutId] ?? rawLayoutId;
-      const isCollage = rawLayoutId === 'collage';
+      // Brief C1b — canonical layout from the ONE source (resolveLayout / aspect_ratio), matching
+      // the crop AR (finishCtx). NOT the raw profiles.grid_layout mirror (which can drift stale),
+      // so the BAKE ratio == the composed crop frame, never a snap-then-store mismatch.
+      const R = resolveLayout(profile as Parameters<typeof resolveLayout>[0]);
+      const isCollage = R.aspect === 'collage';
+      const canonicalLayoutId = isCollage ? 'collage' : legacyLayoutId(R.aspect, R.mobileCount);
 
       const geomBase: EditGeometry = editGeometry ?? neutralGeometry(chipForLayout(canonicalLayoutId).id);
       const finalLayoutId = isCollage ? (chosenLayoutId ?? geomBase.ar) : canonicalLayoutId;
@@ -1715,19 +1727,16 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
           </div>
         </div>
       )}
-      {step === 'crop' && selectedMedia[0] && (
+      {step === 'crop' && selectedMedia[0] && (finishCtx ? (
         <CropTool
           mediaUrl={selectedMedia[0].url}
           mediaType={selectedMedia[0].type}
-          // Brief X2 §1 — derive the crop AR from the SAME resolved layout the bake + finishing
-          // use (finishCtx.layoutId = the loaded, LEGACY_TO_CANONICAL-mapped grid, == handlePost's
-          // canonicalLayoutId), NOT the raw prop userLayoutId. The prop is a SECOND async source
-          // (create/page's state, default 'scope' until its own profile load), so it drifted from
-          // the bake's layout → the crop composed at one ratio but baked at another (wrong frame
-          // AND result≠selection, from one cause). Fallback to the prop only pre-finishCtx.
-          allowArChoice={(finishCtx?.gridLayout ?? (userLayoutId === 'collage' ? 'collage' : 'standard')) === 'collage'}
-          initialAr={chipForLayout(finishCtx?.layoutId ?? userLayoutId).id}
-          debugInfo={{ prop: userLayoutId, ctx: finishCtx?.layoutId ?? null, fresh: debugFresh.fresh, freshAr: debugFresh.freshAr, tOpenMs: cropOpenRef.current, tCtxMs: finishCtxTimeRef.current }}
+          // Brief C1b — the crop AR is the CANONICAL resolved layout (finishCtx.layoutId, from
+          // resolveLayout/aspect_ratio), gated below so the tool NEVER draws on the stale
+          // userLayoutId fallback. No positional index survives here (C1); no wrong frame.
+          allowArChoice={finishCtx.gridLayout === 'collage'}
+          initialAr={chipForLayout(finishCtx.layoutId).id}
+          debugInfo={{ prop: userLayoutId, ctx: finishCtx.layoutId, fresh: debugFresh.fresh, freshAr: debugFresh.freshAr, tOpenMs: cropOpenRef.current, tCtxMs: finishCtxTimeRef.current }}
           onCancel={() => setStep('media')}
           onConfirm={(geom, layoutId) => {
             setEditGeometry(geom);
@@ -1735,7 +1744,14 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
             setStep('finishing');
           }}
         />
-      )}
+      ) : (
+        // Brief C1b — NO-DRAW-UNTIL-RESOLVED: hold a loader beat until the canonical layout
+        // resolves rather than draw a frame on the stale prop default. A loader is fine; a wrong
+        // frame is not.
+        <div data-force-dark style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'var(--black)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <ScopeLoader size="lg" label="Loading" />
+        </div>
+      ))}
       {step === 'finishing' && selectedMedia[0] && (() => {
         // Fallbacks so the editor ALWAYS renders even if finishCtx hasn't resolved
         // yet (it updates once the profile loads); never blank-on-null.
