@@ -11,6 +11,7 @@
 // Reads window.location.search directly (no useSearchParams → no Suspense need).
 
 import { useEffect, useRef, useState } from 'react';
+import { toggleCropDebug } from '@/lib/cropDebug';
 
 const BUILD_SHA = process.env.NEXT_PUBLIC_BUILD_SHA || 'dev';
 const LS_KEY = 'scope:debug-viewport';
@@ -36,7 +37,7 @@ export function useTitleDebugTap() {
     const s = st.current;
     s.count = now - s.last < 600 ? s.count + 1 : 1;
     s.last = now;
-    if (s.count >= 5) { s.count = 0; toggleViewportDebug(); }
+    if (s.count >= 5) { s.count = 0; toggleViewportDebug(); toggleCropDebug(); /* C1a — same 5-tap also toggles the crop overlay (PWA-reachable, persisted) */ }
   };
 }
 

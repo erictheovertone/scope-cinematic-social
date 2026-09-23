@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { AR_CHIPS, type ArChip } from "@/lib/aspectRatio";
+import { cropDebugOn, pushCropTrace } from "@/lib/cropDebug";
 import { rotateCoverScale } from "@/lib/editGeometry";
 import { neutralGeometry, type EditGeometry } from "@/lib/editGeometry";
 
@@ -25,15 +26,15 @@ interface CropToolProps {
   initialGeometry?: EditGeometry;
   onCancel: () => void;
   onConfirm: (geometry: EditGeometry, layoutId: string) => void;
-  /** Brief C1 §0 — the caller's raw layout key (profile.grid_layout / resolved layoutId), for
-   *  the ?debug=crop trace only. Does not affect behaviour. */
-  debugLayoutKey?: string;
+  /** Brief C1/C1a §0 — trace context for ?debug=crop only (console + on-screen overlay). Does
+   *  not affect behaviour. prop = the raw userLayoutId; ctx = finishCtx.layoutId (null =
+   *  unresolved); fresh = grid_layout re-read from the DB at crop-open; freshAr = its chip id;
+   *  tOpenMs = perf.now() at crop-open; tCtxMs = when finishCtx resolved (null = never). */
+  debugInfo?: {
+    prop: string; ctx: string | null; fresh: string | null; freshAr: string | null;
+    tOpenMs: number; tCtxMs: number | null;
+  };
 }
-
-// Brief C1 §0 — ?debug=crop gate for the crop trace (open + next). Off by default.
-const cropDbg = () => {
-  try { return new URLSearchParams(window.location.search).get('debug') === 'crop'; } catch { return false; }
-};
 
 type Tab = "crop" | "rotate" | "skew";
 type Handle = "nw" | "ne" | "sw" | "se" | "move";
@@ -54,7 +55,7 @@ function hasPriorGeometry(g?: EditGeometry): boolean {
 }
 
 export default function CropTool({
-  mediaUrl, mediaType, allowArChoice, initialAr, initialGeometry, onCancel, onConfirm, debugLayoutKey,
+  mediaUrl, mediaType, allowArChoice, initialAr, initialGeometry, onCancel, onConfirm, debugInfo,
 }: CropToolProps) {
   const seeded = hasPriorGeometry(initialGeometry);
   const [ar, setAr] = useState<string>(() => (chipById(initialAr).id));
@@ -180,10 +181,11 @@ export default function CropTool({
       rotate: ((rotate % 360) + 360) % 360,
       skew: { x: 0, y: 0 }, // deferred — always neutral
     };
-    if (cropDbg()) {
+    if (cropDebugOn()) {
       const oAR = orientedAr || 1;
       const rectRatio = (crop.w / crop.h) * oAR; // source-rect ratio in oriented px space
-      console.log(`[crop] next passed=${initialAr} resolved(chip)=${chip.ratio.toFixed(4)} (${chip.ratioLabel}) rect=${crop.x.toFixed(3)},${crop.y.toFixed(3)},${crop.w.toFixed(3)},${crop.h.toFixed(3)} rectRatio=${rectRatio.toFixed(4)} rotate=${geom.rotate} orientedAr=${oAR.toFixed(4)} out=${ar} — overlay==out? ${Math.abs(rectRatio - chip.ratio) < 0.02 ? 'YES' : 'NO (region≠frame)'}`);
+      const stale = debugInfo?.freshAr ? (debugInfo.freshAr !== ar ? `YES (fresh=${debugInfo.freshAr})` : 'NO') : '?';
+      pushCropTrace(`[crop] next passed=${ar} resolved=${chip.ratioLabel} stale=${stale} | rect=${crop.x.toFixed(2)},${crop.y.toFixed(2)},${crop.w.toFixed(2)},${crop.h.toFixed(2)} rectRatio=${rectRatio.toFixed(3)} rotate=${geom.rotate} — overlay==out? ${Math.abs(rectRatio - chip.ratio) < 0.02 ? 'YES' : 'NO (region≠frame)'}`);
     }
     onConfirm(geom, ar);
   };
@@ -233,9 +235,12 @@ export default function CropTool({
               src={mediaUrl} alt="Crop preview"
               onLoad={(e) => {
                 const i = e.currentTarget; setNaturalAr(i.naturalWidth / i.naturalHeight);
-                if (cropDbg()) {
+                if (cropDebugOn()) {
                   const r = stageRef.current?.getBoundingClientRect();
-                  console.log(`[crop] open platform=${window.innerWidth >= 1024 ? 'desktop' : 'mobile'} layout=${debugLayoutKey ?? '?'} passed=${initialAr} resolved=${chip.ratio.toFixed(4)} (${chip.ratioLabel}) natural=${i.naturalWidth}×${i.naturalHeight}→${(i.naturalWidth / i.naturalHeight).toFixed(3)} stage=${r ? Math.round(r.width) + '×' + Math.round(r.height) : '?'} allowArChoice=${allowArChoice}`);
+                  const d = debugInfo;
+                  const tDraw = d ? Math.round(performance.now() - d.tOpenMs) : '?';
+                  const tCtx = d ? (d.tCtxMs != null ? Math.round(d.tCtxMs - d.tOpenMs) + 'ms' : 'never') : '?';
+                  pushCropTrace(`[crop] open ${window.innerWidth >= 1024 ? 'desktop' : 'mobile'} passed=${initialAr} resolved=${chip.ratioLabel} | fresh=${d?.fresh ?? '?'}(${d?.freshAr ?? '?'}) prop=${d?.prop ?? '?'} ctx=${d?.ctx ?? 'unresolved'} | t_ctx=${tCtx} t_draw=${tDraw}ms nat=${i.naturalWidth}×${i.naturalHeight} stage=${r ? Math.round(r.width) + '×' + Math.round(r.height) : '?'}`);
                 }
               }}
               style={{ display: "block", maxWidth: "100%", maxHeight: "62vh", transform: mediaTransform, transformOrigin: mediaOrigin, transition: "transform 0.05s linear" }}

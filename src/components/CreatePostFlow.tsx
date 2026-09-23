@@ -29,6 +29,7 @@ import { createLook, getLooks, uploadLookThumb, setLookThumb, type SavedLook } f
 import { getScopeLimitType } from '@/lib/limits';
 import { useUpsell } from '@/components/UpsellProvider';
 import CropTool from '@/components/CropTool';
+import { cropDebugOn } from "@/lib/cropDebug";
 import ScopeLoader from '@/components/ScopeLoader';
 import { chipForLayout, getAspectRatio } from '@/lib/aspectRatio';
 import {
@@ -297,6 +298,11 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
   // editor's isPro refreshes and Pro tools unlock WITHOUT a page reload.
   const [proTick, setProTick] = useState(0);
   const [chosenLayoutId, setChosenLayoutId] = useState<string | null>(null);
+  // Brief C1a §0 — ?debug=crop instrumentation (does not affect behaviour): the fresh DB re-read
+  // of grid_layout at crop-open + the open/ctx timings, fed to CropTool's trace.
+  const cropOpenRef = useRef(0);
+  const finishCtxTimeRef = useRef<number | null>(null);
+  const [debugFresh, setDebugFresh] = useState<{ fresh: string | null; freshAr: string | null }>({ fresh: null, freshAr: null });
   const [selectedMedia, setSelectedMedia] = useState<MediaItem[]>([]);
   // Read the selected video's duration (the clip window matches it for video posts).
   useEffect(() => {
@@ -393,6 +399,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
           layoutId: canonical,
           userUuid: supabaseUser.id, // uuid for looksService (NEVER the DID)
         });
+        if (finishCtxTimeRef.current == null) finishCtxTimeRef.current = performance.now(); // C1a trace timing
         // Load saved looks (degrades to [] pre-migration; never crashes the flow).
         const looks = await getLooks(supabaseUser.id);
         if (!cancelled) setSavedLooks(looks);
@@ -402,6 +409,24 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
     })();
     return () => { cancelled = true; };
   }, [user?.id, userLayoutId, proTick]);
+
+  // Brief C1a §0 — on entering CROP under ?debug=crop, re-read grid_layout FRESH from the DB
+  // (the app's own fetch) + stamp the open time, so the trace shows fresh vs prop vs ctx and the
+  // finishCtx race. Trace-only; no behaviour change.
+  useEffect(() => {
+    if (step !== 'crop' || !cropDebugOn() || !user?.id) return;
+    cropOpenRef.current = performance.now();
+    (async () => {
+      try {
+        const su = await getUserByPrivyId(user.id);
+        if (!su) return;
+        const p = await getProfile(su.id) as { grid_layout?: string } | null;
+        const fresh = p?.grid_layout ?? null;
+        const canon = fresh ? (LEGACY_TO_CANONICAL[fresh] ?? fresh) : null;
+        setDebugFresh({ fresh, freshAr: canon ? chipForLayout(canon).id : null });
+      } catch { /* trace only */ }
+    })();
+  }, [step, user?.id]);
 
   // SUITE STANDDOWN: while this flow is mounted, page-swipe navigation is OFF
   // globally (SwipeNav reads this attribute) — an editing session must be
@@ -1702,7 +1727,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
           // AND result≠selection, from one cause). Fallback to the prop only pre-finishCtx.
           allowArChoice={(finishCtx?.gridLayout ?? (userLayoutId === 'collage' ? 'collage' : 'standard')) === 'collage'}
           initialAr={chipForLayout(finishCtx?.layoutId ?? userLayoutId).id}
-          debugLayoutKey={`grid=${(finishCtx?.layoutId ?? userLayoutId)} (finishCtx=${finishCtx?.layoutId ?? 'null'} prop=${userLayoutId})`}
+          debugInfo={{ prop: userLayoutId, ctx: finishCtx?.layoutId ?? null, fresh: debugFresh.fresh, freshAr: debugFresh.freshAr, tOpenMs: cropOpenRef.current, tCtxMs: finishCtxTimeRef.current }}
           onCancel={() => setStep('media')}
           onConfirm={(geom, layoutId) => {
             setEditGeometry(geom);

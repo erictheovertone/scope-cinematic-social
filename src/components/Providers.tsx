@@ -13,6 +13,7 @@ import SwipeNav from '@/components/SwipeNav';
 import RecapHost from '@/components/RecapHost';
 import ImageRenditionFallback from '@/components/ImageRenditionFallback';
 import ViewportDebug from '@/components/ViewportDebug';
+import CropDebugOverlay from "@/components/CropDebugOverlay";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -29,6 +30,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
             <PostLightboxHost />
             <RecapHost />
             <ViewportDebug />{/* Brief W2-1b — inert unless ?debug=viewport */}
+            <CropDebugOverlay />{/* Brief C1a — inert unless ?debug=crop */}
           </UpsellProvider>
         </TxNarratorProvider>
       </EconomyProvider>
