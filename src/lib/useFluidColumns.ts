@@ -27,7 +27,13 @@ export function useFluidColumns(base: number, maxCard: number, maxCols = Infinit
     if (!el || typeof ResizeObserver === "undefined") { setCols(clampBase); return; }
     const measure = () => {
       const w = el.clientWidth;
-      if (w > 0) setCols(Math.min(maxCols, Math.max(base, Math.ceil(w / maxCard))));
+      if (w <= 0) return;
+      // Brief R2 — scale the card cap by --ui-scale so a wide display ZOOMS the cards (coherent
+      // with the shell/type scale) instead of only adding columns. This keeps the column count
+      // ~stable across a scale step, so docking dev tools rescales rather than sharply reflowing.
+      // 1 below 1920 → 1440/mobile column math is byte-identical.
+      const s = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-scale')) || 1;
+      setCols(Math.min(maxCols, Math.max(base, Math.ceil(w / (maxCard * s)))));
     };
     measure();
     const ro = new ResizeObserver(measure);

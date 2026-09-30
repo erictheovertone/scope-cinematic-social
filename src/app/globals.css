@@ -119,9 +119,14 @@ html, body {
      Screening Room, Decks) — lifted from the old per-surface 1440/1369 to 1600.
      --shell-narrow: reading/detail surfaces (bio sheet) that intentionally stay
      tighter than the grid cap. Consumed via <DesktopShell>. */
-  --rail-w: 71px;
-  --shell-max: 1600px;      /* capped UI/reading surfaces (DM, Settings, Viewing Modes, Grid Picker) */
-  --shell-narrow: 1180px;   /* tighter reading surfaces (Wallet, Bio sheet) */
+  /* Brief R2 — ONE coordinated desktop scale. Steps on CSS WIDTH (never DPR), 1 below 1920 so
+     mobile + 1440 are pixel-identical. Type, spacing, rail width and the shell caps all multiply
+     by it, so on a 4K panel the whole content island grows (a coherent zoom) instead of locking
+     at 1600px with tiny type. The steps live in the @media block at end-of-file. */
+  --ui-scale: 1;
+  --rail-w: calc(71px * var(--ui-scale));
+  --shell-max: calc(1600px * var(--ui-scale));      /* capped UI/reading surfaces (DM, Settings, Viewing Modes, Grid Picker) */
+  --shell-narrow: calc(1180px * var(--ui-scale));   /* tighter reading surfaces (Wallet, Bio sheet) */
   /* Brief R1a — MEDIA surfaces (Home masonry, Profile grid, Screening Room, Decks,
      Home Lightbox stage, Theatre) do NOT cap: they fill the window minus the rail and
      GROW columns/stage with width. --shell-fluid is only a pathological-width safety
@@ -217,7 +222,7 @@ html, body {
      whole effective size scales. TEXT ONLY — spacing/padding are not scaled; line-
      heights are ratios and scale naturally. Font-size LITERALS (px not via --fs-*) do
      NOT scale — primary reading-surface literals were migrated to tokens in this brief. */
-  --type-scale: 1;
+  --type-scale: var(--ui-scale); /* Brief R2 — type rides the ONE coordinated scale (was a separate 2560/3400 ramp) */
   --fs-6:    calc((6px + var(--ui-bump)) * var(--type-scale));
   --fs-6_5:  calc((6.5px + var(--ui-bump)) * var(--type-scale));
   --fs-7:    calc((7px + var(--ui-bump)) * var(--type-scale));
@@ -246,12 +251,13 @@ html, body {
   --fs-36:   calc((36px + var(--ui-bump)) * var(--type-scale));
   --fs-38:   calc((38px + var(--ui-bump)) * var(--type-scale));
 
-  --sp-1: 4px;
-  --sp-2: 8px;
-  --sp-3: clamp(12px, calc(12px + 2*(100vw - 320px)/320), 14px);
-  --sp-4: clamp(16px, calc(16px + 4*(100vw - 320px)/320), 20px);
-  --sp-5: clamp(20px, calc(20px + 4*(100vw - 320px)/320), 24px);
-  --sp-6: clamp(24px, calc(24px + 8*(100vw - 320px)/320), 32px);
+  /* Brief R2 — spacing rides --ui-scale too (×1 below 1920, so mobile/1440 unchanged). */
+  --sp-1: calc(4px * var(--ui-scale));
+  --sp-2: calc(8px * var(--ui-scale));
+  --sp-3: calc(clamp(12px, calc(12px + 2*(100vw - 320px)/320), 14px) * var(--ui-scale));
+  --sp-4: calc(clamp(16px, calc(16px + 4*(100vw - 320px)/320), 20px) * var(--ui-scale));
+  --sp-5: calc(clamp(20px, calc(20px + 4*(100vw - 320px)/320), 24px) * var(--ui-scale));
+  --sp-6: calc(clamp(24px, calc(24px + 8*(100vw - 320px)/320), 32px) * var(--ui-scale));
 }
 
 /* ── Brief T1 Stage 2 / T1-2a — THE LIGHT THEME (true brand-pair inversion) ───
@@ -1007,12 +1013,13 @@ input:-webkit-autofill:focus {
 .ledger-row:hover,
 .ledger-row:active { background: rgb(var(--ink-rgb) / 0.04); }
 
-/* ── Brief D8 §1 — 4K TYPE SCALE STEPS ───────────────────────────────────────
-   The only rules that raise --type-scale above 1. Viewport-WIDTH gated, so they
-   engage only on very wide desktop displays and never on mobile (which never
-   reaches 2560 CSS px). Placed at end-of-file so they win over the :root default
-   (same specificity, later in source). A 4K panel at OS 200% scaling reports
-   ~1920 CSS px → NO bump (text is already physically large); at 100%/150% it
-   reports 3840/2560 → bump. Text only — no spacing/layout change. */
-@media (min-width: 2560px) { :root { --type-scale: 1.06; } }
-@media (min-width: 3400px) { :root { --type-scale: 1.12; } }
+/* ── Brief R2 — ONE coordinated desktop UI SCALE (replaces D8's type-only 2560/3400 ramp) ──
+   Steps on CSS WIDTH (never DPR), so a 4K panel at OS-200% reports ~1920 CSS px → 1.125, at
+   150% → 2560 → 1.25, at 100% → 3840 → 1.5. --ui-scale drives type + spacing + rail + the shell
+   caps together (see :root), so the content island GROWS as one coherent zoom rather than the
+   text nudging while the island stays 1600px. 1 below 1920 → mobile + 1440 pixel-identical.
+   These are uniform-zoom steps (proportional), NOT layout-state breakpoints: crossing one (e.g.
+   docking dev tools) rescales everything together — no column reflow / cap toggle snaps here. */
+@media (min-width: 1920px) { :root { --ui-scale: 1.125; } }
+@media (min-width: 2560px) { :root { --ui-scale: 1.25; } }
+@media (min-width: 3440px) { :root { --ui-scale: 1.5; } }
