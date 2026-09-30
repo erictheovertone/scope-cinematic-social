@@ -86,8 +86,14 @@ export default function LibraryPage() {
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: "var(--canvas)", color: "var(--ink-100)", maxWidth: 720, margin: "0 auto" }}>
+    // Brief M17 — the page's ONE scroll container. html/body are locked (overflow:hidden +
+    // 100dvh, the PWA bottom-bar work), so a plain minHeight:100vh block never scrolled — its
+    // overflow was clipped by body. This is the same fixed-inset scroller the other list pages use
+    // (account/terms/preferences): overscroll contained (no chain), data-swipe-exclude so the
+    // horizontal SwipeNav ignores vertical scroll, --safe-bottom inside.
+    <div className="bg-canvas" data-swipe-exclude style={{ position: "fixed", inset: 0, overflowY: "auto", WebkitOverflowScrolling: "touch", overscrollBehavior: "contain", color: "var(--ink-100)" }}>
       <audio ref={audioRef} onEnded={() => { setPlaying(null); setProgress(0); }} onTimeUpdate={() => { const a = audioRef.current; if (a && a.duration && isFinite(a.duration)) setProgress(a.currentTime / a.duration); }} />
+      <div style={{ maxWidth: 720, margin: "0 auto", paddingBottom: "var(--safe-bottom)" }}>
 
       <div style={{ padding: "34px 20px 12px", borderBottom: `1px solid ${HAIR}` }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
@@ -95,7 +101,7 @@ export default function LibraryPage() {
           <span style={{ ...SKB, fontSize: 11, color: "rgb(var(--ink-rgb) / 0.55)", textTransform: "uppercase", letterSpacing: "0.16em" }}>[ SCOPE ORIGINAL MUSIC LIBRARY ]</span>
         </div>
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="search title or composer…" style={{ width: "100%", boxSizing: "border-box", background: "rgb(var(--ink-rgb) / 0.05)", border: "none", outline: "none", ...SKR, fontSize: "max(16px, 13px)", color: "var(--ink-100)", padding: "10px 12px" }} />
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 10, maxHeight: 92, overflowY: "auto" }}>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 10, maxHeight: 92, overflowY: "auto", overscrollBehavior: "contain" }}>{/* bounded genre-filter chips: contained so it never chains into the page scroller */}
           {MUSIC_TAXONOMY.flatMap((g) => g.words).map((w) => {
             const on = chips.includes(w);
             return <button key={w} onClick={() => toggleChip(w)} style={{ ...SKR, fontSize: 11, color: on ? "var(--canvas)" : "rgb(var(--ink-rgb) / 0.7)", background: on ? "var(--ink-100)" : "transparent", border: `1px solid ${on ? "var(--ink-100)" : HAIR}`, padding: "4px 9px", cursor: "pointer", textTransform: "lowercase" }}>{w}</button>;
@@ -128,6 +134,7 @@ export default function LibraryPage() {
         <button onClick={() => setShowContribute(true)} style={{ ...SKB, fontSize: 11, color: "var(--ink-100)", textTransform: "uppercase", letterSpacing: "0.06em", background: "none", border: "none", cursor: "pointer", padding: "24px 0 0" }}>Contribute to wear the badge →</button>
       </div>
 
+      </div>
       {showContribute && <ContributeMusicFlow onClose={() => setShowContribute(false)} />}
     </div>
   );
