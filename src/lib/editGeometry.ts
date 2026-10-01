@@ -76,11 +76,11 @@ export async function bakeImageGeometry(
   const MAX_EDGE = Math.max(2048, exportW);
   let src: ImageBitmap;
   try {
-    src = await createImageBitmap(file, { resizeWidth: MAX_EDGE, resizeQuality: 'high' });
+    src = await createImageBitmap(file, { resizeWidth: MAX_EDGE, resizeQuality: 'high', colorSpaceConversion: 'default' });
   } catch {
     // Older engines without resize options: fall back to a plain decode (desktop;
     // small images). Still avoids the long-lived HTMLImageElement bitmap.
-    try { src = await createImageBitmap(file); } catch { return file; }
+    try { src = await createImageBitmap(file, { colorSpaceConversion: 'default' }); } catch { return file; }
   }
 
   try {
@@ -101,9 +101,9 @@ export async function bakeImageGeometry(
     const canvas = document.createElement('canvas');
     canvas.width = exportW;
     canvas.height = exportH;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { colorSpace: 'srgb' });
     if (!ctx) { src.close?.(); return file; }
-    ctx.fillStyle = 'var(--black)';
+    ctx.fillStyle = '#000'; /* baked letterbox — canvas literal, not a CSS var (C2 §1) */
     ctx.fillRect(0, 0, exportW, exportH);
 
     // Map the oriented crop window onto the full canvas.
