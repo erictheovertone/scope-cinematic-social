@@ -260,7 +260,7 @@ export default function DesktopPostView({
             centre on the media and the action row sits at the media's bottom, not a taller zone's.
             Brief T1 Stage 2 — the lightbox STAGE + frame is a viewing surface: force the dark
             token set (media on charcoal, arrows stay ivory) even under the light theme. */}
-        <div {...(lightbox ? { 'data-force-dark': '' } : {})} style={lightbox ? { position: 'relative', flexShrink: 0 } : { position: 'relative' }}>
+        <div style={lightbox ? { position: 'relative', flexShrink: 0 } : { position: 'relative' }}>
           {/* prev / next — Batang > glyphs, mid-media */}
           {/* HIT TARGET NEVER MOVES: 44px outer buttons, stage-anchored seats,
               data-no-pop (no press scale); feedback = brightness on the inner

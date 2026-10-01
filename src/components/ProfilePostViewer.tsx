@@ -620,7 +620,6 @@ export default function ProfilePostViewer({
   return (
     // bg-black class satisfies the globals.css selector guard for fixed divs
     <div
-      data-force-dark
       className="bg-canvas"
       style={{
         position: "fixed",

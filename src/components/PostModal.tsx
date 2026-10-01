@@ -424,7 +424,6 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
         `div[style*="position: fixed"]:not([class*="bg-black"])` doesn't hide it.
       */}
       <div
-        data-force-dark
         className="bg-canvas"
         data-swipe-exclude
         style={{

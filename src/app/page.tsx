@@ -358,7 +358,7 @@ export default function Home() {
             transform: `${menuOpen || !showFrame || !pastLanding || takeover ? 'translateY(-12px)' : 'translateY(0)'}${triggerPressed ? ' scale(0.92)' : ''}`,
             transition: 'opacity 0.25s cubic-bezier(0.16,0.84,0.3,1), transform 0.25s cubic-bezier(0.16,0.84,0.3,1)',
             pointerEvents: menuOpen || !showFrame || !pastLanding || takeover ? 'none' : 'auto',
-            filter: 'drop-shadow(0 0 8px rgb(var(--black-rgb) / 0.9)) drop-shadow(0 2px 12px rgb(var(--black-rgb) / 0.75))',
+            /* T1-5 §5 — logomark drop-shadow removed (both themes) */
             zIndex: 50, // above feed (z20), below the menu overlay (z60)
           }}
         >
@@ -469,7 +469,7 @@ export default function Home() {
               <button
                 onClick={() => setMenuOpen(v => !v)}
                 aria-label="Open viewing modes"
-                style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 9, margin: -3, lineHeight: 0, filter: 'drop-shadow(0 0 8px rgb(var(--black-rgb) / 0.9))' }}
+                style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 9, margin: -3, lineHeight: 0 }}
               >
                 <ThemedImg src="/design-updates-071526/scope-logomark-offwhite.png" alt="" style={{ width: 39, height: 'auto', objectFit: 'contain', display: 'block' }} />
               </button>

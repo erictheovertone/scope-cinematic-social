@@ -1513,7 +1513,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
                     {(['bed', 'music_only'] as const).map((m) => {
                       const on = musicMode === m;
                       return (
-                        <button key={m} onClick={() => setMusicMode(m)} style={{ flex: 1, background: on ? 'var(--ink-100)' : 'transparent', border: `1px solid ${on ? 'var(--ink-100)' : 'rgb(var(--ink-rgb) / 0.2)'}`, cursor: 'pointer', padding: '8px 6px', fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-8)', color: on ? 'var(--black)' : 'rgb(var(--ink-rgb) / 0.7)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                        <button key={m} onClick={() => setMusicMode(m)} style={{ flex: 1, background: 'transparent', border: `1px solid ${on ? 'var(--ink)' : 'var(--hairline)'}`, cursor: 'pointer', padding: '8px 6px', fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-8)', color: 'var(--ink)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                           {m === 'bed' ? 'MUSIC AS BED' : 'MUSIC ONLY'}
                         </button>
                       );
@@ -1706,7 +1706,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
   return (
     <>
       <div onClick={handleBackdropDismiss} style={{ position: 'fixed', inset: 0, backgroundColor: 'var(--black)', opacity: 1, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div onClick={(e) => e.stopPropagation()} data-force-dark className="bg-canvas w-[375px] h-[600px] relative overflow-hidden">
+        <div onClick={(e) => e.stopPropagation()} className="bg-canvas w-[375px] h-[600px] relative overflow-hidden">
           {step === 'media' && renderMediaStep()}
           {step === 'edit' && renderEditStep()}
           {step === 'deck' && renderDeckStep()}
@@ -1748,7 +1748,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
         // Brief C1b — NO-DRAW-UNTIL-RESOLVED: hold a loader beat until the canonical layout
         // resolves rather than draw a frame on the stale prop default. A loader is fine; a wrong
         // frame is not.
-        <div data-force-dark style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'var(--black)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'var(--canvas)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <ScopeLoader size="lg" label="Loading" />
         </div>
       ))}

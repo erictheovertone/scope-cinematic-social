@@ -669,7 +669,9 @@ export default function FinishingShell({
   const railW = compactRail ? 58 : 86;
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'var(--black)', display: 'flex', flexDirection: 'column',
+    // Brief T1-5 §0 — the finishing suite is the ONLY surface that stays dark in light mode
+    // (media reads against charcoal). data-force-dark pins the dark token set under either theme.
+    <div data-force-dark style={{ position: 'fixed', inset: 0, background: 'var(--canvas)', display: 'flex', flexDirection: 'column',
       // Hold-to-compare is a long-press → iOS fires text-selection/callout (the screen
       // goes blue). Kill selection across the whole suite surface; inputs opt back in.
       userSelect: 'none', WebkitUserSelect: 'none', WebkitTouchCallout: 'none' }}>

@@ -617,7 +617,7 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
                       <button
                         key={c}
                         onClick={() => setBuyCurrency(c)}
-                        style={{ ...SKB, fontSize: 'var(--fs-10)', letterSpacing: '0.08em', padding: '6px 14px', cursor: 'pointer', border: 'none', color: buyCurrency === c ? 'var(--black)' : 'var(--ink-100)', background: buyCurrency === c ? 'var(--ink-100)' : 'var(--surface-08)' }}
+                        style={{ ...SKB, fontSize: 'var(--fs-10)', letterSpacing: '0.08em', padding: '6px 14px', cursor: 'pointer', border: `1px solid ${buyCurrency === c ? 'var(--ink)' : 'var(--hairline)'}`, color: 'var(--ink)', background: 'transparent' }}
                       >
                         {c}
                       </button>
@@ -738,7 +738,7 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
                           <button
                             key={c}
                             onClick={() => setSellCurrency(c)}
-                            style={{ ...SKB, fontSize: 'var(--fs-10)', letterSpacing: '0.08em', padding: '6px 14px', cursor: 'pointer', border: 'none', color: sellCurrency === c ? 'var(--black)' : 'var(--ink-100)', background: sellCurrency === c ? 'var(--ink-100)' : 'var(--surface-08)' }}
+                            style={{ ...SKB, fontSize: 'var(--fs-10)', letterSpacing: '0.08em', padding: '6px 14px', cursor: 'pointer', border: `1px solid ${sellCurrency === c ? 'var(--ink)' : 'var(--hairline)'}`, color: 'var(--ink)', background: 'transparent' }}
                           >
                             {c}
                           </button>

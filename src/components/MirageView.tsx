@@ -307,7 +307,6 @@ export default function MirageView({ onClose, desktop = false }: { onClose: () =
       <div
         ref={containerRef}
         className="bg-canvas"
-        data-force-dark
         style={{
           position: "fixed",
           // Brief M15 §3 — desktop fills the shell MINUS the global rail (rail stays visible);
