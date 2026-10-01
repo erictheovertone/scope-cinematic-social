@@ -6,7 +6,10 @@
     "dev": "next dev -H 0.0.0.0",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "create:fixtures": "node test/fixtures/create/generate.mjs",
+    "create:login": "node test/create-login.mjs",
+    "create:matrix": "playwright test"
   },
   "dependencies": {
     "@privy-io/react-auth": "^2.25.0",
@@ -28,6 +31,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

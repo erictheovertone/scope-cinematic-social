@@ -29,7 +29,7 @@ import { createLook, getLooks, uploadLookThumb, setLookThumb, type SavedLook } f
 import { getScopeLimitType } from '@/lib/limits';
 import { useUpsell } from '@/components/UpsellProvider';
 import CropTool from '@/components/CropTool';
-import { cropDebugOn } from "@/lib/cropDebug";
+import { cropDebugOn, pushCropTrace } from "@/lib/cropDebug";
 import ScopeLoader from '@/components/ScopeLoader';
 import { chipForLayout, getAspectRatio } from '@/lib/aspectRatio';
 import { resolveLayout, legacyLayoutId } from "@/lib/layoutModel";
@@ -1758,6 +1758,13 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
         const fallbackLayout = LEGACY_TO_CANONICAL[userLayoutId] ?? userLayoutId;
         const layoutId = finishCtx?.layoutId ?? fallbackLayout;
         const gridLayout = finishCtx?.gridLayout ?? (userLayoutId === 'collage' ? 'collage' : 'standard');
+        // Brief C2 §0/§1a — [finish] trace: the ONE resolved layout + the crop rect that flow into
+        // the suite (gated on ?debug=crop, the same gate the [crop] lines use). colorSpace=srgb is
+        // the bake guarantee (C2 §1c). Lets the harness assert finishing input == overlay.
+        if (cropDebugOn()) {
+          const g = editGeometry;
+          pushCropTrace(`[finish] layoutId=${layoutId} chip=${chipForLayout(layoutId).ratioLabel} grid=${gridLayout} rect=${g ? `${g.crop.x.toFixed(2)},${g.crop.y.toFixed(2)},${g.crop.w.toFixed(2)},${g.crop.h.toFixed(2)}` : 'neutral'} rot=${g?.rotate ?? 0} colorSpace=srgb`);
+        }
         // zIndex 200 lifts the editor above the create modal's opaque z-100 backdrop
         // (same reason CropTool uses 200). Without it the modal covers it → black.
         return (

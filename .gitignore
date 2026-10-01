@@ -44,3 +44,8 @@ next-env.d.ts
 .env.local
 # Local media library — multi-GB source media, never commit (GitHub rejects >100MB files)
 public/music-library/
+
+# Brief C2 — create-pipeline harness (local session + reports)
+test/.auth/
+test/.report/
+test-results/
