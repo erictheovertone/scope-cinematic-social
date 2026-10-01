@@ -169,3 +169,4 @@ Layout is saved in `profiles.grid_layout` and retrieved via `gridLayoutService.t
 - **Supabase client** — always import from `@/lib/supabase/client`, not `@/lib/supabase`
 - **No new dependencies** without asking first
 - When adding SQL changes, output the migration SQL separately so it can be run manually
+- **Never pass a CSS `var(--…)` to a canvas / OffscreenCanvas / sharp / satori-OG / SVG-rasterized-to-image colour** (`fillStyle`, `strokeStyle`, `shadowColor`, `addColorStop`, sharp `flatten`/`tint`/`background`). These sinks can't resolve custom properties — the value silently falls back (usually to black) and bakes the WRONG colour into stored images with no error. Use a LITERAL colour there (baked output is theme-invariant). A token sweep (Brief T1) created this landmine 7×; `scripts/check-canvas-tokens.mjs` now fails the build if it recurs (wired into `npm run build`). DOM SVG (`<svg fill="var(--…)">`) is fine — var() resolves in the live DOM.

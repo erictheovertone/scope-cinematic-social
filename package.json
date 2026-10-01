@@ -4,12 +4,13 @@
   "private": true,
   "scripts": {
     "dev": "next dev -H 0.0.0.0",
-    "build": "next build",
+    "build": "node scripts/check-canvas-tokens.mjs && next build",
     "start": "next start",
     "lint": "eslint",
     "create:fixtures": "node test/fixtures/create/generate.mjs",
     "create:login": "node test/create-login.mjs",
-    "create:matrix": "playwright test"
+    "create:matrix": "playwright test",
+    "check:canvas": "node scripts/check-canvas-tokens.mjs"
   },
   "dependencies": {
     "@privy-io/react-auth": "^2.25.0",
