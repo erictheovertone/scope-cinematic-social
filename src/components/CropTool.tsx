@@ -202,7 +202,7 @@ export default function CropTool({
   const cl = crop.x * 100, ct = crop.y * 100, cwp = crop.w * 100, chp = crop.h * 100;
 
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 200, background: "var(--black)", display: "flex", flexDirection: "column" }}>
+    <div style={{ position: "fixed", inset: 0, zIndex: 200, background: "var(--canvas)", display: "flex", flexDirection: "column" }}>
       {/* ── Top bar ── (safe-area: sits BELOW the status bar so Cancel/Confirm are never
           buried under the notch — inset-relative, identical across devices) */}
       <div style={{ flexShrink: 0, height: "calc(48px + env(safe-area-inset-top, 0px))", paddingTop: "env(safe-area-inset-top, 0px)", display: "flex", alignItems: "center", justifyContent: "space-between", paddingLeft: 16, paddingRight: 16, borderBottom: "1px solid rgb(var(--ink-rgb) / 0.08)" }}>

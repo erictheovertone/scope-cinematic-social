@@ -1428,7 +1428,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
               value={caption}
               onChange={(e) => setCaption(e.target.value)}
               placeholder="Add a caption"
-              className="w-full bg-transparent resize-none outline-none placeholder-[#5c5c5c]"
+              className="w-full bg-transparent resize-none outline-none placeholder-[rgb(var(--ink-rgb) / 0.37)]"
               /* fontSize MUST be ≥16px (iOS zoom floor). flex:1 → fills the writable zone
                  so the tap target spans the whole region below the media. Borderless. */
               style={{ flex: 1, minHeight: 120, fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: 16, lineHeight: 1.5, color: 'var(--ink-100)', caretColor: 'var(--ink-100)', backgroundColor: 'transparent', border: 'none', padding: '2px 0 0' }}

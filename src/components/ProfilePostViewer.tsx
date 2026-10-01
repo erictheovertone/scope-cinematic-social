@@ -625,7 +625,7 @@ export default function ProfilePostViewer({
         position: "fixed",
         inset: 0,
         zIndex: 110,
-        backgroundColor: "var(--black)",
+        backgroundColor: "var(--canvas)",
         display: "flex",
         flexDirection: "column",
         transform: visible ? "translateY(0)" : "translateY(100%)",

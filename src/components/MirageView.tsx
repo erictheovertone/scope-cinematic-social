@@ -313,7 +313,7 @@ export default function MirageView({ onClose, desktop = false }: { onClose: () =
           // mobile is full-bleed inset:0 (unchanged).
           top: 0, right: 0, bottom: 0, left: desktop ? 'var(--rail-w)' : 0,
           zIndex: 45,
-          background: "var(--black)",
+          background: "var(--canvas)",
           overflowY: "auto",
           animation: exiting ? "mirage-view-out 380ms ease-in both" : "none",
         }}

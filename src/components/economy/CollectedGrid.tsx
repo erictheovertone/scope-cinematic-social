@@ -267,7 +267,7 @@ export default function CollectedGrid({
                 style={{
                   ...SKR, fontSize: 12, color: 'var(--ink-100)', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.1em',
                   padding: '7px 12px', border: '0.5px solid transparent',
-                  background: 'linear-gradient(var(--black), var(--black)) padding-box, linear-gradient(135deg, rgb(var(--ink-rgb) / 0.7), rgb(var(--ink-rgb) / 0.15)) border-box',
+                  background: 'linear-gradient(var(--canvas), var(--canvas)) padding-box, linear-gradient(135deg, rgb(var(--ink-rgb) / 0.7), rgb(var(--ink-rgb) / 0.15)) border-box',
                 }}
               >
                 + NEW PROGRAM
@@ -411,7 +411,7 @@ export default function CollectedGrid({
         <div
           data-swipe-exclude
           style={{
-            position: 'fixed', inset: 0, zIndex: 540, background: 'var(--black)',
+            position: 'fixed', inset: 0, zIndex: 540, background: 'var(--canvas)',
             display: 'flex', flexDirection: 'column',
             animation: reducedMotion ? 'none' : fullscreen === 'closing' ? 'fsProgramOut 220ms ease both' : 'fsProgramIn 250ms ease both',
           }}

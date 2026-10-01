@@ -430,7 +430,7 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
           position: "fixed",
           inset: 0,
           zIndex,
-          backgroundColor: "var(--black)",
+          backgroundColor: "var(--canvas)",
           display: "flex",
           flexDirection: "column",
           transform: visible ? "translateY(0)" : "translateY(100%)",
