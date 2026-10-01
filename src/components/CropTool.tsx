@@ -111,6 +111,17 @@ export default function CropTool({
     };
   };
 
+  // Brief C2 §2 — coalesce pointermove → ONE setCrop per animation frame (was a setState on every
+  // move event → >60 re-renders/s on a 120Hz pointer). Same math, batched; flushed on pointerup.
+  const pendingCrop = useRef<{ x: number; y: number; w: number; h: number } | null>(null);
+  const rafId = useRef(0);
+  const queueCrop = (c: { x: number; y: number; w: number; h: number }) => {
+    pendingCrop.current = c;
+    if (rafId.current) return;
+    rafId.current = requestAnimationFrame(() => { rafId.current = 0; if (pendingCrop.current) setCrop(pendingCrop.current); });
+  };
+  useEffect(() => () => { if (rafId.current) cancelAnimationFrame(rafId.current); }, []);
+
   const onPointerMove = (e: React.PointerEvent) => {
     const d = dragRef.current;
     if (!d) return;
@@ -119,7 +130,7 @@ export default function CropTool({
     const ratioFrac = chip.ratio / (orientedAr || 1); // w/h in fraction space
 
     if (d.mode === "move") {
-      setCrop({
+      queueCrop({
         x: clamp(d.sx + dx, 0, 1 - d.sw),
         y: clamp(d.sy + dy, 0, 1 - d.sh),
         w: d.sw, h: d.sh,
@@ -147,10 +158,14 @@ export default function CropTool({
     if (ny < 0) { ny = 0; }
     if (nx + newW > 1) { newW = 1 - nx; newH = newW / ratioFrac; }
     if (ny + newH > 1) { newH = 1 - ny; newW = newH * ratioFrac; if (!right) nx = anchorX - newW; }
-    setCrop({ x: clamp(nx, 0, 1), y: clamp(ny, 0, 1), w: newW, h: newH });
+    queueCrop({ x: clamp(nx, 0, 1), y: clamp(ny, 0, 1), w: newW, h: newH });
   };
 
-  const onPointerUp = () => { dragRef.current = null; };
+  const onPointerUp = () => {
+    if (rafId.current) { cancelAnimationFrame(rafId.current); rafId.current = 0; }
+    if (pendingCrop.current) { setCrop(pendingCrop.current); pendingCrop.current = null; } // flush the final frame
+    dragRef.current = null;
+  };
 
   // ── Straighten ruler ─────────────────────────────────────────────────
   const rulerRef = useRef<HTMLDivElement>(null);
