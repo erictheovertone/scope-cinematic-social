@@ -265,6 +265,7 @@ export default function CropTool({
           {/* Crop overlay */}
           {orientedAr > 0 && (
             <div
+              data-testid="crop-move"
               onPointerDown={(e) => onPointerDown(e, "move")}
               style={{
                 position: "absolute", zIndex: 6,

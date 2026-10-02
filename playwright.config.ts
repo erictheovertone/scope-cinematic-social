@@ -10,7 +10,7 @@ const STATE = process.env.AUTH_STATE || 'test/.auth/state.json';
 
 export default defineConfig({
   testDir: 'test',
-  testMatch: /create-matrix\.spec\.ts/,
+  testMatch: /create-(matrix|perf)\.spec\.ts/,
   timeout: 120_000,
   retries: 0,
   reporter: [['list'], ['html', { outputFolder: 'test/.report', open: 'never' }]],

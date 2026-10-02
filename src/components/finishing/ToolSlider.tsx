@@ -91,6 +91,7 @@ export default function ToolSlider({ type, value, onChange, label, trackGradient
   const track = (
     <div
       ref={trackRef}
+      data-testid="tool-slider-track"
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
