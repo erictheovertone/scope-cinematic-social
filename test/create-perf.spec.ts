@@ -83,8 +83,10 @@ test('perf BEFORE — crop drag + grade slider (scope, 12MP)', async ({ page, br
   await dragAcross(page, cb!, { x: 0.5, y: 0.12 }, { x: 0.5, y: 0.88 });
   const cropPerf = await collect(page);
 
-  // → finishing
+  // → finishing. The tool list shows buttons (EXPOSURE, CONTRAST…); a ToolSlider only mounts once a
+  // tool is opened — tap EXPOSURE to reveal its track.
   await page.getByRole('button', { name: 'Confirm' }).first().click();
+  await page.getByRole('button', { name: 'EXPOSURE' }).first().click({ timeout: 15_000 });
   const slider = page.locator('[data-testid="tool-slider-track"]').first();
   await expect(slider, 'a finishing grade slider').toBeVisible({ timeout: 15_000 });
   const sb = await slider.boundingBox();
