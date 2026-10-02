@@ -1768,7 +1768,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
         // zIndex 200 lifts the editor above the create modal's opaque z-100 backdrop
         // (same reason CropTool uses 200). Without it the modal covers it → black.
         return (
-          <div style={{ position: 'fixed', inset: 0, zIndex: 200 }}>
+          <div data-testid="finishing-step" style={{ position: 'fixed', inset: 0, zIndex: 200 }}>
             <FinishingStep
               mediaUrl={selectedMedia[0].url}
               mediaType={selectedMedia[0].type}

@@ -197,11 +197,13 @@ function ConfirmationView({
   onConfirm,
   onBack,
   saving,
+  error,
 }: {
   layout: typeof LAYOUTS[0];
   onConfirm: () => void;
   onBack: () => void;
   saving: boolean;
+  error?: string | null;
 }) {
   const renderGrid = () => {
     if (layout.id === "collage") {
@@ -283,6 +285,14 @@ function ConfirmationView({
         </div>
       </div>
 
+      {/* C2c §1 — inline save-failure message (never alert()); absolutely positioned above the
+          buttons so the success path has zero visual diff. */}
+      {error && (
+        <div style={{ position: "absolute", bottom: 96, left: "50%", transform: "translateX(-50%)", zIndex: 11, width: "90%", maxWidth: 340, textAlign: "center" }}>
+          <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "var(--danger)", letterSpacing: "0.04em", lineHeight: 1.3 }}>{error}</span>
+        </div>
+      )}
+
       {/* Bottom actions */}
       <div style={{
         position: "absolute", bottom: 40, left: "50%", transform: "translateX(-50%)",
@@ -321,6 +331,7 @@ export default function GridLayoutPage() {
   const [confirming, setConfirming] = useState(false);
   const [showTransition, setShowTransition] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [animating, setAnimating] = useState(false);
   const [animatingLayout, setAnimatingLayout] = useState<typeof LAYOUTS[0] | null>(null);
 
@@ -358,6 +369,7 @@ export default function GridLayoutPage() {
   const handleConfirm = async () => {
     if (!selectedLayout || !user?.id || saving) return;
     setSaving(true);
+    setSaveError(null);
     try {
       await setUserGridLayout(user.id, selectedLayout, names[selectedLayout], ratios[selectedLayout]);
       // NEW MODEL (dual-write): the AR selection writes the SHARED aspect; the
@@ -365,16 +377,21 @@ export default function GridLayoutPage() {
       // grid_layout stays for the mobile readers not yet migrated (PostItem,
       // decks, create). This is what mirrors the AR choice to desktop.
       const dbUser = await getUserByPrivyId(user.id);
-      if (dbUser) {
-        const aspect: AspectId = selectedLayout === 'collage' ? 'collage'
-          : selectedLayout.startsWith('pana') ? 'pana-wide'
-          : selectedLayout.startsWith('cine') ? 'cine-wide'
-          : selectedLayout.startsWith('legacy') ? 'legacy' : 'scope';
-        const cols = LAYOUTS.find((l) => l.id === selectedLayout)?.cols ?? 1;
-        await setSharedAspect(dbUser.id, aspect);
-        await setMobileCount(dbUser.id, selectedLayout === 'collage' ? 2 : cols);
-      }
-      setShowTransition(true);
+      if (!dbUser) throw new Error('no-account');
+      const aspect: AspectId = selectedLayout === 'collage' ? 'collage'
+        : selectedLayout.startsWith('pana') ? 'pana-wide'
+        : selectedLayout.startsWith('cine') ? 'cine-wide'
+        : selectedLayout.startsWith('legacy') ? 'legacy' : 'scope';
+      const cols = LAYOUTS.find((l) => l.id === selectedLayout)?.cols ?? 1;
+      // C2c §1 — the profile write must LAND before we transition. setSharedAspect/setMobileCount
+      // SWALLOW errors and return false (they don't throw), so a failed write used to transition to
+      // "success" and silently lose the layout. Gate the transition on the booleans; no fire-and-forget.
+      const okAspect = await setSharedAspect(dbUser.id, aspect);
+      const okCount = await setMobileCount(dbUser.id, selectedLayout === 'collage' ? 2 : cols);
+      if (!okAspect || !okCount) throw new Error('write-not-landed');
+      setShowTransition(true); // only on a confirmed successful save
+    } catch {
+      setSaveError("Couldn't save your layout — check your connection and try again.");
     } finally {
       setSaving(false);
     }
@@ -394,6 +411,7 @@ export default function GridLayoutPage() {
         onConfirm={handleConfirm}
         onBack={() => setConfirming(false)}
         saving={saving}
+        error={saveError}
       />
     );
   }

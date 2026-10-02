@@ -4,7 +4,9 @@ import { defineConfig, devices } from '@playwright/test';
 // session (test/.auth/state.json, gitignored) saved once by `npm run create:login`. Point
 // BASE_URL at the deploy under test (default = local dev on :3000).
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
-const STATE = 'test/.auth/state.json';
+// AUTH_STATE lets the matrix run against a DEDICATED throwaway account (C2c §3) so tests never
+// touch a real profile. Default = the primary saved session.
+const STATE = process.env.AUTH_STATE || 'test/.auth/state.json';
 
 export default defineConfig({
   testDir: 'test',

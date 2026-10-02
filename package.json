@@ -10,7 +10,10 @@
     "create:fixtures": "node test/fixtures/create/generate.mjs",
     "create:login": "node test/create-login.mjs",
     "create:matrix": "playwright test",
-    "check:canvas": "node scripts/check-canvas-tokens.mjs"
+    "check:canvas": "node scripts/check-canvas-tokens.mjs",
+    "create:login:test": "AUTH_STATE=test/.auth/throwaway.json node test/create-login.mjs",
+    "create:matrix:test": "AUTH_STATE=test/.auth/throwaway.json playwright test --workers=1",
+    "create:restore": "node test/restore-layout.mjs"
   },
   "dependencies": {
     "@privy-io/react-auth": "^2.25.0",
