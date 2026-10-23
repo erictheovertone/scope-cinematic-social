@@ -59,7 +59,6 @@ export default function ComposerDiscographyPage() {
   const [viewerIsComposer, setViewerIsComposer] = useState<boolean | null>(null);
   const [viewerIsOwner, setViewerIsOwner] = useState(false);
   const [playing, setPlaying] = useState<string | null>(null);
-  const [progress, setProgress] = useState(0); // 0..1 for the playing track
   const [showContribute, setShowContribute] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -125,7 +124,6 @@ export default function ComposerDiscographyPage() {
     if (!a) return;
     if (playing === t.id) { a.pause(); setPlaying(null); return; }
     a.src = t.file_url;
-    setProgress(0);
     a.play().then(() => setPlaying(t.id)).catch(() => setPlaying(null));
   };
 
@@ -133,7 +131,6 @@ export default function ComposerDiscographyPage() {
   const seekTrack = (t: Track, pct: number) => {
     const a = audioRef.current;
     if (!a) return;
-    setProgress(pct);
     const apply = () => { if (a.duration && isFinite(a.duration)) a.currentTime = pct * a.duration; };
     if (playing === t.id) { apply(); return; }
     a.src = t.file_url;
@@ -157,7 +154,7 @@ export default function ComposerDiscographyPage() {
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--canvas)", color: "var(--ink-100)" }}>
-      <audio ref={audioRef} onEnded={() => { setPlaying(null); setProgress(0); }} onTimeUpdate={() => { const a = audioRef.current; if (a && a.duration && isFinite(a.duration)) setProgress(a.currentTime / a.duration); }} />
+      <audio ref={audioRef} onEnded={() => setPlaying(null)} />
 
       {/* ── BANNER — album-art-style blurred underlay + sharp portrait ─────────
           (No standalone banner component exists to import — the profile header is
@@ -200,7 +197,7 @@ export default function ComposerDiscographyPage() {
           const isPlaying = playing === t.id;
           const inN = inPostsByTrack.get(t.id) ?? 0;
           return (
-            <div key={t.id} style={{ display: "flex", alignItems: "center", gap: 13, padding: "14px 0", borderBottom: `1px solid rgb(var(--ink-rgb) / 0.07)` }}>
+            <div key={t.id} className="wf-row" style={{ display: "flex", alignItems: "center", gap: 13, padding: "14px 0", borderBottom: `1px solid rgb(var(--ink-rgb) / 0.07)` }}>
               <TrackArt url={t.artwork_url} title={t.title} id={t.id} size={46} />
               <button onClick={() => togglePlay(t)} aria-label={isPlaying ? "Pause" : "Play"} style={{ flexShrink: 0, width: 34, height: 34, borderRadius: "50%", border: `1px solid ${HAIR}`, background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>
                 {isPlaying
@@ -213,7 +210,7 @@ export default function ComposerDiscographyPage() {
                   <span style={{ ...SKR, fontSize: 11, color: "rgb(var(--ink-rgb) / 0.4)", flexShrink: 0 }}>{fmt(t.duration_seconds)}</span>
                 </div>
                 <div style={{ margin: "6px 0 5px" }}>
-                  <Waveform peaks={t.waveform_peaks} progress={isPlaying ? progress : 0} onSeek={(pct) => seekTrack(t, pct)} height={34} />
+                  <Waveform peaks={t.waveform_peaks} audio={isPlaying ? audioRef : undefined} onSeek={(pct) => seekTrack(t, pct)} height={34} />
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                   {t.keywords.slice(0, 4).map((k) => (

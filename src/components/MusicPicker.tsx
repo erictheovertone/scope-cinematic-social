@@ -46,7 +46,6 @@ export default function MusicPicker({
   const [q, setQ] = useState("");
   const [chips, setChips] = useState<string[]>([]);
   const [playing, setPlaying] = useState<string | null>(null);
-  const [progress, setProgress] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // Footer-pill takeover while the picker is up; stop preview on unmount.
@@ -109,14 +108,12 @@ export default function MusicPicker({
     if (!a) return;
     if (playing === t.id) { a.pause(); setPlaying(null); return; }
     a.src = t.file_url;
-    setProgress(0);
     a.play().then(() => setPlaying(t.id)).catch(() => setPlaying(null));
   };
 
   const seekTrack = (t: LibraryTrack, pct: number) => {
     const a = audioRef.current;
     if (!a) return;
-    setProgress(pct);
     const apply = () => { if (a.duration && isFinite(a.duration)) a.currentTime = pct * a.duration; };
     if (playing === t.id) { apply(); return; }
     a.src = t.file_url;
@@ -128,7 +125,7 @@ export default function MusicPicker({
   return createPortal(
     <div style={{ position: "fixed", inset: 0, zIndex: 1300, background: "var(--surface-1)", display: "flex", flexDirection: "column", maxWidth: "30rem", margin: "0 auto" }}>
       {/* audio engine (one, single-at-a-time) */}
-      <audio ref={audioRef} onEnded={() => { setPlaying(null); setProgress(0); }} onTimeUpdate={() => { const a = audioRef.current; if (a && a.duration && isFinite(a.duration)) setProgress(a.currentTime / a.duration); }} />
+      <audio ref={audioRef} onEnded={() => setPlaying(null)} />
 
       {/* header + search — Brief X3 §3: portaled full-screen takeover; its own header
           was un-inset (the audit missed it — not a .top-bar / PageTitle). Pad top by
@@ -166,7 +163,7 @@ export default function MusicPicker({
           const isPlaying = playing === t.id;
           const isCurrent = currentTrackId === t.id;
           return (
-            <div key={t.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 18px", borderBottom: `1px solid rgb(var(--ink-rgb) / 0.06)` }}>
+            <div key={t.id} className="wf-row" style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 18px", borderBottom: `1px solid rgb(var(--ink-rgb) / 0.06)` }}>
               <TrackArt url={t.artwork_url} title={t.title} id={t.id} size={38} />
               {/* play/pause */}
               <button onClick={() => togglePlay(t)} aria-label={isPlaying ? "Pause" : "Play"} style={{ flexShrink: 0, width: 32, height: 32, borderRadius: "50%", border: `1px solid ${HAIR}`, background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>
@@ -183,7 +180,7 @@ export default function MusicPicker({
                   <span style={{ ...SKR, fontSize: "var(--fs-7)", color: "rgb(var(--ink-rgb) / 0.4)", flexShrink: 0 }}>{fmt(t.duration_seconds)}</span>
                 </div>
                 <div style={{ margin: "5px 0 4px" }}>
-                  <Waveform peaks={t.waveform_peaks} progress={isPlaying ? progress : 0} onSeek={(pct) => seekTrack(t, pct)} height={26} />
+                  <Waveform peaks={t.waveform_peaks} audio={isPlaying ? audioRef : undefined} onSeek={(pct) => seekTrack(t, pct)} height={26} />
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                   <span style={{ ...SKR, fontSize: "var(--fs-7)", color: "rgb(var(--ink-rgb) / 0.45)" }}>{t.composer_handle ? `@${t.composer_handle}` : ""}</span>

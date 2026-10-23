@@ -999,3 +999,11 @@ input:-webkit-autofill:focus {
 @media (min-width: 1920px) { :root { --ui-scale: 1.125; } }
 @media (min-width: 2560px) { :root { --ui-scale: 1.25; } }
 @media (min-width: 3440px) { :root { --ui-scale: 1.5; } }
+
+/* M18 — Waveform ink ladder: unplayed bars at ink/0.38 (the played layer is var(--ink),
+   set inline); on desktop, hovering the row or the wave lifts the unplayed bars to 0.5. */
+.wf-rest { background: rgb(var(--ink-rgb) / 0.38); }
+@media (hover: hover) {
+  .wf-row:hover .wf-rest,
+  .wf:hover .wf-rest { background: rgb(var(--ink-rgb) / 0.5); }
+}

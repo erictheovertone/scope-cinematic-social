@@ -30,7 +30,6 @@ export default function LibraryPage() {
   const [q, setQ] = useState("");
   const [chips, setChips] = useState<string[]>([]);
   const [playing, setPlaying] = useState<string | null>(null);
-  const [progress, setProgress] = useState(0);
   const [showContribute, setShowContribute] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -73,12 +72,11 @@ export default function LibraryPage() {
   const togglePlay = (t: Row) => {
     const a = audioRef.current; if (!a) return;
     if (playing === t.id) { a.pause(); setPlaying(null); return; }
-    a.src = t.file_url; setProgress(0);
+    a.src = t.file_url;
     a.play().then(() => setPlaying(t.id)).catch(() => setPlaying(null));
   };
   const seekTrack = (t: Row, pct: number) => {
     const a = audioRef.current; if (!a) return;
-    setProgress(pct);
     const apply = () => { if (a.duration && isFinite(a.duration)) a.currentTime = pct * a.duration; };
     if (playing === t.id) { apply(); return; }
     a.src = t.file_url;
@@ -92,7 +90,7 @@ export default function LibraryPage() {
     // (account/terms/preferences): overscroll contained (no chain), data-swipe-exclude so the
     // horizontal SwipeNav ignores vertical scroll, --safe-bottom inside.
     <div className="bg-canvas" data-swipe-exclude style={{ position: "fixed", inset: 0, overflowY: "auto", WebkitOverflowScrolling: "touch", overscrollBehavior: "contain", color: "var(--ink-100)" }}>
-      <audio ref={audioRef} onEnded={() => { setPlaying(null); setProgress(0); }} onTimeUpdate={() => { const a = audioRef.current; if (a && a.duration && isFinite(a.duration)) setProgress(a.currentTime / a.duration); }} />
+      <audio ref={audioRef} onEnded={() => setPlaying(null)} />
       <div style={{ maxWidth: 720, margin: "0 auto", paddingBottom: "var(--safe-bottom)" }}>
 
       <div style={{ padding: "34px 20px 12px", borderBottom: `1px solid ${HAIR}` }}>
@@ -115,7 +113,7 @@ export default function LibraryPage() {
         {results.map((t) => {
           const isPlaying = playing === t.id;
           return (
-            <div key={t.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "13px 0", borderBottom: `1px solid rgb(var(--ink-rgb) / 0.06)` }}>
+            <div key={t.id} className="wf-row" style={{ display: "flex", alignItems: "center", gap: 12, padding: "13px 0", borderBottom: `1px solid rgb(var(--ink-rgb) / 0.06)` }}>
               <TrackArt url={t.artwork_url} title={t.title} id={t.id} size={44} />
               <button onClick={() => togglePlay(t)} aria-label={isPlaying ? "Pause" : "Play"} style={{ flexShrink: 0, width: 32, height: 32, borderRadius: "50%", border: `1px solid ${HAIR}`, background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>
                 {isPlaying ? <svg width="11" height="11" viewBox="0 0 24 24" fill="var(--ink-100)"><rect x="6" y="5" width="4" height="14" /><rect x="14" y="5" width="4" height="14" /></svg> : <svg width="11" height="11" viewBox="0 0 24 24" fill="var(--ink-100)"><path d="M7 5v14l12-7z" /></svg>}
@@ -125,7 +123,7 @@ export default function LibraryPage() {
                   <span style={{ ...SKB, fontSize: 13, color: "var(--ink-100)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t.title}</span>
                   <span style={{ ...SKR, fontSize: 11, color: "rgb(var(--ink-rgb) / 0.4)", flexShrink: 0 }}>{fmt(t.duration_seconds)}</span>
                 </div>
-                <div style={{ margin: "5px 0 4px" }}><Waveform peaks={t.waveform_peaks} progress={isPlaying ? progress : 0} onSeek={(pct) => seekTrack(t, pct)} height={26} /></div>
+                <div style={{ margin: "5px 0 4px" }}><Waveform peaks={t.waveform_peaks} audio={isPlaying ? audioRef : undefined} onSeek={(pct) => seekTrack(t, pct)} height={26} /></div>
                 <button onClick={() => t.composer_handle && router.push(`/composer/${t.composer_handle}`)} style={{ ...SKR, fontSize: 11, color: "rgb(var(--ink-rgb) / 0.45)", background: "none", border: "none", cursor: t.composer_handle ? "pointer" : "default", padding: 0 }}>{t.composer_handle ? `@${t.composer_handle}` : ""}</button>
               </div>
             </div>
