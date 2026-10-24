@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from "react";
 import DesktopProfile from '@/components/desktop/DesktopProfile';
 import { useIsDesktop } from '@/lib/useIsDesktop';
 import { useScrollChrome, CHROME_TOP_TRANSITION } from '@/lib/useScrollChrome';
+import { useScrollMemory } from '@/lib/tabNav';
 import { feedImage, THUMB_WIDTH } from "@/lib/mediaUrl";
 import { useRouter, useSearchParams } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
@@ -239,6 +240,7 @@ const userLayoutId = stableLayoutId;
   const collectedScrollRef = useRef<HTMLDivElement>(null);
   // Brief M19 — grid / COLLECTED scroll hides the pill + snap logomark down, returns them up.
   useScrollChrome([gridScrollRef, collectedScrollRef], !isDesktop);
+  useScrollMemory('tab:/profile', gridScrollRef, !isDesktop); // Brief M20 — MAIN grid remembers its scroll
   const rafPendingRef = useRef(false);
 
   useEffect(() => {

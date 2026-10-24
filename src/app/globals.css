@@ -1022,3 +1022,21 @@ html[data-chrome-hidden] [data-chrome-top] { translate: 0 calc(-100% - var(--saf
 @media (prefers-reduced-motion: reduce) {
   .footer-pill, [data-chrome-top] { transition: none !important; }
 }
+
+/* M20 — mobile tab transitions (navigateTab wraps the footer's tab taps in
+   document.startViewTransition). Outgoing page fades + drifts up 6px with a hair of
+   scale-down; incoming fades in from 6px below. Transform + opacity only, no blur.
+   The pill carries its own view-transition-name, so it sits OUT of the root crossfade
+   and swaps in place (active icon flips instantly) — static throughout. In-flow page
+   titles belong to their page and cross-fade with it; there is no shared top bar. */
+@keyframes tab-vt-out { to { opacity: 0; transform: translateY(-6px) scale(0.985); } }
+@keyframes tab-vt-in { from { opacity: 0; transform: translateY(6px); } }
+::view-transition-old(root) { animation: 220ms ease-out both tab-vt-out; }
+::view-transition-new(root) { animation: 240ms ease-out both tab-vt-in; }
+.footer-pill { view-transition-name: tab-pill; }
+::view-transition-group(tab-pill) { animation: none; }
+::view-transition-old(tab-pill) { display: none; }
+::view-transition-new(tab-pill) { animation: none; }
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
+}

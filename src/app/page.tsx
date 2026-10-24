@@ -13,6 +13,14 @@ import TheatreMode from "@/components/TheatreMode";
 import ViewingModesMenu from "@/components/ViewingModesMenu";
 import { useIsDesktop } from "@/lib/useIsDesktop";
 import { useScrollChrome, CHROME_TOP_TRANSITION } from "@/lib/useScrollChrome";
+import { useScrollMemory } from "@/lib/tabNav";
+
+// Brief M20 — the feed you left, kept for the session so a tab round-trip comes back to the
+// same posts at the same scroll (no refetch → no blank frame, and positions past page 1
+// restore). Stale after FEED_TTL_MS → a fresh first page, as before.
+const FEED_TTL_MS = 5 * 60_000;
+let feedCache: { posts: any[]; cursor: FeedCursor | null; hasMore: boolean; at: number } | null = null; // eslint-disable-line @typescript-eslint/no-explicit-any -- posts are untyped here (matches useState<any[]>)
+const freshFeed = () => (feedCache && Date.now() - feedCache.at < FEED_TTL_MS ? feedCache : null);
 import { useRotateToTheatre } from "@/lib/useRotateToTheatre";
 import DesktopHome from "@/components/desktop/DesktopHome";
 import { AnimatePresence } from "framer-motion";
@@ -27,7 +35,7 @@ const LANDING_BREATHING_PX = 40;
 export default function Home() {
   const { authenticated, ready } = usePrivy();
   const router = useRouter();
-  const [posts, setPosts] = useState<any[]>([]);
+  const [posts, setPosts] = useState<any[]>(() => freshFeed()?.posts ?? []);
   const [lightboxPost, setLightboxPost] = useState<any>(null);
   const [mirageActive, setMirageActive] = useState(false);
   const [theatreActive, setTheatreActive] = useState(false); // Theatre Mode over the feed
@@ -54,8 +62,8 @@ export default function Home() {
   // Feed pagination — Brief M13: cursor (keyset) paginated, load one page then append.
   // The cursor lives in a ref so loadMore reads the latest without re-subscribing the
   // observer or risking a stale closure.
-  const feedCursorRef = useRef<FeedCursor | null>(null);
-  const [hasMore, setHasMore] = useState(true);
+  const feedCursorRef = useRef<FeedCursor | null>(freshFeed()?.cursor ?? null);
+  const [hasMore, setHasMore] = useState(() => freshFeed()?.hasMore ?? true);
   const [loadingMore, setLoadingMore] = useState(false);
   const loadingMoreRef = useRef(false);   // guards against double-fire from the sentinel
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -68,6 +76,7 @@ export default function Home() {
   const isDesktop = useIsDesktop();
   // Brief M19 — feed scroll hides the pill + frame trigger down, returns them up.
   useScrollChrome([feedRef], !isDesktop);
+  useScrollMemory("tab:/", feedRef, !isDesktop, "data-post-id"); // Brief M20 — the feed remembers its scroll (anchored to the post at the top)
 
   // Brief M7 — ROTATE-TO-THEATRE from the feed lightbox. Fourth consumer of the shared
   // M3a hook (after profile post-scroll, SR host, SR lineup). Rotating the device while
@@ -200,7 +209,13 @@ export default function Home() {
     if (ready && !authenticated) router.push("/welcome");
   }, [ready, authenticated, router]);
 
+  // Brief M20 — keep the session cache in step with what's on screen (real posts only).
   useEffect(() => {
+    if (posts.length && !String(posts[0]?.id).startsWith("mock")) feedCache = { posts, cursor: feedCursorRef.current, hasMore, at: feedCache?.at ?? Date.now() };
+  }, [posts, hasMore]);
+
+  useEffect(() => {
+    if (freshFeed()) return; // Brief M20 — returning within the TTL: the cached feed is already on screen
     const load = async () => {
       try {
         const { posts: all, nextCursor } = await getFeedPage(null);   // first page — rest appends on scroll
@@ -212,8 +227,9 @@ export default function Home() {
           ]);
           setHasMore(false);
         } else {
-          setPosts(all);
           feedCursorRef.current = nextCursor;
+          feedCache = { posts: all, cursor: nextCursor, hasMore: nextCursor !== null, at: Date.now() };
+          setPosts(all);
           setHasMore(nextCursor !== null);   // null cursor (short page) = end of feed
         }
       } catch (e) {

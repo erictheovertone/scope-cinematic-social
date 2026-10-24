@@ -9,9 +9,10 @@
 // surface (and its fixed chrome) slides in as one unit, then reverts to contents.
 // Footer taps set no direction → instant (no slide). Reduced-motion → instant.
 
-import { useRef, useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { consumePendingSlide, type SlideDir } from '@/lib/swipeNav';
+import { tabRouteCommitted } from '@/lib/tabNav';
 
 export default function SlideShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -28,6 +29,10 @@ export default function SlideShell({ children }: { children: React.ReactNode }) 
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     slideRef.current = reduce ? null : consumePendingSlide();
   }
+
+  // Brief M20 — a footer tab's view transition waits on this: the new route has committed
+  // (parent layout effects run after the page's own, so its scroll restore is already in).
+  useLayoutEffect(() => { tabRouteCommitted(); }, [pathname]);
 
   // force re-render to drop the slide class once the animation finishes
   const [, force] = useState(0);

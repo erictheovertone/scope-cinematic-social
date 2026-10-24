@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { navigateTab } from "@/lib/tabNav";
 import PressPop from "@/components/PressPop";
 
 type Page = 'home' | 'profile' | 'public-profile' | 'wallet' | 'dm';
@@ -148,6 +150,15 @@ export default function BottomToolbar({ page, unreadCount = 0, dmUnread = 0, set
   // early-returned before this useRef → React #300 "rendered fewer hooks than
   // expected". Keep every hook above the return.
   const pillRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+  // Brief M20 — tab taps cross-fade via a view transition (Create is a takeover → plain
+  // Link). Modifier/middle clicks keep the Link's default (new tab etc.).
+  const tab = (href: string, before?: () => void) => (e: React.MouseEvent) => {
+    if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    before?.();
+    e.preventDefault();
+    navigateTab(router, href);
+  };
   useEffect(() => {
     const sync = () => setTakeover(!!document.documentElement.dataset.suiteOpen);
     sync();
@@ -230,7 +241,7 @@ export default function BottomToolbar({ page, unreadCount = 0, dmUnread = 0, set
 
         {/* 1 — Home */}
         <PressPop level="icon">
-          <Link className="tap-target" href="/" style={{ ...BTN, opacity: page === 'home' ? 1 : 0.55 }} aria-label="Home">
+          <Link className="tap-target" href="/" onClick={tab("/")} style={{ ...BTN, opacity: page === 'home' ? 1 : 0.55 }} aria-label="Home">
             <PopInner><HomeIcon active={page === 'home'} /></PopInner>
           </Link>
         </PressPop>
@@ -261,7 +272,7 @@ export default function BottomToolbar({ page, unreadCount = 0, dmUnread = 0, set
           </PressPop>
         ) : (
           <PressPop level="icon">
-            <Link className="tap-target" href="/profile" style={{ ...BTN, opacity: 0.55 }} aria-label="Profile">
+            <Link className="tap-target" href="/profile" onClick={tab("/profile")} style={{ ...BTN, opacity: 0.55 }} aria-label="Profile">
               <PopInner><ProfileIcon /></PopInner>
             </Link>
           </PressPop>
@@ -270,7 +281,7 @@ export default function BottomToolbar({ page, unreadCount = 0, dmUnread = 0, set
         {/* 4 — DM (always) — first-class citizen: solid-fill active state + press pop,
               same as the rest. Routes to the DM inbox. */}
         <PressPop level="icon">
-          <Link className="relative tap-target" href="/dm" style={{ ...BTN, opacity: page === 'dm' ? 1 : 0.55 }} aria-label="Direct messages">
+          <Link className="relative tap-target" href="/dm" onClick={tab("/dm")} style={{ ...BTN, opacity: page === 'dm' ? 1 : 0.55 }} aria-label="Direct messages">
             <PopInner><DMIcon active={page === 'dm'} /></PopInner>
             {dmUnread > 0 && page !== 'dm' && (
               // Unread DM dot — the notification-dot language (small, red, no count).
@@ -282,7 +293,7 @@ export default function BottomToolbar({ page, unreadCount = 0, dmUnread = 0, set
         {/* 5 — Bell (home) | Wallet (profile / public-profile) */}
         {!isHome && (
           <PressPop level="icon">
-            <Link className="tap-target" href="/wallet" style={{ ...BTN, opacity: page === 'wallet' ? 1 : 0.55 }} aria-label="Wallet">
+            <Link className="tap-target" href="/wallet" onClick={tab("/wallet")} style={{ ...BTN, opacity: page === 'wallet' ? 1 : 0.55 }} aria-label="Wallet">
               <PopInner><WalletIcon active={page === 'wallet'} /></PopInner>
             </Link>
           </PressPop>
@@ -292,7 +303,7 @@ export default function BottomToolbar({ page, unreadCount = 0, dmUnread = 0, set
           <PressPop level="icon">
           <Link
             href="/profile/notifications"
-            onClick={onNotificationsClick}
+            onClick={tab("/profile/notifications", onNotificationsClick)}
             className="relative tap-target"
             style={{ ...BTN, opacity: 0.55 }}
             aria-label="Notifications"

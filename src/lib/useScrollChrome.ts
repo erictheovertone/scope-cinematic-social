@@ -12,6 +12,8 @@ import { useEffect, useState, type RefObject } from "react";
 
 const FLIP_PX = 10;   // accumulate this much in one direction before flipping
 const TOP_PX = 64;    // always visible this close to the top
+const MOMENTUM_MS = 3000; // iOS momentum keeps scrolling this long after the finger lifts
+const WHEEL_MS = 400;
 
 /** The top-layer transition, for elements that already carry an inline `transition`
  *  (an inline list overrides the stylesheet's, so they append this). */
@@ -25,6 +27,13 @@ export function useScrollChrome(scrollers: RefObject<HTMLElement | null>[], enab
     const root = document.documentElement;
     let cur = false, acc = 0, last = 0, raf = 0;
     let lastEl: HTMLElement | null = null;
+    // Only USER-driven scroll reads direction (a touch, its momentum, a wheel). Programmatic
+    // moves — a tab's scroll restore (M20), scroll anchoring as images load above,
+    // scrollIntoView — re-base silently instead of reading as a fling.
+    let touching = false, intentUntil = 0;
+    const onTouchStart = () => { touching = true; };
+    const onTouchEnd = () => { touching = false; intentUntil = performance.now() + MOMENTUM_MS; };
+    const onWheel = () => { intentUntil = performance.now() + WHEEL_MS; };
 
     const set = (h: boolean) => {
       if (h === cur) return;
@@ -54,6 +63,7 @@ export function useScrollChrome(scrollers: RefObject<HTMLElement | null>[], enab
     const onScroll = (e: Event) => {
       const el = scrollers.map((r) => r.current).find((s) => s && s === e.target);
       if (!el) return;
+      if (!touching && performance.now() > intentUntil) { lastEl = el; last = el.scrollTop; acc = 0; return; }
       // First sight of a scroller: it started at the top (a fresh mount), so measure from 0
       // — a fling's first event counts. A tab swap re-bases on where that scroller sits.
       if (el !== lastEl) { last = lastEl ? el.scrollTop : 0; lastEl = el; acc = 0; }
@@ -61,8 +71,16 @@ export function useScrollChrome(scrollers: RefObject<HTMLElement | null>[], enab
     };
 
     document.addEventListener("scroll", onScroll, { capture: true, passive: true });
+    document.addEventListener("touchstart", onTouchStart, { capture: true, passive: true });
+    document.addEventListener("touchend", onTouchEnd, { capture: true, passive: true });
+    document.addEventListener("touchcancel", onTouchEnd, { capture: true, passive: true });
+    document.addEventListener("wheel", onWheel, { capture: true, passive: true });
     return () => {
       document.removeEventListener("scroll", onScroll, { capture: true });
+      document.removeEventListener("touchstart", onTouchStart, { capture: true });
+      document.removeEventListener("touchend", onTouchEnd, { capture: true });
+      document.removeEventListener("touchcancel", onTouchEnd, { capture: true });
+      document.removeEventListener("wheel", onWheel, { capture: true });
       cancelAnimationFrame(raf);
       delete root.dataset.chromeHidden; // leaving the surface never strands the chrome
     };
