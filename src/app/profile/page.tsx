@@ -4,6 +4,7 @@ import ThemedImg from "@/components/ThemedImg";
 import { useState, useEffect, useRef } from "react";
 import DesktopProfile from '@/components/desktop/DesktopProfile';
 import { useIsDesktop } from '@/lib/useIsDesktop';
+import { useScrollChrome, CHROME_TOP_TRANSITION } from '@/lib/useScrollChrome';
 import { feedImage, THUMB_WIDTH } from "@/lib/mediaUrl";
 import { useRouter, useSearchParams } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
@@ -235,6 +236,9 @@ const userLayoutId = stableLayoutId;
   // the pin. Output is byte-identical to the prior inline math (own unchanged).
   const { tabAnchor, tabCap, gridSpacer, tabRowOffset } = profileTabFlow(headerH, gridScrollY);
   const gridScrollRef = useRef<HTMLDivElement>(null);
+  const collectedScrollRef = useRef<HTMLDivElement>(null);
+  // Brief M19 — grid / COLLECTED scroll hides the pill + snap logomark down, returns them up.
+  useScrollChrome([gridScrollRef, collectedScrollRef], !isDesktop);
   const rafPendingRef = useRef(false);
 
   useEffect(() => {
@@ -532,6 +536,7 @@ const userLayoutId = stableLayoutId;
           finger, one continuous flow. */}
       {activeTab === 'collected' && supabaseUserId && (
         <div
+          ref={collectedScrollRef}
           style={{ position: 'absolute', inset: 0, bottom: 60, overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}
           onScroll={(e) => {
             if (rafPendingRef.current) return;
@@ -891,6 +896,7 @@ const userLayoutId = stableLayoutId;
           headerSnapped, …) is component-level, so it's in scope here unchanged. ── */}
       {!headerSnapped && gridScrollY > 20 && (
         <div
+          data-chrome-top
           onClick={(e) => { e.stopPropagation(); e.preventDefault(); snapScrollYRef.current = gridScrollY; setHeaderSnapped(true); setSnapAnimKey(k => k + 1); }}
           style={{
             position: 'fixed',
@@ -900,7 +906,7 @@ const userLayoutId = stableLayoutId;
             cursor: 'pointer',
             pointerEvents: 'auto',
             opacity: Math.min(1, (gridScrollY - 20) / 20),
-            transition: 'opacity 0.2s ease',
+            transition: `opacity 0.2s ease, ${CHROME_TOP_TRANSITION}`,
             filter: 'drop-shadow(0 0 8px rgb(var(--black-rgb) / 0.9)) drop-shadow(0 2px 12px rgb(var(--black-rgb) / 0.75))',
           }}
         >

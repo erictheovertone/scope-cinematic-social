@@ -11,6 +11,7 @@ import { MUSIC_TAXONOMY } from "@/lib/musicTaxonomy";
 import { backfillPeaks } from "@/lib/waveform";
 import TrackArt from "@/components/TrackArt";
 import Waveform from "@/components/Waveform";
+import { useScrollChrome } from "@/lib/useScrollChrome";
 import ContributeMusicFlow from "@/components/ContributeMusicFlow";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
@@ -32,6 +33,8 @@ export default function LibraryPage() {
   const [playing, setPlaying] = useState<string | null>(null);
   const [showContribute, setShowContribute] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  useScrollChrome([scrollRef]); // Brief M19 — pill hides on scroll down, returns on up
 
   useEffect(() => {
     let dead = false;
@@ -89,7 +92,7 @@ export default function LibraryPage() {
     // overflow was clipped by body. This is the same fixed-inset scroller the other list pages use
     // (account/terms/preferences): overscroll contained (no chain), data-swipe-exclude so the
     // horizontal SwipeNav ignores vertical scroll, --safe-bottom inside.
-    <div className="bg-canvas" data-swipe-exclude style={{ position: "fixed", inset: 0, overflowY: "auto", WebkitOverflowScrolling: "touch", overscrollBehavior: "contain", color: "var(--ink-100)" }}>
+    <div ref={scrollRef} className="bg-canvas" data-swipe-exclude style={{ position: "fixed", inset: 0, overflowY: "auto", WebkitOverflowScrolling: "touch", overscrollBehavior: "contain", color: "var(--ink-100)" }}>
       <audio ref={audioRef} onEnded={() => setPlaying(null)} />
       <div style={{ maxWidth: 720, margin: "0 auto", paddingBottom: "var(--safe-bottom)" }}>
 

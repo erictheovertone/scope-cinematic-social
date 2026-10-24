@@ -1007,3 +1007,18 @@ input:-webkit-autofill:focus {
   .wf-row:hover .wf-rest,
   .wf:hover .wf-rest { background: rgb(var(--ink-rgb) / 0.5); }
 }
+
+/* M19 — mobile chrome hides on scroll down, returns on scroll up (useScrollChrome stamps
+   html[data-chrome-hidden]). The independent `translate` property, so it composes with the
+   pill's pillPop scale (transform) instead of fighting it. Transform only: no opacity, no
+   layout or padding change. Top layers that carry an inline `transition` append
+   CHROME_TOP_TRANSITION (an inline list overrides this one). */
+.footer-pill, [data-chrome-top] {
+  transition: translate 240ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  will-change: translate;
+}
+html[data-chrome-hidden] .footer-pill { translate: 0 calc(100% + var(--safe-bottom) + 16px); }
+html[data-chrome-hidden] [data-chrome-top] { translate: 0 calc(-100% - var(--safe-top) - 16px); }
+@media (prefers-reduced-motion: reduce) {
+  .footer-pill, [data-chrome-top] { transition: none !important; }
+}

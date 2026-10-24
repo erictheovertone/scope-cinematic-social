@@ -9,13 +9,14 @@
 // Refresh on focus/visibility (the polling model — inbox is focus-driven, not a
 // timer). The footer pill SHOWS here (this is the DM tab, icon active).
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { usePrivy } from '@privy-io/react-auth';
 import { getInbox, dmTimeAgo, type InboxConversation } from '@/lib/dm';
 import { feedImage } from '@/lib/mediaUrl';
 import { useIsDesktop } from '@/lib/useIsDesktop';
+import { useScrollChrome } from '@/lib/useScrollChrome';
 import DesktopDM from '@/components/desktop/DesktopDM';
 import { useTitleDebugTap } from '@/components/ViewportDebug';
 import PageTitle from '@/components/PageTitle';
@@ -36,6 +37,8 @@ function MobileDMInbox() {
   const router = useRouter();
   const [convs, setConvs] = useState<InboxConversation[] | null>(null);
   const debugTap = useTitleDebugTap(); // Brief W2-1c — 5 rapid title taps toggle the viewport overlay
+  const scrollRef = useRef<HTMLElement>(null);
+  useScrollChrome([scrollRef]); // Brief M19 — pill hides on scroll down, returns on up
 
   const load = useCallback(() => {
     if (!user?.id) return;
@@ -56,7 +59,9 @@ function MobileDMInbox() {
   }, [load]);
 
   return (
-    <main style={{ minHeight: '100dvh', background: 'var(--canvas)', paddingBottom: 'calc(72px + env(safe-area-inset-bottom, 0px))' }}>
+    // Brief M19 — the inbox's OWN scroller (.screen-min: 100dvh, overflow-y auto, pan-y). It was a
+    // minHeight:100dvh block under the locked html/body, so a long inbox was clipped, never scrolled.
+    <main ref={scrollRef} className="screen-min" style={{ background: 'var(--canvas)', paddingBottom: 'calc(72px + env(safe-area-inset-bottom, 0px))' }}>
       {/* Header — Brief M3: now consumes the shared PageTitle primitive (extracted this
           brief). Same 32px / return-home treatment as before; ~24px to the first row. */}
       <PageTitle title="Messages" onTitleTap={debugTap} paddingBottom={24} />

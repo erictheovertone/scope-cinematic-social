@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useMemo } from "react";
+import { useScrollChrome } from "@/lib/useScrollChrome";
 import { useRouter } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
 import {
@@ -124,6 +125,7 @@ export default function NotificationsPage() {
   const drag = useRef<{ x: number; y: number; axis: 'h' | 'v' | null; lastX: number; lastT: number; vx: number } | null>(null);
   const paneW = useRef(0);
   const listRef = useRef<HTMLDivElement>(null);
+  useScrollChrome([listRef]); // Brief M19 — pill hides on scroll down, returns on up
 
   const onTouchStart = (e: React.TouchEvent) => {
     const t = e.touches[0];

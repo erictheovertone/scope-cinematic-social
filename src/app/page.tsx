@@ -12,6 +12,7 @@ import MirageView from "@/components/MirageView";
 import TheatreMode from "@/components/TheatreMode";
 import ViewingModesMenu from "@/components/ViewingModesMenu";
 import { useIsDesktop } from "@/lib/useIsDesktop";
+import { useScrollChrome, CHROME_TOP_TRANSITION } from "@/lib/useScrollChrome";
 import { useRotateToTheatre } from "@/lib/useRotateToTheatre";
 import DesktopHome from "@/components/desktop/DesktopHome";
 import { AnimatePresence } from "framer-motion";
@@ -36,7 +37,6 @@ export default function Home() {
   // TRUE once the landing block has been pushed out — gates the floating
   // trigger so exactly ONE logomark exists at rest (the in-flow one).
   const [pastLanding, setPastLanding] = useState(false);
-  const [showFrame, setShowFrame] = useState(true);
   // Brief F3 — a takeover (collect sheet, etc.) raises the body suiteOpen flag; hide
   // the floating logomark trigger while it's up (it's a body-portal at z50 that would
   // otherwise paint over the sheet). Same flag the pill listens to.
@@ -66,6 +66,8 @@ export default function Home() {
   // the feed reflows (another post may collapse above it).
   const anchorRef = useRef<{ id: string; top: number } | null>(null);
   const isDesktop = useIsDesktop();
+  // Brief M19 — feed scroll hides the pill + frame trigger down, returns them up.
+  useScrollChrome([feedRef], !isDesktop);
 
   // Brief M7 — ROTATE-TO-THEATRE from the feed lightbox. Fourth consumer of the shared
   // M3a hook (after profile post-scroll, SR host, SR lineup). Rotating the device while
@@ -129,20 +131,11 @@ export default function Home() {
     return () => cancelAnimationFrame(raf);
   }, [openCommentsPostId]);
 
-  // Direction-aware red frame — ANY upward scroll reveals it (regardless of position);
-  // downward hides it.
-  //
-  // ROOT CAUSE of the prior failures (proven by the overlay reading evt:0):
-  //  1) useEffect([]) + `if(!feedRef.current) return` bailed during the auth loading
-  //     screen and never rebound; THEN
-  //  2) the onScroll PROP bound to the feed div — but native `scroll` events DON'T
-  //     bubble, so binding to a node that isn't the true scroller never fires.
-  // FIX (one mechanism for both): a CAPTURE-phase listener on `document`. Capture
-  // travels top-down and doesn't depend on bubbling, so it catches the scroll from
-  // WHATEVER element actually scrolls; and `document` always exists → no mount race.
+  // Landing gate for the floating trigger. (Its scroll-direction hide moved to the shared
+  // useScrollChrome — Brief M19.) Same capture-phase `document` listener as before:
+  // native `scroll` doesn't bubble, so an onScroll PROP on a non-scroller never fires,
+  // and `document` always exists → no mount race behind the auth loading screen.
   useEffect(() => {
-    const THRESHOLD = 4; // px of intent (absorbs jitter / iOS bounce)
-    let last = 0;
     const onScroll = (e: Event) => {
       const t = e.target as (Document | HTMLElement);
       const el: HTMLElement | null =
@@ -150,14 +143,10 @@ export default function Home() {
           ? (document.scrollingElement as HTMLElement | null)
           : (t as HTMLElement);
       const cur = el && typeof el.scrollTop === 'number' ? el.scrollTop : window.scrollY;
-      const dy = cur - last;
-      last = cur;
       // Landing gate — piggybacks this existing listener (no new listeners):
       // the floating trigger exists only once the in-flow landing block (which
       // carries its own logomark) has been pushed out.
       setPastLanding(cur > 140);
-      if (dy < -THRESHOLD) setShowFrame(true);       // up → reveal
-      else if (dy > THRESHOLD) setShowFrame(false);  // down → hide
     };
     document.addEventListener('scroll', onScroll, { capture: true, passive: true });
     return () => document.removeEventListener('scroll', onScroll, { capture: true });
@@ -344,6 +333,7 @@ export default function Home() {
           onPointerUp={() => setTriggerPressed(false)}
           onPointerLeave={() => setTriggerPressed(false)}
           aria-label="Open viewing modes"
+          data-chrome-top
           style={{
             position: 'fixed',
             // Clear the status bar under viewport-fit=cover (env=0 on non-notch).
@@ -354,10 +344,10 @@ export default function Home() {
             cursor: 'pointer',
             padding: '9px 6px', // ≈44px tap target around the 41×26 mark
             lineHeight: 0,
-            opacity: menuOpen || !showFrame || !pastLanding || takeover ? 0 : triggerPressed ? 0.75 : 1,
-            transform: `${menuOpen || !showFrame || !pastLanding || takeover ? 'translateY(-12px)' : 'translateY(0)'}${triggerPressed ? ' scale(0.92)' : ''}`,
-            transition: 'opacity 0.25s cubic-bezier(0.16,0.84,0.3,1), transform 0.25s cubic-bezier(0.16,0.84,0.3,1)',
-            pointerEvents: menuOpen || !showFrame || !pastLanding || takeover ? 'none' : 'auto',
+            opacity: menuOpen || !pastLanding || takeover ? 0 : triggerPressed ? 0.75 : 1,
+            transform: `${menuOpen || !pastLanding || takeover ? 'translateY(-12px)' : 'translateY(0)'}${triggerPressed ? ' scale(0.92)' : ''}`,
+            transition: `opacity 0.25s cubic-bezier(0.16,0.84,0.3,1), transform 0.25s cubic-bezier(0.16,0.84,0.3,1), ${CHROME_TOP_TRANSITION}`,
+            pointerEvents: menuOpen || !pastLanding || takeover ? 'none' : 'auto',
             /* T1-5 §5 — logomark drop-shadow removed (both themes) */
             zIndex: 50, // above feed (z20), below the menu overlay (z60)
           }}

@@ -4,6 +4,7 @@ import ThemedImg from "@/components/ThemedImg";
 import { useState, useEffect, useRef } from "react";
 import DesktopProfile from '@/components/desktop/DesktopProfile';
 import { useIsDesktop } from '@/lib/useIsDesktop';
+import { useScrollChrome, CHROME_TOP_TRANSITION } from '@/lib/useScrollChrome';
 import { createPortal } from "react-dom";
 import { feedImage } from "@/lib/mediaUrl";
 import { useParams, useRouter } from "next/navigation";
@@ -21,7 +22,6 @@ import ProfilePostViewer from "@/components/ProfilePostViewer";
 import FollowListModal from "@/components/FollowListModal";
 import BadgeExplainerSheet from "@/components/BadgeExplainerSheet";
 import MembershipSheet from "@/components/MembershipSheet";
-import BottomToolbar from "@/components/BottomToolbar";
 import MediaRenderer from "@/components/MediaRenderer";
 import PostCell from "@/components/PostCell";
 import { getColCount } from "@/lib/aspectRatio";
@@ -108,6 +108,9 @@ export default function PublicProfilePage() {
   const [headerUnsnapping, setHeaderUnsnapping] = useState(false);
   const [snapAnimKey, setSnapAnimKey] = useState(0);
   const gridScrollRef = useRef<HTMLDivElement>(null);
+  const collectedScrollRef = useRef<HTMLDivElement>(null);
+  // Brief M19 — grid / COLLECTED scroll hides the pill + frame icon down, returns them up.
+  useScrollChrome([gridScrollRef, collectedScrollRef], !isDesktop);
   const rafPendingRef = useRef(false);
   const snapScrollYRef = useRef(0);
   const dismissSnapMenu = () => {
@@ -388,6 +391,7 @@ export default function PublicProfilePage() {
       {/* Frame icon — appears when header is hidden, tapping snaps header back */}
       {!headerSnapped && gridScrollY > 20 && (
         <div
+          data-chrome-top
           onClick={(e) => { e.stopPropagation(); e.preventDefault(); snapScrollYRef.current = gridScrollY; setHeaderSnapped(true); setSnapAnimKey(k => k + 1); }}
           style={{
             position: 'fixed',
@@ -397,7 +401,7 @@ export default function PublicProfilePage() {
             cursor: 'pointer',
             pointerEvents: 'auto',
             opacity: Math.min(1, (gridScrollY - 20) / 20),
-            transition: 'opacity 0.2s ease',
+            transition: `opacity 0.2s ease, ${CHROME_TOP_TRANSITION}`,
             filter: 'drop-shadow(0 0 8px rgb(var(--black-rgb) / 0.9)) drop-shadow(0 2px 12px rgb(var(--black-rgb) / 0.75))',
           }}
         >
@@ -446,6 +450,7 @@ export default function PublicProfilePage() {
           /* COLLECTED — the curator résumé, public by nature (on-chain data).
              Excludes the profile user's own posts (ratified). */
           <div
+            ref={collectedScrollRef}
             style={{ position: 'absolute', inset: 0, bottom: 60, overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}
             onScroll={(e) => {
               const el = e.currentTarget;
@@ -585,8 +590,6 @@ export default function PublicProfilePage() {
           window.location.href = `/membership/success?plan=${plan}`;
         }}
       />
-
-      <BottomToolbar page="public-profile" />
 
     </div>
   );
