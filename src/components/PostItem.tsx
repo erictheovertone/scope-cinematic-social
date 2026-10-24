@@ -9,10 +9,9 @@ import { usePrivy } from "@privy-io/react-auth";
 import {
   likePost,
   unlikePost,
-  getPostLikes,
-  isPostLikedByUser,
+  getPostLikesBatched,
+  getPostCommentsWithAvatarsBatched,
   addComment,
-  getPostComments,
 } from "@/lib/postsService";
 import { getUserByPrivyId, getProfile } from "@/lib/userService";
 import CollectSheetGate from "@/components/economy/CollectSheetGate";
@@ -27,7 +26,6 @@ import CommentList, { useCommentLikes, ReplyComposer, type UIComment } from "@/c
 import MusicWaveButton from "@/components/music/MusicWaveButton";
 import MusicTitleChip from "@/components/music/MusicTitleChip";
 import { replyToComment } from "@/lib/commentInteractions";
-import { supabase } from "@/lib/supabase/client";
 import { getAspectRatio, ratioPadding } from "@/lib/aspectRatio";
 import PillarboxFrame from "@/components/PillarboxFrame";
 
@@ -139,30 +137,22 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
   }, [user?.id]);
 
   useEffect(() => {
+    // Brief P4 — batched with every other card mounting this tick (one likes + one comments
+    // query for the whole page instead of ~5 per card). Same data as before.
+    let cancelled = false;
     const load = async () => {
       try {
-        const [l, c, liked] = await Promise.all([
-          getPostLikes(post.id),
-          getPostComments(post.id),
-          user ? isPostLikedByUser(post.id, user.id) : Promise.resolve(false),
-        ]);
+        const [l, c] = await Promise.all([getPostLikesBatched(post.id), getPostCommentsWithAvatarsBatched(post.id)]);
+        if (cancelled) return;
         setLikes(l);
-        setIsLiked(liked);
-        // Enrich comments with commenter avatars (batched profiles read by username)
-        // — the feed sheet shows real PFPs, level with the handle.
-        const names = [...new Set((c as any[]).map((x) => x.username).filter(Boolean))];
-        let avatarMap = new Map<string, string | null>();
-        if (names.length > 0) {
-          const { data: profiles } = await supabase
-            .from("profiles").select("username, profile_image_url").in("username", names);
-          avatarMap = new Map((profiles || []).map((p) => [p.username, p.profile_image_url]));
-        }
-        setComments((c as any[]).map((x) => ({ ...x, profile_image_url: avatarMap.get(x.username) ?? null })));
+        setIsLiked(!!user && l.some((x) => x.user_id === user.id));
+        setComments(c);
       } catch (e) {
         console.error("Error loading post data:", e);
       }
     };
     load();
+    return () => { cancelled = true; };
   }, [post.id, user?.id]);
 
   // Real MC for COIN posts via the boundary (Zora index; honest $0 pre-trades).
@@ -266,7 +256,7 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
       <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
           {post.profile_image_url && (
-            <img src={feedImage(post.profile_image_url, 96)} style={{ width: '14px', height: '14px', borderRadius: '50%', objectFit: 'cover' }} />
+            <img src={feedImage(post.profile_image_url, 96)} loading="lazy" decoding="async" style={{ width: '14px', height: '14px', borderRadius: '50%', objectFit: 'cover' }} />
           )}
           <span
             className="tappable"
@@ -302,7 +292,7 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
       <div style={{ display: 'flex', alignItems: 'center', gap: 7, minWidth: 0 }}>
         <button className="tappable" onClick={(e) => { e.stopPropagation(); router.push('/profile/' + post.username); }} style={{ display: 'block', flexShrink: 0, background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
           <span style={{ width: 17, height: 17, flexShrink: 0, border: '0.75px solid rgb(var(--ink-rgb) / 0.5)', overflow: 'hidden', display: 'block', background: 'var(--surface-4)' }}>
-            {post.profile_image_url && <img src={feedImage(post.profile_image_url, 96)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
+            {post.profile_image_url && <img src={feedImage(post.profile_image_url, 96)} loading="lazy" decoding="async" alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
           </span>
         </button>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 1, minWidth: 0, alignItems: 'flex-start' }}>
@@ -439,7 +429,7 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
         </PressPop>
 
         {/* Right cluster — First Cut count (coin posts) sits to the LEFT of COLLECT. */}
-        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 10 }}>
+        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", minHeight: 22 /* P4: FirstCutChip (22px) mounts after its read — reserve it, no row shift */, gap: 10 }}>
           {post.token_standard === 'coin' && post.coin_address && (
             <FirstCutChip coinAddress={post.coin_address} postId={post.id} />
           )}
@@ -493,7 +483,7 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
         {/* Right cluster — FC count (coin posts) LEFT of COLLECT. FirstCutChip is a
             shared component (out of blast radius): the frame's "5 | 10" two-numeral
             format is FLAGGED for a nudge, not restyled here. */}
-        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 9 }}>
+        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", minHeight: 22 /* P4: FirstCutChip (22px) mounts after its read — reserve it, no row shift */, gap: 9 }}>
           {post.token_standard === 'coin' && post.coin_address && (
             <FirstCutChip coinAddress={post.coin_address} postId={post.id} />
           )}

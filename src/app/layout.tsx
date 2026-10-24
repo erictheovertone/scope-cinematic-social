@@ -43,6 +43,10 @@ export default function RootLayout({
             Correctness doesn't hinge on this: font-display:block + the useFontReady gate
             already guarantee no fallback frame; the preload only shrinks the blank window. */}
         <link rel="preload" as="font" type="font/woff2" href="/design-updates-071526/font-files/birds-of-paradise-script.woff2" crossOrigin="anonymous" />
+        {/* Brief P4 §1e — the two primary Haas weights (Roman 400 body, Bold 700 titles) start
+            with the HTML instead of after CSS parse; the rest stay on demand (swap). */}
+        <link rel="preload" as="font" type="font/otf" href="/design-updates-071526/font-files/NeueHaasGrotDisp-55Roman.otf" crossOrigin="anonymous" />
+        <link rel="preload" as="font" type="font/otf" href="/design-updates-071526/font-files/NeueHaasGrotDisp-75Bold.otf" crossOrigin="anonymous" />
         <link rel="manifest" href="/manifest.json" />
         {/* theme-color is now set dynamically by the pre-paint script above, to the CANVAS
             ground (#050505 / #E5E1DB) — so if iOS 16.4+ standalone paints a status-bar band it

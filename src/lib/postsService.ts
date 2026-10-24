@@ -607,6 +607,60 @@ export const getPostComments = async (postId: string): Promise<Comment[]> => {
   return data || [];
 };
 
+// ── Brief P4 — coalesced per-post reads (feed N+1 → one query per kind) ───────────────
+// Every feed card asked for its own likes (twice: list + "liked by me") and comments (+ a
+// commenter-avatar read): ~5 requests + CORS preflights per card, each response re-rendering
+// its card while the feed settles. These loaders gather every id requested in the same tick
+// (all cards mounting in one commit) into ONE `in(post_id, …)` query per kind, and fan the
+// rows back out per post. Same rows, same order as the single-post readers above.
+const BATCH_MAX = 60; // keeps the PostgREST URL comfortably short
+function coalesce<T>(fetchMany: (ids: string[]) => Promise<Map<string, T>>, empty: () => T) {
+  let pending = new Map<string, ((v: T) => void)[]>();
+  let scheduled = false;
+  const flush = async () => {
+    scheduled = false;
+    const batch = pending; pending = new Map();
+    const ids = [...batch.keys()];
+    for (let i = 0; i < ids.length; i += BATCH_MAX) {
+      const slice = ids.slice(i, i + BATCH_MAX);
+      let got = new Map<string, T>();
+      try { got = await fetchMany(slice); } catch (e) { console.error('[postsService] batched read failed:', e); }
+      for (const id of slice) for (const resolve of batch.get(id) || []) resolve(got.get(id) ?? empty());
+    }
+  };
+  return (id: string): Promise<T> => new Promise<T>((resolve) => {
+    const list = pending.get(id) || [];
+    list.push(resolve); pending.set(id, list);
+    if (!scheduled) { scheduled = true; setTimeout(flush, 0); }
+  });
+}
+const groupBy = <R extends { post_id: string }>(rows: R[]) => {
+  const m = new Map<string, R[]>();
+  for (const r of rows) { const l = m.get(r.post_id) || []; l.push(r); m.set(r.post_id, l); }
+  return m;
+};
+
+/** Batched getPostLikes (newest first). "Liked by me" = rows.some(l => l.user_id === viewerId). */
+export const getPostLikesBatched = coalesce<Like[]>(async (ids) => {
+  const { data, error } = await supabase.from('likes').select('*').in('post_id', ids).order('created_at', { ascending: false });
+  if (error) throw error;
+  return groupBy((data || []) as Like[]);
+}, () => []);
+
+/** Batched getPostComments (oldest first), enriched with commenter avatars in one profiles read. */
+export const getPostCommentsWithAvatarsBatched = coalesce<(Comment & { profile_image_url: string | null })[]>(async (ids) => {
+  const { data, error } = await supabase.from('comments').select('*').in('post_id', ids).order('created_at', { ascending: true });
+  if (error) throw error;
+  const rows = (data || []) as Comment[];
+  const names = [...new Set(rows.map((c) => (c as { username?: string }).username).filter(Boolean))] as string[];
+  let avatars = new Map<string, string | null>();
+  if (names.length) {
+    const { data: profiles } = await supabase.from('profiles').select('username, profile_image_url').in('username', names);
+    avatars = new Map((profiles || []).map((p) => [p.username as string, p.profile_image_url as string | null]));
+  }
+  return groupBy(rows.map((c) => ({ ...c, profile_image_url: avatars.get((c as { username?: string }).username || '') ?? null })));
+}, () => []);
+
 export const getPostsPaginated = async (
   page: number,
   limit = 30,

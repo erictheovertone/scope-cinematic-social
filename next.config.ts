@@ -10,7 +10,8 @@ const BUILD_SHA = (
 ).slice(0, 7);
 
 const nextConfig: NextConfig = {
-  env: { NEXT_PUBLIC_BUILD_SHA: BUILD_SHA },
+  // Brief P4 §1g — + build time, read out at the foot of Settings (which build is this device on?).
+  env: { NEXT_PUBLIC_BUILD_SHA: BUILD_SHA, NEXT_PUBLIC_BUILD_TIME: new Date().toISOString() },
   typescript: {
     ignoreBuildErrors: true,
   },

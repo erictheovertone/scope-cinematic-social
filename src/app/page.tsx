@@ -13,12 +13,13 @@ import TheatreMode from "@/components/TheatreMode";
 import ViewingModesMenu from "@/components/ViewingModesMenu";
 import { useIsDesktop } from "@/lib/useIsDesktop";
 import { useScrollChrome, CHROME_TOP_TRANSITION } from "@/lib/useScrollChrome";
-import { useHomeAnchor, useTabReselect, scrolledToTop, clearTabAnchor } from "@/lib/tabNav";
+import { useHomeAnchor, useTabReselect, scrolledToTop, clearTabAnchor, peekTabAnchor } from "@/lib/tabNav";
 
 // Brief M20 — the feed you left, kept for the session so a tab round-trip comes back to the
 // same posts at the same scroll (no refetch → no blank frame, and positions past page 1
 // restore). Stale after FEED_TTL_MS → a fresh first page, as before.
 const FEED_TTL_MS = 5 * 60_000;
+const FIRST_PAINT_CARDS = 6; // P4 — a cached return paints this many (or through the anchor), the rest after the fade
 const LANDING_PX = 140; // the in-flow landing block (mark + DISCOVER) is pushed out past this
 let feedCache: { posts: any[]; cursor: FeedCursor | null; hasMore: boolean; at: number } | null = null; // eslint-disable-line @typescript-eslint/no-explicit-any -- posts are untyped here (matches useState<any[]>)
 const freshFeed = () => (feedCache && Date.now() - feedCache.at < FEED_TTL_MS ? feedCache : null);
@@ -65,6 +66,22 @@ export default function Home() {
   // observer or risking a stale closure.
   const feedCursorRef = useRef<FeedCursor | null>(freshFeed()?.cursor ?? null);
   const [hasMore, setHasMore] = useState(() => freshFeed()?.hasMore ?? true);
+  // Brief P4 — a tab return re-renders the whole cached feed inside the view transition's
+  // update (≈120ms at 4× CPU → the new tab painted late). First paint renders only what the
+  // first frame shows — FIRST_PAINT_CARDS, or through the restored anchor + 3 — and the rest
+  // mounts after the 240ms crossfade. A fresh load (no cache) renders as before.
+  const [paintCap, setPaintCap] = useState<number>(() => {
+    const f = freshFeed();
+    if (!f) return Infinity;
+    const id = peekTabAnchor("tab:/");
+    const i = id ? f.posts.findIndex((p) => String(p.id) === id) : -1;
+    return Math.max(FIRST_PAINT_CARDS, i + 4);
+  });
+  useEffect(() => {
+    if (paintCap === Infinity) return;
+    const t = setTimeout(() => setPaintCap(Infinity), 400);
+    return () => clearTimeout(t);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- once, on mount
   const [loadingMore, setLoadingMore] = useState(false);
   const loadingMoreRef = useRef(false);   // guards against double-fire from the sentinel
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -164,20 +181,26 @@ export default function Home() {
   // native `scroll` doesn't bubble, so an onScroll PROP on a non-scroller never fires,
   // and `document` always exists → no mount race behind the auth loading screen.
   useEffect(() => {
-    const onScroll = (e: Event) => {
-      const t = e.target as (Document | HTMLElement);
-      const el: HTMLElement | null =
-        (t === document || t === document.documentElement)
-          ? (document.scrollingElement as HTMLElement | null)
-          : (t as HTMLElement);
+    // Brief P4 §1a — rAF-batched: one scrollTop read + one state write per frame, not per
+    // scroll event (events fire several times a frame during a fling).
+    let raf = 0;
+    let el: HTMLElement | null = null;
+    const read = () => {
+      raf = 0;
       const cur = el && typeof el.scrollTop === 'number' ? el.scrollTop : window.scrollY;
-      // Landing gate — piggybacks this existing listener (no new listeners):
-      // the floating trigger exists only once the in-flow landing block (which
-      // carries its own logomark) has been pushed out.
+      // Landing gate: the floating trigger exists only once the in-flow landing block
+      // (which carries its own logomark) has been pushed out.
       setPastLanding(cur > LANDING_PX);
     };
+    const onScroll = (e: Event) => {
+      const t = e.target as (Document | HTMLElement);
+      el = (t === document || t === document.documentElement)
+        ? (document.scrollingElement as HTMLElement | null)
+        : (t as HTMLElement);
+      if (!raf) raf = requestAnimationFrame(read);
+    };
     document.addEventListener('scroll', onScroll, { capture: true, passive: true });
-    return () => document.removeEventListener('scroll', onScroll, { capture: true });
+    return () => { document.removeEventListener('scroll', onScroll, { capture: true }); cancelAnimationFrame(raf); };
   }, []);
 
   // Belt-and-suspenders for the iOS standalone rubber-band: body{touch-action:none}
@@ -503,7 +526,7 @@ export default function Home() {
             {/* BREATHING SPACE — the one tunable (Eric eyeballs on device). */}
             <div style={{ height: LANDING_BREATHING_PX }} />
           </div>
-          {posts.map((post, index) => (
+          {posts.slice(0, paintCap).map((post, index) => (
             <div key={post.id} data-post-id={post.id} style={getPostAnimStyle(index)}>
               <PostItem
                 post={post}
@@ -516,7 +539,7 @@ export default function Home() {
             </div>
           ))}
           {/* Infinite-scroll sentinel + subtle bottom loader (hidden at end of feed). */}
-          {hasMore && posts.length > 0 && (
+          {hasMore && posts.length > 0 && paintCap === Infinity && (
             <div ref={sentinelRef} style={{ height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               {loadingMore && (
                 <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: 'var(--fs-9)', color: 'rgb(var(--ink-rgb) / 0.35)', letterSpacing: '0.14em', textTransform: 'uppercase' }}>LOADING…</span>

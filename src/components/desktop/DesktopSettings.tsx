@@ -22,6 +22,7 @@
 // decision (gear lists on profiles), not a settings pass.
 
 import AppearanceRow from "@/components/AppearanceRow";
+import BuildStamp from '@/components/BuildStamp';
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { usePrivy } from '@privy-io/react-auth';
@@ -526,6 +527,7 @@ export default function DesktopSettings() {
           >
             <span style={{ ...SKB, fontSize: 12.5, color: RED, textTransform: 'uppercase', letterSpacing: '0.08em' }}>LOG OUT</span>
           </button>
+          <BuildStamp style={{ padding: '0 18px 16px' }} />{/* Brief P4 §1g — which deploy this is */}
         </div>
 
         {/* ═══ RIGHT — the active panel (120ms in-place swap) ═══ */}

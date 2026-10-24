@@ -3,6 +3,7 @@
 import AppearanceRow from "@/components/AppearanceRow";
 import { useState, useEffect, useRef } from "react";
 import DesktopSettings from '@/components/desktop/DesktopSettings';
+import BuildStamp from '@/components/BuildStamp';
 import { useIsDesktop } from '@/lib/useIsDesktop';
 import { useRouter } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
@@ -252,6 +253,11 @@ export default function Preferences() {
       >
         <span style={{ ...MONO, fontSize: 'var(--fs-11)', color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Log Out</span>
       </button>
+
+      {/* Brief P4 §1g — build stamp: which deploy this device is actually running. HTML is
+          network-first and only hashed /_next/static assets are cached long-term (no service
+          worker), so a stale build here means an old PWA page that hasn't reloaded. */}
+      <BuildStamp />
 
       <input ref={photoInputRef} type="file" accept="image/*" onChange={handlePhotoChange} style={{ display: 'none' }} />
     </div>

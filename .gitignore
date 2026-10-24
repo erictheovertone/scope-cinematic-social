@@ -49,3 +49,4 @@ public/music-library/
 test/.auth/
 test/.report/
 test-results/
+test/.perf/

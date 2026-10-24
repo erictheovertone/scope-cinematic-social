@@ -81,6 +81,8 @@ const TAB_KEY = "tab:"; // keys are "tab:<href>" — the reselect event carries 
 const SETTLE_WINDOW_MS = 2500;
 
 export function clearTabAnchor(key: string): void { anchors.delete(key); }
+/** The saved anchor id for `key`, if Home will restore one (P4: render through it first). */
+export function peekTabAnchor(key: string): string | undefined { return anchors.get(key)?.id; }
 
 /** Attach `make(el)` whenever the scroller ELEMENT appears/changes (pages render a loader
  *  first, so it isn't there on mount): an identity check after every commit, before paint. */
