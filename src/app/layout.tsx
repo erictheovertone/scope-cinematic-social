@@ -2,6 +2,8 @@ import "./globals.css";
 import type { Viewport } from "next";
 import Providers from '@/components/Providers';
 import ThemeSync from '@/components/ThemeSync';
+import LaunchCue from '@/components/LaunchCue';
+import { SPLASH_SCREENS, SPLASH_GROUND } from '@/lib/splash';
 
 // Brief T1-4a §2 — NO-FOUC pre-paint theme. Runs synchronously in <head> before first paint:
 // read localStorage 'scope.theme', resolve 'system', stamp data-theme + color-scheme on <html>
@@ -9,6 +11,13 @@ import ThemeSync from '@/components/ThemeSync';
 // chrome — and, where iOS honours it, the status bar — matches the ground with no seam. No
 // imports, try/catch, ≤20 lines. Absent key = 'dark' (Scope's default).
 const NO_FOUC = `(function(){try{var v=localStorage.getItem('scope.theme'),p=(v==='light'||v==='system'||v==='dark')?v:'dark',a=p==='system'?(window.matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'):p,e=document.documentElement;e.setAttribute('data-theme',a);e.style.colorScheme=a;var m=document.querySelector('meta[name="theme-color"]');if(!m){m=document.createElement('meta');m.setAttribute('name','theme-color');document.head.appendChild(m);}m.setAttribute('content',a==='light'?'#E5E1DB':'#050505');}catch(_){}})();`;
+
+// Brief M21 — COLD standalone launch flag, pre-paint: the Home Screen app (iOS navigator.standalone
+// / display-mode: standalone) opening a fresh page session gets html.launching, which reveals the
+// server-rendered LaunchCue on the very first frame (identical to the startup image). Once per
+// session (sessionStorage), so reloads/in-app navigations don't replay it; warm foreground returns
+// never reload the page at all.
+const LAUNCH_FLAG = `(function(){try{var s=window.navigator.standalone===true||matchMedia('(display-mode: standalone)').matches;if(s&&!sessionStorage.getItem('scope.launched')){sessionStorage.setItem('scope.launched','1');document.documentElement.classList.add('launching')}}catch(e){}})()`;
 
 // Stage 0.1 — viewport via Next's export (replaces the manual <meta>). viewportFit
 // 'cover' is what makes env(safe-area-inset-*) resolve to real notch/home-indicator
@@ -27,9 +36,14 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        {/* T1-4a §2 — pre-paint theme stamp; FIRST in <head> so data-theme is set before any
-            paint (no dark flash on a light-set reload). */}
+        {/* Brief M21 — no white before the stylesheet: the ground is off-black from the first
+            byte (the splash's colour). Scoped to not-light so once the T1-4a stamp below picks
+            the light theme, the stylesheet's ivory canvas takes over untouched. */}
+        <style dangerouslySetInnerHTML={{ __html: `html:not([data-theme="light"]){background:${SPLASH_GROUND}}` }} />
+        {/* T1-4a §2 — pre-paint theme stamp; FIRST script in <head> so data-theme is set before
+            any paint (no dark flash on a light-set reload). */}
         <script dangerouslySetInnerHTML={{ __html: NO_FOUC }} />
+        <script dangerouslySetInnerHTML={{ __html: LAUNCH_FLAG }} />
         <title>Scope - Cinematic Social Platform</title>
         <meta name="description" content="A cinematic social platform where creators post ultra-wide images/videos into customizable grids." />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -54,6 +68,14 @@ export default function RootLayout({
             stays black-translucent; on the LIGHT theme its white glyphs read poorly on ivory —
             an iOS status-bar-style limitation (can't vary per theme via meta), flagged for Stage 4b. */}
         <link rel="apple-touch-icon" href="/scope-square-thumbnail-logo-v2.png" />
+        {/* Brief M21 — iOS launch screens (public/splash, from scripts/gen-splash.mjs): one per
+            current iPhone portrait viewport × DPR, so cold launch is off-black + the aperture
+            instead of a white page. iOS caches these at install (re-add the PWA to pick up). */}
+        {SPLASH_SCREENS.map((s) => (
+          <link key={s.file} rel="apple-touch-startup-image" media={s.media} href={`/splash/${s.file}`} />
+        ))}
+        {/* The LaunchCue's mask — must be in hand for its first frame (6KB). */}
+        <link rel="preload" as="image" href="/splash/mark-mask.png" />
         {/* Brief W2-1d — modern standalone flag (Chrome/Android + the spec successor to the
             apple-prefixed one, which is kept for iOS back-compat). */}
         <meta name="mobile-web-app-capable" content="yes" />
@@ -62,6 +84,7 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-title" content="Scope" />
       </head>
       <body className="bg-canvas text-[var(--ink-100)] font-mono antialiased" suppressHydrationWarning>
+        <LaunchCue />
         <ThemeSync />
         <Providers>{children}</Providers>
       </body>

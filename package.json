@@ -15,7 +15,8 @@
     "create:matrix:test": "AUTH_STATE=test/.auth/throwaway.json playwright test test/create-matrix.spec.ts --workers=1",
     "create:restore": "node test/restore-layout.mjs",
     "create:perf": "playwright test test/create-perf.spec.ts --project=desktop-chromium",
-    "perf:smooth": "node test/smooth-gate.mjs"
+    "perf:smooth": "node test/smooth-gate.mjs",
+    "splash:gen": "node --experimental-strip-types --no-warnings scripts/gen-splash.mjs"
   },
   "dependencies": {
     "@privy-io/react-auth": "^2.25.0",
