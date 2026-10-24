@@ -13,7 +13,7 @@ import TheatreMode from "@/components/TheatreMode";
 import ViewingModesMenu from "@/components/ViewingModesMenu";
 import { useIsDesktop } from "@/lib/useIsDesktop";
 import { useScrollChrome, CHROME_TOP_TRANSITION } from "@/lib/useScrollChrome";
-import { useScrollMemory } from "@/lib/tabNav";
+import { useScrollMemory, useTabReselect, scrolledToTop } from "@/lib/tabNav";
 
 // Brief M20 — the feed you left, kept for the session so a tab round-trip comes back to the
 // same posts at the same scroll (no refetch → no blank frame, and positions past page 1
@@ -77,6 +77,22 @@ export default function Home() {
   // Brief M19 — feed scroll hides the pill + frame trigger down, returns them up.
   useScrollChrome([feedRef], !isDesktop);
   useScrollMemory("tab:/", feedRef, !isDesktop, "data-post-id"); // Brief M20 — the feed remembers its scroll (anchored to the post at the top)
+  // M20a — Home tapped while on Home: useScrollMemory smooth-scrolls to the top and drops the
+  // anchor; once there, fetch a FRESH first page (bypasses the session cache). The current
+  // posts stay on screen until the new page lands — no empty frame.
+  useTabReselect("/", async () => {
+    if (feedRef.current) await scrolledToTop(feedRef.current);
+    try {
+      const { posts: all, nextCursor } = await getFeedPage(null);
+      if (all.length === 0) return;
+      feedCursorRef.current = nextCursor;
+      feedCache = { posts: all, cursor: nextCursor, hasMore: nextCursor !== null, at: Date.now() };
+      setHasMore(nextCursor !== null);
+      setPosts(all);
+    } catch (e) {
+      console.error("Error refreshing feed:", e);
+    }
+  });
 
   // Brief M7 — ROTATE-TO-THEATRE from the feed lightbox. Fourth consumer of the shared
   // M3a hook (after profile post-scroll, SR host, SR lineup). Rotating the device while

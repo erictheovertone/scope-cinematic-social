@@ -13,7 +13,7 @@
 // re-applying as the scroller grows, until reached or the user touches it.
 "use client";
 
-import { useLayoutEffect, useRef, type RefObject } from "react";
+import { useEffect, useLayoutEffect, useRef, type RefObject } from "react";
 
 type VTDocument = Document & { startViewTransition?: (cb: () => Promise<void>) => unknown };
 type Router = { push: (href: string) => void };
@@ -21,11 +21,16 @@ type Router = { push: (href: string) => void };
 const COMMIT_TIMEOUT_MS = 700;
 let pendingCommit: (() => void) | null = null;
 
+// M20a — tapping the ACTIVE tab: no navigation, no transition. The tab's scroller goes to the
+// top (useScrollMemory) and the page may refresh (useTabReselect — Home refetches).
+const TAB_RESELECT = "scope:tab-reselect";
+const reduceMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
 export function navigateTab(router: Router, href: string): void {
-  if (typeof window === "undefined" || window.location.pathname === href) { router.push(href); return; }
+  if (typeof window === "undefined") { router.push(href); return; }
+  if (window.location.pathname === href) { window.dispatchEvent(new CustomEvent(TAB_RESELECT, { detail: href })); return; }
   const d = document as VTDocument;
-  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  if (!d.startViewTransition || reduce) { router.push(href); return; }
+  if (!d.startViewTransition || reduceMotion()) { router.push(href); return; }
   pendingCommit?.(); // a previous nav still in flight — release it
   d.startViewTransition(() => new Promise<void>((resolve) => {
     const done = () => { if (pendingCommit === done) pendingCommit = null; resolve(); };
@@ -38,12 +43,33 @@ export function navigateTab(router: Router, href: string): void {
 /** SlideShell calls this from a layout effect when the pathname changes. */
 export function tabRouteCommitted(): void { pendingCommit?.(); }
 
+/** Run `cb` when the active tab `href` is tapped again. */
+export function useTabReselect(href: string, cb: () => void): void {
+  const ref = useRef(cb);
+  ref.current = cb;
+  useEffect(() => {
+    const on = (e: Event) => { if ((e as CustomEvent<string>).detail === href) ref.current(); };
+    window.addEventListener(TAB_RESELECT, on);
+    return () => window.removeEventListener(TAB_RESELECT, on);
+  }, [href]);
+}
+
+/** Resolves once `el` has (smooth-)scrolled to the top, or after `maxMs`. */
+export function scrolledToTop(el: HTMLElement, maxMs = 1200): Promise<void> {
+  return new Promise((resolve) => {
+    const t0 = performance.now();
+    const tick = () => (el.scrollTop <= 1 || performance.now() - t0 > maxMs ? resolve() : requestAnimationFrame(tick));
+    tick();
+  });
+}
+
 // ── per-tab scroll memory ────────────────────────────────────────────────────
 // Saved per key for the session. With `anchorAttr` (e.g. "data-post-id") the position is
 // stored as "this item, this far from the top" rather than raw pixels, and re-applied while
 // content settles — cards above that grow after mount (async rows, images) can't drift it.
 type Saved = { top: number; anchor?: { id: string; offset: number } };
 const saved = new Map<string, Saved>();
+const TAB_KEY = "tab:"; // keys are "tab:<href>" — the reselect event carries the href
 const RESTORE_WINDOW_MS = 2500;
 
 export function useScrollMemory(key: string, ref: RefObject<HTMLElement | null>, enabled = true, anchorAttr?: string): void {
@@ -103,10 +129,19 @@ function attach(key: string, el: HTMLElement, anchorAttr?: string): () => void {
     }
     snap = { top: el.scrollTop };
   }
+  // M20a — active-tab tap: back to the top and forget the saved position/anchor.
+  const onReselect = (e: Event) => {
+    if ((e as CustomEvent<string>).detail !== key.slice(TAB_KEY.length)) return;
+    stopRestore();
+    saved.delete(key);
+    el.scrollTo({ top: 0, behavior: reduceMotion() ? "auto" : "smooth" });
+  };
   el.addEventListener("scroll", onScroll, { passive: true });
+  window.addEventListener(TAB_RESELECT, onReselect);
   return () => {
     stopRestore();
     el.removeEventListener("scroll", onScroll);
+    window.removeEventListener(TAB_RESELECT, onReselect);
     // On leave the element is still in the DOM (layout cleanup), so the anchor can be read.
     const anchor = anchorAttr && el.isConnected ? readAnchor(el, anchorAttr) : undefined;
     saved.set(key, { top: snap.top, anchor });
