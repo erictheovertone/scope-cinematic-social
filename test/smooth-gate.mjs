@@ -24,6 +24,7 @@ const LABEL = opt('label', 'run');
 const COMPARE = opt('compare', null);
 const ONLY = opt('only', null); // e.g. --only mobile
 const HEAP_MIN = +opt('heap-minutes', '3');
+const TRAPS_ONLY = args.includes('--traps-only'); // M22: run just the scroll-trap sweep
 const OUT_DIR = 'test/.perf';
 mkdirSync(OUT_DIR, { recursive: true });
 
@@ -253,6 +254,70 @@ async function scenarios(profile) {
   return out;
 }
 
+// ── Brief M22 — SCROLL-TRAP SWEEP ───────────────────────────────────────────────
+// html/body are locked (position:fixed, overflow:hidden, 100dvh), so a page whose root is a
+// plain min-height block can't scroll — its content is clipped below the fold. For every route
+// that renders a list or long content: if content extends past the viewport, a real scroller
+// (overflow-y auto/scroll) must exist, a programmatic scroll must move it, and scrolling it to
+// the end must bring the last content into view. Closed sheets (content under a non-scrolling
+// fixed layer) are ignored.
+const TRAP_ROUTES = [
+  '/', '/profile', '/profile/{user}', '/profile/{user}/decks', '/profile/{user}/decks/{deck}',
+  '/profile/notifications', '/dm', '/dm/{dmuser}', '/library', '/composer/{user}', '/wallet',
+  '/earnings', '/badges', '/first-cut/{user}', '/membership/manage',
+  '/profile/preferences', '/profile/account', '/profile/data', '/profile/invite', '/profile/hidden',
+  '/profile/contact', '/profile/links', '/profile/edit', '/profile/delete-account', '/terms', '/privacy',
+];
+const TRAP_PROBE = async () => {
+  const H = innerHeight, frame = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+  const isScroller = (el) => { const o = getComputedStyle(el).overflowY; return (o === 'auto' || o === 'scroll') && el.scrollHeight > el.clientHeight + 4; };
+  // content under a fixed layer that is not itself a scroller = a sheet/overlay → not page content
+  // Page content unless it sits in an overlay: walking up, a FIXED layer that is off-screen (a
+  // closed sheet), small (toast/chip) or invisible → overlay, even if it scrolls; otherwise the
+  // nearest scroller / full-screen fixed box → page content. A full-screen fixed non-scroller
+  // still counts — content clipped inside it IS a trap.
+  // Also intentional clipping: an element cut off by a SMALL overflow:hidden box (a card, a
+  // carousel, a clamp) isn't page content; a viewport-sized clipping box still counts (a trap).
+  const inSheet = (el) => { const er = el.getBoundingClientRect(); for (let a = el; a && a !== document.body; a = a.parentElement) { const cs = getComputedStyle(a); if (cs.visibility === 'hidden' || cs.opacity === '0') return true; if (cs.position === 'fixed') { const r = a.getBoundingClientRect(); if (r.top >= H - 1 || r.bottom <= 1 || r.height < H * 0.5) return true; /* closed sheet / toast — even if it scrolls */ } if (isScroller(a)) return false; if (a !== el && (cs.overflowY === 'hidden' || cs.overflowY === 'clip')) { const r = a.getBoundingClientRect(); if (r.height < H * 0.9 && er.bottom > r.bottom + 2) return true; } if (cs.position === 'fixed') return false; } return false; };
+  const extent = () => { let m = 0, last = null; for (const el of document.body.querySelectorAll('*')) { if (el.closest('.footer-pill, nav[aria-label="Primary"], .launch-cue')) continue; const r = el.getBoundingClientRect(); if (!r.height || !r.width || inSheet(el)) continue; if (r.bottom > m) { m = r.bottom; last = el; } } return { bottom: Math.round(m), last }; };
+  const before = extent();
+  if (before.bottom <= H + 4) return { status: 'fits', bottom: before.bottom };
+  const scrollers = [...document.querySelectorAll('*')].filter((el) => isScroller(el) && el.clientHeight >= H * 0.4).sort((a, b) => b.clientHeight - a.clientHeight);
+  const desc = (el) => `${el.tagName.toLowerCase()}${el.className && typeof el.className === 'string' ? '.' + el.className.split(' ')[0] : ''}${el.hasAttribute('data-scroll') ? '[data-scroll]' : ''}`;
+  if (!scrollers.length) return { status: 'TRAP', bottom: before.bottom, why: `content to y=${before.bottom} (viewport ${H}), no overflow-y:auto scroller — last: ${desc(before.last)}` };
+  const sc = scrollers[0], top0 = sc.scrollTop;
+  sc.scrollTop = 200; await frame(); const moved = sc.scrollTop !== top0;
+  sc.scrollTop = sc.scrollHeight; await frame();
+  const after = extent(); sc.scrollTop = top0; await frame();
+  const reached = after.bottom <= H + 4;
+  return { status: moved && reached ? 'scrolls' : moved ? 'PARTIAL' : 'TRAP', scroller: desc(sc), bottom: before.bottom, endBottom: after.bottom, why: !moved ? 'scroller did not move' : !reached ? `after scrolling to end, content still to y=${after.bottom} — last: ${desc(after.last)}` : '' };
+};
+async function scrollTraps(profile) {
+  const { browser, page } = await newSession(profile);
+  // resolve route params from live data
+  await page.goto(BASE + '/library', { waitUntil: 'networkidle' }); await page.waitForTimeout(1500);
+  // the composer handle exactly as the app links it: tap a library row's composer link
+  let user = 'overtone';
+  const handleBtn = page.locator('button', { hasText: /^@\w/ }).first();
+  if (await handleBtn.count()) { await handleBtn.click(); await page.waitForURL(/\/composer\//, { timeout: 10000 }).catch(() => {}); const m = new URL(page.url()).pathname.match(/^\/composer\/(.+)$/); if (m) user = decodeURIComponent(m[1]); }
+  await page.goto(BASE + `/profile/${user}/decks`, { waitUntil: 'networkidle' }); await page.waitForTimeout(1500);
+  const deck = await page.evaluate(() => [...document.querySelectorAll('a[href*="/decks/"]')].map((a) => a.getAttribute('href').split('/decks/')[1])[0]);
+  await page.goto(BASE + '/dm', { waitUntil: 'networkidle' }); await page.waitForTimeout(1500);
+  const dmuser = await page.evaluate(() => [...document.querySelectorAll('a[href^="/dm/"]')].map((a) => a.getAttribute('href').slice(4))[0]);
+  const rows = [];
+  for (const tpl of TRAP_ROUTES) {
+    if ((tpl.includes('{deck}') && !deck) || (tpl.includes('{dmuser}') && !dmuser)) { rows.push({ route: tpl, status: 'skip', why: 'no live id' }); continue; }
+    const route = tpl.replace('{user}', user).replace('{deck}', deck).replace('{dmuser}', dmuser);
+    await page.goto(BASE + route, { waitUntil: 'networkidle', timeout: 30000 }).catch(() => {});
+    await page.waitForTimeout(2500);
+    const landed = new URL(page.url()).pathname;
+    const r = await page.evaluate(TRAP_PROBE).catch((e) => ({ status: 'error', why: String(e).slice(0, 80) }));
+    rows.push({ route, landed: landed !== route ? landed : undefined, ...r });
+  }
+  await browser.close();
+  return rows;
+}
+
 function verdicts(m) {
   const v = {};
   if (m.feedFling) v.feedFling = m.feedFling.p95 <= BUDGET.fling.p95 + 0.15 /* rAF granularity: one 60Hz vsync reads 16.7–16.8 */ && m.feedFling.over50 <= BUDGET.fling.over50;
@@ -262,6 +327,7 @@ function verdicts(m) {
   if (m.openProfile) v.profileLongTasks = m.openProfile.longTasks <= BUDGET.longTasksPerLoad;
   if (m.createFlow) v.createLongTasks = m.createFlow.longTasks <= BUDGET.longTasksPerLoad;
   if (m.heapSession) v.heapSteady = m.heapSession.growthMB <= 2;
+  if (m.scrollTraps) v.noScrollTraps = m.scrollTraps.every((r) => r.status === 'fits' || r.status === 'scrolls' || r.status === 'skip');
   return v;
 }
 
@@ -269,7 +335,7 @@ function table(res, prev) {
   const rows = [];
   for (const prof of Object.keys(res)) {
     for (const [sc, m] of Object.entries(res[prof])) {
-      if (!m || typeof m !== 'object') continue;
+      if (!m || typeof m !== 'object' || Array.isArray(m)) continue;
       const p = prev?.[prof]?.[sc];
       const f = (k, unit = '') => (m[k] === undefined || m[k] === null ? '–' : `${m[k]}${unit}`) + (p && p[k] !== undefined && p[k] !== m[k] ? ` (was ${p[k]})` : '');
       rows.push(`| ${prof} | ${sc} | ${f('longTasks')} / ${f('longTaskMs', 'ms')} | ${f('p95', 'ms')} / ${f('max', 'ms')} | ${f('cls')} | ${sc === 'coldLoad' ? f('ttiMs', 'ms') : sc === 'tabSwitch' ? `paint ${JSON.stringify(m.tabPaintMs)}` : '–'} | ${sc === 'heapSession' ? `${m.startMB}→${m.endMB} MB` : f('heapPeakMB', 'MB')} | ${sc === 'coldLoad' ? `${m.requests} req / ${m.transferKB} KB` : '–'} |`);
@@ -279,13 +345,23 @@ function table(res, prev) {
 }
 
 const res = {};
-for (const prof of ['mobile', 'desktop']) { if (ONLY && ONLY !== prof) continue; console.error(`… ${prof}`); res[prof] = await scenarios(prof); }
+for (const prof of ['mobile', 'desktop']) {
+  if (ONLY && ONLY !== prof) continue;
+  console.error(`… ${prof}`);
+  res[prof] = TRAPS_ONLY ? {} : await scenarios(prof);
+  res[prof].scrollTraps = await scrollTraps(prof);
+}
 const prev = COMPARE && existsSync(`${OUT_DIR}/${COMPARE}.json`) ? JSON.parse(readFileSync(`${OUT_DIR}/${COMPARE}.json`, 'utf8')).results : null;
 const report = { label: LABEL, base: BASE, at: new Date().toISOString(), results: res, verdicts: Object.fromEntries(Object.entries(res).map(([k, m]) => [k, verdicts(m)])) };
 writeFileSync(`${OUT_DIR}/${LABEL}.json`, JSON.stringify(report, null, 2));
 console.log(table(res, prev));
 for (const prof of Object.keys(res)) {
-  console.log(`\n${prof} heaviest JS (cold load, decoded KB / transfer KB):`);
-  for (const c of res[prof].coldLoad.heaviestJs) console.log(`  ${c.kb} / ${c.transferKb}  ${c.chunk}`);
+  console.log(`\n${prof} scroll-trap sweep (375 / 1440):`);
+  console.log('| route | status | scroller | detail |\n|---|---|---|---|');
+  for (const r of res[prof].scrollTraps) console.log(`| ${r.route}${r.landed ? ` → ${r.landed}` : ''} | ${r.status} | ${r.scroller || '–'} | ${r.why || (r.bottom ? `content to y=${r.bottom}` : '')} |`);
+  if (res[prof].coldLoad) {
+    console.log(`\n${prof} heaviest JS (cold load, decoded KB / transfer KB):`);
+    for (const c of res[prof].coldLoad.heaviestJs) console.log(`  ${c.kb} / ${c.transferKb}  ${c.chunk}`);
+  }
   console.log(`${prof} budget: ${JSON.stringify(report.verdicts[prof])}`);
 }

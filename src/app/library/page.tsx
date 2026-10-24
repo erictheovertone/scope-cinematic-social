@@ -11,7 +11,7 @@ import { MUSIC_TAXONOMY } from "@/lib/musicTaxonomy";
 import { backfillPeaks } from "@/lib/waveform";
 import TrackArt from "@/components/TrackArt";
 import Waveform from "@/components/Waveform";
-import { useScrollChrome } from "@/lib/useScrollChrome";
+import PageScroller from "@/components/PageScroller";
 import ContributeMusicFlow from "@/components/ContributeMusicFlow";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
@@ -33,8 +33,6 @@ export default function LibraryPage() {
   const [playing, setPlaying] = useState<string | null>(null);
   const [showContribute, setShowContribute] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const scrollRef = useRef<HTMLDivElement>(null);
-  useScrollChrome([scrollRef]); // Brief M19 — pill hides on scroll down, returns on up
 
   useEffect(() => {
     let dead = false;
@@ -87,14 +85,10 @@ export default function LibraryPage() {
   };
 
   return (
-    // Brief M17 — the page's ONE scroll container. html/body are locked (overflow:hidden +
-    // 100dvh, the PWA bottom-bar work), so a plain minHeight:100vh block never scrolled — its
-    // overflow was clipped by body. This is the same fixed-inset scroller the other list pages use
-    // (account/terms/preferences): overscroll contained (no chain), data-swipe-exclude so the
-    // horizontal SwipeNav ignores vertical scroll, --safe-bottom inside.
-    <div ref={scrollRef} className="bg-canvas" data-swipe-exclude style={{ position: "fixed", inset: 0, overflowY: "auto", WebkitOverflowScrolling: "touch", overscrollBehavior: "contain", color: "var(--ink-100)" }}>
+    // Brief M17 → M22 — the page's ONE scroll container, now the shared <PageScroller> (fixed-inset,
+    // overflow-y auto, --safe-bottom inside, pill hide/return). See the scroll-trap rule in CLAUDE.md.
+    <PageScroller maxWidth={720}>
       <audio ref={audioRef} onEnded={() => setPlaying(null)} />
-      <div style={{ maxWidth: 720, margin: "0 auto", paddingBottom: "var(--safe-bottom)" }}>
 
       <div style={{ padding: "34px 20px 12px", borderBottom: `1px solid ${HAIR}` }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
@@ -135,8 +129,7 @@ export default function LibraryPage() {
         <button onClick={() => setShowContribute(true)} style={{ ...SKB, fontSize: 11, color: "var(--ink-100)", textTransform: "uppercase", letterSpacing: "0.06em", background: "none", border: "none", cursor: "pointer", padding: "24px 0 0" }}>Contribute to wear the badge →</button>
       </div>
 
-      </div>
       {showContribute && <ContributeMusicFlow onClose={() => setShowContribute(false)} />}
-    </div>
+    </PageScroller>
   );
 }

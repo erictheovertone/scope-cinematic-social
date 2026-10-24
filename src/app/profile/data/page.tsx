@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import PageScroller from '@/components/PageScroller';
 import { useRouter } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
 import { supabase } from "@/lib/supabase/client";
@@ -78,7 +79,9 @@ export default function DataPage() {
   };
 
   return (
-    <div className="bg-canvas relative w-[430px] h-[932px] mx-auto">
+    // Brief M22 — was a fixed 430×932 frame (taller than the viewport, clipped by the locked body;
+    // its flex-1 overflow child never scrolled — no flex parent). The shared page scroller.
+    <PageScroller maxWidth={430}>
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-6 border-b border-[var(--mute-1)]">
         <button 
@@ -94,7 +97,7 @@ export default function DataPage() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto px-6 py-6">
+      <div className="px-6 py-6">
         {loading ? (
           <div className="flex items-center justify-center h-full">
             <p className="font-['IBM_Plex_Mono'] text-[var(--ink-100)] text-[var(--fs-14)]">Loading...</p>
@@ -195,6 +198,6 @@ export default function DataPage() {
           </div>
         )}
       </div>
-    </div>
+    </PageScroller>
   );
 }

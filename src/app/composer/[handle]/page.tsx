@@ -15,6 +15,7 @@ import { getUserByPrivyId } from "@/lib/userService";
 import ContributeMusicFlow from "@/components/ContributeMusicFlow";
 import TrackArt from "@/components/TrackArt";
 import Waveform from "@/components/Waveform";
+import PageScroller from "@/components/PageScroller";
 import { backfillPeaks } from "@/lib/waveform";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
@@ -153,7 +154,9 @@ export default function ComposerDiscographyPage() {
   const empty = tracks !== null && tracks.length === 0;
 
   return (
-    <div style={{ minHeight: "100vh", background: "var(--canvas)", color: "var(--ink-100)" }}>
+    // Brief M22 — was a plain minHeight:100vh block under the locked html/body: the track list was
+    // clipped below the fold and never scrolled. The shared page scroller (scroll-trap rule).
+    <PageScroller style={{ background: "var(--canvas)" }}>
       <audio ref={audioRef} onEnded={() => setPlaying(null)} />
 
       {/* ── BANNER — album-art-style blurred underlay + sharp portrait ─────────
@@ -241,7 +244,7 @@ export default function ComposerDiscographyPage() {
       )}
 
       {showContribute && <ContributeMusicFlow onClose={() => setShowContribute(false)} />}
-    </div>
+    </PageScroller>
   );
 }
 
