@@ -13,12 +13,13 @@ import TheatreMode from "@/components/TheatreMode";
 import ViewingModesMenu from "@/components/ViewingModesMenu";
 import { useIsDesktop } from "@/lib/useIsDesktop";
 import { useScrollChrome, CHROME_TOP_TRANSITION } from "@/lib/useScrollChrome";
-import { useScrollMemory, useTabReselect, scrolledToTop } from "@/lib/tabNav";
+import { useHomeAnchor, useTabReselect, scrolledToTop, clearTabAnchor } from "@/lib/tabNav";
 
 // Brief M20 — the feed you left, kept for the session so a tab round-trip comes back to the
 // same posts at the same scroll (no refetch → no blank frame, and positions past page 1
 // restore). Stale after FEED_TTL_MS → a fresh first page, as before.
 const FEED_TTL_MS = 5 * 60_000;
+const LANDING_PX = 140; // the in-flow landing block (mark + DISCOVER) is pushed out past this
 let feedCache: { posts: any[]; cursor: FeedCursor | null; hasMore: boolean; at: number } | null = null; // eslint-disable-line @typescript-eslint/no-explicit-any -- posts are untyped here (matches useState<any[]>)
 const freshFeed = () => (feedCache && Date.now() - feedCache.at < FEED_TTL_MS ? feedCache : null);
 import { useRotateToTheatre } from "@/lib/useRotateToTheatre";
@@ -76,8 +77,10 @@ export default function Home() {
   const isDesktop = useIsDesktop();
   // Brief M19 — feed scroll hides the pill + frame trigger down, returns them up.
   useScrollChrome([feedRef], !isDesktop);
-  useScrollMemory("tab:/", feedRef, !isDesktop, "data-post-id"); // Brief M20 — the feed remembers its scroll (anchored to the post at the top)
-  // M20a — Home tapped while on Home: useScrollMemory smooth-scrolls to the top and drops the
+  // Brief M20b — Home returns to the post you deliberately scrolled to (past the landing block,
+  // LANDING_PX = the pastLanding gate below); otherwise it opens at the top.
+  useHomeAnchor("tab:/", feedRef, !isDesktop, { anchorAttr: "data-post-id", landingPx: LANDING_PX });
+  // M20a — Home tapped while on Home: useHomeAnchor smooth-scrolls to the top and drops the
   // anchor; once there, fetch a FRESH first page (bypasses the session cache). The current
   // posts stay on screen until the new page lands — no empty frame.
   useTabReselect("/", async () => {
@@ -171,7 +174,7 @@ export default function Home() {
       // Landing gate — piggybacks this existing listener (no new listeners):
       // the floating trigger exists only once the in-flow landing block (which
       // carries its own logomark) has been pushed out.
-      setPastLanding(cur > 140);
+      setPastLanding(cur > LANDING_PX);
     };
     document.addEventListener('scroll', onScroll, { capture: true, passive: true });
     return () => document.removeEventListener('scroll', onScroll, { capture: true });
@@ -234,6 +237,7 @@ export default function Home() {
     if (freshFeed()) return; // Brief M20 — returning within the TTL: the cached feed is already on screen
     const load = async () => {
       try {
+        clearTabAnchor("tab:/"); // M20b — a fresh feed: any saved anchor points at a different list
         const { posts: all, nextCursor } = await getFeedPage(null);   // first page — rest appends on scroll
         if (all.length === 0) {
           setPosts([

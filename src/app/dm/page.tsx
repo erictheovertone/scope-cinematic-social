@@ -17,7 +17,7 @@ import { getInbox, dmTimeAgo, type InboxConversation } from '@/lib/dm';
 import { feedImage } from '@/lib/mediaUrl';
 import { useIsDesktop } from '@/lib/useIsDesktop';
 import { useScrollChrome } from '@/lib/useScrollChrome';
-import { useScrollMemory } from '@/lib/tabNav';
+import { useTabTop } from '@/lib/tabNav';
 import DesktopDM from '@/components/desktop/DesktopDM';
 import { useTitleDebugTap } from '@/components/ViewportDebug';
 import PageTitle from '@/components/PageTitle';
@@ -40,7 +40,7 @@ function MobileDMInbox() {
   const debugTap = useTitleDebugTap(); // Brief W2-1c — 5 rapid title taps toggle the viewport overlay
   const scrollRef = useRef<HTMLElement>(null);
   useScrollChrome([scrollRef]); // Brief M19 — pill hides on scroll down, returns on up
-  useScrollMemory('tab:/dm', scrollRef); // Brief M20
+  useTabTop("/dm", scrollRef); // Brief M20b — always opens at the top; active-tab tap → top
 
   const load = useCallback(() => {
     if (!user?.id) return;

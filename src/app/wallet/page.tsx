@@ -2,7 +2,7 @@
 
 import ThemedImg from "@/components/ThemedImg";
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { useScrollMemory } from "@/lib/tabNav";
+import { useTabTop } from "@/lib/tabNav";
 import DesktopWallet from '@/components/desktop/DesktopWallet';
 import { useIsDesktop } from '@/lib/useIsDesktop';
 import { useTitleDebugTap } from '@/components/ViewportDebug';
@@ -117,7 +117,7 @@ export default function WalletPage() {
   const touchStartY = useRef(0);
   const touchStartAtTop = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  useScrollMemory("tab:/wallet", containerRef, !isDesktop); // Brief M20 — the wallet tab remembers its scroll
+  useTabTop("/wallet", containerRef, !isDesktop); // Brief M20b — always opens at the top; active-tab tap → top
 
   const showToast = (msg: string) => {
     setToast(msg);

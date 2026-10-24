@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useScrollChrome } from "@/lib/useScrollChrome";
-import { useScrollMemory } from "@/lib/tabNav";
+import { useTabTop } from "@/lib/tabNav";
 import { useRouter } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
 import {
@@ -127,7 +127,7 @@ export default function NotificationsPage() {
   const paneW = useRef(0);
   const listRef = useRef<HTMLDivElement>(null);
   useScrollChrome([listRef]); // Brief M19 — pill hides on scroll down, returns on up
-  useScrollMemory("tab:/profile/notifications", listRef); // Brief M20
+  useTabTop("/profile/notifications", listRef); // Brief M20b — always opens at the top; active-tab tap → top
 
   const onTouchStart = (e: React.TouchEvent) => {
     const t = e.touches[0];
