@@ -872,7 +872,15 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
                         const newThumbUrl = urlData.publicUrl;
                         if (post.thumbnail_url) {
                           const oldPath = post.thumbnail_url.split("/post-media/")[1];
-                          if (oldPath) await supabase.storage.from("post-media").remove([oldPath]);
+                          // SEC-0 §2c — the anon post-media DELETE policy is dropped; the old
+                          // poster is removed through the server route (ownership-checked).
+                          if (oldPath) {
+                            await fetch("/api/post-media/delete", {
+                              method: "POST",
+                              headers: { "content-type": "application/json" },
+                              body: JSON.stringify({ userId: ownerSbId, postId: post.id, path: oldPath }),
+                            }).catch((err) => console.error("Thumb old-delete error:", err));
+                          }
                         }
                         await supabase.from("posts").update({ thumbnail_url: newThumbUrl }).eq("id", post.id);
                       } catch (err) {

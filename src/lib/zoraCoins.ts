@@ -22,7 +22,6 @@ import {
 } from "@zoralabs/coins-sdk";
 import { createPublicClient, http, getAddress, parseEther, formatEther } from "viem";
 import { base } from "viem/chains";
-import { supabase } from "@/lib/supabase/client";
 import { getEthUsdRate } from "@/lib/coingecko";
 import { TOKENS_PER_PIECE } from "@/lib/economy/tokenomics";
 // Brief Z2 — points the SDK at the keyed transport for this context (proxy in
@@ -242,15 +241,20 @@ async function uploadCoinMetadata(args: {
     metadata.content = { mime: args.mimeType || "video/mp4", uri: args.animationUrl };
   }
 
-  const blob = new Blob([JSON.stringify(metadata)], { type: "application/json" });
-  const path = `${args.postId}.json`;
-  const { error } = await supabase.storage
-    .from("coin-metadata")
-    .upload(path, blob, { cacheControl: "31536000", upsert: true, contentType: "application/json" });
-  if (error) throw error;
-
-  const { data } = supabase.storage.from("coin-metadata").getPublicUrl(path);
-  const url = data.publicUrl;
+  // SEC-0 §2c — the JSON write moved server-side (service role); the anon
+  // coin-metadata INSERT/UPDATE policies are dropped so no one can deface a coin.
+  // Build the metadata here, hand it to the route (stable {postId}.json + upsert
+  // preserved there), then keep the pre-mint 200/json probe on the returned URL.
+  const res = await fetch("/api/coin-metadata", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ userId: args.userId, postId: args.postId, metadata }),
+  });
+  if (!res.ok) {
+    const e = (await res.json().catch(() => ({}))) as { error?: string };
+    throw new Error(`[zoraCoins] coin-metadata write failed: HTTP ${res.status} ${e?.error ?? ""}`);
+  }
+  const { url } = (await res.json()) as { url: string };
 
   // PRE-MINT ASSERTION: a coin must never point at an unreachable or non-JSON
   // tokenURI. Verify the public URL actually serves 200 + application/json
