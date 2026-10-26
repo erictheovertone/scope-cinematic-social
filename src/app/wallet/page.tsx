@@ -30,6 +30,7 @@ import { LedgerCard, DottedLeader } from "@/components/Ledger";
 import SwapSheet, { type SwapInitial } from "@/components/SwapSheet";
 import ImportAssetSheet from "@/components/ImportAssetSheet";
 import { getUserAssets, readAssetBalance, type UserAsset } from "@/lib/userAssets";
+import { sanitizeDecimalInput } from "@/lib/amountInput"; // C3-15: comma/period decimal entry (iOS)
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -1317,9 +1318,10 @@ export default function WalletPage() {
                 <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
                   <span style={{ ...SKB, fontSize: 'var(--fs-14)', color: sendAmount ? "var(--ink-100)" : "rgb(var(--ink-rgb) / 0.3)" }}>$</span>
                   <input
+                    type="text"
                     inputMode="decimal"
                     value={sendAmount}
-                    onChange={e => { setSendAmount(e.target.value.replace(/[^0-9.]/g, "")); setSendError(null); }}
+                    onChange={e => { setSendAmount(sanitizeDecimalInput(e.target.value)); setSendError(null); }}
                     placeholder="0.00"
                     style={{
                       ...SKB, fontSize: 'max(16px, var(--fs-14))', color: "var(--ink-100)", background: "transparent",
