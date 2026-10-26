@@ -30,7 +30,7 @@ import { ensureLut } from "@/lib/editor/lut";
 import { registerAutoplayVideo, reportVisibility } from "@/lib/videoPlayback";
 import { feedImage } from "@/lib/mediaUrl";
 import { videoCssFilter, videoOverlays } from "@/lib/editor/videoGrade";
-import { acquireAttach, releaseAttach, onAttachSlotFree } from "@/lib/videoAttachBudget";
+import { acquireAttach, releaseAttach, onAttachSlotFree, isVideoOverlayActive, onVideoOverlayChange } from "@/lib/videoAttachBudget";
 import { isVideoDebug } from "@/lib/debugFlags";
 import type HlsType from "hls.js"; // TYPE ONLY (erased) — the runtime import is dynamic (§2)
 
@@ -85,6 +85,10 @@ interface Props {
   gridMode?: boolean;
   /** Always play graded (standalone post view / lightbox). */
   forcePlay?: boolean;
+  /** Brief C3-13 — this player lives INSIDE a fullscreen video overlay (profile post-scroll,
+   *  lightbox). Exempts it from the overlay-occlusion release so it keeps/acquires its budget
+   *  slot while background grid players (which set the overlay active) step aside. */
+  inOverlay?: boolean;
   /** Brief W3 §1 — mobile feed: autoplay the FULL source (url), muted+looping, plain
    *  (NO grading pipeline — stays cheap), instead of the pre-baked 3–5s clip. Still
    *  in-view-gated by the IntersectionObserver below (off-screen unmounts). */
@@ -133,7 +137,7 @@ export default function GradedVideo({
   url, posterUrl, posterWidth, clipUrl, editParams, cropX = 0, cropY = 0, cropWidth = 1, cropHeight = 1,
   autoplayFlag = false, gridMode = false, forcePlay = false, fullPlayback = false, style, onClick, showSoundToggle = false,
   processing = false, hlsUrl = null, priority = false, minPlayRatio = 0,
-  windowStart = null, windowLength = null, context = 'full', onVideoEl, userPaused = false,
+  windowStart = null, windowLength = null, context = 'full', onVideoEl, userPaused = false, inOverlay = false,
 }: Props) {
   const isHls = !!hlsUrl; // Brief V3 — the dual-path branch: Stream HLS vs legacy source.
   const id = useId();
@@ -141,6 +145,7 @@ export default function GradedVideo({
   const [coordActive, setCoordActive] = useState(false); // feed coordinator grant (→ PLAY)
   const [nearStable, setNearStable] = useState(false);   // Brief V3d — within NEAR + dwelt (→ ATTACH)
   const [bufferSlot, setBufferSlot] = useState(false);   // Brief V3d — budget granted (→ ATTACH)
+  const [overlayActive, setOverlayActive] = useState(false); // Brief C3-13 — a fullscreen video overlay is up
   const [playing, setPlaying] = useState(false);         // ACTUAL play state (drives visible output)
   const [failed, setFailed] = useState(false);           // pipeline failure → plain playback
   const [errored, setErrored] = useState(false);         // video element error → poster (contain to this tile)
@@ -148,6 +153,12 @@ export default function GradedVideo({
   const [manualPlay, setManualPlay] = useState(false); // non-autoplay video: user tapped the play affordance
   const [videoEl, setVideoEl] = useState<HTMLVideoElement | null>(null);
   const [activeLut, setActiveLut] = useState<{ canvas: HTMLCanvasElement; size: number } | null>(null);
+  // Brief C3-13 — a fullscreen video overlay (profile post-scroll, lightbox) being up means
+  // the grid behind it is occluded; background grid players release their attach slots.
+  useEffect(() => {
+    setOverlayActive(isVideoOverlayActive());
+    return onVideoOverlayChange(setOverlayActive);
+  }, []);
   const boxRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const retryRef = useRef<number | null>(null);
@@ -294,7 +305,9 @@ export default function GradedVideo({
     //    staying NEAR pinned its slot until it left NEAR; three accumulating down a long
     //    scroll pinned all slots ("posts from before today don't play at all"). It now
     //    releases on error and re-tries on NEAR re-entry (the resurrection path clears errored).
-    if (forcePlay || !autoplayFlag || !playbackUrl || errored || !(nearStable || inView || coordActive)) { setBufferSlot(false); return; }
+    // C3-13 — a background grid player (gridMode, not in the overlay) steps aside while a
+    // fullscreen video overlay is up, releasing its slot so the overlay's players can attach.
+    if (forcePlay || !autoplayFlag || !playbackUrl || errored || (gridMode && !inOverlay && overlayActive) || !(nearStable || inView || coordActive)) { setBufferSlot(false); return; }
     let held = false;
     let valve: number | null = null;
     let off: (() => void) | null = null;
@@ -320,7 +333,7 @@ export default function GradedVideo({
       if (off) off();
       if (held) { dlog("slot-released"); releaseAttach(); }
     };
-  }, [forcePlay, autoplayFlag, playbackUrl, errored, nearStable, inView, coordActive]);
+  }, [forcePlay, autoplayFlag, playbackUrl, errored, nearStable, inView, coordActive, gridMode, inOverlay, overlayActive]);
 
   // ── ATTACH (source + buffer, the NEAR tier) — NO play here. HLS: native <video src> on
   //    Safari/iOS (no lib); hls.js via DYNAMIC import elsewhere (its own chunk). Legacy:

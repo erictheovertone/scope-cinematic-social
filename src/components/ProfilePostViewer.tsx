@@ -25,6 +25,7 @@ import MusicWaveButton from "@/components/music/MusicWaveButton";
 import MusicTitleChip from "@/components/music/MusicTitleChip";
 import MediaRenderer from "@/components/MediaRenderer";
 import GradedVideo from "@/components/finishing/GradedVideo";
+import { pushVideoOverlay } from "@/lib/videoAttachBudget";
 import TheatreMode from "@/components/TheatreMode";
 import { useRotateToTheatre } from "@/lib/useRotateToTheatre";
 import { supabase } from "@/lib/supabase/client";
@@ -219,6 +220,7 @@ function PostViewerItem({
               editParams={(post as any).edit_params}
               autoplayFlag={(post as any).autoplay !== false}
               gridMode
+              inOverlay
               processing={(post as any).video_status === 'processing'}
               hlsUrl={(post as any).video_status === 'ready' ? ((post as any).stream_playback_url ?? null) : null}
               cropX={(post as any).crop_x ?? 0}
@@ -530,6 +532,11 @@ export default function ProfilePostViewer({
   const scrollRef = useRef<HTMLDivElement>(null);
   const postRefs = useRef<(HTMLDivElement | null)[]>([]);
   const theatreIndexRef = useRef(0); // theatre's live index, for scroll-restore on exit
+
+  // Brief C3-13 — this fullscreen scroll viewer occludes the profile grid behind it; mark the
+  // overlay active so the grid's gridMode players release their attach slots to this viewer's
+  // players (which are tagged inOverlay). Released on close/unmount.
+  useEffect(() => pushVideoOverlay(), []);
 
   // Theatre entry — scoped to THIS profile's posts, starting on whichever post is
   // currently nearest the scroll position (per the desktop theatre-eye pattern).

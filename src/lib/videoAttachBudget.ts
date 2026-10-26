@@ -45,3 +45,28 @@ export function onAttachSlotFree(cb: () => void): () => void {
   waiters.add(cb);
   return () => { waiters.delete(cb); };
 }
+
+// ── Overlay occlusion (Brief C3-13) ──────────────────────────────────────────
+// A fullscreen video surface (the profile post-scroll viewer, lightbox, theatre) sits
+// OVER the grid. The grid's gridMode players use a viewport-root IntersectionObserver,
+// so they still read as "in view" behind the overlay and HOLD all MAX_ATTACHED slots —
+// starving the overlay's own players (they never attach → never play → frozen posters).
+// While an overlay is active, background grid players (gridMode && !inOverlay) release
+// and stop acquiring; the overlay's own players acquire freely.
+let overlayCount = 0;
+const overlaySubs = new Set<(active: boolean) => void>();
+/** Mark a fullscreen video overlay mounted; call the returned fn on unmount. */
+export function pushVideoOverlay(): () => void {
+  overlayCount += 1;
+  for (const s of Array.from(overlaySubs)) s(true);
+  return () => {
+    overlayCount = Math.max(0, overlayCount - 1);
+    const active = overlayCount > 0;
+    for (const s of Array.from(overlaySubs)) s(active);
+  };
+}
+export function isVideoOverlayActive(): boolean { return overlayCount > 0; }
+export function onVideoOverlayChange(cb: (active: boolean) => void): () => void {
+  overlaySubs.add(cb);
+  return () => { overlaySubs.delete(cb); };
+}
