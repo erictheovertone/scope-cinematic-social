@@ -416,7 +416,7 @@ export default function MembershipSuccess() {
       {tier === "creator" && <CreatorCelebration onDone={handleDone} />}
       {tier === "pro" && (
         <VideoCelebration
-          videoSrc="/badges/welcome-scope-pro-animation.mp4"
+          videoSrc="/welcome-to-pro-new-ani.mp4"
           badgeSrc="/design-updates-071526/new-badges/scope-pro.png"
           onDone={handleDone}
           renderFallback={(d) => <ProCelebration onDone={d} />}

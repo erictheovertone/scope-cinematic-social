@@ -50,7 +50,7 @@ export function UpsellProvider({ children }: { children: ReactNode }) {
       />
       {celebrate && (
         <VideoCelebration
-          videoSrc="/badges/welcome-scope-pro-animation.mp4"
+          videoSrc="/welcome-to-pro-new-ani.mp4"
           badgeSrc="/design-updates-071526/new-badges/scope-pro.png"
           onDone={() => {
             setCelebrate(false);

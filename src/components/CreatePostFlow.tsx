@@ -1383,7 +1383,11 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
         </button>
       </div>
 
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 min-h-0 flex flex-col">
+        {/* C3-6/C3-7 — min-h-0 so the inner overflow-y-auto actually bounds: a flex child
+            defaults to min-height:auto (content size) and refuses to shrink, so the scroller
+            never scrolled and the tail (MIRAGE preview + ADD MUSIC) spilled past the panel's
+            overflow-hidden and was cut off. */}
         {/* SCROLLABLE (fixes the dead caption input): with body{position:fixed;
             overflow:hidden;touch-action:none} (the iOS standalone lock), an input needs
             a SCROLLABLE ancestor or iOS can't focus it / raise the keyboard — the deck
@@ -1464,9 +1468,26 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
               </p>
               <button
                 onClick={() => setVideoAutoplay(v => !v)}
-                style={{ width: 36, height: 20, borderRadius: 0, background: videoAutoplay ? 'var(--ink-100)' : 'rgb(var(--ink-rgb) / 0.15)', border: 'none', cursor: 'pointer', position: 'relative', transition: 'background 0.2s ease', padding: 0 }}
+                role="switch"
+                aria-checked={videoAutoplay}
+                aria-label="Autoplay on grid"
+                style={{
+                  // C3-5 — a real switch: the track and knob were BOTH var(--ink-100) (one blank
+                  // rectangle). Now the knob contrasts the track in every state and both themes —
+                  // ON: dark knob (--canvas) on an ivory track; OFF: ivory knob on a bordered faint
+                  // track. Square corners kept (design rule). 36×20 track, 16×16 knob.
+                  width: 36, height: 20, borderRadius: 0,
+                  background: videoAutoplay ? 'var(--ink-100)' : 'rgb(var(--ink-rgb) / 0.18)',
+                  border: videoAutoplay ? '1px solid var(--ink-100)' : '1px solid rgb(var(--ink-rgb) / 0.35)',
+                  boxSizing: 'border-box', cursor: 'pointer', position: 'relative',
+                  transition: 'background 0.2s ease', padding: 0,
+                }}
               >
-                <div style={{ position: 'absolute', top: 2, left: videoAutoplay ? 18 : 2, width: 16, height: 16, borderRadius: 0, background: 'var(--ink-100)', transition: 'left 0.2s ease' }} />
+                <div style={{
+                  position: 'absolute', top: 2, left: videoAutoplay ? 18 : 2, width: 16, height: 16, borderRadius: 0,
+                  background: videoAutoplay ? 'var(--canvas)' : 'var(--ink-100)',
+                  transition: 'left 0.2s ease, background 0.2s ease',
+                }} />
               </button>
             </div>
             {/* Brief M10 §2 — MIRAGE PREVIEW WINDOW (optional). Reinstated selector: scrub a
@@ -1476,7 +1497,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
             {videoAutoplay && selectedMedia[0] && (
               <div style={{ marginTop: 16 }}>
                 <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-9)', color: 'rgb(var(--ink-rgb) / 0.5)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 2px' }}>
-                  MIRAGE PREVIEW
+                  THUMBNAIL PREVIEW
                 </p>
                 <SnippetSelector
                   videoUrl={selectedMedia[0].url}
@@ -1705,7 +1726,10 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
 
   return (
     <>
-      <div onClick={handleBackdropDismiss} style={{ position: 'fixed', inset: 0, backgroundColor: 'var(--black)', opacity: 1, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      {/* C3-1 — the backdrop ground must be the SAME token as the panel (bg-canvas), or the
+          centered 375×600 panel leaves a different-black band above/below (var(--black) ≠
+          var(--canvas)). One continuous canvas ground now covers the page. */}
+      <div onClick={handleBackdropDismiss} style={{ position: 'fixed', inset: 0, backgroundColor: 'var(--canvas)', opacity: 1, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div onClick={(e) => e.stopPropagation()} className="bg-canvas w-[375px] h-[600px] relative overflow-hidden">
           {step === 'media' && renderMediaStep()}
           {step === 'edit' && renderEditStep()}
