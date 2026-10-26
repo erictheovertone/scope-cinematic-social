@@ -50,3 +50,6 @@ test/.auth/
 test/.report/
 test-results/
 test/.perf/
+
+# C3 harness self-verify screenshots (not source)
+test/shots/
