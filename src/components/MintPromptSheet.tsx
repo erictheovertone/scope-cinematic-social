@@ -7,6 +7,7 @@ import { isValidTicker, tickerError } from "@/lib/economy/ticker";
 import { GAS_FLOOR_ETH } from "@/lib/economy/preflight";
 import ScopeLoader from "@/components/ScopeLoader";
 import { pushCropTrace } from "@/lib/cropDebug"; // C3-10: route the money-path trace to the on-screen 5-tap overlay
+import { sanitizeDecimalInput } from "@/lib/amountInput"; // C3-15: comma/period decimal entry (iOS)
 
 // C3-10 — the mint funding threshold is the LIVE gas cost for the createCoin tx, not a
 // hardcoded floor. Representative gas units for the estimate × 1.5, clamped to a sane band
@@ -327,9 +328,10 @@ export default function MintPromptSheet({ visible, onMint, onSkip, onCoinSkipped
               <div style={{ display: 'flex', alignItems: 'center', border: '1px solid rgb(var(--ink-rgb) / 0.18)', padding: '0 12px' }}>
                 <span style={{ ...SKB, fontSize: 'var(--fs-16)', color: selfBuyUsd ? 'var(--ink-100)' : 'rgb(var(--ink-rgb) / 0.3)' }}>$</span>
                 <input
+                  type="text"
                   inputMode="decimal"
                   value={selfBuyUsd}
-                  onChange={(e) => onSelfBuyChange(e.target.value.replace(/[^0-9.]/g, ''))}
+                  onChange={(e) => onSelfBuyChange(sanitizeDecimalInput(e.target.value))}
                   placeholder="0"
                   style={{ ...SKB, fontSize: 'var(--fs-16)', color: 'var(--ink-100)', background: 'transparent', border: 'none', outline: 'none', width: '100%', padding: '11px 6px' }}
                 />

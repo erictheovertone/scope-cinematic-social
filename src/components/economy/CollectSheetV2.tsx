@@ -23,6 +23,7 @@ import { usePrivy, useFundWallet } from '@privy-io/react-auth';
 import { base } from 'viem/chains';
 import { useEconomy } from '@/components/EconomyProvider';
 import { preflightTrade, preflightMessage } from '@/lib/economy/preflight';
+import { sanitizeDecimalInput } from '@/lib/amountInput'; // C3-15: comma/period decimal entry (iOS)
 import { economyPreviewEnabled } from '@/lib/economy/flag';
 import FirstCutFlourish from '@/components/economy/FirstCutFlourish';
 import GradedVideo from '@/components/finishing/GradedVideo';
@@ -568,10 +569,11 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
                 <div style={{ display: 'flex', alignItems: 'center', borderBottom: '1px solid rgb(var(--ink-rgb) / 0.15)', paddingBottom: 8, marginBottom: 12 }}>
                   <span style={{ ...SKB, fontSize: 'var(--fs-34)', color: buyUsd ? 'var(--ink-100)' : 'rgb(var(--ink-rgb) / 0.25)' }}>$</span>
                   <input
+                    type="text"
                     inputMode="decimal"
                     placeholder="0"
                     value={buyUsd}
-                    onChange={(e) => setBuyUsd(e.target.value.replace(/[^0-9.]/g, ''))}
+                    onChange={(e) => setBuyUsd(sanitizeDecimalInput(e.target.value))}
                     style={{ ...SKB, fontSize: 'max(16px, var(--fs-34))', color: 'var(--ink-100)', WebkitTextFillColor: 'var(--ink-100)', caretColor: 'var(--ink-100)', background: 'transparent', WebkitAppearance: 'none', appearance: 'none', border: 'none', outline: 'none', width: '100%', padding: 0, fontVariantNumeric: 'tabular-nums' }}
                   />
                 </div>

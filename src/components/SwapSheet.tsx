@@ -22,6 +22,7 @@ import { swapTokens, quoteSwap, erc20SwapNeedsApproval, swapTokenDecimals, errIn
 import { preflightTrade, preflightMessage, GAS_FLOOR_ETH } from '@/lib/economy/preflight';
 import { pushCropTrace } from '@/lib/cropDebug'; // C3-10: swap trace → on-screen 5-tap overlay
 import { getEthUsdRate } from '@/lib/coingecko';
+import { sanitizeDecimalInput, sanitizeDecimalInputClamped } from '@/lib/amountInput'; // C3-15: comma/period decimal entry (iOS)
 import ScopeLoader from '@/components/ScopeLoader';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
@@ -325,13 +326,14 @@ export default function SwapSheet({ visible, onClose, ethBalance, usdcBalance, z
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
                 {usdEntry && <span style={{ ...SKB, fontSize: 24, color: 'rgb(var(--ink-rgb) / 0.55)' }}>$</span>}
                 <input
+                  type="text"
                   inputMode="decimal"
                   value={usdEntry ? payUsd : payAmount}
                   disabled={phase === 'swapping'}
                   // USD entry clamps to cents; ETH keeps precision; ZORA/USDC → 2 decimals.
                   onChange={usdEntry
-                    ? (e) => setPayFromUsd(e.target.value.replace(/[^0-9.]/g, '').replace(/^(\d*\.\d{2})\d+$/, '$1'))
-                    : (e) => { const v = e.target.value.replace(/[^0-9.]/g, ''); setPayAmount(sellToken === 'ETH' ? v : v.replace(/^(\d*\.\d{2})\d+$/, '$1')); }}
+                    ? (e) => setPayFromUsd(sanitizeDecimalInputClamped(e.target.value, 2))
+                    : (e) => setPayAmount(sellToken === 'ETH' ? sanitizeDecimalInput(e.target.value) : sanitizeDecimalInputClamped(e.target.value, 2))}
                   placeholder="0"
                   style={{ ...SKB, fontSize: 24, color: 'var(--ink-100)', background: 'transparent', border: 'none', outline: 'none', width: '100%', padding: 0 }}
                 />

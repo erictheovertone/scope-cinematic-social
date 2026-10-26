@@ -16,6 +16,7 @@ import { base } from 'viem/chains';
 import { createScopeCoin, backOwnCoin, reconcileCoinFromTx, coinImageUrl, streamHlsUrl, HLS_MIME } from '@/lib/zoraCoins';
 import { updatePostCoinData, updatePostCoinTxHash } from '@/lib/postsService';
 import { suggestTicker, normalizeTicker, isValidTicker, tickerError } from '@/lib/economy/ticker';
+import { sanitizeDecimalInput } from '@/lib/amountInput'; // C3-15: comma/period decimal entry (iOS)
 import ScopeLoader from '@/components/ScopeLoader';
 import CoinCreatedConfirmation from '@/components/economy/CoinCreatedConfirmation';
 
@@ -192,7 +193,7 @@ export default function CreateCoinSheet({
               <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'rgb(var(--ink-rgb) / 0.5)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>BACK YOUR POST <span style={{ color: 'rgb(var(--ink-rgb) / 0.3)' }}>· OPTIONAL</span></span>
               <div style={{ display: 'flex', alignItems: 'center', border: '1px solid rgb(var(--ink-rgb) / 0.18)', padding: '0 12px', marginTop: 6 }}>
                 <span style={{ ...SKB, fontSize: 'var(--fs-16)', color: selfBuyUsd ? 'var(--ink-100)' : 'rgb(var(--ink-rgb) / 0.3)' }}>$</span>
-                <input inputMode="decimal" value={selfBuyUsd} onChange={(e) => setSelfBuyUsd(e.target.value.replace(/[^0-9.]/g, ''))} placeholder="0"
+                <input type="text" inputMode="decimal" value={selfBuyUsd} onChange={(e) => setSelfBuyUsd(sanitizeDecimalInput(e.target.value))} placeholder="0"
                   style={{ ...SKB, fontSize: 'var(--fs-16)', color: 'var(--ink-100)', background: 'transparent', WebkitAppearance: 'none', appearance: 'none', caretColor: 'var(--ink-100)', border: 'none', outline: 'none', width: '100%', padding: '11px 6px' }} />
               </div>
             </div>
