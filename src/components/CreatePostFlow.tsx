@@ -6,6 +6,7 @@ import { usePrivy, useWallets } from "@privy-io/react-auth";
 import { createWalletClient, custom } from "viem";
 import { base } from "viem/chains";
 import { createPost, updatePostCoinData, updatePostCoinTxHash, updatePostMusic } from '@/lib/postsService';
+import { saveDraft, loadDraft, clearDraft, type CreateDraft } from '@/lib/createDraft';
 import { uploadVideoToStream } from '@/lib/streamUpload';
 import MediaRenderer from '@/components/MediaRenderer';
 // NOTE: the 1155 path (mintNewPost) is DORMANT — intact in src/lib/zora.ts as the
@@ -379,6 +380,63 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
   // as plain metadata (snippet_start / snippet_length) — NO baked clip.
   const [snippetWindow, setSnippetWindow] = useState<{ start: number; length: number } | null>(null);
   const [autoThumbnail, setAutoThumbnail] = useState<string | null>(null);
+
+  // ── Brief C3-11 — draft persistence (IndexedDB) ──────────────────────────────
+  // RESTORE once on mount, only from the empty initial state (never clobber an active
+  // session). Rebuilds media from the stored blobs and jumps to the saved step.
+  const draftRestoredRef = useRef(false);
+  useEffect(() => {
+    if (draftRestoredRef.current) return;
+    draftRestoredRef.current = true;
+    if (step !== 'media' || selectedMedia.length > 0) return;
+    (async () => {
+      const d = await loadDraft();
+      if (!d) return;
+      const media: MediaItem[] = d.media.map((m) => ({
+        id: m.id,
+        file: new File([m.blob], m.name, { type: m.blob.type }),
+        url: URL.createObjectURL(m.blob),
+        type: m.type,
+      }));
+      setSelectedMedia(media);
+      setChosenLayoutId(d.chosenLayoutId);
+      setEditGeometry((d.editGeometry as EditGeometry | null) ?? null);
+      setEditParams((d.editParams as EditParams) ?? DEFAULT_PARAMS);
+      setCaption(d.caption ?? '');
+      if (d.customThumbnail) setCustomThumbnail(new File([d.customThumbnail.blob], d.customThumbnail.name, { type: d.customThumbnail.blob.type }));
+      setVideoAutoplay(d.videoAutoplay);
+      setSnippetWindow(d.snippetWindow);
+      setMusicTrackId(d.music.trackId);
+      setMusicTrack((d.music.track as LibraryTrack | null) ?? null);
+      setMusicMode(d.music.mode);
+      setMusicStart(d.music.start);
+      setStep(d.step);
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // SAVE (debounced) whenever a recoverable step holds media — "the moment any step
+  // completes" and on every edit. Best-effort; the membership round-trip / relaunch reads it.
+  useEffect(() => {
+    if (!(step === 'crop' || step === 'finishing' || step === 'edit') || selectedMedia.length === 0) return;
+    const t = setTimeout(() => {
+      const draft: CreateDraft = {
+        savedAt: Date.now(),
+        step,
+        media: selectedMedia.map((m) => ({ id: m.id, blob: m.file, type: m.type, name: m.file.name })),
+        chosenLayoutId,
+        editGeometry,
+        editParams,
+        caption,
+        customThumbnail: customThumbnail ? { blob: customThumbnail, name: customThumbnail.name } : null,
+        videoAutoplay,
+        snippetWindow,
+        music: { trackId: musicTrackId, track: musicTrack, mode: musicMode, start: musicStart },
+      };
+      void saveDraft(draft);
+    }, 600);
+    return () => clearTimeout(t);
+  }, [step, selectedMedia, chosenLayoutId, editGeometry, editParams, caption, customThumbnail, videoAutoplay, snippetWindow, musicTrackId, musicTrack, musicMode, musicStart]);
 
   // Resolve real Pro status + grid gating for FINISHING once the user is known.
   // IDENTIFIER TYPING: DID (user.id) ONLY to getUserByPrivyId; the uuid
@@ -926,6 +984,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
       setStage('Publishing');
       const newPost = await createPost(postPayload);
       console.log('[handlePost] post created:', newPost?.id);
+      void clearDraft(); // C3-11 — published: the draft is done (a later mint failure keeps the post)
 
       // Brief V2d — publish-side ready check (fire-and-forget). A short encode can finish
       // before the webhook lands; this heals the row fast without waiting for Stream's retry
@@ -1754,7 +1813,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
             <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: 13, color: 'rgb(var(--ink-rgb) / 0.55)', lineHeight: 1.5, margin: '0 0 22px' }}>Your edits will be lost.</p>
             <div style={{ display: 'flex', gap: 10 }}>
               <button onClick={() => setDiscardConfirm(false)} style={{ flex: 1, fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 12, color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.08em', background: 'transparent', border: '1px solid rgb(var(--ink-rgb) / 0.3)', cursor: 'pointer', padding: '12px 0' }}>KEEP EDITING</button>
-              <button onClick={() => { setDiscardConfirm(false); onClose(); setStep('media'); }} style={{ flex: 1, fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 12, color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.08em', background: 'transparent', border: '1px solid rgb(var(--ink-rgb) / 0.4)', cursor: 'pointer', padding: '12px 0' }}>DISCARD</button>
+              <button onClick={() => { void clearDraft(); setDiscardConfirm(false); onClose(); setStep('media'); }} style={{ flex: 1, fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 12, color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.08em', background: 'transparent', border: '1px solid rgb(var(--ink-rgb) / 0.4)', cursor: 'pointer', padding: '12px 0' }}>DISCARD</button>
             </div>
           </div>
         </div>
