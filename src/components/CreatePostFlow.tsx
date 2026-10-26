@@ -18,6 +18,7 @@ import { suggestTicker, normalizeTicker, isValidTicker } from '@/lib/economy/tic
 import { useTxNarrator } from '@/components/TxNarrator';
 import { notifyTradeSettled } from '@/lib/economy/tradeEvents';
 import MintPromptSheet from '@/components/MintPromptSheet';
+import CoinCreatedConfirmation from '@/components/economy/CoinCreatedConfirmation';
 import {
   getUserByPrivyId, getProfile, uploadImage, uploadImageWithRenditions, isProMember, invalidateProfileCache,
   getUserDecks, createDeck, addPostToDeck,
@@ -352,6 +353,9 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
   const { wallets } = useWallets();
   const narrator = useTxNarrator();
   const [mintStatus, setMintStatus] = useState<'idle' | 'minting' | 'minted' | 'mint-failed' | 'coin-failed' | 'backing-failed'>('idle');
+  // C3-14 — the shared coin-created confirmation (receipt-driven). Shown at the
+  // terminal beat, after the codification ceremony, once the coin is confirmed.
+  const [coinConfirm, setCoinConfirm] = useState<{ ticker: string } | null>(null);
   // Coin ticker (Zora symbol) + optional creator self-buy, entered on the mint step.
   const [ticker, setTicker] = useState('');
   const [selfBuyUsd, setSelfBuyUsd] = useState('');
@@ -434,6 +438,18 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
       setSelectedMedia([{ id: `seam-${Date.now()}`, file, url: URL.createObjectURL(blob), type }]);
     };
     return () => { try { delete (window as unknown as { __scopeInjectMedia?: unknown }).__scopeInjectMedia; } catch { /* noop */ } };
+  }, []);
+
+  // C3-14 harness seam — a real on-chain mint can't run in automation (needs gas
+  // + a funded wallet), so the §3 gate drives the receipt-confirmed success
+  // surface directly to assert it renders. Same gating as the media seam:
+  // installs ONLY under NEXT_PUBLIC_TEST_SEAM==='1', never in prod/preview.
+  useEffect(() => {
+    if (process.env.NEXT_PUBLIC_TEST_SEAM !== '1' || typeof window === 'undefined') return;
+    (window as unknown as { __scopeShowCoinConfirm?: unknown }).__scopeShowCoinConfirm = (sym?: string) => {
+      setCoinConfirm({ ticker: normalizeTicker(sym || 'SCOPE') });
+    };
+    return () => { try { delete (window as unknown as { __scopeShowCoinConfirm?: unknown }).__scopeShowCoinConfirm; } catch { /* noop */ } };
   }, []);
 
   // SAVE (debounced) whenever a recoverable step holds media — "the moment any step
@@ -1239,11 +1255,14 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
         }
       }
 
-      // TERMINAL BEAT — then, and only then, the epilogue: navigation.
+      // TERMINAL BEAT — the codification ceremony has played; now the shared
+      // coin-created confirmation (C3-14), receipt-confirmed (createScopeCoin
+      // returned a parsed on-chain deployment above). Its VIEW/DONE run the
+      // epilogue — navigation happens only on the user's tap, not a timer.
       setBackingNarration(`[ FRAGMENTS CREATED · ${sym} ]`);
       notifyTradeSettled(postId); // the ONE post-trade refresh path
-      await beat(2000);
-      completeFlow();
+      await beat(1200);
+      setCoinConfirm({ ticker: sym });
     } catch (coinError) {
       // IN-FLOW failure state: [ COIN FAILED ] + plain-English reason +
       // RETRY / CONTINUE TO PROFILE (rendered by MintPromptSheet). The post is
@@ -1919,6 +1938,13 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
         onRetry={mintStatus === 'backing-failed' ? retryBacking : handleDoMint}
         onContinue={completeFlow}
       />
+      {coinConfirm && (
+        <CoinCreatedConfirmation
+          ticker={coinConfirm.ticker}
+          onView={() => { setCoinConfirm(null); completeFlow(); }}
+          onDone={() => { setCoinConfirm(null); completeFlow(); }}
+        />
+      )}
       {showMusicPicker && (
         <MusicPicker
           currentTrackId={musicTrackId}

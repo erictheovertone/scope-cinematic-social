@@ -9,6 +9,7 @@
 // backstop). Reuses the same wallet + ticker rules.
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useWallets } from '@privy-io/react-auth';
 import { createWalletClient, custom } from 'viem';
 import { base } from 'viem/chains';
@@ -16,6 +17,7 @@ import { createScopeCoin, backOwnCoin, reconcileCoinFromTx, coinImageUrl, stream
 import { updatePostCoinData, updatePostCoinTxHash } from '@/lib/postsService';
 import { suggestTicker, normalizeTicker, isValidTicker, tickerError } from '@/lib/economy/ticker';
 import ScopeLoader from '@/components/ScopeLoader';
+import CoinCreatedConfirmation from '@/components/economy/CoinCreatedConfirmation';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -42,12 +44,17 @@ export default function CreateCoinSheet({
   onDone?: () => void;
 }) {
   const { wallets } = useWallets();
+  const router = useRouter();
   const [ticker, setTicker] = useState(() => normalizeTicker(post.ticker || suggestTicker(post.caption || '')));
   const [selfBuyUsd, setSelfBuyUsd] = useState('');
   const [phase, setPhase] = useState<'idle' | 'working' | 'done' | 'failed'>('idle');
   const [error, setError] = useState<string | null>(null);
   // Slim signature narration during the multi-signature sequence.
   const [narration, setNarration] = useState<string | null>(null);
+  // C3-14 — the shared coin-created confirmation (receipt-driven). Set only once
+  // createScopeCoin has returned a confirmed on-chain deployment.
+  const [confirmedTicker, setConfirmedTicker] = useState('');
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const run = async () => {
     const sym = normalizeTicker(ticker);
@@ -76,6 +83,8 @@ export default function CreateCoinSheet({
             coin_currency: post.coin_currency || 'ETH',
           });
           setPhase('done');
+          setConfirmedTicker(sym);
+          setShowConfirm(true); // receipt-confirmed (reconciled from the landed tx)
           onDone?.();
           return;
         }
@@ -122,6 +131,10 @@ export default function CreateCoinSheet({
           setNarration('BACKING DIDN’T LAND — RETRY FROM YOUR POST');
         }
       }
+      // C3-14 — the coin is receipt-confirmed live; fire the shared confirmation.
+      // (Backing is decoupled; a backing miss above never un-coins the post.)
+      setConfirmedTicker(sym);
+      setShowConfirm(true);
       onDone?.();
     } catch (e: any) {
       console.error('[CreateCoinSheet] failed:', e);
@@ -132,6 +145,18 @@ export default function CreateCoinSheet({
 
   if (!visible) return null;
   const working = phase === 'working';
+
+  // C3-14 — the shared confirmation supersedes the sheet on success. VIEW lands
+  // on the creator's profile, where the just-coined post now lives.
+  if (showConfirm) {
+    return (
+      <CoinCreatedConfirmation
+        ticker={confirmedTicker}
+        onView={() => { setShowConfirm(false); onClose(); router.push('/profile'); }}
+        onDone={() => { setShowConfirm(false); onClose(); }}
+      />
+    );
+  }
 
   return (
     <>
