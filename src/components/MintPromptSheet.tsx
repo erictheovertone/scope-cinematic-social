@@ -74,9 +74,11 @@ export default function MintPromptSheet({ visible, onMint, onSkip, onCoinSkipped
     if (!walletReady || !embeddedWallet) return;
     setCheckingBalance(true);
     try {
+      const rpcUrl = process.env.NEXT_PUBLIC_ALCHEMY_BASE_URL || 'https://mainnet.base.org';
+      const rpcHost = (() => { try { return new URL(rpcUrl).host; } catch { return 'unknown'; } })();
       const publicClient = createPublicClient({
         chain: base,
-        transport: http(process.env.NEXT_PUBLIC_ALCHEMY_BASE_URL || 'https://mainnet.base.org'),
+        transport: http(rpcUrl),
       });
       // Read the REAL chain the transport answers as — never assume the URL.
       // GAS (ETH) is the ONLY mint gate. The self-buy ("back your post") is
@@ -93,8 +95,10 @@ export default function MintPromptSheet({ visible, onMint, onSkip, onCoinSkipped
       const gasOk = ethBalance >= GAS_ALLOWANCE_ETH;
 
       // The one-line diagnostic this class of bug demands — on EVERY evaluation.
+      // C3-10: widened to the full money-path trace (ts · addr · rpcHost · chainId ·
+      // raw wei · parsed eth · threshold) so a wrong "fund" can be read off one line.
       console.log(
-        `[coin-gate] addr=${embeddedWallet.address} chainId=${chainId} eth=${ethBalance} (gas≥${GAS_ALLOWANCE_ETH}→${gasOk}) → ${gasOk ? 'PROCEED' : 'FUND WALLET'}`
+        `[coin-gate] ts=${new Date().toISOString()} addr=${embeddedWallet.address} rpcHost=${rpcHost} chainId=${chainId} rawWei=${balanceWei.toString()} eth=${ethBalance} threshold=${GAS_ALLOWANCE_ETH} gasOk=${gasOk} → ${gasOk ? 'PROCEED' : 'FUND WALLET'}`
       );
 
       if (chainId !== base.id) {

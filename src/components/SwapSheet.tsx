@@ -196,6 +196,13 @@ export default function SwapSheet({ visible, onClose, ethBalance, usdcBalance, z
       : sellToken === 'USDC' ? { wallet: sender, requireUsdc: payNum }
       : { wallet: sender, coin: { have: zoraBalance, need: payNum } },
     );
+    // C3-10 instrumentation (trace only): one line to disambiguate a wrong "insufficient".
+    {
+      const rpcHost = (() => { try { return new URL(process.env.NEXT_PUBLIC_ALCHEMY_BASE_URL || 'https://mainnet.base.org').host; } catch { return 'unknown'; } })();
+      console.log(
+        `[swap-gate] ts=${new Date().toISOString()} sender=${sender} rpcHost=${rpcHost} sell=${sellToken} buy=${buyToken} pay=${payNum} displayBal(ETH/USDC/ZORA)=${ethBalance}/${usdcBalance}/${zoraBalance} → ${pf.ok ? 'OK' : 'BLOCKED:' + pf.reason}`
+      );
+    }
     if (!pf.ok) { setSwapError(preflightMessage(pf, { action: 'swap', ticker: 'ZORA' })); return; }
 
     setPhase('swapping');
