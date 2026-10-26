@@ -33,6 +33,28 @@ import { splitTintRgb } from './splitTonePalette';
 import { buildCurveLUT, isIdentityChannel } from '@/lib/editor/curveEngine';
 import { curveShaders } from './passes/curves';
 import { lookShaders } from './passes/look';
+import { pushCropTrace } from '@/lib/cropDebug';
+
+// ── Brief C3-2 — colour-management readout (1): the decoded bitmap ─────────────
+// Readout (1) of three (decode → GL preview → bake). Test-only, gated on
+// NEXT_PUBLIC_TEST_SEAM so it is NEVER in a prod/preview bundle. Samples the
+// swatch's green (left) + orange (right, the discriminator) regions straight off
+// the colour-managed texture-source canvas, exposes them on window for the
+// create-color spec, and mirrors a line to the 5-tap overlay so the reading can
+// be screenshotted ON DEVICE — because headless WebKit is only the plumbing
+// guard; Eric's iPhone is the arbiter for the actual P3 wash.
+function colorReadout1(ctx: CanvasRenderingContext2D, w: number, h: number) {
+  if (process.env.NEXT_PUBLIC_TEST_SEAM !== '1' || typeof window === 'undefined') return;
+  try {
+    const px = (nx: number, ny: number) => {
+      const d = ctx.getImageData(Math.round(nx * w), Math.round(ny * h), 1, 1).data;
+      return [d[0], d[1], d[2]] as [number, number, number];
+    };
+    const readout = { green: px(0.25, 0.5), orange: px(0.75, 0.5) };
+    (window as unknown as { __scopeColorReadout1?: unknown }).__scopeColorReadout1 = readout;
+    pushCropTrace(`[c3-2] readout1 decode · green=${readout.green.join(',')} · orange=${readout.orange.join(',')}`);
+  } catch { /* best-effort — never block the preview */ }
+}
 
 // Labeled pass-through used for every not-yet-implemented stage. Sampling the
 // input unchanged keeps the chain intact and ordered.
@@ -127,10 +149,19 @@ export default function Pipeline({ source, params, width, height, surfaceRef, pr
     const drawTo = (src: CanvasImageSource) => {
       const canvas = document.createElement('canvas');
       canvas.width = w; canvas.height = h;
-      const ctx = canvas.getContext('2d');
+      // Brief C3-2 — pin the texture-source context to sRGB, matching the app's
+      // other colour-managed sinks (bakeLook, editGeometry). The decode above
+      // already did the P3→sRGB conversion (colorSpaceConversion:'default'); this
+      // makes the DESTINATION space explicit so the managed bytes can't drift on
+      // a UA whose default 2D colourSpace isn't sRGB. The gl-react texture is
+      // uploaded from THIS canvas, so this is the first/last managed hop before GL.
+      const ctx = canvas.getContext('2d', { colorSpace: 'srgb' }) as CanvasRenderingContext2D | null;
       if (!ctx) return;
       ctx.drawImage(src, 0, 0);
-      if (!cancelled) setImgCanvas(canvas);
+      if (!cancelled) {
+        setImgCanvas(canvas);
+        colorReadout1(ctx, w, h); // C3-2 — readout (1): the decoded bitmap, test-only
+      }
     };
     (async () => {
       try {
