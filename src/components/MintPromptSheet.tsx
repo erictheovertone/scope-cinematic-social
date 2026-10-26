@@ -6,6 +6,7 @@ import { base } from "viem/chains";
 import { isValidTicker, tickerError } from "@/lib/economy/ticker";
 import { GAS_FLOOR_ETH } from "@/lib/economy/preflight";
 import ScopeLoader from "@/components/ScopeLoader";
+import { pushCropTrace } from "@/lib/cropDebug"; // C3-10: route the money-path trace to the on-screen 5-tap overlay
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -96,15 +97,16 @@ export default function MintPromptSheet({ visible, onMint, onSkip, onCoinSkipped
 
       // The one-line diagnostic this class of bug demands — on EVERY evaluation.
       // C3-10: widened to the full money-path trace (ts · addr · rpcHost · chainId ·
-      // raw wei · parsed eth · threshold) so a wrong "fund" can be read off one line.
-      console.log(
+      // raw wei · parsed eth · threshold) and routed through pushCropTrace so it also
+      // renders in the on-screen 5-tap debug overlay (console isn't reachable on the phone).
+      pushCropTrace(
         `[coin-gate] ts=${new Date().toISOString()} addr=${embeddedWallet.address} rpcHost=${rpcHost} chainId=${chainId} rawWei=${balanceWei.toString()} eth=${ethBalance} threshold=${GAS_ALLOWANCE_ETH} gasOk=${gasOk} → ${gasOk ? 'PROCEED' : 'FUND WALLET'}`
       );
 
       if (chainId !== base.id) {
         // RPC answers as the wrong network — the balance read is meaningless.
         // Don't false-gate on garbage data; let the coin step be the loud gate.
-        console.error(`[coin-gate] RPC chainId ${chainId} ≠ Base ${base.id} — skipping gate, proceeding to mint`);
+        pushCropTrace(`[coin-gate] RPC chainId ${chainId} ≠ Base ${base.id} — skipping gate, proceeding to mint`);
         onMint();
         return;
       }
@@ -112,7 +114,7 @@ export default function MintPromptSheet({ visible, onMint, onSkip, onCoinSkipped
       if (gasOk) onMint();
       else setInsufficientFunds(true);
     } catch (e) {
-      console.error('[coin-gate] balance check failed (proceeding — coin step is the loud gate):', e);
+      pushCropTrace(`[coin-gate] balance check FAILED (proceeding — coin step is the loud gate): ${e instanceof Error ? e.message : String(e)}`);
       onMint();
     } finally {
       setCheckingBalance(false);

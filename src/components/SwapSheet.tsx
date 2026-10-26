@@ -20,6 +20,7 @@ import { createWalletClient, custom, parseUnits } from 'viem';
 import { base } from 'viem/chains';
 import { swapTokens, quoteSwap, erc20SwapNeedsApproval, swapTokenDecimals, errInfo, type SwapToken } from '@/lib/zoraCoins';
 import { preflightTrade, preflightMessage, GAS_FLOOR_ETH } from '@/lib/economy/preflight';
+import { pushCropTrace } from '@/lib/cropDebug'; // C3-10: swap trace → on-screen 5-tap overlay
 import { getEthUsdRate } from '@/lib/coingecko';
 import ScopeLoader from '@/components/ScopeLoader';
 
@@ -199,7 +200,7 @@ export default function SwapSheet({ visible, onClose, ethBalance, usdcBalance, z
     // C3-10 instrumentation (trace only): one line to disambiguate a wrong "insufficient".
     {
       const rpcHost = (() => { try { return new URL(process.env.NEXT_PUBLIC_ALCHEMY_BASE_URL || 'https://mainnet.base.org').host; } catch { return 'unknown'; } })();
-      console.log(
+      pushCropTrace(
         `[swap-gate] ts=${new Date().toISOString()} sender=${sender} rpcHost=${rpcHost} sell=${sellToken} buy=${buyToken} pay=${payNum} displayBal(ETH/USDC/ZORA)=${ethBalance}/${usdcBalance}/${zoraBalance} → ${pf.ok ? 'OK' : 'BLOCKED:' + pf.reason}`
       );
     }

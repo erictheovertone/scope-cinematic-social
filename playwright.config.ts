@@ -10,6 +10,7 @@ const STATE = process.env.AUTH_STATE || 'test/.auth/state.json';
 
 export default defineConfig({
   testDir: 'test',
+  globalSetup: './test/global-setup.ts', // C3 — fail loud on a stale/wrong-origin AUTH_STATE
   testMatch: /create-(matrix|perf|shots)\.spec\.ts/,
   timeout: 120_000,
   retries: 0,
