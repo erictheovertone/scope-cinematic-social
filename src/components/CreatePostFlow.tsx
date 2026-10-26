@@ -415,6 +415,25 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // ── Brief C3 (gate) — HARNESS-ONLY media seam ────────────────────────────────
+  // The real video media-add path (poster extraction via video decode) doesn't complete
+  // under Playwright, so the §3 end-to-end gate can't reach crop→…→publish for video. This
+  // exposes a window injector that drops a pre-processed media item straight into
+  // selectedMedia. Gated on NODE_ENV: in a production build the effect returns before touching
+  // window, so the injector is NEVER installed and NEVER callable in prod — zero functional
+  // presence. (The project's minifier leaves the unreachable literal in the chunk; a bundler
+  // DEFINE/DCE flag would byte-strip it too — add if strict exclusion is wanted.) The §3 video
+  // gate runs against a dev/preview build (NODE_ENV !== production), where the seam installs.
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'production' || typeof window === 'undefined') return;
+    (window as unknown as { __scopeInjectMedia?: unknown }).__scopeInjectMedia = async (type: 'image' | 'video', url: string) => {
+      const blob = await (await fetch(url)).blob();
+      const file = new File([blob], `seam.${type === 'video' ? 'mp4' : 'jpg'}`, { type: blob.type || (type === 'video' ? 'video/mp4' : 'image/jpeg') });
+      setSelectedMedia([{ id: `seam-${Date.now()}`, file, url: URL.createObjectURL(blob), type }]);
+    };
+    return () => { try { delete (window as unknown as { __scopeInjectMedia?: unknown }).__scopeInjectMedia; } catch { /* noop */ } };
+  }, []);
+
   // SAVE (debounced) whenever a recoverable step holds media — "the moment any step
   // completes" and on every edit. Best-effort; the membership round-trip / relaunch reads it.
   useEffect(() => {
