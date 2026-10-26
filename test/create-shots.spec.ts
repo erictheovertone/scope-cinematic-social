@@ -2,13 +2,14 @@ import { test, expect } from '@playwright/test';
 import { join } from 'path';
 import { mkdirSync } from 'fs';
 
-// Brief C3 §0 — reachable-set screenshots. Mirrors create-matrix's proven path
-// (?debug=crop + [crop] open / [finish] console traces) to drive the authed create
-// photo path media → crop → finishing → EDIT & POST, then shoots the edit step at 375
-// in BOTH themes — capturing the C3-1 off-token black band + the edit-step chrome.
-// C3-5/6/7 (autoplay switch, MIRAGE/THUMBNAIL preview, autoplay-on ADD MUSIC) are
-// isVideoPost-only and do not render for an image fixture → device walk / video fixture.
-//   BASE_URL=https://scopeapp.world npx playwright test test/create-shots.spec.ts --project=iphone-webkit
+// Brief C3 §0 — reachable-set screenshots. Drives the authed create photo path
+// media → crop → finishing → EDIT & POST via the proven [crop] open/[finish] traces
+// (?debug=crop), hides the debug overlay, and shoots the edit step at 375 in BOTH
+// themes — the C3-1 off-token band + edit-step chrome. Requires a FRESH, prod-origin
+// session (create:login:test); a stale/localhost session leaves finishCtx unresolved
+// so the cropper never opens. C3-5/6/7 are isVideoPost-only → need a video fixture.
+//   BASE_URL=https://scopeapp.world AUTH_STATE=test/.auth/throwaway.json \
+//     npx playwright test test/create-shots.spec.ts --project=iphone-webkit
 
 const FIX = (n: string) => join(process.cwd(), 'test/fixtures/create', n);
 const OUT = join(process.cwd(), 'test/shots');
@@ -21,12 +22,21 @@ async function reachEdit(page: import('@playwright/test').Page) {
   const enter = page.getByRole('button', { name: /^ENTER$/ });
   if (await enter.count()) await enter.first().click({ timeout: 3000 }).catch(() => {});
   await page.locator('input[type="file"]').first().setInputFiles(FIX('landscape-4000x3000-noexif.jpg'));
-  await page.getByRole('button', { name: 'Next' }).first().click();                 // media → crop
-  await expect.poll(() => traces.find((t) => t.startsWith('[crop] open')), { timeout: 20_000 }).toBeTruthy();
-  await page.getByRole('button', { name: 'Confirm' }).first().click();              // crop → finishing
-  await expect.poll(() => traces.find((t) => t.startsWith('[finish]')), { timeout: 20_000 }).toBeTruthy();
-  await page.getByRole('button', { name: /^done$/i }).first().click({ timeout: 20_000 }); // finishing → edit
-  await page.waitForTimeout(1000);
+  await page.getByRole('button', { name: 'Next' }).first().click();
+  await expect.poll(() => traces.find((t) => t.startsWith('[crop] open')), { timeout: 30_000 }).toBeTruthy();
+  await page.getByRole('button', { name: 'Confirm' }).first().click();
+  await expect.poll(() => traces.find((t) => t.startsWith('[finish]')), { timeout: 30_000 }).toBeTruthy();
+  await page.getByRole('button', { name: /^done$/i }).first().click({ timeout: 20_000 });
+  await page.waitForTimeout(1500); // settle on the edit step
+  // Hide the ?debug=crop overlay (fixed element whose text starts with "[crop]") for a clean shot.
+  await page.evaluate(() => {
+    document.querySelectorAll('div').forEach((d) => {
+      if (getComputedStyle(d).position === 'fixed' && (d.textContent || '').trimStart().startsWith('[crop]')) {
+        (d as HTMLElement).style.display = 'none';
+      }
+    });
+  });
+  await page.waitForTimeout(400);
 }
 
 for (const scheme of ['dark', 'light'] as const) {
