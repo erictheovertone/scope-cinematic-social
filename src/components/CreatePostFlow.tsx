@@ -387,11 +387,13 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
   const draftRestoredRef = useRef(false);
   useEffect(() => {
     if (draftRestoredRef.current) return;
+    if (!user?.id) return; // wait for Privy to resolve the user before touching the draft (owner check)
     draftRestoredRef.current = true;
     if (step !== 'media' || selectedMedia.length > 0) return;
     (async () => {
       const d = await loadDraft();
       if (!d) return;
+      if (d.ownerId && d.ownerId !== user.id) { void clearDraft(); return; } // C3-11 — not this user's draft
       const media: MediaItem[] = d.media.map((m) => ({
         id: m.id,
         file: new File([m.blob], m.name, { type: m.blob.type }),
@@ -413,19 +415,19 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
       setStep(d.step);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [user?.id]);
 
   // ── Brief C3 (gate) — HARNESS-ONLY media seam ────────────────────────────────
   // The real video media-add path (poster extraction via video decode) doesn't complete
   // under Playwright, so the §3 end-to-end gate can't reach crop→…→publish for video. This
   // exposes a window injector that drops a pre-processed media item straight into
-  // selectedMedia. Gated on NODE_ENV: in a production build the effect returns before touching
-  // window, so the injector is NEVER installed and NEVER callable in prod — zero functional
-  // presence. (The project's minifier leaves the unreachable literal in the chunk; a bundler
-  // DEFINE/DCE flag would byte-strip it too — add if strict exclusion is wanted.) The §3 video
-  // gate runs against a dev/preview build (NODE_ENV !== production), where the seam installs.
+  // selectedMedia. Gated on NEXT_PUBLIC_TEST_SEAM: the injector installs ONLY when that var ===
+  // '1' (set for the local §3 gate build: next build + next start with NEXT_PUBLIC_TEST_SEAM=1).
+  // It is unset in prod AND in Vercel preview (both production builds), so the seam never
+  // activates there — "prod never carries the seam." The §3 gate runs locally against prod
+  // Supabase with the throwaway session on the localhost origin.
   useEffect(() => {
-    if (process.env.NODE_ENV === 'production' || typeof window === 'undefined') return;
+    if (process.env.NEXT_PUBLIC_TEST_SEAM !== '1' || typeof window === 'undefined') return;
     (window as unknown as { __scopeInjectMedia?: unknown }).__scopeInjectMedia = async (type: 'image' | 'video', url: string) => {
       const blob = await (await fetch(url)).blob();
       const file = new File([blob], `seam.${type === 'video' ? 'mp4' : 'jpg'}`, { type: blob.type || (type === 'video' ? 'video/mp4' : 'image/jpeg') });
@@ -441,6 +443,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
     const t = setTimeout(() => {
       const draft: CreateDraft = {
         savedAt: Date.now(),
+        ownerId: user?.id ?? '',
         step,
         media: selectedMedia.map((m) => ({ id: m.id, blob: m.file, type: m.type, name: m.file.name })),
         chosenLayoutId,

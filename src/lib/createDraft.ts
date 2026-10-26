@@ -11,6 +11,9 @@
 
 export interface CreateDraft {
   savedAt: number;
+  /** C3-11 — the Privy user id that owns this draft. On a shared device the restore refuses
+   *  a draft whose owner != the current user, so the next person never sees someone else's. */
+  ownerId: string;
   step: 'crop' | 'finishing' | 'edit';
   media: { id: string; blob: Blob; type: 'image' | 'video'; name: string }[];
   chosenLayoutId: string | null;

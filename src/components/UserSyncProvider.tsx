@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { usePrivy, useWallets } from '@privy-io/react-auth';
 import { syncUserWithSupabase, getUserByPrivyId, getProfile } from '@/lib/userService';
 import { getEmbeddedAddress } from '@/lib/embeddedWallet';
+import { clearDraft } from '@/lib/createDraft';
 
 // Only attempt routing on post-login transition pages.
 // On all other paths we sync silently and let the page handle itself.
@@ -19,6 +20,16 @@ export function UserSyncProvider({ children }: { children: React.ReactNode }) {
   // finishes creating the embedded wallet (async at signup) → the users.wallet_address row is
   // backfilled/corrected to the embedded on first authenticated load, never left as the primary.
   const embeddedAddress = getEmbeddedAddress(user, wallets);
+
+  // C3-11 — clear the create draft on a real LOGOUT transition (true→false), not on the
+  // initial not-yet-authenticated render (which would wipe a valid draft on the Stripe-rail
+  // reload before Privy re-hydrates). Shared-device safety; the restore's owner check is the
+  // durable guard, this is the immediate one.
+  const wasAuthedRef = useRef(false);
+  useEffect(() => {
+    if (authenticated) { wasAuthedRef.current = true; }
+    else if (wasAuthedRef.current) { wasAuthedRef.current = false; void clearDraft(); }
+  }, [authenticated]);
 
   useEffect(() => {
     console.log('[UserSyncProvider] effect — authenticated:', authenticated, 'user:', user?.id ?? 'null', 'pathname:', pathname);
