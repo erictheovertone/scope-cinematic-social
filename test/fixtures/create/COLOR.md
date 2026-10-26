@@ -1,5 +1,18 @@
 # C3-2 — colour-management fixtures & the three-readout assert
 
+## RESOLVED (commit 667230c) — the wash was NOT colour management
+
+Eric's device readout (grey byte-identical; red/green/orange each pulled toward
+their own luma; blue on orange 0→29) reproduced to the byte under a 0.8 saturation
+factor. Root cause: `saturation` is the only asymmetric bi tool ([-1, 0.6]) and
+`mapStop` rested the zero-stop at the midpoint (-0.2), not the identity (0) — so
+`mix(luma, rgb, 0.8)` ran on EVERY image at rest, in preview and bake alike. Fixed
+by anchoring bi tools at a declared `neutral` (saturation → 0). The three-readout
+scaffold below stays as the plumbing guard; the colour-managed decode + sRGB
+texture pin remain correct hardening, but they were never the wash. The sections
+below are kept for the methodology.
+
+
 ## The fixtures (real wide-gamut, not just tagged)
 
 Generated with ImageMagick + the macOS system profile
