@@ -1,12 +1,19 @@
 "use client";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useWallets, useFundWallet, usePrivy } from "@privy-io/react-auth";
-import { createPublicClient, http, formatEther } from "viem";
+import { createPublicClient, http, formatEther, parseEther } from "viem";
 import { base } from "viem/chains";
 import { isValidTicker, tickerError } from "@/lib/economy/ticker";
 import { GAS_FLOOR_ETH } from "@/lib/economy/preflight";
 import ScopeLoader from "@/components/ScopeLoader";
 import { pushCropTrace } from "@/lib/cropDebug"; // C3-10: route the money-path trace to the on-screen 5-tap overlay
+
+// C3-10 — the mint funding threshold is the LIVE gas cost for the createCoin tx, not a
+// hardcoded floor. Representative gas units for the estimate × 1.5, clamped to a sane band
+// (a near-empty wallet still can't mint; a funded wallet is never false-FUNDed).
+const MINT_GAS_UNITS = BigInt(3_000_000); // ~createCoin on Base
+const GAS_FLOOR_WEI = parseEther('0.00003');
+const GAS_CEIL_WEI = parseEther('0.0002');
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -46,6 +53,8 @@ export default function MintPromptSheet({ visible, onMint, onSkip, onCoinSkipped
   const [expanded, setExpanded] = useState(false);
   const [insufficientFunds, setInsufficientFunds] = useState(false);
   const [checkingBalance, setCheckingBalance] = useState(false);
+  const [requiredEth, setRequiredEth] = useState<number>(0.00003); // C3-10 — exact gas threshold to display
+  const gateRetriesRef = useRef(0);
 
   const { wallets } = useWallets();
   const { fundWallet } = useFundWallet();
@@ -88,36 +97,51 @@ export default function MintPromptSheet({ visible, onMint, onSkip, onCoinSkipped
       // backing leg skips / hands off downstream (backOwnCoin fail-fast → the
       // post's collect sheet). Gating the mint on USDC-for-backing was the
       // FUND WALLET mis-fire — removed.
-      const [balanceWei, chainId] = await Promise.all([
+      const [balanceWei, chainId, gasPrice] = await Promise.all([
         publicClient.getBalance({ address: embeddedWallet.address as `0x${string}` }),
         publicClient.getChainId(),
+        publicClient.getGasPrice(),
       ]);
+      // C3-10 — threshold is the LIVE gas cost for the mint tx (× 1.5), clamped to [floor, ceil].
+      // Eric's 0.000172 ETH was > the real cost but < the old hardcoded 0.0002 → false FUND.
+      const estWei = (gasPrice * MINT_GAS_UNITS * BigInt(15)) / BigInt(10);
+      const thresholdWei = estWei < GAS_FLOOR_WEI ? GAS_FLOOR_WEI : estWei > GAS_CEIL_WEI ? GAS_CEIL_WEI : estWei;
       const ethBalance = parseFloat(formatEther(balanceWei));
-      const gasOk = ethBalance >= GAS_ALLOWANCE_ETH;
+      const thresholdEth = parseFloat(formatEther(thresholdWei));
+      setRequiredEth(thresholdEth);
+      const gasOk = balanceWei >= thresholdWei;
+      gateRetriesRef.current = 0;
 
-      // The one-line diagnostic this class of bug demands — on EVERY evaluation.
-      // C3-10: widened to the full money-path trace (ts · addr · rpcHost · chainId ·
-      // raw wei · parsed eth · threshold) and routed through pushCropTrace so it also
-      // renders in the on-screen 5-tap debug overlay (console isn't reachable on the phone).
+      // The one-line diagnostic this class of bug demands — on EVERY evaluation. Routed through
+      // pushCropTrace so it also renders in the on-screen 5-tap overlay (no phone console).
       pushCropTrace(
-        `[coin-gate] ts=${new Date().toISOString()} addr=${embeddedWallet.address} rpcHost=${rpcHost} chainId=${chainId} rawWei=${balanceWei.toString()} eth=${ethBalance} threshold=${GAS_ALLOWANCE_ETH} gasOk=${gasOk} → ${gasOk ? 'PROCEED' : 'FUND WALLET'}`
+        `[coin-gate] ts=${new Date().toISOString()} addr=${embeddedWallet.address} rpcHost=${rpcHost} chainId=${chainId} rawWei=${balanceWei.toString()} eth=${ethBalance} gasPriceWei=${gasPrice.toString()} thresholdWei=${thresholdWei.toString()} thresholdEth=${thresholdEth} gasOk=${gasOk} → ${gasOk ? 'PROCEED' : 'FUND WALLET'}`
       );
 
       if (chainId !== base.id) {
         // RPC answers as the wrong network — the balance read is meaningless.
         // Don't false-gate on garbage data; let the coin step be the loud gate.
         pushCropTrace(`[coin-gate] RPC chainId ${chainId} ≠ Base ${base.id} — skipping gate, proceeding to mint`);
+        setCheckingBalance(false);
         onMint();
         return;
       }
 
+      setCheckingBalance(false);
       if (gasOk) onMint();
       else setInsufficientFunds(true);
     } catch (e) {
-      pushCropTrace(`[coin-gate] balance check FAILED (proceeding — coin step is the loud gate): ${e instanceof Error ? e.message : String(e)}`);
-      onMint();
-    } finally {
+      // C3-10 — an UNKNOWN balance/gas must NEVER show FUND. Keep "checking…" and retry; only
+      // after a couple of failures proceed to mint (the coin step is the loud gate) — still never FUND.
+      pushCropTrace(`[coin-gate] read FAILED (checking…/retry ${gateRetriesRef.current + 1}): ${e instanceof Error ? e.message : String(e)}`);
+      if (gateRetriesRef.current < 2) {
+        gateRetriesRef.current += 1;
+        setTimeout(() => { void checkBalanceAndMint(); }, 800); // keep checkingBalance = true
+        return;
+      }
+      gateRetriesRef.current = 0;
       setCheckingBalance(false);
+      onMint();
     }
   };
 
@@ -169,7 +193,7 @@ export default function MintPromptSheet({ visible, onMint, onSkip, onCoinSkipped
               TO CREATE A COIN.
             </p>
             <p style={{ ...SKR, fontSize: 'var(--fs-12)', color: 'rgb(var(--ink-rgb) / 0.55)', lineHeight: 1.6, margin: '0 0 28px' }}>
-              Creating a coin takes a tiny network fee, paid in ETH — usually less than a cent on Base. Add a little ETH to your wallet with a card or Apple Pay and you&rsquo;re set.
+              Creating a coin takes a tiny network fee, paid in ETH — about {requiredEth.toFixed(5)} ETH right now (usually under a cent on Base). Add a little ETH to your wallet with a card or Apple Pay and you&rsquo;re set.
             </p>
             {[
               'You earn ETH every time someone collects your post',
@@ -203,7 +227,7 @@ export default function MintPromptSheet({ visible, onMint, onSkip, onCoinSkipped
             </button>
             {embeddedWallet && (
               <p style={{ ...SKR, fontSize: 'var(--fs-8)', color: 'rgb(var(--ink-rgb) / 0.2)', textAlign: 'center', margin: '12px 0 0' }}>
-                YOUR WALLET · {embeddedWallet.address.slice(0, 6)}...{embeddedWallet.address.slice(-4)}
+                YOUR WALLET · {embeddedWallet.address.slice(0, 6)}...{embeddedWallet.address.slice(-4)} · NEEDS ~{requiredEth.toFixed(5)} ETH
               </p>
             )}
           </div>

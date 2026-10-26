@@ -11,7 +11,7 @@
 // attempt is the loud gate (same philosophy as the mint gas gate). A pre-flight
 // must never block a funded wallet on a flaky RPC read.
 
-import { getEthBalance, getUsdcBalance } from "@/lib/wallet";
+import { getEthBalance, getUsdcBalance, getGasFloorEth } from "@/lib/wallet";
 
 /** The one gas floor, shared with the mint gate (MintPromptSheet imports this).
     createCoin/trades on Base ≈ a few M gas at sub-0.05 gwei → well under
@@ -44,9 +44,10 @@ export async function preflightTrade(args: {
   if (!wallet) return { ok: true }; // no wallet to read — the attempt is the gate
 
   try {
-    const [ethStr, usdcStr] = await Promise.all([
+    const [ethStr, usdcStr, gasFloor] = await Promise.all([
       getEthBalance(wallet),
       requireUsdc != null ? getUsdcBalance(wallet) : Promise.resolve(null),
+      getGasFloorEth(), // C3-10 — live gas floor, not the hardcoded 0.0002 that false-gated low balances
     ]);
     const eth = parseFloat(ethStr);
 
@@ -56,10 +57,10 @@ export async function preflightTrade(args: {
         return { ok: false, reason: "insufficient_usdc", shortfallUsd: requireUsdc - usdc };
       }
     }
-    if (requireEth != null && eth < requireEth + GAS_FLOOR_ETH) {
-      return { ok: false, reason: "insufficient_eth", shortfallEth: requireEth + GAS_FLOOR_ETH - eth };
+    if (requireEth != null && eth < requireEth + gasFloor) {
+      return { ok: false, reason: "insufficient_eth", shortfallEth: requireEth + gasFloor - eth };
     }
-    if (eth < GAS_FLOOR_ETH) return { ok: false, reason: "insufficient_gas" };
+    if (eth < gasFloor) return { ok: false, reason: "insufficient_gas" };
     return { ok: true };
   } catch (e) {
     console.warn("[preflight] balance read failed (fail-open — the attempt is the gate):", e);

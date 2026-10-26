@@ -13,6 +13,19 @@ export async function getEthBalance(address: string): Promise<string> {
   return formatEther(balance)
 }
 
+// C3-10 — a LIVE gas floor (ETH) for the preflight, instead of a hardcoded 0.0002 that
+// false-gated a funded wallet at low balances. gasPrice × representative units × 1.5,
+// clamped [0.00002, 0.0002]. Unknown (RPC fail) → the LOW floor, never over-gate.
+export async function getGasFloorEth(gasUnits: bigint = BigInt(600_000)): Promise<number> {
+  try {
+    const gp = await client.getGasPrice()
+    const eth = parseFloat(formatEther((gp * gasUnits * BigInt(15)) / BigInt(10)))
+    return Math.min(0.0002, Math.max(0.00002, eth))
+  } catch {
+    return 0.00002
+  }
+}
+
 const USDC_ABI = [
   {
     name: 'balanceOf',
