@@ -45,11 +45,18 @@ export function mapStop(toolKey: ToolKey, stop: number): number {
     return cfg.min + e * (cfg.max - cfg.min);
   }
 
-  // bi: [−1,1] normalized → ease magnitude, keep sign → lerp into [min,max]
+  // bi: [−1,1] normalized → ease magnitude, keep sign → anchor at neutral.
   const n = Math.max(-1, Math.min(1, stop / 6));
   const sign = n < 0 ? -1 : 1;
   const easedMag = ease(Math.abs(n), cfg.easing);
   const easedPos = sign * easedMag; // ∈ [−1,1]
-  // position −1 → min, 0 → midpoint, +1 → max
-  return cfg.min + ((easedPos + 1) / 2) * (cfg.max - cfg.min);
+  // position −1 → min, 0 → NEUTRAL (identity), +1 → max, piecewise-linear about
+  // neutral. For a symmetric range neutral == (min+max)/2, so this is identical
+  // to the old `min + (easedPos+1)/2·(max−min)`. For an ASYMMETRIC range the old
+  // form rested at the midpoint, NOT the identity — e.g. saturation [−1,0.6] rested
+  // at −0.2, washing every image 20% at stop 0. Anchoring at neutral fixes that.
+  const neutral = cfg.neutral ?? (cfg.min + cfg.max) / 2;
+  return easedPos < 0
+    ? neutral + easedPos * (neutral - cfg.min)
+    : neutral + easedPos * (cfg.max - neutral);
 }

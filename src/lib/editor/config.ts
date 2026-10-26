@@ -40,6 +40,11 @@ export interface ToolSpec {
   /** final mapped range the eased stop is scaled into */
   min: number;
   max: number;
+  /** bi only: the value stop=0 (rest) maps to — the tool's IDENTITY. Defaults to
+   *  the arithmetic midpoint (min+max)/2, which is correct for a SYMMETRIC range.
+   *  An ASYMMETRIC range MUST set this explicitly, or the slider rests off its
+   *  true neutral and every image is silently pushed at stop 0 (see saturation). */
+  neutral?: number;
 }
 
 export const TOOL_CONFIG: Record<ToolKey, ToolSpec> = {
@@ -47,7 +52,7 @@ export const TOOL_CONFIG: Record<ToolKey, ToolSpec> = {
   exposure:   { type: 'bi',  easing: 'MEDIUM', min: -1.5, max: 1.5 },  // stops
   denoise:    { type: 'add', easing: 'STRONG', min: 0.0,  max: 0.6 },  // bilateral range σ; capped short of the waxy look
   contrast:   { type: 'bi',  easing: 'STRONG', min: -0.5, max: 0.5 },  // pivot scale, plateaus
-  saturation: { type: 'bi',  easing: 'STRONG', min: -1.0, max: 0.6 },  // ASYMMETRIC: full grey ↓, capped ↑
+  saturation: { type: 'bi',  easing: 'STRONG', min: -1.0, max: 0.6, neutral: 0 },  // ASYMMETRIC: full grey ↓, capped ↑; rest at 0 = identity (shader is mix(luma,rgb,1+sat))
   temp:       { type: 'bi',  easing: 'MEDIUM', min: -1.0, max: 1.0 },  // blue↔amber (WB sub-slider)
   tint:       { type: 'bi',  easing: 'MEDIUM', min: -1.0, max: 1.0 },  // green↔magenta (WB sub-slider)
   fade:       { type: 'add', easing: 'GENTLE', min: 0.0,  max: 0.4 },  // lift blacks
