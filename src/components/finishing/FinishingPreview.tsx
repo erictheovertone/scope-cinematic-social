@@ -13,7 +13,7 @@
  * gated so it never flashes black while the source decodes.
  */
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import type { EditParams } from '@/lib/editor/params';
 import { rotateCoverScale, type EditGeometry } from '@/lib/editGeometry';
@@ -51,7 +51,10 @@ interface FinishingPreviewProps {
   clipWindow?: { start: number; length: number };
 }
 
-export default function FinishingPreview({ mediaUrl, mediaType, params, geometry, layoutId, clipWindow }: FinishingPreviewProps) {
+// C3-4 — memoized: the EDIT & POST step re-renders on every caption keystroke (controlled
+// textarea on the 1800-line parent); without memo this live gl-react pipeline re-rendered each
+// time. With stable props (params/geometry memoized by the parent) keystrokes no longer touch it.
+function FinishingPreview({ mediaUrl, mediaType, params, geometry, layoutId, clipWindow }: FinishingPreviewProps) {
   const [source, setSource] = useState<Source | null>(null);
   const [activeLut, setActiveLut] = useState<{ canvas: HTMLCanvasElement; size: number } | null>(null);
   const boxRef = useRef<HTMLDivElement>(null);
@@ -163,3 +166,5 @@ export default function FinishingPreview({ mediaUrl, mediaType, params, geometry
     </div>
   );
 }
+
+export default memo(FinishingPreview);

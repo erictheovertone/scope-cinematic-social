@@ -293,7 +293,10 @@ export default function MembershipSheet({ visible, onClose, onSuccess, isPaidMem
       {/* Floating badge above sheet */}
       <div data-swipe-exclude style={{
         position: 'fixed',
-        bottom: 'calc(90vh - 48px)',
+        // C3-3 — the sheet is 90vh, so the badge floats in the ~10vh above it; on a notched
+        // phone that put the 80px badge's top under the status bar (clipped). Clamp so the top
+        // always clears the safe area (badge 80 + glow headroom 24).
+        bottom: 'min(calc(90vh - 48px), calc(100dvh - env(safe-area-inset-top, 0px) - 104px))',
         left: '50%',
         transform: visible ? 'translateX(-50%) translateY(0)' : 'translateX(-50%) translateY(100px)',
         transition: 'transform 0.4s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.35s ease',

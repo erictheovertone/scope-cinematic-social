@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from "next/navigation";
 import { usePrivy, useWallets } from "@privy-io/react-auth";
 import { createWalletClient, custom } from "viem";
@@ -1369,6 +1369,14 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
     </div>
   );
 
+  // C3-4 — stable geometry prop for the edit-step previews: `editGeometry ?? neutralGeometry(…)`
+  // allocated a fresh object every render (defeating FinishingPreview's memo on each caption
+  // keystroke). Memoize so the preview only re-renders when geometry/layout actually change.
+  const editPreviewGeometry = useMemo(
+    () => editGeometry ?? neutralGeometry(chipForLayout(chosenLayoutId || userLayoutId).id),
+    [editGeometry, chosenLayoutId, userLayoutId],
+  );
+
   const renderEditStep = () => (
     <div className="h-full flex flex-col">
       <div className="flex items-center justify-between p-4" style={{ paddingTop: 'calc(1rem + env(safe-area-inset-top, 0px))' }}>
@@ -1403,7 +1411,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
                   mediaUrl={selectedMedia[0].url}
                   mediaType={selectedMedia[0].type}
                   params={editParams}
-                  geometry={editGeometry ?? neutralGeometry(chipForLayout(chosenLayoutId || userLayoutId).id)}
+                  geometry={editPreviewGeometry}
                   layoutId={chosenLayoutId || userLayoutId}
                 />
               )}
@@ -1503,7 +1511,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
                   videoUrl={selectedMedia[0].url}
                   heroFrameTime={editParams.heroFrameTime ?? 0}
                   params={editParams}
-                  geometry={editGeometry ?? neutralGeometry(chipForLayout(chosenLayoutId || userLayoutId).id)}
+                  geometry={editPreviewGeometry}
                   layoutId={chosenLayoutId || userLayoutId}
                   onChange={setSnippetWindow}
                 />
