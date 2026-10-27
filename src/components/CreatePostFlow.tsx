@@ -279,6 +279,11 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
   // Real Pro status + grid gating for FINISHING, resolved via the verified path
   // (DID → getUserByPrivyId → getProfile → isProMember). uuid typing respected.
   const [finishCtx, setFinishCtx] = useState<{ isPro: boolean; gridLayout: 'standard' | 'collage'; layoutId: string; userUuid: string } | null>(null);
+  // Brief V2-0 §0 — explicit finishCtx failure state (after retry×3) + a manual retry
+  // trigger. The crop step NEVER guesses a layout (a wrong AR would bake differently
+  // than the user cropped — the C1b invariant); it shows a recoverable retry instead.
+  const [finishCtxError, setFinishCtxError] = useState(false);
+  const [finishCtxRetry, setFinishCtxRetry] = useState(0);
   const [savedLooks, setSavedLooks] = useState<SavedLook[]>([]);
   // Bumped when a Pro purchase resolves in-app → re-fetch finishCtx so the
   // editor's isPro refreshes and Pro tools unlock WITHOUT a page reload.
@@ -514,71 +519,63 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
   // Resolve real Pro status + grid gating for FINISHING once the user is known.
   // IDENTIFIER TYPING: DID (user.id) ONLY to getUserByPrivyId; the uuid
   // (supabaseUser.id) goes to getProfile. The editor never receives the DID.
-  // Brief V1c — fallback finishCtx from the prop layout. Used ONLY when the real
-  // profile fetch fails or stalls (observed on device: a 4K-HEVC decode's memory
-  // pressure strands the fetch → finishCtx never resolves → the crop step's loader
-  // hangs forever). A fallback-framed crop (adjustable; publish re-resolves the
-  // canonical layout independently) beats an infinite loader. isPro:false keeps Pro
-  // tools locked; userUuid:'' disables look-saving — both safe degradations.
-  const fallbackFinishCtx = useCallback((): { isPro: boolean; gridLayout: 'standard' | 'collage'; layoutId: string; userUuid: string } => ({
-    isPro: false,
-    gridLayout: userLayoutId === 'collage' ? 'collage' : 'standard',
-    layoutId: LEGACY_TO_CANONICAL[userLayoutId] ?? userLayoutId,
-    userUuid: '',
-  }), [userLayoutId]);
-
+  // Brief V2-0 §0 — resolve finishCtx with retry×3 + backoff, then an EXPLICIT error
+  // state. The V1c watchdog-fallback (guess userLayoutId) is removed: the crop step must
+  // crop at the SAME resolved layout finishing + publish bake at (single-ctx invariant),
+  // so a failed fetch is never papered over with a page-load snapshot that could diverge
+  // from the publish-time fresh read — it surfaces a recoverable "couldn't load" retry.
   useEffect(() => {
-    if (!user?.id) { setFinishCtx(null); return; }
+    if (!user?.id) { setFinishCtx(null); setFinishCtxError(false); return; }
     let cancelled = false;
-    vdbg('gate:finishctx:waiting'); // V1c — the crop step's real gate
-    // Watchdog: a transient profile-fetch failure/stall must NEVER strand the crop
-    // step on an infinite loader. If finishCtx hasn't resolved shortly, mount the
-    // crop with the prop-derived fallback (a real canonical ctx, if it resolves,
-    // still wins — the setter keeps an already-set ctx).
-    const watchdog = window.setTimeout(() => {
-      if (cancelled) return;
-      setFinishCtx((cur) => { if (cur) return cur; vdbg('gate:finishctx:fallback', 'timeout'); return fallbackFinishCtx(); });
-    }, 4000);
+    setFinishCtxError(false);
+    vdbg('gate:finishctx:waiting'); // the crop step's real gate
+    // Per-attempt timeout: a stalled fetch (4K-decode memory pressure) counts as a
+    // failure and retries instead of hanging the crop loader forever.
+    const withTO = <T,>(p: Promise<T>, ms: number): Promise<T> =>
+      Promise.race([p, new Promise<T>((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))]);
     (async () => {
-      try {
-        const supabaseUser = await getUserByPrivyId(user.id); // DID → users row (uuid)
+      const BACKOFF = [0, 600, 1500]; // 3 attempts
+      for (let attempt = 0; attempt < BACKOFF.length && !cancelled; attempt++) {
+        if (BACKOFF[attempt]) await new Promise((r) => setTimeout(r, BACKOFF[attempt]));
         if (cancelled) return;
-        vdbg('gate:finishctx:user', supabaseUser ? 'ok' : 'null'); // V1c
-        if (!supabaseUser) return;
-        // Brief C1b — read the layout FRESH (bypass the no-TTL session profile cache) so a grid
-        // change made just before opening create is seen, not the previously-cached value.
-        invalidateProfileCache(supabaseUser.id);
-        const profile = await getProfile(supabaseUser.id);     // uuid → profile
-        if (cancelled) return;
-        vdbg('gate:finishctx:profile', profile ? 'ok' : 'null'); // V1c
-        if (!profile) return;
-        // Brief C1b — THE FIX: read the crop AR from the ONE canonical source (aspect_ratio, via
-        // resolveLayout — the same resolver the profile grid + desktop create use), NOT the raw
-        // profiles.grid_layout column. grid_layout is a LEGACY MIRROR that a surface can leave
-        // stale when it writes aspect_ratio without the mirror → the mobile-create off-by-one that
-        // survives reinstall (a data/column drift, not a device cache). One source of truth now.
-        const R = resolveLayout(profile as Parameters<typeof resolveLayout>[0]);
-        const canonical = R.aspect === 'collage' ? 'collage' : legacyLayoutId(R.aspect, R.mobileCount);
-        setFinishCtx({
-          isPro: isProMember(profile as any),
-          gridLayout: R.aspect === 'collage' ? 'collage' : 'standard',
-          layoutId: canonical,
-          userUuid: supabaseUser.id, // uuid for looksService (NEVER the DID)
-        });
-        vdbg('gate:finishctx:ready', canonical); // V1c — CropTool can now mount
-        if (finishCtxTimeRef.current == null) finishCtxTimeRef.current = performance.now(); // C1a trace timing
-        // Load saved looks (degrades to [] pre-migration; never crashes the flow).
-        const looks = await getLooks(supabaseUser.id);
-        if (!cancelled) setSavedLooks(looks);
-      } catch (e) {
-        vdbg('gate:finishctx:error', (e as Error)?.message?.slice(0, 40) ?? 'err'); // V1c
-        console.error('[CreatePostFlow] finishCtx load error:', errInfo(e));
-        // Never strand the crop step: fall back to the prop layout (if nothing set yet).
-        if (!cancelled) setFinishCtx((cur) => cur ?? fallbackFinishCtx());
+        if (attempt > 0) vdbg('gate:finishctx:retry', String(attempt));
+        try {
+          const supabaseUser = await withTO(getUserByPrivyId(user.id), 8000); // DID → users row (uuid)
+          if (cancelled) return;
+          vdbg('gate:finishctx:user', supabaseUser ? 'ok' : 'null');
+          if (!supabaseUser) throw new Error('no user row');
+          // Brief C1b — read the layout FRESH (bypass the no-TTL session profile cache) so a grid
+          // change made just before opening create is seen, not the previously-cached value.
+          invalidateProfileCache(supabaseUser.id);
+          const profile = await withTO(getProfile(supabaseUser.id), 8000); // uuid → profile
+          if (cancelled) return;
+          vdbg('gate:finishctx:profile', profile ? 'ok' : 'null');
+          if (!profile) throw new Error('no profile');
+          // Brief C1b — THE canonical source (aspect_ratio via resolveLayout), NOT the raw
+          // profiles.grid_layout mirror — the same resolver finishing + publish use → one AR.
+          const R = resolveLayout(profile as Parameters<typeof resolveLayout>[0]);
+          const canonical = R.aspect === 'collage' ? 'collage' : legacyLayoutId(R.aspect, R.mobileCount);
+          setFinishCtx({
+            isPro: isProMember(profile as any),
+            gridLayout: R.aspect === 'collage' ? 'collage' : 'standard',
+            layoutId: canonical,
+            userUuid: supabaseUser.id, // uuid for looksService (NEVER the DID)
+          });
+          vdbg('gate:finishctx:ready', canonical); // CropTool can now mount
+          if (finishCtxTimeRef.current == null) finishCtxTimeRef.current = performance.now(); // C1a trace timing
+          const looks = await getLooks(supabaseUser.id).catch(() => [] as SavedLook[]);
+          if (!cancelled) setSavedLooks(looks);
+          return; // success
+        } catch (e) {
+          vdbg('gate:finishctx:error', `${attempt}:${(e as Error)?.message?.slice(0, 30) ?? 'err'}`);
+          console.error('[CreatePostFlow] finishCtx attempt', attempt, 'failed:', errInfo(e));
+        }
       }
+      // All attempts failed — explicit, recoverable error. NEVER a silent layout guess.
+      if (!cancelled) { vdbg('gate:finishctx:failed'); setFinishCtxError(true); }
     })();
-    return () => { cancelled = true; window.clearTimeout(watchdog); };
-  }, [user?.id, userLayoutId, proTick, fallbackFinishCtx]);
+    return () => { cancelled = true; };
+  }, [user?.id, userLayoutId, proTick, finishCtxRetry]);
 
   // Brief V1c — the LOADING screen owner: the crop step renders this loader while
   // finishCtx is null. Crumb when it shows, so a device trace names this gate (it
@@ -1970,6 +1967,18 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
             setStep('finishing');
           }}
         />
+      ) : finishCtxError ? (
+        // Brief V2-0 §0 — EXPLICIT, recoverable failure. The crop step never guesses a
+        // layout (a wrong AR would bake differently than the user cropped), so after
+        // retry×3 we surface this instead of hanging or silently composing at a snapshot.
+        <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'var(--canvas)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 18, padding: '0 40px' }}>
+          <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: 14, color: 'rgb(var(--ink-rgb) / 0.7)', lineHeight: 1.5, textAlign: 'center', margin: 0 }}>Couldn’t load your layout.</p>
+          <button
+            onClick={() => { setFinishCtxError(false); setFinishCtxRetry((n) => n + 1); }}
+            style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 12, color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'transparent', border: '1px solid rgb(var(--ink-rgb) / 0.5)', cursor: 'pointer', padding: '13px 26px' }}
+          >RETRY</button>
+          <button onClick={() => setStep('media')} style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: 11, color: 'rgb(var(--ink-rgb) / 0.45)', textTransform: 'uppercase', letterSpacing: '0.08em', background: 'none', border: 'none', cursor: 'pointer' }}>Back</button>
+        </div>
       ) : (
         // Brief C1b — NO-DRAW-UNTIL-RESOLVED: hold a loader beat until the canonical layout
         // resolves rather than draw a frame on the stale prop default. A loader is fine; a wrong
