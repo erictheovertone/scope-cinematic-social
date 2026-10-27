@@ -439,8 +439,25 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
     return () => { try { delete (window as unknown as { __scopeInjectMedia?: unknown }).__scopeInjectMedia; } catch { /* noop */ } };
   }, []);
 
-  // CEL-1 — the create-flow coin-confirm seam (__scopeShowCoinConfirm) is retired; the
-  // celebration now opens via the app-root sheet's __scopeFakeCoinCreated seam.
+  // CEL-1b §3 — REAL-sequence receipt seam (gated NEXT_PUBLIC_TEST_SEAM). Runs handleDoMint's
+  // terminal beat with a faked receipt: store set (scrim) → rAF → flow teardown + nav. Lets the
+  // harness measure the TRUE order/perf from inside the flow, not on a settled route.
+  useEffect(() => {
+    if (process.env.NEXT_PUBLIC_TEST_SEAM !== '1' || typeof window === 'undefined') return;
+    (window as unknown as { __scopeFlowReceipt?: (v?: string) => void }).__scopeFlowReceipt = (variant?: string) => {
+      const video = variant === 'cel-video';
+      // put the flow in a mint-ready state so teardown has real work to unmount
+      setPendingMintData({ postId: 'seam-post', userId: 'seam-user', mediaUrls: [], postCaption: 'Golden hour, uncut', image: null, animationUrl: null, mediaType: video ? 'video' : 'image', layoutId: 'scope', streamUid: null });
+      setShowMintPrompt(true);
+      onCoinConfirmed({
+        post: { id: 'seam-post', userId: 'seam-user', title: 'Golden hour, uncut', layoutId: 'scope', mediaType: video ? 'video' : 'image', mediaUrl: video ? '/welcome-to-pro-new-ani.mp4' : '/cel-seam.jpg', posterUrl: video ? '/cel-seam.jpg' : null, deckName: null },
+        coin: { symbol: video ? 'WLCM' : 'GOLD', address: '0x1234000000000000000000000000000000005678' },
+        receipt: { hash: '0x12ab00000000000000000000000000000000000000000000000000000000cd34', chainLabel: 'Base' },
+      });
+      requestAnimationFrame(() => completeFlow());
+    };
+    return () => { try { delete (window as unknown as { __scopeFlowReceipt?: unknown }).__scopeFlowReceipt; } catch { /* noop */ } };
+  }, []);
 
   // SAVE (debounced) whenever a recoverable step holds media — "the moment any step
   // completes" and on every edit. Best-effort; the membership round-trip / relaunch reads it.
@@ -1275,7 +1292,10 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
         coin: { symbol: sym, address: coinAddress },
         receipt: { hash, chainLabel: 'Base' },
       });
-      completeFlow();
+      // CEL-1b §2 — ORDER: the store set above begins the scrim THIS frame; defer the flow
+      // teardown + its nav (completeFlow → onClose → router.push('/')) to the NEXT frame so the
+      // scrim is painted before the route changes beneath it — no bare frame of the route.
+      requestAnimationFrame(() => completeFlow());
     } catch (coinError) {
       // IN-FLOW failure state: [ COIN FAILED ] + plain-English reason +
       // RETRY / CONTINUE TO PROFILE (rendered by MintPromptSheet). The post is

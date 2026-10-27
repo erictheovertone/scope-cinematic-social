@@ -77,7 +77,10 @@ export default function CoinCreatedSheet() {
   const basescan = `https://basescan.org/tx/${receipt.hash}`;
 
   const dismiss = () => clearCoinCreated();
-  const viewPost = () => { clearCoinCreated(); router.push("/profile"); };
+  // CEL-1b §1 — land on the POST in the profile post scroll (not the grid): deep-link the post
+  // id; the profile page opens ProfilePostViewer anchored at that id (same by-id anchoring Home
+  // scroll memory uses via data-post-id).
+  const viewPost = () => { clearCoinCreated(); router.push(`/profile?post=${encodeURIComponent(post.id)}`); };
 
   // minimal swipe-down on the handle/sheet: drag follows the finger, release >70px dismisses.
   const onPointerDown = (e: React.PointerEvent) => { dragRef.current = { y: e.clientY, active: true }; };
