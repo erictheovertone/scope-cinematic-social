@@ -514,18 +514,44 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
   // Resolve real Pro status + grid gating for FINISHING once the user is known.
   // IDENTIFIER TYPING: DID (user.id) ONLY to getUserByPrivyId; the uuid
   // (supabaseUser.id) goes to getProfile. The editor never receives the DID.
+  // Brief V1c — fallback finishCtx from the prop layout. Used ONLY when the real
+  // profile fetch fails or stalls (observed on device: a 4K-HEVC decode's memory
+  // pressure strands the fetch → finishCtx never resolves → the crop step's loader
+  // hangs forever). A fallback-framed crop (adjustable; publish re-resolves the
+  // canonical layout independently) beats an infinite loader. isPro:false keeps Pro
+  // tools locked; userUuid:'' disables look-saving — both safe degradations.
+  const fallbackFinishCtx = useCallback((): { isPro: boolean; gridLayout: 'standard' | 'collage'; layoutId: string; userUuid: string } => ({
+    isPro: false,
+    gridLayout: userLayoutId === 'collage' ? 'collage' : 'standard',
+    layoutId: LEGACY_TO_CANONICAL[userLayoutId] ?? userLayoutId,
+    userUuid: '',
+  }), [userLayoutId]);
+
   useEffect(() => {
     if (!user?.id) { setFinishCtx(null); return; }
     let cancelled = false;
+    vdbg('gate:finishctx:waiting'); // V1c — the crop step's real gate
+    // Watchdog: a transient profile-fetch failure/stall must NEVER strand the crop
+    // step on an infinite loader. If finishCtx hasn't resolved shortly, mount the
+    // crop with the prop-derived fallback (a real canonical ctx, if it resolves,
+    // still wins — the setter keeps an already-set ctx).
+    const watchdog = window.setTimeout(() => {
+      if (cancelled) return;
+      setFinishCtx((cur) => { if (cur) return cur; vdbg('gate:finishctx:fallback', 'timeout'); return fallbackFinishCtx(); });
+    }, 4000);
     (async () => {
       try {
         const supabaseUser = await getUserByPrivyId(user.id); // DID → users row (uuid)
-        if (!supabaseUser || cancelled) return;
+        if (cancelled) return;
+        vdbg('gate:finishctx:user', supabaseUser ? 'ok' : 'null'); // V1c
+        if (!supabaseUser) return;
         // Brief C1b — read the layout FRESH (bypass the no-TTL session profile cache) so a grid
         // change made just before opening create is seen, not the previously-cached value.
         invalidateProfileCache(supabaseUser.id);
         const profile = await getProfile(supabaseUser.id);     // uuid → profile
-        if (!profile || cancelled) return;
+        if (cancelled) return;
+        vdbg('gate:finishctx:profile', profile ? 'ok' : 'null'); // V1c
+        if (!profile) return;
         // Brief C1b — THE FIX: read the crop AR from the ONE canonical source (aspect_ratio, via
         // resolveLayout — the same resolver the profile grid + desktop create use), NOT the raw
         // profiles.grid_layout column. grid_layout is a LEGACY MIRROR that a surface can leave
@@ -539,16 +565,25 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
           layoutId: canonical,
           userUuid: supabaseUser.id, // uuid for looksService (NEVER the DID)
         });
+        vdbg('gate:finishctx:ready', canonical); // V1c — CropTool can now mount
         if (finishCtxTimeRef.current == null) finishCtxTimeRef.current = performance.now(); // C1a trace timing
         // Load saved looks (degrades to [] pre-migration; never crashes the flow).
         const looks = await getLooks(supabaseUser.id);
         if (!cancelled) setSavedLooks(looks);
       } catch (e) {
+        vdbg('gate:finishctx:error', (e as Error)?.message?.slice(0, 40) ?? 'err'); // V1c
         console.error('[CreatePostFlow] finishCtx load error:', errInfo(e));
+        // Never strand the crop step: fall back to the prop layout (if nothing set yet).
+        if (!cancelled) setFinishCtx((cur) => cur ?? fallbackFinishCtx());
       }
     })();
-    return () => { cancelled = true; };
-  }, [user?.id, userLayoutId, proTick]);
+    return () => { cancelled = true; window.clearTimeout(watchdog); };
+  }, [user?.id, userLayoutId, proTick, fallbackFinishCtx]);
+
+  // Brief V1c — the LOADING screen owner: the crop step renders this loader while
+  // finishCtx is null. Crumb when it shows, so a device trace names this gate (it
+  // clears when finishCtx resolves and CropTool mounts → crop:waiting fires).
+  useEffect(() => { if (step === 'crop' && !finishCtx) vdbg('gate:croploader:shown'); }, [step, finishCtx]);
 
   // Brief C1a §0 — on entering CROP under ?debug=crop, re-read grid_layout FRESH from the DB
   // (the app's own fetch) + stamp the open time, so the trace shows fresh vs prop vs ctx and the
