@@ -1,7 +1,7 @@
 "use client";
 
 import ThemedImg from "@/components/ThemedImg";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
 import { setUserGridLayout, getUserGridLayout } from "@/lib/gridLayoutService";
@@ -328,6 +328,10 @@ export default function GridLayoutPage() {
   const isNewUser = searchParams?.get('from') === 'setup';
   const { user } = usePrivy();
   const [selectedLayout, setSelectedLayout] = useState<string>("");
+  // U2 — once the user taps a tile, the async seed below must never overwrite their pick: a slow
+  // profile fetch used to land AFTER the tap and stage the OLD layout on the confirm screen, so
+  // CONFIRM saved the previous layout and reported success (the matrix's intermittent post-write miss).
+  const userPickedRef = useRef(false);
   const [confirming, setConfirming] = useState(false);
   const [showTransition, setShowTransition] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -347,7 +351,7 @@ export default function GridLayoutPage() {
     };
 
     const pref = getUserGridLayout(user.id);
-    if (pref) {
+    if (pref && !userPickedRef.current) {
       const canonical = LEGACY_MAP[pref.layoutId] ?? pref.layoutId;
       setSelectedLayout(canonical);
     }
@@ -356,7 +360,7 @@ export default function GridLayoutPage() {
       if (!dbUser) return;
       const profile = await getProfile(dbUser.id);
       // Also seed selectedLayout from DB (source of truth over localStorage)
-      if (profile) {
+      if (profile && !userPickedRef.current) {
         // C1c — seed the picker from the CANONICAL source (aspect_ratio via resolveLayout), not
         // the retired grid_layout mirror.
         const R = resolveLayout(profile as Parameters<typeof resolveLayout>[0]);
@@ -448,6 +452,7 @@ export default function GridLayoutPage() {
                 setAnimating(true);
                 setTimeout(() => {
                   setAnimating(false);
+                  userPickedRef.current = true;
                   setSelectedLayout(layout.id);
                   setConfirming(true);
                 }, 600);
