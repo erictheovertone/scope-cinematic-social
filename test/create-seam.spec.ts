@@ -88,3 +88,55 @@ test('video path via seam reaches EDIT with controls intact', async ({ page }) =
   // C3-6 — the renamed thumbnail control.
   await expect(page.getByText(/thumbnail preview/i).first()).toBeVisible({ timeout: 10_000 });
 });
+
+// ── C3-6/C3-7 — EDIT & POST on a VIDEO post: the tail (THUMBNAIL PREVIEW + ADD MUSIC) is
+//    reachable (scroller bounds), and ADD MUSIC is visible whether autoplay is ON or OFF.
+//    Screenshots 375 dark+light, autoplay ON and OFF. (Needs the localhost authed state for the
+//    crop→finishing gate; run: AUTH_STATE=test/.auth/state.json … --project=iphone-webkit)
+async function driveVideoToEdit(page: Page) {
+  const traces: string[] = [];
+  page.on('console', (m) => { const t = m.text(); if (t.startsWith('[crop]') || t.startsWith('[finish]')) traces.push(t); });
+  await openCreate(page);
+  await expect
+    .poll(() => page.evaluate(() => typeof (window as unknown as { __scopeInjectMedia?: unknown }).__scopeInjectMedia === 'function'), { timeout: 15_000 })
+    .toBeTruthy();
+  await page.evaluate(() => (window as unknown as { __scopeInjectMedia: (t: string, u: string) => Promise<void> }).__scopeInjectMedia('video', '/welcome-to-pro-new-ani.mp4'));
+  await page.getByRole('button', { name: 'Next' }).first().click();
+  await expect.poll(() => traces.find((t) => t.startsWith('[crop] open')), { timeout: 30_000 }).toBeTruthy();
+  await page.getByRole('button', { name: 'Confirm' }).first().click();
+  await expect.poll(() => traces.find((t) => t.startsWith('[finish]')), { timeout: 30_000 }).toBeTruthy();
+  await page.getByRole('button', { name: /^done$/i }).first().click({ timeout: 20_000 });
+  await page.waitForTimeout(1500);
+}
+
+for (const scheme of ['dark', 'light'] as const) {
+  test(`C3-6/C3-7 EDIT&POST video tail reachable @375 ${scheme}`, async ({ page }, testInfo) => {
+    await page.emulateMedia({ colorScheme: scheme });
+    await driveVideoToEdit(page);
+
+    const addMusic = page.getByRole('button', { name: /\+?\s*ADD MUSIC/i }).first();
+    const autoplaySwitch = page.getByRole('switch').first();
+
+    // Autoplay ON (default): THUMBNAIL PREVIEW present AND ADD MUSIC reachable (scroll to it).
+    await expect(autoplaySwitch).toHaveAttribute('aria-checked', 'true');
+    await expect(page.getByText(/thumbnail preview/i).first()).toBeVisible({ timeout: 10_000 });
+    await addMusic.scrollIntoViewIfNeeded();
+    await expect(addMusic, 'ADD MUSIC not reachable with autoplay ON (tail clipped?)').toBeVisible();
+    const onBox = await addMusic.boundingBox();
+    expect(onBox && onBox.y + onBox.height <= 812, 'ADD MUSIC past the fold after scroll (clip)').toBeTruthy();
+    let p = join(OUT, `editpost-video-autoplay-on-${scheme}.png`);
+    await page.screenshot({ path: p });
+    await testInfo.attach(`editpost-video-autoplay-on-${scheme}`, { path: p, contentType: 'image/png' });
+
+    // Autoplay OFF: THUMBNAIL PREVIEW hides (no autoplay → nowhere to play) but ADD MUSIC STILL
+    // visible (Eric's rule — the toggle controls playback, not whether music can be attached).
+    await autoplaySwitch.click();
+    await expect(autoplaySwitch).toHaveAttribute('aria-checked', 'false');
+    await page.waitForTimeout(300);
+    await addMusic.scrollIntoViewIfNeeded();
+    await expect(addMusic, 'ADD MUSIC vanished when autoplay OFF (it must not be gated)').toBeVisible();
+    p = join(OUT, `editpost-video-autoplay-off-${scheme}.png`);
+    await page.screenshot({ path: p });
+    await testInfo.attach(`editpost-video-autoplay-off-${scheme}`, { path: p, contentType: 'image/png' });
+  });
+}
