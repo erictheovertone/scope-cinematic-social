@@ -12,6 +12,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { toggleCropDebug } from '@/lib/cropDebug';
+import { toggleVideoDebug } from '@/lib/debugFlags'; // V1e — same 5-tap also toggles the video trace
 
 const BUILD_SHA = process.env.NEXT_PUBLIC_BUILD_SHA || 'dev';
 const LS_KEY = 'scope:debug-viewport';
@@ -37,7 +38,7 @@ export function useTitleDebugTap() {
     const s = st.current;
     s.count = now - s.last < 600 ? s.count + 1 : 1;
     s.last = now;
-    if (s.count >= 5) { s.count = 0; toggleViewportDebug(); toggleCropDebug(); /* C1a — same 5-tap also toggles the crop overlay (PWA-reachable, persisted) */ }
+    if (s.count >= 5) { s.count = 0; toggleViewportDebug(); toggleCropDebug(); toggleVideoDebug(); /* C1a/V1e — same 5-tap toggles the crop + video overlays (PWA-reachable, persisted) */ }
   };
 }
 
