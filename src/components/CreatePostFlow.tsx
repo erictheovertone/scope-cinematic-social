@@ -633,6 +633,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
     animationUrl: string | null;
     mediaType: string;
     layoutId: string;
+    streamUid: string | null; // C3-16 — video uid so the mint route can recover the image
   } | null>(null);
 
   // Deck step state
@@ -977,14 +978,19 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
       //    re-encode here.
       const autoplayClipUrl: string | null = null;
 
-      let thumbnailUrl: string | null = null;
+      // C3-16 — track the CUSTOM and AUTO thumbnails separately so the coin-image precedence
+      // can prefer the creator's custom pick over the graded poster (Eric's rule), while the
+      // DB `thumbnail_url` keeps its custom-or-auto meaning for feed/grid display.
+      let customThumbUrl: string | null = null;
+      let autoThumbUrl: string | null = null;
       if (customThumbnail) {
-        thumbnailUrl = await uploadImageWithRenditions(customThumbnail, 'post-media', user.id);
-        console.log('[handlePost] thumbnail uploaded (+renditions):', thumbnailUrl);
+        customThumbUrl = await uploadImageWithRenditions(customThumbnail, 'post-media', user.id);
+        console.log('[handlePost] custom thumbnail uploaded (+renditions):', customThumbUrl);
       } else if (selectedMedia[0]?.type === 'video' && autoThumbnail) {
-        thumbnailUrl = await uploadAutoThumbnail(autoThumbnail, user.id);
-        console.log('[handlePost] auto thumbnail uploaded:', thumbnailUrl);
+        autoThumbUrl = await uploadAutoThumbnail(autoThumbnail, user.id);
+        console.log('[handlePost] auto thumbnail uploaded:', autoThumbUrl);
       }
+      const thumbnailUrl: string | null = customThumbUrl ?? autoThumbUrl;
 
       const isVideo = selectedMedia[0]?.type === 'video';
       const postPayload = {
@@ -1057,15 +1063,17 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
         userId: supabaseUser.id,
         mediaUrls,
         postCaption: caption,
-        // GRADED image: photos = baked image. Video = the Brief V2e four-link chain
-        // (posterUrl ?? thumbnailUrl ?? stream_poster_url[null at publish] ?? constructed
-        // Stream thumbnail from the uid) — the guard in uploadCoinMetadata is the backstop.
-        image: isVideo ? coinImageUrl({ posterUrl, thumbnailUrl, streamUid }) : mediaUrls[0],
+        // GRADED image: photos = baked image. Video = the C3-16 precedence chain
+        // (custom thumbnail ?? graded poster ?? auto thumbnail ?? stream poster ?? Stream
+        // thumbnail from the uid). Null here is NO LONGER fatal — streamUid is carried to the
+        // mint so /api/coin-metadata recovers the Stream thumbnail server-side.
+        image: isVideo ? coinImageUrl({ thumbnailUrl: customThumbUrl, posterUrl, autoThumbnailUrl: autoThumbUrl, streamUid }) : mediaUrls[0],
         // Brief V2e §2 — animation_url = the deterministic HLS manifest (from the uid). The
         // manifest becomes valid once encoding finishes; Zora only needs a string at mint.
         animationUrl: isVideo ? streamHlsUrl(streamUid) : null,
         mediaType: selectedMedia[0]?.type || 'image',
         layoutId: finalLayoutId,
+        streamUid: isVideo ? streamUid : null,
       });
       // Caption-derived ticker suggestion; creator overwrites it on the mint step.
       setTicker(suggestTicker(caption));
@@ -1169,9 +1177,10 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
           name: data.postCaption || 'Scope Post',
           description: data.postCaption || '',
           symbol: sym,
-          image: data.image ?? '', // null → the uploadCoinMetadata guard fires (honest backstop)
+          image: data.image ?? '', // may be '' for video → route recovers it from streamUid (C3-16)
           animationUrl: data.animationUrl,
           mimeType: data.mediaType === 'video' ? HLS_MIME : undefined,
+          streamUid: data.streamUid,
         },
       });
       // Reconciliation breadcrumb BEFORE the canonical write (amendment C).
@@ -1495,12 +1504,15 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
         {/* C3-6/C3-7 — min-h-0 so the inner overflow-y-auto actually bounds: a flex child
             defaults to min-height:auto (content size) and refuses to shrink, so the scroller
             never scrolled and the tail (MIRAGE preview + ADD MUSIC) spilled past the panel's
-            overflow-hidden and was cut off. */}
+            overflow-hidden and was cut off. REOPENED (video): the min-h-0 was on THIS wrapper
+            only — the scroller itself (a flex-1 child below) still defaulted to min-height:auto,
+            so it grew to content and spilled for the taller VIDEO tail (photos fit in 600px, so
+            it looked fixed). The scroller now ALSO carries min-h-0 so it bounds and scrolls. */}
         {/* SCROLLABLE (fixes the dead caption input): with body{position:fixed;
             overflow:hidden;touch-action:none} (the iOS standalone lock), an input needs
             a SCROLLABLE ancestor or iOS can't focus it / raise the keyboard — the deck
             step works because ITS container is overflow-y-auto; this one wasn't. */}
-        <div className="flex-1 overflow-y-auto p-4 flex flex-col" style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}>
+        <div className="flex-1 min-h-0 overflow-y-auto p-4 flex flex-col" style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y', paddingBottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))' }}>
           <div style={{ position: 'relative', width: '100%', marginBottom: 16, backgroundColor: 'var(--black)', flexShrink: 0 }}>
             {/* WYSIWYG preview — live gl-react render of geometry + ALL look params
                 (matches FINISHING; no preview bake → no generational loss; works for

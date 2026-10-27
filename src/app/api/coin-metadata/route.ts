@@ -20,12 +20,25 @@ export const dynamic = 'force-dynamic';
 export const maxDuration = 20;
 
 export async function POST(req: NextRequest) {
-  const { userId, postId, metadata } = await req.json().catch(() => ({} as Record<string, unknown>));
+  const { userId, postId, metadata, streamUid } = await req.json().catch(() => ({} as Record<string, unknown>));
   if (!userId || !postId || !metadata || typeof metadata !== 'object') {
     return NextResponse.json({ error: 'userId, postId, metadata required' }, { status: 400 });
   }
+  const meta = metadata as Record<string, unknown>;
+
+  // Brief C3-16 — recover a missing VIDEO image SERVER-SIDE. The client often can't build the
+  // deterministic Stream thumbnail (its customer-code env isn't NEXT_PUBLIC, so it's undefined
+  // in the browser) and the client poster/auto-thumbnail captures can fail on iOS → the image
+  // arrives empty. Here CLOUDFLARE_STREAM_CUSTOMER_CODE IS available, so build the Stream
+  // thumbnail from the uid. It becomes valid once Stream finishes encoding; the coins-SDK only
+  // needs a reachable JSON with a string image at mint, which the probe below still asserts.
+  if ((typeof meta.image !== 'string' || !meta.image) && typeof streamUid === 'string' && streamUid) {
+    const code = process.env.CLOUDFLARE_STREAM_CUSTOMER_CODE;
+    if (code) meta.image = `https://customer-${code}.cloudflarestream.com/${streamUid}/thumbnails/thumbnail.jpg`;
+  }
+
   // Mirror the client-side V2b guard: a coin must never point at metadata with no image.
-  if (typeof (metadata as Record<string, unknown>).image !== 'string' || !(metadata as Record<string, unknown>).image) {
+  if (typeof meta.image !== 'string' || !meta.image) {
     return NextResponse.json({ error: 'metadata.image required (string)' }, { status: 400 });
   }
 

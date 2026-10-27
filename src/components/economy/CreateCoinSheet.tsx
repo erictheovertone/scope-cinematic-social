@@ -96,7 +96,7 @@ export default function CreateCoinSheet({
       // Stream thumbnail (link 4). Guard is the backstop. Photos keep media_urls[0].
       const p = post as { poster_url?: string | null; thumbnail_url?: string | null; stream_poster_url?: string | null; stream_uid?: string | null };
       const image = post.media_type === 'video'
-        ? (coinImageUrl({ posterUrl: p.poster_url, thumbnailUrl: p.thumbnail_url, streamPosterUrl: p.stream_poster_url, streamUid: p.stream_uid }) ?? '')
+        ? (coinImageUrl({ thumbnailUrl: p.thumbnail_url, posterUrl: p.poster_url, streamPosterUrl: p.stream_poster_url, streamUid: p.stream_uid }) ?? '')
         : (post.media_urls?.[0] ?? '');
       const { coinAddress, hash, currency } = await createScopeCoin({
         walletClient,
@@ -110,6 +110,7 @@ export default function CreateCoinSheet({
           image,
           animationUrl: post.media_type === 'video' ? streamHlsUrl(p.stream_uid) : null,
           mimeType: post.media_type === 'video' ? HLS_MIME : undefined,
+          streamUid: post.media_type === 'video' ? p.stream_uid : null, // C3-16 — route recovers image
         },
       });
       await updatePostCoinTxHash(post.id, hash).catch(() => {});

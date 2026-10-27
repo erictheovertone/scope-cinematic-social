@@ -8,8 +8,11 @@ import { usePrivy } from "@privy-io/react-auth";
 import PressPop from "@/components/PressPop";
 import {
   likePost, unlikePost, getPostLikes, isPostLikedByUser,
-  addComment, getPostComments,
+  addComment, getPostComments, updateSnippetWindow,
 } from "@/lib/postsService";
+import SnippetSelector from "@/components/finishing/SnippetSelector";
+import { neutralGeometry } from "@/lib/editGeometry";
+import { DEFAULT_PARAMS, type EditParams } from "@/lib/editor/params";
 import { getUserByPrivyId, getProfile } from "@/lib/userService";
 import DeckPickerSheet from "@/components/DeckPickerSheet";
 import CollectSheetGate from "@/components/economy/CollectSheetGate";
@@ -88,6 +91,14 @@ function PostViewerItem({
   const [showCreateCoin, setShowCreateCoin] = useState(false);
   const [deckToast, setDeckToast] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
+  // C3-17 — owner "Edit autoplay" (snippet window) on a video post, restored on MOBILE to match
+  // desktop D10 (DesktopPostView). Gated on media_type === 'video' ONLY — NOT on mint status, so
+  // it shows on minted AND unminted video posts. The owner === viewer here (isOwnProfile), so the
+  // owner-scoped updateSnippetWindow uses post.user_id (= the viewer's users.id).
+  const isVideo = (post as any).media_type === 'video';
+  const [showSnippet, setShowSnippet] = useState(false);
+  const [snippetWin, setSnippetWin] = useState<{ start: number; length: number } | null>(null);
+  const [savingSnippet, setSavingSnippet] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -406,6 +417,17 @@ function PostViewerItem({
                         <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "var(--ink-100)", textTransform: "uppercase", letterSpacing: "0.06em" }}>CREATE COIN</span>
                       </button>
                     )}
+                    {/* C3-17 — EDIT AUTOPLAY (video posts only, minted or not). Opens the M10
+                        SnippetSelector overlay seeded with the saved window; SAVE writes
+                        snippet_start/length owner-scoped. Mirrors desktop D10. */}
+                    {isVideo && (
+                      <button
+                        onClick={() => { setMenuOpen(false); setSnippetWin({ start: (post as any).snippet_start ?? 0, length: (post as any).snippet_length ?? 4 }); setShowSnippet(true); }}
+                        style={{ display: "block", width: "100%", textAlign: "left", background: "transparent", border: "none", borderBottom: "1px solid rgb(var(--ink-rgb) / 0.08)", cursor: "pointer", padding: "11px 14px" }}
+                      >
+                        <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "var(--ink-100)", textTransform: "uppercase", letterSpacing: "0.06em" }}>EDIT AUTOPLAY</span>
+                      </button>
+                    )}
                     <button
                       onClick={() => { setMenuOpen(false); onDeletePress?.(post.id); }}
                       style={{ display: "block", width: "100%", textAlign: "left", background: "transparent", border: "none", cursor: "pointer", padding: "11px 14px" }}
@@ -441,6 +463,41 @@ function PostViewerItem({
           onClose={() => setShowCreateCoin(false)}
           onDone={() => { setTimeout(() => setShowCreateCoin(false), 1400); }}
         />
+      )}
+
+      {/* C3-17 — EDIT AUTOPLAY overlay (mobile), mirroring desktop D10: M10 SnippetSelector
+          against the Stream HLS, seeded with the saved window; SAVE writes snippet_start/length
+          owner-scoped via post.user_id (owner === viewer on own profile). */}
+      {isOwnProfile && isVideo && showSnippet && (
+        <div data-swipe-exclude onClick={() => setShowSnippet(false)}
+          style={{ position: 'fixed', inset: 0, zIndex: 650, background: 'rgb(var(--black-rgb) / 0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ width: 'min(680px, 92vw)', maxHeight: '88vh', overflowY: 'auto', background: 'var(--canvas)', border: '1px solid rgb(var(--ink-rgb) / 0.12)', padding: 22 }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 14 }}>
+              <span style={{ ...SKB, fontSize: 'var(--fs-13)', color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Edit autoplay</span>
+              <button onClick={() => setShowSnippet(false)} aria-label="Close" style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 'var(--fs-16)', color: 'rgb(var(--ink-rgb) / 0.5)', lineHeight: 1, padding: 2 }}>×</button>
+            </div>
+            <SnippetSelector
+              videoUrl={((post as any).stream_playback_url as string) ?? post.media_urls?.[0] ?? ''}
+              heroFrameTime={snippetWin?.start ?? 0}
+              onChange={(w) => setSnippetWin(w)}
+              params={((post as any).edit_params as EditParams) ?? DEFAULT_PARAMS}
+              geometry={neutralGeometry(String(getAspectRatio(post.layout_id ?? '')))}
+              layoutId={post.layout_id ?? ''}
+            />
+            <div style={{ display: 'flex', gap: 10, marginTop: 18, justifyContent: 'flex-end' }}>
+              <button onClick={() => setShowSnippet(false)} style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'rgb(var(--ink-rgb) / 0.6)', textTransform: 'uppercase', letterSpacing: '0.08em', background: 'transparent', border: '1px solid rgb(var(--ink-rgb) / 0.12)', cursor: 'pointer', padding: '10px 18px' }}>CANCEL</button>
+              <button disabled={savingSnippet || !snippetWin || !post.user_id}
+                onClick={async () => {
+                  if (!snippetWin || !post.user_id) return;
+                  setSavingSnippet(true);
+                  const ok = await updateSnippetWindow(post.id, post.user_id, snippetWin.start, snippetWin.length);
+                  setSavingSnippet(false);
+                  if (ok) setShowSnippet(false); // snippet contexts re-read the window on next mount
+                }}
+                style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'var(--on-ink)', textTransform: 'uppercase', letterSpacing: '0.08em', background: 'var(--ink-100)', border: 'none', cursor: savingSnippet ? 'default' : 'pointer', padding: '10px 22px', opacity: savingSnippet || !snippetWin ? 0.6 : 1 }}>{savingSnippet ? 'SAVING…' : 'SAVE'}</button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* ── CAPTION — marginTop: 3, marginBottom: 16 (separator) ── */}

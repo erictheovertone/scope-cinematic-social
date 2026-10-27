@@ -208,10 +208,17 @@ export function streamThumbnailUrl(uid: string | null | undefined): string | nul
 export function streamHlsUrl(uid: string | null | undefined): string | null {
   return uid && STREAM_CUSTOMER_CODE ? `https://customer-${STREAM_CUSTOMER_CODE}.cloudflarestream.com/${uid}/manifest/video.m3u8` : null;
 }
-/** The four-link coin image chain for a video post. Null only if every link is empty AND
- *  there's no uid/customer-code — then uploadCoinMetadata's guard fires (honest failure). */
-export function coinImageUrl(f: { posterUrl?: string | null; thumbnailUrl?: string | null; streamPosterUrl?: string | null; streamUid?: string | null }): string | null {
-  return f.posterUrl ?? f.thumbnailUrl ?? f.streamPosterUrl ?? streamThumbnailUrl(f.streamUid);
+/** The coin-image chain for a video post (Brief C3-16 precedence):
+ *   custom thumbnail → graded poster (hero frame) → auto thumbnail → Stream poster (ready)
+ *   → deterministic Stream thumbnail (uid).
+ *  The last two links need the Stream customer-subdomain code. Client-side that is null unless
+ *  NEXT_PUBLIC_CLOUDFLARE_STREAM_CUSTOMER_CODE is in the bundle (it currently is NOT — the prod
+ *  env key lacks the NEXT_PUBLIC_ prefix), so the /api/coin-metadata route builds the Stream
+ *  thumbnail SERVER-SIDE (where CLOUDFLARE_STREAM_CUSTOMER_CODE is available) as the real
+ *  backstop. This fn returning null for a video is therefore NO LONGER fatal: the mint passes
+ *  the streamUid and the route recovers the image. */
+export function coinImageUrl(f: { thumbnailUrl?: string | null; posterUrl?: string | null; autoThumbnailUrl?: string | null; streamPosterUrl?: string | null; streamUid?: string | null }): string | null {
+  return f.thumbnailUrl ?? f.posterUrl ?? f.autoThumbnailUrl ?? f.streamPosterUrl ?? streamThumbnailUrl(f.streamUid);
 }
 
 async function uploadCoinMetadata(args: {
@@ -222,18 +229,25 @@ async function uploadCoinMetadata(args: {
   image: string;          // graded media URL
   animationUrl?: string | null; // baked video clip, if any
   mimeType?: string;
+  streamUid?: string | null; // C3-16: lets the route recover a Stream-thumbnail image server-side
 }): Promise<string> {
-  // Brief V2b — the coins-sdk validates the fetched tokenURI: name/description/image must
-  // all be strings ("Metadata image is required and must be a string"). Guard image HERE so
-  // a missing one throws a CLEAR, retryable coin-failed error instead of the cryptic SDK one.
-  if (typeof args.image !== "string" || !args.image) {
-    throw new Error("[zoraCoins] coin metadata image missing — video poster/thumbnail unavailable (cannot mint)");
+  // Brief V2b — the coins-sdk validates the fetched tokenURI: name/description/image must all
+  // be strings ("Metadata image is required and must be a string").
+  // Brief C3-16 — a VIDEO coin's image is frequently null in the BROWSER: the deterministic
+  // Stream thumbnail needs the customer-code env (not NEXT_PUBLIC in prod → undefined client-
+  // side) and the client poster/auto-thumbnail captures can fail on iOS. So do NOT hard-fail
+  // here when we have a streamUid — the /api/coin-metadata route fills the image from the
+  // SERVER env (CLOUDFLARE_STREAM_CUSTOMER_CODE, which IS set). Only throw when there is
+  // genuinely no image AND no uid to recover one from (e.g. a photo whose upload failed).
+  const hasImage = typeof args.image === "string" && !!args.image;
+  if (!hasImage && !args.streamUid) {
+    throw new Error("[zoraCoins] coin metadata image missing — no poster/thumbnail and no Stream uid (cannot mint)");
   }
   const metadata: Record<string, unknown> = {
     name: args.name,
     description: args.description ?? "",
-    image: args.image,
   };
+  if (hasImage) metadata.image = args.image; // else the route fills it from streamUid (server env)
   // OMIT animation_url when absent (V2b: never write it as null — the SDK requires a string
   // IF the key is present). Video coins are poster-only until V3 wires Stream playback.
   if (args.animationUrl) {
@@ -248,7 +262,7 @@ async function uploadCoinMetadata(args: {
   const res = await fetch("/api/coin-metadata", {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ userId: args.userId, postId: args.postId, metadata }),
+    body: JSON.stringify({ userId: args.userId, postId: args.postId, metadata, streamUid: args.streamUid ?? null }),
   });
   if (!res.ok) {
     const e = (await res.json().catch(() => ({}))) as { error?: string };
@@ -295,6 +309,7 @@ export async function createScopeCoin({
     image: string;         // GRADED media URL
     animationUrl?: string | null;
     mimeType?: string;
+    streamUid?: string | null; // C3-16: video uid → route recovers a Stream-thumbnail image
   };
 }): Promise<CreateScopeCoinResult> {
   // Guard FIRST — never reach createCoin without a valid referrer.
@@ -324,6 +339,7 @@ export async function createScopeCoin({
     image: post.image,
     animationUrl: post.animationUrl,
     mimeType: post.mimeType,
+    streamUid: post.streamUid,
   });
 
   console.log("[zoraCoins] createScopeCoin — creator:", creator, "symbol:", post.symbol, "currency:", currency);
