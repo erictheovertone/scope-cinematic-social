@@ -1,6 +1,47 @@
 import { test, expect, type Locator } from '@playwright/test';
 import { join } from 'path';
+import { readFileSync } from 'fs';
 import sharp from 'sharp';
+
+// ── MX-2 §1 — post-write profile assertion ─────────────────────────────────────
+// Read the throwaway profile row from Supabase REST (profiles is public-read) after each layout
+// switch and fail loudly if aspect_ratio / mobile_count don't match what was set — so a silent
+// partial write (the setGridLayout race this brief fixes) can NEVER pass again. Creds come from
+// .env.local; identity from the AUTH_STATE privy token (sub = privy_id) → users.id → profile.
+function envVar(key: string): string {
+  if (process.env[key]) return process.env[key]!;
+  try {
+    const m = readFileSync('.env.local', 'utf8').match(new RegExp('^' + key + '=(.*)$', 'm'));
+    if (m) return m[1].trim().replace(/^["']|["']$/g, '');
+  } catch { /* fall through */ }
+  return '';
+}
+const SUPA_URL = envVar('NEXT_PUBLIC_SUPABASE_URL');
+const SUPA_KEY = envVar('NEXT_PUBLIC_SUPABASE_ANON_KEY');
+const supaHeaders = { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` };
+// aspect key → expected mobile_count (grid-layout handleConfirm: collage→2, 2X→2, 1X→1).
+const EXPECT_MOBILE: Record<string, number> = { scope: 1, 'pana-wide': 1, 'cine-wide': 1, legacy: 2, collage: 2 };
+let _uid: string | null = null;
+async function throwawayUserId(): Promise<string> {
+  if (_uid) return _uid;
+  const state = JSON.parse(readFileSync(process.env.AUTH_STATE || 'test/.auth/throwaway.json', 'utf8'));
+  const ls = (state.origins || []).flatMap((o: { localStorage?: { name: string; value: string }[] }) => o.localStorage || []);
+  const tok = ls.find((k: { name: string }) => k.name === 'privy:token');
+  if (!tok) throw new Error('[post-write] no privy:token in AUTH_STATE');
+  const pid = JSON.parse(Buffer.from(tok.value.split('.')[1], 'base64').toString()).sub as string;
+  const r = await fetch(`${SUPA_URL}/rest/v1/users?privy_id=eq.${encodeURIComponent(pid)}&select=id`, { headers: supaHeaders });
+  const rows = (await r.json()) as { id: string }[];
+  if (!rows?.[0]?.id) throw new Error(`[post-write] user not found for ${pid} (HTTP ${r.status})`);
+  _uid = rows[0].id;
+  return _uid;
+}
+async function readProfileAR(): Promise<{ aspect_ratio: string; mobile_count: number }> {
+  const uid = await throwawayUserId();
+  const r = await fetch(`${SUPA_URL}/rest/v1/profiles?user_id=eq.${uid}&select=aspect_ratio,mobile_count`, { headers: supaHeaders });
+  const rows = (await r.json()) as { aspect_ratio: string; mobile_count: number }[];
+  if (!rows?.[0]) throw new Error(`[post-write] profile not found for user ${uid} (HTTP ${r.status})`);
+  return rows[0];
+}
 
 // Brief C2 §0 — the create-pipeline matrix. Reuses the stored Privy session. For each fixture it
 // imports → crops → confirms, capturing the [crop] open/next + [finish] console traces + a finishing
@@ -63,10 +104,17 @@ async function setGridLayout(page: import('@playwright/test').Page, aspect: stri
   await expect(tile).toBeVisible({ timeout: 10_000 });
   await tile.click(); // → ConfirmationView
   await page.getByRole('button', { name: /^confirm$/i }).first().click(); // persists the layout
-  // C2c §1/§2 — the CONFIRM handler now awaits the write and only redirects to /profile once it has
-  // LANDED (fire-and-forget fixed in grid-layout/page.tsx). So the redirect IS the success signal:
-  // wait for it with NO catch. If it never comes, the write didn't land — fail loud, real finding.
-  await page.waitForURL(/\/profile(\/|\?|$)/, { timeout: 15_000 });
+  // MX-2 §1 — the §3 FIX. The old gate `waitForURL(/\/profile(\/|\?|$)/)` matched the CURRENT
+  // /profile/grid-layout URL instantly, so it NEVER waited for the CONFIRM redirect — the test
+  // navigated away and cancelled the in-flight setSharedAspect/setMobileCount writes (MX-1 §1b).
+  // Wait for the EXACT /profile path (the real redirect after WelcomeTransition → router.push),
+  // which only fires once both writes resolved.
+  await page.waitForURL((u) => new URL(u).pathname === '/profile', { timeout: 15_000 });
+  // POST-WRITE ASSERTION — read the profile row back and fail loudly on any mismatch, so a silent
+  // partial write can never pass again.
+  const row = await readProfileAR();
+  expect(row.aspect_ratio, `[post-write] aspect_ratio after setGridLayout(${aspect}) — got ${JSON.stringify(row)}`).toBe(aspect);
+  expect(row.mobile_count, `[post-write] mobile_count after setGridLayout(${aspect}) — got ${JSON.stringify(row)}`).toBe(EXPECT_MOBILE[aspect]);
 }
 
 // Import FIXTURES[0] and advance to crop; returns the captured [crop] open line.
