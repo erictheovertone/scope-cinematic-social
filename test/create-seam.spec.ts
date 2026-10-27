@@ -113,6 +113,71 @@ test('cel motion — no long task > 50ms over the 3s sequence', async ({ page },
   expect(over, `long tasks > 50ms during the 3s celebration: [${over.join(', ')}]`).toHaveLength(0);
 });
 
+// CEL-1b §2 — REAL sequence (store set → rAF teardown → nav), fired from INSIDE the flow via
+// __scopeFlowReceipt on /create. The scrim must be up within ~one frame of the receipt and STAY
+// up while the route changes beneath it to '/' (handleClose). No bare frame of the route.
+test('cel real sequence — scrim covers receipt → teardown → nav @375', async ({ page }, testInfo) => {
+  await page.goto('/create');
+  await expect
+    .poll(() => page.evaluate(() => typeof (window as unknown as { __scopeFlowReceipt?: unknown }).__scopeFlowReceipt === 'function'), { timeout: 15_000 })
+    .toBeTruthy();
+  await page.evaluate(() => (window as unknown as { __scopeFlowReceipt: (v: string) => void }).__scopeFlowReceipt('cel-photo'));
+  const sheet = page.locator('[role="dialog"][aria-label="Coin created"]');
+  await expect(sheet).toBeVisible({ timeout: 300 }); // scrim up ~within a frame of the receipt
+
+  const stamps = [0, 100, 300];
+  let prev = 0;
+  for (const ms of stamps) {
+    if (ms - prev > 0) await page.waitForTimeout(ms - prev);
+    prev = ms;
+    await expect(sheet, `scrim must stay up at ${ms}ms (no bare route frame)`).toBeVisible();
+    const p = join(CEL_OUT, `realseq-${ms}ms-${testInfo.project.name}.png`);
+    await page.screenshot({ path: p });
+    await testInfo.attach(`realseq-${ms}ms`, { path: p, contentType: 'image/png' });
+  }
+  // the teardown nav ran beneath the sheet (handleClose → '/', which the logged-out seam session
+  // may redirect onward): the route left /create while the scrim stayed up the whole time.
+  await expect.poll(() => new URL(page.url()).pathname, { timeout: 2_000 }).not.toBe('/create');
+  await expect(sheet).toBeVisible();
+});
+
+// CEL-1b §1 — "View post" deep-links to the POST: router.push('/profile?post=<id>'). (The authed
+// LANDING screenshot showing that post needs the §3 login — the post must exist in the profile.)
+test('cel View post deep-links to the post id', async ({ page }) => {
+  await openSeamHost(page);
+  await page.evaluate(() => (window as unknown as { __scopeFakeCoinCreated: (v: string) => void }).__scopeFakeCoinCreated('cel-photo'));
+  const sheet = page.locator('[role="dialog"][aria-label="Coin created"]');
+  await expect(sheet).toBeVisible({ timeout: 5_000 });
+  await sheet.getByRole('button', { name: /view post/i }).click();
+  await expect.poll(() => page.url(), { timeout: 5_000 }).toMatch(/\/profile\?post=seam-post/);
+});
+
+// CEL-1b §3 — gate c RE-MEASURED over the REAL sequence (receipt → teardown → nav → rise → 3s).
+// Logs long tasks with attribution. The SHEET's own work is proven < 50ms by the isolated
+// /welcome gate above; here teardown/home-mount cost is EXPECTED and reported (P4, not a blocker).
+test('cel real-sequence perf — long tasks attributed', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-chromium', 'longtask observer is Chromium-only');
+  await page.goto('/create');
+  await expect
+    .poll(() => page.evaluate(() => typeof (window as unknown as { __scopeFlowReceipt?: unknown }).__scopeFlowReceipt === 'function'), { timeout: 15_000 })
+    .toBeTruthy();
+  await page.waitForTimeout(1500); // settle /create so pre-receipt startup isn't in-window
+  await page.evaluate(() => {
+    (window as unknown as { __lt: { d: number; t: number }[]; __t0: number }).__lt = [];
+    (window as unknown as { __t0: number }).__t0 = performance.now();
+    const po = new PerformanceObserver((list) => { for (const e of list.getEntries()) (window as unknown as { __lt: { d: number; t: number }[]; __t0: number }).__lt.push({ d: Math.round(e.duration), t: Math.round(e.startTime - (window as unknown as { __t0: number }).__t0) }); });
+    po.observe({ entryTypes: ['longtask'] });
+  });
+  await page.evaluate(() => (window as unknown as { __scopeFlowReceipt: (v: string) => void }).__scopeFlowReceipt('cel-photo'));
+  await page.waitForTimeout(3200);
+  const lt = await page.evaluate(() => (window as unknown as { __lt: { d: number; t: number }[] }).__lt || []);
+  // eslint-disable-next-line no-console
+  console.log(`REAL-SEQUENCE long tasks (ms@offset): ${lt.map((x) => `${x.d}@${x.t}`).join(', ') || 'none'}`);
+  // Sanity only — teardown/home-mount cost is allowed and reported; nothing pathological.
+  const huge = lt.filter((x) => x.d > 500).map((x) => x.d);
+  expect(huge, `pathological long task(s) > 500ms: [${huge.join(', ')}]`).toHaveLength(0);
+});
+
 // Gate d — BOTH mint paths funnel through the single onCoinConfirmed store (anti-fork). The seam
 // proves the store→sheet contract both producers rely on; the producers are unit-covered by the
 // call-site rewrite (create-post flow handleDoMint + existing-post CreateCoinSheet.run).

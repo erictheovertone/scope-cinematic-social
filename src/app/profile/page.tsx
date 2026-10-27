@@ -320,6 +320,20 @@ const userLayoutId = stableLayoutId;
     }
   }, [searchParams]);
 
+  // CEL-1b §1 — deep-link: /profile?post=<id> (from the Coin Created sheet's "View post") opens
+  // the post scroll ANCHORED at that post, not the grid. Waits for userPosts, finds the index,
+  // opens ProfilePostViewer there, then strips the param so Back doesn't re-open it.
+  useEffect(() => {
+    const pid = searchParams?.get('post');
+    if (!pid || userPosts.length === 0) return;
+    const idx = userPosts.findIndex((p) => p.id === pid);
+    if (idx >= 0) {
+      setViewerIndex(idx);
+      setShowViewer(true);
+      router.replace('/profile');
+    }
+  }, [searchParams, userPosts, router]);
+
   useEffect(() => {
     if (!user || showCreatePost || !supabaseUserId) return;
     const load = () => getUserPosts(supabaseUserId)
