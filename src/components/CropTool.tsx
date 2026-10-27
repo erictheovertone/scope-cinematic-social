@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { AR_CHIPS, type ArChip } from "@/lib/aspectRatio";
 import { cropDebugOn, pushCropTrace } from "@/lib/cropDebug";
+import { vdbg } from "@/lib/videoDebug"; // Brief V1b — crop:waiting/crop:ready (no-op unless ?debug=video)
 import { rotateCoverScale } from "@/lib/editGeometry";
 import { neutralGeometry, type EditGeometry } from "@/lib/editGeometry";
 
@@ -69,6 +70,11 @@ export default function CropTool({
   const seededRef = useRef<boolean>(seeded);
   const [tab, setTab] = useState<Tab>("crop");
   const [naturalAr, setNaturalAr] = useState(0); // un-rotated source w/h
+
+  // Brief V1b — crop crumbs (no-op unless ?debug=video). The video crop preview's
+  // LOADING waits on loadedmetadata (it sets naturalAr → the overlay appears). Name
+  // that wait; each crumb carries the live decoder count so a stall shows by name.
+  useEffect(() => { if (mediaType === 'video') vdbg('crop:waiting', 'loadedmetadata'); }, [mediaType]);
 
   const stageRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{
@@ -242,7 +248,7 @@ export default function CropTool({
           {mediaType === "video" ? (
             <video
               src={mediaUrl} autoPlay muted loop playsInline
-              onLoadedMetadata={(e) => { const v = e.currentTarget; setNaturalAr(v.videoWidth / v.videoHeight); }}
+              onLoadedMetadata={(e) => { const v = e.currentTarget; setNaturalAr(v.videoWidth / v.videoHeight); vdbg('crop:ready', `${v.videoWidth}x${v.videoHeight}`); }}
               style={{ display: "block", maxWidth: "100%", maxHeight: "62vh", transform: mediaTransform, transformOrigin: mediaOrigin, transition: "transform 0.05s linear" }}
             />
           ) : (

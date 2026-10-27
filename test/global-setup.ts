@@ -32,7 +32,17 @@ export default function globalSetup() {
     }
   }
   if (exp != null && exp < now) {
-    throw new Error(`[auth-preflight] Privy token in ${STATE} expired ${Math.round((now - exp) / 3600)}h ago (${new Date(exp * 1000).toISOString()})\n  ${fix}`);
+    // SKIP_AUTH_PREFLIGHT=1 downgrades the expired-token throw to a warning — ONLY for
+    // auth-free diagnostics (e.g. V1b's seam-inject decoder-count test, which never
+    // needs a profile). The authed tests (crop/finishing) will still hang on a stale
+    // token, so this is not a substitute for `create:login:test`.
+    const msg = `[auth-preflight] Privy token in ${STATE} expired ${Math.round((now - exp) / 3600)}h ago (${new Date(exp * 1000).toISOString()})\n  ${fix}`;
+    if (process.env.SKIP_AUTH_PREFLIGHT === '1') {
+      // eslint-disable-next-line no-console
+      console.warn(`⚠ ${msg}\n  (SKIP_AUTH_PREFLIGHT=1 — proceeding; authed tests WILL hang)`);
+    } else {
+      throw new Error(msg);
+    }
   }
   // eslint-disable-next-line no-console
   console.log(`[auth-preflight] ok — ${baseOrigin}${exp != null ? `, token valid ${Math.round((exp - now) / 60)}min` : ' (no privy:token exp found — proceeding)'}`);

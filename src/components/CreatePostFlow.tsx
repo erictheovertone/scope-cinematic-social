@@ -128,27 +128,9 @@ function withTimeout<T>(p: Promise<T>, ms: number, stage: string): Promise<T> {
   ]);
 }
 
-function captureVideoThumbnail(videoUrl: string): Promise<string | null> {
-  return new Promise((resolve) => {
-    const video = document.createElement('video');
-    video.muted = true;
-    video.src = videoUrl;
-    video.onloadedmetadata = () => { video.currentTime = 0.5; };
-    video.onseeked = () => {
-      try {
-        const canvas = document.createElement('canvas');
-        canvas.width = video.videoWidth || 640;
-        canvas.height = video.videoHeight || 360;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) { resolve(null); return; }
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        resolve(canvas.toDataURL('image/jpeg', 0.8));
-      } catch { resolve(null); }
-    };
-    video.onerror = () => resolve(null);
-    setTimeout(() => resolve(null), 5000);
-  });
-}
+// Brief V1b — captureVideoThumbnail (a SECOND lingering <video>) was removed. The
+// auto-thumbnail is now grabbed by the single one-shot <video> in the duration effect,
+// which tears down before the crop step so a 4K clip has exactly one decoder at crop.
 
 async function uploadAutoThumbnail(dataUrl: string, userId: string): Promise<string | null> {
   try {
@@ -308,12 +290,29 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
   const finishCtxTimeRef = useRef<number | null>(null);
   const [debugFresh, setDebugFresh] = useState<{ fresh: string | null; freshAr: string | null }>({ fresh: null, freshAr: null });
   const [selectedMedia, setSelectedMedia] = useState<MediaItem[]>([]);
-  // Read the selected video's duration (the clip window matches it for video posts).
+  // Brief V1b — ONE one-shot <video> reads duration AND grabs the auto-thumbnail,
+  // then TEARS DOWN immediately. Before: the duration probe (here) and the thumbnail
+  // grabber (captureVideoThumbnail, in handleMediaSelect) were TWO separate <video>
+  // elements that lingered past their jobs; with the crop preview that made THREE
+  // concurrent decoders. On a 4K HEVC clip iOS starved the crop decode, so the crop
+  // step's loadedmetadata never fired → LOADING forever (device trace: vid 3 live).
+  // One element, released before crop, means exactly ONE decoder at the crop step.
   useEffect(() => {
     if (selectedMedia[0]?.type !== 'video' || !selectedMedia[0]?.url) { setVideoDuration(0); return; }
+    const url = selectedMedia[0].url;
+    const f0 = selectedMedia[0].file; // present on the pick AND the seam path
+    let done = false;
     const v = document.createElement('video');
-    v.preload = 'metadata';
-    const f0 = selectedMedia[0].file; // present on both the pick AND the seam path
+    v.muted = true; v.playsInline = true; v.preload = 'auto'; // iOS: muted+playsInline so a frame decodes
+    const teardown = () => {
+      try { v.onloadedmetadata = null; v.onseeked = null; v.onerror = null; v.pause(); v.removeAttribute('src'); v.load(); } catch { /* ignore */ }
+    };
+    const finish = (thumb: string | null) => {
+      if (done) return; done = true;
+      if (thumb) setAutoThumbnail(thumb);
+      vdbg('thumb', thumb ? 'ok' : 'null'); // V1
+      teardown(); // release the decoder BEFORE the crop step mounts
+    };
     v.onloadedmetadata = () => {
       const d = isFinite(v.duration) ? v.duration : 0;
       setVideoDuration(d);
@@ -323,9 +322,22 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
         res: `${v.videoWidth}x${v.videoHeight}`,
         ...(f0 ? { sizeMB: (f0.size / 1048576).toFixed(0), container: f0.type || 'video' } : {}),
       });
+      try { v.currentTime = Math.min(0.5, d || 0.5); } catch { finish(null); } // seek to the poster frame
     };
-    v.src = selectedMedia[0].url;
-    return () => { v.src = ''; };
+    v.onseeked = () => {
+      try {
+        const c = document.createElement('canvas');
+        c.width = v.videoWidth || 640; c.height = v.videoHeight || 360;
+        const ctx = c.getContext('2d');
+        if (!ctx) { finish(null); return; }
+        ctx.drawImage(v, 0, 0, c.width, c.height);
+        finish(c.toDataURL('image/jpeg', 0.8));
+      } catch { finish(null); }
+    };
+    v.onerror = () => finish(null);
+    const t = window.setTimeout(() => finish(null), 8000); // a 4K seek can be slow; never leak if it stalls
+    v.src = url;
+    return () => { window.clearTimeout(t); if (!done) { done = true; teardown(); } };
   }, [selectedMedia]);
   const [caption, setCaption] = useState('');
   const [isUploading, setIsUploading] = useState(false);
@@ -732,7 +744,8 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
           source: file.name || 'unnamed', // web can't distinguish roll vs file — name is the only signal
         });
         newMedia.push({ id: `${Date.now()}-${Math.random()}`, file, url: objUrl, type: "video" });
-        captureVideoThumbnail(objUrl).then(thumb => { vdbg('thumb', thumb ? 'ok' : 'null'); if (thumb) setAutoThumbnail(thumb); });
+        // V1b — the auto-thumbnail is now grabbed by the SINGLE one-shot <video> in the
+        // duration effect above (one decoder, torn down before crop). No second element here.
       } else if (file.type.startsWith("image/")) {
         console.log(`[handleMediaSelect] Starting compression for ${file.name}…`);
         let processedFile = file;

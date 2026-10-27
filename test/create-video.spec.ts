@@ -89,7 +89,7 @@ for (const d of [20, 45, 90]) {
     const hSettle = await heapMB(page);
 
     type Dump = {
-      crumbs: { step: string; elapsed: number; detail?: string }[];
+      crumbs: { step: string; elapsed: number; detail?: string; v: number }[];
       file: Record<string, string | number>;
       errors: string[];
       res: Record<string, number>;
@@ -100,6 +100,9 @@ for (const d of [20, 45, 90]) {
     });
 
     const heaps = [hCrop, hFinish, hEdit, hSettle].filter((x): x is number => x != null);
+    // Live <video> (decoder) count at each recorded step — the V1b deliverable.
+    const videoCountByStep: Record<string, number> = {};
+    for (const c of dump?.crumbs ?? []) videoCountByStep[c.step] = c.v;
     const report = {
       duration: d,
       fixture: url,
@@ -108,8 +111,9 @@ for (const d of [20, 45, 90]) {
       file: dump?.file ?? null,
       wallFromPickS: { toCropOpen: tCrop, toFinishing: tFinish, toEditOrFallback: tEdit },
       heapMB: { crop: hCrop, finishing: hFinish, editOrFallback: hEdit, afterSettle: hSettle, peak: heaps.length ? Math.max(...heaps) : null },
+      videoCountByStep,           // decoders alive at each step — crop must be 1
       resources: dump?.res ?? null,
-      crumbs: dump?.crumbs?.map((c) => `${c.step}+${c.elapsed.toFixed(2)}${c.detail ? `(${c.detail})` : ''}`) ?? [],
+      crumbs: dump?.crumbs?.map((c) => `${c.step}+${c.elapsed.toFixed(2)}·v${c.v}${c.detail ? `(${c.detail})` : ''}`) ?? [],
       errors: dump?.errors ?? [],
     };
     await testInfo.attach(`v1-trace-${d}s`, { body: JSON.stringify(report, null, 2), contentType: 'application/json' });
@@ -121,5 +125,48 @@ for (const d of [20, 45, 90]) {
     // describe the real pipeline, not an early bail). Whether DONE / EDIT & POST
     // was reachable is RECORDED in `outcome`, not asserted.
     expect(tFinish, 'never reached the finishing suite').toBeGreaterThan(0);
+
+    // V1b — the crop step must stand up with exactly ONE live decoder (was 3 on the
+    // device: thumb grabber + duration probe + crop preview). The merged one-shot
+    // tears down before crop, so step:crop carries v1.
+    if (videoCountByStep['step:crop'] != null) {
+      expect(videoCountByStep['step:crop'], 'more than one decoder alive at the crop step').toBeLessThanOrEqual(1);
+    }
   });
 }
+
+// ── V1b — auth-free decoder-teardown guard ────────────────────────────────────
+// The root-cause fix (merge the duration probe + thumbnail grabber into one one-shot
+// <video> that TEARS DOWN before crop) is observable WITHOUT a profile: the seam
+// inject + the duration/thumbnail effect run without auth. After the one-shot's
+// `thumb` crumb, the only live decoder must be the media-step preview (1) — NOT the
+// two extra one-shots (which, pre-fix, lingered as a 3rd+4th decoder into crop).
+// Runnable with a stale token via SKIP_AUTH_PREFLIGHT=1 (it never needs real auth).
+test('V1b — duration+thumbnail one-shot releases its decoder before crop', async ({ page }) => {
+  const url = fixtureUrl(20);
+  test.skip(!url, 'no 20s fixture — run make-video-fixtures.sh or gen-fixtures-browser.mjs');
+
+  await page.goto('/create?debug=video');
+  await expect
+    .poll(() => page.evaluate(() => typeof (window as unknown as { __scopeInjectMedia?: unknown }).__scopeInjectMedia === 'function'), { timeout: 15_000 })
+    .toBeTruthy();
+  await page.evaluate((u) => (window as unknown as { __scopeInjectMedia: (t: string, u: string) => Promise<void> }).__scopeInjectMedia('video', u as string), url);
+
+  // Wait until the one-shot emits `thumb` (duration read + thumbnail grabbed + torn down).
+  await expect
+    .poll(() => page.evaluate(() => {
+      const f = (window as unknown as { __scopeVdbgDump?: () => { crumbs: { step: string }[] } }).__scopeVdbgDump;
+      return f ? f().crumbs.some((c) => c.step === 'thumb') : false;
+    }), { timeout: 20_000 })
+    .toBeTruthy();
+  await page.waitForTimeout(700); // let the teardown settle
+
+  const dump = await page.evaluate(() => {
+    const f = (window as unknown as { __scopeVdbgDump?: () => { crumbs: { step: string; v: number }[]; res: { videosLive: number; videosTotal: number } } }).__scopeVdbgDump;
+    return f ? f() : null;
+  });
+  const liveNow = dump?.res?.videosLive ?? 99;
+  console.log(`[V1b] liveDecodersAfterThumb=${liveNow} total=${dump?.res?.videosTotal} crumbs=${JSON.stringify(dump?.crumbs?.map((c) => `${c.step}·v${c.v}`))}`);
+  // Only the media-step preview holds a decoder; the one-shot has released its own.
+  expect(liveNow, 'the duration/thumbnail one-shot did not release its decoder before crop').toBeLessThanOrEqual(1);
+});
