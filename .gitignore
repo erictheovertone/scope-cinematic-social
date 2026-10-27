@@ -53,3 +53,8 @@ test/.perf/
 
 # C3 harness self-verify screenshots (not source)
 test/shots/
+
+# V1e — generated video fixtures + harness shots (not source)
+public/test-fixtures/
+test/shots-v1/
+test/shots-mx/

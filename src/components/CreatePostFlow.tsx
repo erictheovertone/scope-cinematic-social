@@ -8,6 +8,7 @@ import { base } from "viem/chains";
 import { createPost, updatePostCoinData, updatePostCoinTxHash, updatePostMusic } from '@/lib/postsService';
 import { saveDraft, loadDraft, clearDraft, type CreateDraft } from '@/lib/createDraft';
 import { uploadVideoToStream } from '@/lib/streamUpload';
+import { vdbg, vdbgFile, vdbgReset, vdbgMarkNav } from '@/lib/videoDebug'; // V1e — ?debug=video trace (no-op unless on)
 import MediaRenderer from '@/components/MediaRenderer';
 // NOTE: the 1155 path (mintNewPost) is DORMANT — intact in src/lib/zora.ts as the
 // rollback lifeboat, deliberately unreferenced here. New posts mint as coins.
@@ -312,7 +313,11 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
     if (selectedMedia[0]?.type !== 'video' || !selectedMedia[0]?.url) { setVideoDuration(0); return; }
     const v = document.createElement('video');
     v.preload = 'metadata';
-    v.onloadedmetadata = () => setVideoDuration(isFinite(v.duration) ? v.duration : 0);
+    v.onloadedmetadata = () => {
+      setVideoDuration(isFinite(v.duration) ? v.duration : 0);
+      vdbg('meta', `${v.videoWidth}x${v.videoHeight} ${(isFinite(v.duration) ? v.duration : 0).toFixed(1)}s`); // V1e
+      vdbgFile({ res: `${v.videoWidth}x${v.videoHeight}`, durationS: (isFinite(v.duration) ? v.duration : 0).toFixed(1) });
+    };
     v.src = selectedMedia[0].url;
     return () => { v.src = ''; };
   }, [selectedMedia]);
@@ -384,6 +389,17 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
   // as plain metadata (snippet_start / snippet_length) — NO baked clip.
   const [snippetWindow, setSnippetWindow] = useState<{ start: number; length: number } | null>(null);
   const [autoThumbnail, setAutoThumbnail] = useState<string | null>(null);
+
+  // ── Brief V1e — ?debug=video breadcrumbs. PASSIVE mirror of existing state
+  //    transitions; every call is a no-op unless the trace is on → zero behaviour change. ──
+  useEffect(() => { vdbg(`step:${step}`); }, [step]);
+  useEffect(() => { if (postStage) vdbg(`stage:${postStage}`); }, [postStage]);
+  useEffect(() => { if (musicTrackId) vdbg('music', musicTrackId); }, [musicTrackId]);
+  const upDecileRef = useRef(-1);
+  useEffect(() => {
+    const d = Math.floor(uploadPct / 25);
+    if (uploadPct > 0 && d !== upDecileRef.current) { upDecileRef.current = d; vdbg('upload%', `${uploadPct}`); }
+  }, [uploadPct]);
 
   // ── Brief C3-11 — draft persistence (IndexedDB) ──────────────────────────────
   // RESTORE once on mount, only from the empty initial state (never clobber an active
@@ -482,14 +498,17 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
   useEffect(() => {
     if (!user?.id) { setFinishCtx(null); return; }
     let cancelled = false;
+    vdbg('gate:finishctx:waiting'); // V1e — the crop step's real gate
     (async () => {
       try {
         const supabaseUser = await getUserByPrivyId(user.id); // DID → users row (uuid)
+        if (!cancelled) vdbg('gate:finishctx:user', supabaseUser ? 'ok' : 'null'); // V1e
         if (!supabaseUser || cancelled) return;
         // Brief C1b — read the layout FRESH (bypass the no-TTL session profile cache) so a grid
         // change made just before opening create is seen, not the previously-cached value.
         invalidateProfileCache(supabaseUser.id);
         const profile = await getProfile(supabaseUser.id);     // uuid → profile
+        if (!cancelled) vdbg('gate:finishctx:profile', profile ? 'ok' : 'null'); // V1e
         if (!profile || cancelled) return;
         // Brief C1b — THE FIX: read the crop AR from the ONE canonical source (aspect_ratio, via
         // resolveLayout — the same resolver the profile grid + desktop create use), NOT the raw
@@ -504,16 +523,23 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
           layoutId: canonical,
           userUuid: supabaseUser.id, // uuid for looksService (NEVER the DID)
         });
+        vdbg('gate:finishctx:ready', canonical); // V1e — CropTool can now mount
         if (finishCtxTimeRef.current == null) finishCtxTimeRef.current = performance.now(); // C1a trace timing
         // Load saved looks (degrades to [] pre-migration; never crashes the flow).
         const looks = await getLooks(supabaseUser.id);
         if (!cancelled) setSavedLooks(looks);
       } catch (e) {
+        vdbg('gate:finishctx:error', (e as Error)?.message?.slice(0, 40) ?? 'err'); // V1e
         console.error('[CreatePostFlow] finishCtx load error:', errInfo(e));
       }
     })();
     return () => { cancelled = true; };
   }, [user?.id, userLayoutId, proTick]);
+
+  // V1e — the LOADING screen owner: the crop step renders a loader while finishCtx is
+  // null. Crumb when it shows so a device trace names this gate (it clears when finishCtx
+  // resolves and CropTool mounts → crop:waiting).
+  useEffect(() => { if (step === 'crop' && !finishCtx) vdbg('gate:croploader:shown'); }, [step, finishCtx]);
 
   // Brief C1a §0 — on entering CROP under ?debug=crop, re-read grid_layout FRESH from the DB
   // (the app's own fetch) + stamp the open time, so the trace shows fresh vs prop vs ctx and the
@@ -668,6 +694,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
   }, [userLayoutId, isOpen, imgNaturalAr, videoNaturalAr]);
 
   const handleMediaSelect = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
+    vdbgReset(); vdbg('pick:onchange'); // V1e — FIRST statement, before any guard: proves the real <input> onChange fired
     console.log('[handleMediaSelect] onChange fired');
 
     // IMPORTANT: convert to Array *before* clearing the input.
@@ -677,6 +704,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
     event.target.value = "";
 
     if (files.length === 0) {
+      vdbg('pick:bail', 'no-files'); // V1e
       console.log('[handleMediaSelect] no files in event');
       return;
     }
@@ -696,13 +724,16 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
       // V2 — raising it is a follow-up now the transcode barrier is gone.)
       const isMov = file.type === "video/quicktime" || file.name.toLowerCase().endsWith(".mov");
       if (file.type.startsWith("video/") || isMov) {
+        vdbgFile({ sizeMB: (file.size / 1048576).toFixed(0), container: file.type || (isMov ? 'video/quicktime' : 'video'), source: file.name || 'unnamed' }); // V1e
         if (file.size > VIDEO_MAX_BYTES) {
+          vdbg('pick:bail', `video-too-big ${(file.size / 1048576).toFixed(0)}MB`); // V1e
           setVideoError("Video must be under 500MB. Please trim or compress before uploading.");
           continue;
         }
         const objUrl = URL.createObjectURL(file);
+        vdbg('pick', `video ${(file.size / 1048576).toFixed(0)}MB ${file.type || 'no-type'}`); // V1e — accepted
         newMedia.push({ id: `${Date.now()}-${Math.random()}`, file, url: objUrl, type: "video" });
-        captureVideoThumbnail(objUrl).then(thumb => { if (thumb) setAutoThumbnail(thumb); });
+        captureVideoThumbnail(objUrl).then(thumb => { vdbg('thumb', thumb ? 'ok' : 'null'); if (thumb) setAutoThumbnail(thumb); });
       } else if (file.type.startsWith("image/")) {
         console.log(`[handleMediaSelect] Starting compression for ${file.name}…`);
         let processedFile = file;
@@ -710,8 +741,10 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
           processedFile = await compressImage(file);
           console.log(`[handleMediaSelect] Compression complete: ${(processedFile.size / 1024).toFixed(1)} KB (was ${(file.size / 1024).toFixed(1)} KB)`);
         } catch (e) {
+          vdbg('pick:compress-threw', (e as Error)?.message?.slice(0, 30) ?? 'err'); // V1e — non-fatal; uses original
           console.error('[handleMediaSelect] Compression threw — using original:', errInfo(e));
         }
+        vdbg('pick', `image ${(processedFile.size / 1048576).toFixed(1)}MB`); // V1e — accepted
         console.log('[handleMediaSelect] Adding to selectedMedia');
         newMedia.push({
           id: `${Date.now()}-${Math.random()}`,
@@ -720,6 +753,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
           type: "image",
         });
       } else {
+        vdbg('pick:bail', `unrecognised type:${file.type || 'none'}`); // V1e
         console.log(`[handleMediaSelect] Skipping unrecognised type: "${file.type}" (${file.name})`);
       }
     }
@@ -906,6 +940,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
           setStage('Uploading video');
           console.log('[handlePost] uploading video to Stream:', media.file.name);
           streamUid = await uploadVideoToStream(media.file, (frac) => setUploadPct(Math.round(frac * 100)));
+          vdbg('upload-done', streamUid); // V1e
           console.log('[handlePost] stream upload complete, uid:', streamUid);
           continue;
         }
@@ -1027,6 +1062,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
       console.log('[handlePost] createPost payload:', postPayload);
       setStage('Publishing');
       const newPost = await createPost(postPayload);
+      vdbg('published', newPost?.id ?? '?'); // V1e
       console.log('[handlePost] post created:', newPost?.id);
       void clearDraft(); // C3-11 — published: the draft is done (a later mint failure keeps the post)
 
@@ -1082,6 +1118,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
       setShowMintPrompt(true);
 
     } catch (e: any) {
+      vdbg('FAIL', `${stage}: ${(e?.message ?? 'unknown').slice(0, 50)}`); // V1e
       const lt = getScopeLimitType(e);
       if (lt) { setIsPosting(false); setIsUploading(false); showUpsell(lt); return; }
       console.error('[handlePost] FAILED:', errInfo(e));
@@ -1100,6 +1137,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
   };
 
   const completeFlow = () => {
+    vdbgMarkNav('profile'); // V1e — clean end of the flow (not an iOS kill)
     onClose();
     setStep('media');
     setPostStage('');
@@ -1866,7 +1904,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
             <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: 13, color: 'rgb(var(--ink-rgb) / 0.55)', lineHeight: 1.5, margin: '0 0 22px' }}>Your edits will be lost.</p>
             <div style={{ display: 'flex', gap: 10 }}>
               <button onClick={() => setDiscardConfirm(false)} style={{ flex: 1, fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 12, color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.08em', background: 'transparent', border: '1px solid rgb(var(--ink-rgb) / 0.3)', cursor: 'pointer', padding: '12px 0' }}>KEEP EDITING</button>
-              <button onClick={() => { void clearDraft(); setDiscardConfirm(false); onClose(); setStep('media'); }} style={{ flex: 1, fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 12, color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.08em', background: 'transparent', border: '1px solid rgb(var(--ink-rgb) / 0.4)', cursor: 'pointer', padding: '12px 0' }}>DISCARD</button>
+              <button onClick={() => { vdbgMarkNav('discard'); void clearDraft(); setDiscardConfirm(false); onClose(); setStep('media'); }} style={{ flex: 1, fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 12, color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.08em', background: 'transparent', border: '1px solid rgb(var(--ink-rgb) / 0.4)', cursor: 'pointer', padding: '12px 0' }}>DISCARD</button>
             </div>
           </div>
         </div>
