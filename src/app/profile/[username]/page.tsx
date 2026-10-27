@@ -34,6 +34,7 @@ import { dividerBackground } from "@/lib/economy/dividerLines";
 import { useEconomy } from "@/components/EconomyProvider";
 import CollectedGrid from "@/components/economy/CollectedGrid";
 import ProfileTabRow from "@/components/profile/ProfileTabRow";
+import ArrivedNote from "@/components/arrival/ArrivedNote";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -513,6 +514,7 @@ export default function PublicProfilePage() {
         )}
       </div>
 
+      {username && <ArrivedNote username={username} />}
       {showViewer && <ProfilePostViewer posts={posts} initialIndex={viewerIndex} ownerUsername={username} ownerAvatarUrl={profile?.profile_image_url} onClose={() => setShowViewer(false)} />}
       {showFollowersModal && targetPrivyId && <FollowListModal type="followers" privyUserId={targetPrivyId} onClose={() => setShowFollowersModal(false)} />}
       {showFollowingModal && targetPrivyId && <FollowListModal type="following" privyUserId={targetPrivyId} onClose={() => setShowFollowingModal(false)} />}

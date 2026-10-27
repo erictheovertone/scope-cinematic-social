@@ -28,6 +28,15 @@ const nextConfig: NextConfig = {
   // Legal routes consolidated to top-level /terms + /privacy (Privy modal links
   // there; must be logged-out reachable). The old locations 308 → canonical so
   // existing links/bookmarks and the #dmca anchor keep working.
+  // Brief ARR-1 — PUBLIC_PROFILES_ENABLED off ⇒ /[username] must not even MATCH: every /<name> gets
+  // Next's own 404 (true status), exactly as before the route existed. (A page-level notFound()
+  // can't — the root loading.tsx has already streamed a 200 shell.) afterFiles runs after all
+  // static routes resolve and before dynamic ones, so real top-level pages are untouched. Read at
+  // build/start: the flag is fixed per deployment (a Vercel env change needs a redeploy anyway).
+  async rewrites() {
+    if (process.env.PUBLIC_PROFILES_ENABLED === "true") return { beforeFiles: [], afterFiles: [], fallback: [] };
+    return { beforeFiles: [], afterFiles: [{ source: "/:username", destination: "/_arrival-off/:username" }], fallback: [] };
+  },
   async redirects() {
     return [
       { source: "/legal/terms", destination: "/terms", permanent: true },

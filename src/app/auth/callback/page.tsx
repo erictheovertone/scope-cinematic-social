@@ -6,10 +6,11 @@ import { usePrivy } from "@privy-io/react-auth";
 import { syncUserWithSupabase, getUserByPrivyId, getProfile } from "@/lib/userService";
 import { hasSeenDesktopExplainer } from "@/lib/desktopOnboarding";
 import ScopeLoader from "@/components/ScopeLoader";
+import { readArrivalIntent, applyArrivalIntent, clearArrivalIntent, arrivalDestination } from "@/lib/arrival/intent";
 
 export default function AuthCallback() {
   const router = useRouter();
-  const { user, authenticated, ready } = usePrivy();
+  const { user, authenticated, ready, getAccessToken } = usePrivy();
 
   useEffect(() => {
     if (!ready) return;
@@ -31,6 +32,15 @@ export default function AuthCallback() {
         }
 
         const profile = await getProfile(supabaseUser.id);
+
+        // Brief ARR-1 — arrived from a public profile: follow + attribution now (the user row
+        // exists), then land back on that profile. No username yet → onboard first; the intent
+        // stays and the grid-layout step's exit lands there instead.
+        const arrival = readArrivalIntent();
+        if (arrival) {
+          await applyArrivalIntent(arrival, getAccessToken);
+          if (profile?.username) { clearArrivalIntent(); router.replace(arrivalDestination(arrival)); return; }
+        }
         const isDesktop = typeof window !== "undefined" && window.matchMedia("(min-width: 1024px)").matches;
 
         // DESKTOP: the continuous /onboarding flow (explainer → setup → picker).
@@ -57,7 +67,7 @@ export default function AuthCallback() {
     };
 
     checkProfile();
-  }, [ready, authenticated, user, router]);
+  }, [ready, authenticated, user, router, getAccessToken]);
 
   return (
     <div

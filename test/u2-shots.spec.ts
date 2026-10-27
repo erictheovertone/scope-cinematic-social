@@ -137,3 +137,78 @@ test.describe('U2-2 welcome', () => {
     }
   }
 });
+
+// ── U2-5 · ARR-1 — Arrival (public profile behind PUBLIC_PROFILES_ENABLED) ───────────────────
+// ARR_FLAG=on|off tells the spec which server it's pointed at. ARR_USER = a real username.
+const ARR_USER = process.env.ARR_USER || 'overtone';
+const FORBIDDEN = /contact_email|stripe|wallet|privy|paid_member|payment|user_id|"id"|email|founding_member_number|last_seen/i;
+
+test.describe('U2-5 arrival', () => {
+  test.skip(!process.env.ARR_FLAG, 'set ARR_FLAG=on|off');
+
+  test('U2-5 flag-off — route + API behave exactly as today (404)', async ({ page, request }, info) => {
+    test.skip(process.env.ARR_FLAG !== 'off');
+    const api = await request.get(`/api/public-profile/${ARR_USER}`);
+    expect(api.status()).toBe(404);
+    const res = await page.goto(`/${ARR_USER}`);
+    expect(res?.status()).toBe(404);
+    await page.waitForTimeout(800);
+    await page.screenshot({ path: join(OUT, `u2-5-flag-off-${info.project.name}.png`) });
+  });
+
+  test('U2-5 anon-smoke — the API returns ONLY the allowlist', async ({ request }) => {
+    test.skip(process.env.ARR_FLAG !== 'on');
+    const res = await request.get(`/api/public-profile/${ARR_USER}`);
+    expect(res.status()).toBe(200);
+    const text = await res.text();
+    const body = JSON.parse(text);
+    expect(Object.keys(body).sort()).toEqual(['avatarUrl', 'badges', 'bio', 'decksCount', 'desktopCols', 'displayName', 'frames', 'framesCount', 'layoutId', 'mobileCols', 'username'].sort());
+    for (const f of body.frames) expect(Object.keys(f).sort()).toEqual(['aspect', 'image', 'video']);
+    for (const b of body.badges) expect(Object.keys(b).sort()).toEqual(['key', 'name']);
+    // No forbidden field NAME anywhere in the payload (values are URLs/text; keys are checked).
+    const keys: string[] = [];
+    JSON.parse(text, (k, v) => { if (k) keys.push(k); return v; });
+    expect(keys.filter((k) => FORBIDDEN.test(k))).toEqual([]);
+    expect(text).not.toMatch(/0x[a-fA-F0-9]{40}/); // no wallet address
+    expect(text).not.toMatch(/did:privy:/);       // no privy id
+    expect(text).not.toMatch(/cus_|sub_[A-Za-z0-9]{8}/); // no stripe ids
+    // eslint-disable-next-line no-console
+    console.log(`[anon-smoke] keys ok · ${body.frames.length} frames · badges=${body.badges.map((b: { name: string }) => b.name).join(',')}`);
+  });
+
+  test('U2-5 arrival → closed → theatre', async ({ page }, info) => {
+    test.skip(process.env.ARR_FLAG !== 'on');
+    const tag = info.project.name;
+    const res = await page.goto(`/${ARR_USER}?ref=email`);
+    expect(res?.status()).toBe(200);
+    // Server-rendered: the header is in the initial HTML.
+    expect(await res!.text()).toContain(`${ARR_USER.toLowerCase()}</h1>`);
+    await page.locator('img').nth(2).waitFor();
+    await page.waitForTimeout(1500);
+    await page.screenshot({ path: join(OUT, `u2-5-arrival-${tag}.png`) });
+    // Card hidden at rest.
+    const card = page.getByText(/is on Scope/i);
+    expect(Number(await card.evaluate((el) => getComputedStyle(el.parentElement!).opacity))).toBeLessThan(0.05);
+    // Mid-close and closed, driven by real scroll.
+    const sc = page.locator('[data-scroll]').first();
+    await sc.evaluate((el) => { el.scrollTop = 24 + 130; });
+    await page.waitForTimeout(400);
+    await page.screenshot({ path: join(OUT, `u2-5-mid-${tag}.png`) });
+    await sc.evaluate((el) => { el.scrollTop = 24 + 400; });
+    await page.waitForTimeout(500);
+    await page.screenshot({ path: join(OUT, `u2-5-closed-${tag}.png`) });
+    expect(Number(await card.evaluate((el) => getComputedStyle(el.parentElement!).opacity))).toBeGreaterThan(0.95);
+    await expect(page.getByRole('button', { name: 'Continue with Apple' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Continue with email' })).toBeVisible();
+    await expect(page.getByRole('checkbox')).toHaveAttribute('aria-checked', 'true');
+    // Scroll back → opens again.
+    await sc.evaluate((el) => { el.scrollTop = 0; });
+    await page.waitForTimeout(400);
+    expect(Number(await card.evaluate((el) => getComputedStyle(el.parentElement!).opacity))).toBeLessThan(0.05);
+    // Tap a frame → theatre.
+    await page.getByRole('button', { name: 'Open frame 1', exact: true }).click();
+    await expect(page.getByRole('dialog', { name: 'Frame' })).toBeVisible();
+    await page.waitForTimeout(600);
+    await page.screenshot({ path: join(OUT, `u2-5-theatre-${tag}.png`) });
+  });
+});

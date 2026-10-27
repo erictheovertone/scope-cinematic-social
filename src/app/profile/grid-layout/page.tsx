@@ -8,6 +8,7 @@ import { setUserGridLayout, getUserGridLayout } from "@/lib/gridLayoutService";
 import { getUserByPrivyId, getProfile } from "@/lib/userService";
 import { setSharedLayout, resolveLayout, legacyLayoutId, type AspectId } from "@/lib/layoutModel";
 import WelcomeTransition from "@/components/WelcomeTransition";
+import { readArrivalIntent, clearArrivalIntent, arrivalDestination } from "@/lib/arrival/intent";
 
 const SKB: React.CSSProperties = { fontFamily: "var(--font-display)", fontWeight: 700 };
 
@@ -404,7 +405,12 @@ export default function GridLayoutPage() {
 
   // WelcomeTransition plays here — eliminates flash of profile page
   if (showTransition) {
-    return <WelcomeTransition onComplete={() => router.push(isNewUser ? "/profile?new=1" : "/profile")} />;
+    return <WelcomeTransition onComplete={() => {
+      // Brief ARR-1 — a sign-up that started on someone's public profile lands back there.
+      const arrival = readArrivalIntent();
+      if (arrival) { clearArrivalIntent(); router.push(arrivalDestination(arrival)); return; }
+      router.push(isNewUser ? "/profile?new=1" : "/profile");
+    }} />;
   }
 
   // Confirmation screen — shows selected layout as red-bordered grid
