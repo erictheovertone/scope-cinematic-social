@@ -9,7 +9,6 @@
 // backstop). Reuses the same wallet + ticker rules.
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useWallets } from '@privy-io/react-auth';
 import { createWalletClient, custom } from 'viem';
 import { base } from 'viem/chains';
@@ -18,7 +17,7 @@ import { updatePostCoinData, updatePostCoinTxHash } from '@/lib/postsService';
 import { suggestTicker, normalizeTicker, isValidTicker, tickerError } from '@/lib/economy/ticker';
 import { sanitizeDecimalInput } from '@/lib/amountInput'; // C3-15: comma/period decimal entry (iOS)
 import ScopeLoader from '@/components/ScopeLoader';
-import CoinCreatedConfirmation from '@/components/economy/CoinCreatedConfirmation';
+import { onCoinConfirmed } from '@/lib/coinCreatedStore';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -45,17 +44,35 @@ export default function CreateCoinSheet({
   onDone?: () => void;
 }) {
   const { wallets } = useWallets();
-  const router = useRouter();
   const [ticker, setTicker] = useState(() => normalizeTicker(post.ticker || suggestTicker(post.caption || '')));
   const [selfBuyUsd, setSelfBuyUsd] = useState('');
   const [phase, setPhase] = useState<'idle' | 'working' | 'done' | 'failed'>('idle');
   const [error, setError] = useState<string | null>(null);
   // Slim signature narration during the multi-signature sequence.
   const [narration, setNarration] = useState<string | null>(null);
-  // C3-14 — the shared coin-created confirmation (receipt-driven). Set only once
-  // createScopeCoin has returned a confirmed on-chain deployment.
-  const [confirmedTicker, setConfirmedTicker] = useState('');
-  const [showConfirm, setShowConfirm] = useState(false);
+  // CEL-1 — the celebration is the app-root <CoinCreatedSheet/> (coinCreatedStore). This
+  // sheet fires onCoinConfirmed(result) at the receipt point, then closes (unchanged).
+  const fireCoinCreated = (sym: string, address: string, hash: string) => {
+    const pp = post as unknown as { stream_playback_url?: string | null; stream_poster_url?: string | null; thumbnail_url?: string | null; layout_id?: string | null; crop_x?: number; crop_y?: number; crop_width?: number; crop_height?: number };
+    const isVid = post.media_type === 'video';
+    onCoinConfirmed({
+      post: {
+        id: post.id,
+        userId: post.user_id,
+        title: post.caption || 'Scope Post',
+        layoutId: pp.layout_id ?? '',
+        mediaType: isVid ? 'video' : 'image',
+        mediaUrl: isVid ? (pp.stream_playback_url ?? post.media_urls?.[0] ?? null) : (post.media_urls?.[0] ?? null),
+        posterUrl: isVid ? (pp.stream_poster_url ?? post.poster_url ?? pp.thumbnail_url ?? null) : null,
+        cropX: pp.crop_x, cropY: pp.crop_y, cropWidth: pp.crop_width, cropHeight: pp.crop_height,
+        deckName: null,
+      },
+      coin: { symbol: sym, address },
+      receipt: { hash, chainLabel: 'Base' },
+    });
+    onDone?.();
+    onClose();
+  };
 
   const run = async () => {
     const sym = normalizeTicker(ticker);
@@ -84,9 +101,7 @@ export default function CreateCoinSheet({
             coin_currency: post.coin_currency || 'ETH',
           });
           setPhase('done');
-          setConfirmedTicker(sym);
-          setShowConfirm(true); // receipt-confirmed (reconciled from the landed tx)
-          onDone?.();
+          fireCoinCreated(sym, existing, post.coin_tx_hash); // receipt-confirmed (reconciled tx)
           return;
         }
       }
@@ -133,11 +148,9 @@ export default function CreateCoinSheet({
           setNarration('BACKING DIDN’T LAND — RETRY FROM YOUR POST');
         }
       }
-      // C3-14 — the coin is receipt-confirmed live; fire the shared confirmation.
+      // CEL-1 — receipt-confirmed live; fire the shared app-root celebration, then close.
       // (Backing is decoupled; a backing miss above never un-coins the post.)
-      setConfirmedTicker(sym);
-      setShowConfirm(true);
-      onDone?.();
+      fireCoinCreated(sym, coinAddress, hash);
     } catch (e: any) {
       console.error('[CreateCoinSheet] failed:', e);
       setError(e?.message?.includes('SCOPE_PLATFORM_REFERRER') ? 'Coin config error — contact support.' : 'Coin creation failed. Please try again.');
@@ -147,18 +160,6 @@ export default function CreateCoinSheet({
 
   if (!visible) return null;
   const working = phase === 'working';
-
-  // C3-14 — the shared confirmation supersedes the sheet on success. VIEW lands
-  // on the creator's profile, where the just-coined post now lives.
-  if (showConfirm) {
-    return (
-      <CoinCreatedConfirmation
-        ticker={confirmedTicker}
-        onView={() => { setShowConfirm(false); onClose(); router.push('/profile'); }}
-        onDone={() => { setShowConfirm(false); onClose(); }}
-      />
-    );
-  }
 
   return (
     <>

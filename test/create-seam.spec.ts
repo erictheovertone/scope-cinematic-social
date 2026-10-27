@@ -23,41 +23,99 @@ async function openCreate(page: Page) {
   if (await enter.count()) await enter.first().click({ timeout: 3000 }).catch(() => {});
 }
 
-// ── C3-14 — the shared coin-created confirmation renders (receipt-driven in prod; here the seam
-//    drives the exact success surface, since a real mint needs gas + a funded wallet) ──────────
-for (const scheme of ['dark', 'light'] as const) {
-  test(`C3-14 coin-created confirmation @375 ${scheme}`, async ({ page }, testInfo) => {
-    await page.emulateMedia({ colorScheme: scheme });
-    await openCreate(page);
-    // The CreatePostFlow mounts on /create and installs the seam hook (gated NEXT_PUBLIC_TEST_SEAM).
-    await expect
-      .poll(() => page.evaluate(() => typeof (window as unknown as { __scopeShowCoinConfirm?: unknown }).__scopeShowCoinConfirm === 'function'), { timeout: 15_000 })
-      .toBeTruthy();
-    // 'SCOPE' — a valid 3–6 char ticker (normalizeTicker caps at 6, so a longer input is trimmed).
-    await page.evaluate(() => (window as unknown as { __scopeShowCoinConfirm: (s: string) => void }).__scopeShowCoinConfirm('SCOPE'));
+// ── CEL-1 — Coin Created sheet (variant A "Stamp"). The __scopeFakeCoinCreated seam fakes a
+//    CONFIRMED receipt (no ETH, no crop, no auth) so the app-root <CoinCreatedSheet/> opens. Rows
+//    cel-photo + cel-video, captured at the motion stamps (0.3 / 1.2 / 2.0 / 3.0s) in dark+light.
+//    The project supplies the viewport (iphone-webkit = mobile 375, desktop-chromium = 1440), so
+//    running both projects yields the mobile+desktop halves of the 16-frame contact sheet.
+const CEL_OUT = join(OUT, 'cel');
+mkdirSync(CEL_OUT, { recursive: true });
+const CEL_VARIANTS = ['cel-photo', 'cel-video'] as const;
+const CEL_STAMPS = [300, 1200, 2000, 3000];
 
-    const confirm = page.locator('[data-testid="coin-created-confirm"]');
-    await expect(confirm).toBeVisible({ timeout: 10_000 });
-    await expect(page.locator('[data-testid="coin-created-ticker"]')).toHaveText('SCOPE');
-    await expect(confirm.getByText(/coin created/i)).toBeVisible();
-    await expect(confirm.getByRole('button', { name: /view your post/i })).toBeVisible();
-
-    // The headline/copy/buttons fade in on `revealed` (650ms) — wait so the self-verify
-    // screenshot shows the settled surface, not the first animation frame. Hide the
-    // ?debug=crop overlay for a clean shot.
-    await page.waitForTimeout(1000);
-    await page.evaluate(() => {
-      document.querySelectorAll('div').forEach((d) => {
-        if (getComputedStyle(d).position === 'fixed' && (d.textContent || '').trimStart().startsWith('[crop]')) {
-          (d as HTMLElement).style.display = 'none';
-        }
-      });
-    });
-    const path = join(OUT, `coin-confirm-${scheme}.png`);
-    await page.screenshot({ path });
-    await testInfo.attach(`coin-confirm-${scheme}`, { path, contentType: 'image/png' });
-  });
+async function openSeamHost(page: Page) {
+  await page.goto('/create'); // app-root <CoinCreatedSheet/> mounts here and installs the seam
+  await expect
+    .poll(() => page.evaluate(() => typeof (window as unknown as { __scopeFakeCoinCreated?: unknown }).__scopeFakeCoinCreated === 'function'), { timeout: 15_000 })
+    .toBeTruthy();
 }
+
+for (const variant of CEL_VARIANTS) {
+  for (const scheme of ['dark', 'light'] as const) {
+    test(`${variant} @${scheme}`, async ({ page }, testInfo) => {
+      // The app flips theme via data-theme (localStorage 'scope.theme'), NOT prefers-color-scheme,
+      // so set BOTH — the initScript lands before the NO_FOUC pre-paint stamp in layout.tsx.
+      await page.addInitScript((t) => { try { localStorage.setItem('scope.theme', t); } catch { /* noop */ } }, scheme);
+      await page.emulateMedia({ colorScheme: scheme });
+      await openSeamHost(page);
+
+      const t0 = Date.now();
+      await page.evaluate((v) => (window as unknown as { __scopeFakeCoinCreated: (v: string) => void }).__scopeFakeCoinCreated(v), variant);
+      const sheet = page.locator('[role="dialog"][aria-label="Coin created"]');
+      await expect(sheet).toBeVisible({ timeout: 5_000 });
+
+      // Evidence frames at the motion stamps (wall-clock from fire — approximate but sufficient).
+      for (const ms of CEL_STAMPS) {
+        const wait = ms - (Date.now() - t0);
+        if (wait > 0) await page.waitForTimeout(wait);
+        const p = join(CEL_OUT, `${variant}-${scheme}-${testInfo.project.name}-${ms}ms.png`);
+        await page.screenshot({ path: p });
+        await testInfo.attach(`${variant}-${scheme}-${ms}ms`, { path: p, contentType: 'image/png' });
+      }
+
+      // Settled-state content assertions (theme-tokenised → correct in both schemes).
+      await expect(sheet.getByText(/^coin created$/i).first()).toBeVisible();
+      await expect(sheet.getByText(/base · confirmed/i)).toBeVisible();
+      await expect(sheet.getByText(/^\$[A-Z0-9]{3,6}$/)).toBeVisible();        // $SYMBOL
+      await expect(sheet.getByText(/receipt/i)).toBeVisible();                  // ledger
+      await expect(sheet.getByRole('button', { name: /view post/i })).toBeVisible();
+      await expect(sheet.getByRole('button', { name: /^done$/i })).toBeVisible();
+      // The actual minted media is present (img for photo, video el for video).
+      await expect(sheet.locator(variant === 'cel-video' ? 'video' : 'img').first()).toBeVisible({ timeout: 5_000 });
+    });
+  }
+}
+
+// Gate b — reduced-motion: the sheet lands in its FINAL state (single .2s fade), no staged motion.
+test('cel reduced-motion final state', async ({ page }, testInfo) => {
+  await page.emulateMedia({ colorScheme: 'dark', reducedMotion: 'reduce' });
+  await openSeamHost(page);
+  await page.evaluate(() => (window as unknown as { __scopeFakeCoinCreated: (v: string) => void }).__scopeFakeCoinCreated('cel-photo'));
+  const sheet = page.locator('[role="dialog"][aria-label="Coin created"]');
+  await expect(sheet).toBeVisible({ timeout: 5_000 });
+  await page.waitForTimeout(400);
+  // Everything is at full opacity immediately (no 2.7s CTA wait): CTAs already visible.
+  await expect(sheet.getByRole('button', { name: /view post/i })).toBeVisible();
+  const p = join(CEL_OUT, `reduced-motion-${testInfo.project.name}.png`);
+  await page.screenshot({ path: p });
+  await testInfo.attach('cel-reduced-motion', { path: p, contentType: 'image/png' });
+});
+
+// Gate c — the 3s motion is compositor-only (transform/opacity/stroke-dashoffset). Assert NO main-
+// thread long task > 50ms during the sequence. PerformanceObserver 'longtask' is Chromium-only.
+test('cel motion — no long task > 50ms over the 3s sequence', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-chromium', 'longtask observer is Chromium-only');
+  // Measure the SHEET in isolation on a light, settled route — NOT /create, whose heavy
+  // CreatePostFlow mount creates its own startup long tasks that would confound the celebration.
+  await page.goto('/welcome');
+  await expect
+    .poll(() => page.evaluate(() => typeof (window as unknown as { __scopeFakeCoinCreated?: unknown }).__scopeFakeCoinCreated === 'function'), { timeout: 15_000 })
+    .toBeTruthy();
+  await page.waitForTimeout(1500); // let the route settle so only the sheet's work is in-window
+  await page.evaluate(() => {
+    (window as unknown as { __lt: number[] }).__lt = [];
+    const po = new PerformanceObserver((list) => { for (const e of list.getEntries()) (window as unknown as { __lt: number[] }).__lt.push(e.duration); });
+    po.observe({ entryTypes: ['longtask'] });
+  });
+  await page.evaluate(() => (window as unknown as { __scopeFakeCoinCreated: (v: string) => void }).__scopeFakeCoinCreated('cel-video'));
+  await page.waitForTimeout(3100);
+  const over = await page.evaluate(() => ((window as unknown as { __lt: number[] }).__lt || []).filter((d) => d > 50).map((d) => Math.round(d)));
+  expect(over, `long tasks > 50ms during the 3s celebration: [${over.join(', ')}]`).toHaveLength(0);
+});
+
+// Gate d — BOTH mint paths funnel through the single onCoinConfirmed store (anti-fork). The seam
+// proves the store→sheet contract both producers rely on; the producers are unit-covered by the
+// call-site rewrite (create-post flow handleDoMint + existing-post CreateCoinSheet.run).
 
 // ── C3-13/5/6/7 — the VIDEO path, reachable via the media seam → crop → finishing → EDIT ───────
 test('video path via seam reaches EDIT with controls intact', async ({ page }) => {
