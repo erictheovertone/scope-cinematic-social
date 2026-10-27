@@ -3,7 +3,7 @@ import type { Viewport } from "next";
 import Providers from '@/components/Providers';
 import ThemeSync from '@/components/ThemeSync';
 import LaunchCue from '@/components/LaunchCue';
-import { SPLASH_SCREENS, SPLASH_GROUND } from '@/lib/splash';
+import { SPLASH_SCREENS, SPLASH_GROUND, CANVAS_LIGHT } from '@/lib/splash';
 
 // Brief T1-4a §2 — NO-FOUC pre-paint theme. Runs synchronously in <head> before first paint:
 // read localStorage 'scope.theme', resolve 'system', stamp data-theme + color-scheme on <html>
@@ -36,10 +36,13 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        {/* Brief M21 — no white before the stylesheet: the ground is off-black from the first
-            byte (the splash's colour). Scoped to not-light so once the T1-4a stamp below picks
-            the light theme, the stylesheet's ivory canvas takes over untouched. */}
-        <style dangerouslySetInnerHTML={{ __html: `html:not([data-theme="light"]){background:${SPLASH_GROUND}}` }} />
+        {/* Brief M21 — no white before the stylesheet: html AND body carry the canvas ground from
+            the first byte, per theme (the T1-4a stamp below sets data-theme before first paint).
+            Literals, not var(--canvas): the token sheet may not have arrived yet. */}
+        <style dangerouslySetInnerHTML={{ __html: `html,body{background:${SPLASH_GROUND}}html[data-theme="light"],html[data-theme="light"] body{background:${CANVAS_LIGHT}}` }} />
+        {/* U2-1 — a theme-color in the server HTML itself (dark = Scope's default); the stamp
+            below re-points it to the resolved theme's canvas. */}
+        <meta name="theme-color" content={SPLASH_GROUND} />
         {/* T1-4a §2 — pre-paint theme stamp; FIRST script in <head> so data-theme is set before
             any paint (no dark flash on a light-set reload). */}
         <script dangerouslySetInnerHTML={{ __html: NO_FOUC }} />

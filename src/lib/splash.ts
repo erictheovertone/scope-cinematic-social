@@ -5,13 +5,16 @@
 
 export const SPLASH_GROUND = "#050505";
 export const SPLASH_INK = "#E5E1DB";
+/** The light theme's canvas (== --canvas under [data-theme="light"]) — the pre-stylesheet ground. */
+export const CANVAS_LIGHT = "#E5E1DB";
 /** The aperture mark's width at 1× — LaunchCue draws it at exactly this size, centered. */
 export const SPLASH_MARK_W = 96;
 
 export const SPLASH_SCREENS = [
-  { w: 440, h: 956, r: 3 }, // 16 Pro Max
+  { w: 440, h: 956, r: 3 }, // 16/17 Pro Max
+  { w: 420, h: 912, r: 3 }, // Air
   { w: 430, h: 932, r: 3 }, // 14/15 Pro Max, 15/16 Plus
-  { w: 402, h: 874, r: 3 }, // 16 Pro
+  { w: 402, h: 874, r: 3 }, // 16 Pro, 17, 17 Pro
   { w: 393, h: 852, r: 3 }, // 14/15 Pro, 15/16
   { w: 390, h: 844, r: 3 }, // 12/13/14
   { w: 375, h: 812, r: 3 }, // X/XS/11 Pro, 12/13 mini
