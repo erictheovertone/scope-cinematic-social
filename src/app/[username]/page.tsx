@@ -9,6 +9,7 @@ import { notFound, redirect } from 'next/navigation';
 import Arrival from '@/components/arrival/Arrival';
 import { publicProfilesEnabled } from '@/lib/arrival/flag';
 import { getPublicProfile } from '@/lib/arrival/publicProfile';
+import { getArrivalLoginMethods } from '@/lib/arrival/loginMethods';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,7 +35,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function PublicProfilePage({ params, searchParams }: Props) {
   if (!publicProfilesEnabled()) notFound();
   const { username } = await params;
-  const profile = await getPublicProfile(username);
+  const [profile, loginMethods] = await Promise.all([getPublicProfile(username), getArrivalLoginMethods()]);
   if (!profile) notFound();
 
   const jar = await cookies();
@@ -42,5 +43,5 @@ export default async function PublicProfilePage({ params, searchParams }: Props)
 
   const ref = (await searchParams).ref;
   const refTag = (Array.isArray(ref) ? ref[0] : ref)?.slice(0, 64) ?? null;
-  return <Arrival profile={profile} refTag={refTag} />;
+  return <Arrival profile={profile} refTag={refTag} loginMethods={loginMethods} />;
 }

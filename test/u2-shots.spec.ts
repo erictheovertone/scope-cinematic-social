@@ -198,7 +198,8 @@ test.describe('U2-5 arrival', () => {
     await page.waitForTimeout(500);
     await page.screenshot({ path: join(OUT, `u2-5-closed-${tag}.png`) });
     expect(Number(await card.evaluate((el) => getComputedStyle(el.parentElement!).opacity))).toBeGreaterThan(0.95);
-    await expect(page.getByRole('button', { name: 'Continue with Apple' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Continue with Google' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Continue with Apple' })).toHaveCount(0); // apple_oauth is off in Privy today
     await expect(page.getByRole('button', { name: 'Continue with email' })).toBeVisible();
     await expect(page.getByRole('checkbox')).toHaveAttribute('aria-checked', 'true');
     // Scroll back → opens again.

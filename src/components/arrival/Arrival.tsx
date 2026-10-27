@@ -14,6 +14,7 @@ import { useLogin, usePrivy } from '@privy-io/react-auth';
 import type { PublicProfile, PublicFrame } from '@/lib/arrival/publicProfile';
 import { BLADE_PATHS, BLADE_CX } from '@/lib/arrival/blades';
 import { saveArrivalIntent } from '@/lib/arrival/intent';
+import type { ArrivalLoginMethod } from '@/lib/arrival/loginMethods';
 import { getAspectRatio } from '@/lib/aspectRatio';
 import { feedImage } from '@/lib/mediaUrl';
 
@@ -32,7 +33,9 @@ const TUNE = {
 const clamp = (v: number) => Math.min(1, Math.max(0, v));
 const easeIO = (p: number) => (p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2);
 
-export default function Arrival({ profile, refTag }: { profile: PublicProfile; refTag: string | null }) {
+const METHOD_LABEL: Record<ArrivalLoginMethod, string> = { apple: 'Continue with Apple', google: 'Continue with Google', email: 'Continue with email' };
+
+export default function Arrival({ profile, refTag, loginMethods }: { profile: PublicProfile; refTag: string | null; loginMethods: ArrivalLoginMethod[] }) {
   const router = useRouter();
   const [vp, setVp] = useState({ W: 375, H: 812 });
   const [follow, setFollow] = useState(true);
@@ -116,7 +119,7 @@ export default function Arrival({ profile, refTag }: { profile: PublicProfile; r
     onComplete: () => router.push('/auth/callback'),
     onError: (err) => { if (String(err) !== 'exited_auth_flow') setAuthError('Sign-in didn’t complete. Try again.'); },
   });
-  const begin = (method?: 'apple' | 'email') => {
+  const begin = (method?: ArrivalLoginMethod) => {
     setAuthError(null);
     saveArrivalIntent({ username: profile.username, ref: refTag, follow });
     if (method) login({ loginMethods: [method] });
@@ -172,8 +175,11 @@ export default function Arrival({ profile, refTag }: { profile: PublicProfile; r
                   Follow {name}
                 </button>
                 <div style={{ display: 'grid', gap: 8, width: '100%' }}>
-                  <button type="button" onClick={() => begin('apple')} style={btn(true)}>Continue with Apple</button>
-                  <button type="button" onClick={() => begin('email')} style={btn(false)}>Continue with email</button>
+                  {/* Exactly what Privy has enabled (server-read), first one filled — Apple appears
+                      on its own once it's switched on in the Privy dashboard. */}
+                  {loginMethods.map((m, i) => (
+                    <button key={m} type="button" onClick={() => begin(m)} style={btn(i === 0)}>{METHOD_LABEL[m]}</button>
+                  ))}
                 </div>
                 {authError && <div role="alert" style={{ fontSize: 12, color: 'rgb(var(--ink-rgb) / 0.85)' }}>{authError}</div>}
                 <div style={{ color: 'rgb(var(--ink-rgb) / 0.5)', fontSize: 12 }}>
