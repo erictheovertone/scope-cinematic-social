@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { getFeedPage, type FeedCursor } from "@/lib/postsService";
+import { takeFeedDirty, POST_PUBLISHED_EVT } from "@/lib/feedCache";
 import PostItem from "@/components/PostItem";
 import PostModal from "@/components/PostModal";
 import MirageView from "@/components/MirageView";
@@ -22,7 +23,12 @@ const FEED_TTL_MS = 5 * 60_000;
 const FIRST_PAINT_CARDS = 6; // P4 — a cached return paints this many (or through the anchor), the rest after the fade
 const LANDING_PX = 140; // the in-flow landing block (mark + DISCOVER) is pushed out past this
 let feedCache: { posts: any[]; cursor: FeedCursor | null; hasMore: boolean; at: number } | null = null; // eslint-disable-line @typescript-eslint/no-explicit-any -- posts are untyped here (matches useState<any[]>)
-const freshFeed = () => (feedCache && Date.now() - feedCache.at < FEED_TTL_MS ? feedCache : null);
+// Brief V1e §6 — a publish latches the cache stale (survives Home being unmounted); the
+// next freshFeed() read consumes the flag and drops the cache so Home refetches.
+const freshFeed = () => {
+  if (feedCache && takeFeedDirty()) feedCache = null;
+  return feedCache && Date.now() - feedCache.at < FEED_TTL_MS ? feedCache : null;
+};
 import { useRotateToTheatre } from "@/lib/useRotateToTheatre";
 import DesktopHome from "@/components/desktop/DesktopHome";
 import { AnimatePresence } from "framer-motion";
@@ -38,6 +44,21 @@ export default function Home() {
   const { authenticated, ready } = usePrivy();
   const router = useRouter();
   const [posts, setPosts] = useState<any[]>(() => freshFeed()?.posts ?? []);
+  // Brief V1e §6 — if Home is mounted when a post publishes, prepend it live; if it's
+  // unmounted (the usual case — the user is on /create), the dirty latch makes the next
+  // Home mount refetch, so the new post is at top either way, no manual refresh.
+  useEffect(() => {
+    const onPub = (e: Event) => {
+      const post = (e as CustomEvent).detail;
+      if (!post?.id) return;
+      setPosts((prev) => (prev.some((p) => p?.id === post.id) ? prev : [post, ...prev]));
+      if (feedCache && !feedCache.posts.some((p: any) => p?.id === post.id)) {
+        feedCache = { ...feedCache, posts: [post, ...feedCache.posts] };
+      }
+    };
+    window.addEventListener(POST_PUBLISHED_EVT, onPub);
+    return () => window.removeEventListener(POST_PUBLISHED_EVT, onPub);
+  }, []);
   const [lightboxPost, setLightboxPost] = useState<any>(null);
   const [mirageActive, setMirageActive] = useState(false);
   const [theatreActive, setTheatreActive] = useState(false); // Theatre Mode over the feed

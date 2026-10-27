@@ -9,6 +9,7 @@ import { createPost, updatePostCoinData, updatePostCoinTxHash, updatePostMusic }
 import { saveDraft, loadDraft, clearDraft, type CreateDraft } from '@/lib/createDraft';
 import { uploadVideoToStream } from '@/lib/streamUpload';
 import { vdbg, vdbgFile, vdbgReset, vdbgMarkNav } from '@/lib/videoDebug'; // V1e — ?debug=video trace (no-op unless on)
+import { markFeedDirty, POST_PUBLISHED_EVT } from '@/lib/feedCache'; // V1e §6 — Home shows a fresh post without refresh
 import MediaRenderer from '@/components/MediaRenderer';
 // NOTE: the 1155 path (mintNewPost) is DORMANT — intact in src/lib/zora.ts as the
 // rollback lifeboat, deliberately unreferenced here. New posts mint as coins.
@@ -1063,6 +1064,10 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
       setStage('Publishing');
       const newPost = await createPost(postPayload);
       vdbg('published', newPost?.id ?? '?'); // V1e
+      // Brief V1e §6 — a freshly published post must appear on Home without a manual
+      // refresh: latch the 5-min feed cache stale (next Home visit refetches → post at
+      // top) and, if Home is already mounted, prepend it live.
+      try { markFeedDirty(); window.dispatchEvent(new CustomEvent(POST_PUBLISHED_EVT, { detail: newPost })); } catch { /* Home refetches on next visit regardless */ }
       console.log('[handlePost] post created:', newPost?.id);
       void clearDraft(); // C3-11 — published: the draft is done (a later mint failure keeps the post)
 
