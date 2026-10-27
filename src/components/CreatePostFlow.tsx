@@ -8,6 +8,7 @@ import { base } from "viem/chains";
 import { createPost, updatePostCoinData, updatePostCoinTxHash, updatePostMusic } from '@/lib/postsService';
 import { saveDraft, loadDraft, clearDraft, type CreateDraft } from '@/lib/createDraft';
 import { uploadVideoToStream } from '@/lib/streamUpload';
+import { vdbg, vdbgFile, vdbgMarkNav, vdbgReset } from '@/lib/videoDebug'; // Brief V1 — ?debug=video trace (no-op unless on)
 import MediaRenderer from '@/components/MediaRenderer';
 // NOTE: the 1155 path (mintNewPost) is DORMANT — intact in src/lib/zora.ts as the
 // rollback lifeboat, deliberately unreferenced here. New posts mint as coins.
@@ -312,7 +313,17 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
     if (selectedMedia[0]?.type !== 'video' || !selectedMedia[0]?.url) { setVideoDuration(0); return; }
     const v = document.createElement('video');
     v.preload = 'metadata';
-    v.onloadedmetadata = () => setVideoDuration(isFinite(v.duration) ? v.duration : 0);
+    const f0 = selectedMedia[0].file; // present on both the pick AND the seam path
+    v.onloadedmetadata = () => {
+      const d = isFinite(v.duration) ? v.duration : 0;
+      setVideoDuration(d);
+      vdbg('meta', `${v.videoWidth}x${v.videoHeight} ${d.toFixed(1)}s`); // V1
+      vdbgFile({
+        durationS: d.toFixed(1),
+        res: `${v.videoWidth}x${v.videoHeight}`,
+        ...(f0 ? { sizeMB: (f0.size / 1048576).toFixed(0), container: f0.type || 'video' } : {}),
+      });
+    };
     v.src = selectedMedia[0].url;
     return () => { v.src = ''; };
   }, [selectedMedia]);
@@ -384,6 +395,18 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
   // as plain metadata (snippet_start / snippet_length) — NO baked clip.
   const [snippetWindow, setSnippetWindow] = useState<{ start: number; length: number } | null>(null);
   const [autoThumbnail, setAutoThumbnail] = useState<string | null>(null);
+
+  // ── Brief V1 — ?debug=video breadcrumbs. These PASSIVELY mirror existing state
+  //    transitions (step / postStage / uploadPct) into the trace store; every call is a
+  //    no-op unless ?debug=video is on, so the video path's behaviour is unchanged. ──
+  useEffect(() => { vdbg(`step:${step}`); }, [step]);
+  useEffect(() => { if (postStage) vdbg(`stage:${postStage}`); }, [postStage]);
+  useEffect(() => { if (musicTrackId) vdbg('music', musicTrackId); }, [musicTrackId]);
+  const upDecileRef = useRef(-1);
+  useEffect(() => {
+    const d = Math.floor(uploadPct / 25); // emit at 25/50/75/100 boundaries only
+    if (uploadPct > 0 && d !== upDecileRef.current) { upDecileRef.current = d; vdbg('upload%', `${uploadPct}`); }
+  }, [uploadPct]);
 
   // ── Brief C3-11 — draft persistence (IndexedDB) ──────────────────────────────
   // RESTORE once on mount, only from the empty initial state (never clobber an active
@@ -701,8 +724,15 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
           continue;
         }
         const objUrl = URL.createObjectURL(file);
+        vdbgReset(); // V1 — start a fresh trace for this pick
+        vdbg('pick', `${(file.size / 1048576).toFixed(0)}MB ${file.type || 'video'}`);
+        vdbgFile({
+          sizeMB: (file.size / 1048576).toFixed(0),
+          container: file.type || (isMov ? 'video/quicktime' : 'video'),
+          source: file.name || 'unnamed', // web can't distinguish roll vs file — name is the only signal
+        });
         newMedia.push({ id: `${Date.now()}-${Math.random()}`, file, url: objUrl, type: "video" });
-        captureVideoThumbnail(objUrl).then(thumb => { if (thumb) setAutoThumbnail(thumb); });
+        captureVideoThumbnail(objUrl).then(thumb => { vdbg('thumb', thumb ? 'ok' : 'null'); if (thumb) setAutoThumbnail(thumb); });
       } else if (file.type.startsWith("image/")) {
         console.log(`[handleMediaSelect] Starting compression for ${file.name}…`);
         let processedFile = file;
@@ -906,6 +936,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
           setStage('Uploading video');
           console.log('[handlePost] uploading video to Stream:', media.file.name);
           streamUid = await uploadVideoToStream(media.file, (frac) => setUploadPct(Math.round(frac * 100)));
+          vdbg('upload-done', streamUid); // V1
           console.log('[handlePost] stream upload complete, uid:', streamUid);
           continue;
         }
@@ -1027,6 +1058,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
       console.log('[handlePost] createPost payload:', postPayload);
       setStage('Publishing');
       const newPost = await createPost(postPayload);
+      vdbg('published', newPost?.id ?? '?'); // V1
       console.log('[handlePost] post created:', newPost?.id);
       void clearDraft(); // C3-11 — published: the draft is done (a later mint failure keeps the post)
 
@@ -1084,6 +1116,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
     } catch (e: any) {
       const lt = getScopeLimitType(e);
       if (lt) { setIsPosting(false); setIsUploading(false); showUpsell(lt); return; }
+      vdbg('FAIL', `${stage}: ${(e?.message ?? 'unknown').slice(0, 50)}`); // V1
       console.error('[handlePost] FAILED:', errInfo(e));
       console.error('[handlePost] error message:', e?.message);
       console.error('[handlePost] error code:', e?.code);
@@ -1100,6 +1133,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
   };
 
   const completeFlow = () => {
+    vdbgMarkNav('profile'); // V1 — clean end of the flow (not an iOS kill)
     onClose();
     setStep('media');
     setPostStage('');
@@ -1625,7 +1659,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
                   params={editParams}
                   geometry={editPreviewGeometry}
                   layoutId={chosenLayoutId || userLayoutId}
-                  onChange={setSnippetWindow}
+                  onChange={(w) => { vdbg('snippet', `${w.start.toFixed(1)}+${w.length}s`); setSnippetWindow(w); }}
                 />
               </div>
             )}
@@ -1866,7 +1900,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
             <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: 13, color: 'rgb(var(--ink-rgb) / 0.55)', lineHeight: 1.5, margin: '0 0 22px' }}>Your edits will be lost.</p>
             <div style={{ display: 'flex', gap: 10 }}>
               <button onClick={() => setDiscardConfirm(false)} style={{ flex: 1, fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 12, color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.08em', background: 'transparent', border: '1px solid rgb(var(--ink-rgb) / 0.3)', cursor: 'pointer', padding: '12px 0' }}>KEEP EDITING</button>
-              <button onClick={() => { void clearDraft(); setDiscardConfirm(false); onClose(); setStep('media'); }} style={{ flex: 1, fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 12, color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.08em', background: 'transparent', border: '1px solid rgb(var(--ink-rgb) / 0.4)', cursor: 'pointer', padding: '12px 0' }}>DISCARD</button>
+              <button onClick={() => { vdbgMarkNav('discard'); void clearDraft(); setDiscardConfirm(false); onClose(); setStep('media'); }} style={{ flex: 1, fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 12, color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.08em', background: 'transparent', border: '1px solid rgb(var(--ink-rgb) / 0.4)', cursor: 'pointer', padding: '12px 0' }}>DISCARD</button>
             </div>
           </div>
         </div>

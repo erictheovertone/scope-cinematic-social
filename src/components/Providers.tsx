@@ -14,6 +14,7 @@ import RecapHost from '@/components/RecapHost';
 import ImageRenditionFallback from '@/components/ImageRenditionFallback';
 import ViewportDebug from '@/components/ViewportDebug';
 import CropDebugOverlay from "@/components/CropDebugOverlay";
+import VideoDebugOverlay from "@/components/VideoDebugOverlay";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -31,6 +32,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
             <RecapHost />
             <ViewportDebug />{/* Brief W2-1b — inert unless ?debug=viewport */}
             <CropDebugOverlay />{/* Brief C1a — inert unless ?debug=crop */}
+            <VideoDebugOverlay />{/* Brief V1 — inert unless ?debug=video */}
           </UpsellProvider>
         </TxNarratorProvider>
       </EconomyProvider>
