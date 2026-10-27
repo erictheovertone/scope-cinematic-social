@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>V2-0 §2 — HLS→WebGL feasibility</title>
+<style>
+  :root { color-scheme: dark; }
+  body { margin: 0; background: #000; color: #eee; font: 13px/1.5 ui-monospace, "SF Mono", monospace; padding: 16px; }
+  h1 { font-size: 15px; margin: 0 0 4px; }
+  .sub { color: #888; margin: 0 0 14px; word-break: break-all; }
+  .row { border: 1px solid #333; border-radius: 6px; padding: 10px 12px; margin-bottom: 12px; }
+  .label { color: #ffd23f; font-weight: 700; }
+  .verdict { font-size: 20px; font-weight: 700; margin: 6px 0; }
+  .works { color: #39ff88; } .black { color: #ff9f1c; } .tainted { color: #ff3b3b; } .pending { color: #888; }
+  .detail { color: #aaa; white-space: pre-wrap; }
+  canvas, video { display: none; }
+</style>
+</head>
+<body>
+<h1>V2-0 §2 — Stream HLS / MP4 → gl-react-style WebGL look</h1>
+<p class="sub" id="ua"></p>
+<div class="row"><div class="label">HLS (manifest/video.m3u8)</div><div class="verdict pending" id="hls-v">… testing</div><div class="detail" id="hls-d"></div></div>
+<div class="row"><div class="label">MP4 (downloads/default.mp4)</div><div class="verdict pending" id="mp4-v">… testing</div><div class="detail" id="mp4-d"></div></div>
+<canvas id="cv" width="64" height="64"></canvas>
+
+<script>
+const qs = new URLSearchParams(location.search);
+const CUST = qs.get('cust') || 'd1di7e2fjth1m0wg';
+const UID  = qs.get('uid')  || 'daf16b3bf3885f261bf38c1cb3657ce0';
+const HLS  = qs.get('hls')  || `https://customer-${CUST}.cloudflarestream.com/${UID}/manifest/video.m3u8`;
+const MP4  = qs.get('mp4')  || `https://customer-${CUST}.cloudflarestream.com/${UID}/downloads/default.mp4`;
+document.getElementById('ua').textContent = navigator.userAgent;
+
+// ── minimal WebGL look pipeline (identity sampler + a visible invert, so a drawn
+//    non-black result proves the frame reached the shader, not just the <video>) ──
+const cv = document.getElementById('cv');
+const gl = cv.getContext('webgl', { preserveDrawingBuffer: true });
+let prog, tex;
+function initGL() {
+  const vs = gl.createShader(gl.VERTEX_SHADER);
+  gl.shaderSource(vs, 'attribute vec2 p;varying vec2 uv;void main(){uv=vec2((p.x+1.0)/2.0,1.0-(p.y+1.0)/2.0);gl_Position=vec4(p,0.0,1.0);}');
+  gl.compileShader(vs);
+  const fs = gl.createShader(gl.FRAGMENT_SHADER);
+  gl.shaderSource(fs, 'precision mediump float;varying vec2 uv;uniform sampler2D t;void main(){vec4 c=texture2D(t,uv);gl_FragColor=vec4(1.0-c.rgb,1.0);}');
+  gl.compileShader(fs);
+  prog = gl.createProgram(); gl.attachShader(prog, vs); gl.attachShader(prog, fs); gl.linkProgram(prog); gl.useProgram(prog);
+  const buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
+  const loc = gl.getAttribLocation(prog, 'p'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+  tex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, tex);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+}
+initGL();
+
+// Draw one video frame through the shader and classify the readback.
+function sample(video) {
+  try {
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, video); // throws if tainted
+  } catch (e) {
+    return { verdict: 'tainted', detail: `texImage2D threw: ${e.name} — ${e.message}` };
+  }
+  gl.viewport(0, 0, cv.width, cv.height);
+  gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+  const px = new Uint8Array(cv.width * cv.height * 4);
+  try {
+    gl.readPixels(0, 0, cv.width, cv.height, gl.RGBA, gl.UNSIGNED_BYTE, px); // throws if tainted
+  } catch (e) {
+    return { verdict: 'tainted', detail: `readPixels threw: ${e.name} — ${e.message}` };
+  }
+  let min = 255, max = 0, sum = 0;
+  for (let i = 0; i < px.length; i += 4) { const l = (px[i]+px[i+1]+px[i+2])/3; min = Math.min(min,l); max = Math.max(max,l); sum += l; }
+  const mean = Math.round(sum / (px.length/4));
+  // Inverted shader: a real frame → the readback has spread/variance. All-equal (≈0 or ≈255) = black/blank.
+  if (max - min < 6) return { verdict: 'black', detail: `drawn but flat: mean=${mean} spread=${max-min} (no frame reached the texture — black/blank)` };
+  return { verdict: 'works', detail: `frame reached shader: mean=${mean} spread=${max-min} (inverted sample varied → texturable, not tainted)` };
+}
+
+function show(id, r, engine) {
+  const v = document.getElementById(id + '-v'), d = document.getElementById(id + '-d');
+  v.className = 'verdict ' + r.verdict;
+  v.textContent = r.verdict.toUpperCase();
+  d.textContent = (engine ? `engine: ${engine}\n` : '') + r.detail;
+}
+
+function makeVideo() {
+  const v = document.createElement('video');
+  v.crossOrigin = 'anonymous'; v.playsInline = true; v.muted = true; v.autoplay = true; v.loop = true;
+  document.body.appendChild(v);
+  return v;
+}
+
+// Wait for a few decoded frames, then sample. Resolves a verdict object.
+function runWhenReady(v, engine, id) {
+  let done = false;
+  const finish = (r) => { if (done) return; done = true; show(id, r, engine); };
+  v.addEventListener('error', () => finish({ verdict: 'black', detail: `<video> error: ${v.error ? v.error.code + ' ' + (v.error.message||'') : 'unknown'} (source failed to load — e.g. MP4 downloads not enabled, or HLS unsupported)` }));
+  const tick = () => {
+    if (done) return;
+    if (v.readyState >= 2 && v.currentTime > 0.05) { finish(sample(v)); return; }
+    requestAnimationFrame(tick);
+  };
+  v.addEventListener('loadeddata', () => { v.play().catch(()=>{}); requestAnimationFrame(tick); });
+  v.play().catch(()=>{});
+  setTimeout(() => finish({ verdict: 'black', detail: 'timed out after 15s — no decodable frame (source never reached readyState≥2)' }), 15000);
+}
+
+// HLS: native where supported (Safari/iOS), else hls.js.
+function testHls() {
+  const v = makeVideo();
+  if (v.canPlayType('application/vnd.apple.mpegurl')) {
+    v.src = HLS; runWhenReady(v, 'native HLS', 'hls');
+  } else {
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js';
+    s.onload = () => {
+      if (window.Hls && window.Hls.isSupported()) {
+        const h = new window.Hls(); h.loadSource(HLS); h.attachMedia(v); runWhenReady(v, 'hls.js', 'hls');
+      } else { show('hls', { verdict: 'black', detail: 'hls.js unsupported and no native HLS' }, '—'); }
+    };
+    s.onerror = () => show('hls', { verdict: 'black', detail: 'hls.js failed to load (CDN blocked?)' }, '—');
+    document.head.appendChild(s);
+  }
+}
+function testMp4() { const v = makeVideo(); v.src = MP4; runWhenReady(v, 'native MP4', 'mp4'); }
+
+testHls();
+testMp4();
+</script>
+</body>
+</html>
