@@ -4,7 +4,7 @@
 import { chromium } from '@playwright/test';
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
-const STATE = process.env.AUTH_STATE || 'test/.auth/state.json';
+const STATE = process.env.AUTH_STATE || 'test/.auth/throwaway.json'; // U2 — the ONE shared session
 const LABEL = process.env.LAYOUT_LABEL || '1X SCOPE';
 
 const browser = await chromium.launch();
