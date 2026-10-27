@@ -9,6 +9,7 @@
 import { useLogin } from '@privy-io/react-auth';
 import { useRouter } from 'next/navigation';
 import { useFontReady } from '@/lib/useFontReady';
+import { WORDMARK_INK_BOX } from '@/lib/scriptWordmark';
 
 // Brief S2b §3 — Welcome-only exception per Eric; the app-wide soften system stays
 // retired (W5). The ONE shared blur constant (mobile welcome imports this), so the
@@ -45,7 +46,7 @@ export default function DesktopLanding() {
       <div style={{ position: 'absolute', top: 'calc(30vh - 40px)', paddingTop: 40, left: 'max(calc(var(--safe-left) + 48px), 10vw)', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', filter: `blur(${WELCOME_BLUR})` }}>
         {/* Brief S2c — pin 400 / normal / no-synthesis so the inherited body 700 can't
             synthesize bold on the single-cut script face (the thickening). */}
-        <span style={{ fontFamily: 'var(--font-script)', fontWeight: 400, fontStyle: 'normal', fontSynthesis: 'none', fontSize: DESKTOP_WORDMARK, lineHeight: 0.85, letterSpacing: '1.5px', color: 'var(--ink-100)', display: 'block', opacity: wordmarkReady ? 1 : 0, transition: 'opacity 120ms ease' }}>
+        <span style={{ fontFamily: 'var(--font-script)', fontWeight: 400, fontStyle: 'normal', fontSynthesis: 'none', fontSize: DESKTOP_WORDMARK, lineHeight: 0.85, letterSpacing: '1.5px', color: 'var(--ink-100)', display: 'block', ...WORDMARK_INK_BOX, opacity: wordmarkReady ? 1 : 0, transition: 'opacity 120ms ease' }}>
           scope
         </span>
         <button onClick={login} aria-label="Log in" style={{ ...action, marginTop: 26 }}>Login</button>
