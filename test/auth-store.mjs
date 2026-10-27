@@ -14,7 +14,10 @@ import { readFileSync, writeFileSync, renameSync, mkdirSync, rmdirSync, statSync
 import { dirname } from 'path';
 
 export const DEFAULT_STATE = 'test/.auth/throwaway.json';
-export const MIN_VALID_MIN = 35;
+// Privy's sessions API only rotates a token near expiry (it hands back the SAME token while it has
+// more life than that) — so the floor sits inside Privy's window. A matrix run is ~1 min; ≥ 10 min
+// keeps test browsers clear of the SDK's own refresh for any normal run.
+export const MIN_VALID_MIN = 10;
 const LOCK_STALE_MS = 3 * 60_000;
 const LOCK_WAIT_MS = 4 * 60_000;
 
@@ -92,6 +95,12 @@ export async function ensureFresh(path, base, refresh) {
 
     const next = await refresh(mirror(s0, t0.origin, [origin]), origin, t0.origin);
     const t1 = tokenOf(next, origin);
+    // Privy declined to rotate (handed back the same token) and it is still live → not dead; carry on.
+    if (t1 && t1.token === t0.token && t0.exp * 1000 > Date.now() + 60_000) {
+      const hasOrigin = (s0.origins ?? []).some((o) => o.origin === origin && tokenOf({ origins: [o] }, origin)?.token === t0.token);
+      if (!hasOrigin) writeAtomic(path, mirror(s0, t0.origin, [origin]));
+      return `ok — ${origin}, token valid ${left()}min (Privy kept the current token)`;
+    }
     if (!t1 || t1.exp * 1000 < Date.now() + MIN_VALID_MIN * 60_000) {
       throw new Error(`[auth] refresh failed — the session in ${path} is dead (refresh token already used or expired)\n  ${fix}`);
     }

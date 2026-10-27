@@ -2,9 +2,9 @@ import { ensureFresh, DEFAULT_STATE } from './auth-store.mjs';
 
 // Brief C3 → V1c §4 → U2 — auth preflight + shared-session refresh. ONE test/.auth/throwaway.json
 // serves every CC window and every localhost port (test/auth-store.mjs): under a file lock, a token
-// with < 35 min left is refreshed ONCE via Privy's public sessions API (V1c §4 — no browser), written
+// with < 10 min left is refreshed ONCE via Privy's public sessions API (V1c §4 — no browser), written
 // back atomically only if the file still holds the token we read (compare-and-swap), and mirrored to
-// every localhost origin. ≥ 35 min means test browsers never refresh mid-run (an in-browser refresh
+// every localhost origin. ≥ 10 min (inside Privy's rotation window) keeps test browsers from refreshing mid-run (an in-browser refresh
 // rotates the single-use refresh token without writing it back — what burned the session in U2).
 // A dead session fails LOUD before any test, with the login command.
 
@@ -35,9 +35,10 @@ async function refreshViaPrivy(state: State, origin: string, sourceOrigin: strin
     },
     body: JSON.stringify({ refresh_token: refresh }),
   });
-  if (!res.ok) { console.warn(`[auth] Privy refresh failed (${res.status})`); return state; }
-  const j = (await res.json()) as { token?: string; refresh_token?: string; identity_token?: string };
-  if (!j?.token) return state;
+  const body = await res.text();
+  if (!res.ok) { console.warn(`[auth] Privy refresh failed (${res.status}) ${body.slice(0, 200)}`); return state; }
+  const j = JSON.parse(body) as { token?: string | null; refresh_token?: string | null; identity_token?: string | null; session_update_action?: string };
+  if (!j?.token) { console.warn(`[auth] Privy refresh returned no token (keys: ${Object.keys(j).join(',')}; action: ${j.session_update_action ?? '-'})`); return state; }
   const set = (name: string, value: string) => {
     const v = JSON.stringify(value); // the app stores these JSON-quoted
     const e = o.localStorage.find((x) => x.name === name);
