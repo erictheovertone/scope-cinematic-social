@@ -6,7 +6,7 @@ import { mkdirSync } from 'fs';
 import { dirname } from 'path';
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
-const STATE = process.env.AUTH_STATE || 'test/.auth/state.json'; // C2c §3 — throwaway via AUTH_STATE
+const STATE = process.env.AUTH_STATE || 'test/.auth/throwaway.json'; // MX-1 §2a — ONE default path; AUTH_STATE overrides
 mkdirSync(dirname(STATE), { recursive: true });
 
 const browser = await webkit.launch({ headless: false });

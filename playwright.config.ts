@@ -6,7 +6,7 @@ import { defineConfig, devices } from '@playwright/test';
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 // AUTH_STATE lets the matrix run against a DEDICATED throwaway account (C2c §3) so tests never
 // touch a real profile. Default = the primary saved session.
-const STATE = process.env.AUTH_STATE || 'test/.auth/state.json';
+const STATE = process.env.AUTH_STATE || 'test/.auth/throwaway.json'; // MX-1 §2a — ONE default path
 
 export default defineConfig({
   testDir: 'test',

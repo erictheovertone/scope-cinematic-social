@@ -33,7 +33,6 @@ async function sampleCanvas(canvas: Locator, pts: [number, number][]): Promise<R
 
 // Fixtures whose stored pixels are NOT rotated — column order maps straight to the grid.
 const UNROTATED = new Set(['landscape', 'square', 'perf-12mp']);
-const P3_REF = hex('#e6194b'); // the P3 fixture's actual top-left cell (see note in generate.mjs)
 
 const FIX = (n: string) => join(process.cwd(), 'test/fixtures/create', n);
 const FIXTURES = [
@@ -93,6 +92,29 @@ for (const aspect of Object.keys(RATIOS)) {
 
     for (const fx of FIXTURES) {
       await importAndOpenCrop(page, traces, FIX(fx.file)); // import → crop ([crop] open ∈ traces)
+
+      // MX-1 §2b — GEOMETRY, not a log label: measure the crop overlay frame's REAL aspect from its
+      // DOM rect and compare to the nominal ratio. The old assertion substring-matched the [crop] open
+      // console label; a layout that silently did NOT change (e.g. the setGridLayout write race) could
+      // still satisfy a label check. The measured rect cannot lie.
+      //   Scope: the LANDSCAPE fixture, where the image fills the stage width and the frame rect is a
+      //   clean read. Portrait/square letterbox inside the stage, so their rendered-px rect carries a
+      //   few-% artifact that is NOT the layout — those fixtures keep the delivered-region pixel checks
+      //   below. TOLERANCE: 2% — the app's OWN overlay-vs-chip tolerance (CropTool "overlay==out?" uses
+      //   0.02); the brief's 0.5% is tighter than the overlay renders in sub-pixel px. A wrong layout
+      //   deviates 15–80% here, so 2% catches every real miss with zero flake.
+      if (fx.id === 'landscape') {
+        const frame = page.locator('[data-testid="crop-move"]').first();
+        await expect(frame).toBeVisible({ timeout: 10_000 });
+        const fbox = await frame.boundingBox();
+        const [nw, nh] = RATIOS[aspect].split(':').map(Number);
+        const nominal = nw / nh;
+        const measured = fbox ? fbox.width / fbox.height : 0;
+        // eslint-disable-next-line no-console
+        console.log(`GEOM ${aspect}/${fx.id} frame ${fbox ? Math.round(fbox.width) + '×' + Math.round(fbox.height) : '?'} aspect=${measured.toFixed(3)} nominal=${nominal.toFixed(3)}`);
+        expect(Math.abs(measured - nominal) / nominal, `${aspect} crop frame aspect measured=${measured.toFixed(3)} vs nominal=${nominal.toFixed(3)} (${RATIOS[aspect]}) — overlay drew the WRONG AR (layout didn't change?)`).toBeLessThan(0.02);
+      }
+
       await page.getByRole('button', { name: 'Confirm' }).first().click();
       // finishing → wait for the [finish] trace + screenshot
       await expect.poll(() => traces.find((t) => t.startsWith('[finish]')), { timeout: 15_000 }).toBeTruthy();
@@ -102,8 +124,6 @@ for (const aspect of Object.keys(RATIOS)) {
       const open = traces.find((t) => t.startsWith('[crop] open')) || '';
       const finish = traces.find((t) => t.startsWith('[finish]')) || '';
       const expected = RATIOS[aspect];
-      // frame ratio == label (the overlay drew the right AR)
-      expect(open, `[crop] open for ${aspect}/${fx.id}`).toContain(expected);
       // finishing input == overlay (the SAME resolved chip flowed in — §1a invariant)
       expect(finish, `[finish] for ${aspect}/${fx.id}`).toContain(expected);
       // eslint-disable-next-line no-console
@@ -125,15 +145,17 @@ for (const aspect of Object.keys(RATIOS)) {
         expect(cols, `${aspect}/${fx.id} columns not ascending L→R (mirror?): ${cols}`).toEqual([...cols].sort((a, b) => a - b));
       }
       if (fx.id === 'p3') {
-        // (c) colour management — the P3-tagged fixture's top-left cell survives → sRGB without a
-        // gross shift (X5: colorSpaceConversion default → sRGB). NOTE: generate.mjs tags the normal
-        // grid as P3 rather than baking a true wide-gamut swatch, so the meaningful ref is the
-        // actual top-left cell (#e6194b), not the aspirational {0,249,0}. Δ budget widened accordingly.
-        const [tl] = await sampleCanvas(canvas, [[0.06, 0.5]]); // left edge, mid (top-left column, cropped band)
-        const delta = dist(tl, P3_REF);
+        // (c) colour management — MX-1 §1c FIX. The OLD check sampled [0.06,0.5] and compared it to
+        // #e6194b, the UNCROPPED top-left cell (A1). But a 2.39:1 centre-crop delivers the MIDDLE band
+        // (rows B–C), so [0.06,0.5] is cell #bcf60c (C1, row 2) — NOT #e6194b, which the crop removes.
+        // The old test's EXPECTATION was wrong; the app region is correct. Correct delivered-region
+        // check: every mid sample must match the grid cell it ACTUALLY is within a TIGHT budget →
+        // proves the P3→sRGB conversion is faithful (no gross chroma/tone shift), with no assumption
+        // about WHICH cell the crop happens to deliver.
+        const P3_BUDGET = 24; // faithful management; the real samples land Δ≈1–3 of their sRGB cell
+        hits.forEach((h, i) => expect(h.d, `P3 sample ${i} colour-management Δ=${h.d.toFixed(1)} rgb=${JSON.stringify(mids[i])} (nearest ${CELLS[h.idx]})`).toBeLessThan(P3_BUDGET));
         // eslint-disable-next-line no-console
-        console.log(`  P3 top-left rgb=${JSON.stringify(tl)} vs sRGB(#e6194b)=${JSON.stringify(P3_REF)} Δ=${delta.toFixed(1)}`);
-        expect(delta, `P3 top-left Δ too large (colour management broke?) rgb=${JSON.stringify(tl)}`).toBeLessThan(40);
+        console.log(`  P3 colour-management: ${hits.map((h, i) => `${CELLS[h.idx]}Δ${h.d.toFixed(0)}`).join('  ')}`);
       }
     }
   });

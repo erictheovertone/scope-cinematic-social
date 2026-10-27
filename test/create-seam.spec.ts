@@ -8,9 +8,9 @@ import { mkdirSync } from 'fs';
 // harness seams, which install ONLY under NEXT_PUBLIC_TEST_SEAM=1 — so this spec runs against
 // the LOCAL seam build, never prod. No real publish and no real mint → no prod-data side effects.
 //
-//   (one-time) BASE_URL=http://localhost:3000 AUTH_STATE=test/.auth/local.json npm run create:login:test
+//   (one-time) BASE_URL=http://localhost:3000 AUTH_STATE=test/.auth/throwaway.json npm run create:login:test
 //   NEXT_PUBLIC_TEST_SEAM=1 npm run build && NEXT_PUBLIC_TEST_SEAM=1 npm run start   # :3000
-//   BASE_URL=http://localhost:3000 AUTH_STATE=test/.auth/local.json \
+//   BASE_URL=http://localhost:3000 AUTH_STATE=test/.auth/throwaway.json \
 //     npx playwright test test/create-seam.spec.ts --project=iphone-webkit
 
 const FIX = (n: string) => join(process.cwd(), 'test/fixtures/create', n);
@@ -92,7 +92,7 @@ test('video path via seam reaches EDIT with controls intact', async ({ page }) =
 // ── C3-6/C3-7 — EDIT & POST on a VIDEO post: the tail (THUMBNAIL PREVIEW + ADD MUSIC) is
 //    reachable (scroller bounds), and ADD MUSIC is visible whether autoplay is ON or OFF.
 //    Screenshots 375 dark+light, autoplay ON and OFF. (Needs the localhost authed state for the
-//    crop→finishing gate; run: AUTH_STATE=test/.auth/state.json … --project=iphone-webkit)
+//    crop→finishing gate; run: AUTH_STATE=test/.auth/throwaway.json … --project=iphone-webkit)
 async function driveVideoToEdit(page: Page) {
   const traces: string[] = [];
   page.on('console', (m) => { const t = m.text(); if (t.startsWith('[crop]') || t.startsWith('[finish]')) traces.push(t); });
