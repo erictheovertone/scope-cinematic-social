@@ -1,8 +1,9 @@
 'use client';
 
-import { Suspense } from 'react';
+import { Suspense, useMemo } from 'react';
 import { PrivyProvider } from '@privy-io/react-auth';
-import { privyConfig, PRIVY_APP_ID } from '@/lib/privy';
+import { privyConfigFor, PRIVY_APP_ID } from '@/lib/privy';
+import { useTheme } from '@/lib/useTheme';
 import AppShell from '@/components/AppShell';
 import { UpsellProvider } from '@/components/UpsellProvider';
 import { EconomyProvider } from '@/components/EconomyProvider';
@@ -17,6 +18,10 @@ import CropDebugOverlay from "@/components/CropDebugOverlay";
 import VideoDebugOverlay from "@/components/VideoDebugOverlay";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
+  // Brief U2b §2 — the Privy modal follows the app theme (ink-on-canvas SUBMIT button,
+  // inverted in light). useTheme is reactive, so a runtime toggle re-themes the modal.
+  const theme = useTheme();
+  const privyConfig = useMemo(() => privyConfigFor(theme), [theme]);
   return (
     <PrivyProvider appId={PRIVY_APP_ID} config={privyConfig}>
       <EconomyProvider>
