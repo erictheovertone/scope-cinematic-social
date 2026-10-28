@@ -349,6 +349,7 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
     <MediaRenderer
       url={post.media_urls?.[0]}
       width={600}
+      hasRenditions={!!(post as { media_has_renditions?: boolean }).media_has_renditions}
       priority={priority}
       mediaType={post.media_type}
       caption={post.caption}

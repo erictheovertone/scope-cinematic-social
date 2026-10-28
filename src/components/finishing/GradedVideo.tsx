@@ -549,8 +549,11 @@ export default function GradedVideo({
           SAME CSS grade (filter here + the overlay layers below cover it) → no ungraded
           pixel ever paints between poster and the graded video. Legacy posters are already
           baked-graded, so no filter there (isHls false). */}
+      {/* Brief P0 — an UPLOADED poster has no baked rendition, so sizing it through feedImage
+          would 404 the `.{w}.webp` and (on the scroll) fall every tile back to its master → a
+          decode storm. Only Cloudflare Stream thumbnails size (via ?width); uploaded direct. */}
       {posterUrl && (
-        <img src={feedImage(posterUrl, posterWidth ?? 750)} alt="" draggable={false} loading={priority ? "eager" : "lazy"} fetchPriority={priority ? "high" : "auto"} decoding="async" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", display: "block", filter: isHls ? cssFilter : undefined }} />
+        <img src={/cloudflarestream\.com/.test(posterUrl) ? feedImage(posterUrl, posterWidth ?? 750) : posterUrl} alt="" draggable={false} loading={priority ? "eager" : "lazy"} fetchPriority={priority ? "high" : "auto"} decoding="async" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", display: "block", filter: isHls ? cssFilter : undefined }} />
       )}
 
       {/* Brief V2 — Stream still encoding: poster (above) or the var(--surface-1) placeholder (the

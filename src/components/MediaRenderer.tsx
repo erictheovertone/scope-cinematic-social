@@ -23,6 +23,12 @@ interface MediaRendererProps {
   /** Above-the-fold cells (first 2–3 in the feed): eager + fetchPriority high so the
    *  first paint is instant. Everything else stays lazy. Images only. */
   priority?: boolean;
+  /** Brief P0 §2b — whether the post row says baked renditions exist for this media
+   *  (posts.media_has_renditions, set at upload / backfill). Only then do we request a
+   *  `.{w}.webp` rendition; legacy posts without them load the MASTER directly, so the
+   *  scroll never fires a 404'd rendition → no fallback-to-master decode storm. Defaults
+   *  to false (safe): an un-wired caller or a pre-backfill post serves the master. */
+  hasRenditions?: boolean;
 }
 
 function isVideo(url: string, mediaType?: string): boolean {
@@ -51,7 +57,7 @@ function getCropStyle(cropX = 0, cropY = 0, cropWidth = 1, cropHeight = 1): Reac
 export default function MediaRenderer({
   url, mediaType, caption, autoplay = false,
   showSoundToggle = false, className, style, onClick, thumbnailUrl,
-  cropX, cropY, cropWidth, cropHeight, width, priority = false,
+  cropX, cropY, cropWidth, cropHeight, width, priority = false, hasRenditions = false,
 }: MediaRendererProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [muted, setMuted] = useState(true);
@@ -65,6 +71,13 @@ export default function MediaRenderer({
   useEffect(() => {
     if (imgElRef.current?.complete && imgElRef.current.naturalWidth > 0) setImgLoaded(true);
   }, [url, width]);
+  // Brief P0 §2 — the image source. §2b: only request a baked rendition when the post row
+  // says they exist; otherwise serve the MASTER directly (legacy posts never 404 a .webp).
+  // §2a: if a rendition is nonetheless missing, fall back to the master EXACTLY ONCE and
+  // stop — the fallback is terminal (never back to the rendition), so an error can't loop.
+  const baseSrc = width && hasRenditions ? feedImage(url, width) : url;
+  const [imgSrc, setImgSrc] = useState(baseSrc);
+  useEffect(() => { setImgSrc(baseSrc); }, [baseSrc]); // reset when the media/width/flag changes
   // LAZY: don't fetch video bytes until near the viewport. `near` gates the <video>
   // src (below) — off-screen videos download nothing; scrolling away drops the src
   // (disposes/frees the decoder). preload="none" keeps it from buffering ahead of play.
@@ -104,7 +117,7 @@ export default function MediaRenderer({
     return (
       <img
         ref={imgElRef}
-        src={width ? feedImage(url, width) : url}
+        src={imgSrc}
         alt="" /* never the caption — alt text paints as a visible "ghost
                   caption" over slow-loading media, duplicating the real one */
         className={className}
@@ -113,6 +126,7 @@ export default function MediaRenderer({
         fetchpriority={priority ? 'high' : 'auto'}
         decoding="async"
         onLoad={() => setImgLoaded(true)}
+        onError={() => { if (imgSrc !== url) setImgSrc(url); }} /* P0 §2a — master once, terminal */
         style={{ width: '100%', height: '100%', display: 'block', ...getCropStyle(cropX, cropY, cropWidth, cropHeight), ...style, opacity: imgLoaded ? 1 : 0, transition: 'opacity 150ms ease-out' }}
         onClick={onClick}
       />
@@ -132,7 +146,7 @@ export default function MediaRenderer({
       <video
         ref={videoRef}
         src={near ? url : undefined}       /* lazy: no bytes until near-viewport; dropped when scrolled away */
-        poster={thumbnailUrl ? (width ? feedImage(thumbnailUrl, width) : thumbnailUrl) : undefined}
+        poster={thumbnailUrl ? (width && hasRenditions ? feedImage(thumbnailUrl, width) : thumbnailUrl) : undefined}
         preload="none"
         muted={muted}
         loop

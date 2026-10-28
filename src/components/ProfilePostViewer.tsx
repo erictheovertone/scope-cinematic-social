@@ -246,6 +246,7 @@ function PostViewerItem({
           <MediaRenderer
             url={post.media_urls[0]}
             width={1280}
+            hasRenditions={!!(post as any).media_has_renditions}
             mediaType={(post as any).media_type}
             caption={post.caption || ""}
             thumbnailUrl={(post as any).poster_url ?? (post as any).thumbnail_url}

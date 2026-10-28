@@ -23,5 +23,17 @@ export async function POST(req: NextRequest) {
     { auth: { persistSession: false } },
   );
   const results = await bakeRenditionsFromUrl(supabase, masterUrl);
-  return NextResponse.json({ results });
+  // Brief P0 §2b — flag the post so the CLIENT requests a rendition only once the 600
+  // display tier actually exists. Until then (or if baking failed) the post rides its
+  // master directly: no 404'd `.webp`, so no fallback-to-master decode storm on the
+  // post scroll. Best-effort; the onError fallback still covers a stale/missing flag.
+  const ok600 = results.some((r) => r.width === 600 && r.ok);
+  let flagged = false;
+  if (ok600) {
+    try {
+      const { error } = await supabase.from('posts').update({ media_has_renditions: true }).contains('media_urls', [masterUrl]);
+      flagged = !error;
+    } catch { /* flag is best-effort */ }
+  }
+  return NextResponse.json({ results, flagged });
 }

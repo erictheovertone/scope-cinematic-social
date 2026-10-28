@@ -782,7 +782,11 @@ const userLayoutId = stableLayoutId;
                   </div>
                 ) : (
                   <DeckThumbnail
-                    imageUrls={deck.thumbnail_urls.slice(0, 4).map((u) => feedImage(u, THUMB_WIDTH))}
+                    /* Brief P0 — a deck's post-thumbnail has no per-image rendition flag and the
+                       legacy ones aren't baked, so sizing them through feedImage 404s the .600 and
+                       falls back to the master (a decode storm on open). Size only Cloudflare Stream
+                       posters (?width); load uploaded post images directly. */
+                    imageUrls={deck.thumbnail_urls.slice(0, 4).map((u) => (/cloudflarestream\.com/.test(u) ? feedImage(u, THUMB_WIDTH) : u))}
                     title={deck.title}
                     aspectRatio={getDeckAspect(deck.grid_layout)}
                   />

@@ -115,6 +115,7 @@ export default function PostCell({ post, layoutId, index, onClick, showSoundTogg
             <MediaRenderer
               url={post.media_urls[0]}
               width={600}
+              hasRenditions={!!(post as { media_has_renditions?: boolean }).media_has_renditions}
               mediaType={post.media_type}
               caption={post.caption || 'Post'}
               thumbnailUrl={post.thumbnail_url}

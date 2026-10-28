@@ -12,7 +12,9 @@
 
 import { useEffect } from 'react';
 
-const RENDITION_URL = /^(.*)\.(?:600|1600)\.webp(\?.*)?$/;
+// Brief P0 — must list EVERY baked tier (RENDITION_WIDTHS). 2560 was missing, so a
+// 2560 rendition 404 was never reverted to the master (it just stayed broken).
+const RENDITION_URL = /^(.*)\.(?:600|1600|2560)\.webp(\?.*)?$/;
 
 export default function ImageRenditionFallback() {
   useEffect(() => {
