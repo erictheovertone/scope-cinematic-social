@@ -146,7 +146,10 @@ export default function MediaRenderer({
       <video
         ref={videoRef}
         src={near ? url : undefined}       /* lazy: no bytes until near-viewport; dropped when scrolled away */
-        poster={thumbnailUrl ? (width && hasRenditions ? feedImage(thumbnailUrl, width) : thumbnailUrl) : undefined}
+        /* Brief SCROLL-GUARD — always size the poster through feedImage, capped ≤1600 (posters are
+           baked at publish + backfilled, so this no longer risks a master; NOT gated on the video's
+           media_has_renditions, which is false for video posts and used to leak the raw poster). */
+        poster={thumbnailUrl ? feedImage(thumbnailUrl, Math.min(width ?? 1600, 1600)) : undefined}
         preload="none"
         muted={muted}
         loop

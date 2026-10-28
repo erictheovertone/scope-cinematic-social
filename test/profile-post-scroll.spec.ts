@@ -47,16 +47,27 @@ test('profile + post scroll — no 404 renditions, no image error events', async
   expect(badRenditions, `rendition 404s on profile/post-scroll:\n${badRenditions.join('\n')}`).toEqual([]);
   expect(imgErr, `<img> error events on profile/post-scroll:\n${imgErr.join('\n')}`).toEqual([]);
 
-  // Brief P0b — decoded-image memory at open must stay well under the iOS kill threshold
-  // (~1.5GB, far less on older phones). Sum naturalW×naturalH×4 across every decoded post-media
-  // <img> + videoW×videoH×4 across <video>. The scroll windows media to the visible post ±1, so
-  // this stays bounded regardless of post count. (Headless releases offscreen decodes, so this is
-  // a floor, not the device peak — device validation still owns the final word.)
-  const mem = await page.evaluate(() => {
-    let bytes = 0;
-    for (const i of [...document.querySelectorAll('img')]) { const im = i as HTMLImageElement; if (im.naturalWidth > 0 && (im.currentSrc || im.src).includes('/post-media/')) bytes += im.naturalWidth * im.naturalHeight * 4; }
+  // Brief SCROLL-GUARD — no scroll <img> may load a MASTER. Every content image (post-media
+  // rendition or Cloudflare Stream thumbnail; avatars/deck-covers excluded) must resolve to a
+  // ≤1600 rendition. Measure the widest decoded natural width AND the decoded-image memory.
+  //   • max naturalWidth ≤ 1600  (hard cap: anything > 2048 is a leaked master → fail)
+  //   • decoded MB < 120         (tightened from P0b's 200; the poster leak was the hog)
+  // (Headless releases offscreen decodes, so MB here is a floor, not the device peak — device
+  // validation still owns the final word; the naturalWidth cap is exact regardless.)
+  const { maxW, widest, mem } = await page.evaluate(() => {
+    const isContent = (s: string) => s.includes('/post-media/') || s.includes('cloudflarestream.com/');
+    let bytes = 0, maxW = 0, widest = '';
+    for (const i of [...document.querySelectorAll('img')]) {
+      const im = i as HTMLImageElement; const src = im.currentSrc || im.src;
+      if (im.naturalWidth > 0 && isContent(src)) {
+        bytes += im.naturalWidth * im.naturalHeight * 4;
+        if (im.naturalWidth > maxW) { maxW = im.naturalWidth; widest = src.replace(/^https?:\/\/[^/]+/, ''); }
+      }
+    }
     for (const v of [...document.querySelectorAll('video')]) { const vd = v as HTMLVideoElement; if (vd.videoWidth > 0) bytes += vd.videoWidth * vd.videoHeight * 4; }
-    return Math.round(bytes / 1048576);
+    return { maxW, widest, mem: Math.round(bytes / 1048576) };
   });
-  expect(mem, `decoded-image memory at open = ${mem}MB (gate < 200MB)`).toBeLessThan(200);
+  console.log(`[SCROLL-GUARD] widest scroll image = ${maxW}px (${widest || 'none'}) · decoded = ${mem}MB`);
+  expect(maxW, `widest scroll image = ${maxW}px (gate ≤ 1600) — ${widest}`).toBeLessThanOrEqual(1600);
+  expect(mem, `decoded-image memory at open = ${mem}MB (gate < 120MB)`).toBeLessThan(120);
 });

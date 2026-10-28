@@ -69,3 +69,38 @@ console.log(`  .600 already present : ${present}`);
 console.log(`  .600 MISSING         : ${missing}`);
 if (RUN) console.log(`  baked: ${baked}   flagged media_has_renditions=true: ${flagged}   bake-failed: ${failed}`);
 else console.log(`  (dry-run — no writes) missing ids (first 25): ${missingIds.slice(0, 25).join(', ')}`);
+
+// ── Brief SCROLL-GUARD — backfill VIDEO POSTER renditions ─────────────────────
+// Video posts render the at-rest frame from poster_url (an UPLOADED post-media image, baked by
+// publish since V2a). Legacy video posts predate that bake, so their poster has no `.{w}.webp`
+// and every scroll tile loaded the multi-MB master. Bake 600/1600/2560 for each uploaded poster
+// (Stream thumbnails size live via ?width → skipped). No flag flip: /api/renditions only flags
+// a post whose media_urls contains the URL, and a poster is never in media_urls.
+const vids = [];
+for (let from = 0; ; from += 1000) {
+  const { data, error } = await supabase.from('posts').select('id, poster_url, media_type').eq('media_type', 'video').range(from, from + 999);
+  if (error) { console.error(error); process.exit(1); }
+  vids.push(...(data || []));
+  if (!data || data.length < 1000) break;
+}
+const posterPosts = vids.filter((p) => isPostImage(p.poster_url)); // uploaded post-media posters only (excludes Stream thumbnails)
+console.log(`\n${RUN ? 'EXECUTE' : 'DRY-RUN'} — ${posterPosts.length} video posts with an uploaded post-media poster`);
+let pPresent = 0, pMissing = 0, pBaked = 0, pFailed = 0;
+const pMissingIds = [];
+for (const p of posterPosts) {
+  const poster = p.poster_url;
+  if (await has600(poster)) { pPresent++; continue; }
+  pMissing++; pMissingIds.push(p.id);
+  if (RUN) {
+    try {
+      const r = await fetch(`${BASE}/api/renditions`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ masterUrl: poster }) });
+      const j = await r.json().catch(() => ({}));
+      if (r.ok && Array.isArray(j.results) && j.results.some((x) => x.width === 600 && x.ok)) pBaked++;
+      else { pFailed++; console.warn('  ✗ poster bake failed:', p.id, JSON.stringify(j).slice(0, 160)); }
+    } catch (e) { pFailed++; console.warn('  ✗ poster bake error:', p.id, String(e).slice(0, 120)); }
+  }
+}
+console.log(`  poster .600 already present : ${pPresent}`);
+console.log(`  poster .600 MISSING         : ${pMissing}`);
+if (RUN) console.log(`  poster baked: ${pBaked}   poster bake-failed: ${pFailed}`);
+else console.log(`  (dry-run — no writes) missing poster ids (first 25): ${pMissingIds.slice(0, 25).join(', ')}`);

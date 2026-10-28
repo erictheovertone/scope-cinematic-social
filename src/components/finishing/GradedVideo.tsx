@@ -549,11 +549,13 @@ export default function GradedVideo({
           SAME CSS grade (filter here + the overlay layers below cover it) → no ungraded
           pixel ever paints between poster and the graded video. Legacy posters are already
           baked-graded, so no filter there (isHls false). */}
-      {/* Brief P0 — an UPLOADED poster has no baked rendition, so sizing it through feedImage
-          would 404 the `.{w}.webp` and (on the scroll) fall every tile back to its master → a
-          decode storm. Only Cloudflare Stream thumbnails size (via ?width); uploaded direct. */}
+      {/* Brief SCROLL-GUARD — route EVERY poster through feedImage, capped ≤1600. Uploaded posters
+          are now baked with renditions at publish (uploadImageWithRenditions) + backfilled for
+          legacy, so the old "uploaded direct" path (which loaded the multi-MB master into every
+          scroll tile) is gone. Cloudflare Stream thumbnails still size live via ?width; an uploaded
+          post-media poster resolves to its `.{w}.webp`. Cap at 1600 so no scroll tile exceeds it. */}
       {posterUrl && (
-        <img src={/cloudflarestream\.com/.test(posterUrl) ? feedImage(posterUrl, posterWidth ?? 750) : posterUrl} alt="" draggable={false} loading={priority ? "eager" : "lazy"} fetchPriority={priority ? "high" : "auto"} decoding="async" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", display: "block", filter: isHls ? cssFilter : undefined }} />
+        <img src={feedImage(posterUrl, Math.min(posterWidth ?? 750, 1600))} alt="" draggable={false} loading={priority ? "eager" : "lazy"} fetchPriority={priority ? "high" : "auto"} decoding="async" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", display: "block", filter: isHls ? cssFilter : undefined }} />
       )}
 
       {/* Brief V2 — Stream still encoding: poster (above) or the var(--surface-1) placeholder (the
