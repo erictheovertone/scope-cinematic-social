@@ -1484,7 +1484,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
             <button
               onClick={() => fileInputRef.current?.click()}
               className="tappable"
-              style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-12)', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--ink-100)', border: '1.5px solid transparent', background: 'linear-gradient(var(--black), var(--black)) padding-box, linear-gradient(135deg, var(--ink-100), rgb(var(--ink-rgb) / 0.5)) border-box', padding: '14px 28px', cursor: 'pointer' }}
+              style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-12)', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--ink-100)', border: '1.5px solid transparent', background: 'linear-gradient(var(--canvas), var(--canvas)) padding-box, linear-gradient(135deg, var(--ink-100), rgb(var(--ink-rgb) / 0.5)) border-box', padding: '14px 28px', cursor: 'pointer' }}
             >
               Choose from Library
             </button>
@@ -1573,7 +1573,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
             </div>
             <button
               onClick={() => setStep('crop')}
-              style={{ position: 'absolute', bottom: 8, right: 8, background: 'rgb(var(--black-rgb) / 0.6)', border: '1px solid rgb(var(--ink-rgb) / 0.25)', cursor: 'pointer', padding: '5px 9px' }}
+              style={{ position: 'absolute', bottom: 8, right: 8, background: 'rgb(var(--canvas-rgb) / 0.6)' /* U2-3 — canvas chip: ink label reads in both themes */, border: '1px solid rgb(var(--ink-rgb) / 0.25)', cursor: 'pointer', padding: '5px 9px' }}
             >
               <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-8)', color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>ADJUST CROP</span>
             </button>
@@ -2018,7 +2018,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
       {isPosting && !showMintPrompt && (
         <div style={{
           position: 'fixed', inset: 0, zIndex: 600,
-          backgroundColor: 'var(--black)',
+          backgroundColor: 'var(--canvas)', // U2-3 — was --black: the ink counter vanished in light
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           animation: 'fadeInBlack 0.2s ease forwards',
         }}>

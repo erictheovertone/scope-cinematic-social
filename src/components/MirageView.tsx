@@ -61,7 +61,7 @@ function MirageLightbox({
         zIndex: 70,
         // Brief M10a §2 — focus dim lightened ~×0.8 (0.96 → 0.77) so the collage stays
         // legible behind the focused item: the visible collage IS the return affordance.
-        background: visible ? "rgb(var(--black-rgb) / 0.77)" : "rgb(var(--black-rgb) / 0)",
+        background: visible ? "rgb(var(--canvas-rgb) / 0.77)" : "rgb(var(--canvas-rgb) / 0)", // U2-3 — canvas, so light mode dims to ivory (dark: unchanged)
         transition: "background 200ms ease",
         overflowY: "auto",
       }}

@@ -506,7 +506,7 @@ export default function TheatreMode({
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
         style={{
-          position: 'absolute', inset: 0, background: portrait ? 'var(--canvas)' : 'rgb(var(--black-rgb) / 0.92)',
+          position: 'absolute', inset: 0, background: portrait ? 'var(--canvas)' : 'rgb(var(--canvas-rgb) / 0.92)', // U2-3 — canvas both ways
           opacity: shown ? 1 : 0, transition: `opacity ${reduceMotion.current ? 120 : 360}ms ${EASE}`,
           display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
         }}

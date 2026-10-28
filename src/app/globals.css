@@ -292,8 +292,7 @@ html, body {
    (In dark theme this is a harmless re-declaration.) */
 [data-force-dark] {
   /* T1-5 §0/§2 — now ONLY the finishing suite forces dark. Reset the primitives to the dark pair
-     + the dark greys/positive; surfaces / on-ink / glass / hairline all derive from the triplets,
-     so they follow automatically (no re-declaration). */
+     + the dark greys/positive, then re-derive the surfaces / on-ink / glass / hairline below. */
   --ink-rgb: 229 225 219;
   --canvas-rgb: 5 5 5;
   --canvas: rgb(var(--canvas-rgb) / 1);
@@ -303,6 +302,32 @@ html, body {
   --mute-3: #888888;
   --positive: #00E08A;
   --positive-alt: #4ade80;
+  /* U2-3 — RE-DERIVE here. A custom property's var() resolves on the element that DECLARES it and
+     descendants inherit the resolved value — so the :root derivations below were still the LIGHT
+     values inside a force-dark region (ink-100 = off-black on the dark canvas: the finishing
+     suite's labels vanished in light). Same formulas as :root, evaluated against the dark pair. */
+  --ink-30: rgb(var(--ink-rgb) / 0.30);
+  --ink-45: rgb(var(--ink-rgb) / 0.45);
+  --ink-55: rgb(var(--ink-rgb) / 0.55);
+  --ink-65: rgb(var(--ink-rgb) / 0.65);
+  --ink-72: rgb(var(--ink-rgb) / 0.72);
+  --ink-80: rgb(var(--ink-rgb) / 0.80);
+  --ink-100: rgb(var(--ink-rgb) / 1);
+  --surface-1: color-mix(in srgb, var(--canvas) 97.8%, var(--ink));
+  --surface-2: color-mix(in srgb, var(--canvas) 93.3%, var(--ink));
+  --surface-3: color-mix(in srgb, var(--canvas) 90.6%, var(--ink));
+  --surface-08: color-mix(in srgb, var(--canvas) 98.7%, var(--ink));
+  --surface-0d: color-mix(in srgb, var(--canvas) 96.4%, var(--ink));
+  --surface-10: color-mix(in srgb, var(--canvas) 95.1%, var(--ink));
+  --surface-1f: color-mix(in srgb, var(--canvas) 88.4%, var(--ink));
+  --surface-4: color-mix(in srgb, var(--canvas) 87.1%, var(--ink));
+  --surface-2a: color-mix(in srgb, var(--canvas) 83.5%, var(--ink));
+  --glass-fill: rgb(var(--canvas-rgb) / 0.5);
+  --glass-border: rgb(var(--ink-rgb) / 0.22);
+  --on-ink: var(--canvas);
+  --hairline: rgb(var(--ink-rgb) / 0.22);
+  --hairline-strong: rgb(var(--ink-rgb) / 0.30);
+  --avatar-frame: rgb(var(--ink-rgb) / 0.15);
 }
 
 /* Capped + centered mobile column. Edge-to-edge below ~480px; centered above it on
@@ -450,6 +475,10 @@ button:active,
   background: rgba(3,3,3,0.3);
 }
 .footer-pill.smoke { background: rgba(0,0,0,0.5); }
+/* U2-3 — LIGHT: the dark wash under ink icons made the pill's icons vanish over dark frames.
+   Light gets an ivory (canvas) wash of the same weight; dark is untouched. */
+html[data-theme="light"] .footer-pill { background: rgb(var(--canvas-rgb) / 0.55); }
+html[data-theme="light"] .footer-pill.smoke { background: rgb(var(--canvas-rgb) / 0.75); }
 /* Pill POP (4C) — a subtle scale flex on nav tap, timed with the marker slide. GPU
    transform only; collapsed to instant under the reduced-motion net (Stage 4.1). */
 .footer-pill.pill-pop { animation: pillPop 240ms cubic-bezier(0.34, 1.5, 0.5, 1); }
@@ -464,6 +493,7 @@ button:active,
     backdrop-filter: none; -webkit-backdrop-filter: none;
     background: rgba(18,18,18,0.98);
   }
+  html[data-theme="light"] .footer-pill, html[data-theme="light"] .footer-pill.smoke { background: rgb(var(--canvas-rgb) / 0.98); }
 }
 
 /* ── Surface slide-on-commit (SlideShell) ─────────────────────────────────────

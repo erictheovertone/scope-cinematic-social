@@ -467,7 +467,9 @@ export default function Home() {
         WebkitBackdropFilter: 'blur(12px)',
         maskImage: 'linear-gradient(to bottom, black 0%, black 45%, transparent 100%)',
         WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 45%, transparent 100%)',
-        background: 'linear-gradient(to bottom, rgb(var(--black-rgb) / 0.35) 0%, rgb(var(--black-rgb) / 0) 100%)',
+        // U2-3 — tint toward the CANVAS, not black: in light the black tint read as a drop shadow
+        // behind the aperture. Dark is unchanged (canvas ≈ black).
+        background: 'linear-gradient(to bottom, rgb(var(--canvas-rgb) / 0.35) 0%, rgb(var(--canvas-rgb) / 0) 100%)',
         zIndex: 2, pointerEvents: 'none',
       }} />
 

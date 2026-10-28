@@ -12,6 +12,7 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { Recap } from '@/lib/economy/recap';
 import { openPostLightbox } from '@/lib/postLightbox';
+import { useTheme } from '@/lib/useTheme';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -71,6 +72,9 @@ interface Props {
 
 export default function WhileYouWereAwaySheet({ visible, recap, username, onClose }: Props) {
   const [mounted, setMounted] = useState(false);
+  // U2-3 — the two baked card PNGs are dark-only art (no light variant yet): in light they'd sit
+  // as black slabs under ink text. Light drops them for a surface fill; dark is untouched.
+  const theme = useTheme();
   useEffect(() => setMounted(true), []);
 
   const reduced = useRef(false);
@@ -167,7 +171,7 @@ export default function WhileYouWereAwaySheet({ visible, recap, username, onClos
     <div
       data-swipe-exclude
       style={{
-        position: 'fixed', inset: 0, zIndex: 600, background: 'var(--black)', overflow: 'hidden',
+        position: 'fixed', inset: 0, zIndex: 600, background: 'var(--canvas)', overflow: 'hidden', // U2-3 — canvas (light: ivory)
         pointerEvents: visible ? 'auto' : 'none',
         transform: visible ? `translateY(${dragY}px)` : 'translateY(100%)',
         transition: dragging ? 'none' : 'transform 0.36s cubic-bezier(0.32,0.72,0,1)',
@@ -192,14 +196,14 @@ export default function WhileYouWereAwaySheet({ visible, recap, username, onClos
           {/* N DAYS pill — dark gradient, ivory label, radius 2. Brief M12: the border was
               dark-red #7a2e2e (a red-kill survivor on this page) → ivory hairline @30%, which
               keeps subtle definition on the dark gradient and pairs with the ghost ENTER CTA. */}
-          <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: RED, background: 'linear-gradient(93.77deg, #181818 24.12%, var(--black) 64.5%)', border: '0.5px solid rgb(var(--ink-rgb) / 0.3)', borderRadius: 2, padding: '3px 8px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{recap.sinceDays} DAYS</span>
+          <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: RED, background: 'linear-gradient(93.77deg, var(--surface-4) 24.12%, var(--canvas) 64.5%)', border: '0.5px solid rgb(var(--ink-rgb) / 0.3)', borderRadius: 2, padding: '3px 8px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{recap.sinceDays} DAYS</span>
         </div>
 
         {/* HERO / EARNED CARD — baked PNG background (fills + scales), radius 2, h 127,
             elements absolutely placed per Figma 787:248. */}
-        <div style={{ position: 'relative', overflow: 'hidden', border: '0.5px solid var(--surface-1f)', borderRadius: 2, height: 127, boxSizing: 'border-box', marginBottom: 28, flexShrink: 0 }}>
+        <div style={{ position: 'relative', overflow: 'hidden', border: '0.5px solid var(--surface-1f)', borderRadius: 2, background: 'var(--surface-2)', height: 127, boxSizing: 'border-box', marginBottom: 28, flexShrink: 0 }}>
           {/* PNG background — behind all content, stretches to fill the card edge-to-edge */}
-          <img src="/your-work-earned-rect.png" alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'fill', zIndex: 0, pointerEvents: 'none' }} />
+          {theme === 'dark' && <img src="/your-work-earned-rect.png" alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'fill', zIndex: 0, pointerEvents: 'none' }} />}
           {/* Holo logo top-right (~19px from top, ~124×81) */}
           <img src="/opaque-scope-logo-holo.png" alt="" style={{ position: 'absolute', top: 19, right: 12, width: 124, height: 'auto', zIndex: 2, pointerEvents: 'none' }} />
           <p style={{ position: 'absolute', top: 21, left: 12, zIndex: 1, ...SKB, fontSize: 'var(--fs-9)', color: W65, margin: 0, textTransform: 'uppercase', letterSpacing: '0.12em' }}>YOUR WORK EARNED</p>
@@ -242,8 +246,8 @@ export default function WhileYouWereAwaySheet({ visible, recap, username, onClos
 
         {/* STAT STRIP (audience) — baked PNG background (fills + scales), radius 2, h 98,
             3 equal columns above it. */}
-        <div style={{ position: 'relative', overflow: 'hidden', height: 98, flexShrink: 0, border: '0.5px solid var(--surface-1f)', borderRadius: 2 }}>
-          <img src="/audience-growth-rect.png" alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'fill', zIndex: 0, pointerEvents: 'none' }} />
+        <div style={{ position: 'relative', overflow: 'hidden', height: 98, flexShrink: 0, border: '0.5px solid var(--surface-1f)', borderRadius: 2, background: 'var(--surface-2)' }}>
+          {theme === 'dark' && <img src="/audience-growth-rect.png" alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'fill', zIndex: 0, pointerEvents: 'none' }} />}
           <div style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'stretch', height: '100%' }}>
             <div style={{ flex: 1, display: 'flex' }}>{stat(UserPlus, s.follows, 'NEW FOLLOWS')}</div>
             <div style={{ flex: 1, display: 'flex' }}>{stat(MessageCircle, s.comments, 'NEW COMMENTS')}</div>

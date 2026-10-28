@@ -21,8 +21,9 @@ const BTN: React.CSSProperties = {
   // Kill the double-tap-zoom recognition delay (root is touch-action:none; these
   // opt back into fast single-tap → click). Every footer tap fires first time.
   touchAction: 'manipulation',
-  // White icons need contrast where a bright frame shows through the dark glass → subtle shadow.
-  filter: 'drop-shadow(0 1px 2px rgb(var(--black-rgb) / 0.55))',
+  // Icons need contrast where a frame shows through the glass → a subtle shadow in the CANVAS
+  // colour (U2-3: was black, which haloed the ink icons in light; dark is unchanged).
+  filter: 'drop-shadow(0 1px 2px rgb(var(--canvas-rgb) / 0.55))',
   // Brief F4 — fixed-width cells (no flex:1 spread): the row gap sets icon-to-icon
   // spacing and the pill wraps the row. Marker retired → no % cell mapping needed.
   // 150ms opacity crossfade for the active↔inactive dim (respects reduced-motion net).

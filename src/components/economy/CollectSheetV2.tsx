@@ -394,7 +394,7 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
         onClick={onClose}
         data-swipe-exclude
         style={{
-          position: 'fixed', inset: 0, background: 'rgb(var(--black-rgb) / 0.85)', zIndex: 500,
+          position: 'fixed', inset: 0, background: 'rgb(var(--canvas-rgb) / 0.85)', zIndex: 500, // U2-3 — canvas scrim
           opacity: visible ? 1 : 0, pointerEvents: visible ? 'auto' : 'none',
           transition: 'opacity 0.3s ease',
         }}
