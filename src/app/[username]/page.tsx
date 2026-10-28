@@ -34,13 +34,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function PublicProfilePage({ params, searchParams }: Props) {
+  // ARR-3 — read a request-bound API FIRST so the route is always rendered dynamically per
+  // request. Otherwise Next can bake a static not-found fallback at build time (observed: a
+  // production build with PUBLIC_PROFILES_ENABLED=1 served a static 404 for EVERY username,
+  // even though the flag is on at runtime — the API route worked, this page didn't). With the
+  // flag read at runtime, /[username] follows the live env + allowlist.
+  const jar = await cookies();
   if (!publicProfilesEnabled()) notFound();
   const { username } = await params;
   if (!publicProfileAllowed(username)) notFound(); // ARR-2 — non-allowlisted → 404 as today
   const [profile, loginMethods] = await Promise.all([getPublicProfile(username), getArrivalLoginMethods()]);
   if (!profile) notFound();
 
-  const jar = await cookies();
   if (jar.get('privy-session') || jar.get('privy-token')) redirect(`/profile/${encodeURIComponent(profile.username)}`);
 
   const ref = (await searchParams).ref;

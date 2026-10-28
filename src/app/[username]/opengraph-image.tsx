@@ -5,7 +5,7 @@
 // every image is fetched and re-encoded to a JPEG data URI with sharp first.
 import { ImageResponse } from 'next/og';
 import sharp from 'sharp';
-import { publicProfilesEnabled } from '@/lib/arrival/flag';
+import { publicProfilesEnabled, publicProfileAllowed } from '@/lib/arrival/flag';
 import { getPublicProfile } from '@/lib/arrival/publicProfile';
 import { feedImage } from '@/lib/mediaUrl';
 
@@ -24,7 +24,8 @@ async function jpeg(url: string | null | undefined, w: number, h: number): Promi
 }
 
 export default async function OgImage({ params }: { params: Promise<{ username: string }> }) {
-  const profile = publicProfilesEnabled() ? await getPublicProfile((await params).username) : null;
+  const uname = (await params).username; // ARR-3 — case-insensitive via getPublicProfile (ilike) + the allowlist
+  const profile = publicProfilesEnabled() && publicProfileAllowed(uname) ? await getPublicProfile(uname) : null;
   const name = profile ? profile.username.toLowerCase() : 'Scope';
   const frames = (profile?.frames ?? []).slice(0, 3);
   const stripH = Math.round(400 / 2.39);
