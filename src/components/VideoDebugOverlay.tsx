@@ -16,6 +16,9 @@ import {
   vdbgInstallProbes,
   vdbgLiveCounts,
   vdbgError,
+  installCrashBreadcrumb,
+  readLastError,
+  type LastError,
 } from '@/lib/videoDebug';
 
 const BUILD_SHA = process.env.NEXT_PUBLIC_BUILD_SHA || 'dev';
@@ -24,10 +27,15 @@ export default function VideoDebugOverlay() {
   const [on, setOn] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [reloadStep, setReloadStep] = useState<string | null>(null);
+  const [lastError, setLastError] = useState<LastError | null>(null);
   const [, setTick] = useState(0);
   const trailRef = useRef<HTMLDivElement>(null);
 
   const snap = useSyncExternalStore(subscribeVideoDebug, getVideoDebugState, getVideoDebugState);
+
+  // Brief P0 — ALWAYS-ON (even with the overlay off): record the last crash so it
+  // survives the reload and names itself. Must run regardless of `on`.
+  useEffect(() => { installCrashBreadcrumb(); }, []);
 
   // On/off sync — the 5-tap toggle fires VIDEO_DEBUG_CHANGE_EVT; ?debug=video is read
   // on mount. Re-check on the toggle event + cross-tab storage changes.
@@ -44,12 +52,13 @@ export default function VideoDebugOverlay() {
   useEffect(() => {
     if (!on || typeof window === 'undefined') return;
     setReloadStep(readReloadCrumb()); // crash line from a previous (killed) page
+    setLastError(readLastError());    // P0 — the last global crash (any route), if any
     vdbgInstallProbes();
     const onErr = (e: ErrorEvent) => vdbgError(`${e.message}`.slice(0, 80));
     const onRej = (e: PromiseRejectionEvent) => vdbgError(`unhandled: ${String(e.reason?.message ?? e.reason).slice(0, 70)}`);
     window.addEventListener('error', onErr);
     window.addEventListener('unhandledrejection', onRej);
-    const id = window.setInterval(() => setTick((t) => t + 1), 500); // live resource counters
+    const id = window.setInterval(() => { setTick((t) => t + 1); setLastError(readLastError()); }, 500); // live counters + fresh crash record
     (window as unknown as { __scopeVdbgDump?: () => unknown }).__scopeVdbgDump = () => {
       const s = getVideoDebugState();
       return { crumbs: s.crumbs, file: s.file, errors: s.errors, res: vdbgLiveCounts() };
@@ -100,6 +109,12 @@ export default function VideoDebugOverlay() {
 
   const header: string[] = [];
   if (reloadStep) header.push(`⚠ LAST STEP BEFORE RELOAD: ${reloadStep}`);
+  if (lastError) {
+    const ago = Math.max(0, Math.round((Date.now() - lastError.ts) / 1000));
+    header.push(`⚠ LAST ERROR BEFORE RELOAD (${ago}s ago @${lastError.route}): ${lastError.msg}`);
+    const frame = lastError.stack?.split('\n').map((l) => l.trim()).find((l) => /\.(t|j)sx?|at |chunk/.test(l));
+    if (frame) header.push(`   ↳ ${frame.slice(0, 160)}`);
+  }
   header.push(`?debug=video ${BUILD_SHA} @${nav}`);
   header.push(`file ${f.sizeMB ?? '–'}MB ${f.container ?? '–'} ${f.res ?? '–'} ${f.durationS ?? '–'}s  fps${f.fps ?? 'n/a'}`);
   header.push(`vid ${r.videosLive} live/${r.videosTotal}  gl ${r.glLive} live/${r.glTotal}  url ${r.urlsLive}/${r.urlsTotal}  cvs ${r.canvasesLive}/${r.canvasesTotal} ${r.canvasMP.toFixed(1)}MP  copy ${r.bigBlobCount}×(${r.bigBlobMB.toFixed(0)}MB)`);

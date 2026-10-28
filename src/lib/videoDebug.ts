@@ -38,6 +38,52 @@ const state: State = { startT: 0, crumbs: [], errors: [], file: {} };
 const listeners = new Set<() => void>();
 function emit() { listeners.forEach((l) => l()); }
 
+// ── Global crash breadcrumb (Brief P0) ────────────────────────────────────────
+// The ONE always-on part of this module. The rest no-ops unless ?debug=video, but a
+// crash that kills the tab happens with the overlay OFF — so this records the LAST
+// error + route to localStorage unconditionally, and the overlay (once enabled) shows
+// "LAST ERROR BEFORE RELOAD" on ANY route. So the next crash names itself. It is
+// passive (addEventListener, never replaces window.onerror), never preventDefault's
+// (normal error handling still runs), never throws, and writes a tiny truncated record.
+const LAST_ERROR_KEY = 'scope.debug.lastError';
+
+export type LastError = { msg: string; src?: string; line?: number; col?: number; stack?: string; route: string; ts: number };
+
+let crashInstalled = false;
+
+/** Install the always-on crash recorder. Idempotent; safe to call on every mount. */
+export function installCrashBreadcrumb(): void {
+  if (crashInstalled || typeof window === 'undefined') return;
+  crashInstalled = true;
+  const write = (msg: string, extra: Partial<LastError>) => {
+    try {
+      const rec: LastError = { msg: String(msg).slice(0, 300), route: window.location?.pathname ?? '', ts: Date.now(), ...extra };
+      if (rec.stack) rec.stack = rec.stack.slice(0, 800);
+      localStorage.setItem(LAST_ERROR_KEY, JSON.stringify(rec));
+    } catch { /* storage disabled / quota — best-effort */ }
+  };
+  try {
+    window.addEventListener('error', (e: ErrorEvent) => {
+      write(e.message || 'error', { src: e.filename, line: e.lineno, col: e.colno, stack: (e.error as Error | undefined)?.stack });
+    });
+    window.addEventListener('unhandledrejection', (e: PromiseRejectionEvent) => {
+      const r = e.reason as (Error & { message?: string }) | undefined;
+      write(`unhandledrejection: ${r?.message ?? String(r)}`, { stack: r?.stack });
+    });
+  } catch { /* listeners unavailable — ignore */ }
+}
+
+/** The last recorded crash (any route), or null. */
+export function readLastError(): LastError | null {
+  try { const s = localStorage.getItem(LAST_ERROR_KEY); return s ? (JSON.parse(s) as LastError) : null; }
+  catch { return null; }
+}
+
+/** Clear the recorded crash (after it's been read/acted on). */
+export function clearLastError(): void {
+  try { localStorage.removeItem(LAST_ERROR_KEY); } catch { /* ignore */ }
+}
+
 // ── Resource probe (installed once, gated) ────────────────────────────────────
 type Probe = {
   liveUrls: Set<string>;
