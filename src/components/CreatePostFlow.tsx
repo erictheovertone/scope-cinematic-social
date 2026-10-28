@@ -230,6 +230,16 @@ async function compressImage(file: File): Promise<File> {
 
 const VIDEO_MAX_BYTES = 500 * 1024 * 1024; // 500 MB (Brief V3 — tus handles it; 300s duration backstop stays)
 
+// Brief UPLOAD-STATE — a human estimate for Cloudflare's encode, shown in the "preparing" state.
+// Encode time scales with pixels/bitrate, which size tracks well enough: a short SD/HD clip lands
+// in ~15s; a 4K clip (tens of MB up to the cap) takes 1–2 min. Copy only — never a countdown.
+function encodeEstimate(bytes: number): string {
+  const mb = bytes / (1024 * 1024);
+  if (mb <= 40) return 'about 15 seconds';
+  if (mb <= 150) return 'under a minute';
+  return '1–2 minutes';
+}
+
 interface MediaItem {
   id: string;
   file: File;
@@ -397,6 +407,11 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
   // Brief V2a — the live publish stage, surfaced on the POSTING overlay so a HANG names
   // itself on Eric's device (no inspector needed). Set via the local `stage` in handlePost.
   const [postStage, setPostStage] = useState<string>('');
+  // Brief UPLOAD-STATE — once the video's bytes are up (100%), the overlay stops showing a
+  // static "100%" and shows "Uploaded · preparing your video" + an indeterminate indicator and
+  // an encode estimate, while we poll Stream's readyToStream. `prepEstimate` is the human estimate.
+  const [preparing, setPreparing] = useState(false);
+  const [prepEstimate, setPrepEstimate] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const { user } = usePrivy();
@@ -1034,6 +1049,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
     setPostError(null);
     setUploadPct(0);      // Brief V2c — reset the counter for this publish
     setDisplayPct(0);
+    setPreparing(false);  // Brief UPLOAD-STATE — clear any stale preparing state for this publish
 
     // Brief V2a — track the current stage locally (the state var is stale inside the
     // catch closure) so a failure/hang can NAME the stage on screen + in the message.
@@ -1078,7 +1094,13 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
         if (media.type === 'video') {
           setStage('Uploading video');
           console.log('[handlePost] uploading video to Stream:', media.file.name);
-          streamUid = await uploadVideoToStream(media.file, (frac) => setUploadPct(Math.round(frac * 100)));
+          setPrepEstimate(encodeEstimate(media.file.size));
+          // Brief UPLOAD-STATE — the instant the bytes are all up (frac ≥ 1), flip the overlay out
+          // of the static "100%" into the "preparing" state; it then persists through the encode poll.
+          streamUid = await uploadVideoToStream(media.file, (frac) => {
+            setUploadPct(Math.round(frac * 100));
+            if (frac >= 1) setPreparing(true);
+          });
           vdbg('upload-done', streamUid); // V1e
           console.log('[handlePost] stream upload complete, uid:', streamUid);
           continue;
@@ -1209,15 +1231,25 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
       console.log('[handlePost] post created:', newPost?.id);
       void clearDraft(); // C3-11 — published: the draft is done (a later mint failure keeps the post)
 
-      // Brief V2d — publish-side ready check (fire-and-forget). A short encode can finish
-      // before the webhook lands; this heals the row fast without waiting for Stream's retry
-      // backoff. No-op if still processing; the webhook + 5-min reconcile cron are the net.
+      // Brief UPLOAD-STATE — hold the "preparing" overlay and POLL readyToStream instead of
+      // freezing on a static 100%. /api/stream/check (V2d) asks Cloudflare directly and heals the
+      // row the moment it's ready. The post is already published above, so this only paces when the
+      // mint prompt appears; it is BOUNDED so a slow/stuck encode can't trap the flow — on
+      // ready/failed OR the cap we proceed (the webhook + 5-min reconcile cron remain the net).
       if (isVideo && newPost?.id) {
         const pid = newPost.id;
-        setTimeout(() => {
-          fetch('/api/stream/check', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ postId: pid }) }).catch(() => {});
-        }, 10_000);
+        const deadline = Date.now() + 120_000; // a 4K encode runs ~1–2 min; past that, proceed as 'processing'
+        while (Date.now() < deadline) {
+          await new Promise((r) => setTimeout(r, 2500));
+          let status = 'processing';
+          try {
+            const res = await fetch('/api/stream/check', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ postId: pid }) });
+            status = ((await res.json().catch(() => ({}))) as { status?: string })?.status ?? 'processing';
+          } catch { /* transient network — keep polling until the cap */ }
+          if (status === 'ready' || status === 'failed') break;
+        }
       }
+      setPreparing(false);
 
       if (deckId && newPost?.id) {
         addPostToDeck(deckId, newPost.id).catch(e => console.error('addPostToDeck error:', errInfo(e)));
@@ -1263,7 +1295,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
     } catch (e: any) {
       vdbg('FAIL', `${stage}: ${(e?.message ?? 'unknown').slice(0, 50)}`); // V1e
       const lt = getScopeLimitType(e);
-      if (lt) { setIsPosting(false); setIsUploading(false); showUpsell(lt); return; }
+      if (lt) { setIsPosting(false); setIsUploading(false); setPreparing(false); showUpsell(lt); return; }
       console.error('[handlePost] FAILED:', errInfo(e));
       console.error('[handlePost] error message:', e?.message);
       console.error('[handlePost] error code:', e?.code);
@@ -1273,6 +1305,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
       const code = e?.code ?? e?.status ?? '';
       setPostError(`${stage || 'Publish'} failed${code ? ` [${code}]` : ''} — ${e?.message ?? 'unknown error'}. Please try again.`);
       setIsUploading(false);
+      setPreparing(false);
       // Clear the full-screen POSTING overlay so the error is actually visible
       // (GATE B: a bake/publish failure must be loud, never a silent stuck state).
       setIsPosting(false);
@@ -2197,10 +2230,24 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
           animation: 'fadeInBlack 0.2s ease forwards',
         }}>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
-            {/* Brief V2c — the big smooth counter (video upload). Haas 75 Bold 56px; the %
-                sits ~0.5em and slightly raised (top-aligned + a hair of top margin). Only
-                shows once there's real upload progress; images fall back to POSTING…. */}
-            {uploadPct > 0 ? (
+            {/* Brief UPLOAD-STATE — once the bytes are up, the counter would freeze on a static
+                100% while Cloudflare encodes. Instead show a live "preparing" state: eyebrow,
+                "Preparing your video", the encode estimate, and an INDETERMINATE bar — no number
+                to look stuck. Brief V2c's big counter still runs for the upload itself. */}
+            {preparing ? (
+              <div data-upload-preparing style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, width: 232 }}>
+                <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-11)', color: 'rgb(var(--ink-rgb) / 0.5)', textTransform: 'uppercase', letterSpacing: '0.15em', margin: 0 }}>Uploaded</p>
+                <p style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 22, lineHeight: 1.1, color: 'var(--ink-100)', margin: 0, textAlign: 'center' }}>Preparing your video</p>
+                <div aria-hidden style={{ position: 'relative', width: '100%', height: 2, background: 'rgb(var(--ink-rgb) / 0.16)', overflow: 'hidden' }}>
+                  <span style={{ position: 'absolute', top: 0, left: 0, height: '100%', width: '40%', background: 'var(--ink-100)', animation: 'prepIndeterminate 1.1s ease-in-out infinite' }} />
+                </div>
+                {prepEstimate && (
+                  <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: 'var(--fs-10)', color: 'rgb(var(--ink-rgb) / 0.5)', margin: 0, textAlign: 'center' }}>
+                    This usually takes {prepEstimate}.
+                  </p>
+                )}
+              </div>
+            ) : uploadPct > 0 ? (
               <div style={{ display: 'flex', alignItems: 'flex-start', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 56, lineHeight: 1, letterSpacing: 'var(--track-display)', color: 'var(--ink-100)' }}>
                 {displayPct}
                 <span style={{ fontSize: '0.5em', marginTop: '0.14em', marginLeft: '0.04em' }}>%</span>
@@ -2210,9 +2257,10 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
                 POSTING...
               </p>
             )}
+            <style>{`@keyframes prepIndeterminate { 0% { transform: translateX(-120%); } 100% { transform: translateX(320%); } }`}</style>
             {/* Brief V2a — the live stage, smaller, below the number. If POSTING freezes,
                 this line names the stalled stage on Eric's device without an inspector. */}
-            {postStage && (
+            {postStage && !preparing && (
               <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: 'var(--fs-9)', color: 'rgb(var(--ink-rgb) / 0.5)', textTransform: 'uppercase', letterSpacing: '0.12em', margin: 0 }}>
                 {postStage}
               </p>
