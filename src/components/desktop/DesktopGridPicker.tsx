@@ -8,7 +8,7 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
-import { setSharedAspect, setDesktopCount, resolveLayout, legacyLayoutId, type AspectId } from '@/lib/layoutModel';
+import { setSharedLayout, resolveLayout, legacyLayoutId, type AspectId } from '@/lib/layoutModel';
 import { getProfile, updateProfileFields } from '@/lib/userService';
 import {
   DESKTOP_ASPECTS, DESKTOP_COUNTS, chipFor,
@@ -69,18 +69,18 @@ export default function DesktopGridPicker({
     if (saving) return;
     setSaving(true); setSaveError(false);
     const layout: DesktopLayout = { aspect, count };
-    // NEW MODEL: the AR step writes the SHARED aspect; the COUNT step writes the
-    // DESKTOP count (an explicit choice → it no longer derives). Each writer
-    // invalidates the cache + broadcasts 'scope:layout-changed' so grids re-read.
-    const okA = await setSharedAspect(userId, aspect as AspectId);
-    const okC = await setDesktopCount(userId, count);
+    // NEW MODEL: the AR writes the SHARED aspect; the COUNT writes the DESKTOP count
+    // (an explicit choice → it no longer derives). QC-1 — both go in ONE atomic write
+    // (invalidates the cache + broadcasts 'scope:layout-changed'), so a close between two
+    // separate writes can't land a half-saved layout.
+    const okAC = await setSharedLayout(userId, aspect as AspectId, { desktopCount: count });
     // C1c — the profiles.grid_layout mirror is RETIRED. This picker used to also write it via a
     // resolveLayout(getProfile(...)) read — the one-save-lag site: it derived the mirror from a
     // profile read that could serve pre-save state, so the mirror lagged one save behind the
     // canonical aspect_ratio. Now aspect_ratio + desktop_count are the only writes; every reader
     // resolves through resolveLayout(aspect_ratio, mobile_count).
     setSaving(false);
-    if (okA && okC) {
+    if (okAC) {
       onApplied(layout);
       onClose();
       router.push('/profile'); // one flow — settings AND the future onboarding entry land here

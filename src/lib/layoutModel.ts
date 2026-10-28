@@ -123,3 +123,20 @@ export async function setDesktopCount(userId: string, count: number): Promise<bo
   try { await updateProfileFields(userId, { desktop_count: count }); broadcast(); return true; }
   catch (e) { console.warn('[layout] desktop_count save (migration pending?):', (e as Error)?.message); return false; }
 }
+
+/** QC-1 — a layout change in ONE write: the shared aspect AND the surface's count in a single
+ *  updateProfileFields, so a tap-back / navigation BETWEEN two separate writes can no longer land
+ *  a half-saved layout (new count with the old aspect, or vice-versa). Pass only the count for the
+ *  surface being set; the other surface keeps deriving via the count matrix. Returns false (never
+ *  throws) on a failed/pre-migration write, same as the single-field writers. */
+export async function setSharedLayout(
+  userId: string,
+  aspect: AspectId,
+  counts: { mobileCount?: number; desktopCount?: number },
+): Promise<boolean> {
+  const fields: Record<string, unknown> = { aspect_ratio: aspect };
+  if (counts.mobileCount != null) fields.mobile_count = counts.mobileCount;
+  if (counts.desktopCount != null) fields.desktop_count = counts.desktopCount;
+  try { await updateProfileFields(userId, fields); broadcast(); return true; }
+  catch (e) { console.warn('[layout] layout save (migration pending?):', (e as Error)?.message); return false; }
+}

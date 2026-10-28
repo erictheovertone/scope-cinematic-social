@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
 import { setUserGridLayout, getUserGridLayout } from "@/lib/gridLayoutService";
 import { getUserByPrivyId, getProfile } from "@/lib/userService";
-import { setSharedAspect, setMobileCount, resolveLayout, legacyLayoutId, type AspectId } from "@/lib/layoutModel";
+import { setSharedLayout, resolveLayout, legacyLayoutId, type AspectId } from "@/lib/layoutModel";
 import WelcomeTransition from "@/components/WelcomeTransition";
 
 const SKB: React.CSSProperties = { fontFamily: "var(--font-display)", fontWeight: 700 };
@@ -387,12 +387,13 @@ export default function GridLayoutPage() {
         : selectedLayout.startsWith('cine') ? 'cine-wide'
         : selectedLayout.startsWith('legacy') ? 'legacy' : 'scope';
       const cols = LAYOUTS.find((l) => l.id === selectedLayout)?.cols ?? 1;
-      // C2c §1 — the profile write must LAND before we transition. setSharedAspect/setMobileCount
-      // SWALLOW errors and return false (they don't throw), so a failed write used to transition to
-      // "success" and silently lose the layout. Gate the transition on the booleans; no fire-and-forget.
-      const okAspect = await setSharedAspect(dbUser.id, aspect);
-      const okCount = await setMobileCount(dbUser.id, selectedLayout === 'collage' ? 2 : cols);
-      if (!okAspect || !okCount) throw new Error('write-not-landed');
+      // C2c §1 — the profile write must LAND before we transition. setSharedLayout SWALLOWS errors
+      // and returns false (it doesn't throw), so a failed write used to transition to "success" and
+      // silently lose the layout. Gate the transition on the boolean; no fire-and-forget.
+      // QC-1 — aspect + mobile_count go in ONE atomic write, so a tap-back between two separate
+      // writes can no longer leave a half-saved layout (the MX-1 harness race).
+      const ok = await setSharedLayout(dbUser.id, aspect, { mobileCount: selectedLayout === 'collage' ? 2 : cols });
+      if (!ok) throw new Error('write-not-landed');
       setShowTransition(true); // only on a confirmed successful save
     } catch {
       setSaveError("Couldn't save your layout — check your connection and try again.");
