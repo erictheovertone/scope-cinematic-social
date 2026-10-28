@@ -1,7 +1,8 @@
 'use client';
 // ── Arrival — the logged-out public profile (Brief ARR-1; docs/design/scope-arrival-mock.html) ──
-// The first screen is real: header + the grid at the owner's layout, every frame opens in the
-// theatre. Scrolling on draws the aperture in from the screen edges: the six blades of the mark
+// The first screen is real: header + the grid at the owner's layout — the only unobstructed view
+// for an anonymous visitor (ARR-4: no theatre on tap). Any tap on it, or scrolling on, draws the
+// aperture in from the screen edges to surface the sign-up card: the six blades of the mark
 // slide in as WINDOWS on the dimmed page (holes in a canvas sheet), close on the content, and land
 // solid as the mark, with the sign-up card beneath. Scroll back and it opens again.
 // Scroll drive = the mock's, verbatim: one rAF per scroll event writes transforms + opacities on
@@ -39,7 +40,6 @@ export default function Arrival({ profile, refTag, loginMethods }: { profile: Pu
   const router = useRouter();
   const [vp, setVp] = useState({ W: 375, H: 812 });
   const [follow, setFollow] = useState(true);
-  const [theatre, setTheatre] = useState<PublicFrame | null>(null);
   const [authError, setAuthError] = useState<string | null>(null);
 
   const scRef = useRef<HTMLDivElement>(null);
@@ -102,8 +102,11 @@ export default function Arrival({ profile, refTag, loginMethods }: { profile: Pu
     return () => { sc.removeEventListener('scroll', onScroll); if (raf) cancelAnimationFrame(raf); };
   }, [t.start, t.range, t.k, t.mx, t.my, vp.W]);
 
-  /** Close the aperture (the header Follow, as in the mock). */
-  const closeAperture = useCallback(() => {
+  /** Brief ARR-4 — reveal the sign-up card by driving the aperture shut, the same animation the
+   *  scroll plays. ANY tap on the first screen fires this (a frame, the Follow button, the header,
+   *  the counts) because a short profile never scrolls far enough to surface the card on its own.
+   *  Manual scroll still drives the aperture too (both write the same scrollTop). */
+  const revealCTA = useCallback(() => {
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     scRef.current?.scrollTo({ top: t.start + t.range + 12, behavior: reduce ? 'auto' : 'smooth' });
   }, [t.start, t.range]);
@@ -160,7 +163,7 @@ export default function Arrival({ profile, refTag, loginMethods }: { profile: Pu
               </svg>
 
               {/* the card */}
-              <div ref={cardRef} aria-hidden style={{ position: 'absolute', left: '50%', top: t.cardTop, width: desktop ? 300 : 236, transform: 'translate(-50%,-50%) translateY(10px)', textAlign: 'center', opacity: 0, pointerEvents: 'none', display: 'grid', gap: 9, justifyItems: 'center' }}>
+              <div ref={cardRef} data-arrival-card aria-hidden style={{ position: 'absolute', left: '50%', top: t.cardTop, width: desktop ? 300 : 236, transform: 'translate(-50%,-50%) translateY(10px)', textAlign: 'center', opacity: 0, pointerEvents: 'none', display: 'grid', gap: 9, justifyItems: 'center' }}>
                 {profile.avatarUrl
                   ? <img src={feedImage(profile.avatarUrl, 132)} alt="" width={44} height={44} style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover' }} />
                   : <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'var(--surface-3)' }} />}
@@ -206,9 +209,11 @@ export default function Arrival({ profile, refTag, loginMethods }: { profile: Pu
             <button type="button" onClick={() => begin()} style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgb(var(--ink-rgb) / 0.5)', background: 'transparent', border: 'none', cursor: 'pointer', padding: 8, marginRight: -8 }}>Log in</button>
           </div>
 
-          <div style={desktop
-            ? { maxWidth: 'var(--shell-max, 1180px)', margin: '0 auto', padding: '28px 32px 22px', display: 'grid', gridTemplateColumns: 'auto 1fr auto', alignItems: 'center', gap: 24 }
-            : { padding: '20px 20px 16px', display: 'grid', gap: 12 }}>
+          {/* ARR-4 — the header + counts are a tap target that reveals the CTA (the Follow button
+              below keeps its own handler; both resolve to revealCTA). */}
+          <div onClick={revealCTA} style={desktop
+            ? { maxWidth: 'var(--shell-max, 1180px)', margin: '0 auto', padding: '28px 32px 22px', display: 'grid', gridTemplateColumns: 'auto 1fr auto', alignItems: 'center', gap: 24, cursor: 'pointer' }
+            : { padding: '20px 20px 16px', display: 'grid', gap: 12, cursor: 'pointer' }}>
             <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
               {profile.avatarUrl
                 ? <img src={feedImage(profile.avatarUrl, desktop ? 240 : 192)} alt="" style={{ width: desktop ? 80 : 64, height: desktop ? 80 : 64, borderRadius: '50%', objectFit: 'cover' }} />
@@ -226,7 +231,7 @@ export default function Arrival({ profile, refTag, loginMethods }: { profile: Pu
                 {topBadge && <span><b style={{ color: 'var(--ink-100)', fontWeight: 500 }}>{topBadge}</b></span>}
               </div>
             </div>
-            <button type="button" onClick={closeAperture} style={{ ...btn(false), width: desktop ? 180 : '100%', padding: 12 }}>Follow</button>
+            <button type="button" onClick={revealCTA} style={{ ...btn(false), width: desktop ? 180 : '100%', padding: 12 }}>Follow</button>
           </div>
 
           {/* the grid at the owner's layout */}
@@ -234,7 +239,9 @@ export default function Arrival({ profile, refTag, loginMethods }: { profile: Pu
             ? { columnCount: cols, columnGap: 2, background: '#000', marginTop: desktop ? 0 : 6 }
             : { display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: 2, background: '#000', marginTop: desktop ? 0 : 6 }}>
             {real.map((f, i) => (
-              <button key={i} type="button" onClick={() => setTheatre(f)} aria-label={`Open frame ${i + 1}`}
+              // ARR-4 — a frame tap no longer opens a theatre (the first screen is the only
+              // unobstructed view for an anonymous visitor); it reveals the sign-up CTA instead.
+              <button key={i} type="button" onClick={revealCTA} aria-label={`Join Scope to view ${name}’s frames`}
                 style={{ display: 'block', width: '100%', aspectRatio: collage ? f.aspect : cellAR, overflow: 'hidden', background: '#000', border: 'none', padding: 0, cursor: 'pointer', breakInside: 'avoid', marginBottom: collage ? 2 : 0 }}>
                 <FrameImg frame={f} width={imgW} alt="" loading={i < cols * 3 ? 'eager' : 'lazy'} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
               </button>
@@ -246,7 +253,6 @@ export default function Arrival({ profile, refTag, loginMethods }: { profile: Pu
         </div>
       </div>
 
-      {theatre && <Theatre frame={theatre} onClose={() => setTheatre(null)} W={vp.W} />}
       <style>{`
         .arrival-dark-cell { position: relative; background: #0A0A0A; border-top: 1px solid rgb(var(--ink-rgb) / 0.06); border-bottom: 1px solid rgb(var(--ink-rgb) / 0.06); }
         .arrival-dark-cell::before, .arrival-dark-cell::after { content: ""; position: absolute; left: 0; right: 0; height: 4px;
@@ -294,27 +300,3 @@ function StoreBadge({ small, name, icon }: { small: string; name: string; icon: 
   );
 }
 
-/** Tap a frame on the first screen → the theatre: the frame full-width on canvas, video plays.
- *  ≤2000px requests: Cloudflare Stream thumbnails 400 above that. */
-function Theatre({ frame, onClose, W }: { frame: PublicFrame; onClose: () => void; W: number }) {
-  const [on, setOn] = useState(false);
-  useEffect(() => {
-    const id = requestAnimationFrame(() => setOn(true));
-    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-    window.addEventListener('keydown', esc);
-    return () => { cancelAnimationFrame(id); window.removeEventListener('keydown', esc); };
-  }, [onClose]);
-  const isHls = !!frame.video && /\.m3u8(\?|$)/.test(frame.video);
-  return (
-    <div role="dialog" aria-modal="true" aria-label="Frame" onClick={onClose}
-      style={{ position: 'fixed', inset: 0, zIndex: 7, background: 'var(--canvas)', display: 'grid', placeItems: 'center', opacity: on ? 1 : 0, transition: 'opacity .25s ease-out' }}>
-      <button type="button" onClick={onClose} aria-label="Close"
-        style={{ position: 'absolute', top: 'calc(var(--safe-top, 0px) + 12px)', right: 12, width: 44, height: 44, display: 'grid', placeItems: 'center', color: 'var(--ink-100)', fontSize: 22, background: 'transparent', border: 'none', cursor: 'pointer' }}>×</button>
-      <div onClick={(e) => e.stopPropagation()} style={{ width: '100%', maxWidth: 'min(100vw, calc(85vh * 2.75))' }}>
-        {frame.video && !isHls
-          ? <video src={frame.video} poster={frameSrc(frame.image, Math.min(2000, W * 2), frame.hasRenditions)} controls playsInline autoPlay muted style={{ width: '100%', aspectRatio: frame.aspect, objectFit: 'cover', display: 'block', background: '#000' }} />
-          : <FrameImg frame={frame} width={Math.min(2000, W * 2)} alt="" style={{ width: '100%', aspectRatio: frame.aspect, objectFit: 'cover', display: 'block' }} />}
-      </div>
-    </div>
-  );
-}
