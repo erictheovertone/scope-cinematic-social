@@ -46,4 +46,17 @@ test('profile + post scroll — no 404 renditions, no image error events', async
   const imgErr = await page.evaluate(() => (window as unknown as { __imgErr: string[] }).__imgErr);
   expect(badRenditions, `rendition 404s on profile/post-scroll:\n${badRenditions.join('\n')}`).toEqual([]);
   expect(imgErr, `<img> error events on profile/post-scroll:\n${imgErr.join('\n')}`).toEqual([]);
+
+  // Brief P0b — decoded-image memory at open must stay well under the iOS kill threshold
+  // (~1.5GB, far less on older phones). Sum naturalW×naturalH×4 across every decoded post-media
+  // <img> + videoW×videoH×4 across <video>. The scroll windows media to the visible post ±1, so
+  // this stays bounded regardless of post count. (Headless releases offscreen decodes, so this is
+  // a floor, not the device peak — device validation still owns the final word.)
+  const mem = await page.evaluate(() => {
+    let bytes = 0;
+    for (const i of [...document.querySelectorAll('img')]) { const im = i as HTMLImageElement; if (im.naturalWidth > 0 && (im.currentSrc || im.src).includes('/post-media/')) bytes += im.naturalWidth * im.naturalHeight * 4; }
+    for (const v of [...document.querySelectorAll('video')]) { const vd = v as HTMLVideoElement; if (vd.videoWidth > 0) bytes += vd.videoWidth * vd.videoHeight * 4; }
+    return Math.round(bytes / 1048576);
+  });
+  expect(mem, `decoded-image memory at open = ${mem}MB (gate < 200MB)`).toBeLessThan(200);
 });

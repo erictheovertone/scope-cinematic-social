@@ -99,6 +99,20 @@ function PostViewerItem({
   const [showSnippet, setShowSnippet] = useState(false);
   const [snippetWin, setSnippetWin] = useState<{ start: number; length: number } | null>(null);
   const [savingSnippet, setSavingSnippet] = useState(false);
+  // Brief P0b — the scroll mounts EVERY post, so without this every tile decodes its image/
+  // video at once (and stays decoded) → iOS image-memory kill. Gate the MEDIA on visibility:
+  // mount the <img>/<video> only within ±1 viewport, render the aspect-box placeholder (no
+  // decode) otherwise. The tile keeps its height + its comment/like state; only the heavy
+  // media unmounts offscreen, so decoded memory stays ~±1 tiles regardless of post count.
+  const mediaBoxRef = useRef<HTMLDivElement>(null);
+  const [mediaVisible, setMediaVisible] = useState(false);
+  useEffect(() => {
+    const el = mediaBoxRef.current;
+    if (!el || typeof IntersectionObserver === 'undefined') { setMediaVisible(true); return; }
+    const io = new IntersectionObserver((entries) => setMediaVisible(entries[0]?.isIntersecting ?? false), { rootMargin: '120% 0px', threshold: 0 });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
 
   useEffect(() => {
     const load = async () => {
@@ -293,16 +307,19 @@ function PostViewerItem({
             {metadataRow}
             {/* Media is NOT tappable here — the post-scroll already shows it full-size;
                 the old tap opened a redundant single-post PostModal (killed). */}
+            {/* P0b — mediaBoxRef is the visibility anchor; mediaEl mounts only within ±1 viewport. */}
+            <div ref={mediaBoxRef} style={{ width: "100%" }}>
             {is43 ? (
               <PillarboxFrame>
-                {mediaEl}
+                {mediaVisible ? mediaEl : null}
               </PillarboxFrame>
             ) : (
               <div style={{ position: "relative", width: "100%", aspectRatio: getAspectRatio(post.layout_id ?? ''), overflow: "hidden", background: "var(--surface-1)" }}>
-                {mediaEl}
+                {mediaVisible ? mediaEl : null}
                 <MusicWaveButton post={post as { music_track_id?: string | null; music_mode?: string | null; music_start_seconds?: number | null; media_type?: string | null }} />
               </div>
             )}
+            </div>
           </>
         );
       })()}
