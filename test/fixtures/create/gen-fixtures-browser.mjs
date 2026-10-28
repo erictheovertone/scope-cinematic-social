@@ -7,6 +7,7 @@
 // so this takes ~20+45+90 ≈ 155s. Output → public/test-fixtures/ (gitignored).
 //
 //   node test/fixtures/create/gen-fixtures-browser.mjs
+//   node test/fixtures/create/gen-fixtures-browser.mjs 4k   # V3 — 4096×2160 8.2s (Eric's device clip shape) → v-4k.mp4
 import { chromium } from '@playwright/test';
 import { mkdirSync, writeFileSync } from 'fs';
 import { join, dirname } from 'path';
@@ -16,15 +17,17 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 const OUT = join(ROOT, 'public', 'test-fixtures');
 mkdirSync(OUT, { recursive: true });
 
-const DURATIONS = [20, 45, 90];
-const W = 1080, H = 1920, FPS = 30, BITRATE = 12_000_000;
+const FOUR_K = process.argv[2] === '4k';
+const DURATIONS = FOUR_K ? [8.2] : [20, 45, 90];
+const W = FOUR_K ? 4096 : 1080, H = FOUR_K ? 2160 : 1920, FPS = 30, BITRATE = FOUR_K ? 45_000_000 : 12_000_000;
+const NAME = (d) => (FOUR_K ? 'v-4k' : `v-${d}s`);
 
 const browser = await chromium.launch({ args: ['--autoplay-policy=no-user-gesture-required'] });
 const page = await browser.newPage();
 await page.setContent('<!doctype html><body style="margin:0;background:#000"><canvas id="c"></canvas></body>');
 
 for (const d of DURATIONS) {
-  process.stdout.write(`→ v-${d}s.mp4 (${W}x${H} H.264, ${d}s, real-time)… `);
+  process.stdout.write(`→ ${NAME(d)}.mp4 (${W}x${H} H.264, ${d}s, real-time)… `);
   const b64 = await page.evaluate(async ({ W, H, FPS, BITRATE, d }) => {
     const c = document.getElementById('c');
     c.width = W; c.height = H;
@@ -62,7 +65,7 @@ for (const d of DURATIONS) {
   }, { W, H, FPS, BITRATE, d });
 
   const ext = b64.mime.includes('mp4') ? 'mp4' : 'webm';
-  const path = join(OUT, `v-${d}s.${ext}`);
+  const path = join(OUT, `${NAME(d)}.${ext}`);
   const buf = Buffer.from(b64.b64, 'base64');
   writeFileSync(path, buf);
   console.log(`${(buf.length / 1048576).toFixed(1)} MB  [${b64.mime}]`);
