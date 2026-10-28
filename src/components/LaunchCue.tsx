@@ -8,12 +8,11 @@
 // runs ONCE (≤1.1s, CSS), then the overlay cross-fades to the shell as the first data lands.
 // Reduced motion: the mark stays static, then fades. Dark by design in either theme.
 import { useEffect } from 'react';
-import { SPLASH_GROUND, SPLASH_INK, SPLASH_MARK_W } from '@/lib/splash';
+import { SPLASH_GROUND, SPLASH_INK, SPLASH_MARK_W, MARK_ASPECT } from '@/lib/splash';
 
 const CUE_MS = 1100;      // the sweep + grow, once
 const MAX_WAIT_MS = 6000; // never hold the app behind the cue longer than this
 const FADE_MS = 320;
-const MARK_ASPECT = 1223 / 1920; // public/logomark-plain-white.png
 
 export default function LaunchCue() {
   useEffect(() => {

@@ -9,6 +9,10 @@ export const SPLASH_INK = "#E5E1DB";
 export const CANVAS_LIGHT = "#E5E1DB";
 /** The aperture mark's width at 1× — LaunchCue draws it at exactly this size, centered. */
 export const SPLASH_MARK_W = 96;
+/** The mark's height ÷ width — public/logomark-plain-white.png is 1920×1223. The ONE source
+ *  for this ratio: LaunchCue sizes its span by it, and gen-splash renders the cue frame by it,
+ *  so the static splash and the live cue cannot drift in aspect. */
+export const MARK_ASPECT = 1223 / 1920;
 
 export const SPLASH_SCREENS = [
   { w: 440, h: 956, r: 3 }, // 16/17 Pro Max
