@@ -236,7 +236,7 @@ export default function Arrival({ profile, refTag, loginMethods }: { profile: Pu
             {real.map((f, i) => (
               <button key={i} type="button" onClick={() => setTheatre(f)} aria-label={`Open frame ${i + 1}`}
                 style={{ display: 'block', width: '100%', aspectRatio: collage ? f.aspect : cellAR, overflow: 'hidden', background: '#000', border: 'none', padding: 0, cursor: 'pointer', breakInside: 'avoid', marginBottom: collage ? 2 : 0 }}>
-                <img src={feedImage(f.image, imgW)} alt="" loading={i < cols * 3 ? 'eager' : 'lazy'} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                <FrameImg frame={f} width={imgW} alt="" loading={i < cols * 3 ? 'eager' : 'lazy'} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
               </button>
             ))}
           </div>
@@ -264,6 +264,21 @@ function btn(fill: boolean): React.CSSProperties {
     fontFamily: MONO, fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase',
     background: fill ? 'var(--ink-100)' : 'transparent', color: fill ? 'var(--on-ink)' : 'var(--ink-100)',
   };
+}
+
+// ── ARR-2 — rendition-safe frame image ───────────────────────────────────────
+// Request a baked rendition ONLY when the row says one exists (frame.hasRenditions); size
+// Cloudflare Stream posters via ?width; otherwise load the master directly. So a legacy frame
+// never 404s a `.{w}.webp` → no fallback-to-master decode storm on the anonymous grid.
+function frameSrc(image: string, width: number, hasRenditions: boolean): string {
+  if (hasRenditions || /cloudflarestream\.com/.test(image)) return feedImage(image, width);
+  return image;
+}
+function FrameImg({ frame, width, ...rest }: { frame: PublicFrame; width: number } & React.ImgHTMLAttributes<HTMLImageElement>) {
+  const [src, setSrc] = useState(() => frameSrc(frame.image, width, frame.hasRenditions));
+  useEffect(() => { setSrc(frameSrc(frame.image, width, frame.hasRenditions)); }, [frame.image, width, frame.hasRenditions]);
+  // Terminal fallback: a genuinely-missing rendition reverts to the master ONCE (no loop).
+  return <img {...rest} src={src} onError={() => { if (src !== frame.image) setSrc(frame.image); }} />;
 }
 
 function StoreBadge({ small, name, icon }: { small: string; name: string; icon: string }) {
@@ -297,8 +312,8 @@ function Theatre({ frame, onClose, W }: { frame: PublicFrame; onClose: () => voi
         style={{ position: 'absolute', top: 'calc(var(--safe-top, 0px) + 12px)', right: 12, width: 44, height: 44, display: 'grid', placeItems: 'center', color: 'var(--ink-100)', fontSize: 22, background: 'transparent', border: 'none', cursor: 'pointer' }}>×</button>
       <div onClick={(e) => e.stopPropagation()} style={{ width: '100%', maxWidth: 'min(100vw, calc(85vh * 2.75))' }}>
         {frame.video && !isHls
-          ? <video src={frame.video} poster={feedImage(frame.image, Math.min(2000, W * 2))} controls playsInline autoPlay muted style={{ width: '100%', aspectRatio: frame.aspect, objectFit: 'cover', display: 'block', background: '#000' }} />
-          : <img src={feedImage(frame.image, Math.min(2000, W * 2))} alt="" style={{ width: '100%', aspectRatio: frame.aspect, objectFit: 'cover', display: 'block' }} />}
+          ? <video src={frame.video} poster={frameSrc(frame.image, Math.min(2000, W * 2), frame.hasRenditions)} controls playsInline autoPlay muted style={{ width: '100%', aspectRatio: frame.aspect, objectFit: 'cover', display: 'block', background: '#000' }} />
+          : <FrameImg frame={frame} width={Math.min(2000, W * 2)} alt="" style={{ width: '100%', aspectRatio: frame.aspect, objectFit: 'cover', display: 'block' }} />}
       </div>
     </div>
   );

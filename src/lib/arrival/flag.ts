@@ -4,3 +4,16 @@
 export function publicProfilesEnabled(): boolean {
   return process.env.PUBLIC_PROFILES_ENABLED === 'true';
 }
+
+// ── ARR-2 allowlist ─────────────────────────────────────────────────────────
+// PUBLIC_PROFILES_ALLOWLIST (comma-separated usernames, server env). With the flag ON:
+//   • allowlist SET   → only those usernames render Arrival to anonymous visitors; everyone
+//                       else notFound() (as today).
+//   • allowlist EMPTY → all usernames render Arrival.
+// (Flag off → nothing renders; callers check publicProfilesEnabled() first.) Case-insensitive.
+export function publicProfileAllowed(username: string): boolean {
+  const raw = (process.env.PUBLIC_PROFILES_ALLOWLIST ?? '').trim();
+  if (!raw) return true; // empty allowlist = all
+  const set = new Set(raw.split(',').map((s) => s.trim().toLowerCase()).filter(Boolean));
+  return set.has(String(username).trim().toLowerCase());
+}

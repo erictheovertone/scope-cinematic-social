@@ -7,7 +7,7 @@ import type { Metadata } from 'next';
 import { cookies } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
 import Arrival from '@/components/arrival/Arrival';
-import { publicProfilesEnabled } from '@/lib/arrival/flag';
+import { publicProfilesEnabled, publicProfileAllowed } from '@/lib/arrival/flag';
 import { getPublicProfile } from '@/lib/arrival/publicProfile';
 import { getArrivalLoginMethods } from '@/lib/arrival/loginMethods';
 
@@ -16,8 +16,9 @@ export const dynamic = 'force-dynamic';
 type Props = { params: Promise<{ username: string }>; searchParams: Promise<{ ref?: string | string[] }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  if (!publicProfilesEnabled()) return {};
-  const profile = await getPublicProfile((await params).username);
+  const uname = (await params).username;
+  if (!publicProfilesEnabled() || !publicProfileAllowed(uname)) return {};
+  const profile = await getPublicProfile(uname);
   if (!profile) return {};
   const name = profile.username.toLowerCase();
   const title = `${name} on Scope`;
@@ -35,6 +36,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function PublicProfilePage({ params, searchParams }: Props) {
   if (!publicProfilesEnabled()) notFound();
   const { username } = await params;
+  if (!publicProfileAllowed(username)) notFound(); // ARR-2 — non-allowlisted → 404 as today
   const [profile, loginMethods] = await Promise.all([getPublicProfile(username), getArrivalLoginMethods()]);
   if (!profile) notFound();
 

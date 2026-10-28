@@ -20,6 +20,10 @@ export interface PublicFrame {
   video: string | null;
   /** CSS aspect ("2.39 / 1") of the post itself — the theatre + collage tiles. */
   aspect: string;
+  /** ARR-2 — whether a baked rendition exists for this image (posts.media_has_renditions). The
+   *  Arrival <img> requests a rendition ONLY when true; else it loads the master directly, so a
+   *  legacy frame never 404s a `.{w}.webp` and the anon grid never decode-storms. */
+  hasRenditions: boolean;
 }
 
 export interface PublicProfile {
@@ -40,7 +44,7 @@ export interface PublicProfile {
 
 /** Every key the public payload may carry — anon-smoke asserts the response against this. */
 export const PUBLIC_PROFILE_KEYS = ['username', 'displayName', 'avatarUrl', 'bio', 'framesCount', 'decksCount', 'badges', 'layoutId', 'mobileCols', 'desktopCols', 'frames'] as const;
-export const PUBLIC_FRAME_KEYS = ['image', 'video', 'aspect'] as const;
+export const PUBLIC_FRAME_KEYS = ['image', 'video', 'aspect', 'hasRenditions'] as const;
 
 const MAX_FRAMES = 60;
 
@@ -89,7 +93,7 @@ export async function getPublicProfile(rawUsername: string): Promise<PublicProfi
 
   const [postsRes, framesCountRes, decksRes, userRes, tracksRes] = await Promise.all([
     db.from('posts')
-      .select('media_urls, media_type, layout_id, thumbnail_url, poster_url, stream_poster_url, stream_playback_url, video_status')
+      .select('media_urls, media_type, layout_id, thumbnail_url, poster_url, stream_poster_url, stream_playback_url, video_status, media_has_renditions')
       .eq('user_id', uid).eq('is_deleted', false)
       .order('is_pinned', { ascending: false }).order('created_at', { ascending: false })
       .limit(MAX_FRAMES),
@@ -117,14 +121,15 @@ export async function getPublicProfile(rawUsername: string): Promise<PublicProfi
   const rl = resolveLayout(p);
   const layoutId = legacyLayoutId(rl.aspect, rl.mobileCount);
 
-  type Row = { media_urls: string[] | null; media_type: string | null; layout_id: string | null; thumbnail_url: string | null; poster_url: string | null; stream_poster_url: string | null; stream_playback_url: string | null; video_status: string | null };
+  type Row = { media_urls: string[] | null; media_type: string | null; layout_id: string | null; thumbnail_url: string | null; poster_url: string | null; stream_poster_url: string | null; stream_playback_url: string | null; video_status: string | null; media_has_renditions: boolean | null };
   const frames: PublicFrame[] = ((postsRes.data ?? []) as Row[]).flatMap((r) => {
     const isVideo = r.media_type === 'video';
     const file = r.media_urls?.[0] ?? null;
     const image = isVideo ? (r.stream_poster_url ?? r.poster_url ?? r.thumbnail_url) : (file ?? r.thumbnail_url);
     if (!image) return [];
     const video = isVideo ? ((r.video_status === 'ready' ? r.stream_playback_url : null) ?? file) : null;
-    return [{ image, video, aspect: getAspectRatio(r.layout_id || 'scope') }];
+    // Posters (video) never have baked renditions; a photo's rendition flag comes from the row.
+    return [{ image, video, aspect: getAspectRatio(r.layout_id || 'scope'), hasRenditions: !isVideo && !!r.media_has_renditions }];
   });
 
   // Built field by field — nothing from the row passes through by spread.
