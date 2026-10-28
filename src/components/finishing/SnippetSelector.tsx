@@ -24,7 +24,7 @@ import type { EditGeometry } from "@/lib/editGeometry";
 const RED = "var(--ink-100)";
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const REG: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
-const CLIP_LEN = 4; // seconds (3–5s band)
+export const CLIP_LEN = 4; // seconds (3–5s band) — shared with SnippetScrubber (EDIT & POST)
 
 // Thumbnail width — the ONE tunable. Reads as a small inset, never a full post.
 const SNIPPET_W = 132;

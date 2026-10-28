@@ -6,7 +6,8 @@ import { usePrivy, useWallets } from "@privy-io/react-auth";
 import { createWalletClient, custom } from "viem";
 import { base } from "viem/chains";
 import { createPost, updatePostCoinData, updatePostCoinTxHash, updatePostMusic } from '@/lib/postsService';
-import { saveDraft, loadDraft, clearDraft, type CreateDraft } from '@/lib/createDraft';
+import { saveDraft, loadDraft, clearDraft, markCreateLive, markCreateClean, peekUncleanCreateExit, blobReadable, type CreateDraft } from '@/lib/createDraft';
+import { claimVideo, releaseVideo, assertStepBoundary } from '@/lib/mediaOwnership';
 import { uploadVideoToStream } from '@/lib/streamUpload';
 import { vdbg, vdbgFile, vdbgReset, vdbgMarkNav } from '@/lib/videoDebug'; // V1e — ?debug=video trace (no-op unless on)
 import { markFeedDirty, POST_PUBLISHED_EVT } from '@/lib/feedCache'; // V1e §6 — Home shows a fresh post without refresh
@@ -41,7 +42,7 @@ import {
   neutralGeometry, bakeImageGeometry, type EditGeometry,
 } from '@/lib/editGeometry';
 import FinishingPreview from '@/components/finishing/FinishingPreview';
-import SnippetSelector from '@/components/finishing/SnippetSelector';
+import SnippetScrubber from '@/components/finishing/SnippetScrubber';
 import MusicPicker, { type LibraryTrack } from '@/components/MusicPicker';
 import ClipSelector from '@/components/ClipSelector';
 
@@ -150,26 +151,28 @@ async function uploadAutoThumbnail(dataUrl: string, userId: string): Promise<str
 function captureVideoFrameFile(url: string, time = 0): Promise<File> {
   return new Promise((resolve, reject) => {
     const v = document.createElement('video');
+    claimVideo(v, 'posting'); // V3 §2 — one-shot; released on every exit below
     v.crossOrigin = 'anonymous'; v.muted = true; v.playsInline = true; v.preload = 'auto';
+    const fail = (e: Error) => { releaseVideo(v); reject(e); };
     const grab = () => {
       try {
         const cv = document.createElement('canvas');
         cv.width = v.videoWidth; cv.height = v.videoHeight;
         const ctx = cv.getContext('2d');
-        if (!ctx || !cv.width || !cv.height) { reject(new Error('captureVideoFrameFile: no frame')); return; }
+        if (!ctx || !cv.width || !cv.height) { fail(new Error('captureVideoFrameFile: no frame')); return; }
         ctx.drawImage(v, 0, 0);
+        releaseVideo(v); // the frame is on the canvas — free the decoder before the encode
         cv.toBlob((b) => {
-          v.src = '';
           b ? resolve(new File([b], 'poster-frame.jpg', { type: 'image/jpeg' })) : reject(new Error('captureVideoFrameFile: toBlob failed'));
         }, 'image/jpeg', 0.92);
-      } catch (e) { reject(e as Error); }
+      } catch (e) { fail(e as Error); }
     };
     v.onloadeddata = () => {
       const dur = isFinite(v.duration) ? v.duration : 0;
       const t = Math.min(Math.max(time, 0), dur || 0);
       if (t > 0) { v.onseeked = grab; v.currentTime = t; } else grab();
     };
-    v.onerror = () => reject(new Error('captureVideoFrameFile: video load failed'));
+    v.onerror = () => fail(new Error('captureVideoFrameFile: video load failed'));
     v.src = url;
   });
 }
@@ -303,21 +306,30 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
   // concurrent decoders. On a 4K HEVC clip iOS starved the crop decode, so the crop
   // step's loadedmetadata never fired → LOADING forever (device trace: vid 3 live).
   // One element, released before crop, means exactly ONE decoder at the crop step.
+  // V3 §2 — the crop step waits for this (loader beat) so the one-shot is released BEFORE crop mounts.
+  const [probeDone, setProbeDone] = useState(true);
+  // V3 §5 — a crash-safe restore already has the duration + poster (from the draft): skip the decode.
+  const skipProbeUrlRef = useRef<string | null>(null);
   useEffect(() => {
-    if (selectedMedia[0]?.type !== 'video' || !selectedMedia[0]?.url) { setVideoDuration(0); return; }
+    if (selectedMedia[0]?.type !== 'video' || !selectedMedia[0]?.url) { setVideoDuration(0); setProbeDone(true); return; }
     const url = selectedMedia[0].url;
+    if (skipProbeUrlRef.current === url) { setProbeDone(true); vdbg('probe:skipped', 'restored poster'); return; }
+    setProbeDone(false);
     const f0 = selectedMedia[0].file; // present on the pick AND the seam path
     let done = false;
     const v = document.createElement('video');
+    claimVideo(v, 'probe');
     v.muted = true; v.playsInline = true; v.preload = 'auto'; // iOS: muted+playsInline so a frame decodes
     const teardown = () => {
-      try { v.onloadedmetadata = null; v.onseeked = null; v.onerror = null; v.pause(); v.removeAttribute('src'); v.load(); } catch { /* ignore */ }
+      v.onloadedmetadata = null; v.onseeked = null; v.onerror = null;
+      releaseVideo(v);
     };
     const finish = (thumb: string | null) => {
       if (done) return; done = true;
       if (thumb) setAutoThumbnail(thumb);
       vdbg('thumb', thumb ? 'ok' : 'null'); // V1
       teardown(); // release the decoder BEFORE the crop step mounts
+      setProbeDone(true);
     };
     v.onloadedmetadata = () => {
       const d = isFinite(v.duration) ? v.duration : 0;
@@ -345,6 +357,15 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
     v.src = url;
     return () => { window.clearTimeout(t); if (!done) { done = true; teardown(); } };
   }, [selectedMedia]);
+
+  // V3 §2 — the media step's preview <video>: claimed on attach, decoder released the moment React
+  // detaches it (an unmounted element with a src keeps its decoder on WebKit until GC). Stable
+  // callback, so a re-render never tears it down.
+  const mediaPreviewElRef = useRef<HTMLVideoElement | null>(null);
+  const mediaPreviewRef = useCallback((el: HTMLVideoElement | null) => {
+    if (el) { mediaPreviewElRef.current = el; claimVideo(el, 'media'); }
+    else { releaseVideo(mediaPreviewElRef.current); mediaPreviewElRef.current = null; }
+  }, []);
   const [caption, setCaption] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   // Brief V2 — Stream TUS upload progress (0–100). Set during the video upload.
@@ -412,10 +433,30 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
   // as plain metadata (snippet_start / snippet_length) — NO baked clip.
   const [snippetWindow, setSnippetWindow] = useState<{ start: number; length: number } | null>(null);
   const [autoThumbnail, setAutoThumbnail] = useState<string | null>(null);
+  // V3 §3 — EDIT & POST's one <video> (FinishingPreview hands it up) — the snippet scrubber drives it.
+  const [editVideo, setEditVideo] = useState<HTMLVideoElement | null>(null);
+  const onEditReady = useCallback(() => vdbg('edit:ready'), []);
+  // V3 §5 — crash-safe restore: frame the crop on the poster (zero decoders) + say so once.
+  const [cropFromPoster, setCropFromPoster] = useState(false);
+  const [restoreNotice, setRestoreNotice] = useState(false);
+  useEffect(() => {
+    if (!restoreNotice) return;
+    const t = window.setTimeout(() => setRestoreNotice(false), 3500);
+    return () => window.clearTimeout(t);
+  }, [restoreNotice]);
+  // Read at first render — before this page's own marker effect can touch the key.
+  const [uncleanExit] = useState<string | null>(() => (typeof window === 'undefined' ? null : peekUncleanCreateExit()));
 
   // ── Brief V1e — ?debug=video breadcrumbs. PASSIVE mirror of existing state
   //    transitions; every call is a no-op unless the trace is on → zero behaviour change. ──
   useEffect(() => { vdbg(`step:${step}`); }, [step]);
+  // V3 §2 — at every step boundary, any claimed <video> from ANOTHER step still decoding is a bug
+  // (dev: console.error; prod: a `leak:` crumb). Deferred one task so the previous step's teardown
+  // (passive cleanups) has run. Crop holds a loader until the one-shot probe is released.
+  useEffect(() => {
+    const t = window.setTimeout(() => assertStepBoundary(step, step === 'crop' && !probeDone ? ['probe'] : []), 0);
+    return () => window.clearTimeout(t);
+  }, [step, probeDone]);
   useEffect(() => { if (postStage) vdbg(`stage:${postStage}`); }, [postStage]);
   useEffect(() => { if (musicTrackId) vdbg('music', musicTrackId); }, [musicTrackId]);
   const upDecileRef = useRef(-1);
@@ -432,11 +473,25 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
     if (draftRestoredRef.current) return;
     if (!user?.id) return; // wait for Privy to resolve the user before touching the draft (owner check)
     draftRestoredRef.current = true;
+    if (uncleanExit) markCreateClean(); // V3 §5 — consumed here (read at first render); this session re-marks if it goes live
     if (step !== 'media' || selectedMedia.length > 0) return;
     (async () => {
       const d = await loadDraft();
       if (!d) return;
       if (d.ownerId && d.ownerId !== user.id) { void clearDraft(); return; } // C3-11 — not this user's draft
+      // V3 §5 — re-validate the stored media BEFORE anything decodes or uploads it. A blob iOS can no
+      // longer read used to restore fine and then fail at upload ("tus PATCH stalled at offset 0").
+      const forceUnreadable = process.env.NEXT_PUBLIC_TEST_SEAM === '1' && (() => { try { return localStorage.getItem('scope:test:unreadable-draft') === '1'; } catch { return false; } })();
+      const readable = forceUnreadable ? [false] : await Promise.all(d.media.map((m) => blobReadable(m.blob)));
+      if (readable.some((ok) => !ok)) {
+        vdbg('restore:file-unreadable', d.media.map((m) => `${m.type} ${(m.blob.size / 1048576).toFixed(0)}MB`).join(','));
+        void clearDraft();
+        setVideoError(d.media.some((m) => m.type === 'video')
+          ? 'Couldn’t reopen your last video. Pick the video again.'
+          : 'Couldn’t reopen your last photo. Pick the photo again.');
+        return;
+      }
+      vdbg('restore:file-ok', `${d.media.length} item(s)`);
       const media: MediaItem[] = d.media.map((m) => ({
         id: m.id,
         file: new File([m.blob], m.name, { type: m.blob.type }),
@@ -455,7 +510,24 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
       setMusicTrack((d.music.track as LibraryTrack | null) ?? null);
       setMusicMode(d.music.mode);
       setMusicStart(d.music.start);
-      setStep(d.step);
+      // V3 §5 — the draft carries the poster + duration → the one-shot probe never has to decode.
+      if (media[0]?.type === 'video' && d.poster && d.durationS) {
+        skipProbeUrlRef.current = media[0].url;
+        setAutoThumbnail(d.poster);
+        setVideoDuration(d.durationS);
+      }
+      if (uncleanExit) {
+        // The previous page died mid-flow (iOS kills the tab under decode pressure). Restoring straight
+        // into finishing / EDIT & POST re-runs the exact load that killed it — come back at CROP, on
+        // the poster, zero decoders. The user's own tap forward is what starts the next decode.
+        vdbg('restore:crash-safe', `${uncleanExit}→crop`);
+        setCropFromPoster(media[0]?.type === 'video');
+        setRestoreNotice(true);
+        setStep('crop');
+      } else {
+        vdbg('restore:step', d.step);
+        setStep(d.step);
+      }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
@@ -517,11 +589,28 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
         videoAutoplay,
         snippetWindow,
         music: { trackId: musicTrackId, track: musicTrack, mode: musicMode, start: musicStart },
+        poster: selectedMedia[0]?.type === 'video' ? autoThumbnail : null, // V3 §5
+        durationS: videoDuration || undefined,
       };
       void saveDraft(draft);
     }, 600);
     return () => clearTimeout(t);
-  }, [step, selectedMedia, chosenLayoutId, editGeometry, editParams, caption, customThumbnail, videoAutoplay, snippetWindow, musicTrackId, musicTrack, musicMode, musicStart]);
+  }, [step, selectedMedia, chosenLayoutId, editGeometry, editParams, caption, customThumbnail, videoAutoplay, snippetWindow, musicTrackId, musicTrack, musicMode, musicStart, autoThumbnail, videoDuration]);
+
+  // V3 §5 — the crash marker. Set while this (open) flow holds media past the media step; cleared on
+  // every clean end: back to media, close, unmount (publish / discard / Pro round-trip), a real pagehide.
+  // A silent iOS tab kill runs none of these, so the key survives → the next load restores crash-safe.
+  const liveMarkRef = useRef(false);
+  useEffect(() => {
+    const live = isOpen && step !== 'media' && selectedMedia.length > 0;
+    if (live) { markCreateLive(step); liveMarkRef.current = true; }
+    else if (liveMarkRef.current) { markCreateClean(); liveMarkRef.current = false; }
+  }, [isOpen, step, selectedMedia.length]);
+  useEffect(() => {
+    const clean = () => { if (liveMarkRef.current) { markCreateClean(); liveMarkRef.current = false; } };
+    window.addEventListener('pagehide', clean);
+    return () => { window.removeEventListener('pagehide', clean); clean(); };
+  }, []);
 
   // Resolve real Pro status + grid gating for FINISHING once the user is known.
   // IDENTIFIER TYPING: DID (user.id) ONLY to getUserByPrivyId; the uuid
@@ -582,12 +671,12 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
       if (!cancelled) { vdbg('gate:finishctx:failed'); setFinishCtxError(true); }
     })();
     return () => { cancelled = true; };
-  }, [user?.id, userLayoutId, proTick, finishCtxRetry]);
+  }, [user?.id, proTick, finishCtxRetry]); // V3 §6 — not userLayoutId: unused here, and its page-load seed→resolve flip fired a 2nd fetch
 
   // V1e — the LOADING screen owner: the crop step renders a loader while finishCtx is
   // null. Crumb when it shows so a device trace names this gate (it clears when finishCtx
   // resolves and CropTool mounts → crop:waiting).
-  useEffect(() => { if (step === 'crop' && !finishCtx) vdbg('gate:croploader:shown'); }, [step, finishCtx]);
+  useEffect(() => { if (step === 'crop' && (!finishCtx || !probeDone)) vdbg('gate:croploader:shown', !finishCtx ? 'finishctx' : 'probe'); }, [step, finishCtx, probeDone]);
 
   // Brief C1a §0 — on entering CROP under ?debug=crop, re-read grid_layout FRESH from the DB
   // (the app's own fetch) + stamp the open time, so the trace shows fresh vs prop vs ctx and the
@@ -808,6 +897,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
     }
 
     setSelectedMedia(prev => [...prev, ...newMedia]);
+    setCropFromPoster(false); // V3 §5 — a fresh pick is never a crash restore
     setIsOptimising(false);
     setCropX(0); setCropY(0); setCropWidth(1); setCropHeight(1); setVideoNaturalAr(0);
     setImageCropX(0); setImageCropY(0); setImageCropWidth(1); setImageCropHeight(1); setImgNaturalAr(0);
@@ -1567,7 +1657,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
                    <video> has 0 intrinsic size → paints NOTHING (the "renders nothing"
                    case). autoPlay+loop+preload paints the frame immediately, letterboxed
                    (objectFit:contain) at any AR. */
-                <video src={selectedMedia[0].url} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', display: 'block' }} autoPlay muted loop playsInline preload="auto" />
+                <video ref={mediaPreviewRef} src={selectedMedia[0].url} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', display: 'block' }} autoPlay muted loop playsInline preload="auto" />
               )}
               <button
                 onClick={() => handleRemoveMedia(selectedMedia[0].id)}
@@ -1633,6 +1723,10 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
                   params={editParams}
                   geometry={editPreviewGeometry}
                   layoutId={chosenLayoutId || userLayoutId}
+                  // V3 §3 — the ONE player: it is also the autoplay audition (loops the chosen window).
+                  clipWindow={videoAutoplay && snippetWindow ? snippetWindow : undefined}
+                  onVideo={setEditVideo}
+                  onFirstFrame={onEditReady}
                 />
               )}
             </div>
@@ -1727,12 +1821,12 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
                 <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-9)', color: 'rgb(var(--ink-rgb) / 0.5)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 2px' }}>
                   THUMBNAIL PREVIEW
                 </p>
-                <SnippetSelector
-                  videoUrl={selectedMedia[0].url}
+                {/* V3 §3 — scrubs the main preview's own <video> over a once-captured strip: no second
+                    decode, no second WebGL context, no audition element. */}
+                <SnippetScrubber
+                  video={editVideo}
                   heroFrameTime={editParams.heroFrameTime ?? 0}
-                  params={editParams}
-                  geometry={editPreviewGeometry}
-                  layoutId={chosenLayoutId || userLayoutId}
+                  value={snippetWindow}
                   onChange={setSnippetWindow}
                 />
               </div>
@@ -1979,10 +2073,12 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
           </div>
         </div>
       )}
-      {step === 'crop' && selectedMedia[0] && (finishCtx ? (
+      {step === 'crop' && selectedMedia[0] && (finishCtx && probeDone ? (
         <CropTool
           mediaUrl={selectedMedia[0].url}
           mediaType={selectedMedia[0].type}
+          // V3 §5 — after a crash, frame on the poster (zero decoders) until the user moves on.
+          posterUrl={cropFromPoster ? autoThumbnail : null}
           // Brief C1b — the crop AR is the CANONICAL resolved layout (finishCtx.layoutId, from
           // resolveLayout/aspect_ratio), gated below so the tool NEVER draws on the stale
           // userLayoutId fallback. No positional index survives here (C1); no wrong frame.
@@ -1993,6 +2089,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
           onConfirm={(geom, layoutId) => {
             setEditGeometry(geom);
             setChosenLayoutId(layoutId);
+            setCropFromPoster(false); // later crop visits (ADJUST CROP) use the live clip again
             setStep('finishing');
           }}
         />
@@ -2016,6 +2113,12 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
           <ScopeLoader size="lg" label="Loading" />
         </div>
       ))}
+      {/* V3 §5 — said once, after a crash-safe restore. */}
+      {restoreNotice && step === 'crop' && (
+        <div role="status" style={{ position: 'fixed', left: 0, right: 0, top: 'calc(env(safe-area-inset-top, 0px) + 60px)', zIndex: 250, display: 'flex', justifyContent: 'center', pointerEvents: 'none' }}>
+          <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-9)', color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.12em', background: 'var(--surface-1)', border: '1px solid rgb(var(--ink-rgb) / 0.14)', padding: '9px 14px' }}>Picked up where you left off</span>
+        </div>
+      )}
       {step === 'finishing' && selectedMedia[0] && (() => {
         // Fallbacks so the editor ALWAYS renders even if finishCtx hasn't resolved
         // yet (it updates once the profile loads); never blank-on-null.

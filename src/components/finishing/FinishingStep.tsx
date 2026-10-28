@@ -15,6 +15,7 @@ import FinishingShell from './FinishingShell';
 import type { EditParams } from '@/lib/editor/params';
 import type { EditGeometry } from '@/lib/editGeometry';
 import type { SavedLook } from '@/lib/looksService';
+import { claimVideo, releaseVideo } from '@/lib/mediaOwnership';
 
 interface FinishingStepProps {
   mediaUrl: string;
@@ -55,12 +56,14 @@ export default function FinishingStep({
     };
     if (mediaType === 'video') {
       const v = document.createElement('video');
+      claimVideo(v, 'finishing'); // V3 §2 — FINISHING's one element
       v.crossOrigin = 'anonymous';
       v.muted = true; v.loop = true; v.playsInline = true;
       v.onloadeddata = () => { if (!cancelled) { v.play().catch(() => {}); setSource(v); } };
       v.onerror = () => fail('video error');
       v.src = mediaUrl;
-      return () => { cancelled = true; v.pause(); v.src = ''; };
+      // V3 §2 — release the decoder before EDIT & POST mounts (src='' kept it on WebKit until GC).
+      return () => { cancelled = true; v.onloadeddata = null; v.onerror = null; releaseVideo(v); };
     }
     const img = new Image();
     img.crossOrigin = 'anonymous';

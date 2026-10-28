@@ -15,6 +15,9 @@
 // V1b: each crumb is stamped with the LIVE <video> count (the decoder count) at
 // that moment, so Eric's screenshot shows the wait by name AND how many decoders
 // were alive when it stalled.
+//
+// V3 §7: each crumb also carries the live WebGL-context count (g → `gl:<n>`), counted by a gated
+// pass-through on HTMLCanvasElement.prototype.getContext; a context stops counting once lost.
 
 import { isVideoDebug } from './debugFlags';
 
@@ -22,7 +25,7 @@ const TRAIL_KEY = 'scope:vdbg-trail';
 const MAX_CRUMBS = 48;
 const MAX_ERRORS = 3;
 
-export type Crumb = { t: number; elapsed: number; step: string; detail?: string; v: number };
+export type Crumb = { t: number; elapsed: number; step: string; detail?: string; v: number; g: number };
 
 type State = {
   startT: number;
@@ -44,6 +47,8 @@ type Probe = {
   totalVideos: number;
   canvases: Set<WeakRef<HTMLCanvasElement>>;
   totalCanvases: number;
+  gls: Set<WeakRef<WebGLRenderingContext>>;
+  totalGls: number;
 };
 let probe: Probe | null = null;
 
@@ -53,6 +58,7 @@ export function vdbgInstallProbes(): void {
   const p: Probe = {
     liveUrls: new Set(), totalUrls: 0, bigBlobs: new Map(),
     videos: new Set(), totalVideos: 0, canvases: new Set(), totalCanvases: 0,
+    gls: new Set(), totalGls: 0,
   };
   probe = p;
   try {
@@ -82,6 +88,18 @@ export function vdbgInstallProbes(): void {
       } catch { /* ignore */ }
       return el;
     }) as typeof document.createElement;
+
+    // V3 §7 — WebGL contexts (gl-react Surfaces + the photo bake). getContext returns the SAME
+    // context on repeat calls, so de-dupe by identity.
+    const origGC = HTMLCanvasElement.prototype.getContext;
+    const seen = new WeakSet<object>();
+    HTMLCanvasElement.prototype.getContext = function (this: HTMLCanvasElement, type: string, attrs?: unknown) {
+      const ctx = (origGC as (t: string, a?: unknown) => RenderingContext | null).call(this, type, attrs);
+      try {
+        if (ctx && /webgl/i.test(type) && !seen.has(ctx)) { seen.add(ctx); p.gls.add(new WeakRef(ctx as WebGLRenderingContext)); p.totalGls++; }
+      } catch { /* ignore */ }
+      return ctx;
+    } as typeof HTMLCanvasElement.prototype.getContext;
   } catch { /* frozen globals — counters stay at 0 */ }
 }
 
@@ -111,6 +129,18 @@ function liveCanvasEls(): HTMLCanvasElement[] {
 /** The decoder count = live <video> elements right now (detached ones included). */
 export function vdbgLiveVideoCount(): number { return liveVideoEls().length; }
 
+/** V3 §7 — live WebGL contexts (not lost, not collected). */
+export function vdbgLiveGlCount(): number {
+  if (!probe) return 0;
+  let n = 0;
+  for (const ref of probe.gls) {
+    const g = ref.deref();
+    if (!g) { probe.gls.delete(ref); continue; }
+    if (!g.isContextLost()) n++;
+  }
+  return n;
+}
+
 /** Full live resource snapshot (overlay + harness dump). */
 export function vdbgLiveCounts() {
   const vids = liveVideoEls();
@@ -120,6 +150,7 @@ export function vdbgLiveCounts() {
     urlsLive: probe?.liveUrls.size ?? 0, urlsTotal: probe?.totalUrls ?? 0,
     canvasesLive: canv.length, canvasesTotal: probe?.totalCanvases ?? 0,
     canvasMP: canv.reduce((n, c) => n + (c.width || 0) * (c.height || 0), 0) / 1e6,
+    glLive: vdbgLiveGlCount(), glTotal: probe?.totalGls ?? 0,
     bigBlobCount: probe?.bigBlobs.size ?? 0,
     bigBlobMB: probe ? [...probe.bigBlobs.values()].reduce((n, b) => n + b, 0) / (1024 * 1024) : 0,
   };
@@ -137,7 +168,7 @@ export function vdbg(step: string, detail?: string): void {
   if (!isVideoDebug()) return;
   const now = Date.now();
   if (!state.startT) state.startT = now;
-  state.crumbs.push({ t: now, elapsed: (now - state.startT) / 1000, step, detail, v: vdbgLiveVideoCount() });
+  state.crumbs.push({ t: now, elapsed: (now - state.startT) / 1000, step, detail, v: vdbgLiveVideoCount(), g: vdbgLiveGlCount() });
   if (state.crumbs.length > MAX_CRUMBS) state.crumbs.shift();
   persistTrail(step, false);
   emit();

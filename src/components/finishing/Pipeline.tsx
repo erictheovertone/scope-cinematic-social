@@ -17,7 +17,7 @@
  * client-only (WebGL) — the dev route imports it via next/dynamic ssr:false.
  */
 
-import { cloneElement, useEffect, useMemo, useRef, useState } from 'react';
+import { cloneElement, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Node, Shaders } from 'gl-react';
 import { Surface } from 'gl-react-dom';
 import type { EditParams } from '@/lib/editor/params';
@@ -34,6 +34,7 @@ import { buildCurveLUT, isIdentityChannel } from '@/lib/editor/curveEngine';
 import { curveShaders } from './passes/curves';
 import { lookShaders } from './passes/look';
 import { pushCropTrace } from '@/lib/cropDebug';
+import { vdbg } from '@/lib/videoDebug';
 
 // ── Brief C3-2 — colour-management readout (1): the decoded bitmap ─────────────
 // Readout (1) of three (decode → GL preview → bake). Test-only, gated on
@@ -85,9 +86,71 @@ interface PipelineProps {
   captureRef?: React.Ref<unknown>;
   /** Active LOOK LUT (2D-tiled canvas + cube size). Applied in the LOOK stage. */
   activeLut?: { canvas: HTMLCanvasElement; size: number } | null;
+  /** Brief V3 §7 — called once the Surface has drawn its first frame (gl-react onLoad). */
+  onFirstDraw?: () => void;
 }
 
-export default function Pipeline({ source, params, width, height, surfaceRef, preserve, captureRef, activeLut }: PipelineProps) {
+// ── Brief V3 §4 — preview video texture at DISPLAY size, never source size ──────────────────────
+// gl-react's video loader re-uploads the whole <video> frame every draw: a 4096×2160 clip is a
+// 35 MB RGBA texture re-sent ~60×/s for a preview a few hundred CSS px wide. For the live preview we
+// draw each frame into a CAPPED 2D canvas instead — sized to the Surface's CSS box × DPR, clamped to
+// the source — and hand THAT to gl-react (its canvas loader re-uploads the canvas, a texture the
+// size of the pixels actually shown). The Surface already renders at box × DPR, so nothing visible is
+// lost. The bake path (captureRef/preserve) never takes this branch. The canvas is rebuilt only when
+// the needed size leaves [current/2, current] (gl-react caches a texture per canvas object, so a
+// fresh canvas per pixel of zoom would pile textures up — this keeps it to log₂ steps).
+//
+// MEASURED, so it SELF-SELECTS (test/create-v3.spec.ts §4, 4K source, per frame):
+//   Chromium: texImage2D(<video>) 26.4ms · drawImage→capped canvas 13.8ms + upload 1.6ms → capped wins.
+//   WebKit (Playwright/macOS): texImage2D(<video>) 1ms — a GPU blit — but drawImage 30ms (a CPU readback).
+// Which shape an iPhone has can't be known off-device, so the first capped paints are TIMED: drawImage
+// into a throwaway probe canvas + a 1px readback (WebKit defers drawImage until the canvas is consumed,
+// so the call alone reads ~0ms; the readback forces the real work). The readback over-states the steady
+// state (no readback there), so the probe errs toward the safe direct path. ≤ one 60Hz frame → keep the
+// capped texture; slower → the direct upload for the session. A separate probe canvas, because repeated
+// readbacks can demote a canvas to software in Chromium. The verdict is crumbed (`tex:`) so the device
+// overlay names the path taken.
+const TEX_CAP_MAX_MS = 16;
+const TEX_SAMPLES = 5;
+let texMode: 'probing' | 'capped' | 'direct' = 'probing';
+const texSamples: number[] = [];
+function probePaint(v: HTMLVideoElement, w: number, h: number): boolean {
+  if (texMode !== 'probing') return false;
+  try {
+    const c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    const ctx = c.getContext('2d', { colorSpace: 'srgb' }) as CanvasRenderingContext2D | null;
+    if (!ctx) return false;
+    const t0 = performance.now();
+    ctx.drawImage(v, 0, 0, w, h);
+    ctx.getImageData(0, 0, 1, 1);
+    texSamples.push(performance.now() - t0);
+    c.width = 0; c.height = 0;
+  } catch { return false; }
+  if (texSamples.length < TEX_SAMPLES + 1) return false;
+  const s = texSamples.slice(1).sort((a, b) => a - b); // first sample carries the first-frame decode — dropped
+  const med = s[Math.floor(s.length / 2)];
+  texMode = med <= TEX_CAP_MAX_MS ? 'capped' : 'direct';
+  vdbg('tex', `${texMode} ${w}x${h} drawImage+flush≈${med.toFixed(1)}ms`);
+  return true;
+}
+
+function texCap(need: number, current: number, max: number): number {
+  const n = Math.max(1, Math.min(max, Math.ceil(need)));
+  if (current > 0 && current >= n && current <= n * 2) return current;
+  return n;
+}
+
+/** Brief V3 §2 — gl-react never loses its context on unmount, so the GPU context lingers until GC
+ *  (and iOS caps live contexts). Lose it explicitly once the canvas has left the DOM. */
+function loseGL(canvas: HTMLCanvasElement) {
+  try {
+    const gl = (canvas.getContext('webgl2') || canvas.getContext('webgl')) as WebGLRenderingContext | null;
+    gl?.getExtension('WEBGL_lose_context')?.loseContext();
+  } catch { /* already gone */ }
+}
+
+export default function Pipeline({ source, params, width, height, surfaceRef, preserve, captureRef, activeLut, onFirstDraw }: PipelineProps) {
   // Drive a redraw every frame ONLY while the video is actually PLAYING (the
   // texture re-uploads per frame). A PAUSED video — the hero-frame grading
   // default — draws ONCE and stops: the old code looped at 60fps forever even
@@ -98,11 +161,42 @@ export default function Pipeline({ source, params, width, height, surfaceRef, pr
   const [, setTick] = useState(0);
   const rafRef = useRef<number | null>(null);
 
+  // V3 §4 — the capped preview texture (video + live preview only; see texCap above).
+  const isVideoSource = typeof HTMLVideoElement !== 'undefined' && source instanceof HTMLVideoElement;
+  const [mode, setMode] = useState(texMode);
+  const capVideo = isVideoSource && !captureRef && !preserve && mode !== 'direct';
+  const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
+  const vw = isVideoSource ? (source as HTMLVideoElement).videoWidth : 0;
+  const vh = isVideoSource ? (source as HTMLVideoElement).videoHeight : 0;
+  const capRef = useRef({ w: 0, h: 0 });
+  const capW = capVideo && vw ? texCap(width * dpr, capRef.current.w, vw) : 0;
+  const capH = capVideo && vh ? texCap(height * dpr, capRef.current.h, vh) : 0;
+  capRef.current = { w: capW, h: capH };
+  const frameCanvas = useMemo<HTMLCanvasElement | null>(() => {
+    if (!capW || !capH) return null;
+    const c = document.createElement('canvas');
+    c.width = capW; c.height = capH;
+    return c;
+  }, [source, capW, capH]);
+  const paintFrame = useCallback(() => {
+    if (!frameCanvas || !isVideoSource) return;
+    const v = source as HTMLVideoElement;
+    // V3 §3 — while the EDIT & POST strip is being captured from this same element the preview holds
+    // its last frame (the capture seeks around the clip; the viewer must not flicker through it).
+    if (v.dataset.scopeCtl === 'strip' || v.readyState < 2) return;
+    try {
+      const ctx = frameCanvas.getContext('2d', { colorSpace: 'srgb' }) as CanvasRenderingContext2D | null;
+      ctx?.drawImage(v, 0, 0, frameCanvas.width, frameCanvas.height);
+      if (probePaint(v, frameCanvas.width, frameCanvas.height)) queueMicrotask(() => setMode(texMode)); // never setState mid-render
+    } catch { /* frame not decodable yet */ }
+  }, [frameCanvas, isVideoSource, source]);
+
   useEffect(() => {
     const isVideo = typeof HTMLVideoElement !== 'undefined' && source instanceof HTMLVideoElement;
     if (!isVideo) return;
     const v = source as HTMLVideoElement;
-    const draw = () => setTick((t) => (t + 1) % 1_000_000);
+    // V3 §3 — while the strip is captured from this element, hold the last frame (either texture path).
+    const draw = () => { if (v.dataset.scopeCtl === 'strip') return; paintFrame(); setTick((t) => (t + 1) % 1_000_000); };
     const loop = () => { draw(); rafRef.current = requestAnimationFrame(loop); };
     const start = () => { if (rafRef.current == null) rafRef.current = requestAnimationFrame(loop); };
     const stop = () => { if (rafRef.current != null) { cancelAnimationFrame(rafRef.current); rafRef.current = null; } draw(); };
@@ -118,7 +212,24 @@ export default function Pipeline({ source, params, width, height, surfaceRef, pr
       v.removeEventListener('seeked', draw);
       if (rafRef.current != null) { cancelAnimationFrame(rafRef.current); rafRef.current = null; }
     };
-  }, [source]);
+  }, [source, paintFrame]);
+
+  // V3 §2 — release this Surface's WebGL context once its canvas has left the DOM (unmount, or the
+  // Surface dropped while we stay mounted). isConnected guards StrictMode's simulated unmount.
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const glCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const releaseGL = !captureRef && !preserve;
+  useEffect(() => {
+    if (!releaseGL) return;
+    const c = wrapRef.current?.querySelector('canvas') ?? null;
+    const prev = glCanvasRef.current;
+    if (prev && prev !== c && !prev.isConnected) loseGL(prev);
+    glCanvasRef.current = c ?? (prev && prev.isConnected ? prev : null);
+  });
+  useEffect(() => () => {
+    const c = glCanvasRef.current;
+    if (c && !c.isConnected) loseGL(c);
+  }, []);
 
   // gl-react 6 (webgltexture-loader-dom) registers texture loaders for string
   // URLs, HTMLCanvasElement and HTMLVideoElement — but NOT a bare
@@ -180,9 +291,14 @@ export default function Pipeline({ source, params, width, height, surfaceRef, pr
   const texSource = useMemo<HTMLCanvasElement | HTMLVideoElement | null>(() => {
     if (!source) return null;
     const isVideo = typeof HTMLVideoElement !== 'undefined' && source instanceof HTMLVideoElement;
-    if (isVideo) return source as HTMLVideoElement;
+    if (isVideo) {
+      if (!capVideo) return source as HTMLVideoElement; // bake path / measured-direct: the element itself
+      if (!frameCanvas) return null;                      // metadata not in yet → gate like the image path
+      paintFrame();                                       // a new capped canvas starts with the current frame
+      return frameCanvas;
+    }
     return imgCanvas; // color-managed canvas from the effect above; null until ready → gates render
-  }, [source, imgCanvas]);
+  }, [source, imgCanvas, capVideo, frameCanvas, paintFrame]);
 
   // Luma curve → a 256×1 grayscale LUT texture (R=G=B=lut). Null = identity →
   // the curve node is skipped. Rebuilt only when its control points change.
@@ -387,17 +503,21 @@ export default function Pipeline({ source, params, width, height, surfaceRef, pr
   const surfaceChild = captureRef
     ? <Node shader={passthrough.passthrough} uniforms={{ t: cloneElement(texture, { ref: captureRef } as Record<string, unknown>) }} />
     : texture;
-  return (
+  const surface = (
     <Surface
       ref={surfaceRef as never}
       width={width}
       height={height}
       pixelRatio={captureRef ? 1 : undefined}
       webglContextAttributes={preserve ? { preserveDrawingBuffer: true } : undefined}
+      onLoad={onFirstDraw}
     >
       {surfaceChild}
     </Surface>
   );
+  // display:contents — the wrapper only exists so the GL canvas can be found for release; it takes
+  // no box, so the Surface lays out exactly as before.
+  return releaseGL ? <div ref={wrapRef} style={{ display: 'contents' }}>{surface}</div> : surface;
 }
 
 // Photo bake (Brief 8B) lives in lib/editor/bakeLook.ts: it renders this same

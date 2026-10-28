@@ -20,6 +20,7 @@ import { rotateCoverScale, type EditGeometry } from '@/lib/editGeometry';
 import { AR_CHIPS, chipForLayout } from '@/lib/aspectRatio';
 import { lookById } from './looksCatalog';
 import { ensureLut } from '@/lib/editor/lut';
+import { claimVideo, releaseVideo } from '@/lib/mediaOwnership';
 
 const Pipeline = dynamic(() => import('./Pipeline'), { ssr: false });
 
@@ -49,27 +50,36 @@ interface FinishingPreviewProps {
   /** Optional — loop only this [start, start+length] window (the audition snippet's
    *  selected autoplay moment). Omitted (editor preview) → full-video loop, unchanged. */
   clipWindow?: { start: number; length: number };
+  /** Brief V3 §3 — hands the ONE preview <video> up (null on teardown) so the snippet selector can
+   *  scrub this same element instead of standing up a second decode + GL context. */
+  onVideo?: (v: HTMLVideoElement | null) => void;
+  /** Brief V3 §7 — the viewer drew its first frame. */
+  onFirstFrame?: () => void;
 }
 
 // C3-4 — memoized: the EDIT & POST step re-renders on every caption keystroke (controlled
 // textarea on the 1800-line parent); without memo this live gl-react pipeline re-rendered each
 // time. With stable props (params/geometry memoized by the parent) keystrokes no longer touch it.
-function FinishingPreview({ mediaUrl, mediaType, params, geometry, layoutId, clipWindow }: FinishingPreviewProps) {
+function FinishingPreview({ mediaUrl, mediaType, params, geometry, layoutId, clipWindow, onVideo, onFirstFrame }: FinishingPreviewProps) {
   const [source, setSource] = useState<Source | null>(null);
   const [activeLut, setActiveLut] = useState<{ canvas: HTMLCanvasElement; size: number } | null>(null);
   const boxRef = useRef<HTMLDivElement>(null);
   const [box, setBox] = useState({ w: 0, h: 0 });
+  const onVideoRef = useRef(onVideo);
+  onVideoRef.current = onVideo;
 
   // Decode source (image) or load video — gate the pipeline mount on it (no black).
   useEffect(() => {
     let cancelled = false;
     if (mediaType === 'video') {
       const v = document.createElement('video');
+      claimVideo(v, 'edit'); // V3 §2 — EDIT & POST's one element
       v.crossOrigin = 'anonymous';
       v.muted = true; v.loop = true; v.playsInline = true;
-      v.onloadeddata = () => { if (!cancelled) { v.play().catch(() => {}); setSource(v); } };
+      v.onloadeddata = () => { if (!cancelled) { v.play().catch(() => {}); setSource(v); onVideoRef.current?.(v); } };
       v.src = mediaUrl;
-      return () => { cancelled = true; v.pause(); v.src = ''; };
+      // V3 §2 — release the decoder (src='' kept it on WebKit until GC).
+      return () => { cancelled = true; v.onloadeddata = null; onVideoRef.current?.(null); setSource(null); releaseVideo(v); };
     }
     const img = new Image();
     img.crossOrigin = 'anonymous';
@@ -92,13 +102,21 @@ function FinishingPreview({ mediaUrl, mediaType, params, geometry, layoutId, cli
     const { start, length } = clipWindow;
     v.loop = false; // our window controls looping, not the native end-loop
     const toStart = () => { try { v.currentTime = start; } catch { /* seek before metadata */ } };
-    if (v.currentTime < start - 0.05 || v.currentTime >= start + length) toStart();
-    v.play().catch(() => {});
-    const onTime = () => { if (v.currentTime >= start + length - 0.03) { toStart(); v.play().catch(() => {}); } };
-    const onEnded = () => { toStart(); v.play().catch(() => {}); };
+    // V3 §3 — the snippet selector drives this same element while it scrubs / captures its strip;
+    // the window loop stands down until it hands the element back.
+    const held = () => !!v.dataset.scopeCtl;
+    if (!held()) {
+      if (v.currentTime < start - 0.05 || v.currentTime >= start + length) toStart();
+      v.play().catch(() => {});
+    }
+    const onTime = () => { if (!held() && v.currentTime >= start + length - 0.03) { toStart(); v.play().catch(() => {}); } };
+    const onEnded = () => { if (held()) return; toStart(); v.play().catch(() => {}); };
     v.addEventListener('timeupdate', onTime);
     v.addEventListener('ended', onEnded);
-    return () => { v.removeEventListener('timeupdate', onTime); v.removeEventListener('ended', onEnded); };
+    return () => {
+      v.removeEventListener('timeupdate', onTime); v.removeEventListener('ended', onEnded);
+      v.loop = true; // window cleared (or element handed back) → full-clip loop again
+    };
   }, [source, mediaType, clipWindow?.start, clipWindow?.length]);
 
   // Load the active LOOK LUT so the preview shows the look too.
@@ -159,7 +177,7 @@ function FinishingPreview({ mediaUrl, mediaType, params, geometry, layoutId, cli
             transform: geom.spin !== 0 || geom.cover !== 1 ? `rotate(${geom.spin}deg) scale(${geom.cover})` : undefined,
             transformOrigin: `${geom.originX}% ${geom.originY}%`,
           }}>
-            <Pipeline source={source} params={params} width={geom.sw} height={geom.sh} activeLut={activeLut} />
+            <Pipeline source={source} params={params} width={geom.sw} height={geom.sh} activeLut={activeLut} onFirstDraw={onFirstFrame} />
           </div>
         </div>
       )}

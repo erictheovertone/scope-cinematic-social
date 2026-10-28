@@ -6,6 +6,7 @@ import { cropDebugOn, pushCropTrace } from "@/lib/cropDebug";
 import { vdbg } from "@/lib/videoDebug"; // V1e — crop:waiting/crop:ready (no-op unless the trace is on)
 import { rotateCoverScale } from "@/lib/editGeometry";
 import { neutralGeometry, type EditGeometry } from "@/lib/editGeometry";
+import { claimVideo, releaseVideo } from "@/lib/mediaOwnership";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -14,6 +15,12 @@ const RED = "var(--ink-100)";
 interface CropToolProps {
   mediaUrl: string;
   mediaType: "image" | "video";
+  /**
+   * Brief V3 §5 — crash-safe restore: frame the crop on this still (the clip's own first frame, same
+   * pixel dimensions) instead of a live <video>, so the restored crop step runs with ZERO decoders.
+   * The crop rect is a fraction of the frame, so the geometry is identical either way.
+   */
+  posterUrl?: string | null;
   /** collage users pick freely; everyone else is locked to their grid AR */
   allowArChoice: boolean;
   /** chip id to start on (the locked AR for non-collage) */
@@ -56,7 +63,7 @@ function hasPriorGeometry(g?: EditGeometry): boolean {
 }
 
 export default function CropTool({
-  mediaUrl, mediaType, allowArChoice, initialAr, initialGeometry, onCancel, onConfirm, debugInfo,
+  mediaUrl, mediaType, posterUrl, allowArChoice, initialAr, initialGeometry, onCancel, onConfirm, debugInfo,
 }: CropToolProps) {
   const seeded = hasPriorGeometry(initialGeometry);
   const [ar, setAr] = useState<string>(() => (chipById(initialAr).id));
@@ -73,7 +80,16 @@ export default function CropTool({
 
   // V1e — crop crumbs (no-op unless the trace is on). The video crop preview's LOADING
   // waits on loadedmetadata (it sets naturalAr → the overlay). Name that wait.
-  useEffect(() => { if (mediaType === 'video') vdbg('crop:waiting', 'loadedmetadata'); }, [mediaType]);
+  const livePreview = mediaType === 'video' && !posterUrl;
+  useEffect(() => { vdbg('crop:waiting', livePreview ? 'loadedmetadata' : mediaType === 'video' ? 'poster' : 'image'); }, [livePreview, mediaType]);
+
+  // V3 §2 — the crop step's one <video>: claimed on attach, released (decoder freed) the moment
+  // React detaches it. Stable callback, so a re-render never tears it down.
+  const videoElRef = useRef<HTMLVideoElement | null>(null);
+  const cropVideoRef = useCallback((el: HTMLVideoElement | null) => {
+    if (el) { videoElRef.current = el; claimVideo(el, 'crop'); }
+    else { releaseVideo(videoElRef.current); videoElRef.current = null; }
+  }, []);
 
   const stageRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{
@@ -244,17 +260,19 @@ export default function CropTool({
           onPointerUp={onPointerUp}
           onPointerLeave={onPointerUp}
         >
-          {mediaType === "video" ? (
+          {livePreview ? (
             <video
+              ref={cropVideoRef}
               src={mediaUrl} autoPlay muted loop playsInline
               onLoadedMetadata={(e) => { const v = e.currentTarget; setNaturalAr(v.videoWidth / v.videoHeight); vdbg('crop:ready', `${v.videoWidth}x${v.videoHeight}`); }}
               style={{ display: "block", maxWidth: "100%", maxHeight: "62vh", transform: mediaTransform, transformOrigin: mediaOrigin, transition: "transform 0.05s linear" }}
             />
           ) : (
             <img
-              src={mediaUrl} alt="Crop preview"
+              src={mediaType === "video" && posterUrl ? posterUrl : mediaUrl} alt="Crop preview"
               onLoad={(e) => {
                 const i = e.currentTarget; setNaturalAr(i.naturalWidth / i.naturalHeight);
+                if (mediaType === "video") vdbg('crop:ready', `poster ${i.naturalWidth}x${i.naturalHeight}`);
                 if (cropDebugOn()) {
                   const r = stageRef.current?.getBoundingClientRect();
                   const d = debugInfo;

@@ -92,7 +92,7 @@ export default function VideoDebugOverlay() {
       <div aria-hidden style={wrap}>
         <div style={box}>
           <button style={tab} onClick={() => setCollapsed(false)} aria-label="expand">⌄</button>
-          {`video ${lastCrumb ? `${lastCrumb.step}+${lastCrumb.elapsed.toFixed(1)}·v${lastCrumb.v}` : `idle·v${r.videosLive}`}`}
+          {`video ${lastCrumb ? `${lastCrumb.step}+${lastCrumb.elapsed.toFixed(1)}·v${lastCrumb.v} gl:${lastCrumb.g}` : `idle·v${r.videosLive} gl:${r.glLive}`}`}
         </div>
       </div>
     );
@@ -102,10 +102,10 @@ export default function VideoDebugOverlay() {
   if (reloadStep) header.push(`⚠ LAST STEP BEFORE RELOAD: ${reloadStep}`);
   header.push(`?debug=video ${BUILD_SHA} @${nav}`);
   header.push(`file ${f.sizeMB ?? '–'}MB ${f.container ?? '–'} ${f.res ?? '–'} ${f.durationS ?? '–'}s  fps${f.fps ?? 'n/a'}`);
-  header.push(`vid ${r.videosLive} live/${r.videosTotal}  url ${r.urlsLive}/${r.urlsTotal}  cvs ${r.canvasesLive}/${r.canvasesTotal} ${r.canvasMP.toFixed(1)}MP  copy ${r.bigBlobCount}×(${r.bigBlobMB.toFixed(0)}MB)`);
+  header.push(`vid ${r.videosLive} live/${r.videosTotal}  gl ${r.glLive} live/${r.glTotal}  url ${r.urlsLive}/${r.urlsTotal}  cvs ${r.canvasesLive}/${r.canvasesTotal} ${r.canvasMP.toFixed(1)}MP  copy ${r.bigBlobCount}×(${r.bigBlobMB.toFixed(0)}MB)`);
   for (const e of snap.errors) header.push(`err ${e}`);
 
-  const crumbLines = snap.crumbs.map((c) => `${c.step}+${c.elapsed.toFixed(1)}·v${c.v}${c.detail ? `(${c.detail})` : ''}`);
+  const crumbLines = snap.crumbs.map((c) => `${c.step}+${c.elapsed.toFixed(1)}·v${c.v} gl:${c.g}${c.detail ? `(${c.detail})` : ''}`);
 
   return (
     <div aria-hidden style={wrap}>
