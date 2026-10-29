@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import { isStripePlan, tierForPlan, tierForPrice, type MembershipTier } from "@/lib/stripePlans";
 
 // ── Stripe webhook — FULL subscription lifecycle ──────────────────────────────
 //
@@ -19,6 +20,11 @@ import { createClient, SupabaseClient } from "@supabase/supabase-js";
 // DID-based path is checkout.session.completed, whose metadata.privyUserId we
 // set ourselves at session creation.
 // Unknown events: acknowledged 200, ignored.
+//
+// TIER (Brief AUG-1): every write that grants access also writes profiles.membership_tier
+// ('pro' | 'augmented'), resolved from the subscription's Price (tierForPrice) so renewals and
+// plan changes land the right tier; subscription.deleted reverts it to 'free'. augmented_since
+// is stamped once on the way into Augmented and cleared on the way out.
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2024-06-20",
@@ -50,6 +56,26 @@ async function profileFor(
     if (data?.user_id) return data.user_id;
   }
   return null;
+}
+
+// The tier a subscription grants: its Price first (authoritative — survives plan changes in the
+// portal), the plan metadata we set at checkout second, Pro as the historic default.
+function tierOfSubscription(sub: Stripe.Subscription | null, plan?: string | null): Exclude<MembershipTier, "free"> {
+  const priceId = sub?.items?.data?.[0]?.price?.id;
+  return tierForPrice(priceId) ?? (isStripePlan(plan) ? tierForPlan(plan) : null)
+    ?? (isStripePlan(sub?.metadata?.plan) ? tierForPlan(sub!.metadata.plan as never) : "pro");
+}
+
+// Tier write: membership_tier is absolute; augmented_since is stamped only when first entering
+// Augmented (the .is(null) guard makes redelivery a no-op) and cleared when leaving it.
+async function writeTier(supabase: SupabaseClient, userId: string, tier: MembershipTier): Promise<void> {
+  const { error } = await supabase.from("profiles").update({ membership_tier: tier }).eq("user_id", userId);
+  if (error) { console.warn("[stripe/webhook] membership_tier write failed (run mus1_aug1.sql?):", error.message); return; }
+  if (tier === "augmented") {
+    await supabase.from("profiles").update({ augmented_since: new Date().toISOString() }).eq("user_id", userId).is("augmented_since", null);
+  } else {
+    await supabase.from("profiles").update({ augmented_since: null }).eq("user_id", userId);
+  }
 }
 
 // Core fields write + best-effort writes for post-migration columns
@@ -107,11 +133,22 @@ export async function POST(req: NextRequest) {
         const customerId = typeof session.customer === "string" ? session.customer : null;
         const subscriptionId = typeof session.subscription === "string" ? session.subscription : null;
 
+        // UPGRADE (Pro → Augmented, or monthly ↔ annual): the new subscription supersedes the
+        // stored one. End the old one now so the member is never billed twice; its
+        // subscription.deleted is ignored below because it is no longer the profile's current sub.
+        const { data: prior } = await supabase.from("profiles").select("stripe_subscription_id").eq("user_id", userData.id).maybeSingle();
+        const priorSub = prior?.stripe_subscription_id as string | null | undefined;
+        if (priorSub && subscriptionId && priorSub !== subscriptionId) {
+          try { await stripe.subscriptions.cancel(priorSub, { prorate: true }); console.log("[stripe/webhook] superseded sub cancelled:", priorSub); }
+          catch (e) { console.warn("[stripe/webhook] could not cancel superseded sub", priorSub, (e as Error).message); }
+        }
+
         // paid_member_until: the REAL period end for subscriptions; one-time
         // 'payment' mode (annual) has no subscription → plan-based fallback.
         let paidUntil: string | null = null;
+        let sub: Stripe.Subscription | null = null;
         if (subscriptionId) {
-          try { paidUntil = periodEndIso(await stripe.subscriptions.retrieve(subscriptionId)); } catch { /* fallback below */ }
+          try { sub = await stripe.subscriptions.retrieve(subscriptionId); paidUntil = periodEndIso(sub); } catch { /* fallback below */ }
         }
         if (!paidUntil) {
           const days = plan === "annual_stripe" ? 365 : 30;
@@ -131,7 +168,9 @@ export async function POST(req: NextRequest) {
           membership_cancels_at: null,
           membership_payment_failed_at: null,
         });
-        console.log("[stripe/webhook] activated:", privyUserId, "until:", paidUntil, "| sub:", subscriptionId);
+        const tier = tierOfSubscription(sub, plan);
+        await writeTier(supabase, userData.id, tier);
+        console.log("[stripe/webhook] activated:", privyUserId, "tier:", tier, "until:", paidUntil, "| sub:", subscriptionId);
         break;
       }
 
@@ -152,12 +191,14 @@ export async function POST(req: NextRequest) {
         let paidUntil: string | null = null;
         const lineEnd = invoice.lines?.data?.[0]?.period?.end;
         if (lineEnd) paidUntil = new Date(lineEnd * 1000).toISOString();
-        if (!paidUntil && subscriptionId) {
-          try { paidUntil = periodEndIso(await stripe.subscriptions.retrieve(subscriptionId)); } catch { /* keep null */ }
+        let sub: Stripe.Subscription | null = null;
+        if (subscriptionId) {
+          try { sub = await stripe.subscriptions.retrieve(subscriptionId); if (!paidUntil) paidUntil = periodEndIso(sub); } catch { /* keep null */ }
         }
         await writeMembership(supabase, userId,
           { is_paid_member: true, ...(paidUntil ? { paid_member_until: paidUntil } : {}) },
           { membership_payment_failed_at: null });
+        if (sub) await writeTier(supabase, userId, tierOfSubscription(sub));
         console.log("[stripe/webhook] renewal:", userId, "until:", paidUntil);
         break;
       }
@@ -167,12 +208,17 @@ export async function POST(req: NextRequest) {
         const sub = event.data.object as Stripe.Subscription;
         const userId = await profileFor(supabase, sub.id, typeof sub.customer === "string" ? sub.customer : null);
         if (!userId) return NextResponse.json({ received: true, ignored: "no matching profile" });
+        const { data: cur } = await supabase.from("profiles").select("stripe_subscription_id").eq("user_id", userId).maybeSingle();
+        if (cur?.stripe_subscription_id && cur.stripe_subscription_id !== sub.id) {
+          return NextResponse.json({ received: true, ignored: "superseded subscription" });
+        }
         const cancelsAt = sub.cancel_at_period_end ? periodEndIso(sub) : null;
         await writeMembership(supabase, userId,
           sub.status === "active" || sub.status === "trialing"
             ? { is_paid_member: true, ...(periodEndIso(sub) ? { paid_member_until: periodEndIso(sub) } : {}) }
             : {},
           { membership_cancels_at: cancelsAt });
+        if (sub.status === "active" || sub.status === "trialing") await writeTier(supabase, userId, tierOfSubscription(sub));
         console.log("[stripe/webhook] sync:", userId, "| status:", sub.status, "| cancelsAt:", cancelsAt);
         break;
       }
@@ -182,6 +228,13 @@ export async function POST(req: NextRequest) {
         const sub = event.data.object as Stripe.Subscription;
         const userId = await profileFor(supabase, sub.id, typeof sub.customer === "string" ? sub.customer : null);
         if (!userId) return NextResponse.json({ received: true, ignored: "no matching profile" });
+        // Only the profile's CURRENT subscription can downgrade it — a superseded one (upgrade)
+        // matched only by customer id ends silently.
+        const { data: cur } = await supabase.from("profiles").select("stripe_subscription_id").eq("user_id", userId).maybeSingle();
+        if (cur?.stripe_subscription_id && cur.stripe_subscription_id !== sub.id) {
+          console.log("[stripe/webhook] superseded sub ended, no downgrade:", sub.id);
+          return NextResponse.json({ received: true, ignored: "superseded subscription" });
+        }
         const endedAt = (sub as unknown as { ended_at?: number }).ended_at;
         await writeMembership(supabase, userId, {
           is_paid_member: false,
@@ -190,6 +243,7 @@ export async function POST(req: NextRequest) {
           membership_cancels_at: null,
           membership_payment_failed_at: null,
         });
+        await writeTier(supabase, userId, "free");
         console.log("[stripe/webhook] DOWNGRADED:", userId, "| sub ended:", sub.id);
         break;
       }

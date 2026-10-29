@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
+import { isStripePlan, priceFor } from "@/lib/stripePlans";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2024-06-20",
@@ -9,32 +10,17 @@ export async function POST(req: NextRequest) {
   try {
     const { plan, privyUserId } = await req.json();
 
-    const isAnnual = plan === "annual_stripe";
+    if (!isStripePlan(plan)) return NextResponse.json({ error: "unknown plan" }, { status: 400 });
+    if (!privyUserId) return NextResponse.json({ error: "privyUserId required" }, { status: 400 });
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://scopeapp.world";
 
+    // AUG-1 — a dashboard Price (src/lib/stripePlans.ts), always a recurring subscription.
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
-      mode: isAnnual ? "payment" : "subscription",
-      line_items: [
-        {
-          price_data: {
-            currency: "usd",
-            product_data: {
-              name: isAnnual ? "Scope Pro — Annual" : "Scope Pro — Monthly",
-              description: isAnnual
-                ? "Full access to Scope Pro for 12 months. Unlimited posts, decks, analytics, and your member badge."
-                : "Full access to Scope Pro. Unlimited posts, decks, analytics, and your member badge. Renews monthly.",
-            },
-            unit_amount: isAnnual ? 5000 : 500,
-            ...(isAnnual ? {} : { recurring: { interval: "month" } }),
-          },
-          quantity: 1,
-        },
-      ],
-      metadata: {
-        privyUserId,
-        plan,
-      },
+      mode: "subscription",
+      line_items: [{ price: priceFor(plan), quantity: 1 }],
+      metadata: { privyUserId, plan },
+      subscription_data: { metadata: { privyUserId, plan } },
       success_url: `${baseUrl}/membership/success?session_id={CHECKOUT_SESSION_ID}&plan=${plan}`,
       cancel_url: `${baseUrl}/profile`,
     });
