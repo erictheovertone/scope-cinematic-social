@@ -27,6 +27,64 @@ export function readState(path) {
   return JSON.parse(readFileSync(path, 'utf8'));
 }
 
+// ── HARD RULE: the harness never runs as Eric ────────────────────────────────────────────────────
+// Refused by DID (offline, from every stored token) and by email (Privy users/me — the stored tokens
+// carry only the DID). No env override: a refusal means log in as the test account instead.
+export const FORBIDDEN_DIDS = ['did:privy:cmhjqhry90120kz0ddgzkir25'];
+export const FORBIDDEN_EMAILS = ['eric@muon.film'];
+const PRIVY_APP_ID = process.env.NEXT_PUBLIC_PRIVY_APP_ID || 'cmfggbvdy013fl50ba827mw47';
+
+const jwtSub = (v) => { try { return JSON.parse(Buffer.from(String(v).replace(/^"|"$/g, '').split('.')[1], 'base64url').toString()).sub ?? null; } catch { return null; } };
+
+function refuse(path, why) {
+  const bar = '█'.repeat(78);
+  return new Error(`\n${bar}\n[auth] REFUSED — ${why}\n  ${path} is Eric's session. The harness NEVER runs against eric@muon.film.\n  Log in as the TEST account:  BASE_URL=http://localhost:3000 AUTH_STATE=${path} npm run create:login:test\n${bar}`);
+}
+
+/** Every Privy DID the state could authenticate as (localStorage tokens on any origin + the cookie). */
+export function didsOf(state) {
+  const out = new Set();
+  for (const o of state.origins ?? []) for (const e of o.localStorage ?? []) if (e.name === 'privy:token' || e.name === 'privy:id_token') { const s = jwtSub(e.value); if (s) out.add(s); }
+  for (const c of state.cookies ?? []) if (/^privy-(token|id-token)$/.test(c.name)) { const s = jwtSub(c.value); if (s) out.add(s); }
+  return [...out];
+}
+
+/** Offline check — throws if any token in the state belongs to a forbidden DID. */
+export function assertNotForbiddenDid(state, path) {
+  const hit = didsOf(state).find((d) => FORBIDDEN_DIDS.includes(d));
+  if (hit) throw refuse(path, `Privy DID ${hit}`);
+}
+
+/**
+ * Full check — DID offline, then the account's linked emails from Privy. Fails CLOSED: if Privy can't
+ * confirm who the session is, nothing runs. Returns a status line for the run log.
+ */
+export async function assertHarnessIdentity(path, base) {
+  if (!existsSync(path)) throw new Error(`[auth] missing ${path}`);
+  const state = readState(path);
+  assertNotForbiddenDid(state, path);
+  const origin = new URL(base).origin;
+  const t = tokenOf(state, origin);
+  if (!t) throw new Error(`[auth] identity check: no Privy token in ${path}`);
+  const o = (state.origins ?? []).find((x) => x.origin === t.origin);
+  const caid = o?.localStorage?.find((e) => e.name === 'privy:caid')?.value?.replace(/^"|"$/g, '');
+  let res;
+  try {
+    res = await fetch('https://auth.privy.io/api/v1/users/me', {
+      headers: { 'privy-app-id': PRIVY_APP_ID, Origin: t.origin, ...(caid ? { 'privy-ca-id': caid } : {}), Authorization: `Bearer ${t.token.replace(/^"|"$/g, '')}`, Accept: 'application/json' },
+    });
+  } catch (e) { throw new Error(`[auth] identity check failed CLOSED — Privy unreachable (${e?.message || e}); refusing to run unverified`); }
+  if (!res.ok) throw new Error(`[auth] identity check failed CLOSED — Privy users/me ${res.status}; refusing to run unverified`);
+  const j = await res.json();
+  const u = j.user ?? j;
+  if (FORBIDDEN_DIDS.includes(u.id)) throw refuse(path, `Privy DID ${u.id}`);
+  const emails = (u.linked_accounts ?? []).flatMap((a) => [a.address, a.email]).filter((x) => typeof x === 'string' && x.includes('@')).map((x) => x.toLowerCase());
+  const bad = emails.find((e) => FORBIDDEN_EMAILS.includes(e));
+  if (bad) throw refuse(path, `linked email ${bad}`);
+  const mask = (e) => e.replace(/^(.).*(@.*)$/, '$1***$2');
+  return `identity ok — ${u.id} (${emails.map(mask).join(', ') || 'no email'})`;
+}
+
 /** The freshest privy:token in the file (any localhost origin, or `origin`), with its exp. */
 export function tokenOf(state, origin) {
   let best = null;

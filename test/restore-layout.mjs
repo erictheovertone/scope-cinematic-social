@@ -2,10 +2,12 @@
 // The create-matrix sweep cycles profile aspect_ratio through 5 values; this sets it back.
 // Usage:  BASE_URL=https://<deploy> LAYOUT_LABEL='1X SCOPE' node test/restore-layout.mjs
 import { chromium } from '@playwright/test';
+import { assertHarnessIdentity } from './auth-store.mjs';
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 const STATE = process.env.AUTH_STATE || 'test/.auth/throwaway.json'; // U2 — the ONE shared session
 const LABEL = process.env.LAYOUT_LABEL || '1X SCOPE';
+console.log(`[auth] ${await assertHarnessIdentity(STATE, BASE_URL)}`); // HARD RULE — never Eric's profile
 
 const browser = await chromium.launch();
 const ctx = await browser.newContext({ storageState: STATE, viewport: { width: 1440, height: 900 } });

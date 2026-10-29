@@ -9,17 +9,20 @@
 // 4× (≈ a mid iPhone on JS-heavy work). Desktop: 1440×900, no throttle. Cold load runs on
 // simulated 4G (150ms RTT, 1.6 Mbps down / 750 Kbps up — Lighthouse's mobile preset), cache
 // disabled. Gestures are real compositor gestures (Input.synthesizeScrollGesture), not
-// scrollTop writes. Uses the stored Privy session (test/.auth/state.json — npm run create:login).
+// scrollTop writes. Uses the ONE shared test session (AUTH_STATE, default test/.auth/throwaway.json) — never Eric's.
 //
 // Per scenario: long tasks (>50ms: count, total ms) · p95 / max frame time (rAF deltas) ·
 // CLS (layout-shift, no recent input) · JS heap peak · cold load adds TTI, request count,
 // transferred bytes and the five heaviest JS chunks.
 import { chromium, devices } from '@playwright/test';
 import { mkdirSync, writeFileSync, readFileSync, existsSync } from 'fs';
+import { DEFAULT_STATE, assertHarnessIdentity } from './auth-store.mjs';
 
 const args = process.argv.slice(2);
 const opt = (k, d) => { const i = args.indexOf(`--${k}`); return i >= 0 ? args[i + 1] : d; };
 const BASE = process.env.BASE_URL || 'http://localhost:3000';
+const STATE = process.env.AUTH_STATE || DEFAULT_STATE;
+console.log(`[auth] ${await assertHarnessIdentity(STATE, BASE)}`); // HARD RULE — refuses Eric's session before anything runs
 const LABEL = opt('label', 'run');
 const COMPARE = opt('compare', null);
 const ONLY = opt('only', null); // e.g. --only mobile
@@ -64,8 +67,8 @@ async function newSession(profile) {
   // domain — enabling it adds per-frame overhead to the frames being measured.
   const browser = await chromium.launch({ args: ['--enable-precise-memory-info'] });
   const ctx = await browser.newContext(profile === 'mobile'
-    ? { ...devices['iPhone 13'], viewport: { width: 375, height: 812 }, deviceScaleFactor: 3, storageState: 'test/.auth/state.json' }
-    : { viewport: { width: 1440, height: 900 }, storageState: 'test/.auth/state.json' });
+    ? { ...devices['iPhone 13'], viewport: { width: 375, height: 812 }, deviceScaleFactor: 3, storageState: STATE }
+    : { viewport: { width: 1440, height: 900 }, storageState: STATE });
   await ctx.addInitScript(COLLECTOR);
   // GATE_CSS: inject an experimental stylesheet (A/B a rendering fix before shipping it).
   if (process.env.GATE_CSS) await ctx.addInitScript((css) => { document.addEventListener('DOMContentLoaded', () => { const st = document.createElement('style'); st.textContent = css; document.head.appendChild(st); }); }, process.env.GATE_CSS);
