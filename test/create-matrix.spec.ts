@@ -82,6 +82,17 @@ function findBand(raw: Buffer, w: number, h: number, ch: number): { x0: number; 
   if (!ys.length || !xs.length) return null;
   return { x0: xs[0], y0: ys[0], x1: xs[xs.length - 1], y1: ys[ys.length - 1] };
 }
+// Brightness band (for the P3 CELLS fixture, which has no grid marker): the non-black content
+// region = rows/cols whose mean luminance clears a floor. Robust across engines/DPR.
+function findBrightBand(raw: Buffer, w: number, h: number, ch: number): { x0: number; y0: number; x1: number; y1: number } | null {
+  const lum = (i: number) => 0.3 * raw[i] + 0.59 * raw[i + 1] + 0.11 * raw[i + 2];
+  const rowLum = new Float32Array(h); const colSum = new Float64Array(w); const colN = new Int32Array(w);
+  for (let y = 0; y < h; y++) { let s = 0; const base = y * w * ch; for (let x = 0; x < w; x++) { const l = lum(base + x * ch); s += l; colSum[x] += l; colN[x]++; } rowLum[y] = s / w; }
+  const ys: number[] = []; for (let y = 0; y < h; y++) if (rowLum[y] > 25) ys.push(y);
+  const xs: number[] = []; for (let x = 0; x < w; x++) if (colSum[x] / colN[x] > 25) xs.push(x);
+  if (!ys.length || !xs.length) return null;
+  return { x0: xs[0], y0: ys[0], x1: xs[xs.length - 1], y1: ys[ys.length - 1] };
+}
 // Decode the fixture cell at an absolute pixel from a patch (filters border/text/letterbox).
 function decodeAtPx(raw: Buffer, w: number, h: number, ch: number, cx: number, cy: number): { r: number; c: number } | null {
   const rad = Math.max(3, Math.round(Math.min(w, h) * 0.02));
@@ -106,16 +117,35 @@ async function sampleRGB(raw: Buffer, w: number, h: number, ch: number, pts: [nu
 }
 const P3_PTS: [number, number][] = [[0.15, 0.5], [0.38, 0.5], [0.62, 0.5], [0.85, 0.5]];
 let _p3floor: number | null = null;
-// Floor = the engine's own P3→sRGB error in a BARE <img>, read from a colour-managed PAGE
-// screenshot (canvas.screenshot returns the raw WebGL buffer in a shifted space — not comparable).
+// Floor = the engine's own P3 error through a WebGL canvas with a FAITHFUL sRGB texture — the same
+// colour path gl-react's Surface uses (createImageBitmap({colorSpaceConversion:'default'}) decodes
+// P3→sRGB, proven faithful Δ≤2 on both engines; then a passthrough shader to a WebGL canvas). This
+// is the brief's "bare" reference for a WebGL pipeline: it captures the browser's WebGL-canvas display
+// gamut (which expands SATURATED colours on webkit) but adds no app grade — so budget = floor + 8
+// isolates a real PIPELINE colour error from the engine's WebGL gamut. (A bare <img> under-measures:
+// webkit colour-manages <img> but not a WebGL canvas, which no app code controls.)
 async function p3Floor(page: Page): Promise<number> {
   if (_p3floor != null) return _p3floor;
   const b64 = readFileSync(join(process.cwd(), 'test/fixtures/create/p3-tagged.jpg')).toString('base64');
-  await page.setContent(`<body style="margin:0;background:#000"><img style="position:fixed;inset:0;width:100vw;height:100vh;object-fit:fill" src="data:image/jpeg;base64,${b64}"></body>`);
+  await page.setContent('<body style="margin:0;background:#000"><canvas id="gl" style="position:fixed;inset:0;width:100vw;height:100vh"></canvas></body>');
+  await page.evaluate(async (data) => {
+    const img = new Image(); img.src = 'data:image/jpeg;base64,' + data; await img.decode();
+    const bmp = await createImageBitmap(img, { colorSpaceConversion: 'default' });
+    const cv = document.getElementById('gl') as HTMLCanvasElement; cv.width = 512; cv.height = 512;
+    const gl = cv.getContext('webgl', { preserveDrawingBuffer: true })!;
+    const vs = gl.createShader(gl.VERTEX_SHADER)!; gl.shaderSource(vs, 'attribute vec2 p;varying vec2 uv;void main(){uv=vec2((p.x+1.0)/2.0,(1.0-p.y)/2.0);gl_Position=vec4(p,0.0,1.0);}'); gl.compileShader(vs);
+    const fs = gl.createShader(gl.FRAGMENT_SHADER)!; gl.shaderSource(fs, 'precision mediump float;varying vec2 uv;uniform sampler2D t;void main(){gl_FragColor=texture2D(t,uv);}'); gl.compileShader(fs);
+    const pr = gl.createProgram()!; gl.attachShader(pr, vs); gl.attachShader(pr, fs); gl.linkProgram(pr); gl.useProgram(pr);
+    const buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+    const loc = gl.getAttribLocation(pr, 'p'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+    const tex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, tex); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, bmp);
+    gl.viewport(0, 0, 512, 512); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+  }, b64);
   await page.waitForTimeout(300);
   const { data, info } = await sharp(await page.screenshot()).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
   const s = await sampleRGB(data, info.width, info.height, info.channels, P3_PTS);
-  _p3floor = Math.max(...s.map(nearest)); // engine's P3→sRGB floor
+  _p3floor = Math.max(...s.map(nearest));
   return _p3floor;
 }
 
@@ -230,15 +260,14 @@ for (const frame of Object.keys(NOMINAL)) {
     const pcb = await pcanvas.boundingBox();
     const pshot = await page.screenshot(pcb ? { clip: { x: pcb.x, y: pcb.y, width: pcb.width, height: pcb.height } } : undefined);
     const { data: pd, info: pi } = await sharp(pshot).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
-    // The P3 fixture is the 4×4 CELLS (not the grid), so locate the crop band geometrically: the
-    // nominal-aspect crop centred in the source-aspect canvas. Sample at its vertical centre (row 2).
-    const cAsp = pi.width / pi.height, nom = NOMINAL[frame];
-    let bx0 = 0, by0 = 0, bw = pi.width, bh = pi.height;
-    if (nom >= cAsp) { bh = pi.width / nom; by0 = (pi.height - bh) / 2; } else { bw = pi.height * nom; bx0 = (pi.width - bw) / 2; }
-    const pPts: [number, number][] = P3_PTS.map(([nx]) => [(bx0 + nx * bw) / pi.width, (by0 + 0.5 * bh) / pi.height] as [number, number]);
+    // The P3 fixture is the 4×4 CELLS (no grid marker) — find the bright content band and sample its
+    // vertical centre (the 2.39 crop delivers the middle row) across the four columns.
+    const pb = findBrightBand(pd, pi.width, pi.height, pi.channels);
+    const pbw = pb ? pb.x1 - pb.x0 : pi.width, pbh = pb ? pb.y1 - pb.y0 : pi.height, pbx = pb ? pb.x0 : 0, pby = pb ? pb.y0 : 0;
+    const pPts: [number, number][] = P3_PTS.map(([nx]) => [(pbx + nx * pbw) / pi.width, (pby + 0.5 * pbh) / pi.height] as [number, number]);
     const ps = await sampleRGB(pd, pi.width, pi.height, pi.channels, pPts);
     const pipeMax = Math.max(...ps.map(nearest));
-    if (process.env.MX_DEBUG) console.log(`DBG p3 ${engine} canvas ${pi.width}x${pi.height} band y0=${Math.round(by0)} h=${Math.round(bh)} samples=${ps.map((p) => `${p.r},${p.g},${p.b}`).join(' | ')} floor=${floor.toFixed(1)}`);
+    if (process.env.MX_DEBUG) console.log(`DBG p3 ${engine} canvas ${pi.width}x${pi.height} band ${Math.round(pbw)}x${Math.round(pbh)}@(${Math.round(pbx)},${Math.round(pby)}) samples=${ps.map((p) => `${p.r},${p.g},${p.b}`).join(' | ')} floor=${floor.toFixed(1)}`);
     const budget = floor + 8;
     const p3Str = `Δ${pipeMax.toFixed(0)}/floor${floor.toFixed(0)}+8`;
     expect.soft(pipeMax, `[${engine}/${frame}/p3] pipeline Δ=${pipeMax.toFixed(1)} > budget ${budget.toFixed(1)} (floor ${floor.toFixed(1)})`).toBeLessThanOrEqual(budget);
