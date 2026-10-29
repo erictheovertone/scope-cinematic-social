@@ -4,10 +4,26 @@
 -- Rules of engagement (§4): zero visible/functional change for legitimate users;
 -- the ONLY behaviour that may change is that FORGED requests are denied.
 --
+-- ── RE-VERIFIED 2026-10-29 against the current schema (QUEUE-4 §8) ───────────
+--   • New columns since this was written — media_has_renditions (posts),
+--     signup_ref / signup_profile (users) — require NO change here:
+--       - media_has_renditions is a POSTS column; SEC-0 never touches posts grants
+--         (content vandalism is the stated SEC-1 residual).
+--       - signup_ref / signup_profile are attribution, not identity/money; the 2a
+--         trigger guards only privy_id + wallet_address (SEC-0's identity scope).
+--   • 2b re-grant verified: profiles has 41 columns = 28 re-granted (below) + the
+--     13 sensitive withheld (is_paid_member, is_top_collector, paid_member_until,
+--     payment_method, stripe_customer_id, is_in_house_creator, is_founding_member,
+--     founding_member_number, portfolio_mc, is_screening_room_holder,
+--     stripe_subscription_id, membership_cancels_at, srh_count). No legit-writable
+--     column is accidentally revoked; every granted column exists.
+--   • anon-smoke BEFORE baseline (prod, 2026-10-29): all 5 forged writes ALLOWED
+--     (exit 1) — uncontained, as expected. Eric's identity row restored intact.
+--
 -- ⚠️  RUN ORDER — READ BEFORE RUNNING ANYTHING  ⚠️
---   STEP 0  Deploy the code first (commit <hash> → Vercel READY): the two new
---           server routes /api/post-media/delete and /api/coin-metadata. Until
---           they are LIVE, STEP 2c below WILL break poster-replace and minting.
+--   STEP 0  Code is ALREADY LIVE: /api/post-media/delete and /api/coin-metadata
+--           are on main (production) as of this commit → Vercel READY. (They must
+--           stay live; until they were, STEP 2c would break poster-replace + mint.)
 --   STEP 1  Rehearse THIS WHOLE FILE on a Supabase PREVIEW BRANCH with seeded
 --           data (gate 4). Confirm onboarding / profile-edit / poster-replace /
 --           mint all still pass there.
