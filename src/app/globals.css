@@ -197,6 +197,10 @@ html, body {
   --positive: #00E08A;     /* earnings / positive (stays green on paper) */
   --positive-alt: #4ade80;
   --gold: #c9a84c;         /* badge accent (stays) */
+  /* AUG-1 — brass: the ONE Augmented accent (theme-invariant, like --gold). Used ONLY for
+     Augmented members: the tag, the avatar frame, the badge aperture, the chosen plan. */
+  --brass: #C8A86A;
+  --brass-grad: linear-gradient(135deg, #E9D29A, #C8A86A 45%, #8E7340);
   /* Glass/blend recipe (pill bar, sheet scrims): a black wash + the ivory hairline. */
   --glass-fill: rgb(var(--canvas-rgb) / 0.5);
   --glass-border: rgb(var(--ink-rgb) / 0.22);

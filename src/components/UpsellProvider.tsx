@@ -5,8 +5,11 @@ import UpsellSheet, { UpsellLimit } from '@/components/UpsellSheet';
 import MembershipSheet from '@/components/MembershipSheet';
 import ProCelebration from '@/components/ProCelebration';
 import VideoCelebration from '@/components/VideoCelebration';
+import AugmentedSheet from '@/components/AugmentedSheet';
 
-const Ctx = createContext<{ showUpsell: (l: UpsellLimit) => void; goPro: () => void }>({ showUpsell: () => {}, goPro: () => {} });
+// AUG-1 — showAugmented() raises the Augmented Pro sheet (Settings → Membership, a Download tap by
+// a non-member, the Augmented badge tap). It resolves in place: no navigation.
+const Ctx = createContext<{ showUpsell: (l: UpsellLimit) => void; goPro: () => void; showAugmented: () => void }>({ showUpsell: () => {}, goPro: () => {}, showAugmented: () => {} });
 export const useUpsell = () => useContext(Ctx);
 
 export function UpsellProvider({ children }: { children: ReactNode }) {
@@ -18,6 +21,8 @@ export function UpsellProvider({ children }: { children: ReactNode }) {
   // celebration; any other origin keeps the existing profile badge/glow-in flow.
   const [fromFinishing, setFromFinishing] = useState(false);
   const [celebrate, setCelebrate] = useState(false);
+  const [showAug, setShowAug] = useState(false);
+  const showAugmented = useCallback(() => { setLimit(null); setShowMembership(false); setShowAug(true); }, []);
 
   const showUpsell = useCallback((l: UpsellLimit) => setLimit(l), []);
   const goPro = useCallback(() => {
@@ -39,7 +44,7 @@ export function UpsellProvider({ children }: { children: ReactNode }) {
   }, [fromFinishing, router]);
 
   return (
-    <Ctx.Provider value={{ showUpsell, goPro }}>
+    <Ctx.Provider value={{ showUpsell, goPro, showAugmented }}>
       {children}
       <UpsellSheet limit={limit} onClose={() => setLimit(null)} onGoPro={goPro} />
       <MembershipSheet
@@ -48,6 +53,7 @@ export function UpsellProvider({ children }: { children: ReactNode }) {
         onSuccess={handleMembershipSuccess}
         fromFinishing={fromFinishing}
       />
+      <AugmentedSheet visible={showAug} onClose={() => setShowAug(false)} onJoined={() => setShowAug(false)} />
       {celebrate && (
         <VideoCelebration
           videoSrc="/welcome-to-pro-new-ani.mp4"
