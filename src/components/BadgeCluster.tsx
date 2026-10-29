@@ -6,6 +6,7 @@
 // (e.g. the composer → discography) happens from inside the sheet.
 "use client";
 import ThemedImg from "@/components/ThemedImg";
+import { BrassAperture } from "@/components/brand/AugmentedMark";
 
 export interface ClusterBadge { key: string; src: string; title?: string }
 
@@ -26,7 +27,10 @@ export default function BadgeCluster({
       {/* Brief 2.2c: wrapping grid, 3 icons per row (→ 2 rows at 6 badges),
           right-aligned, icons ~17.8px (+15% again over 2.2b's 15.5), opacity 90–100%. */}
       <span style={{ display: "grid", gridTemplateColumns: "repeat(3, auto)", columnGap: 5, rowGap: 5, justifyContent: "end", justifyItems: "end" }}>
-        {badges.slice(0, 6).map((b, i) => (
+        {badges.slice(0, 6).map((b, i) => b.key === 'augmentedPro' ? (
+          // AUG-1 — the Augmented tier badge is the brass aperture (no image asset), first.
+          <BrassAperture key={b.key} size={18} />
+        ) : (
           <ThemedImg
             key={b.key}
             src={b.src}

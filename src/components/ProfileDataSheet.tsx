@@ -4,18 +4,15 @@ import ThemedImg from "@/components/ThemedImg";
 import { useState, useEffect, Fragment } from "react";
 import { createPortal } from "react-dom";
 import type { ProfileLink } from "@/lib/userService";
-import { isProMember, getComposerTopTracks } from "@/lib/userService";
+import { isProMember } from "@/lib/userService";
 import { feedImage } from "@/lib/mediaUrl";
 import { BADGES, resolveBadges, BADGE_SHORT_BLURB, BADGE_DISPLAY_NAME, type BadgeKey } from "@/lib/economy/badges";
 import { economyPreviewEnabled } from "@/lib/economy/flag";
 import { LedgerCard } from "@/components/Ledger";
 import { useRouter } from "next/navigation";
-
-/** Brief M11 §4b — seconds → m:ss for a track's micro-meta. */
-function fmtDuration(s: number): string {
-  const m = Math.floor(s / 60), sec = Math.floor(s % 60);
-  return `${m}:${sec.toString().padStart(2, '0')}`;
-}
+import BioMusicSection from "@/components/music/BioMusicSection";
+import { BrassAperture } from "@/components/brand/AugmentedMark";
+import { useUpsell } from "@/components/UpsellProvider";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -89,10 +86,8 @@ export default function ProfileDataSheet({
   const [sectionsVisible, setSectionsVisible] = useState(false);
   // BADGES section — tapped badge whose blurb pop-up is open (null = closed).
   const [activeBlurb, setActiveBlurb] = useState<BadgeKey | null>(null);
-  // Brief M11 §4b — the composer's approved tracks (Music section). Read-only; one query,
-  // no per-row fetches. Gated on the COMPOSER badge (same source of truth — W8 §2 lesson).
-  const [tracks, setTracks] = useState<{ id: string; title: string; duration_seconds: number | null }[]>([]);
-  const hasComposerBadge = badges.some((b) => b.key === 'composer');
+  // AUG-1 — tapping the brass Augmented badge raises the Augmented Pro sheet (badge-tap upsell).
+  const { showAugmented } = useUpsell();
 
   useEffect(() => {
     if (!isOpen) {
@@ -123,22 +118,6 @@ export default function ProfileDataSheet({
       window.dispatchEvent(new CustomEvent("scope:takeover-change"));
     };
   }, [isOpen]);
-
-  // Brief M11 §4b (fixed M11a) — load the composer's approved tracks (newest first). This
-  // MUST sit with the other hooks ABOVE the `if (!isOpen) return null` guard below: React
-  // #310 is a hook that runs on only SOME renders — placing it after the early return meant
-  // it ran when open (7 hooks) but not when closed (6) → order/count mismatch → crash. It
-  // no-ops internally when closed / non-composer, so running every render is free.
-  // Brief D13 — cap at 3 (was 5; the discography link carries the rest) and read through the
-  // ONE shared derivation (getComposerTopTracks) that the desktop DesktopBioSheet also uses.
-  useEffect(() => {
-    if (!isOpen || !hasComposerBadge || !profile?.user_id) { setTracks([]); return; }
-    let cancelled = false;
-    getComposerTopTracks(String(profile.user_id), 3)
-      .then((data) => { if (!cancelled) setTracks(data); })
-      .catch(() => { if (!cancelled) setTracks([]); });
-    return () => { cancelled = true; };
-  }, [isOpen, hasComposerBadge, profile?.user_id]);
 
   if (!isOpen) return null;
 
@@ -221,6 +200,7 @@ export default function ProfileDataSheet({
                tap-to-navigate here reads consistently rather than confusing the blurb pattern. */
             onClick={(e) => {
               e.stopPropagation();
+              if (b.brass) { showAugmented(); return; }
               if (b.key === 'composer' && profile?.username) { router.push(`/composer/${profile.username}`); return; }
               setActiveBlurb(b.key);
             }}
@@ -228,43 +208,25 @@ export default function ProfileDataSheet({
           >
             {/* Brief W10 §4 — no CSS container frame: the new badge PNG carries its own
                 rounded frame in the art. Render the image + label, nothing else. */}
-            <ThemedImg src={(b.framedSrc ?? b.bannerSrc ?? b.src) as string} alt={BADGE_DISPLAY_NAME[b.key]} style={{ width: '100%', height: 'auto', objectFit: 'contain', display: 'block' }} />
-            <span style={{ fontFamily: 'var(--font-body)', fontWeight: 400, fontSize: 7.5, letterSpacing: '0.12em', color: 'rgb(var(--ink-rgb) / 0.46)', textTransform: 'uppercase', textAlign: 'center', lineHeight: 1.1 }}>{BADGE_DISPLAY_NAME[b.key]}</span>
+            {b.brass
+              ? <span style={{ width: '100%', aspectRatio: '1', display: 'grid', placeItems: 'center' }}><BrassAperture size={34} /></span>
+              : <ThemedImg src={(b.framedSrc ?? b.bannerSrc ?? b.src) as string} alt={BADGE_DISPLAY_NAME[b.key]} style={{ width: '100%', height: 'auto', objectFit: 'contain', display: 'block' }} />}
+            <span style={{ fontFamily: 'var(--font-body)', fontWeight: 400, fontSize: 7.5, letterSpacing: '0.12em', color: b.brass ? 'var(--brass)' : 'rgb(var(--ink-rgb) / 0.46)', textTransform: 'uppercase', textAlign: 'center', lineHeight: 1.1 }}>{BADGE_DISPLAY_NAME[b.key]}</span>
           </button>
         ))}
       </div>
     </div>
   );
 
-  // MUSIC — Brief M11 §4b. ABOVE Kit in the spine. Renders ONLY for a composer with ≥1
-  // approved track (empty-section collapse). Rows + footer navigate to the discography
-  // (/composer/[handle]) — the track's home in this route structure; the music library
-  // exposes no per-track public deep link, and inline play would need the audio infra
-  // (out of this brief's read-only scope), so both route to the composer page for
-  // consistency with its own row behaviour.
-  if (hasComposerBadge && tracks.length > 0) sectionNodes.push(
-    <div key="music" style={{ ...sectionPad, ...sec(180) }}>
-      <div style={titleStyle}>Music</div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        {tracks.map((t, i) => (
-          <button
-            key={t.id}
-            onClick={(e) => { e.stopPropagation(); if (profile?.username) router.push(`/composer/${profile.username}`); }}
-            style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 12, width: '100%', background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left', marginBottom: i < tracks.length - 1 ? 10 : 0 }}
-          >
-            <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 10, color: 'rgb(var(--ink-rgb) / 0.79)', letterSpacing: 'var(--track-body)', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.title}</span>
-            {t.duration_seconds != null && (
-              <span style={{ fontFamily: 'var(--font-body)', fontWeight: 400, fontSize: 9, color: 'rgb(var(--ink-rgb) / 0.4)', letterSpacing: 'var(--track-body)', flexShrink: 0 }}>{fmtDuration(t.duration_seconds)}</span>
-            )}
-          </button>
-        ))}
-        <button
-          onClick={(e) => { e.stopPropagation(); if (profile?.username) router.push(`/composer/${profile.username}`); }}
-          style={{ display: 'block', marginTop: 14, background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 9, letterSpacing: 'var(--track-wide)', color: 'rgb(var(--ink-rgb) / 0.6)', textTransform: 'uppercase' }}
-        >
-          View Discography →
-        </button>
-      </div>
+  // MUSIC — MUS-1 §6: album covers via the shared BioMusicSection, directly AFTER Badges (the
+  // only place album covers appear on a user's pages). It renders null when the user has no
+  // albums, so its divider is drawn by the slot's own ::before (shown only when the slot is
+  // non-empty) instead of the spine's between-node Divider — no orphan rule when absent.
+  // Replaces the M11 per-track listing.
+  const musicIdx = profile?.user_id ? sectionNodes.length : -1;
+  if (profile?.user_id) sectionNodes.push(
+    <div key="music" className={musicIdx > 0 ? 'bio-music-slot ruled' : 'bio-music-slot'} style={sec(180)} onClick={(e) => e.stopPropagation()}>
+      <BioMusicSection userId={String(profile.user_id)} />
     </div>
   );
 
@@ -391,10 +353,17 @@ export default function ProfileDataSheet({
 
         {sectionNodes.map((node, i) => (
           <Fragment key={i}>
-            {i > 0 && <Divider />}
+            {i > 0 && i !== musicIdx && i - 1 !== musicIdx && <Divider />}
+            {/* the rule AFTER the music slot always draws (it separates prev|next when music is
+                absent) — except when music is the FIRST node and empty (CSS below). */}
+            {i > 0 && i - 1 === musicIdx && <div className="bio-after-music"><Divider /></div>}
             {node}
           </Fragment>
         ))}
+        <style>{`
+          .bio-music-slot.ruled:not(:empty)::before { content: ''; display: block; height: 1px; background: var(--hairline); }
+          .bio-music-slot:not(.ruled):empty + .bio-after-music { display: none; }
+        `}</style>
 
         {/* Return (+ UNFOLLOW for a followed profile — existing affordance kept). */}
         <div style={{ display: 'flex', justifyContent: isFollowing && !isOwnProfile && onUnfollow ? 'space-between' : 'flex-end', alignItems: 'center', padding: '24px 8px 0', ...sec(400) }}>

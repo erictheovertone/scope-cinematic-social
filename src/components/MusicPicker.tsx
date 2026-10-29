@@ -12,6 +12,7 @@ import { MUSIC_TAXONOMY } from "@/lib/musicTaxonomy";
 import TrackArt from "@/components/TrackArt";
 import Waveform from "@/components/Waveform";
 import { backfillPeaks } from "@/lib/waveform";
+import TrackView from "@/components/music/TrackView";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -46,6 +47,9 @@ export default function MusicPicker({
   const [q, setQ] = useState("");
   const [chips, setChips] = useState<string[]>([]);
   const [playing, setPlaying] = useState<string | null>(null);
+  // Brief MUS-1 — the in-sheet track view (artwork tap). Overlays the results INSIDE this sheet;
+  // no navigation, so the create flow underneath stays mounted.
+  const [viewId, setViewId] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // Footer-pill takeover while the picker is up; stop preview on unmount.
@@ -164,7 +168,11 @@ export default function MusicPicker({
           const isCurrent = currentTrackId === t.id;
           return (
             <div key={t.id} className="wf-row" style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 18px", borderBottom: `1px solid rgb(var(--ink-rgb) / 0.06)` }}>
-              <TrackArt url={t.artwork_url} title={t.title} id={t.id} size={38} />
+              <button type="button" data-testid={`picker-art-${t.id}`} aria-label={`Open ${t.title}`}
+                onClick={() => { try { audioRef.current?.pause(); } catch {} setPlaying(null); setViewId(t.id); }}
+                style={{ flexShrink: 0, background: "none", border: "none", padding: 0, cursor: "pointer", display: "block" }}>
+                <TrackArt url={t.artwork_url} title={t.title} id={t.id} size={38} />
+              </button>
               {/* play/pause */}
               <button onClick={() => togglePlay(t)} aria-label={isPlaying ? "Pause" : "Play"} style={{ flexShrink: 0, width: 32, height: 32, borderRadius: "50%", border: `1px solid ${HAIR}`, background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>
                 {isPlaying ? (
@@ -195,6 +203,28 @@ export default function MusicPicker({
           );
         })}
       </div>
+
+      {/* in-sheet track view — "Use in a post" selects exactly like the row's Select button */}
+      {viewId && (
+        <div style={{ position: "absolute", inset: 0, zIndex: 2, background: "var(--surface-1)", overflowY: "auto", overscrollBehavior: "contain", touchAction: "pan-y", paddingTop: "var(--safe-top)", paddingBottom: "var(--safe-bottom)" }}>
+          <TrackView
+            trackId={viewId}
+            embedded
+            onClose={() => setViewId(null)}
+            onUse={(tr, composer) => {
+              const known = tracks?.find((x) => x.id === tr.id);
+              const lib: LibraryTrack = known ?? {
+                id: tr.id, title: tr.title, composer_user_id: tr.composer_user_id,
+                composer_handle: composer?.username ?? null, keywords: tr.keywords ?? [],
+                duration_seconds: tr.duration_seconds, file_url: tr.file_url,
+                artwork_url: tr.artwork_url, waveform_peaks: tr.waveform_peaks,
+              };
+              setViewId(null);
+              pick(lib);
+            }}
+          />
+        </div>
+      )}
     </div>,
     document.body,
   );

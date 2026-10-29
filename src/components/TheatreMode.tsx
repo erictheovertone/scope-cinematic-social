@@ -32,6 +32,7 @@ import { useFirstCutLedger, FIRST_CUT_SLOTS } from '@/lib/firstCutLedger';
 import { BADGES } from '@/lib/economy/badges';
 import CollectSheetGate from '@/components/economy/CollectSheetGate';
 import FirstCutLedger from '@/components/economy/FirstCutLedger';
+import DownloadAction from '@/components/DownloadAction';
 import GradedVideo from '@/components/finishing/GradedVideo';
 import { feedImage } from '@/lib/mediaUrl';
 import MusicWaveButton from '@/components/music/MusicWaveButton';
@@ -636,6 +637,11 @@ export default function TheatreMode({
                   </span>
                 )}
               </div>
+            )}
+            {/* AUG-1 — Download, every theatre origin (feed + profile); the server gates. Note
+                floats ABOVE (the bar sits in the bottom letterbox band). */}
+            {f(post, 'id') && (
+              <DownloadAction kind="post" id={String(f(post, 'id'))} variant="theatre" notePlacement="above" noteAlign="right" />
             )}
           </div>
         )}

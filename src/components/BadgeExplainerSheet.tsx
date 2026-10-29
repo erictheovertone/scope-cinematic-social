@@ -10,6 +10,9 @@ import { resolveBadges } from "@/lib/economy/badges";
 import { useEconomy } from '@/components/EconomyProvider';
 import { supabase } from "@/lib/supabase/client";
 import { TIER_DETAILS } from "@/app/badge/[tier]/page";
+import { tierOf } from "@/lib/tier";
+import { BrassAperture } from "@/components/brand/AugmentedMark";
+import { useUpsell } from "@/components/UpsellProvider";
 
 const BOLD: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const REG: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -26,6 +29,8 @@ interface BadgeExplainerSheetProps {
     isScreeningRoomHolder?: boolean;
     isFoundingMember: boolean;
     foundingMemberNumber?: number | null;
+    /** AUG-1 — active Augmented Pro member (tierOf). */
+    isAugmented?: boolean;
   };
   isPaidMember?: boolean;
   paidMemberUntil?: Date | null;
@@ -65,6 +70,18 @@ const tiers = [
     title: 'SCOPE PRO',
     description: 'Unlimited posts, decks, and analytics. Debited from your wallet or via card. Your red aperture badge ships immediately.',
     sub: '$5 / MONTH · $50 / YEAR',
+  },
+  // AUG-1 — the paid Augmented tier. No image: renders <BrassAperture>. Tapping the row (or
+  // JOIN AUGMENTED) raises the Augmented Pro sheet via useUpsell().showAugmented().
+  {
+    key: 'augmented',
+    img: '',
+    size: 44,
+    label: 'AUGMENTED',
+    color: '#C8A86A',
+    title: 'AUGMENTED PRO',
+    description: 'Everything in Pro, plus unlimited full-resolution downloads, music downloads, and basic sync rights for your own social and YouTube. The brass mark rides on your profile and posts.',
+    sub: '$29.99 / MONTH · $299 / YEAR',
   },
   {
     key: 'top1k',
@@ -126,6 +143,7 @@ function tierEarned(key: string, t: BadgeExplainerSheetProps['userTiers'], isPai
   switch (key) {
     case 'free': return true;            // every account has it
     case 'pro': return isPaid;           // paid_member_until active
+    case 'augmented': return !!t.isAugmented; // AUG-1 paid tier
     case 'founding': return !!t.isFoundingMember;
     case 'creator': return !!t.isInHouseCreator;
     case 'top1k': return !!t.isTopCollector;
@@ -145,6 +163,7 @@ function getCurrentBadge(userTiers: BadgeExplainerSheetProps['userTiers']) {
 export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, userTiers, isPaidMember, paidMemberUntil, onManageMembership }: BadgeExplainerSheetProps) {
   const router = useRouter();
   const { user } = usePrivy();
+  const { showAugmented } = useUpsell();
   // Two-level stack: list ↔ in-sheet tier detail. Tapping a tier opens its full
   // description WITHOUT leaving the sheet; Back from the detail returns to the list
   // (not the profile). Sheet close (onClose) returns to the profile.
@@ -206,6 +225,7 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
             isScreeningRoomHolder: isSRH,
             isFoundingMember: isFounding,
             foundingMemberNumber: p.founding_member_number ?? null,
+            isAugmented: tierOf(p) === 'augmented',
           },
           isPaid,
           paidUntil: p.paid_member_until ? new Date(p.paid_member_until) : null,
@@ -344,6 +364,7 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
             single "my current badge", which no longer fits the multi-badge model. */}
         {(() => {
           const earned = resolveBadges({
+            isAugmented: vTiers.isAugmented,
             isFoundingMember: vTiers.isFoundingMember,
             isTopCollector: vTiers.isTopCollector,
             isScreeningRoomHolder: vTiers.isScreeningRoomHolder,
@@ -364,6 +385,9 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
                     {/* Framed design-refresh card (ratio-locked — the frames
                         aren't square) at the section's established 34px width;
                         pro falls back to min-design (no framed asset yet). */}
+                    {b.brass ? (
+                      <span key={`${b.key}-${visible ? 'open' : 'shut'}`} className="focus-pull" style={{ display: 'block', lineHeight: 0, animation: 'focusPull 2s cubic-bezier(0.16,0.84,0.3,1) both', animationDelay: `${i * 100}ms` }}><BrassAperture size={42.5} /></span>
+                    ) : (
                     <img
                       key={`${b.key}-${visible ? 'open' : 'shut'}`}
                       className="focus-pull"
@@ -371,6 +395,7 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
                       alt={b.title}
                       style={{ width: 42.5, height: b.framedSrc ? 'auto' : 42.5, objectFit: 'contain', display: 'block', animation: 'focusPull 2s cubic-bezier(0.16,0.84,0.3,1) both', animationDelay: `${i * 100}ms` }} /* 34 × 1.25 — Eric's +25% */
                     />
+                    )}
                     <span style={{ ...BOLD, fontSize: 'var(--fs-8)', letterSpacing: '0.04em', color: 'var(--ink-100)', textTransform: 'uppercase', lineHeight: 1.1, textAlign: 'center' }}>{b.title}</span>
                   </div>
                 ))}
@@ -394,15 +419,19 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
         {/* Tier list — ORDER: FREE → SCOPE PRO (membership tiers together) →
             earned honors below. Sorted by the ratified order. */}
         {[...tiers].sort((a, b) => {
-          const O = ['free', 'pro', 'founding', 'firstCut', 'top1k', 'srh', 'creator', 'composer'];
+          const O = ['free', 'pro', 'augmented', 'founding', 'firstCut', 'top1k', 'srh', 'creator', 'composer'];
           return O.indexOf(a.key) - O.indexOf(b.key);
         }).map((tier, i) => (
           <div key={tier.key} id={`badge-tier-${tier.key}`}>
-            <div onClick={() => { if (tier.key === 'composer' && vComposerTrackCount > 0 && viewerHandle) { onClose(); router.push(`/composer/${viewerHandle}`); } else setDetailKey(tier.key); }} style={{ display: 'flex', gap: 16, marginBottom: 24, alignItems: 'flex-start', cursor: 'pointer', animation: visible ? `badgeRippleIn 300ms ease-out ${i * 45}ms both` : undefined }}>
+            <div onClick={() => { if (tier.key === 'augmented') { if (!vTiers.isAugmented) { onClose(); showAugmented(); } } else if (tier.key === 'composer' && vComposerTrackCount > 0 && viewerHandle) { onClose(); router.push(`/composer/${viewerHandle}`); } else setDetailKey(tier.key); }} style={{ display: 'flex', gap: 16, marginBottom: 24, alignItems: 'flex-start', cursor: 'pointer', animation: visible ? `badgeRippleIn 300ms ease-out ${i * 45}ms both` : undefined }}>
               <div style={{ flexShrink: 0, marginTop: 2, position: 'relative', width: tier.size, height: tier.size }}>
                 {/* Flat min-design icon — consistent with the BADGES EARNED grid
                     above (no 3D/glow; the new flat assets don't suit a round coin). */}
+                {tier.key === 'augmented' ? (
+                  <span style={{ display: 'block', lineHeight: 0, animation: visible ? `badgeGlowPulse 400ms ease-out ${i * 45 + 150}ms both` : undefined }}><BrassAperture size={tier.size} /></span>
+                ) : (
                 <ThemedImg src={tier.img} alt={tier.label} style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block', animation: visible ? `badgeGlowPulse 400ms ease-out ${i * 45 + 150}ms both` : undefined }} />
+                )}
                 {tierEarned(tier.key, vTiers, vIsPaid, vComposerTrackCount) && (
                   <div style={{ position: 'absolute', top: -3, right: -3, width: 6, height: 6, borderRadius: '50%', backgroundColor: 'var(--ink-100)', zIndex: 2 }} />
                 )}
@@ -428,14 +457,20 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
                     <span style={{ ...BOLD, fontSize: 'var(--fs-9)', color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>GET PRO →</span>
                   </button>
                 )}
-                <button
+                {/* AUG-1 — not-held Augmented: the buy CTA (badge-tap upsell entry point). */}
+                {tier.key === 'augmented' && !vTiers.isAugmented && (
+                  <button onClick={(e) => { e.stopPropagation(); onClose(); showAugmented(); }} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '0 0 6px', display: 'block' }}>
+                    <span style={{ ...BOLD, fontSize: 'var(--fs-9)', color: 'var(--brass)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>JOIN AUGMENTED →</span>
+                  </button>
+                )}
+                {tier.key !== 'augmented' && <button
                   onClick={() => setDetailKey(tier.key)}
                   style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px 0 0', display: 'inline-block' }}
                 >
                   <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-8)', color: 'var(--ink-100)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
                     LEARN MORE →
                   </span>
-                </button>
+                </button>}
                 <p style={{ ...BOLD, fontSize: 'var(--fs-8)', color: 'rgb(var(--ink-rgb) / 0.25)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>
                   {tier.sub}
                 </p>

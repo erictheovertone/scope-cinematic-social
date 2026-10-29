@@ -18,6 +18,7 @@ import { getUserByPrivyId, getProfile } from '@/lib/userService';
 import { resolveMembership, membershipBarLabel, type MembershipState } from '@/lib/membership';
 import RedBrackets from '@/components/desktop/RedBrackets';
 import { TIER_DETAILS } from '@/app/badge/[tier]/page';
+import { BrassAperture } from '@/components/brand/AugmentedMark';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -34,7 +35,7 @@ export default function DesktopBadgesSheet({
   /** The viewed profile's @handle — a HELD composer row routes to their discography. */
   composerHandle?: string;
 }) {
-  const { goPro } = useUpsell();
+  const { goPro, showAugmented } = useUpsell();
   const router = useRouter();
   const { user } = usePrivy();
   const reduced = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
@@ -63,8 +64,11 @@ export default function DesktopBadgesSheet({
 
   if (typeof document === 'undefined') return null;
   // ORDER: the two membership tiers together at top, earned honors below.
-  const order: BadgeKey[] = ['free', 'pro', 'augmented', 'firstCut', 'top1k', 'srh', 'composer', 'inHouse'];
-  const DETAIL_KEY: Partial<Record<BadgeKey, string>> = { free: 'free', pro: 'pro', augmented: 'founding', firstCut: 'firstCut', top1k: 'top1k', srh: 'srh', composer: 'composer', inHouse: 'creator' };
+  // AUG-1 — augmentedPro (the paid tier, brass) sits with the membership tiers; adopter (the
+  // first-500 badge, formerly 'augmented') keeps its slot. augmentedPro has no TIER_DETAILS —
+  // its LEARN MORE / JOIN raise the Augmented Pro sheet (showAugmented).
+  const order: BadgeKey[] = ['free', 'pro', 'augmentedPro', 'adopter', 'firstCut', 'top1k', 'srh', 'composer', 'inHouse'];
+  const DETAIL_KEY: Partial<Record<BadgeKey, string>> = { free: 'free', pro: 'pro', adopter: 'founding', firstCut: 'firstCut', top1k: 'top1k', srh: 'srh', composer: 'composer', inHouse: 'creator' };
 
   return createPortal(
     <div data-swipe-exclude style={{ position: 'fixed', inset: 0, zIndex: 660, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -152,7 +156,11 @@ export default function DesktopBadgesSheet({
                     100%{filter:none} frame overrode the inline grayscale on locked badges.
                     No fill-mode → the pulse plays, then the icon reverts to its inline
                     filter (grayscale for locked). */}
+                {b.brass ? (
+                  <span style={{ lineHeight: 0, opacity: state === 'held' ? 1 : 0.85, animation: reduced ? 'none' : `badgeGlowPulse 400ms ease-out ${ri * 45 + 150}ms` }}><BrassAperture size={44} /></span>
+                ) : (
                 <ThemedImg src={src} alt={b.title} style={{ width: 44, height: 44, objectFit: 'contain', display: 'block', filter: state === 'held' ? 'none' : 'grayscale(1)', opacity: state === 'held' ? 1 : 0.85, animation: reduced ? 'none' : `badgeGlowPulse 400ms ease-out ${ri * 45 + 150}ms` }} />
+                )}
               </span>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
@@ -165,7 +173,11 @@ export default function DesktopBadgesSheet({
                 <div style={{ display: 'flex', alignItems: 'center', gap: 18, marginTop: 10 }}>
                   {/* HELD composer → the work (discography); everyone else / locked
                       composer → the earn-path descriptor. Coherent with held-vs-locked. */}
-                  {k === 'composer' && state === 'held' && composerHandle ? (
+                  {k === 'augmentedPro' ? (
+                    <button onClick={() => { onClose(); showAugmented(); }} style={{ ...SKB, fontSize: 11, color: 'var(--brass)', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>
+                      {state === 'held' ? 'AUGMENTED PRO →' : 'JOIN AUGMENTED →'}
+                    </button>
+                  ) : k === 'composer' && state === 'held' && composerHandle ? (
                     <button onClick={() => { onClose(); router.push(`/composer/${composerHandle}`); }} style={{ ...SKB, fontSize: 11, color: 'rgb(var(--ink-rgb) / 0.75)', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>
                       DISCOGRAPHY →
                     </button>
@@ -174,7 +186,7 @@ export default function DesktopBadgesSheet({
                       LEARN MORE →
                     </button>
                   )}
-                  {state === 'buyable' && isOwn && (
+                  {state === 'buyable' && isOwn && k !== 'augmentedPro' && (
                     <button onClick={(e) => { e.stopPropagation(); onClose(); goPro(); }} style={{ ...SKB, fontSize: 11, color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>
                       GET PRO →
                     </button>

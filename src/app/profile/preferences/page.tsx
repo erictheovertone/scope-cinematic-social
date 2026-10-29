@@ -9,6 +9,8 @@ import { useRouter } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
 import { getUserByPrivyId, getProfile, saveProfile, uploadImage, setShowRecap, isProMember } from "@/lib/userService";
 import { useUpsell } from "@/components/UpsellProvider";
+import { resolveMembership, membershipBarLabel, type MembershipState } from "@/lib/membership";
+import { AugmentedMark } from "@/components/brand/AugmentedMark";
 import AddToHomeScreenSheet from "@/components/AddToHomeScreenSheet";
 import ContributeMusicFlow from "@/components/ContributeMusicFlow";
 import { isStandalone } from "@/lib/pwaUtils";
@@ -49,7 +51,7 @@ export default function Preferences() {
   const router = useRouter();
   const { logout } = usePrivy();
   const { user } = usePrivy();
-  const { goPro } = useUpsell();
+  const { goPro, showAugmented } = useUpsell();
   const photoInputRef = useRef<HTMLInputElement>(null);
 
   const isDesktop = useIsDesktop();
@@ -62,6 +64,8 @@ export default function Preferences() {
   // Membership state rides the SAME profile fetch below — zero extra requests
   // (the cheapest state logic: the page already loads the profile).
   const [isPaid, setIsPaid] = useState(false);
+  // AUG-1 — the shared membership read (tier + RENEWS/CANCELS) for the Augmented Pro row.
+  const [membership, setMembership] = useState<MembershipState | null>(null);
   const [photoUploading, setPhotoUploading] = useState(false);
   const [photoSuccess, setPhotoSuccess] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
@@ -84,6 +88,7 @@ export default function Preferences() {
           });
           setShowRecapState(profile.show_recap !== false); // default ON
           setIsPaid(isProMember(profile as { is_paid_member?: boolean; paid_member_until?: string | null }));
+          setMembership(resolveMembership(profile as Parameters<typeof resolveMembership>[0]));
         }
       } catch (e) {
         console.error("Preferences load error:", e);
@@ -141,7 +146,8 @@ export default function Preferences() {
   // are the two additions. Row styling unchanged — sections are the only new
   // visual element. (PRIVACY SETTINGS is still the pre-existing no-op row —
   // renamed only, flagged for a future destination.)
-  type Row = { label: string; action: () => void; danger?: boolean };
+  type Row = { label: string; action: () => void; danger?: boolean; brass?: boolean; testId?: string };
+  const isAugmented = !!membership?.isPaid && membership.tier === 'augmented';
   const sections: { title: string; rows: Row[] }[] = [
     {
       title: 'PROFILE',
@@ -158,6 +164,11 @@ export default function Preferences() {
         isPaid
           ? { label: 'Manage Membership', action: () => router.push('/membership/manage') }
           : { label: 'Become a Member', action: () => goPro() }, // Brief X4 — opens the NEUTRAL membership upsell (MembershipSheet: benefits + $5/$50 + Stripe), not the post-limit 'posts' variant ("Your reel is full"). goPro from here has limit===null so fromFinishing stays false → normal success flow.
+        // AUG-1 — Augmented members see their status (shared membershipBarLabel → manage);
+        // everyone else gets the Augmented Pro offer (brass mark: this IS the offer).
+        isAugmented && membership
+          ? { label: membershipBarLabel(membership), action: () => router.push('/membership/manage'), brass: true, testId: 'settings-augmented-status' }
+          : { label: 'Augmented Pro', action: () => showAugmented(), brass: true, testId: 'settings-augmented-entry' },
       ],
     },
     {
@@ -223,11 +234,13 @@ export default function Preferences() {
             <div key={item.label}>
               <button
                 onClick={item.action}
+                data-testid={item.testId}
                 style={{
-                  display: 'block', width: '100%', background: 'transparent',
+                  display: item.brass ? 'flex' : 'block', alignItems: 'center', gap: 10, width: '100%', background: 'transparent',
                   border: 'none', cursor: 'pointer', padding: '18px 20px', textAlign: 'left',
                 }}
               >
+                {item.brass && <AugmentedMark width={18} />}
                 <span style={{ ...MONO, fontSize: 'var(--fs-11)', color: photoError && item.label === photoLabel ? 'var(--ink-100)' : 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                   {item.label}
                 </span>

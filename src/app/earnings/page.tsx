@@ -51,7 +51,7 @@ export default function EarningsPage() {
   const rows: { label: string; sub: string; value: number | null }[] = [
     { label: 'CREATOR EARNINGS', sub: 'YOUR CUT OF EVERY TRADE ON YOUR POSTS', value: data?.creatorEarnedUsd ?? null },
     { label: 'FIRST CUT EARNINGS', sub: 'YOUR SHARE FROM POSTS YOU FOUNDED', value: data?.firstCutEarnedUsd ?? null },
-    { label: 'POOL EARNINGS', sub: 'TOP 1K + AUGMENTED REWARD POOLS', value: data?.poolsEarnedUsd ?? null },
+    { label: 'POOL EARNINGS', sub: 'TOP 1K + ADOPTER REWARD POOLS', value: data?.poolsEarnedUsd ?? null },
   ];
 
   return (

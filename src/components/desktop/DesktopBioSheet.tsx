@@ -11,9 +11,12 @@ import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { feedImage } from '@/lib/mediaUrl';
 import { useEconomy } from '@/components/EconomyProvider';
-import type { ProfileLink, ComposerTrack } from '@/lib/userService';
-import { getComposerTopTracks } from '@/lib/userService';
+import type { ProfileLink } from '@/lib/userService';
 import type { BadgeMeta } from '@/lib/economy/badges';
+import BioMusicSection from '@/components/music/BioMusicSection';
+import { AugmentedTag, BrassAperture } from '@/components/brand/AugmentedMark';
+import { useUpsell } from '@/components/UpsellProvider';
+import { tierOf } from '@/lib/tier';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -32,8 +35,6 @@ const PORTRAIT_MASK = `linear-gradient(to right, transparent 0, var(--black) ${P
 
 type P = Record<string, unknown>;
 const usd = (n: number) => (n >= 1000 ? `$${Math.round(n).toLocaleString()}` : `$${n.toFixed(2)}`);
-// Brief D13 — track duration seconds → m:ss (mirrors the mobile fmtDuration).
-const fmtDur = (s: number | null) => { if (s == null || !isFinite(s)) return ''; const m = Math.floor(s / 60), sec = Math.floor(s % 60); return `${m}:${sec.toString().padStart(2, '0')}`; };
 
 interface Props {
   profile: P | null;
@@ -69,10 +70,9 @@ export default function DesktopBioSheet({ profile, isOwn, links, badges, posts, 
   const router = useRouter();
   const economy = useEconomy();
   const [portfolioMc, setPortfolioMc] = useState<number | null>(null);
-  // Brief D13 — MUSIC section: a composer's top approved tracks (cap 3), through the ONE
-  // shared derivation (getComposerTopTracks) the mobile ProfileDataSheet also consumes.
-  const [tracks, setTracks] = useState<ComposerTrack[]>([]);
-  const hasComposerBadge = badges.some((b) => b.key === 'composer');
+  const { showAugmented } = useUpsell();
+  // AUG-1 — brass tag in the header for an active Augmented member (profile is select('*')).
+  const isAug = tierOf(profile as Parameters<typeof tierOf>[0]) === 'augmented';
   // Brief D11 §1 — the loaded avatar's native px, read on <img> load. Caps the portrait render
   // size at native × 1.25 so a small master never upscales to softness (avatars have no rendition
   // tiers and top out at a 512 master — see report; a truly sharp large PFP is a Q1 follow-up).
@@ -108,18 +108,6 @@ export default function DesktopBioSheet({ profile, isOwn, links, badges, posts, 
     })();
     return () => { dead = true; };
   }, [posts, economy]);
-
-  // Brief D13 — load the composer's top 3 approved tracks (gated on the composer badge —
-  // same source of truth as the section's visibility). Read-only, one query, no per-row fetch.
-  useEffect(() => {
-    const uid = profile?.user_id ? String(profile.user_id) : '';
-    if (!hasComposerBadge || !uid) { setTracks([]); return; }
-    let cancelled = false;
-    getComposerTopTracks(uid, 3)
-      .then((data) => { if (!cancelled) setTracks(data); })
-      .catch(() => { if (!cancelled) setTracks([]); });
-    return () => { cancelled = true; };
-  }, [hasComposerBadge, profile?.user_id]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -183,6 +171,7 @@ export default function DesktopBioSheet({ profile, isOwn, links, badges, posts, 
           <div style={{ position: 'absolute', left: 40, top: 0, bottom: 0, width: 440, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
             <p style={{ ...SKB, fontSize: 11, color: RED, textTransform: 'uppercase', letterSpacing: '0.22em', margin: '0 0 14px' }}>CREATOR</p>
             <h1 style={{ ...SKB, fontSize: 'calc(46px * var(--type-scale))', lineHeight: 1, letterSpacing: '-0.02em', color: 'var(--ink-100)', textTransform: 'uppercase', margin: 0 }}>{name}</h1>
+            {isAug && <div style={{ marginTop: 12 }}><AugmentedTag size={10} /></div>}
             {handle && <p style={{ ...SKR, fontSize: 14, color: 'rgb(var(--ink-rgb) / 0.55)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '10px 0 0' }}>@{handle}</p>}
             {shortBio && <p style={{ ...SKR, fontSize: 14, color: 'rgb(var(--ink-rgb) / 0.7)', lineHeight: 1.6, margin: '18px 0 0', maxWidth: 400 }}>{shortBio}</p>}
             <button onClick={onMessage} style={{ ...SKB, alignSelf: 'flex-start', fontSize: 11, color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'transparent', border: '1px solid rgb(var(--ink-rgb) / 0.4)', cursor: 'pointer', padding: '12px 22px', margin: '26px 0 0' }}>MESSAGE {name.split(' ')[0]}</button>
@@ -220,10 +209,10 @@ export default function DesktopBioSheet({ profile, isOwn, links, badges, posts, 
                 <button
                   key={b.key}
                   className="d12-badge"
-                  onClick={() => { if (b.key === 'composer' && handle) { onClose(); router.push(`/composer/${handle}`); } else { onViewBadges(); } }}
+                  onClick={() => { if (b.brass) { onClose(); showAugmented(); } else if (b.key === 'composer' && handle) { onClose(); router.push(`/composer/${handle}`); } else { onViewBadges(); } }}
                   aria-label={`${b.key === 'top1k' ? 'Collector' : b.title} badge — view details`}
                 >
-                  <ThemedImg src={b.bannerSrc ?? b.src} alt="" style={{ width: 60, height: 60, objectFit: 'contain' }} />
+                  {b.brass ? <BrassAperture size={60} /> : <ThemedImg src={b.bannerSrc ?? b.src} alt="" style={{ width: 60, height: 60, objectFit: 'contain' }} />}
                   <span style={{ ...SKB, fontSize: 10, color: 'rgb(var(--ink-rgb) / 0.65)', textTransform: 'uppercase', letterSpacing: '0.08em', textAlign: 'center' }}>{b.key === 'top1k' ? 'COLLECTOR' : b.title}</span>
                   {b.key === 'firstCut' && firstCutCount > 0 && <span style={{ ...SKB, fontSize: 9, color: RED }}>{firstCutCount} SLOTS</span>}
                   {b.key === 'srh' && srhCount > 0 && <span style={{ ...SKB, fontSize: 9, color: RED }}>×{srhCount}</span>}
@@ -242,31 +231,9 @@ export default function DesktopBioSheet({ profile, isOwn, links, badges, posts, 
           </Band>
         )}
 
-        {/* ═══ MUSIC — Brief D13 §1 (ports mobile M11 §4) ═══ */}
-        {/* Renders ONLY for a composer with ≥1 approved track. Top 3 tracks (shared derivation
-            getComposerTopTracks; ordering = created_at DESC — no stored use-count, see report),
-            each row + the footer route to the discography (/composer/[handle]); the music
-            library exposes no per-track public deep link. ABOVE Kit, matching the mobile spine. */}
-        {hasComposerBadge && tracks.length > 0 && (
-          <Band label="MUSIC">
-            <div>
-              {tracks.map((t, i) => (
-                <button
-                  key={t.id}
-                  onClick={() => { if (handle) { onClose(); router.push(`/composer/${handle}`); } }}
-                  style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 20, width: '100%', maxWidth: 620, background: 'none', border: 'none', padding: '10px 0', cursor: 'pointer', textAlign: 'left', borderTop: i > 0 ? `1px solid ${HAIR}` : 'none' }}
-                >
-                  <span style={{ ...SKR, fontSize: 14, color: 'rgb(var(--ink-rgb) / 0.8)', letterSpacing: '0.01em', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.title}</span>
-                  <span style={{ ...SKR, fontSize: 12, color: 'rgb(var(--ink-rgb) / 0.4)', flexShrink: 0, fontVariantNumeric: 'tabular-nums' }}>{fmtDur(t.duration_seconds)}</span>
-                </button>
-              ))}
-              <button
-                onClick={() => { if (handle) { onClose(); router.push(`/composer/${handle}`); } }}
-                style={{ ...SKB, display: 'block', marginTop: 18, fontSize: 10, color: 'rgb(var(--ink-rgb) / 0.6)', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}
-              >VIEW DISCOGRAPHY →</button>
-            </div>
-          </Band>
-        )}
+        {/* ═══ MUSIC — MUS-1 §6: album covers via the shared BioMusicSection (renders null when the
+            user has no albums). Replaces the D13 per-track listing — covers live only here. ═══ */}
+        {profile?.user_id ? <BioMusicSection userId={String(profile.user_id)} /> : null}
 
         {kit.length > 0 && (
           <Band label="KIT">

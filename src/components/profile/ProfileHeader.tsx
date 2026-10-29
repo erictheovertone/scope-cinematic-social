@@ -15,6 +15,7 @@
 import { useRef, useState, useLayoutEffect, useEffect } from "react";
 import BadgeCluster from "@/components/BadgeCluster";
 import { feedImage } from "@/lib/mediaUrl";
+import { AugmentedTag, BrassFrame } from "@/components/brand/AugmentedMark";
 
 export interface ProfileHeaderAnalytics {
   followers: number;
@@ -36,6 +37,7 @@ export default function ProfileHeader({
   username,
   profileImage,
   isPaidMember,
+  isAugmented = false,
   analytics,
   badges,
   onOpenBadges,
@@ -47,6 +49,10 @@ export default function ProfileHeader({
   username: string;
   profileImage?: string | null;
   isPaidMember: boolean;
+  /** AUG-1 — active Augmented member (tierOf(profile) === 'augmented'): the brass tag REPLACES
+   *  PRO beside the name and the square PFP takes the 2px brass frame (same 65 box). The
+   *  brass badge-row aperture arrives through `badges` (key 'augmentedPro'). */
+  isAugmented?: boolean;
   analytics: ProfileHeaderAnalytics;
   badges: ProfileHeaderBadge[];
   onOpenBadges: () => void;
@@ -140,13 +146,15 @@ export default function ProfileHeader({
           square (frame 36:3), NOT derived from the text-column height; its bottom sits
           above the divider. Text column starts at PFP-right + ~7px gap (≈ x79). */}
       <div style={{ display: "flex", alignItems: "flex-start", gap: 7, padding: "4px 0 0 8px" }}>
-        <div style={{ width: 65, height: 65, flexShrink: 0, border: "1px solid var(--avatar-frame)", boxSizing: "border-box", overflow: "hidden" }}>
+        <BrassFrame on={isAugmented} style={{ width: 65, height: 65, boxSizing: "border-box" }}>
+        <div style={isAugmented ? { width: "100%", height: "100%", overflow: "hidden" } : { width: 65, height: 65, flexShrink: 0, border: "1px solid var(--avatar-frame)", boxSizing: "border-box", overflow: "hidden" }}>
           {profileImage ? (
             <img src={feedImage(profileImage, 172)} alt="Profile" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", display: "block" }} />
           ) : (
             <div style={{ width: "100%", height: "100%", backgroundColor: "var(--surface-4)" }} />
           )}
         </div>
+        </BrassFrame>
 
         <div style={{ flex: 1, minWidth: 0 }}>{/* Brief W4 — no paddingRight: the divider below runs to the RIGHT MARGIN (frame x81→375). */}
           {/* name+handle+stats — shrinks to the RENDERED NAME WIDTH; that outer edge
@@ -165,7 +173,9 @@ export default function ProfileHeader({
             </div>
             {/* PRO — INDEPENDENT chip, absolute just beyond the name's last letter.
                 ONLY for pro members; never in the name flex or its width. */}
-            {isPaidMember && (
+            {isAugmented ? (
+              <span style={{ position: "absolute", left: "100%", top: -1, marginLeft: 6, whiteSpace: "nowrap" }}><AugmentedTag /></span>
+            ) : isPaidMember && (
               <span style={{ position: "absolute", left: "100%", top: 1, marginLeft: 5, whiteSpace: "nowrap", fontFamily: "var(--font-black)", fontWeight: 900, fontSize: 4.85, color: "rgb(var(--ink-rgb) / 0.64)", letterSpacing: "var(--track-wide)" }}>PRO</span>
             )}
             {/* handle — right-aligned to the name's last letter; tight + smaller */}

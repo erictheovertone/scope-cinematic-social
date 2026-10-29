@@ -20,6 +20,7 @@ const NB = '/design-updates-071526/new-badges';
 const TI = '/design-updates-071526/token-icons';
 
 export const LIGHT_VARIANT: Record<string, string> = {
+  // ADOPTER badge art (key 'adopter' since AUG-1) — the asset filenames still say augmented.
   [`${NB}/augmented.png`]: `${DV}/augmented-dark.png`,
   [`${NB}/collector.png`]: `${DV}/collector-dark.png`,
   [`${NB}/composer.png`]: `${DV}/composer-dark.png`,

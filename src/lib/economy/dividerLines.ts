@@ -21,7 +21,7 @@ export interface DividerLine {
   /** CSS background — drives the actual 0.5px divider AND the picker swatch. */
   gradient: string;
   /** Minimum tier that unlocks this line (tiers stack — a tier sees all below).
-      0 = free/default · 1 = Pro + any badged · 2 = SRH/Collector/Augmented · 3 = Augmented. */
+      0 = free/default · 1 = Pro + any badged · 2 = SRH/Collector/Adopter · 3 = Adopter. */
   tier: 0 | 1 | 2 | 3;
 }
 
@@ -43,7 +43,7 @@ export const DIVIDER_ORDER: DividerLineKey[] = ['default', 'slate', 'splice', 'd
 export const TIER_UNLOCK_LABEL: Record<1 | 2 | 3, string> = {
   1: 'PRO+',
   2: 'COLLECTOR+',
-  3: 'AUGMENTED',
+  3: 'ADOPTER',
 };
 
 export interface DividerTierFlags extends BadgeTierFlags {
@@ -53,7 +53,7 @@ export interface DividerTierFlags extends BadgeTierFlags {
 
 /**
  * Highest unlocked tier from the user's ACTUAL held badges. Tiers stack.
- *   Augmented                         → 3 (SUNSET + BURN + all below)
+ *   Adopter (first 500)               → 3 (SUNSET + BURN + all below)
  *   SRH / Collector                   → 2 (DRIP + GOLDEN + tier 1)
  *   Pro / First Cut / In-House /
  *   Composer / (SRH / Collector)      → 1 (SLATE + SPLICE)

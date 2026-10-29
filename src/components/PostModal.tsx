@@ -17,6 +17,7 @@ import {
 } from "@/lib/postsService";
 import { getUserByPrivyId, getProfile } from "@/lib/userService";
 import DeckPickerSheet from "@/components/DeckPickerSheet";
+import DownloadAction from "@/components/DownloadAction";
 import PressPop from "@/components/PressPop";
 import CollectSheetGate from "@/components/economy/CollectSheetGate";
 import { isUntradeableCoin } from "@/lib/economy/pairing";
@@ -35,6 +36,8 @@ import ReframeOverlay from "@/components/ReframeOverlay";
 import EditMusicSheet from "@/components/EditMusicSheet";
 import MusicWaveButton from "@/components/music/MusicWaveButton";
 import MusicTitleChip from "@/components/music/MusicTitleChip";
+import { useAugmented } from "@/lib/tier";
+import { AugmentedChip } from "@/components/brand/AugmentedMark";
 
 interface Post {
   id: string;
@@ -234,6 +237,7 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
   // viewer == author — explicit prop wins; otherwise resolved Supabase ids.
   const ownerView = isOwner ?? (!!viewerSbId && post.user_id === viewerSbId);
   const ownerSbId = supabaseUserId || viewerSbId || '';
+  const isAugAuthor = useAugmented([post.user_id]); // AUG-1 — brass chip beside the author handle
 
   // Trigger entrance animation on mount
   useEffect(() => {
@@ -543,6 +547,7 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
                   : <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "var(--ink-100)", textTransform: "uppercase" }}>{post.username?.[0] ?? "?"}</span>}
               </div>
               <span className="tappable" onClick={() => goToProfile()} style={{ ...SKB, fontSize: 'var(--fs-9)', color: "var(--ink-100)", opacity: 0.7, letterSpacing: "-0.14px", cursor: "pointer", textTransform: "uppercase", display: "inline-block" }}>@{post.username}</span>
+              {isAugAuthor(post.user_id) && <AugmentedChip size={11} />}
               <MusicTitleChip post={post as { music_track_id?: string | null }} />
               {isCoinPost(post) && (
                 <span style={{ display: "flex", alignItems: "baseline", gap: 6, marginLeft: "auto" }}>
@@ -695,6 +700,9 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
               {isCoinPost(post) && post.coin_address && (
                 <PressPop><FirstCutChip iconOnly size={18.7} coinAddress={post.coin_address} postId={post.id} onPress={() => setShowFcSheet(true)} /></PressPop>
               )}
+
+              {/* AUG-1 — Download: visible to everyone; the server gates (login / Augmented upsell). */}
+              {post.id && <PressPop><DownloadAction kind="post" id={String(post.id)} variant="modal" /></PressPop>}
 
               {/* ••• — owner controls reveal (ripple-down). Non-owners have no
                   extra actions today (share is already in the row) → hidden. */}

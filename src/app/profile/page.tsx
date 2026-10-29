@@ -37,6 +37,7 @@ import BadgeCluster from "@/components/BadgeCluster";
 import ProfileHeader from "@/components/profile/ProfileHeader";
 import ProfileTabRow from "@/components/profile/ProfileTabRow";
 import { resolveBadges } from "@/lib/economy/badges";
+import { tierOf } from "@/lib/tier";
 import { dividerBackground } from "@/lib/economy/dividerLines";
 import { useEconomy } from "@/components/EconomyProvider";
 import CollectedGrid from "@/components/economy/CollectedGrid";
@@ -141,7 +142,10 @@ const userLayoutId = stableLayoutId;
   const [firstCutPull, setFirstCutPull] = useState<string | null>(null); // Moment 2 focus-pull
   const [arriveKeys, setArriveKeys] = useState<string[] | null>(null);     // badge-arrival entrance (pro etc.)
   const [dividerLine, setDividerLine] = useState<string | null>(null); // chosen banner divider (Piece 2)
-  const [holoBanner, setHoloBanner] = useState(false); // Augmented holo backdrop (Piece 3)
+  const [holoBanner, setHoloBanner] = useState(false); // Adopter holo backdrop (Piece 3)
+  // AUG-1 — active Augmented member, from the select('*') profile row (membership_tier +
+  // paid_member_until). Pre-migration → tierOf degrades to pro/free → false, no change.
+  const isAugmented = tierOf(rawProfile) === 'augmented';
   useEffect(() => {
     // First Cut is a REAL, table-backed award (first_cut_awards) — NOT mock
     // preview data — so it must NOT be gated behind the economy-preview flag.
@@ -166,7 +170,7 @@ const userLayoutId = stableLayoutId;
   // what Moment 1 celebrated. The strip itself gates the pull on an open slot.
   useEffect(() => {
     if (!badgesLoaded || !supabaseUserId) return;
-    const keys = resolveBadges({ isFoundingMember, isTopCollector, isScreeningRoomHolder, isPaidMember, isInHouseCreator, firstCutCount, composerTrackCount }).map((b) => b.key);
+    const keys = resolveBadges({ isAugmented, isFoundingMember, isTopCollector, isScreeningRoomHolder, isPaidMember, isInHouseCreator, firstCutCount, composerTrackCount }).map((b) => b.key);
     const storeKey = `scope:seenBadges:${supabaseUserId}`;
     let seen: string[] | null = null;
     try { const raw = localStorage.getItem(storeKey); seen = raw ? JSON.parse(raw) : null; } catch {}
@@ -187,7 +191,7 @@ const userLayoutId = stableLayoutId;
     }
     try { localStorage.setItem(storeKey, JSON.stringify(keys)); } catch {}
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [badgesLoaded, supabaseUserId, firstCutCount, composerTrackCount, isFoundingMember, isTopCollector, isScreeningRoomHolder, isPaidMember, isInHouseCreator]);
+  }, [badgesLoaded, supabaseUserId, firstCutCount, composerTrackCount, isAugmented, isFoundingMember, isTopCollector, isScreeningRoomHolder, isPaidMember, isInHouseCreator]);
 
   // PORTFOLIO MC — VALUATION RULE 2 (ratified): the PUBLIC number counts
   // EXTERNAL positions only (coins collected from others), never the user's
@@ -423,7 +427,7 @@ const userLayoutId = stableLayoutId;
   // Brief W8 §2 — ONE resolved held-badges list; the cluster (ProfileHeader) and the bio
   // sheet both consume it, so they can never diverge (COMPOSER was dropping in the sheet
   // because it re-derived without composerTrackCount).
-  const resolvedBadges = resolveBadges({ isFoundingMember, isTopCollector, isScreeningRoomHolder, isPaidMember, isInHouseCreator, firstCutCount, composerTrackCount });
+  const resolvedBadges = resolveBadges({ isAugmented, isFoundingMember, isTopCollector, isScreeningRoomHolder, isPaidMember, isInHouseCreator, firstCutCount, composerTrackCount });
 
   return (
     <div className="relative">{/* Non-scrolling viewport root — fixed chrome (footer + snapped frame) is lifted OUT below as SIBLINGS of the scroller, so on iOS standalone it anchors to the VIEWPORT, not the .screen-min scroll container (which floated the footer above the screen bottom). */}
@@ -479,10 +483,11 @@ const userLayoutId = stableLayoutId;
           username={userProfile.username}
           profileImage={userProfile.profileImage}
           isPaidMember={isPaidMember}
+          isAugmented={isAugmented}
           analytics={{ followers: analytics.followers, collectors: analytics.collectors, portfolioMc: analytics.portfolioMc, following: analytics.following, totalPosts: analytics.totalPosts, decks: userDecks.length }}
           expanded={profileDataOpen}
           badges={resolvedBadges
-            .filter((b) => b.bannerSrc)
+            .filter((b) => b.bannerSrc || b.brass)
             .map((b) => ({ key: b.key, src: (b.framedSrc ?? b.bannerSrc) as string, title: b.title }))}
           onOpenBadges={() => setShowBadgeSheet(true)}
           onMeasure={setHeaderH}
@@ -889,6 +894,7 @@ const userLayoutId = stableLayoutId;
           isTopCollector,
           isFoundingMember,
           foundingMemberNumber,
+          isAugmented,
         }}
         isPaidMember={isPaidMember}
         paidMemberUntil={paidMemberUntil}

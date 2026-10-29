@@ -821,7 +821,7 @@ html[data-theme="light"] .footer-pill.smoke { background: rgb(var(--canvas-rgb) 
   to { opacity: 1; transform: translate(0, 0) scale(1) rotate(0deg); }
 }
 
-/* ── Holographic banner (Piece 3 — Augmented only) ──────────────────────────
+/* ── Holographic banner (Piece 3 — Adopter / first-500 only) ──────────────────────────
    The LOCKED motion: a slow top→bottom DRIFT of the magenta/pink/plum gradient,
    14s full cycle (set on the element). Pure background-position on a tiny
    element → GPU-friendly, no scroll jank. */

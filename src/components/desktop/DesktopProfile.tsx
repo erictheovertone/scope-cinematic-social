@@ -23,6 +23,8 @@ import { useEconomy } from '@/components/EconomyProvider';
 import { resolveBadges, FIRST_CUT_ACTION_MARK } from '@/lib/economy/badges';
 import { getCachedMarketCaps } from '@/lib/economy/coinMarketData';
 import { feedImage } from '@/lib/mediaUrl';
+import { tierOf } from '@/lib/tier';
+import { AugmentedTag, BrassFrame, BrassAperture } from '@/components/brand/AugmentedMark';
 import PostModal from '@/components/PostModal';
 import DesktopBioSheet from '@/components/desktop/DesktopBioSheet';
 import DesktopBadgesSheet from '@/components/desktop/DesktopBadgesSheet';
@@ -302,7 +304,11 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
   const location = profile?.location ? String(profile.location) : null;
   const primaryLink = links.find((l) => (l as { is_primary?: boolean }).is_primary) ?? null;
 
+  // AUG-1 — the brass treatment for an active Augmented member (profile is select('*'), so it
+  // carries membership_tier + paid_member_until; pre-migration tierOf degrades to pro/free).
+  const isAug = tierOf(profile as Parameters<typeof tierOf>[0]) === 'augmented';
   const badges = useMemo(() => resolveBadges({
+    isAugmented: isAug,
     isFoundingMember: !!profile?.is_founding_member,
     isTopCollector: !!profile?.is_top_collector,
     isScreeningRoomHolder: !!profile?.is_screening_room_holder,
@@ -310,7 +316,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
     isInHouseCreator: !!profile?.is_in_house_creator,
     firstCutCount: fcCount,
     composerTrackCount: composerCount,
-  }).filter((b) => b.framedSrc ?? b.bannerSrc ?? b.src), [profile, fcCount, composerCount]);
+  }).filter((b) => b.brass || (b.framedSrc ?? b.bannerSrc ?? b.src)), [profile, fcCount, composerCount, isAug]);
   const srhCount = Math.max(1, Number(profile?.srh_count ?? 0) || 1);
 
   const sortedPosts = posts; // recent order (SORT BY was a temp control — removed)
@@ -370,11 +376,14 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
         <div style={{ position: 'relative', height: 205, boxSizing: 'border-box' }}>
           {/* PFP — 168×168, house ivory frame (frame x92 y14). The old Pro-only
               side accent is not in this frame → removed (flagged). */}
-          <div style={{ position: 'absolute', left: 0, top: 14, width: 168, height: 168, border: '1px solid var(--avatar-frame)', boxSizing: 'border-box', overflow: 'hidden' }}>
+          {/* AUG-1 — Augmented: the 2px brass frame REPLACES the ivory hairline (same 168 box). */}
+          <BrassFrame on={isAug} style={{ position: 'absolute', left: 0, top: 14, width: 168, height: 168, boxSizing: 'border-box' }}>
+          <div style={isAug ? { width: '100%', height: '100%', overflow: 'hidden' } : { position: 'absolute', left: 0, top: 14, width: 168, height: 168, border: '1px solid var(--avatar-frame)', boxSizing: 'border-box', overflow: 'hidden' }}>
             {pfp ? (
               <img src={feedImage(pfp, 400)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
             ) : <div style={{ width: '100%', height: '100%', background: 'var(--surface-2)' }} />}
           </div>
+          </BrassFrame>
 
           {/* Text block — name x288 (frame). Brief D3 §3 — adopt mobile's NAME-EDGE SYSTEM
               (the same declarative CSS pattern as ProfileHeader, node 38:88; it's a layout
@@ -396,7 +405,10 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
                 )}
               </div>
               {/* PRO — independent absolute chip just beyond the name; never in the edge math. */}
-              {profile && isProMember(profile as { is_paid_member?: boolean; paid_member_until?: string | null }) && (
+              {/* AUG-1 — Augmented: the brass tag REPLACES PRO (same absolute slot). */}
+              {isAug ? (
+                <span style={{ position: 'absolute', left: '100%', top: 0, marginLeft: 10, whiteSpace: 'nowrap' }}><AugmentedTag size={8} /></span>
+              ) : profile && isProMember(profile as { is_paid_member?: boolean; paid_member_until?: string | null }) && (
                 <span style={{ position: 'absolute', left: '100%', top: 2, marginLeft: 6, whiteSpace: 'nowrap', fontFamily: 'var(--font-black)', fontWeight: 900, fontSize: 6.7, color: 'rgb(var(--ink-rgb) / 0.64)', letterSpacing: 'var(--track-wide)' }}>PRO</span>
               )}
               {/* handle — RIGHT edge == the name's right edge (justify flex-end in the shrink column). */}
@@ -468,7 +480,11 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
           <div style={{ position: 'absolute', right: 0, top: 121, textAlign: 'right' }}>
             <button onClick={() => setBadgesOpen(true)} style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 15, color: 'rgb(var(--ink-rgb) / 0.76)', letterSpacing: 'var(--track-body)', margin: '0 0 10px', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, display: 'block', marginLeft: 'auto' }}>Badges</button>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8 }}>
-              {badges.slice(0, 4).map((b, i) => (
+              {badges.slice(0, 4).map((b, i) => b.brass ? (
+                <button key={b.key} className="tappable" onClick={() => setBadgesOpen(true)} aria-label="Augmented" style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', lineHeight: 0 }}>
+                  <BrassAperture size={30} />
+                </button>
+              ) : (
                 <ThemedImg
                   key={b.key}
                   className="tappable"
@@ -810,6 +826,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
         <DesktopBadgesSheet
           flags={{
             isPaidMember: profile ? isProMember(profile as { is_paid_member?: boolean; paid_member_until?: string | null }) : false,
+            isAugmented: isAug,
             isFoundingMember: !!profile?.is_founding_member,
             isTopCollector: !!profile?.is_top_collector,
             isScreeningRoomHolder: !!profile?.is_screening_room_holder,

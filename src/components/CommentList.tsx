@@ -19,6 +19,9 @@ import {
   unlikeComment,
   type CommentLikeState,
 } from "@/lib/commentInteractions";
+import { supabase } from "@/lib/supabase/client";
+import { useAugmented } from "@/lib/tier";
+import { AugmentedChip } from "@/components/brand/AugmentedMark";
 
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
@@ -36,6 +39,42 @@ export interface UIComment {
 }
 
 export type CommentVariant = "lightbox" | "scroll" | "feed" | "desktop";
+
+// ── AUG-1 — Augmented chip beside a commenter's @handle ─────────────────────
+// comments.user_id is the commenter's Privy DID, not the users.id uuid useAugmented keys on;
+// every comment row (and every surface's optimistic row) carries `username`. So resolve
+// username → profiles.user_id in ONE batched, module-cached read (columns that always exist —
+// safe pre-migration), then hand the uuids to the shared useAugmented (its own batched cache).
+const uidByName = new Map<string, string | null>();
+const namePending = new Set<string>();
+let nameTimer: ReturnType<typeof setTimeout> | null = null;
+const nameListeners = new Set<() => void>();
+function flushNames() {
+  nameTimer = null;
+  const names = [...namePending];
+  namePending.clear();
+  if (!names.length) return;
+  supabase.from("profiles").select("user_id, username").in("username", names).then(({ data }) => {
+    for (const n of names) if (!uidByName.has(n)) uidByName.set(n, null);
+    for (const r of (data ?? []) as { user_id: string; username: string }[]) uidByName.set(r.username, r.user_id);
+    nameListeners.forEach((l) => l());
+  });
+}
+function useAugmentedByUsername(names: (string | null | undefined)[]): (name: string | null | undefined) => boolean {
+  const [, bump] = useState(0);
+  const key = [...new Set(names.filter(Boolean) as string[])].sort().join(",");
+  useEffect(() => {
+    const l = () => bump((n) => n + 1);
+    nameListeners.add(l);
+    let added = false;
+    for (const n of key ? key.split(",") : []) if (!uidByName.has(n) && !namePending.has(n)) { namePending.add(n); added = true; }
+    if (added && !nameTimer) nameTimer = setTimeout(flushNames, 16);
+    return () => { nameListeners.delete(l); };
+  }, [key]);
+  const uids = key ? key.split(",").map((n) => uidByName.get(n) ?? null) : [];
+  const isAug = useAugmented(uids);
+  return (name) => !!name && isAug(uidByName.get(name) ?? null);
+}
 
 // ── Like state hook ─────────────────────────────────────────────────────────
 // Loads batch like-state for the current comment set and exposes an optimistic
@@ -236,8 +275,9 @@ function useLevelAvatar(depKey: string, biasPx = 0) {
 
 // ── One comment row ─────────────────────────────────────────────────────────
 function Row({
-  c, isReply, cfg, likeStates, onToggleLike, onReply, onProfile, avatarUrl, viewerDid,
+  c, isReply, cfg, likeStates, onToggleLike, onReply, onProfile, avatarUrl, viewerDid, augmented = false,
 }: {
+  augmented?: boolean;
   c: UIComment;
   isReply: boolean;
   cfg: VCfg;
@@ -292,7 +332,7 @@ function Row({
             onClick={canProfile ? (e) => { e.stopPropagation(); onProfile!(c.username as string); } : undefined}
             style={{ ...SKB, fontSize: handleSize, color: `rgb(var(--ink-rgb) / ${cfg.hOp})`, marginRight: 5, textTransform: "uppercase", cursor: canProfile ? "pointer" : "default", display: "inline-block" }}
           >
-            @{c.username}
+            @{c.username}{augmented && <AugmentedChip size={11} />}
           </span>
           <span style={{ ...SKR, fontSize: textSize, color: `rgb(var(--ink-rgb) / ${cfg.tOp})` }}>{c.content}</span>
         </div>
@@ -347,6 +387,7 @@ export default function CommentList({
   const groups = groupComments(comments);
   const resolveAvatar = avatarUrl ?? ((c: UIComment) => c.profile_image_url ?? null);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const isAugName = useAugmentedByUsername(comments.map((c) => c.username));
 
   return (
     <>
@@ -361,6 +402,7 @@ export default function CommentList({
               c={parent} isReply={false} cfg={cfg}
               likeStates={likeStates} onToggleLike={onToggleLike} onReply={onReply}
               onProfile={onProfile} avatarUrl={resolveAvatar(parent)} viewerDid={viewerDid}
+              augmented={isAugName(parent.username)}
             />
             {collapsed && (
               <button
@@ -375,6 +417,7 @@ export default function CommentList({
                 key={r.id} c={r} isReply cfg={cfg}
                 likeStates={likeStates} onToggleLike={onToggleLike}
                 onProfile={onProfile} avatarUrl={resolveAvatar(r)} viewerDid={viewerDid}
+                augmented={isAugName(r.username)}
               />
             ))}
           </div>

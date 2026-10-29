@@ -28,6 +28,8 @@ import MusicTitleChip from "@/components/music/MusicTitleChip";
 import { replyToComment } from "@/lib/commentInteractions";
 import { getAspectRatio, ratioPadding } from "@/lib/aspectRatio";
 import PillarboxFrame from "@/components/PillarboxFrame";
+import { useAugmented } from "@/lib/tier";
+import { AugmentedChip } from "@/components/brand/AugmentedMark";
 
 interface Post {
   id: string;
@@ -110,6 +112,10 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
   const [showCollectSheet, setShowCollectSheet] = useState(false);
   const [mc, setMc] = useState<string | null>(null);
   const economy = useEconomy();
+  // AUG-1 — brass chip beside an Augmented author's handle. posts.user_id = users.id uuid;
+  // useAugmented coalesces every card mounted in one render into ONE profiles read (cached).
+  const isAug = useAugmented([post.user_id]);
+  const authorAug = isAug(post.user_id);
   // Caption clamp (desktop cards only): detect whether 2 lines truncated it →
   // show the "… more" affordance. Display-only; the stored caption is untouched.
   const captionRef = useRef<HTMLParagraphElement>(null);
@@ -265,6 +271,7 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
           >
             @{post.username}
           </span>
+          {authorAug && <AugmentedChip size={11} />}
         </div>
         {/* Brief W7 §2a — song title UNDER the handle (mirrors mobile feed), marquee, sentence case.
             Chrome zone (byline), NOT the media wrapper → never scales with hoverGrow. */}
@@ -296,10 +303,15 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
           </span>
         </button>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 1, minWidth: 0, alignItems: 'flex-start' }}>
+          {/* AUG-1 — handle + brass chip on one line; the chip sits OUTSIDE the 0.66-opacity
+              handle button so the brass reads at full strength. */}
+          <span style={{ display: 'inline-flex', alignItems: 'center', minWidth: 0, maxWidth: '100%' }}>
           <button className="tappable" onClick={(e) => { e.stopPropagation(); router.push('/profile/' + post.username); }} style={{ display: 'inline-flex', alignItems: 'baseline', gap: 4, opacity: 0.66, background: 'none', border: 'none', padding: 0, cursor: 'pointer', minWidth: 0, maxWidth: '100%' }}>
             <span style={{ fontFamily: 'var(--font-light)', fontWeight: 400, fontSize: 10, color: 'var(--ink-100)', letterSpacing: 'var(--track-wide)', flexShrink: 0 }}>[ at ]</span>
             <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 12, color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: 'var(--track-body)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{post.username}</span>
           </button>
+          {authorAug && <AugmentedChip size={12} />}
+          </span>
           {/* SONG ROW — track title AS STORED (sentence case), 55 Roman ~11px ~55%,
               wave glyph, capped 28 chars/one line; renders ONLY when a track is
               attached (no reserved space otherwise). Resolves via the module-cached

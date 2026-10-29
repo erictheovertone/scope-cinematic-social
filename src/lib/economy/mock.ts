@@ -139,7 +139,7 @@ export const mockEconomy: EconomyApi = {
   async getBadges(userId: string): Promise<Badges> {
     const r = rng(hash('badges:' + userId));
     const badges: Badges = {};
-    if (r() > 0.6) badges.augmented = true;
+    if (r() > 0.6) badges.adopter = true;
     const fc = Math.floor(r() * 5);
     if (fc > 0) badges.firstCutCount = fc;
     if (r() > 0.5) badges.topKRank = 1 + Math.floor(r() * 1000);

@@ -108,8 +108,8 @@ export interface Earnings {
 
 /** Badge state for a user. Absent fields = badge not earned (skip in stack). */
 export interface Badges {
-  /** Augmented status (top rarity). */
-  augmented?: boolean;
+  /** Adopter status — one of the first 500 (was `augmented` before AUG-1). */
+  adopter?: boolean;
   /** Number of FIRST CUT founding positions held. */
   firstCutCount?: number;
   /** Top-1k rank (1..1000) if ranked, else absent. */

@@ -17,6 +17,7 @@ import type { ArrivalLoginMethod } from '@/lib/arrival/loginMethods';
 import { getAspectRatio } from '@/lib/aspectRatio';
 import { feedImage } from '@/lib/mediaUrl';
 import { BADGES } from '@/lib/economy/badges';
+import { AugmentedTag, BrassFrame } from '@/components/brand/AugmentedMark';
 
 const UI = 'var(--font-display)'; // Neue Haas Grotesk — ARR-5: everywhere, mono nowhere
 const CANVAS = '#050505';
@@ -160,9 +161,14 @@ export default function Arrival({ profile, refTag, loginMethods }: { profile: Pu
 
               {/* ── the sign-up card (ARR-5d) ── */}
               <div ref={cardRef} data-arrival-card aria-hidden style={{ position: 'absolute', left: '50%', top: t.cardTop, width: desktop ? 300 : 248, transform: 'translate(-50%,-50%) translateY(10px)', textAlign: 'center', opacity: 0, pointerEvents: 'none', display: 'grid', gap: 14, justifyItems: 'center' }}>
+                {/* AUG-1 (mock §2) — an Augmented owner: brass frame on the avatar + the tag under it,
+                    so a visitor sees the membership before the sign-in. */}
+                <BrassFrame on={!!profile.augmented} style={{ borderRadius: '50%' }}>
                 {profile.avatarUrl
                   ? <img src={feedImage(profile.avatarUrl, 144)} alt="" width={48} height={48} style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover' }} />
                   : <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'var(--surface-3)' }} />}
+                </BrassFrame>
+                {profile.augmented && <AugmentedTag />}
                 <div style={{ ...LABEL, color: 'rgb(var(--ink-rgb) / 0.6)' }}>{NAME} is on Scope</div>
                 <button type="button" role="checkbox" aria-checked={follow} onClick={() => setFollow((f) => !f)}
                   style={{ display: 'inline-flex', alignItems: 'center', gap: 9, color: 'var(--ink-100)', fontFamily: UI, fontSize: 15, padding: '2px 0', background: 'transparent', border: 'none', cursor: 'pointer' }}>

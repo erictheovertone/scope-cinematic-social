@@ -122,7 +122,7 @@ export const TIER_DETAILS: Record<string, {
       },
       {
         title: 'THE BADGE',
-        body: "The holographic augmented aperture is the most visually distinct badge on the platform. It marks you as someone who was here before Scope was Scope. That history doesn't disappear — it compounds.",
+        body: "The holographic Adopter aperture is the most visually distinct badge on the platform. It marks you as someone who was here before Scope was Scope. That history doesn't disappear — it compounds.",
       },
     ],
   },
@@ -191,7 +191,8 @@ export default function BadgeDetailPage() {
   const params = useParams();
   const router = useRouter();
   const tier = params?.tier as string;
-  const detail = TIER_DETAILS[tier];
+  // 'adopter' (the AUG-1 name for the first-500 badge) aliases the existing 'founding' detail.
+  const detail = TIER_DETAILS[tier === 'adopter' ? 'founding' : tier];
 
   if (!detail) {
     return (

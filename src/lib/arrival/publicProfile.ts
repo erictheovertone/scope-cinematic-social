@@ -35,6 +35,9 @@ export interface PublicProfile {
   decksCount: number;
   /** Earned badges, rarity order — key + user-facing name only. */
   badges: { key: BadgeKey; name: string }[];
+  /** AUG-1 — an ACTIVE Augmented Pro member (brass frame + tag on the card). A derived boolean
+   *  only: the tier column and the membership dates never leave this file. */
+  augmented: boolean;
   /** The owner's grid layout (legacy layout id the grid readers understand) + column counts. */
   layoutId: string;
   mobileCols: number;
@@ -43,7 +46,7 @@ export interface PublicProfile {
 }
 
 /** Every key the public payload may carry — anon-smoke asserts the response against this. */
-export const PUBLIC_PROFILE_KEYS = ['username', 'displayName', 'avatarUrl', 'bio', 'framesCount', 'decksCount', 'badges', 'layoutId', 'mobileCols', 'desktopCols', 'frames'] as const;
+export const PUBLIC_PROFILE_KEYS = ['username', 'displayName', 'avatarUrl', 'bio', 'framesCount', 'decksCount', 'badges', 'augmented', 'layoutId', 'mobileCols', 'desktopCols', 'frames'] as const;
 export const PUBLIC_FRAME_KEYS = ['image', 'video', 'aspect', 'hasRenditions'] as const;
 
 const MAX_FRAMES = 60;
@@ -91,7 +94,7 @@ export async function getPublicProfile(rawUsername: string): Promise<PublicProfi
   if (!p?.username || !p.user_id) return null;
   const uid = String(p.user_id);
 
-  const [postsRes, framesCountRes, decksRes, userRes, tracksRes] = await Promise.all([
+  const [postsRes, framesCountRes, decksRes, userRes, tracksRes, tierRes] = await Promise.all([
     db.from('posts')
       .select('media_urls, media_type, layout_id, thumbnail_url, poster_url, stream_poster_url, stream_playback_url, video_status, media_has_renditions')
       .eq('user_id', uid).eq('is_deleted', false)
@@ -101,16 +104,23 @@ export async function getPublicProfile(rawUsername: string): Promise<PublicProfi
     db.from('decks').select('id', { count: 'exact', head: true }).eq('user_id', uid).neq('is_public', false),
     db.from('users').select('wallet_address').eq('id', uid).maybeSingle(),
     db.from('tracks').select('id', { count: 'exact', head: true }).eq('composer_user_id', uid).eq('status', 'approved'),
+    // AUG-1 — membership_tier in its OWN query: pre-migration the column doesn't exist, and adding
+    // it to the main select above would null the whole profile (→ 404). Here an error → not augmented.
+    db.from('profiles').select('membership_tier').eq('user_id', uid).maybeSingle(),
   ]);
 
   const fc = await firstCutCount(db, uid, (userRes.data?.wallet_address as string | null) ?? null).catch(() => 0);
   const paidUntil = p.paid_member_until ? new Date(p.paid_member_until as string) : null;
+  const paidActive = !!paidUntil && paidUntil.getTime() > Date.now();
+  // Same rule as tierOf (src/lib/tier.ts, client-only): augmented needs an active paid period.
+  const augmented = paidActive && !tierRes.error && (tierRes.data as { membership_tier?: string | null } | null)?.membership_tier === 'augmented';
   const badges = resolveBadges({
+    isAugmented: augmented,
     isFoundingMember: !!p.is_founding_member,
     isTopCollector: !!p.is_top_collector,
     isInHouseCreator: !!p.is_in_house_creator,
     isScreeningRoomHolder: !!p.is_screening_room_holder,
-    isPaidMember: !!paidUntil && paidUntil.getTime() > Date.now(),
+    isPaidMember: paidActive,
     firstCutCount: fc,
     composerTrackCount: tracksRes.count ?? 0,
   })
@@ -141,6 +151,7 @@ export async function getPublicProfile(rawUsername: string): Promise<PublicProfi
     framesCount: framesCountRes.count ?? frames.length,
     decksCount: decksRes.count ?? 0,
     badges,
+    augmented,
     layoutId,
     mobileCols: layoutId === 'collage' ? 2 : rl.mobileCount,
     desktopCols: rl.desktopCount,

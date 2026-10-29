@@ -87,7 +87,7 @@ export default function EditProfilePage() {
   const [firstCutCount, setFirstCutCount] = useState(0);
   const [lineFlags, setLineFlags] = useState({ isPaidMember: false, isFoundingMember: false, isTopCollector: false, isInHouseCreator: false });
   const [selectedLine, setSelectedLine] = useState<DividerLineKey>('default');
-  const [holoBanner, setHoloBanner] = useState(false); // Piece 3 — Augmented only
+  const [holoBanner, setHoloBanner] = useState(false); // Piece 3 — Adopter only
 
   // LINKS
   const [links, setLinks] = useState<ProfileLink[]>([]);
@@ -415,7 +415,7 @@ export default function EditProfilePage() {
             the holo block (before KIT) is the sole separator now — avoids a double rule
             when holo is absent (non-founding users). */}
 
-        {/* HOLO BANNER — Piece 3. Augmented (Founding 500) ONLY: an iridescent
+        {/* HOLO BANNER — Piece 3. Adopter (Founding 500) ONLY: an iridescent
             fill for the badge backdrop. Default OFF. Persists on SAVE. */}
         {lineFlags.isFoundingMember && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 18 }}>
@@ -426,7 +426,7 @@ export default function EditProfilePage() {
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <p style={{ ...LABEL, marginBottom: 4 }}>HOLO BANNER</p>
-              <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: 'rgb(var(--ink-rgb) / 0.35)', lineHeight: 1.4, margin: 0 }}>Augmented only — an iridescent backdrop for the founding 500.</p>
+              <p style={{ ...SKR, fontSize: 'var(--fs-9)', color: 'rgb(var(--ink-rgb) / 0.35)', lineHeight: 1.4, margin: 0 }}>Adopter only — an iridescent backdrop for the founding 500.</p>
             </div>
             <button
               onClick={() => { setHoloBanner(v => !v); setIsDirty(true); }}

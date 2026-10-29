@@ -30,6 +30,9 @@ import { replyToComment } from '@/lib/commentInteractions';
 // edit/delete logic; ProfilePostViewer is the reference). DeckPicker gates on an
 // authed Privy user internally, mirroring mobile.
 import DeckPickerSheet from '@/components/DeckPickerSheet';
+import DownloadAction from '@/components/DownloadAction';
+import { useAugmented } from '@/lib/tier';
+import { AugmentedChip } from '@/components/brand/AugmentedMark';
 import CreateCoinSheet from '@/components/economy/CreateCoinSheet';
 import DeletePostSheet from '@/components/DeletePostSheet';
 
@@ -79,6 +82,7 @@ export default function DesktopPostView({
   const post = posts[index];
   const postId = String(post?.id ?? '');
   const coinAddr = (post?.coin_address as string | null) ?? null;
+  const isAugAuthor = useAugmented([post?.user_id as string | undefined]); // AUG-1 — author chip
 
   const [likes, setLikes] = useState<{ user_id?: string }[]>([]);
   const [comments, setComments] = useState<{ id?: string; username?: string; content?: string; created_at?: string }[]>([]);
@@ -338,6 +342,7 @@ export default function DesktopPostView({
                 <img src={feedImage(post.profile_image_url as string, 96)} alt="" style={{ width: 20, height: 20, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
               ) : <span style={{ width: 20, height: 20, borderRadius: '50%', background: 'var(--surface-2a)', flexShrink: 0 }} />}
               <span style={{ ...SKB, fontSize: 12, color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>@{post.username as string}</span>
+              {isAugAuthor(post?.user_id as string | undefined) && <AugmentedChip size={12} />}
             </button>
           )}
           {coinAddr && (
@@ -349,6 +354,8 @@ export default function DesktopPostView({
               <span style={{ fontFamily: 'var(--font-black)', fontWeight: 900, fontSize: 11.5, color: fcCount > 0 ? 'var(--ink-100)' : 'rgb(var(--ink-rgb) / 0.6)', fontVariantNumeric: 'tabular-nums', letterSpacing: '0.02em' }}>{fcCount} / 10</span>
             </span>
           )}
+          {/* AUG-1 — Download: visible to everyone; the server gates (login / Augmented upsell). */}
+          {postId && <DownloadAction kind="post" id={postId} variant="desktop" />}
           {coinAddr && (
             <button onClick={() => setCollectOpen(true)} style={{ marginLeft: 'auto', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 13.5, letterSpacing: 'var(--track-display)', color: 'rgb(var(--ink-rgb) / 0.7)', textTransform: 'uppercase' }}>
               COLLECT

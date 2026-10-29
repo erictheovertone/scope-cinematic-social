@@ -8,6 +8,7 @@
 
 import { useRouter } from 'next/navigation';
 import { BADGES, RARITY_ORDER, BADGE_SHORT_BLURB } from '@/lib/economy/badges';
+import { BrassAperture } from '@/components/brand/AugmentedMark';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -33,7 +34,9 @@ export default function BadgesStubPage() {
           const b = BADGES[key];
           return (
             <div key={key} style={{ display: 'flex', gap: 14, alignItems: 'flex-start', padding: '14px 0', borderTop: '1px solid rgb(var(--ink-rgb) / 0.1)' }}>
-              <img src={b.bannerSrc ?? b.src} alt={b.title} style={{ width: 38, height: 38, objectFit: 'contain', flexShrink: 0 }} />
+              {b.brass
+                ? <BrassAperture size={38} />
+                : <img src={b.bannerSrc ?? b.src} alt={b.title} style={{ width: 38, height: 38, objectFit: 'contain', flexShrink: 0 }} />}
               <div style={{ flex: 1, minWidth: 0 }}>
                 <p style={{ ...SKB, fontSize: 'var(--fs-11)', color: 'var(--ink-100)', letterSpacing: '0.1em', textTransform: 'uppercase', margin: '0 0 5px' }}>{b.title}</p>
                 <p style={{ ...SKR, fontSize: 'var(--fs-10_5)', color: 'rgb(var(--ink-rgb) / 0.6)', lineHeight: 1.45, margin: 0 }}>{BADGE_SHORT_BLURB[key]}</p>

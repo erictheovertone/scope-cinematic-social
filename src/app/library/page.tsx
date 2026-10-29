@@ -2,6 +2,7 @@
 // The picker's browser as its own surface: keyword/title search, compact waveform
 // rows with red-fill audition + scrub, composers linking to their discographies.
 // Discovery only (no select) — reached from the track sheet + the settings row.
+// Brief MUS-1 — a track's artwork / title opens its track view (/track/[id]).
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -111,13 +112,18 @@ export default function LibraryPage() {
           const isPlaying = playing === t.id;
           return (
             <div key={t.id} className="wf-row" style={{ display: "flex", alignItems: "center", gap: 12, padding: "13px 0", borderBottom: `1px solid rgb(var(--ink-rgb) / 0.06)` }}>
-              <TrackArt url={t.artwork_url} title={t.title} id={t.id} size={44} />
+              {/* Brief MUS-1 — artwork + title open the track view */}
+              <button type="button" onClick={() => { try { audioRef.current?.pause(); } catch {} router.push(`/track/${t.id}`); }} aria-label={`Open ${t.title}`} data-testid={`library-art-${t.id}`}
+                style={{ flexShrink: 0, background: "none", border: "none", padding: 0, cursor: "pointer", display: "block" }}>
+                <TrackArt url={t.artwork_url} title={t.title} id={t.id} size={44} />
+              </button>
               <button onClick={() => togglePlay(t)} aria-label={isPlaying ? "Pause" : "Play"} style={{ flexShrink: 0, width: 32, height: 32, borderRadius: "50%", border: `1px solid ${HAIR}`, background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>
                 {isPlaying ? <svg width="11" height="11" viewBox="0 0 24 24" fill="var(--ink-100)"><rect x="6" y="5" width="4" height="14" /><rect x="14" y="5" width="4" height="14" /></svg> : <svg width="11" height="11" viewBox="0 0 24 24" fill="var(--ink-100)"><path d="M7 5v14l12-7z" /></svg>}
               </button>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-                  <span style={{ ...SKB, fontSize: 13, color: "var(--ink-100)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t.title}</span>
+                  <button type="button" onClick={() => { try { audioRef.current?.pause(); } catch {} router.push(`/track/${t.id}`); }}
+                    style={{ ...SKB, fontSize: 13, color: "var(--ink-100)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", background: "none", border: "none", padding: 0, cursor: "pointer", textAlign: "left", minWidth: 0 }}>{t.title}</button>
                   <span style={{ ...SKR, fontSize: 11, color: "rgb(var(--ink-rgb) / 0.4)", flexShrink: 0 }}>{fmt(t.duration_seconds)}</span>
                 </div>
                 <div style={{ margin: "5px 0 4px" }}><Waveform peaks={t.waveform_peaks} audio={isPlaying ? audioRef : undefined} onSeek={(pct) => seekTrack(t, pct)} height={26} /></div>

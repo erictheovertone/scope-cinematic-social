@@ -5,13 +5,15 @@
 //  • max 3 coins + an overflow chip ("+N") when the user has more,
 //  • the WHOLE stack ≤ 50% of the pfp width (coins shrink/tighten to comply),
 //  • static at rest (no animation — the 3D flip lives in the BADGES section),
-//  • rarity order Augmented → First Cut → Top 1k → Pro (resolved upstream).
+//  • rarity order Augmented → Adopter → First Cut → Top 1k → Pro (resolved upstream).
+//    AUG-1: the Augmented tier badge (brass) has no image — it renders <BrassAperture>.
 //
 // REAL/ungated. First Cut only enters the list when the economy boundary
 // supplies firstCutCount > 0, so nothing implies earnings off-flag.
 
 import ThemedImg from "@/components/ThemedImg";
 import type { BadgeMeta } from '@/lib/economy/badges';
+import { BrassAperture } from '@/components/brand/AugmentedMark';
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 
@@ -56,7 +58,11 @@ export default function BadgeStack({
         cursor: onPress ? 'pointer' : 'default',
       }}
     >
-      {visible.map((b, i) => (
+      {visible.map((b, i) => b.brass ? (
+        <span key={b.key} style={{ position: 'absolute', left: i * step, top: 0, zIndex: visible.length - i, lineHeight: 0, background: 'var(--canvas)', borderRadius: '50%' }}>
+          <BrassAperture size={size} />
+        </span>
+      ) : (
         <ThemedImg
           key={b.key}
           src={b.src}

@@ -290,6 +290,27 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
   const [musicStart, setMusicStart] = useState(0); // clip start offset (seconds) → posts.music_start_seconds
   const [videoDuration, setVideoDuration] = useState(0); // selected video's length → the clip window width
   const [showMusicPicker, setShowMusicPicker] = useState(false);
+  // MUS-1 — "Use in a post" from the standalone track view stashes the track id; the EDIT & POST
+  // music row picks it up on arrival (consumed once; the same state the picker's onSelect sets).
+  useEffect(() => {
+    if (step !== 'edit' || musicTrackId) return;
+    let id: string | null = null;
+    try { id = sessionStorage.getItem('scope:preselect-track'); sessionStorage.removeItem('scope:preselect-track'); } catch { /* private mode */ }
+    if (!id) return;
+    let dead = false;
+    import('@/lib/supabase/client').then(({ supabase: sb }) => sb
+      .from('tracks').select('id, title, composer_user_id, keywords, duration_seconds, file_url, artwork_url, waveform_peaks')
+      .eq('id', id).eq('status', 'approved').maybeSingle())
+      .then(({ data }) => {
+        if (dead || !data) return;
+        setMusicTrackId(data.id);
+        setMusicTrack({ ...(data as Omit<LibraryTrack, 'composer_handle'>), composer_handle: null });
+        setMusicStart(0);
+        setMusicMode(selectedMedia[0]?.type === 'video' ? 'bed' : null);
+      });
+    return () => { dead = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step]);
   // Real Pro status + grid gating for FINISHING, resolved via the verified path
   // (DID → getUserByPrivyId → getProfile → isProMember). uuid typing respected.
   const [finishCtx, setFinishCtx] = useState<{ isPro: boolean; gridLayout: 'standard' | 'collage'; layoutId: string; userUuid: string } | null>(null);

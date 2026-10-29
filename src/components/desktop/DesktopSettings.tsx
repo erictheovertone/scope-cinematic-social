@@ -35,6 +35,7 @@ import { updateProfileFields, invalidateMembership } from '@/lib/userService';
 import { getUserPosts } from '@/lib/postsService';
 import { createPortal } from 'react-dom';
 import { resolveMembership, membershipBarLabel, type MembershipState } from '@/lib/membership';
+import { AugmentedMark } from '@/components/brand/AugmentedMark';
 import { useEconomy } from '@/components/EconomyProvider';
 import { feedImage } from '@/lib/mediaUrl';
 import PfpCropStage from '@/components/desktop/PfpCropStage';
@@ -61,7 +62,7 @@ const INPUT: React.CSSProperties = { ...SKR, fontSize: 13, color: 'var(--ink-100
 export default function DesktopSettings() {
   const router = useRouter();
   const { logout, user } = usePrivy();
-  const { goPro } = useUpsell();
+  const { goPro, showAugmented } = useUpsell();
   const photoInputRef = useRef<HTMLInputElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -393,7 +394,9 @@ export default function DesktopSettings() {
                 Reflects RENEWS / CANCELS <date> inline; GET PRO for non-members. */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '16px 18px', border: `1px solid ${HAIR}`, marginBottom: membership.isPaid ? 18 : 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
-                <img src={membership.isPaid ? '/design-updates-071526/new-badges/scope-pro.png' : '/free-tier-aperture-logo-red.png'} alt="" style={{ width: 22, height: 22, objectFit: 'contain', flexShrink: 0 }} />
+                {membership.isPaid && membership.tier === 'augmented'
+                  ? <span style={{ width: 22, height: 22, display: 'inline-grid', placeItems: 'center', flexShrink: 0 }}><AugmentedMark width={22} /></span>
+                  : <img src={membership.isPaid ? '/design-updates-071526/new-badges/scope-pro.png' : '/free-tier-aperture-logo-red.png'} alt="" style={{ width: 22, height: 22, objectFit: 'contain', flexShrink: 0 }} />}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 3, minWidth: 0 }}>
                   <span style={{ ...SKB, fontSize: 9, color: 'rgb(var(--ink-rgb) / 0.4)', textTransform: 'uppercase', letterSpacing: '0.15em' }}>MY MEMBERSHIP</span>
                   <span style={{ ...SKB, fontSize: 13, color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -405,6 +408,22 @@ export default function DesktopSettings() {
                 <button onClick={() => goPro()} style={{ ...SKB, fontSize: 11, color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.08em', background: RED, border: 'none', cursor: 'pointer', padding: '10px 20px', flexShrink: 0 }}>GET PRO →</button>
               )}
             </div>
+
+            {/* AUG-1 — the Augmented Pro offer for everyone not already Augmented (free AND Pro).
+                Brass is allowed here: this IS the Augmented offer. Opens the AugmentedSheet in place.
+                Augmented members see their status in the bar above instead. */}
+            {membership.tier !== 'augmented' && (
+              <button data-testid="settings-augmented-entry" onClick={() => showAugmented()} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, width: '100%', padding: '14px 18px', margin: membership.isPaid ? '-6px 0 18px' : '12px 0 0', background: 'transparent', border: '1px solid var(--brass)', cursor: 'pointer', textAlign: 'left' }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
+                  <AugmentedMark width={22} />
+                  <span style={{ display: 'flex', flexDirection: 'column', gap: 3, minWidth: 0 }}>
+                    <span style={{ ...SKB, fontSize: 13, color: 'var(--brass)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>AUGMENTED PRO</span>
+                    <span style={{ ...SKR, fontSize: 11, color: 'rgb(var(--ink-rgb) / 0.5)' }}>Full-resolution downloads + music sync rights</span>
+                  </span>
+                </span>
+                <span style={{ ...SKB, fontSize: 13, color: 'var(--brass)', flexShrink: 0 }}>→</span>
+              </button>
+            )}
 
             {/* MANAGE CONTROLS — cancel / resume inline (same endpoint as mobile) */}
             {membership.isPaid && (

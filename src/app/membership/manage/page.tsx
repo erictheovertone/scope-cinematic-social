@@ -5,6 +5,9 @@ import { useRouter } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
 import { supabase } from "@/lib/supabase/client";
 import { invalidateMembership } from "@/lib/userService";
+import { tierOf, type Tier } from "@/lib/tier";
+import { AugmentedMark } from "@/components/brand/AugmentedMark";
+import PageScroller from "@/components/PageScroller";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -20,6 +23,15 @@ export default function ManageMembershipPage() {
   // the page): active-but-cancelled renders "cancels <date>" + a RESUME control.
   const [cancelsAt, setCancelsAt] = useState<string | null>(null);
   const [resuming, setResuming] = useState(false);
+  // AUG-1 — Augmented members manage the SAME Stripe subscription here (the cancel route acts on
+  // profiles.stripe_subscription_id, which the webhook points at the Augmented sub); only the
+  // labels change. Pro renders exactly as before.
+  const [tier, setTier] = useState<Tier>("pro");
+  const [paidUntil, setPaidUntil] = useState<string | null>(null);
+  const isAug = tier === "augmented";
+  const PLAN = isAug ? "AUGMENTED PRO" : "SCOPE PRO";
+  const SHORT = isAug ? "AUGMENTED PRO" : "PRO";
+  const Short = isAug ? "Augmented Pro" : "Pro";
 
   useEffect(() => {
     if (!user?.id) return;
@@ -29,6 +41,13 @@ export default function ManageMembershipPage() {
       if (!alive || !u?.id) return;
       const { data: p } = await supabase.from('profiles').select('membership_cancels_at').eq('user_id', u.id).maybeSingle();
       if (alive) setCancelsAt((p as { membership_cancels_at?: string | null } | null)?.membership_cancels_at ?? null);
+      // Separate read so a pre-migration DB (no membership_tier column) can't break the cancel state.
+      const { data: t } = await supabase.from('profiles').select('membership_tier, paid_member_until, is_paid_member').eq('user_id', u.id).maybeSingle();
+      if (alive && t) {
+        const row = t as { membership_tier?: string | null; paid_member_until?: string | null };
+        setTier(tierOf(row) === 'augmented' ? 'augmented' : 'pro');
+        setPaidUntil(row.paid_member_until ?? null);
+      }
     })();
     return () => { alive = false; };
   }, [user?.id]);
@@ -97,7 +116,7 @@ export default function ManageMembershipPage() {
       <div style={{ backgroundColor: 'var(--black)', minHeight: '100dvh', padding: '48px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
         <p style={{ ...SKB, fontSize: 'var(--fs-18)', color: 'var(--ink-100)', textTransform: 'uppercase', textAlign: 'center', margin: '0 0 12px' }}>MEMBERSHIP CANCELLED</p>
         <p style={{ ...SKR, fontSize: 'var(--fs-12)', color: 'rgb(var(--ink-rgb) / 0.5)', textAlign: 'center', margin: '0 0 32px', lineHeight: 1.6 }}>
-          Your Pro access continues until the end of your billing period.
+          Your {Short} access continues until the end of your billing period.
         </p>
         <button onClick={() => router.push('/profile')} style={{ background: 'var(--ink-100)', border: 'none', cursor: 'pointer', padding: '12px 32px' }}>
           <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: 'var(--on-ink)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>BACK TO PROFILE</span>
@@ -107,6 +126,9 @@ export default function ManageMembershipPage() {
   }
 
   return (
+    // Scroll-trap rule: body is locked, so the page scrolls inside PageScroller (the plan details +
+    // cancel confirm run past the fold on a 375 phone, more so with the Augmented benefits).
+    <PageScroller className="bg-black" style={{ backgroundColor: 'var(--black)' }}>
     <div style={{ backgroundColor: 'var(--black)', minHeight: '100dvh', padding: '0 0 80px' }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', padding: '16px', borderBottom: '1px solid rgb(var(--ink-rgb) / 0.08)' }}>
@@ -121,16 +143,18 @@ export default function ManageMembershipPage() {
       {/* Current plan */}
       <div style={{ padding: '24px 16px', borderBottom: '1px solid rgb(var(--ink-rgb) / 0.08)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-          <img src="/design-updates-071526/new-badges/scope-pro.png" alt="Scope Pro" style={{ width: 40, height: 40, objectFit: 'contain' }} />
+          {isAug
+            ? <span style={{ width: 40, height: 40, display: 'inline-grid', placeItems: 'center' }}><AugmentedMark width={40} title="Augmented Pro" /></span>
+            : <img src="/design-updates-071526/new-badges/scope-pro.png" alt="Scope Pro" style={{ width: 40, height: 40, objectFit: 'contain' }} />}
           <div>
             <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'rgb(var(--ink-rgb) / 0.4)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 4px' }}>CURRENT PLAN</p>
-            <p style={{ ...SKB, fontSize: 'var(--fs-18)', color: 'var(--ink-100)', textTransform: 'uppercase', margin: 0 }}>SCOPE PRO</p>
+            <p style={{ ...SKB, fontSize: 'var(--fs-18)', color: 'var(--ink-100)', textTransform: 'uppercase', margin: 0 }}>{PLAN}</p>
           </div>
         </div>
         <div style={{ display: 'flex', gap: 24 }}>
           {[
-            { label: 'STATUS', value: cancelsAt ? `PRO · CANCELS ${fmtDate(cancelsAt).toUpperCase()}` : 'ACTIVE' },
-            { label: 'BILLING', value: cancelsAt ? 'ENDS — NO RENEWAL' : '$5 / MONTH' },
+            { label: 'STATUS', value: cancelsAt ? `${SHORT} · CANCELS ${fmtDate(cancelsAt).toUpperCase()}` : 'ACTIVE' },
+            { label: 'BILLING', value: cancelsAt ? 'ENDS — NO RENEWAL' : isAug ? (paidUntil ? `RENEWS ${fmtDate(paidUntil).toUpperCase()}` : 'ACTIVE') : '$5 / MONTH' },
           ].map(({ label, value }) => (
             <div key={label}>
               <p style={{ ...SKB, fontSize: 'var(--fs-8)', color: 'rgb(var(--ink-rgb) / 0.4)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 4px' }}>{label}</p>
@@ -142,8 +166,9 @@ export default function ManageMembershipPage() {
 
       {/* What you get */}
       <div style={{ padding: '24px 16px', borderBottom: '1px solid rgb(var(--ink-rgb) / 0.08)' }}>
-        <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'rgb(var(--ink-rgb) / 0.4)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 16px' }}>INCLUDED WITH PRO</p>
+        <p style={{ ...SKB, fontSize: 'var(--fs-9)', color: 'rgb(var(--ink-rgb) / 0.4)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 16px' }}>INCLUDED WITH {SHORT}</p>
         {[
+          ...(isAug ? ['Unlimited full-resolution downloads', 'Music downloads', 'Basic sync license · your social + YouTube', 'The Augmented badge on your profile and posts'] : []),
           'Unlimited posts',
           'Full analytics dashboard',
           'Priority minting',
@@ -163,7 +188,7 @@ export default function ManageMembershipPage() {
         {cancelsAt ? (
           <div>
             <p style={{ ...SKR, fontSize: 'var(--fs-12)', color: 'rgb(var(--ink-rgb) / 0.5)', lineHeight: 1.6, margin: '0 0 14px' }}>
-              Your membership is set to cancel on {fmtDate(cancelsAt)}. Pro stays active until then.
+              Your membership is set to cancel on {fmtDate(cancelsAt)}. {Short} stays active until then.
             </p>
             <button
               onClick={handleResume}
@@ -189,14 +214,14 @@ export default function ManageMembershipPage() {
           <div style={{ border: '1px solid rgb(var(--ink-rgb) / 0.3)', padding: 20 }}>
             <p style={{ ...SKB, fontSize: 'var(--fs-13)', color: 'var(--ink-100)', textTransform: 'uppercase', margin: '0 0 8px' }}>ARE YOU SURE?</p>
             <p style={{ ...SKR, fontSize: 'var(--fs-12)', color: 'rgb(var(--ink-rgb) / 0.5)', lineHeight: 1.6, margin: '0 0 20px' }}>
-              You'll keep Pro access until the end of your billing period. After that you'll revert to the free tier.
+              You'll keep {Short} access until the end of your billing period. After that you'll revert to the free tier.
             </p>
             <div style={{ display: 'flex', gap: 10 }}>
               <button
                 onClick={() => setShowCancelConfirm(false)}
                 style={{ flex: 1, background: 'transparent', border: '1px solid rgb(var(--ink-rgb) / 0.2)', cursor: 'pointer', padding: '10px 0' }}
               >
-                <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'rgb(var(--ink-rgb) / 0.6)', textTransform: 'uppercase' }}>KEEP PRO</span>
+                <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'rgb(var(--ink-rgb) / 0.6)', textTransform: 'uppercase' }}>KEEP {SHORT}</span>
               </button>
               <button
                 onClick={handleCancel}
@@ -215,5 +240,6 @@ export default function ManageMembershipPage() {
         )}
       </div>
     </div>
+    </PageScroller>
   );
 }

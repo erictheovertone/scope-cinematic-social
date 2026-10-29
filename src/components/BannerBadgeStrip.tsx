@@ -43,7 +43,7 @@ export default function BannerBadgeStrip({
       lets badge holders / Pro users choose a custom line colour/gradient in
       Edit Profile; default stays black/none until they do. */
   dividerColor = 'var(--black)',
-  /** Piece 3 — Augmented-only holographic fill. When true, the backdrop becomes
+  /** Piece 3 — Adopter-only (first-500, formerly "Augmented") holographic fill. When true, the backdrop becomes
       a living iridescent (magenta/pink/plum) shimmer instead of the static art.
       Icons stay above it (z-index) and legible. */
   holo = false,
@@ -113,7 +113,7 @@ export default function BannerBadgeStrip({
         .badge-arrive { animation: badgeArrive 500ms cubic-bezier(0.34,1.56,0.64,1) 250ms both, badgeArriveGlow 600ms ease-out 520ms both; }
         @media (prefers-reduced-motion: reduce) { .badge-arrive { animation: none; } }
       `}</style>
-      {/* Backdrop — standard art, OR (Augmented + holo on) the iridescent fill.
+      {/* Backdrop — standard art, OR (Adopter + holo on) the iridescent fill.
           Icons sit on it, fixed size, symmetric for any count. */}
       <div
         onClick={onPress ? (e) => { e.stopPropagation(); onPress(); } : undefined}
@@ -133,7 +133,7 @@ export default function BannerBadgeStrip({
           cursor: onPress ? 'pointer' : 'default',
         }}
       >
-        {/* DRIFT — the locked Augmented holo: a slow top→bottom drift of the
+        {/* DRIFT — the locked Adopter holo: a slow top→bottom drift of the
             magenta/pink/plum gradient at 14s (Eric's picked pace). Single layer,
             no sheen/hue. Opacity tuned down vs the preview so it's special, not
             blinding; icons stay legible above (z-index 1). Pure CSS bg-position

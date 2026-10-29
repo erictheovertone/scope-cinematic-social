@@ -30,6 +30,7 @@ import ScopeLoader from "@/components/ScopeLoader";
 import BadgeCluster from "@/components/BadgeCluster";
 import ProfileHeader from "@/components/profile/ProfileHeader";
 import { resolveBadges } from "@/lib/economy/badges";
+import { tierOf } from "@/lib/tier";
 import { dividerBackground } from "@/lib/economy/dividerLines";
 import { useEconomy } from "@/components/EconomyProvider";
 import CollectedGrid from "@/components/economy/CollectedGrid";
@@ -279,7 +280,9 @@ export default function PublicProfilePage() {
   }
 
   // Brief W8 §2 — ONE resolved held-badges list shared by the cluster + the bio sheet.
-  const resolvedBadges = resolveBadges({ isFoundingMember, isTopCollector, isScreeningRoomHolder, isPaidMember, isInHouseCreator, firstCutCount, composerTrackCount });
+  // AUG-1 — the viewed profile's tier, from its select('*') row (membership_tier + paid_member_until).
+  const isAugmented = tierOf(profile) === 'augmented';
+  const resolvedBadges = resolveBadges({ isAugmented, isFoundingMember, isTopCollector, isScreeningRoomHolder, isPaidMember, isInHouseCreator, firstCutCount, composerTrackCount });
 
   return (
     <div className="bg-canvas relative w-full app-shell screen-min mx-auto pb-[60px]" style={{ background: 'var(--canvas)', overscrollBehavior: 'none' }}>{/* Brief F6 — canvas var(--canvas) (matches own). Brief F6b §4a — overscroll-behavior:none on the app-shell root kills the rubber-band scroll-chain (the F5 §4a / decks-page pattern). */}
@@ -306,10 +309,11 @@ export default function PublicProfilePage() {
           username={username}
           profileImage={profile?.profile_image_url}
           isPaidMember={isPaidMember}
+          isAugmented={isAugmented}
           analytics={{ followers: followerCount, collectors: 0, portfolioMc: profile?.portfolio_mc || 0, following: followingCount, totalPosts: posts.length, decks: publicDecks.length }}
           expanded={profileDataOpen}
           badges={resolvedBadges
-            .filter((b) => b.bannerSrc)
+            .filter((b) => b.bannerSrc || b.brass)
             .map((b) => ({ key: b.key, src: (b.framedSrc ?? b.bannerSrc) as string, title: b.title }))}
           onOpenBadges={() => setShowBadgeSheet(true)}
           onMeasure={setHeaderH}
@@ -578,7 +582,7 @@ export default function PublicProfilePage() {
         visible={showBadgeSheet}
         onClose={() => setShowBadgeSheet(false)}
         onJoinPress={() => { setShowBadgeSheet(false); setShowMembershipSheet(true); }}
-        userTiers={{ isFree: !isPaidMember && !isTopCollector && !isFoundingMember && !isInHouseCreator, isInHouseCreator, isPaidMember, isTopCollector, isFoundingMember, foundingMemberNumber }}
+        userTiers={{ isFree: !isPaidMember && !isTopCollector && !isFoundingMember && !isInHouseCreator, isInHouseCreator, isPaidMember, isTopCollector, isFoundingMember, foundingMemberNumber, isAugmented }}
       />
 
       <MembershipSheet

@@ -5,12 +5,15 @@
 // (e.g. the TEMPORARY First Cut art) is a ONE-LINE change here.
 //
 // Rarity order (Scope_Economy.docx §4a + Economy UI brief Part 1.1):
-//   Augmented → First Cut → Top 1k → Pro  (absent badges skip)
+//   Augmented (the paid AUG-1 tier, brass) → Adopter (first 500) → First Cut → Top 1k → Pro
+//   (absent badges skip). 'adopter' was formerly keyed 'augmented' — renamed in AUG-1 when the
+//   name moved to the paid tier; its image asset files still say augmented.png.
 // In-House and Free are retained below Pro so existing membership badges still
 // render; Free is the baseline shown only when a user has earned nothing else.
 
 export type BadgeKey =
-  | 'augmented'
+  | 'augmentedPro'
+  | 'adopter'
   | 'firstCut'
   | 'top1k'
   | 'srh'
@@ -33,6 +36,9 @@ export interface BadgeMeta {
       Distinct from `src` (the coin art). Badges without a strip icon (the Free
       baseline) are simply omitted from the strip. */
   bannerSrc?: string;
+  /** AUG-1 — no image: renders as <BrassAperture> (the Augmented tier badge). Every badge
+      renderer branches on this before reaching for src. */
+  brass?: boolean;
 }
 
 // TEMPORARY First Cut art = /first-cut-badge-green.png. Swap this one line when
@@ -46,7 +52,10 @@ export interface BadgeMeta {
 // keeps its old asset (FLAGGED). The count/label chrome + sizes are untouched.
 const NEW = '/design-updates-071526/new-badges';
 export const BADGES: Record<BadgeKey, BadgeMeta> = {
-  augmented: { key: 'augmented', src: `${NEW}/augmented.png`,  title: 'AUGMENTED', color: '#ff0080',            bannerSrc: `${NEW}/augmented.png`,  framedSrc: `${NEW}/augmented.png` },
+  // AUG-1 — the paid tier badge: brass aperture, no image asset (src unused when brass).
+  augmentedPro: { key: 'augmentedPro', src: '', title: 'AUGMENTED', color: '#C8A86A', brass: true },
+  // The first-500 founding badge (was 'augmented'); asset filename unchanged.
+  adopter:   { key: 'adopter',   src: `${NEW}/augmented.png`,  title: 'ADOPTER',   color: '#ff0080',            bannerSrc: `${NEW}/augmented.png`,  framedSrc: `${NEW}/augmented.png` },
   firstCut:  { key: 'firstCut',  src: `${NEW}/first-cut.png`,  title: 'FIRST CUT', color: 'var(--positive)',            bannerSrc: `${NEW}/first-cut.png`,  framedSrc: `${NEW}/first-cut.png` },
   top1k:     { key: 'top1k',     src: `${NEW}/collector.png`,  title: 'TOP 1K',    color: 'var(--gold)',            bannerSrc: `${NEW}/collector.png`,  framedSrc: `${NEW}/collector.png` },
   srh:       { key: 'srh',       src: `${NEW}/srh.png`,        title: 'SRH',       color: 'var(--gold)',            bannerSrc: `${NEW}/srh.png`,        framedSrc: `${NEW}/srh.png` },
@@ -69,7 +78,8 @@ export const FIRST_CUT_ACTION_MARK = `${NEW}/first-cut-no-frame.png`;
 // show going forward (e.g. top1k reads as COLLECTOR, not TOP 1K). Shared: any badge
 // UI rendering a name should read through BADGE_DISPLAY_NAME.
 export const BADGE_DISPLAY_NAME: Record<BadgeKey, string> = {
-  augmented: 'AUGMENTED',
+  augmentedPro: 'AUGMENTED',
+  adopter: 'ADOPTER',
   firstCut: 'FIRST CUT',
   top1k: 'COLLECTOR',
   srh: 'SRH',
@@ -80,14 +90,15 @@ export const BADGE_DISPLAY_NAME: Record<BadgeKey, string> = {
 };
 
 /** Rarity order for the stack/section. */
-export const RARITY_ORDER: BadgeKey[] = ['augmented', 'firstCut', 'top1k', 'srh', 'composer', 'pro', 'inHouse'];
+export const RARITY_ORDER: BadgeKey[] = ['augmentedPro', 'adopter', 'firstCut', 'top1k', 'srh', 'composer', 'pro', 'inHouse'];
 
 // ── Tap-blurb copy (BADGES section pop-up) ───────────────────────────────────
 // RATIFIED by Eric 2026-06-11. From Scope_Economy.docx §4: one breath each,
 // ≤2 sentences, 12-year-old-proof. NOTE: §3 Denomination Rule bans the phrase
 // "share of platform fees" — collector rewards are stated as % of VOLUME.
 export const BADGE_BLURBS: Record<BadgeKey, string> = {
-  augmented: 'One of Scope’s first 500 members. They earn a slice of every trade on Scope, forever — the founding honor.',
+  augmentedPro: 'An Augmented Pro member — everything in Pro, plus full-resolution and music downloads with basic sync rights.',
+  adopter: 'One of Scope’s first 500 members. They earn a slice of every trade on Scope, forever — the founding honor.',
   firstCut: 'Given for being one of the first 10 people to collect a post. As long as they keep every piece, they earn a cut each time that post is traded.',
   top1k: 'One of the 1,000 biggest collectors on Scope. Together they earn 1% of everything traded, split among them.',
   srh: 'Holds a post in the Screening Room — Scope’s top-50 most-traded showcase. A live signal, held only while the post stays in the room.',
@@ -104,7 +115,8 @@ export const BADGE_BLURBS: Record<BadgeKey, string> = {
 export const BADGE_SHORT_BLURB: Record<BadgeKey, string> = {
   pro: 'The paid membership tier — unlocks Pro features and customization.',
   firstCut: 'Held by the first 10 external collectors of a post — a permanent founding position in that work.',
-  augmented: 'One of the first 500 members of Scope. The earliest believers.',
+  augmentedPro: 'Augmented Pro — everything in Pro, plus full-resolution and music downloads.',
+  adopter: 'One of the first 500 members of Scope. The earliest believers.',
   top1k: 'Among the top 1,000 collectors on Scope by collecting activity.',
   srh: 'Currently holds a post in the Screening Room — Scope’s top-50 most-traded showcase. Held in real time; lost if the post drops out.',
   composer: 'Contribute to the Scope Original Music Library.',
@@ -113,7 +125,8 @@ export const BADGE_SHORT_BLURB: Record<BadgeKey, string> = {
 };
 
 export interface BadgeTierFlags {
-  isFoundingMember?: boolean;     // Augmented
+  isAugmented?: boolean;          // Augmented (paid tier — tierOf(profile) === 'augmented')
+  isFoundingMember?: boolean;     // Adopter (first 500)
   isTopCollector?: boolean;       // Top 1k
   isScreeningRoomHolder?: boolean; // SRH (profiles.is_screening_room_holder — awarded by the cron)
   isPaidMember?: boolean;         // Pro
@@ -132,12 +145,14 @@ export interface BadgeTierFlags {
  */
 export function resolveBadges(flags: BadgeTierFlags): BadgeMeta[] {
   const earned: Record<BadgeKey, boolean> = {
-    augmented: !!flags.isFoundingMember,
+    augmentedPro: !!flags.isAugmented,
+    adopter: !!flags.isFoundingMember,
     firstCut: (flags.firstCutCount ?? 0) > 0,
     top1k: !!flags.isTopCollector,
     srh: !!flags.isScreeningRoomHolder,
     composer: (flags.composerTrackCount ?? 0) > 0,
-    pro: !!flags.isPaidMember,
+    // Augmented includes Pro — show the brass badge, not both.
+    pro: !!flags.isPaidMember && !flags.isAugmented,
     inHouse: !!flags.isInHouseCreator,
     free: false,
   };

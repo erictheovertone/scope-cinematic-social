@@ -15,6 +15,7 @@ import { neutralGeometry } from "@/lib/editGeometry";
 import { DEFAULT_PARAMS, type EditParams } from "@/lib/editor/params";
 import { getUserByPrivyId, getProfile } from "@/lib/userService";
 import DeckPickerSheet from "@/components/DeckPickerSheet";
+import DownloadAction from "@/components/DownloadAction";
 import CollectSheetGate from "@/components/economy/CollectSheetGate";
 import { isUntradeableCoin } from "@/lib/economy/pairing";
 import CreateCoinSheet from "@/components/economy/CreateCoinSheet";
@@ -360,6 +361,11 @@ function PostViewerItem({
               (matches today's chip); the whip lands on the mark. */}
           {isCoinPost(post as { coin_address?: string | null; token_standard?: string | null }) && (post as { coin_address?: string | null }).coin_address && (
             <FirstCutChip iconOnly size={17} coinAddress={(post as { coin_address?: string }).coin_address as string} postId={(post as { id?: string }).id as string} />
+          )}
+
+          {/* AUG-1 — Download: visible to everyone; the server gates (login / Augmented upsell). */}
+          {(post as { id?: string }).id && (
+            <PressPop><DownloadAction kind="post" id={(post as { id?: string }).id as string} variant="mobile" /></PressPop>
           )}
 
           {/* Share button removed from the profile post-scroll (own AND public). */}
