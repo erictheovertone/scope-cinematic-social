@@ -3,6 +3,9 @@
 // POST { adminUserId, trackId, action:'approve'|'reject' }
 //   approve → status='approved' + approved_at + notify the composer (COMPOSER badge
 //             auto-derives from the approved row). reject → status='rejected'.
+// POST { adminUserId, versionIds[]|versionId, action } — MUS-1 §4 audio replacements (the same
+//   queue): approve swaps the version's file/duration/peaks onto the live track; reject leaves
+//   the approved audio in place.
 // Gated: the caller's Privy DID must equal process.env.SCOPE_ADMIN_USER_ID.
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
@@ -38,7 +41,26 @@ export async function GET(req: NextRequest) {
     : { data: [] as { user_id: string; username: string }[] };
   const handleByUuid = new Map((profiles ?? []).map((p) => [p.user_id, p.username]));
   const tracks = (data ?? []).map((t) => ({ ...t, composer_handle: handleByUuid.get(t.composer_user_id) ?? null }));
-  return NextResponse.json({ tracks });
+
+  // MUS-1 — pending audio replacements (absent pre-migration → empty list, never a 500).
+  const { data: vrows } = await supabase
+    .from('track_versions').select('id, track_id, composer_id, file_url, duration_seconds, created_at')
+    .eq('status', 'pending').order('created_at', { ascending: true });
+  const vTrackIds = [...new Set((vrows ?? []).map((v) => v.track_id))];
+  const { data: vtracks } = vTrackIds.length
+    ? await supabase.from('tracks').select('id, title, file_url').in('id', vTrackIds)
+    : { data: [] as { id: string; title: string; file_url: string }[] };
+  const vComposers = [...new Set((vrows ?? []).map((v) => v.composer_id))].filter((id) => !handleByUuid.has(id));
+  if (vComposers.length) {
+    const { data: more } = await supabase.from('profiles').select('user_id, username').in('user_id', vComposers);
+    for (const p of more ?? []) handleByUuid.set(p.user_id, p.username);
+  }
+  const tById = new Map((vtracks ?? []).map((t) => [t.id, t]));
+  const versions = (vrows ?? []).map((v) => ({
+    ...v, title: tById.get(v.track_id)?.title ?? '', current_file_url: tById.get(v.track_id)?.file_url ?? null,
+    composer_handle: handleByUuid.get(v.composer_id) ?? null,
+  }));
+  return NextResponse.json({ tracks, versions });
 }
 
 export async function POST(req: NextRequest) {
@@ -50,6 +72,31 @@ export async function POST(req: NextRequest) {
   if (!isAdminUser(adminUserId)) return NextResponse.json({ error: 'forbidden' }, { status: 403 });
   // Accept a batch (trackIds[]) or a single (trackId) — one code path for both, so
   // APPROVE ALL / REJECT ALL and single decisions behave identically.
+  const versionIds: string[] = Array.isArray(body.versionIds)
+    ? body.versionIds.map(String).filter(Boolean)
+    : (body.versionId ? [String(body.versionId)] : []);
+  if (versionIds.length) {
+    if (action !== 'approve' && action !== 'reject') return NextResponse.json({ error: 'action(approve|reject) required' }, { status: 400 });
+    const db = svc();
+    const decided_at = new Date().toISOString();
+    if (action === 'reject') {
+      const { error } = await db.from('track_versions').update({ status: 'rejected', decided_at }).in('id', versionIds).eq('status', 'pending');
+      if (error) return NextResponse.json({ error: 'update failed' }, { status: 500 });
+      return NextResponse.json({ ok: true, status: 'rejected', count: versionIds.length });
+    }
+    const { data: vs } = await db.from('track_versions').select('id, track_id, file_url, duration_seconds, waveform_peaks').in('id', versionIds).eq('status', 'pending');
+    for (const v of vs ?? []) {
+      const { error } = await db.from('tracks').update({
+        file_url: v.file_url,
+        ...(v.duration_seconds ? { duration_seconds: v.duration_seconds } : {}),
+        ...(v.waveform_peaks ? { waveform_peaks: v.waveform_peaks } : {}),
+      }).eq('id', v.track_id);
+      if (error) return NextResponse.json({ error: `swap failed for ${v.track_id}` }, { status: 500 });
+      await db.from('track_versions').update({ status: 'approved', decided_at }).eq('id', v.id);
+    }
+    return NextResponse.json({ ok: true, status: 'approved', count: (vs ?? []).length });
+  }
+
   const trackIds: string[] = Array.isArray(body.trackIds)
     ? body.trackIds.map(String).filter(Boolean)
     : (body.trackId ? [String(body.trackId)] : []);

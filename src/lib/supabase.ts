@@ -32,6 +32,14 @@ export interface Profile {
   contact_email?: string
   contact_email_public?: boolean
   portfolio_mc?: number
+  /** Membership (AUG-1): 'free' | 'pro' | 'augmented' — written by the Stripe webhook. Access is
+   *  still bounded by paid_member_until (lib/tier.ts tierOf). */
+  membership_tier?: 'free' | 'pro' | 'augmented' | null
+  augmented_since?: string | null
+  paid_member_until?: string | null
+  /** Composer page (MUS-1). */
+  composer_bio?: string | null
+  composer_links?: { label: string; url: string }[] | null
   created_at: string
   updated_at: string
 }

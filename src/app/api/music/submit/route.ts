@@ -85,6 +85,21 @@ export async function POST(req: NextRequest) {
     else console.log('[contrib] optional cols ok', id);
   }
 
+  // MUS-1 — every track has a home: a new submission lands at the end of the composer's
+  // "Singles" album (created on first use). Best-effort like the optional columns above, and
+  // a re-submission keeps whatever album the composer has since moved it to.
+  try {
+    const { data: cur } = await supabase.from('tracks').select('album_id').eq('id', id).maybeSingle();
+    if (cur && !cur.album_id) {
+      let { data: singles } = await supabase.from('albums').select('id').eq('composer_id', userId).eq('is_singles', true).maybeSingle();
+      if (!singles) ({ data: singles } = await supabase.from('albums').insert({ composer_id: userId, title: 'Singles', is_singles: true, position: 1000 }).select('id').single());
+      if (singles) {
+        const { count } = await supabase.from('tracks').select('id', { count: 'exact', head: true }).eq('album_id', singles.id);
+        await supabase.from('tracks').update({ album_id: singles.id, position: (count ?? 0) + 1 }).eq('id', id);
+      }
+    }
+  } catch (e) { console.warn('[contrib] singles placement skipped (run mus1_aug1.sql?):', (e as Error).message); }
+
   console.log('[contrib] submit done', id);
   return NextResponse.json({ track: data });
 }
