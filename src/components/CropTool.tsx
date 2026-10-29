@@ -255,7 +255,13 @@ export default function CropTool({
       <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", padding: 12 }}>
         <div
           ref={stageRef}
-          style={{ position: "relative", maxWidth: "100%", maxHeight: "100%", lineHeight: 0, touchAction: "none" }}
+          /* Brief MX-3/C4 — the stage must shrink-wrap the image exactly: the crop overlay is
+             positioned as a % of this box, so if it is clamped SHORTER than the image (maxHeight:100%
+             of a preview area shorter than the image's 62vh), the overlay mis-sizes — the taller the
+             source, the worse (3:4 → 4%, 9:16 → 12% off nominal on mobile). Dropping maxHeight lets
+             the stage equal the image's rendered box; the preview area's overflow:hidden still clips
+             any spill, exactly as before. Width stays capped to the preview via maxWidth. */
+          style={{ position: "relative", maxWidth: "100%", maxHeight: "62vh", lineHeight: 0, touchAction: "none" }}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
           onPointerLeave={onPointerUp}
