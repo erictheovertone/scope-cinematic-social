@@ -90,7 +90,7 @@ interface Props {
   onChange: (window: { start: number; length: number }) => void;
 }
 
-export default function SnippetScrubber({ video, heroFrameTime, value, onChange }: Props) {
+export default function SnippetScrubber({ video, heroFrameTime, value, onChange, bare }: Props & { bare?: boolean }) {
   const duration = video && isFinite(video.duration) ? video.duration : 0;
   const len = Math.min(CLIP_LEN, duration || CLIP_LEN);
   const maxStart = Math.max(0, duration - len);
@@ -176,11 +176,15 @@ export default function SnippetScrubber({ video, heroFrameTime, value, onChange 
   const widthPct = duration > 0 ? (len / duration) * 100 : 100;
 
   return (
-    <div style={{ padding: "8px 2px 2px" }}>
+    <div style={{ padding: bare ? 0 : "8px 2px 2px" }}>
+      {/* Brief E1 — `bare` hides this label/readout: the EDIT & POST CLIP row already shows
+          "AUTOPLAY CLIP · 4S" + the window readout, so the strip beneath is label-less. */}
+      {!bare && (
       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
         <span style={{ ...SKB, fontSize: 'var(--fs-8)', color: "rgb(var(--ink-rgb) / 0.5)", textTransform: "uppercase", letterSpacing: "0.1em" }}>AUTOPLAY CLIP · {Math.round(len)}s</span>
         <span style={{ ...REG, fontSize: 'var(--fs-8)', color: "rgb(var(--ink-rgb) / 0.5)", letterSpacing: "0.04em" }}>{fmt(start)}–{fmt(start + len)}</span>
       </div>
+      )}
       <div
         ref={trackRef}
         data-testid="snippet-track"

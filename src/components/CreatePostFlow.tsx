@@ -1717,215 +1717,136 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
     [editGeometry, chosenLayoutId, userLayoutId],
   );
 
-  const renderEditStep = () => (
+  const renderEditStep = () => {
+    const isVid = selectedMedia[0]?.type === 'video';
+    const EL: React.CSSProperties = { fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 12, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--ink-100)' };
+    const ROW: React.CSSProperties = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: 56, borderTop: '1px solid rgb(var(--ink-rgb) / 0.12)', gap: 12 };
+    const CTRL: React.CSSProperties = { fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 12, letterSpacing: '0.03em', textTransform: 'uppercase', color: 'var(--ink-100)', background: 'transparent', border: '1px solid rgb(var(--ink-rgb) / 0.2)', padding: '8px 12px', cursor: 'pointer', whiteSpace: 'nowrap' };
+    const fmt = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+    const clipStart = snippetWindow?.start ?? 0;
+    const clipReadout = `${fmt(clipStart)}–${fmt(clipStart + (snippetWindow?.length ?? 4))}`;
+    return (
     <div className="h-full flex flex-col">
-      <div className="flex items-center justify-between p-4" style={{ paddingTop: 'calc(1rem + env(safe-area-inset-top, 0px))' }}>
-        <button onClick={() => setStep('media')} className="text-[var(--ink-100)] text-lg">←</button>
-        <h2 style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-14)', color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.04em', margin: 0 }}>Edit & Post</h2>
-        <button
-          onClick={() => { setStep('deck'); loadDecksForStep(); }}
-          disabled={isUploading}
-          style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-13)', textTransform: 'uppercase', letterSpacing: '0.04em', background: 'none', border: 'none', cursor: isUploading ? 'default' : 'pointer', color: isUploading ? 'var(--mute-2)' : 'var(--ink-100)' }}
-        >
-          Next
-        </button>
+      {/* Brief E1 — header pinned at the safe-area top (Neue Haas), hairline beneath. */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px', height: 52, paddingTop: 'env(safe-area-inset-top, 0px)', boxSizing: 'content-box', borderBottom: '1px solid rgb(var(--ink-rgb) / 0.12)', flexShrink: 0 }}>
+        <button onClick={() => setStep('media')} aria-label="Back" style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 20, color: 'var(--ink-100)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, lineHeight: 1 }}>←</button>
+        <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 13, color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>Edit &amp; Post</h2>
+        <button onClick={() => { setStep('deck'); loadDecksForStep(); }} disabled={isUploading}
+          style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: '0.06em', background: 'none', border: 'none', cursor: isUploading ? 'default' : 'pointer', color: isUploading ? 'var(--mute-2)' : 'var(--ink-100)', padding: 0 }}>Next</button>
       </div>
 
-      <div className="flex-1 min-h-0 flex flex-col">
-        {/* C3-6/C3-7 — min-h-0 so the inner overflow-y-auto actually bounds: a flex child
-            defaults to min-height:auto (content size) and refuses to shrink, so the scroller
-            never scrolled and the tail (MIRAGE preview + ADD MUSIC) spilled past the panel's
-            overflow-hidden and was cut off. REOPENED (video): the min-h-0 was on THIS wrapper
-            only — the scroller itself (a flex-1 child below) still defaulted to min-height:auto,
-            so it grew to content and spilled for the taller VIDEO tail (photos fit in 600px, so
-            it looked fixed). The scroller now ALSO carries min-h-0 so it bounds and scrolls. */}
-        {/* SCROLLABLE (fixes the dead caption input): with body{position:fixed;
-            overflow:hidden;touch-action:none} (the iOS standalone lock), an input needs
-            a SCROLLABLE ancestor or iOS can't focus it / raise the keyboard — the deck
-            step works because ITS container is overflow-y-auto; this one wasn't. */}
-        <div className="flex-1 min-h-0 overflow-y-auto p-4 flex flex-col" style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y', paddingBottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))' }}>
-          <div style={{ position: 'relative', width: '100%', marginBottom: 16, backgroundColor: 'var(--black)', flexShrink: 0 }}>
-            {/* WYSIWYG preview — live gl-react render of geometry + ALL look params
-                (matches FINISHING; no preview bake → no generational loss; works for
-                video too). The single publish bake stays in handlePost. */}
-            <div style={{ position: 'relative', width: '100%', aspectRatio: getAspectRatio(chosenLayoutId || userLayoutId), background: 'var(--black)', overflow: 'hidden' }}>
-              {selectedMedia[0] && (
-                <FinishingPreview
-                  mediaUrl={selectedMedia[0].url}
-                  mediaType={selectedMedia[0].type}
-                  params={editParams}
-                  geometry={editPreviewGeometry}
-                  layoutId={chosenLayoutId || userLayoutId}
-                  // V3 §3 — the ONE player: it is also the autoplay audition (loops the chosen window).
-                  clipWindow={videoAutoplay && snippetWindow ? snippetWindow : undefined}
-                  onVideo={setEditVideo}
-                  onFirstFrame={onEditReady}
-                />
-              )}
-            </div>
-            <button
-              onClick={() => setStep('crop')}
-              style={{ position: 'absolute', bottom: 8, right: 8, background: 'rgb(var(--canvas-rgb) / 0.6)' /* U2-3 — canvas chip: ink label reads in both themes */, border: '1px solid rgb(var(--ink-rgb) / 0.25)', cursor: 'pointer', padding: '5px 9px' }}
-            >
-              <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-8)', color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>ADJUST CROP</span>
-            </button>
-          </div>
-          {/* Brief V3 §6 — the autoplay-clip window selector is REMOVED. Nothing consumes
-              it since V2a dropped the client clip bake (Stream is the video store of record;
-              graded HLS playback is this brief). Dead control gone. */}
-          {/* CAPTION TARGET — the ENTIRE region below the media focuses the caption. The
-              textarea GROWS to fill this zone (so most taps land in it directly), AND the
-              zone's onClick → input.focus() so even taps in the dead space around it land
-              in the caption. Only child <button>s opt out. "Add a caption" is the
-              placeholder INSIDE the flow — no separate dead label. No precision required. */}
-          <div
-            onClick={(e) => { if (!(e.target as HTMLElement).closest('button')) captionInputRef.current?.focus(); }}
-            style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 160, cursor: 'text' }}
-          >
-            <textarea
-              ref={captionInputRef}
-              value={caption}
-              onChange={(e) => setCaption(e.target.value)}
-              placeholder="Add a caption"
-              className="w-full bg-transparent resize-none outline-none placeholder-[rgb(var(--ink-rgb) / 0.37)]"
-              /* fontSize MUST be ≥16px (iOS zoom floor). flex:1 → fills the writable zone
-                 so the tap target spans the whole region below the media. Borderless. */
-              style={{ flex: 1, minHeight: 120, fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: 16, lineHeight: 1.5, color: 'var(--ink-100)', caretColor: 'var(--ink-100)', backgroundColor: 'transparent', border: 'none', padding: '2px 0 0' }}
-            />
-          </div>
-          {selectedMedia[0]?.type === 'video' && (
-            <div style={{ flexShrink: 0 }}>
-            <div style={{ marginTop: 12 }}>
-              <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-9)', color: 'rgb(var(--ink-rgb) / 0.5)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 8px' }}>
-                CUSTOM THUMBNAIL (OPTIONAL)
-              </p>
-              {customThumbnail ? (
-                <div style={{ position: 'relative', width: 80, height: 45 }}>
-                  <img src={URL.createObjectURL(customThumbnail)} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                  <button
-                    onClick={() => setCustomThumbnail(null)}
-                    style={{ position: 'absolute', top: -6, right: -6, width: 16, height: 16, borderRadius: '50%', background: 'var(--ink-100)', border: 'none', cursor: 'pointer', color: 'var(--on-ink)', fontSize: 'var(--fs-10)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                  >×</button>
-                </div>
-              ) : (
-                <button
-                  onClick={() => thumbnailInputRef.current?.click()}
-                  style={{ background: 'transparent', border: '1px solid rgb(var(--ink-rgb) / 0.2)', padding: '6px 12px', cursor: 'pointer' }}
-                >
-                  <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-9)', color: 'rgb(var(--ink-rgb) / 0.6)', textTransform: 'uppercase' }}>+ ADD THUMBNAIL</span>
-                </button>
-              )}
-              <input ref={thumbnailInputRef} type="file" accept="image/*" onChange={(e) => { const f = e.target.files?.[0]; if (f) setCustomThumbnail(f); e.target.value = ''; }} style={{ display: 'none' }} />
-            </div>
-            <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-9)', color: 'rgb(var(--ink-rgb) / 0.5)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>
-                AUTOPLAY
-              </p>
-              <button
-                onClick={() => setVideoAutoplay(v => !v)}
-                role="switch"
-                aria-checked={videoAutoplay}
-                aria-label="Autoplay on grid"
-                style={{
-                  // C3-5 — a real switch: the track and knob were BOTH var(--ink-100) (one blank
-                  // rectangle). Now the knob contrasts the track in every state and both themes —
-                  // ON: dark knob (--canvas) on an ivory track; OFF: ivory knob on a bordered faint
-                  // track. Square corners kept (design rule). 36×20 track, 16×16 knob.
-                  width: 36, height: 20, borderRadius: 0,
-                  background: videoAutoplay ? 'var(--ink-100)' : 'rgb(var(--ink-rgb) / 0.18)',
-                  border: videoAutoplay ? '1px solid var(--ink-100)' : '1px solid rgb(var(--ink-rgb) / 0.35)',
-                  boxSizing: 'border-box', cursor: 'pointer', position: 'relative',
-                  transition: 'background 0.2s ease', padding: 0,
-                }}
-              >
-                <div style={{
-                  position: 'absolute', top: 2, left: videoAutoplay ? 18 : 2, width: 16, height: 16, borderRadius: 0,
-                  background: videoAutoplay ? 'var(--canvas)' : 'var(--ink-100)',
-                  transition: 'left 0.2s ease, background 0.2s ease',
-                }} />
-              </button>
-            </div>
-            {/* Brief M10 §2 — MIRAGE PREVIEW WINDOW (optional). Reinstated selector: scrub a
-                start point + fixed 4s window against the local video; graded audition thumb.
-                Untouched → null → Mirage plays from 0. Metadata only — no clip is baked.
-                Shown only when autoplay is on (a window with no autoplay has nowhere to play). */}
-            {videoAutoplay && selectedMedia[0] && (
-              <div style={{ marginTop: 16 }}>
-                <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-9)', color: 'rgb(var(--ink-rgb) / 0.5)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 2px' }}>
-                  THUMBNAIL PREVIEW
-                </p>
-                {/* V3 §3 — scrubs the main preview's own <video> over a once-captured strip: no second
-                    decode, no second WebGL context, no audition element. */}
-                <SnippetScrubber
-                  video={editVideo}
-                  heroFrameTime={editParams.heroFrameTime ?? 0}
-                  value={snippetWindow}
-                  onChange={setSnippetWindow}
-                />
-              </div>
-            )}
-            </div>
-          )}
-          {/* MUSIC (M2) — attach an approved library track. Applies to image + video;
-              the bed/music_only layering choice shows only for videos. Never gates
-              publish — it's just columns on the create insert. */}
-          <div style={{ marginTop: 16, flexShrink: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-9)', color: 'rgb(var(--ink-rgb) / 0.5)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>MUSIC</p>
-              <button onClick={() => setShowMusicPicker(true)} style={{ background: 'transparent', border: '1px solid rgb(var(--ink-rgb) / 0.2)', padding: '6px 12px', cursor: 'pointer' }}>
-                <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-9)', color: 'rgb(var(--ink-rgb) / 0.6)', textTransform: 'uppercase' }}>{musicTrackId ? 'CHANGE' : '+ ADD MUSIC'}</span>
-              </button>
-            </div>
-            {musicTrackId && (
-              <>
-                <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-                  <span style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: 'var(--fs-8)', color: 'var(--ink-100)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {musicTrack?.title ?? 'Track attached'}{musicTrack?.composer_handle ? ` · @${musicTrack.composer_handle}` : ''}
-                  </span>
-                  <button onClick={() => { setMusicTrackId(null); setMusicTrack(null); setMusicMode(null); }} style={{ flexShrink: 0, background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-8)', color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.06em', padding: 0 }}>REMOVE</button>
-                </div>
-                {selectedMedia[0]?.type === 'video' && (
-                  <div style={{ marginTop: 10, display: 'flex', gap: 8 }}>
-                    {(['bed', 'music_only'] as const).map((m) => {
-                      const on = musicMode === m;
-                      return (
-                        <button key={m} onClick={() => setMusicMode(m)} style={{ flex: 1, background: 'transparent', border: `1px solid ${on ? 'var(--ink)' : 'var(--hairline)'}`, cursor: 'pointer', padding: '8px 6px', fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-8)', color: 'var(--ink)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                          {m === 'bed' ? 'MUSIC AS BED' : 'MUSIC ONLY'}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-                {/* CLIP SELECTOR — image posts get a fixed 20s window; videos get a
-                    window the length of the video. Drag to choose the section; the
-                    video-longer-than-track case falls to the whole track (loops). */}
-                {musicTrack?.file_url && (
-                  <ClipSelector
-                    fileUrl={musicTrack.file_url}
-                    peaks={musicTrack.waveform_peaks}
-                    trackDuration={musicTrack.duration_seconds ?? 0}
-                    windowSeconds={selectedMedia[0]?.type === 'video' ? (videoDuration || (musicTrack.duration_seconds ?? 20)) : 20}
-                    startSeconds={musicStart}
-                    onChange={setMusicStart}
-                  />
-                )}
-              </>
+      {/* Brief E1 — ONE scroller inside the full-height shell: the column scrolls here, keyboard
+          open or closed, nothing clipped. Preview (NOT force-dark) · caption · 56px hairline rows. */}
+      <div className="flex-1 min-h-0 overflow-y-auto" style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y', paddingBottom: 'calc(16px + env(safe-area-inset-bottom, 0px))' }}>
+        {/* preview — chosen layout ratio; ADJUST CROP pill */}
+        <div style={{ position: 'relative', width: '100%', background: 'var(--black)' }}>
+          <div style={{ position: 'relative', width: '100%', aspectRatio: getAspectRatio(chosenLayoutId || userLayoutId), background: 'var(--black)', overflow: 'hidden' }}>
+            {selectedMedia[0] && (
+              <FinishingPreview
+                mediaUrl={selectedMedia[0].url}
+                mediaType={selectedMedia[0].type}
+                params={editParams}
+                geometry={editPreviewGeometry}
+                layoutId={chosenLayoutId || userLayoutId}
+                clipWindow={videoAutoplay && snippetWindow ? snippetWindow : undefined}
+                onVideo={setEditVideo}
+                onFirstFrame={onEditReady}
+              />
             )}
           </div>
+          <button onClick={() => setStep('crop')} style={{ position: 'absolute', bottom: 8, right: 8, background: 'rgb(var(--canvas-rgb) / 0.6)', border: '1px solid rgb(var(--ink-rgb) / 0.25)', cursor: 'pointer', padding: '5px 9px' }}>
+            <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 10, color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Adjust crop</span>
+          </button>
         </div>
 
-        {/* The LAYOUT / "N media items selected" footer was removed — temporary-looking
-            and the layout is already decided by here. Only a publish error surfaces. */}
-        {postError && (
-          <div className="p-4">
-            <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-10)', color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-              {postError}
-            </p>
+        {/* caption — auto-grow, min 2 lines, 28px below the preview */}
+        <div onClick={(e) => { if (!(e.target as HTMLElement).closest('button')) captionInputRef.current?.focus(); }} style={{ padding: '0 16px', cursor: 'text' }}>
+          <textarea
+            ref={captionInputRef}
+            value={caption}
+            onChange={(e) => setCaption(e.target.value)}
+            onInput={(e) => { const t = e.currentTarget; t.style.height = 'auto'; t.style.height = Math.max(48, t.scrollHeight) + 'px'; }}
+            placeholder="Add a caption"
+            style={{ width: '100%', marginTop: 28, minHeight: 48, resize: 'none', outline: 'none', fontFamily: 'var(--font-display)', fontWeight: 400, fontSize: 16, lineHeight: 1.5, color: 'var(--ink-100)', caretColor: 'var(--ink-100)', backgroundColor: 'transparent', border: 'none', padding: 0 }}
+          />
+        </div>
+
+        {/* rows — 56px, hairline tops, Haas 700 12px uppercase label left, control right */}
+        <div style={{ padding: '0 16px', marginTop: 18 }}>
+          {isVid && (
+            <>
+              {/* CLIP — autoplay toggle + mono window readout; strip beneath, full-width, never clipped */}
+              <div style={ROW}>
+                <span style={EL}>Autoplay clip · 4s</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                  <span style={{ fontFamily: "'IBM Plex Mono', ui-monospace, monospace", fontSize: 12, color: 'rgb(var(--ink-rgb) / 0.5)' }}>{clipReadout}</span>
+                  <button onClick={() => setVideoAutoplay((v) => !v)} role="switch" aria-checked={videoAutoplay} aria-label="Autoplay on grid"
+                    style={{ width: 36, height: 20, borderRadius: 0, background: videoAutoplay ? 'var(--ink-100)' : 'rgb(var(--ink-rgb) / 0.18)', border: videoAutoplay ? '1px solid var(--ink-100)' : '1px solid rgb(var(--ink-rgb) / 0.35)', boxSizing: 'border-box', cursor: 'pointer', position: 'relative', padding: 0, flexShrink: 0 }}>
+                    <div style={{ position: 'absolute', top: 2, left: videoAutoplay ? 18 : 2, width: 16, height: 16, background: videoAutoplay ? 'var(--canvas)' : 'var(--ink-100)', transition: 'left 0.2s ease' }} />
+                  </button>
+                </div>
+              </div>
+              {videoAutoplay && selectedMedia[0] && (
+                <div style={{ marginBottom: 14 }}>
+                  <SnippetScrubber bare video={editVideo} heroFrameTime={editParams.heroFrameTime ?? 0} value={snippetWindow} onChange={setSnippetWindow} />
+                </div>
+              )}
+
+              {/* COVER — replaces Custom Thumbnail + Thumbnail Preview */}
+              <div style={ROW}>
+                <span style={EL}>Cover</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div style={{ width: 96, height: 40, background: 'var(--surface-2)', overflow: 'hidden', flexShrink: 0 }}>
+                    {customThumbnail && <img src={URL.createObjectURL(customThumbnail)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
+                  </div>
+                  <button onClick={() => thumbnailInputRef.current?.click()} style={CTRL}>{customThumbnail ? 'Change' : 'Choose frame'}</button>
+                  {customThumbnail && <button onClick={() => setCustomThumbnail(null)} aria-label="Remove cover" style={{ ...CTRL, border: 'none', padding: '7px 4px', color: 'rgb(var(--ink-rgb) / 0.55)' }}>×</button>}
+                  <input ref={thumbnailInputRef} type="file" accept="image/*" onChange={(e) => { const f = e.target.files?.[0]; if (f) setCustomThumbnail(f); e.target.value = ''; }} style={{ display: 'none' }} />
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* MUSIC — "+ Add music" always visible; chosen → name · × · 48px waveform */}
+          <div style={ROW}>
+            <span style={EL}>Music</span>
+            {musicTrackId ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
+                <span style={{ fontFamily: 'var(--font-display)', fontSize: 13, color: 'var(--ink-100)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 160 }}>{musicTrack?.title ?? 'Track'}</span>
+                <button onClick={() => { setMusicTrackId(null); setMusicTrack(null); setMusicMode(null); }} aria-label="Remove music" style={{ ...CTRL, border: 'none', padding: '7px 4px', color: 'rgb(var(--ink-rgb) / 0.55)' }}>×</button>
+              </div>
+            ) : (
+              <button onClick={() => setShowMusicPicker(true)} style={CTRL}>+ Add music</button>
+            )}
           </div>
-        )}
+          {musicTrackId && (
+            <div style={{ paddingBottom: 14 }}>
+              {isVid && (
+                <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+                  {(['bed', 'music_only'] as const).map((m) => { const on = musicMode === m; return (
+                    <button key={m} onClick={() => setMusicMode(m)} style={{ flex: 1, background: 'transparent', border: `1px solid ${on ? 'var(--ink-100)' : 'rgb(var(--ink-rgb) / 0.2)'}`, cursor: 'pointer', padding: '8px 6px', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 11, color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{m === 'bed' ? 'Music as bed' : 'Music only'}</button>
+                  ); })}
+                </div>
+              )}
+              {musicTrack?.file_url && (
+                <div style={{ height: 48 }}>
+                  <ClipSelector fileUrl={musicTrack.file_url} peaks={musicTrack.waveform_peaks} trackDuration={musicTrack.duration_seconds ?? 0} windowSeconds={isVid ? (videoDuration || (musicTrack.duration_seconds ?? 20)) : 20} startSeconds={musicStart} onChange={setMusicStart} />
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* DECK — add to a deck (the full picker is the Next step) */}
+          <div style={ROW}>
+            <span style={EL}>Deck</span>
+            <button onClick={() => { setStep('deck'); loadDecksForStep(); }} style={CTRL}>{selectedDeckId ? (userDecks.find((d) => d.id === selectedDeckId)?.title ?? 'In a deck') : 'Add to deck'}</button>
+          </div>
+
+          {postError && <p style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 11, color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.04em', marginTop: 16 }}>{postError}</p>}
+        </div>
       </div>
     </div>
-  );
+  ); };
 
   const renderDeckStep = () => {
     const MONO_S: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
@@ -2085,7 +2006,12 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
           centered 375×600 panel leaves a different-black band above/below (var(--black) ≠
           var(--canvas)). One continuous canvas ground now covers the page. */}
       <div onClick={handleBackdropDismiss} style={{ position: 'fixed', inset: 0, backgroundColor: 'var(--canvas)', opacity: 1, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div onClick={(e) => e.stopPropagation()} className="bg-canvas w-[375px] h-[600px] relative overflow-hidden">
+        {/* Brief E1 — FULL-HEIGHT shell. Was a fixed w-[375px] h-[600px] box centred in the viewport,
+            so the composer rendered ~106px+ down with a black band above the header AND the inner
+            overflow-y-auto could never bound (the fixed-px-frame scroll-trap CLAUDE.md flags). Now
+            100dvh (max-width keeps the centred modal shape on wide screens); the header pins at the
+            safe-area top and the EDIT & POST column scrolls inside this shell, keyboard open or not. */}
+        <div onClick={(e) => e.stopPropagation()} className="bg-canvas relative overflow-hidden" style={{ width: '100%', maxWidth: 430, height: '100dvh' }}>
           {step === 'media' && renderMediaStep()}
           {step === 'edit' && renderEditStep()}
           {step === 'deck' && renderDeckStep()}
