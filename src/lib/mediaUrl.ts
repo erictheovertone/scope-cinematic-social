@@ -62,7 +62,9 @@ const STREAM_THUMB = /\.cloudflarestream\.com\/[^/]+\/thumbnails\/thumbnail\.(?:
 export function feedImage(url: string | null | undefined, width: number, _quality = 78): string {
   if (!url) return url ?? '';
   if (STREAM_THUMB.test(url)) {
-    const w = Math.round(width);
+    // Cloudflare Stream thumbnails 400 above ~2000px on a side — cap app-wide here (feedImage is
+    // the single source of Stream-thumbnail sizing) so no caller can request a 400'd width.
+    const w = Math.min(Math.round(width), 2000);
     return `${url.split('?')[0]}?width=${w}&height=${w}&fit=clip`;
   }
   // Foreign hosts / already-transformed URLs lack the object marker → untouched.
