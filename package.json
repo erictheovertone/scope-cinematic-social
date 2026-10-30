@@ -20,6 +20,7 @@
     "renditions:backfill": "node --experimental-strip-types --no-warnings scripts/backfill-renditions.mjs"
   },
   "dependencies": {
+    "@coinbase/cdp-sdk": "^1.60.0",
     "@privy-io/react-auth": "^2.25.0",
     "@stripe/stripe-js": "^9.4.0",
     "@supabase/supabase-js": "^2.78.0",

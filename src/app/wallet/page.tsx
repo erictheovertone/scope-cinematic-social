@@ -23,6 +23,7 @@ import { useCountUp } from "@/lib/economy/useCountUp";
 import { groupActivity, shortAddr as shortAddr0x, type ActivityRow } from "@/lib/walletActivity";
 import { supabase } from "@/lib/supabase/client";
 import { getUserByPrivyId } from "@/lib/userService";
+import { useAugmented } from "@/lib/tier";
 import { getEarnings, sumAll, type EarningsData } from "@/lib/economy/earnings";
 import { feedImage } from "@/lib/mediaUrl";
 import EarningsSheet from "@/components/economy/EarningsSheet";
@@ -45,7 +46,7 @@ const USDC_BASE = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913" as const;
 const ERC20_TRANSFER_ABI = [{ name: "transfer", type: "function", stateMutability: "nonpayable", inputs: [{ name: "to", type: "address" }, { name: "amount", type: "uint256" }], outputs: [{ name: "", type: "bool" }] }] as const;
 
 export default function WalletPage() {
-  const { user } = usePrivy();
+  const { user, getAccessToken } = usePrivy();
   const { fundWallet } = useFundWallet();
   const { wallets } = useWallets();
   const economy = useEconomy();
@@ -54,6 +55,25 @@ export default function WalletPage() {
   const walletAddress = getEmbeddedAddress(user, wallets) ?? "";
 
   const isDesktop = useIsDesktop();
+  // ── Brief WAL-1 — Coinbase Onramp (direct CDP session-token flow) ──────────────────────────────
+  const [viewerUuid, setViewerUuid] = useState<string | null>(null);
+  const augOf = useAugmented([viewerUuid]);
+  const isAugmented = augOf(viewerUuid);
+  const [funding, setFunding] = useState(false);
+  const [fundError, setFundError] = useState<string | null>(null);
+  const [fundedNotice, setFundedNotice] = useState(false);
+  const buyWithCoinbase = async () => {
+    if (funding) return;
+    setFunding(true); setFundError(null);
+    try {
+      const token = await getAccessToken();
+      const res = await fetch('/api/onramp/session', { method: 'POST', headers: token ? { Authorization: `Bearer ${token}` } : {} });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok || !j?.url) { setFundError(j?.error || `Couldn’t start Coinbase (${res.status}).`); return; }
+      if (isDesktop) window.open(j.url, '_blank', 'noopener'); else window.location.href = j.url;
+    } catch { setFundError('Network error starting Coinbase — try again.'); }
+    finally { setFunding(false); }
+  };
   const [activeTab, setActiveTab] = useState<"balances" | "holdings" | "earnings" | "activity">("balances");
   // ETH/USD via the boundary's single source; null = rate unavailable → "$—".
   const [ethUsdRate, setEthUsdRate] = useState<number | null>(null);
@@ -249,6 +269,30 @@ export default function WalletPage() {
   useEffect(() => {
     fetchBalances();
   }, [walletAddress]);
+
+  // WAL-1 — resolve the viewer's uuid once (for the brass-tier read on the ADD FUNDS button).
+  useEffect(() => {
+    if (!user?.id) return;
+    let live = true;
+    getUserByPrivyId(user.id).then((u) => { if (live && u?.id) setViewerUuid(u.id); }).catch(() => {});
+    return () => { live = false; };
+  }, [user?.id]);
+
+  // WAL-1 — returning from Coinbase (?funded=1): show "Funds on the way", strip the param, and
+  // re-poll the balance for 60s so the top-up lands without a manual refresh.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (new URLSearchParams(window.location.search).get('funded') !== '1') return;
+    setFundedNotice(true);
+    router.replace('/wallet');
+    const start = Date.now();
+    const id = window.setInterval(() => {
+      fetchBalances();
+      if (Date.now() - start > 60_000) { window.clearInterval(id); setFundedNotice(false); }
+    }, 8_000);
+    return () => window.clearInterval(id);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ACTIVITY loader — session-cached transfers; force bypasses the cache.
   // Honest failure: a rate-limited read renders the retry state, never a
@@ -757,6 +801,31 @@ export default function WalletPage() {
           </div>
         </div>
       </LedgerCard>
+
+      {/* Brief WAL-1 — ADD FUNDS (Coinbase Onramp, direct CDP session-token flow). Canvas/ink
+          tokens; the primary button goes brass only for an Augmented member. Kept ABOVE the
+          existing DEPOSIT/SWAP/SEND transfer UI. */}
+      <div style={{ margin: "18px 10px 0" }}>
+        <LedgerCard variant="gradient" radius={6} style={{ padding: "14px 14px", display: "flex", flexDirection: "column", gap: 10 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+            <span style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 12, letterSpacing: "0.04em", textTransform: "uppercase", color: "rgb(var(--ink-rgb) / 0.67)" }}>Add funds</span>
+            <button
+              onClick={buyWithCoinbase}
+              disabled={funding}
+              style={{
+                fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 12, letterSpacing: "0.04em", textTransform: "uppercase",
+                padding: "10px 16px", cursor: funding ? "default" : "pointer", border: "none",
+                background: isAugmented ? "var(--brass)" : "var(--ink-100)",
+                color: isAugmented ? "#0A0A0A" : "var(--on-ink)",
+              }}
+            >
+              {funding ? "Starting…" : "Buy with Coinbase"}
+            </button>
+          </div>
+          {fundError && <span role="alert" style={{ fontFamily: "var(--font-medium)", fontWeight: 500, fontSize: 11, color: "var(--danger)" }}>{fundError}</span>}
+          {fundedNotice && <span style={{ fontFamily: "var(--font-medium)", fontWeight: 500, fontSize: 11, color: "rgb(var(--ink-rgb) / 0.6)" }}>Funds on the way — your balance will update shortly.</span>}
+        </LedgerCard>
+      </div>
 
       {/* ACTION CARDS — DEPOSIT · SWAP · SEND, ledger gradient variant (node 37:123).
           Thin-stroke arrow glyphs: down / swap-pair / up-right. Tap behaviors
