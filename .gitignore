@@ -60,3 +60,5 @@ test/shots-v1/
 test/shots-mx/
 # MUS-2 harness screenshots (not source)
 test/shots-mus2/
+# ARR-6 — Arrival closed-state shots (not source)
+test/shots-arr6/
