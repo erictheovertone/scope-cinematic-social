@@ -5,12 +5,13 @@
 //          backfill + new submissions land in Singles · manage page refuses a non-owner.
 //   AUG-1: download gate (free → upsell sheet; augmented → 200 signed URL, dead after 60s) ·
 //          Stripe TEST flow end to end: join annual (pre-selected), join monthly, cancel → tier
-//          holds to period end → subscription ends → tier reverts.
+//          holds to period end → subscription ends → tier reverts. The card-entry step inside
+//          Stripe's iframe is replaced by an API subscription (Stripe hCaptchas automated checkout).
 // Needs: docs/migrations/mus1_aug1.sql run; a seam build (NEXT_PUBLIC_TEST_SEAM=1) on :3000;
 // .env.local with sk_test_ + the four test STRIPE_PRICE_* + STRIPE_WEBHOOK_SECRET.
 //   BASE_URL=http://localhost:3000 AUTH_STATE=<shared throwaway.json> npx playwright test test/mus-aug.spec.ts --workers=1
 import { test, expect, type Page } from '@playwright/test';
-import { BASE, IDS, TITLES, ALBUM_TITLE, db, me, seed, teardown, resetMembership, profileRow, relay, sessionToken, stripe, uuid } from './mus-aug-harness';
+import { BASE, IDS, TITLES, ALBUM_TITLE, db, me, seed, teardown, resetMembership, profileRow, relay, sessionToken, stripe, uuid, subscribeViaApi, deliverCheckoutCompleted } from './mus-aug-harness';
 import { toEdit } from './v3-harness';
 
 const T1 = IDS.tracks[0];
@@ -43,7 +44,7 @@ test('MUS-1 · track route from the composer page (album cover → first track)'
 
 test('MUS-1 · track route from the bio sheet MUSIC section', async ({ page }) => {
   await page.goto('/profile');
-  await page.getByRole('button', { name: /^bio$/i }).first().click({ timeout: 20_000 });
+  await page.getByRole('button', { name: /profile info/i }).first().click({ timeout: 20_000 });
   const music = page.getByTestId('bio-music');
   await expect(music).toBeVisible({ timeout: 15_000 });
   await openTrackFrom(page, () => music.getByText(ALBUM_TITLE).first().click());
@@ -116,36 +117,41 @@ test('AUG-1 · download gate: free → upsell sheet (UI) + 403 (API)', async ({ 
 
   await page.goto(`/track/${T1}`);
   await page.getByTestId('track-download').click({ timeout: 20_000 });
-  const sheet = page.getByTestId('augmented-sheet');
-  await expect(sheet).toBeVisible({ timeout: 10_000 });
+  const sheet = page.getByRole('dialog', { name: 'Augmented Pro' }); // role query skips the closed (aria-hidden) sheet
+  await expect(sheet).toBeVisible({ timeout: 15_000 });
   await expect(page.getByTestId('plan-augmented_annual')).toHaveAttribute('aria-checked', 'true'); // annual pre-selected
   await expect(sheet.getByText(/2 months free/i)).toBeVisible();
 });
 
-/** Pay the Stripe Embedded Checkout with the 4242 test card. */
-async function payEmbedded(page: Page) {
-  const frame = page.frameLocator('iframe[name*="embedded-checkout"], iframe[src*="checkout.stripe.com"]').first();
-  const email = frame.locator('#email');
-  await email.waitFor({ timeout: 45_000 });
-  await email.fill('harness+test@example.com');
-  await frame.locator('#cardNumber').fill('4242424242424242');
-  await frame.locator('#cardExpiry').fill('12 / 34');
-  await frame.locator('#cardCvc').fill('123');
-  const name = frame.locator('#billingName');
-  if (await name.count()) await name.fill('Harness Test');
-  const zip = frame.locator('#billingPostalCode');
-  if (await zip.count()) await zip.fill('10001');
-  await frame.locator('button[type="submit"], .SubmitButton').first().click();
-}
-
+/**
+ * Join through the REAL UI up to Stripe's checkout (Download → sheet → plan → Join → the session is
+ * created on the plan's Price in subscription mode and Stripe's embedded checkout mounts), then the
+ * payment leg via the API (Stripe serves hCaptcha to automated card entry), then the webhook with
+ * checkout.session.completed for the real ids + Stripe's real invoice/subscription events.
+ */
 async function joinViaSheet(page: Page, plan: 'augmented_annual' | 'augmented_monthly') {
+  const since = Math.floor(Date.now() / 1000) - 5;
   await page.goto(`/track/${T1}`);
   await page.getByTestId('track-download').click({ timeout: 20_000 });
-  await expect(page.getByTestId('augmented-sheet')).toBeVisible();
+  await expect(page.getByRole('dialog', { name: 'Augmented Pro' })).toBeVisible({ timeout: 15_000 });
   await page.getByTestId(`plan-${plan}`).click();
   await page.getByTestId('augmented-join').click();
-  await payEmbedded(page);
-  await expect.poll(async () => (await profileRow()).membership_tier, { timeout: 60_000, intervals: [1000] }).toBe('augmented');
+  await expect(page.locator('iframe[name*="embedded-checkout"], iframe[src*="checkout.stripe.com"]').first()).toBeVisible({ timeout: 30_000 });
+  const sessions = await stripe<{ data: { id: string; mode: string; metadata: Record<string, string>; created: number }[] }>(`checkout/sessions?limit=5&created[gte]=${since}`);
+  const cs = sessions.data.find((x) => x.metadata?.plan === plan);
+  expect(cs, 'checkout session created by the Join tap').toBeTruthy();
+  expect(cs!.mode).toBe('subscription');
+  const items = await stripe<{ data: { price: { id: string; recurring: { interval: string } | null } }[] }>(`checkout/sessions/${cs!.id}/line_items`);
+  const priceId = items.data[0].price.id;
+  expect(items.data[0].price.recurring?.interval).toBe(plan === 'augmented_annual' ? 'year' : 'month');
+  console.log(`[checkout] ${plan}: session ${cs!.id.slice(0, 14)}… on ${priceId.slice(0, 12)}… (${items.data[0].price.recurring?.interval})`);
+
+  const ids = await subscribeViaApi(plan, priceId);
+  expect(await deliverCheckoutCompleted(ids, plan)).toBe(200);
+  const delivered = await relay(since, [ids.customer, ids.subscription], ['invoice.payment_succeeded', 'customer.subscription.updated']);
+  console.log('[webhook relay]', delivered.map((d) => `${d.type}→${d.status}`).join(' · ') || '(none yet)');
+  expect(delivered.every((d) => d.status === 200)).toBeTruthy();
+  await expect.poll(async () => (await profileRow()).membership_tier, { timeout: 20_000 }).toBe('augmented');
   return profileRow();
 }
 
@@ -153,7 +159,6 @@ test('AUG-1 · Stripe TEST: join ANNUAL → augmented → download 200, signed U
   test.skip(browserName !== 'chromium', 'Stripe flow runs once, on desktop-chromium');
   test.setTimeout(240_000);
   await resetMembership();
-  const since = Math.floor(Date.now() / 1000) - 5;
   const row = await joinViaSheet(page, 'augmented_annual');
   expect(row.augmented_since).toBeTruthy();
   const sub = await stripe<{ items: { data: { price: { id: string; recurring: { interval: string } } }[] }; status: string }>(`subscriptions/${row.stripe_subscription_id}`);
@@ -163,11 +168,6 @@ test('AUG-1 · Stripe TEST: join ANNUAL → augmented → download 200, signed U
   const until = new Date(row.paid_member_until!).getTime();
   expect(until - Date.now()).toBeGreaterThan(360 * 86_400_000);
 
-  // the webhook path, with Stripe's real events for this checkout
-  const delivered = await relay(since, [row.stripe_customer_id!, row.stripe_subscription_id!], ['checkout.session.completed', 'invoice.payment_succeeded', 'customer.subscription.updated']);
-  console.log('[webhook relay]', delivered.map((d) => `${d.type}→${d.status}`).join(' · '));
-  expect(delivered.length).toBeGreaterThan(0);
-  expect(delivered.every((d) => d.status === 200)).toBeTruthy();
   expect((await profileRow()).membership_tier).toBe('augmented');
 
   // download: 200 + signed URL that works now and is dead after 60s

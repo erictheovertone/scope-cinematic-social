@@ -187,3 +187,35 @@ export async function relay(sinceSec: number, objectIds: string[], types: string
 }
 
 export const uuid = () => randomUUID();
+
+/**
+ * The PAYMENT leg without the iframe (Stripe serves hCaptcha to automated checkout): a real
+ * test-mode customer + pm_card_visa + subscription on the plan's Price, with the SAME metadata
+ * checkout's subscription_data sets. Returns the real ids.
+ */
+export async function subscribeViaApi(plan: string, priceId: string): Promise<{ customer: string; subscription: string }> {
+  const did = sessionDid();
+  const c = await stripe<{ id: string }>('customers', { method: 'POST', body: { email: 'harness+test@example.com', 'metadata[privyUserId]': did } });
+  const pm = await stripe<{ id: string }>('payment_methods/pm_card_visa/attach', { method: 'POST', body: { customer: c.id } });
+  const s = await stripe<{ id: string; status: string }>('subscriptions', { method: 'POST', body: {
+    customer: c.id, 'items[0][price]': priceId, default_payment_method: pm.id,
+    'metadata[privyUserId]': did, 'metadata[plan]': plan,
+  } });
+  if (s.status !== 'active') throw new Error(`test subscription not active: ${s.status}`);
+  return { customer: c.id, subscription: s.id };
+}
+
+/** checkout.session.completed for those REAL ids (the one constructed event), signed + delivered. */
+export async function deliverCheckoutCompleted(ids: { customer: string; subscription: string }, plan: string): Promise<number> {
+  const evt = {
+    id: `evt_harness_${Date.now()}`, object: 'event', api_version: '2024-06-20', created: Math.floor(Date.now() / 1000), livemode: false,
+    type: 'checkout.session.completed', pending_webhooks: 1, request: { id: null, idempotency_key: null },
+    data: { object: { id: `cs_test_harness_${Date.now()}`, object: 'checkout.session', mode: 'subscription', status: 'complete', payment_status: 'paid',
+      customer: ids.customer, subscription: ids.subscription, metadata: { privyUserId: sessionDid(), plan } } },
+  };
+  const payload = JSON.stringify(evt);
+  const t = Math.floor(Date.now() / 1000);
+  const sig = createHmac('sha256', E('STRIPE_WEBHOOK_SECRET')).update(`${t}.${payload}`).digest('hex');
+  const r = await fetch(`${BASE}/api/stripe/webhook`, { method: 'POST', headers: { 'stripe-signature': `t=${t},v1=${sig}`, 'content-type': 'application/json' }, body: payload });
+  return r.status;
+}

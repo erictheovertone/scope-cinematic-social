@@ -8,20 +8,25 @@
 //                         license is surfaced alongside (onLicense)
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import { useUpsell } from "@/components/UpsellProvider";
 
 export type DownloadKind = "post" | "track";
 
 export function useDownload() {
-  const { user, login, getAccessToken } = usePrivy();
+  const { ready, user, login, getAccessToken } = usePrivy();
   const { showAugmented } = useUpsell();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const readyRef = useRef(ready); readyRef.current = ready;
+  const userRef = useRef(user); userRef.current = user;
 
   const download = useCallback(async (kind: DownloadKind, id: string): Promise<"ok" | "upsell" | "login" | "error"> => {
-    if (!user) { login(); return "login"; }
+    // Privy still restoring the session: a signed-in viewer must not be bounced to login (or
+    // lose the tap). Wait for it, briefly, then decide.
+    for (let i = 0; i < 40 && !readyRef.current; i++) await new Promise((r) => setTimeout(r, 100));
+    if (!userRef.current) { login(); return "login"; }
     setBusy(true); setError(null);
     try {
       const token = await getAccessToken();
@@ -41,7 +46,7 @@ export function useDownload() {
     } finally {
       setBusy(false);
     }
-  }, [user, login, getAccessToken, showAugmented]);
+  }, [login, getAccessToken, showAugmented]);
 
   return { download, busy, error };
 }

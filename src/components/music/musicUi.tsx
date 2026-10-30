@@ -108,10 +108,14 @@ export function AlbumTile({ cover, title, meta, onClick, overlay, nameSlot }: {
   cover: string | null; title: string; meta: string; onClick?: () => void;
   overlay?: React.ReactNode; nameSlot?: React.ReactNode;
 }) {
+  // The whole tile is the button (cover + name + meta), except on the manage page where the
+  // name is an inline editor (nameSlot) and only the cover is tappable.
+  const whole = !!onClick && !nameSlot;
+  const act = (e: React.KeyboardEvent) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick?.(); } };
+  const btn = (on: boolean) => on ? { onClick, role: "button" as const, tabIndex: 0, onKeyDown: act } : {};
   return (
-    <div style={{ minWidth: 0 }}>
-      <div onClick={onClick} role={onClick ? "button" : undefined} tabIndex={onClick ? 0 : undefined}
-        onKeyDown={onClick ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(); } } : undefined}
+    <div {...btn(whole)} aria-label={whole ? title : undefined} style={{ minWidth: 0, cursor: whole ? "pointer" : undefined }}>
+      <div {...btn(!!onClick && !whole)}
         style={{ position: "relative", aspectRatio: "1 / 1", background: "var(--surface-2)", overflow: "hidden", cursor: onClick ? "pointer" : "default" }}>
         {cover
           ? <img src={feedImage(cover, 600)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />

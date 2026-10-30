@@ -48,6 +48,8 @@ export default function AugmentedSheet({ visible, onClose, onJoined }: { visible
   const [embeddedOpen, setEmbeddedOpen] = useState(false);
   const embeddedRef = useRef<HTMLDivElement>(null);
   const checkoutRef = useRef<EmbeddedCheckoutHandle | null>(null);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => { if (visible) { setPlan("augmented_annual"); setError(null); } }, [visible]);
   useEffect(() => {
@@ -113,7 +115,10 @@ export default function AugmentedSheet({ visible, onClose, onJoined }: { visible
     return () => window.removeEventListener("scope:tier-changed", h);
   }, [user?.id]);
 
-  if (typeof document === "undefined") return null;
+  // Portal only after mount: the server renders nothing, so the client's first render must too
+  // (a `typeof document` check here mismatched hydration app-wide — React #418 — and the
+  // client re-render dropped <html data-theme>, flipping light-theme users back to dark).
+  if (!mounted) return null;
 
   const body = (
     <div data-testid="augmented-sheet">
@@ -180,9 +185,9 @@ export default function AugmentedSheet({ visible, onClose, onJoined }: { visible
       )}
       <div data-swipe-exclude onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 600, backgroundColor: "rgb(var(--black-rgb) / 0.85)", opacity: visible ? 1 : 0, pointerEvents: visible ? "auto" : "none", transition: "opacity 0.3s ease" }} />
       {isDesktop ? (
-        <div data-swipe-exclude role="dialog" aria-modal="true" aria-label="Augmented Pro" style={{ position: "fixed", left: "50%", top: "50%", zIndex: 601, width: 420, maxHeight: "90vh", overflowY: "auto", background: "var(--surface-1)", border: `1px solid ${HAIR}`, padding: "28px 24px", color: "var(--ink-100)", opacity: visible ? 1 : 0, pointerEvents: visible ? "auto" : "none", transform: `translate(-50%, ${visible ? "-50%" : "-46%"})`, transition: "opacity 0.25s ease, transform 0.25s ease" }}>{body}</div>
+        <div data-swipe-exclude role="dialog" aria-modal="true" aria-label="Augmented Pro" aria-hidden={!visible} {...(visible ? {} : { inert: true })} style={{ position: "fixed", left: "50%", top: "50%", zIndex: 601, width: 420, maxHeight: "90vh", overflowY: "auto", background: "var(--surface-1)", border: `1px solid ${HAIR}`, padding: "28px 24px", color: "var(--ink-100)", opacity: visible ? 1 : 0, pointerEvents: visible ? "auto" : "none", transform: `translate(-50%, ${visible ? "-50%" : "-46%"})`, transition: "opacity 0.25s ease, transform 0.25s ease" }}>{body}</div>
       ) : (
-        <div data-swipe-exclude role="dialog" aria-modal="true" aria-label="Augmented Pro" style={{ position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 601, maxHeight: "92dvh", overflowY: "auto", background: "var(--surface-1)", borderTop: `1px solid ${HAIR}`, borderRadius: "22px 22px 0 0", padding: "14px 20px calc(32px + var(--safe-bottom))", color: "var(--ink-100)", transform: visible ? "translateY(0)" : "translateY(100%)", transition: "transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)" }}>{body}</div>
+        <div data-swipe-exclude role="dialog" aria-modal="true" aria-label="Augmented Pro" aria-hidden={!visible} {...(visible ? {} : { inert: true })} style={{ position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 601, maxHeight: "92dvh", overflowY: "auto", background: "var(--surface-1)", borderTop: `1px solid ${HAIR}`, borderRadius: "22px 22px 0 0", padding: "14px 20px calc(32px + var(--safe-bottom))", color: "var(--ink-100)", transform: visible ? "translateY(0)" : "translateY(100%)", transition: "transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)" }}>{body}</div>
       )}
     </>,
     document.body,

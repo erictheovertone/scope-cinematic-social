@@ -12,6 +12,7 @@ mkdirSync(OUT, { recursive: true });
 const THEMES = ['dark', 'light'] as const;
 
 test.describe.configure({ mode: 'serial' });
+test.setTimeout(300_000); // four surfaces per test on 3× WebKit
 test.beforeAll(async () => { await seed(); await resetMembership(); });
 test.afterAll(async () => { if (process.env.MUS_KEEP !== '1') await teardown(); });
 
@@ -33,23 +34,23 @@ for (const theme of THEMES) {
     const p = info.project.name;
     const m = await me();
     await themed(page, theme);
-    await page.goto(`/track/${IDS.tracks[0]}`);
-    await expect(page.getByTestId('track-view')).toBeVisible({ timeout: 20_000 });
+    await page.goto(`/track/${IDS.tracks[0]}`, { waitUntil: 'domcontentloaded' });
+    await expect(page.getByTestId('track-view').filter({ hasText: 'Harness Ember' }).first()).toBeVisible({ timeout: 20_000 });
     await page.waitForTimeout(800);
     await shot(page, p, theme, 'track-view');
 
-    await page.goto(`/composer/${m.username}`);
+    await page.goto(`/composer/${m.username}`, { waitUntil: 'domcontentloaded' });
     await expect(page.getByText(ALBUM_TITLE).first()).toBeVisible({ timeout: 20_000 });
     await page.waitForTimeout(600);
     await shot(page, p, theme, 'composer');
 
-    await page.goto(`/composer/${m.username}/manage`);
+    await page.goto(`/composer/${m.username}/manage`, { waitUntil: 'domcontentloaded' });
     await expect(page.getByText(/manage music/i).first()).toBeVisible({ timeout: 20_000 });
     await page.waitForTimeout(800);
     await shot(page, p, theme, 'manage');
 
-    await page.goto('/profile');
-    await page.getByRole('button', { name: /^bio$/i }).first().click({ timeout: 20_000 });
+    await page.goto('/profile', { waitUntil: 'domcontentloaded' });
+    await page.getByRole('button', { name: /profile info/i }).first().click({ timeout: 20_000 });
     const music = page.getByTestId('bio-music');
     await expect(music).toBeVisible({ timeout: 15_000 });
     await music.scrollIntoViewIfNeeded();
@@ -64,30 +65,32 @@ for (const theme of THEMES) {
 
     // upsell — as a free member, from a Download tap
     await setAugmented(false);
-    await page.goto(`/track/${IDS.tracks[0]}`);
+    await page.goto(`/track/${IDS.tracks[0]}`, { waitUntil: 'domcontentloaded' });
     await page.getByTestId('track-download').click({ timeout: 20_000 });
-    await expect(page.getByTestId('augmented-sheet')).toBeVisible();
+    await expect(page.getByRole('dialog', { name: 'Augmented Pro' })).toBeVisible({ timeout: 15_000 });
     await page.waitForTimeout(700);
     await shot(page, p, theme, 'upsell');
 
     // brass — the test account set Augmented for these shots only
     await setAugmented(true);
     try {
-      await page.goto('/profile');
+      await page.goto('/profile', { waitUntil: 'domcontentloaded' });
       await expect(page.getByTestId('augmented-tag').first()).toBeVisible({ timeout: 20_000 });
       await expect(page.getByTestId('brass-frame').first()).toBeVisible();
       await page.waitForTimeout(800);
       await shot(page, p, theme, 'profile');
 
-      await page.getByRole('button', { name: /^bio$/i }).first().click();
+      await page.getByRole('button', { name: /profile info/i }).first().click();
       await expect(page.getByTestId('brass-aperture').first()).toBeVisible({ timeout: 15_000 });
       await page.waitForTimeout(600);
       await shot(page, p, theme, 'bio-sheet');
       await page.keyboard.press('Escape').catch(() => {});
 
-      // post-row chip — the test account's own post, opened from its profile grid
-      await page.goto('/profile');
-      await page.locator('[data-post-id], [data-testid^="post-tile"], img').nth(2).click({ timeout: 15_000 }).catch(() => {});
+      // post-row chip — the test account's own post in the unified post lightbox (author byline)
+      const { data: post } = await db.from('posts').select('id').eq('user_id', m.userId).eq('is_deleted', false).limit(1).single();
+      await page.goto('/', { waitUntil: 'domcontentloaded' });
+      await page.waitForTimeout(1500);
+      await page.evaluate((id) => window.dispatchEvent(new CustomEvent('scope:open-post', { detail: { postId: id } })), post!.id);
       await expect(page.getByTestId('augmented-chip').first()).toBeVisible({ timeout: 20_000 });
       await page.waitForTimeout(800);
       await shot(page, p, theme, 'post-chip');
