@@ -39,7 +39,7 @@ const BENEFITS = [
 
 interface EmbeddedCheckoutHandle { mount: (el: string | HTMLElement) => void; destroy: () => void }
 
-export default function AugmentedSheet({ visible, onClose, onJoined }: { visible: boolean; onClose: () => void; onJoined: () => void }) {
+export default function AugmentedSheet({ visible, onClose, onJoined }: { visible: boolean; onClose: () => void; onJoined: (tier: "pro" | "augmented") => void }) {
   const { user, login } = usePrivy();
   const isDesktop = useIsDesktop();
   const [plan, setPlan] = useState<Plan>("augmented_annual");
@@ -88,11 +88,13 @@ export default function AugmentedSheet({ visible, onClose, onJoined }: { visible
                 method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sessionId }),
               });
               if (!r.ok) throw new Error(`confirm-stripe ${r.status}`);
+              // CEL-2 — the tier the completed Price granted (server-resolved from the price ID).
+              const { tier } = await r.json().catch(() => ({ tier: null }));
               await invalidateMembership(user.id);
               window.dispatchEvent(new CustomEvent("scope:pro-activated"));
               window.dispatchEvent(new CustomEvent("scope:tier-changed"));
               setWorking(false);
-              onJoined();
+              onJoined(tier === "pro" ? "pro" : "augmented");
             } catch (e) {
               console.error("[augmented] confirm failed:", e);
               setWorking(false);

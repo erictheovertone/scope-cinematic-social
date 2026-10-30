@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
     else if (tier === "augmented") await supabase.from("profiles").update({ augmented_since: new Date().toISOString() }).eq("user_id", userData.id).is("augmented_since", null);
 
     console.log("[confirm-stripe] membership activated for:", privyUserId, "| customer:", stripeCustomerId, "| sub:", stripeSubscriptionId);
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, tier }); // CEL-2 — the client picks the welcome film from this
   } catch (e: any) {
     console.error("[confirm-stripe]", e);
     return NextResponse.json({ error: e.message }, { status: 500 });

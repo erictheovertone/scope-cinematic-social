@@ -3,12 +3,12 @@
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import ProCelebration from "@/components/ProCelebration";
-import VideoCelebration from "@/components/VideoCelebration";
+import VideoCelebration, { AugmentedWelcomeStill } from "@/components/VideoCelebration";
 
 const BOLD: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const REG: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
 
-type Tier = "pro" | "creator" | "top1k" | "founding";
+type Tier = "pro" | "augmented" | "creator" | "top1k" | "founding";
 
 
 // ── CREATOR ANIMATION ─────────────────────────────────────────────────────────
@@ -382,17 +382,22 @@ export default function MembershipSuccess() {
     if (founding) setTier("founding");
     else if (plan === "creator") setTier("creator");
     else if (plan === "top1k") setTier("top1k");
+    else if (plan.startsWith("augmented")) setTier("augmented");
     else setTier("pro");
 
     const activate = async () => {
       const sessionId = searchParams?.get("session_id");
       if (!sessionId) return;
       try {
-        await fetch("/api/membership/confirm-stripe", {
+        const r = await fetch("/api/membership/confirm-stripe", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ sessionId }),
         });
+        // CEL-2 — the server resolved the tier from the Price that completed; it wins over the
+        // ?plan= hint (STRIPE_PRICE_AUGMENTED_* → augmented, STRIPE_PRICE_PRO_* → pro).
+        const { tier: paid } = await r.json().catch(() => ({ tier: null }));
+        if (!founding && plan !== "creator" && plan !== "top1k" && (paid === "augmented" || paid === "pro")) setTier(paid);
       } catch (e) {
         console.error("[success] confirm failed:", e);
       }
@@ -416,10 +421,18 @@ export default function MembershipSuccess() {
       {tier === "creator" && <CreatorCelebration onDone={handleDone} />}
       {tier === "pro" && (
         <VideoCelebration
-          videoSrc="/welcome-to-pro-new-ani.mp4"
-          badgeSrc="/design-updates-071526/new-badges/scope-pro.png"
+          key="pro"
+          tier="pro"
           onDone={handleDone}
           renderFallback={(d) => <ProCelebration onDone={d} />}
+        />
+      )}
+      {tier === "augmented" && (
+        <VideoCelebration
+          key="augmented"
+          tier="augmented"
+          onDone={handleDone}
+          renderFallback={(d) => <AugmentedWelcomeStill onDone={d} />}
         />
       )}
     </>
