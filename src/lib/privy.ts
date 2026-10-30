@@ -11,6 +11,14 @@ export const PRIVY_APP_ID = process.env.NEXT_PUBLIC_PRIVY_APP_ID || 'cmfggbvdy01
 // reads as "ink on canvas" in either theme.
 const INK = { dark: '#E5E1DB', light: '#050505' } as const;
 
+// Brand logo in the Privy modal header, per theme (absolute URLs — the modal renders outside the
+// app tree and is served from public/brand/). Committed alongside this change so the URLs resolve
+// the moment the build is live.
+const LOGO = {
+  dark: 'https://scopeapp.world/brand/privy-logo-dark.png',
+  light: 'https://scopeapp.world/brand/privy-logo-light.png',
+} as const;
+
 export type PrivyTheme = 'dark' | 'light';
 
 const BASE = {
@@ -44,6 +52,7 @@ export function privyConfigFor(theme: PrivyTheme) {
     appearance: {
       theme,
       accentColor: INK[theme] as `#${string}`,
+      logo: LOGO[theme],
       showWalletLoginFirst: false,
     },
   };
