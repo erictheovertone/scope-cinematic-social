@@ -58,3 +58,5 @@ test/shots/
 public/test-fixtures/
 test/shots-v1/
 test/shots-mx/
+# ARR-6 — Arrival closed-state shots (not source)
+test/shots-arr6/

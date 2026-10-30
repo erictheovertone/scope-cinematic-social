@@ -40,6 +40,7 @@ test('arrival — anon frame tap reveals the sign-up card within 1.2s, no theatr
     .toBeGreaterThan(0.9);
   console.log(`[ARR-4] sign-up card visible ${Date.now() - t0}ms after frame tap`);
 
-  // (c) no theatre dialog opened on the frame tap.
-  expect(await page.locator('[role="dialog"]').count()).toBe(0);
+  // (c) no theatre dialog opened on the frame tap. (Hidden app-root sheets — e.g. AUG-1's Augmented
+  // sheet, mounted aria-hidden on every page — are not a theatre; count only shown dialogs.)
+  expect(await page.locator('[role="dialog"]:not([aria-hidden="true"])').count()).toBe(0);
 });

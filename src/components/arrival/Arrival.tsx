@@ -6,8 +6,12 @@
 // uppercase username, badge as its image, the card is avatar · "<NAME> IS ON SCOPE" · Follow · the
 // login methods · Log in (no economics), and the closed state is laid out to the real viewport height
 // (mark ~30% down, card centred, store badges above the safe area, no overlaps 375×667 → 430×932).
+// ARR-6: the card is ONE centred column — avatar 88 (brass if Augmented) · the mark (200 phone /
+// 260 desktop, 24 below the avatar) · tag · "<NAME> IS ON SCOPE" · Follow · methods · Log in — with
+// the store badges at the bottom. The mark's slot is an empty box in that column; the blades land
+// on its measured centre, and the avatar fades in with the card (no longer inside the blades).
 // A Scope surface — force-dark regardless of the viewer's theme.
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLogin, usePrivy } from '@privy-io/react-auth';
 import type { PublicProfile, PublicFrame } from '@/lib/arrival/publicProfile';
@@ -26,11 +30,14 @@ const DESKTOP_MIN = 1024;
 // ARR-5a — the one uppercase-label recipe: Haas 700, 12px, 0.08em.
 const LABEL: React.CSSProperties = { fontFamily: UI, fontWeight: 700, fontSize: 12, letterSpacing: '0.08em', textTransform: 'uppercase' };
 
-// Mark centre (my) ~30% down; card centred; the scroll drive's start/range unchanged.
+// ARR-6 — the closed mark is a fixed width (blade viewBox is 666×408 units); its centre (my) is
+// measured from the card column's mark slot. The scroll drive's start/range unchanged.
+const MARK_VB = { w: 666, h: 408 };
 const TUNE = {
-  mobile: { myF: 0.30, k375: 0.315, cardF: 0.50, start: 24, range: 260 },
-  desktop: { myF: 175 / 720, k: 0.45, cardF: 445 / 720, start: 24, range: 320 },
+  mobile: { markW: 200, start: 24, range: 260 },
+  desktop: { markW: 260, start: 24, range: 320 },
 };
+const AVATAR = 88;
 
 const clamp = (v: number) => Math.min(1, Math.max(0, v));
 const easeIO = (p: number) => (p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2);
@@ -49,15 +56,26 @@ export default function Arrival({ profile, refTag, loginMethods }: { profile: Pu
   const bgRef = useRef<SVGRectElement>(null);
   const dimRef = useRef<SVGRectElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
+  const slotRef = useRef<HTMLDivElement>(null);
   const badgesRef = useRef<HTMLDivElement>(null);
+  const [markY, setMarkY] = useState<number | null>(null);
 
   const desktop = vp.W >= DESKTOP_MIN;
-  // ARR-5e — the mark scales DOWN first when the viewport is short, so the mark · card · store-badges
-  // stack never overlaps from 375×667 up to 430×932.
-  const kShort = TUNE.mobile.k375 * Math.min(vp.W / 375, 1.25) * Math.max(0.72, Math.min(1.08, vp.H / 812));
-  const t = desktop
-    ? { mx: vp.W / 2, my: vp.H * TUNE.desktop.myF, k: TUNE.desktop.k, cardTop: vp.H * TUNE.desktop.cardF, start: TUNE.desktop.start, range: TUNE.desktop.range }
-    : { mx: vp.W / 2, my: vp.H * TUNE.mobile.myF, k: kShort, cardTop: vp.H * TUNE.mobile.cardF, start: TUNE.mobile.start, range: TUNE.mobile.range };
+  const tune = desktop ? TUNE.desktop : TUNE.mobile;
+  const markW = tune.markW, markH = (markW * MARK_VB.h) / MARK_VB.w;
+  const t = { mx: vp.W / 2, my: markY ?? vp.H * 0.4, k: markW / MARK_VB.w, start: tune.start, range: tune.range };
+
+  // ARR-6 — land the mark on its slot: the slot's centre in overlay coordinates (offsetTop ignores
+  // the card's fade-in translate, so this is the CLOSED position). Re-measured on any resize/font swap.
+  useLayoutEffect(() => {
+    const card = cardRef.current, slot = slotRef.current;
+    if (!card || !slot) return;
+    const measure = () => setMarkY(card.offsetTop + slot.offsetTop + slot.offsetHeight / 2);
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(card); if (card.parentElement) ro.observe(card.parentElement);
+    return () => ro.disconnect();
+  }, [vp.W, vp.H]);
 
   useEffect(() => {
     const read = () => setVp({ W: window.innerWidth, H: window.innerHeight });
@@ -94,7 +112,7 @@ export default function Arrival({ profile, refTag, loginMethods }: { profile: Pu
       gI.style.fillOpacity = String(reduce ? e : clamp((p - 0.8) / 0.2));
       const cp = reduce ? e : clamp((p - 0.7) / 0.3);
       card.style.opacity = String(cp);
-      card.style.transform = `translate(-50%,-50%) translateY(${((1 - cp) * 10).toFixed(1)}px)`;
+      card.style.transform = `translateY(${((1 - cp) * 10).toFixed(1)}px)`;
       card.style.pointerEvents = cp > 0.9 ? 'auto' : 'none';
       card.setAttribute('aria-hidden', cp > 0.9 ? 'false' : 'true');
       badges.style.opacity = String(reduce ? e : clamp((p - 0.85) / 0.15));
@@ -141,10 +159,12 @@ export default function Arrival({ profile, refTag, loginMethods }: { profile: Pu
   return (
     <div data-force-dark style={{ position: 'fixed', inset: 0, background: 'var(--canvas)', color: 'var(--ink-100)', fontFamily: UI }}>
       <div ref={scRef} data-scroll style={{ position: 'absolute', inset: 0, overflowY: 'auto', overflowX: 'hidden', overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}>
-        <div style={{ position: 'relative' }}>
+        {/* ARR-6 — always tall enough for the drive to reach closed (a 1-frame profile on a wide
+            desktop grid was shorter than viewport + range, so the card could never appear) */}
+        <div style={{ position: 'relative', minHeight: vp.H + t.start + t.range + 24 }}>
           {/* the aperture, pinned from inside the scroller so scrolling back up always works */}
           <div style={{ position: 'sticky', top: 0, height: 0, zIndex: 5 }}>
-            <div style={{ position: 'absolute', left: 0, top: 0, width: vp.W, height: vp.H, pointerEvents: 'none' }}>
+            <div style={{ position: 'absolute', left: 0, top: 0, width: vp.W, height: vp.H, pointerEvents: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 'var(--safe-top, 0px)', boxSizing: 'border-box' }}>
               <svg viewBox={`0 0 ${vp.W} ${vp.H}`} aria-hidden style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', display: 'block' }}>
                 <defs>
                   <mask id="arrival-iris" maskUnits="userSpaceOnUse" x={0} y={0} width={vp.W} height={vp.H}>
@@ -154,20 +174,22 @@ export default function Arrival({ profile, refTag, loginMethods }: { profile: Pu
                 </defs>
                 <rect ref={dimRef} width={vp.W} height={vp.H} fill={CANVAS} opacity={0} />
                 <rect ref={bgRef} width={vp.W} height={vp.H} fill={CANVAS} mask="url(#arrival-iris)" opacity={0} />
-                <g ref={inkRef} style={{ fill: INK, stroke: INK, strokeWidth: 3, strokeLinejoin: 'round', fillOpacity: 0, strokeOpacity: 0 }}>
+                <g ref={inkRef} data-arrival-mark style={{ fill: INK, stroke: INK, strokeWidth: 3, strokeLinejoin: 'round', fillOpacity: 0, strokeOpacity: 0 }}>
                   {BLADE_PATHS.map((d, i) => <path key={i} d={d} />)}
                 </g>
               </svg>
 
-              {/* ── the sign-up card (ARR-5d) ── */}
-              <div ref={cardRef} data-arrival-card aria-hidden style={{ position: 'absolute', left: '50%', top: t.cardTop, width: desktop ? 300 : 248, transform: 'translate(-50%,-50%) translateY(10px)', textAlign: 'center', opacity: 0, pointerEvents: 'none', display: 'grid', gap: 14, justifyItems: 'center' }}>
-                {/* AUG-1 (mock §2) — an Augmented owner: brass frame on the avatar + the tag under it,
-                    so a visitor sees the membership before the sign-in. */}
+              {/* ── the sign-up card (ARR-5d → ARR-6: one centred column, the mark in its slot) ── */}
+              <div ref={cardRef} data-arrival-card aria-hidden style={{ position: 'relative', margin: 'auto 0', width: desktop ? 300 : 248, flex: 'none', transform: 'translateY(10px)', textAlign: 'center', opacity: 0, pointerEvents: 'none', display: 'grid', gap: 14, justifyItems: 'center' }}>
+                {/* AUG-1 (mock §2) — an Augmented owner: brass frame on the avatar + the tag under the
+                    mark, so a visitor sees the membership before the sign-in. */}
                 <BrassFrame on={!!profile.augmented} style={{ borderRadius: '50%' }}>
                 {profile.avatarUrl
-                  ? <img src={feedImage(profile.avatarUrl, 144)} alt="" width={48} height={48} style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover' }} />
-                  : <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'var(--surface-3)' }} />}
+                  ? <img data-arrival-avatar src={feedImage(profile.avatarUrl, AVATAR * 3)} alt="" width={AVATAR} height={AVATAR} style={{ width: AVATAR, height: AVATAR, borderRadius: '50%', objectFit: 'cover', display: 'block' }} />
+                  : <div data-arrival-avatar style={{ width: AVATAR, height: AVATAR, borderRadius: '50%', background: 'var(--surface-3)' }} />}
                 </BrassFrame>
+                {/* the mark's slot — empty; the aperture's blades close onto its centre (24px below the avatar) */}
+                <div ref={slotRef} data-arrival-mark-slot aria-hidden style={{ width: markW, height: markH, marginTop: 10, marginBottom: 6 }} />
                 {profile.augmented && <AugmentedTag />}
                 <div style={{ ...LABEL, color: 'rgb(var(--ink-rgb) / 0.6)' }}>{NAME} is on Scope</div>
                 <button type="button" role="checkbox" aria-checked={follow} onClick={() => setFollow((f) => !f)}
@@ -190,9 +212,9 @@ export default function Arrival({ profile, refTag, loginMethods }: { profile: Pu
               </div>
 
               {/* app badges — placeholders until the native builds ship (ARR-5e: ≥24px above safe) */}
-              <div ref={badgesRef} style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: `0 20px calc(24px + var(--safe-bottom, 0px))`, display: 'grid', gap: 10, justifyItems: 'center', opacity: 0, pointerEvents: 'none' }}>
+              <div ref={badgesRef} style={{ position: 'relative', alignSelf: 'stretch', flex: 'none', padding: `16px 20px calc(24px + var(--safe-bottom, 0px))`, display: 'grid', gap: 10, justifyItems: 'center', opacity: 0, pointerEvents: 'none' }}>
                 <div style={{ ...LABEL, color: 'rgb(var(--ink-rgb) / 0.5)' }}>Also on</div>
-                <div style={{ display: 'flex', gap: 10 }}>
+                <div data-arrival-badges style={{ display: 'flex', gap: 10 }}>
                   <StoreBadge small="Download on the" name="App Store" icon="M16.4 12.6c0-2.5 2-3.7 2.1-3.8-1.2-1.7-3-1.9-3.6-2-1.5-.2-3 .9-3.8.9-.8 0-2-.9-3.3-.8-1.7 0-3.2 1-4.1 2.5-1.8 3-.5 7.6 1.3 10.1.9 1.2 1.9 2.6 3.2 2.6 1.3-.1 1.8-.8 3.3-.8s2 .8 3.3.8 2.2-1.3 3.1-2.5c1-1.4 1.4-2.8 1.4-2.9-.1 0-2.9-1.1-2.9-4.1zM14 5.2c.7-.8 1.2-2 1-3.2-1 0-2.3.7-3 1.5-.6.7-1.2 1.9-1 3.1 1.1.1 2.3-.6 3-1.4z" />
                   <StoreBadge small="Get it on" name="Google Play" icon="M3.6 2.2c-.3.3-.5.8-.5 1.4v16.8c0 .6.2 1.1.5 1.4l.1.1 9.4-9.4v-.2L3.7 2.1l-.1.1zm12.6 12.6-3.1-3.1v-.2l3.1-3.1.1.1 3.7 2.1c1.1.6 1.1 1.6 0 2.2l-3.7 2.1-.1-.1zm-.1.1L13 11.8l-9.4 9.4c.3.4.9.4 1.6 0l10.9-6.3zM5.2 2.6l10.9 6.2L13 11.8 3.7 2.4c.6-.3 1.1-.3 1.5.2z" />
                 </div>
