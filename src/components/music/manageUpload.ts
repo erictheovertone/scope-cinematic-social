@@ -1,5 +1,5 @@
 // ── manageUpload — the manage page's file paths (Brief MUS-1 §4) ─────────────────────────────────
-// Same mechanics as ContributeMusicFlow (direct-to-storage via /api/music/sign, client-decoded
+// Same mechanics as the contribution page (ContributePage) (direct-to-storage via /api/music/sign, client-decoded
 // peaks + duration), reused for "Replace audio". The replacement object is signed under a FRESH
 // id — never the live track's id — because /api/music/sign upserts `<user>/<id>.<ext>`: signing
 // the live id would overwrite the approved audio before review. Covers are downscaled before the

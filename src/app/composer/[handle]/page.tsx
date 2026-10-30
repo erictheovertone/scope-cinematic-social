@@ -17,7 +17,6 @@ import {
   composerByHandle, composerCatalog, postsScored, albumCover, fmtDur,
   type CatalogAlbum, type CatalogTrack, type Composer,
 } from "@/lib/musicCatalog";
-import ContributeMusicFlow from "@/components/ContributeMusicFlow";
 import PageScroller from "@/components/PageScroller";
 import {
   SKB, SKM, SKR, MUTE, INK, LBL, HAIR,
@@ -41,7 +40,7 @@ export default function ComposerPage() {
   const [following, setFollowing] = useState(false);
   const [followBusy, setFollowBusy] = useState(false);
   const [followErr, setFollowErr] = useState<string | null>(null);
-  const [showContribute, setShowContribute] = useState(false);
+  const [ownAlbums, setOwnAlbums] = useState<CatalogAlbum[]>([]);
 
   // Composer + public catalog + the posts-scored stat.
   useEffect(() => {
@@ -76,6 +75,20 @@ export default function ComposerPage() {
     return () => { dead = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id, composer?.user_id]);
+
+  // MUS-2 §4 — the composer also sees their albums that have no approved track yet (just submitted,
+  // or emptied); everyone else never does (composerCatalog filters them out).
+  useEffect(() => {
+    if (!viewerIsOwner || !composer) { setOwnAlbums([]); return; }
+    let dead = false;
+    supabase.from("albums").select("id, composer_id, title, cover_url, year, position, is_singles").eq("composer_id", composer.user_id)
+      .then(({ data }) => { if (!dead) setOwnAlbums(((data ?? []) as Omit<CatalogAlbum, "trackCount">[]).map((a) => ({ ...a, trackCount: 0 }))); });
+    return () => { dead = true; };
+  }, [viewerIsOwner, composer?.user_id]); // eslint-disable-line react-hooks/exhaustive-deps
+  const shownAlbums = useMemo(() => {
+    const extra = ownAlbums.filter((a) => !a.is_singles && !albums.some((x) => x.id === a.id));
+    return [...albums.filter((a) => !a.is_singles), ...extra.sort((a, b) => a.position - b.position), ...albums.filter((a) => a.is_singles)];
+  }, [albums, ownAlbums]);
 
   // Follow state — the app's ONE follow mechanism (userService, Privy DIDs, same as profiles).
   useEffect(() => {
@@ -133,7 +146,12 @@ export default function ComposerPage() {
   );
   const ctaStyle = isDesktop ? undefined : { width: "100%", marginTop: 4 };
   const cta = viewerIsOwner
-    ? <Act fill onClick={() => router.push(`/composer/${encodeURIComponent(composer?.username ?? handle)}/manage`)} style={ctaStyle}>Manage music</Act>
+    ? (
+      <div style={{ display: "flex", gap: 8, ...(isDesktop ? {} : { width: "100%" }) }}>
+        <Act fill onClick={() => router.push("/music/add")} style={isDesktop ? undefined : { flex: 1 }} testId="composer-add-music">Add music</Act>
+        <Act onClick={() => router.push(`/composer/${encodeURIComponent(composer?.username ?? handle)}/manage`)} style={isDesktop ? undefined : { flex: 1 }}>Manage music</Act>
+      </div>
+    )
     : isSelf ? null
       : <Act fill={!following} onClick={toggleFollow} disabled={followBusy || (!!user && !targetPrivyId)} style={ctaStyle}>{following ? "Following" : "Follow"}</Act>;
 
@@ -172,13 +190,14 @@ export default function ComposerPage() {
         {composer && empty && <p style={{ ...SKR, fontSize: 13, color: MUTE, padding: "20px 0", textAlign: isDesktop ? "left" : "center" }}>No discography yet.</p>}
 
         {/* ── ALBUMS ── */}
-        {albums.length > 0 && (
+        {shownAlbums.length > 0 && (
           <>
             <SecHead label="Albums" />
             <div style={{ display: "grid", gridTemplateColumns: isDesktop ? "repeat(4, minmax(0, 1fr))" : "repeat(2, minmax(0, 1fr))", gap: 14 }}>
-              {albums.map((al) => (
-                <AlbumTile key={al.id} cover={albumCover(al, tracks ?? [])} title={al.title} meta={albumMeta(al.year, al.trackCount)}
-                  onClick={() => { const id = firstTrack(al); if (id) openTrack(id); }} />
+              {shownAlbums.map((al) => (
+                <AlbumTile key={al.id} cover={albumCover(al, tracks ?? [])} title={al.title}
+                  meta={al.trackCount ? albumMeta(al.year, al.trackCount) : "In review · only you see this"}
+                  onClick={al.trackCount ? () => { const id = firstTrack(al); if (id) openTrack(id); } : () => router.push(`/composer/${encodeURIComponent(composer?.username ?? handle)}/manage`)} />
               ))}
             </div>
           </>
@@ -214,18 +233,17 @@ export default function ComposerPage() {
               [ SCOPE ORIGINAL MUSIC LIBRARY ]
             </button>
             {viewerIsComposer === false && !viewerIsOwner && (
-              <button onClick={() => setShowContribute(true)} style={ctaLink}>Contribute to wear the badge →</button>
+              <button onClick={() => router.push("/music/add")} style={ctaLink}>Contribute to wear the badge →</button>
             )}
           </div>
         )}
         {composer && empty && viewerIsOwner && (
           <div style={{ padding: "8px 0 48px" }}>
-            <button onClick={() => setShowContribute(true)} style={ctaLink}>Contribute to wear the badge →</button>
+            <button onClick={() => router.push("/music/add")} style={ctaLink}>Add your first music →</button>
           </div>
         )}
       </div>
 
-      {showContribute && <ContributeMusicFlow onClose={() => setShowContribute(false)} />}
     </PageScroller>
   );
 }

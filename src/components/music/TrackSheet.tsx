@@ -13,7 +13,6 @@ import { useTrackForPost } from "@/lib/useTrack";
 import { feedImage } from "@/lib/mediaUrl";
 import TrackArt from "@/components/TrackArt";
 import Waveform from "@/components/Waveform";
-import ContributeMusicFlow from "@/components/ContributeMusicFlow";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -27,7 +26,6 @@ export default function TrackSheet({ trackId, onClose }: { trackId: string; onCl
   const [visible, setVisible] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [showContribute, setShowContribute] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // slide-up
@@ -97,7 +95,7 @@ export default function TrackSheet({ trackId, onClose }: { trackId: string; onCl
 
       {/* doors */}
       <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 2 }}>
-        <button onClick={() => setShowContribute(true)} style={{ ...SKB, fontSize: 11, color: RED, textTransform: "uppercase", letterSpacing: "0.06em", background: "none", border: `1px solid rgb(var(--ink-rgb) / 0.4)`, cursor: "pointer", padding: "12px 0", lineHeight: 1.4 }}>
+        <button onClick={() => go("/music/add")} style={{ ...SKB, fontSize: 11, color: RED, textTransform: "uppercase", letterSpacing: "0.06em", background: "none", border: `1px solid rgb(var(--ink-rgb) / 0.4)`, cursor: "pointer", padding: "12px 0", lineHeight: 1.4 }}>
           Contribute to the Scope Original Music Library — wear the Composer badge
         </button>
         <button onClick={() => go("/library")} style={{ ...SKB, fontSize: 11, color: "rgb(var(--ink-rgb) / 0.7)", textTransform: "uppercase", letterSpacing: "0.1em", background: "none", border: `1px solid ${HAIR}`, cursor: "pointer", padding: "11px 0" }}>
@@ -105,7 +103,6 @@ export default function TrackSheet({ trackId, onClose }: { trackId: string; onCl
         </button>
       </div>
 
-      {showContribute && <ContributeMusicFlow onClose={() => setShowContribute(false)} />}
     </div>
   );
 

@@ -5,6 +5,8 @@
 // The GET is per-CALLER (it returns the viewer's own catalog), so a viewer whose username isn't
 // this page's handle sees "Not your page" — never another user's catalog, never their own catalog
 // under someone else's URL. Every write goes through /api/music/manage (ownership verified there).
+// MUS-2 §3 — each track can MOVE to another album (Singles included, both ways); ticked tracks can
+// become a NEW album; an empty album can be deleted. Singles can't be renamed or deleted.
 // Inline errors only.
 "use client";
 
@@ -45,6 +47,7 @@ export default function ManageMusicPage() {
   const [userUuid, setUserUuid] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [picked, setPicked] = useState<string[]>([]);
 
   const api = useCallback(async (body: Record<string, unknown>) => {
     const token = await getAccessToken();
@@ -128,6 +131,24 @@ export default function ManageMusicPage() {
     try { await api({ action: "reorder", albumId, trackIds: ids }); }
     catch (e) { setCat(prev); setErr((e as Error).message); }
   };
+  const moveTrack = async (trackId: string, albumId: string) => {
+    setErr(null);
+    try { await api({ action: "move", trackId, albumId }); await load(); }
+    catch (e) { setErr((e as Error).message); }
+  };
+  const albumFromPicked = async (title: string, year: string) => {
+    setErr(null);
+    const j = await api({ action: "album_from_tracks", title, year: year.trim() === "" ? null : Number(year), trackIds: picked });
+    setPicked([]);
+    await load();
+    if (j.id) setSelected(j.id);
+  };
+  const deleteAlbum = async (albumId: string) => {
+    setErr(null);
+    try { await api({ action: "album_delete", albumId }); setSelected(null); await load(); }
+    catch (e) { setErr((e as Error).message); }
+  };
+  const togglePick = (id: string) => setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
   const renameTrack = async (trackId: string, title: string) => {
     setErr(null);
     await api({ action: "track_rename", trackId, title });
@@ -183,10 +204,18 @@ export default function ManageMusicPage() {
         {selAlbum ? (
           <>
             <SecHead label={`${selAlbum.title} · tracks`} first={isDesktop} aside={isDesktop ? "Drag to reorder · click a title to rename" : "Drag to reorder"} />
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", margin: "0 0 12px" }}>
+              <Act small onClick={() => router.push(selAlbum.is_singles ? "/music/add" : `/music/add?album=${encodeURIComponent(selAlbum.id)}`)} testId="manage-add-tracks">Add tracks</Act>
+              {!selAlbum.is_singles && albumTracks.length === 0 && (
+                <Act small onClick={() => deleteAlbum(selAlbum.id)} testId="manage-delete-album">Delete album</Act>
+              )}
+            </div>
             {albumTracks.length === 0
               ? <p style={{ ...SKR, fontSize: 13, color: MUTE, margin: "6px 0" }}>No tracks in this album yet.</p>
               : <DragList key={selAlbum.id} tracks={albumTracks} pending={pending}
+                  albums={albums} albumId={selAlbum.id} picked={picked} onPick={togglePick} onMoveTrack={moveTrack}
                   onOrder={(ids) => commitOrder(ids, selAlbum.id)} onRename={renameTrack} onReplace={replaceAudio} />}
+            {picked.length > 0 && <FromPicked n={picked.length} onCreate={albumFromPicked} onClear={() => setPicked([])} />}
           </>
         ) : albums.length === 0 ? (
           <p style={{ ...SKR, fontSize: 13, color: MUTE, margin: "20px 0 6px" }}>Create an album to organise your tracks.</p>
@@ -199,7 +228,7 @@ export default function ManageMusicPage() {
               <div key={t.id} style={{ display: "flex", alignItems: "center", gap: 12, minHeight: 48, borderTop: `1px solid ${HAIR}`, borderBottom: i === unfiled.length - 1 ? `1px solid ${HAIR}` : "none" }}>
                 <span style={{ ...SKM, fontSize: 14, flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.title}</span>
                 <span style={TIME}>{fmtDur(t.duration_seconds)}</span>
-                {selAlbum && <Act small onClick={() => commitOrder([...albumTracks.map((x) => x.id), t.id], selAlbum.id)}>Add to album</Act>}
+                <MoveTo albums={albums} current={null} onMove={(a) => moveTrack(t.id, a)} />
               </div>
             ))}
           </>
@@ -396,8 +425,9 @@ function NewAlbum({ onCreate }: { onCreate: (title: string, year: string) => Pro
 // Dragging from the ⋮⋮ handle live-reorders rows as the pointer crosses neighbours' midpoints; the
 // handle is touch-action:none so it never fights the page scroller. On drop, if the order changed,
 // the FULL order is POSTed (reorder) — reverted by the parent on failure.
-function DragList({ tracks, pending, onOrder, onRename, onReplace }: {
+function DragList({ tracks, pending, albums, albumId, picked, onPick, onMoveTrack, onOrder, onRename, onReplace }: {
   tracks: MTrack[]; pending: Set<string>;
+  albums: MAlbum[]; albumId: string; picked: string[]; onPick: (id: string) => void; onMoveTrack: (trackId: string, albumId: string) => Promise<void>;
   onOrder: (ids: string[]) => void; onRename: (id: string, title: string) => Promise<void>; onReplace: (id: string, f: File) => Promise<void>;
 }) {
   const [order, setOrder] = useState(() => tracks.map((t) => t.id));
@@ -446,7 +476,9 @@ function DragList({ tracks, pending, onOrder, onRename, onReplace }: {
           <div key={id} ref={(el) => { if (el) rows.current.set(id, el); else rows.current.delete(id); }}
             style={{ borderTop: `1px solid ${HAIR}`, borderBottom: i === order.length - 1 ? `1px solid ${HAIR}` : "none", background: dragId === id ? "rgb(var(--ink-rgb) / 0.06)" : "transparent" }}>
             <ManageTrackRow track={t} index={i} pending={pending.has(id)} dragging={dragId === id}
-              handleProps={{ onPointerDown: onDown(id) }} onRename={(v) => onRename(id, v)} onReplace={(f) => onReplace(id, f)} />
+              handleProps={{ onPointerDown: onDown(id) }} onRename={(v) => onRename(id, v)} onReplace={(f) => onReplace(id, f)}
+              picked={picked.includes(id)} onPick={() => onPick(id)}
+              moveTo={<MoveTo albums={albums} current={albumId} onMove={(a) => onMoveTrack(id, a)} />} />
           </div>
         );
       })}
@@ -454,10 +486,11 @@ function DragList({ tracks, pending, onOrder, onRename, onReplace }: {
   );
 }
 
-function ManageTrackRow({ track, index, pending, dragging, handleProps, onRename, onReplace }: {
+function ManageTrackRow({ track, index, pending, dragging, handleProps, onRename, onReplace, picked, onPick, moveTo }: {
   track: MTrack; index: number; pending: boolean; dragging: boolean;
   handleProps: { onPointerDown: (e: React.PointerEvent) => void };
   onRename: (v: string) => Promise<void>; onReplace: (f: File) => Promise<void>;
+  picked: boolean; onPick: () => void; moveTo: React.ReactNode;
 }) {
   const [edit, setEdit] = useState(false);
   const [draft, setDraft] = useState(track.title);
@@ -477,6 +510,8 @@ function ManageTrackRow({ track, index, pending, dragging, handleProps, onRename
       <div style={{ display: "flex", alignItems: "center", gap: 12, minHeight: 36 }}>
         <span {...handleProps} aria-label="Drag to reorder" role="button"
           style={{ color: DOT, fontSize: 14, letterSpacing: -2, width: 18, flexShrink: 0, cursor: dragging ? "grabbing" : "grab", touchAction: "none", userSelect: "none", padding: "8px 0" }}>⋮⋮</span>
+        <button type="button" role="checkbox" aria-checked={picked} aria-label={`Select ${track.title}`} onClick={onPick} data-testid="manage-pick"
+          style={{ width: 16, height: 16, flexShrink: 0, padding: 0, border: `1px solid ${picked ? INK : DOT}`, background: picked ? INK : "transparent", color: "var(--on-ink)", fontSize: 11, lineHeight: 1, cursor: "pointer", borderRadius: 0 }}>{picked ? "✓" : ""}</button>
         <span style={{ ...TIME, width: 22, flexShrink: 0 }}>{num2(index)}</span>
         {edit ? (
           <input value={draft} onChange={(e) => setDraft(e.target.value)} maxLength={80} autoFocus readOnly={busy} style={{ ...INPUT, flex: 1, padding: "6px 8px" }}
@@ -491,7 +526,7 @@ function ManageTrackRow({ track, index, pending, dragging, handleProps, onRename
         )}
         <span style={{ ...TIME, width: 36, textAlign: "right", flexShrink: 0 }}>{fmtDur(track.duration_seconds)}</span>
       </div>
-      <div style={{ display: "flex", alignItems: "center", gap: 10, paddingLeft: 52, marginTop: 2, flexWrap: "wrap" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, paddingLeft: 80, marginTop: 2, flexWrap: "wrap" }}>
         {track.status !== "approved" && <span style={{ ...LBL, fontSize: 10 }}>{track.status}</span>}
         {pending
           ? <span style={{ ...LBL, fontSize: 10, color: INK }}>Audio pending review</span>
@@ -500,11 +535,53 @@ function ManageTrackRow({ track, index, pending, dragging, handleProps, onRename
           style={{ ...SKB, fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", color: MUTE, background: "none", border: "none", padding: "4px 0", cursor: "pointer" }}>
           {audioBusy ? "Uploading…" : pending ? "Replace again" : "Replace audio"}
         </button>
+        {moveTo}
         <input ref={fileRef} type="file" accept="audio/mpeg,audio/mp3,audio/aac,audio/mp4,audio/x-m4a,audio/wav,audio/x-wav,audio/wave" hidden onChange={async (e) => {
           const f = e.target.files?.[0]; e.target.value = "";
           if (!f) return; setAudioBusy(true); setErr(null);
           try { await onReplace(f); } catch (er) { setErr((er as Error).message || "Upload failed — try again."); } finally { setAudioBusy(false); }
         }} />
+      </div>
+      <ErrLine msg={err} />
+    </div>
+  );
+}
+
+// ── MUS-2 §3 — "Move to…" (any other album, Singles included) ────────────────────────────────────
+function MoveTo({ albums, current, onMove }: { albums: MAlbum[]; current: string | null; onMove: (albumId: string) => Promise<void> | void }) {
+  const [busy, setBusy] = useState(false);
+  const others = albums.filter((a) => a.id !== current);
+  if (!others.length) return null;
+  return (
+    <select value="" disabled={busy} aria-label="Move to album" data-testid="manage-move"
+      onChange={async (e) => { const v = e.target.value; if (!v) return; setBusy(true); try { await onMove(v); } finally { setBusy(false); } }}
+      style={{ ...SKB, fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", color: MUTE, background: "transparent", border: "none", padding: "4px 0", cursor: "pointer", maxWidth: 160 }}>
+      <option value="">{busy ? "Moving…" : "Move to…"}</option>
+      {others.map((a) => <option key={a.id} value={a.id}>{a.title}</option>)}
+    </select>
+  );
+}
+
+// ── MUS-2 §3 — a new album from the ticked tracks ────────────────────────────────────────────────
+function FromPicked({ n, onCreate, onClear }: { n: number; onCreate: (title: string, year: string) => Promise<void>; onClear: () => void }) {
+  const [title, setTitle] = useState("");
+  const [year, setYear] = useState(String(new Date().getFullYear()));
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const go = async () => {
+    setBusy(true); setErr(null);
+    try { await onCreate(title, year); } catch (e) { setErr((e as Error).message); } finally { setBusy(false); }
+  };
+  return (
+    <div style={{ marginTop: 14, padding: 12, border: `1px solid ${INK}`, display: "grid", gap: 8 }} data-testid="manage-from-picked">
+      <span style={LBL}>New album from {n} selected {n === 1 ? "track" : "tracks"}</span>
+      <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) 88px", gap: 6 }}>
+        <input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={80} placeholder="Album title" style={INPUT} data-testid="manage-from-picked-title" />
+        <input value={year} onChange={(e) => setYear(e.target.value.replace(/[^0-9]/g, "").slice(0, 4))} placeholder="Year" inputMode="numeric" style={INPUT} />
+      </div>
+      <div style={{ display: "flex", gap: 6 }}>
+        <Act fill small onClick={go} disabled={busy || !title.trim()} testId="manage-from-picked-create">{busy ? "…" : "Create album"}</Act>
+        <Act small onClick={onClear} disabled={busy}>Clear selection</Act>
       </div>
       <ErrLine msg={err} />
     </div>

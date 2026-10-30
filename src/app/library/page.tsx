@@ -13,7 +13,6 @@ import { backfillPeaks } from "@/lib/waveform";
 import TrackArt from "@/components/TrackArt";
 import Waveform from "@/components/Waveform";
 import PageScroller from "@/components/PageScroller";
-import ContributeMusicFlow from "@/components/ContributeMusicFlow";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -32,7 +31,6 @@ export default function LibraryPage() {
   const [q, setQ] = useState("");
   const [chips, setChips] = useState<string[]>([]);
   const [playing, setPlaying] = useState<string | null>(null);
-  const [showContribute, setShowContribute] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
@@ -132,10 +130,9 @@ export default function LibraryPage() {
             </div>
           );
         })}
-        <button onClick={() => setShowContribute(true)} style={{ ...SKB, fontSize: 11, color: "var(--ink-100)", textTransform: "uppercase", letterSpacing: "0.06em", background: "none", border: "none", cursor: "pointer", padding: "24px 0 0" }}>Contribute to wear the badge →</button>
+        <button onClick={() => router.push("/music/add")} style={{ ...SKB, fontSize: 11, color: "var(--ink-100)", textTransform: "uppercase", letterSpacing: "0.06em", background: "none", border: "none", cursor: "pointer", padding: "24px 0 0" }}>Contribute to wear the badge →</button>
       </div>
 
-      {showContribute && <ContributeMusicFlow onClose={() => setShowContribute(false)} />}
     </PageScroller>
   );
 }

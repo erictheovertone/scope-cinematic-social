@@ -12,7 +12,6 @@ import { useUpsell } from "@/components/UpsellProvider";
 import { resolveMembership, membershipBarLabel, type MembershipState } from "@/lib/membership";
 import { AugmentedMark } from "@/components/brand/AugmentedMark";
 import AddToHomeScreenSheet from "@/components/AddToHomeScreenSheet";
-import ContributeMusicFlow from "@/components/ContributeMusicFlow";
 import { isStandalone } from "@/lib/pwaUtils";
 
 async function compressImage(file: File): Promise<File> {
@@ -58,7 +57,6 @@ export default function Preferences() {
   const [mounted, setMounted] = useState(false);
   const [sbUserId, setSbUserId] = useState("");
   const [showA2HS, setShowA2HS] = useState(false);
-  const [showContributeMusic, setShowContributeMusic] = useState(false);
   const [currentProfile, setCurrentProfile] = useState({ displayName: "", username: "", bio: "" });
   const [showRecap, setShowRecapState] = useState(true); // "While you were away" on return (default ON)
   // Membership state rides the SAME profile fetch below — zero extra requests
@@ -176,7 +174,7 @@ export default function Preferences() {
       rows: [
         { label: `While You Were Away · ${showRecap ? 'ON' : 'OFF'}`, action: toggleShowRecap },
         { label: 'Notifications', action: () => router.push('/profile/notifications') },
-        { label: 'Contribute Music', action: () => setShowContributeMusic(true) },
+        { label: 'Contribute Music', action: () => router.push('/music/add') },
         { label: 'Browse the Library', action: () => router.push('/library') },
         ...(mounted && !isStandalone() ? [{ label: 'Add to Home Screen', action: () => setShowA2HS(true) }] : []),
       ],
@@ -274,7 +272,6 @@ export default function Preferences() {
 
       <input ref={photoInputRef} type="file" accept="image/*" onChange={handlePhotoChange} style={{ display: 'none' }} />
     </div>
-    {showContributeMusic && <ContributeMusicFlow onClose={() => setShowContributeMusic(false)} />}
     <AddToHomeScreenSheet
       isOpen={showA2HS}
       onClose={() => setShowA2HS(false)}
