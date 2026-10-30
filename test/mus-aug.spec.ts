@@ -52,13 +52,14 @@ test('MUS-1 · track route from the bio sheet MUSIC section', async ({ page }) =
 
 test('MUS-1 · track view inside the EDIT & POST library sheet (create flow stays mounted)', async ({ page }) => {
   await toEdit(page, 'v-20s.mp4');
-  await page.getByText(/\+ ADD MUSIC/).first().click();
+  await page.getByRole('button', { name: /\+ add music/i }).first().click();
   await page.getByTestId(`picker-art-${T1}`).click({ timeout: 15_000 });
   await expect(page.getByTestId('track-view')).toBeVisible({ timeout: 15_000 });
   await expect(page.getByText(/edit & post/i).first()).toBeAttached(); // never navigated away
   await page.getByTestId('track-view').getByRole('button', { name: /use in a post/i }).click();
   await expect(page.getByTestId('track-view')).toBeHidden({ timeout: 10_000 });
-  await expect(page.getByText(/^CHANGE$/).first()).toBeVisible({ timeout: 10_000 }); // the track is on the post
+  await expect(page.getByRole('button', { name: 'Remove music' })).toBeVisible({ timeout: 10_000 }); // the track is on the post (E1 row)
+  await expect(page.getByText(TITLES[0]).first()).toBeVisible();
 });
 
 test('MUS-1 · manage endpoints: 401 without a token, 403 for a non-owner, 200 for the owner', async ({ request }) => {

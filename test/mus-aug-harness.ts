@@ -157,10 +157,14 @@ export async function stripe<T = Record<string, unknown>>(path: string, init: { 
 
 /** Cancel every active test subscription carrying this account's privyUserId (teardown). */
 async function cancelAllTestSubs(): Promise<number> {
-  const did = sessionDid();
-  const list = await stripe<{ data: { id: string; metadata: Record<string, string>; status: string }[] }>(`subscriptions/search?query=${encodeURIComponent(`metadata['privyUserId']:'${did}' AND status:'active'`)}`);
-  for (const s of list.data) await stripe(`subscriptions/${s.id}`, { method: 'DELETE' });
-  return list.data.length;
+  // By the harness customers (exact list) — Stripe's search index lags up to a minute.
+  let n = 0;
+  const cs = await stripe<{ data: { id: string }[] }>(`customers?limit=100&email=${encodeURIComponent('harness+test@example.com')}`);
+  for (const c of cs.data) {
+    const subs = await stripe<{ data: { id: string }[] }>(`subscriptions?status=active&customer=${c.id}`);
+    for (const s of subs.data) { await stripe(`subscriptions/${s.id}`, { method: 'DELETE' }); n++; }
+  }
+  return n;
 }
 
 /**
