@@ -163,7 +163,7 @@ export default function PfpCropModal({ file, onCancel, onConfirm }: Props) {
   return createPortal(
     <div
       data-swipe-exclude
-      style={{ position: 'fixed', inset: 0, zIndex: 700, background: 'rgb(var(--black-rgb) / 0.94)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 'calc(env(safe-area-inset-top,0px) + 20px) 20px calc(env(safe-area-inset-bottom,0px) + 20px)' }}
+      style={{ position: 'fixed', inset: 0, zIndex: 700, background: 'rgb(var(--black-rgb) / 0.94)' /* theme-ok: crop stage (media on black) */, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 'calc(env(safe-area-inset-top,0px) + 20px) 20px calc(env(safe-area-inset-bottom,0px) + 20px)' }}
     >
       <p style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'rgb(var(--ink-rgb) / 0.6)', textTransform: 'uppercase', letterSpacing: '0.14em', margin: '0 0 18px' }}>DRAG & PINCH TO FRAME</p>
 
@@ -172,7 +172,7 @@ export default function PfpCropModal({ file, onCancel, onConfirm }: Props) {
         onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}
         onMouseDown={onMouseDown} onMouseMove={onMouseMove} onMouseUp={onMouseUp} onMouseLeave={onMouseUp}
         onWheel={onWheel}
-        style={{ position: 'relative', width: FRAME, height: FRAME, overflow: 'hidden', touchAction: 'none', cursor: 'grab', background: 'var(--black)', border: '1px solid rgb(var(--ink-rgb) / 0.25)' }}
+        style={{ position: 'relative', width: FRAME, height: FRAME, overflow: 'hidden', touchAction: 'none', cursor: 'grab', background: 'var(--black)' /* theme-ok: crop stage (media on black) */, border: '1px solid rgb(var(--ink-rgb) / 0.25)' }}
       >
         {nat && (
           <img

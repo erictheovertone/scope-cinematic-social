@@ -8,6 +8,7 @@ import { invalidateMembership } from "@/lib/userService";
 import { tierOf, type Tier } from "@/lib/tier";
 import { AugmentedMark } from "@/components/brand/AugmentedMark";
 import PageScroller from "@/components/PageScroller";
+import { useIsDesktop } from "@/lib/useIsDesktop";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -15,6 +16,11 @@ const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fon
 export default function ManageMembershipPage() {
   const router = useRouter();
   const { user } = usePrivy();
+  // On desktop the window-pinned left rail (--rail-w) overlays a full-width mobile page, clipping
+  // the header title and every left-aligned line ("MANAGE" → "ANAGE"). Clear it with the rail offset
+  // (the DesktopShell rail-clearance convention) so nothing hides behind the rail.
+  const isDesktop = useIsDesktop();
+  const railPad = isDesktop ? { paddingLeft: 'calc(var(--rail-w) + 16px)' } : null;
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [cancelled, setCancelled] = useState(false);
@@ -113,7 +119,7 @@ export default function ManageMembershipPage() {
 
   if (cancelled) {
     return (
-      <div style={{ backgroundColor: 'var(--black)', minHeight: '100dvh', padding: '48px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ backgroundColor: 'var(--canvas)', minHeight: '100dvh', padding: '48px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', ...railPad }}>
         <p style={{ ...SKB, fontSize: 'var(--fs-18)', color: 'var(--ink-100)', textTransform: 'uppercase', textAlign: 'center', margin: '0 0 12px' }}>MEMBERSHIP CANCELLED</p>
         <p style={{ ...SKR, fontSize: 'var(--fs-12)', color: 'rgb(var(--ink-rgb) / 0.5)', textAlign: 'center', margin: '0 0 32px', lineHeight: 1.6 }}>
           Your {Short} access continues until the end of your billing period.
@@ -128,8 +134,8 @@ export default function ManageMembershipPage() {
   return (
     // Scroll-trap rule: body is locked, so the page scrolls inside PageScroller (the plan details +
     // cancel confirm run past the fold on a 375 phone, more so with the Augmented benefits).
-    <PageScroller className="bg-black" style={{ backgroundColor: 'var(--black)' }}>
-    <div style={{ backgroundColor: 'var(--black)', minHeight: '100dvh', padding: '0 0 80px' }}>
+    <PageScroller className="bg-canvas" style={{ backgroundColor: 'var(--canvas)' }}>
+    <div style={{ backgroundColor: 'var(--canvas)', minHeight: '100dvh', padding: '0 0 80px', ...railPad }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', padding: '16px', borderBottom: '1px solid rgb(var(--ink-rgb) / 0.08)' }}>
         <button onClick={() => router.back()} style={{ background: 'transparent', border: 'none', cursor: 'pointer', marginRight: 12, padding: 4 }}>

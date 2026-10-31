@@ -125,8 +125,9 @@ export default function ProfileMenu({ isOpen, onClose }: ProfileMenuProps) {
   return (
     <>
       {/* Backdrop */}
-      <div 
-        className="fixed inset-0 bg-black bg-opacity-50 z-[100]"
+      <div
+        className="fixed inset-0 z-[100]"
+        style={{ background: 'rgb(var(--canvas-rgb) / 0.5)' }}
         onClick={onClose}
       />
       

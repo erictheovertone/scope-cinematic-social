@@ -568,7 +568,7 @@ export default function DesktopSettings() {
       {/* ── MORE FROM picker — multi-select up to 6 own posts for the lightbox shelf ── */}
       {moreFromOpen && createPortal(
         <div data-swipe-exclude style={{ position: 'fixed', inset: 0, zIndex: 680, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div onClick={() => setMoreFromOpen(false)} style={{ position: 'absolute', inset: 0, background: 'rgb(var(--black-rgb) / 0.9)' }} />
+          <div onClick={() => setMoreFromOpen(false)} style={{ position: 'absolute', inset: 0, background: 'rgb(var(--canvas-rgb) / 0.9)' }} />
           <div style={{ position: 'relative', width: 760, maxHeight: '82vh', display: 'flex', flexDirection: 'column', background: 'var(--surface-1)', border: '1px solid var(--surface-3)', padding: '32px 34px' }}>
             <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 6 }}>
               <h2 style={{ ...SKB, fontSize: 16, color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>MORE FROM</h2>

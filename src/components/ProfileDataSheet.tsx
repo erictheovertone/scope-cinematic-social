@@ -314,7 +314,7 @@ export default function ProfileDataSheet({
       onClick={() => { if (activeBlurb) { setActiveBlurb(null); return; } onClose(); }}
       style={{
         position: 'fixed', inset: 0, zIndex: 100,
-        background: `rgb(var(--black-rgb) / ${bgVisible ? 0.95 : 0})`,
+        background: `rgb(var(--canvas-rgb) / ${bgVisible ? 0.95 : 0})`,
         transition: 'background 200ms ease',
         overflowY: 'auto', overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch',
       }}

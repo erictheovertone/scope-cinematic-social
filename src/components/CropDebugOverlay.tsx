@@ -27,7 +27,7 @@ export default function CropDebugOverlay() {
       style={{
         position: 'fixed', top: 'calc(4px + env(safe-area-inset-top, 0px))', left: 4, right: 4,
         zIndex: 2147483647,
-        background: 'rgb(var(--black-rgb) / 0.9)', color: '#39ff88',
+        background: 'rgb(var(--black-rgb) / 0.9)' /* theme-ok: debug overlay */, color: '#39ff88',
         font: '9px/1.4 ui-monospace, "SF Mono", monospace',
         padding: '6px 8px', borderRadius: 3, pointerEvents: 'none',
         whiteSpace: 'pre-wrap', wordBreak: 'break-word', letterSpacing: 0,

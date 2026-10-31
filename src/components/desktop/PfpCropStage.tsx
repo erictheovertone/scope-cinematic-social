@@ -128,7 +128,7 @@ export default function PfpCropStage({
             onPointerUp={onPointerUp}
             onPointerCancel={onPointerUp}
             onWheel={onWheel}
-            style={{ position: 'relative', width: CROP, height: CROP, overflow: 'hidden', background: 'var(--black)', cursor: 'grab', touchAction: 'none' }}
+            style={{ position: 'relative', width: CROP, height: CROP, overflow: 'hidden', background: 'var(--black)' /* theme-ok: crop stage (media on black) */, cursor: 'grab', touchAction: 'none' }}
           >
             {img && (
               <canvas

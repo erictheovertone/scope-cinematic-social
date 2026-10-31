@@ -151,7 +151,7 @@ export default function DesktopScreeningRoom() {
         {current && post && (
           <>
             {/* ═══ 2. THE STAGE (1227×343 letterbox) ═══ */}
-            <div style={{ width: '100%', maxWidth: 'var(--shell-fluid)', aspectRatio: '1227 / 343', background: 'var(--black)', overflow: 'hidden', position: 'relative', margin: '0 auto' }}>
+            <div style={{ width: '100%', maxWidth: 'var(--shell-fluid)', aspectRatio: '1227 / 343', background: 'var(--black)' /* theme-ok: media letterbox (hero banner) */, overflow: 'hidden', position: 'relative', margin: '0 auto' }}>
               <div key={swapKey} style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'sr-stage-in 180ms ease-out both' }}>
                 {stageMedia(post)}
               </div>

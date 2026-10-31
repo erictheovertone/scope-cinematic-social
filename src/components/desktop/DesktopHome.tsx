@@ -229,7 +229,7 @@ export default function DesktopHome() {
 
       {/* MODE-SWITCH FLASH — one language for every switch: cut through black. */}
       {flash && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 320, background: 'var(--black)', pointerEvents: 'none', opacity: 1, animation: 'modeFlash 190ms ease-out forwards' }} />
+        <div style={{ position: 'fixed', inset: 0, zIndex: 320, background: 'var(--black)' /* theme-ok: transient mode-flash overlay (190ms) */, pointerEvents: 'none', opacity: 1, animation: 'modeFlash 190ms ease-out forwards' }} />
       )}
       <style>{`@keyframes modeFlash { 0%{opacity:0} 32%{opacity:1} 100%{opacity:0} }`}</style>
     </div>

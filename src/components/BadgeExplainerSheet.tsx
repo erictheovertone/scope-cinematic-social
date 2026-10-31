@@ -266,7 +266,7 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
       <div
         onClick={onClose}
         style={{
-          position: 'fixed', inset: 0, backgroundColor: 'rgb(var(--black-rgb) / 0.9)',
+          position: 'fixed', inset: 0, backgroundColor: 'rgb(var(--canvas-rgb) / 0.9)',
           zIndex: 400, opacity: visible ? 1 : 0,
           pointerEvents: visible ? 'auto' : 'none',
           transition: 'opacity 0.3s ease',

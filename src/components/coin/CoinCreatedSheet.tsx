@@ -137,7 +137,7 @@ export default function CoinCreatedSheet() {
         </div>
 
         {/* media — actual minted media, post aspect, no cover-crop, with hairline rect */}
-        <div className="cc-media" style={{ position: "relative", width: "100%", maxHeight: "42svh", aspectRatio: aspect, margin: "0 auto 18px", background: "var(--black)", overflow: "hidden" }}>
+        <div className="cc-media" style={{ position: "relative", width: "100%", maxHeight: "42svh", aspectRatio: aspect, margin: "0 auto 18px", background: "var(--black)" /* theme-ok: media letterbox */, overflow: "hidden" }}>
           <MediaRenderer
             url={post.mediaType === "video" ? (post.mediaUrl ?? "") : (post.mediaUrl ?? "")}
             mediaType={post.mediaType}

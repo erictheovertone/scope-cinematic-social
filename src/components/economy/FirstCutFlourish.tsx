@@ -50,7 +50,7 @@ export default function FirstCutFlourish({
       style={{
         position: 'fixed', inset: 0, zIndex: 600, pointerEvents: 'none',
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-        background: 'rgb(var(--black-rgb) / 0.9)',
+        background: 'rgb(var(--black-rgb) / 0.9)' /* theme-ok: transient celebration flourish (fades in/out) */,
         animation: `fcBackdrop ${DUR} ease both`,
       }}
     >

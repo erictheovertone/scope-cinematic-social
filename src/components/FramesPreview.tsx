@@ -29,7 +29,7 @@ export default function FramesPreview({ selectedItems, layoutConfig, previewWidt
       style={{
         width: previewWidth,
         height: previewHeight,
-        background: "var(--black)",
+        background: "var(--black)", /* theme-ok: media letterbox */
         position: "relative",
         overflow: "hidden",
         flexShrink: 0,
@@ -78,7 +78,7 @@ export default function FramesPreview({ selectedItems, layoutConfig, previewWidt
           left: 0,
           width: previewWidth,
           height: bandH,
-          background: "var(--black)",
+          background: "var(--black)", /* theme-ok: media letterbox */
           display: "flex",
           flexDirection: "column",
           alignItems: "center",

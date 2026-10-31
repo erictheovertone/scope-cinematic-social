@@ -81,7 +81,7 @@ export default function ReframeOverlay({ post, layoutId, onSave, onCancel }: Ref
   const isVideoPost = post.media_type === 'video';
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 600, backgroundColor: 'var(--black)', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 600, backgroundColor: 'var(--black)' /* theme-ok: media reframe stage */, display: 'flex', flexDirection: 'column' }}>
       {/* Header — Brief X3 §3: full-screen reframe takeover; header was un-inset.
           Pad top by --safe-top (F1) so CANCEL / RE-FRAME / SAVE clear the notch. */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 'calc(16px + var(--safe-top)) 16px 16px', flexShrink: 0 }}>

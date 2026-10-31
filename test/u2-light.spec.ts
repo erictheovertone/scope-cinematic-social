@@ -1,4 +1,4 @@
-import { test, type Page } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import { join } from 'path';
 import { mkdirSync } from 'fs';
 
@@ -57,7 +57,120 @@ async function openFirstTile(page: Page) {
   await page.waitForTimeout(2500);
 }
 
+// ── Brief LT-1 — computed-contrast gate ───────────────────────────────────────
+// The regression is theme-invariant black used as a surface: in light mode the ink flips to
+// off-black but the background stays black → ~1:1 contrast (unreadable). We assert the REAL
+// rendered colours, never a class name: composite each surface's background down the ancestor
+// stack (honouring alpha), composite the text colour over it, and take the WCAG ratio. A broken
+// black-on-black surface lands ~1.0; a correct one (ivory↔ink either way) lands high. Threshold 3.
+const READABLE = 3;
+
+/** Composited background luminance (0..1) at a viewport point — walks html→target summing alpha. */
+const bgLumAt = (page: Page, x: number, y: number) => page.evaluate(({ x, y }) => {
+  const parse = (c: string) => { const m = c.match(/rgba?\(([^)]+)\)/i); if (!m) return null; const p = m[1].split(',').map((s) => parseFloat(s)); return { r: p[0], g: p[1], b: p[2], a: p[3] ?? 1 }; };
+  const el = document.elementFromPoint(x, y); if (!el) return null;
+  const stack: Element[] = []; for (let c: Element | null = el; c; c = c.parentElement) stack.push(c);
+  let out = { r: 255, g: 255, b: 255 };
+  for (let i = stack.length - 1; i >= 0; i--) { const bg = parse(getComputedStyle(stack[i]).backgroundColor); if (bg && bg.a > 0) { const a = bg.a; out = { r: bg.r * a + out.r * (1 - a), g: bg.g * a + out.g * (1 - a), b: bg.b * a + out.b * (1 - a) }; } }
+  const f = (v: number) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
+  return 0.2126 * f(out.r) + 0.7152 * f(out.g) + 0.0722 * f(out.b);
+}, { x, y });
+
+/** WCAG contrast of a named on-screen text element against its composited background. null = not found. */
+const contrastOf = (page: Page, re: RegExp) => page.evaluate(({ source, flags }) => {
+  const rx = new RegExp(source, flags);
+  const parse = (c: string) => { const m = c.match(/rgba?\(([^)]+)\)/i); if (!m) return null; const p = m[1].split(',').map((s) => parseFloat(s)); return { r: p[0], g: p[1], b: p[2], a: p[3] ?? 1 }; };
+  const el = [...document.querySelectorAll('p,span,button,h1,h2,div')].find((e) => {
+    if (!rx.test((e.textContent || '').replace(/\s+/g, ' ').trim())) return false;
+    const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0 && r.top >= 0 && r.bottom <= innerHeight;
+  });
+  if (!el) return null;
+  const bgStack: Element[] = []; for (let c: Element | null = el.parentElement; c; c = c.parentElement) bgStack.push(c);
+  let bg = { r: 255, g: 255, b: 255 };
+  for (let i = bgStack.length - 1; i >= 0; i--) { const b = parse(getComputedStyle(bgStack[i]).backgroundColor); if (b && b.a > 0) { const a = b.a; bg = { r: b.r * a + bg.r * (1 - a), g: b.g * a + bg.g * (1 - a), b: b.b * a + bg.b * (1 - a) }; } }
+  const fr = parse(getComputedStyle(el).color) || { r: 0, g: 0, b: 0, a: 1 }; const a = fr.a;
+  const fg = { r: fr.r * a + bg.r * (1 - a), g: fr.g * a + bg.g * (1 - a), b: fr.b * a + bg.b * (1 - a) };
+  const lum = (c: { r: number; g: number; b: number }) => { const f = (v: number) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }; return 0.2126 * f(c.r) + 0.7152 * f(c.g) + 0.0722 * f(c.b); };
+  const L1 = lum(fg), L2 = lum(bg); return (Math.max(L1, L2) + 0.05) / (Math.min(L1, L2) + 0.05);
+}, { source: re.source, flags: re.flags });
+
 for (const theme of THEMES) {
+  test.describe(`LT-1 contrast — ${theme}`, () => {
+    const expectFlip = (lum: number | null, where: string) => {
+      if (lum == null) throw new Error(`${where}: no background sampled`);
+      // The canvas must follow the theme: ivory ground in light (bright), near-black in dark.
+      if (theme === 'light') expect(lum, `${where} bg must be the ivory canvas in light`).toBeGreaterThan(0.4);
+      else expect(lum, `${where} bg must be the dark canvas in dark`).toBeLessThan(0.12);
+    };
+    const expectReadable = async (page: Page, re: RegExp, where: string) => {
+      const c = await contrastOf(page, re);
+      if (c == null) { console.warn(`[LT-1] ${where}: "${re}" not on screen — skipped text-contrast (bg-flip still asserted)`); return; }
+      expect(c, `${where} text contrast`).toBeGreaterThan(READABLE);
+    };
+    test(`manage membership · profile · bio sheet · collect · lightbox — ${theme}`, async ({ page }, info) => {
+      const shot = (n: string) => join(OUT, `lt1-${n}-${theme}-${info.project.name}.png`);
+
+      // ── Manage Membership (the named black-background page) ──
+      await boot(page, theme);
+      await page.goto('/membership/manage', { waitUntil: 'domcontentloaded' });
+      await page.waitForTimeout(3500);
+      expectFlip(await bgLumAt(page, 20, 300), 'manage-membership');
+      await expectReadable(page, /^MANAGE MEMBERSHIP$/, 'manage-membership title');
+      // Title must not be clipped (truncation fix).
+      const titleClipped = await page.evaluate(() => {
+        const el = [...document.querySelectorAll('span')].find((e) => (e.textContent || '').trim() === 'MANAGE MEMBERSHIP') as HTMLElement | undefined;
+        return el ? el.scrollWidth > el.clientWidth + 1 : null;
+      });
+      expect(titleClipped, 'MANAGE MEMBERSHIP title must not truncate').not.toBe(true);
+      await page.screenshot({ path: shot('manage-membership') });
+
+      // ── Own profile + bio sheet ──
+      await page.goto('/profile', { waitUntil: 'domcontentloaded' });
+      await page.waitForTimeout(5000);
+      await pastRecap(page, shot);
+      expectFlip(await bgLumAt(page, 20, 400), 'profile');
+      await page.screenshot({ path: shot('profile') });
+      const bio = page.getByRole('button', { name: 'View profile info' }).first();
+      if (await bio.count()) {
+        await bio.click();
+        await page.waitForTimeout(1200);
+        expectFlip(await bgLumAt(page, 200, 500), 'bio-sheet');
+        await expectReadable(page, /\w{3,}/, 'bio-sheet body'); // any real word inside the sheet
+        await page.screenshot({ path: shot('bio-sheet') });
+      } else {
+        console.warn('[LT-1] BIO trigger not present on this account — bio sheet skipped');
+      }
+
+      // ── Collect sheet + the post lightbox (PostModal), reached off a coined post ──
+      if (info.project.name !== 'iphone-webkit') return; // mobile reaches the collect/lightbox path deterministically
+      await page.goto(`/profile/${PROFILE}`, { waitUntil: 'domcontentloaded' });
+      await page.waitForTimeout(4500);
+      await pastRecap(page, shot);
+      await openFirstTile(page);
+      const collect = page.getByRole('button', { name: 'COLLECT', exact: true }).first();
+      if (await collect.count()) {
+        await collect.evaluate((e) => { e.scrollIntoView({ block: 'center' }); });
+        await page.waitForTimeout(600);
+        await collect.evaluate((e) => (e as HTMLElement).click());
+        await page.waitForTimeout(1800);
+        expectFlip(await bgLumAt(page, 200, 650), 'collect-sheet');
+        await expectReadable(page, /collect|balance|holders|market|buy/i, 'collect-sheet label');
+        await page.screenshot({ path: shot('collect') });
+        // Tap the sheet's post media → openPostLightbox → the unified lightbox (PostModal).
+        const media = await page.evaluate(() => {
+          const im = [...document.querySelectorAll('img')].map((i) => ({ i, r: i.getBoundingClientRect() })).find(({ r }) => r.width > 120 && r.height > 80 && r.top > 40);
+          if (!im) return null; const r = im.r; return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
+        });
+        if (media) {
+          await page.mouse.click(media.x, media.y);
+          await page.waitForTimeout(2200);
+          expectFlip(await bgLumAt(page, 20, 120), 'lightbox');
+          await page.screenshot({ path: shot('lightbox') });
+        } else { console.warn('[LT-1] collect-sheet media not found — lightbox skipped'); }
+      } else { console.warn('[LT-1] no COLLECT on first tile — collect/lightbox skipped'); }
+    });
+  });
+
   test.describe(`U2-3 light sweep — ${theme}`, () => {
     test(`home · recap · toolbar · mirage — ${theme}`, async ({ page }, info) => {
       const shot = (n: string) => join(OUT, `${n}-${theme}-${info.project.name}.png`);

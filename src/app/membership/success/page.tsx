@@ -39,7 +39,7 @@ function CreatorCelebration({ onDone }: { onDone: () => void }) {
   }, [phase]);
 
   return (
-    <div style={{ position: "fixed", inset: 0, backgroundColor: "var(--black)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", overflow: "hidden", opacity: exiting ? 0 : 1, transition: exiting ? "opacity 0.8s ease" : "none" }}>
+    <div data-force-dark style={{ position: "fixed", inset: 0, backgroundColor: "var(--black)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", overflow: "hidden", opacity: exiting ? 0 : 1, transition: exiting ? "opacity 0.8s ease" : "none" }}>
       <div style={{ position: "absolute", inset: 0, backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.08'/%3E%3C/svg%3E\")", opacity: phase === "loading" ? 0 : 0.4, transition: "opacity 1s ease", pointerEvents: "none" }} />
       {phase !== "loading" && (
         <>
@@ -108,7 +108,7 @@ function Top1kCelebration({ onDone }: { onDone: () => void }) {
   }, [phase]);
 
   return (
-    <div style={{ position: "fixed", inset: 0, backgroundColor: "var(--black)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", overflow: "hidden", opacity: exiting ? 0 : 1, transition: exiting ? "opacity 0.8s ease" : "none" }}>
+    <div data-force-dark style={{ position: "fixed", inset: 0, backgroundColor: "var(--black)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", overflow: "hidden", opacity: exiting ? 0 : 1, transition: exiting ? "opacity 0.8s ease" : "none" }}>
       {particles.map((p, i) => (
         <div key={i} style={{ position: "absolute", left: `${p.x}%`, top: "-10px", width: p.size, height: p.size * 3, backgroundColor: `rgba(201,168,76,${0.4 + Math.random() * 0.6})`, borderRadius: 1, animation: `particleFall ${3 + p.delay}s linear ${p.delay}s infinite`, opacity: phase === "loading" ? 0 : 1, transition: "opacity 0.5s ease" }} />
       ))}
@@ -166,7 +166,7 @@ function FoundingCelebration({ foundingNumber, onDone }: { foundingNumber?: numb
   const isActive = phase !== "void";
 
   return (
-    <div style={{
+    <div data-force-dark style={{
       position: "fixed", inset: 0,
       backgroundColor: "var(--black)",
       display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",

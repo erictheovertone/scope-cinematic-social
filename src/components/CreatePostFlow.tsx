@@ -1760,8 +1760,8 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
           open or closed, nothing clipped. Preview (NOT force-dark) · caption · 56px hairline rows. */}
       <div className="flex-1 min-h-0 overflow-y-auto" style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y', paddingBottom: 'calc(16px + env(safe-area-inset-bottom, 0px))' }}>
         {/* preview — chosen layout ratio; ADJUST CROP pill */}
-        <div style={{ position: 'relative', width: '100%', background: 'var(--black)' }}>
-          <div style={{ position: 'relative', width: '100%', aspectRatio: getAspectRatio(chosenLayoutId || userLayoutId), background: 'var(--black)', overflow: 'hidden' }}>
+        <div style={{ position: 'relative', width: '100%', background: 'var(--black)' /* theme-ok: media letterbox */ }}>
+          <div style={{ position: 'relative', width: '100%', aspectRatio: getAspectRatio(chosenLayoutId || userLayoutId), background: 'var(--black)' /* theme-ok: media letterbox */, overflow: 'hidden' }}>
             {selectedMedia[0] && (
               <FinishingPreview
                 mediaUrl={selectedMedia[0].url}

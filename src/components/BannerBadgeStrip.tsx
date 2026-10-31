@@ -121,7 +121,7 @@ export default function BannerBadgeStrip({
           position: 'absolute',
           inset: 0,
           overflow: 'hidden',
-          backgroundColor: 'var(--black)',
+          backgroundColor: 'var(--black)', /* theme-ok: banner art backdrop (black mat behind the banner image / holo) */
           backgroundImage: holo ? 'none' : "url('/badges/profile-badge-banner-backdrop.png')",
           backgroundSize: 'cover',
           backgroundPosition: 'center',

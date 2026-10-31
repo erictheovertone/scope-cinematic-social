@@ -871,7 +871,7 @@ export default function DeckDetailPage() {
       {lightboxItem && (
         <>
           <div
-            style={{ position: "fixed", inset: 0, zIndex: 130, background: "rgb(var(--black-rgb) / 0.96)" }}
+            style={{ position: "fixed", inset: 0, zIndex: 130, background: "rgb(var(--black-rgb) / 0.96)" /* theme-ok: media lightbox stage */ }}
             onClick={() => setLightboxItem(null)}
           />
           <div
