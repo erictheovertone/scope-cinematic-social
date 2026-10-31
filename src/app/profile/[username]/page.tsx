@@ -274,8 +274,9 @@ export default function PublicProfilePage() {
 
   // ── DESKTOP SEAM (Brief 1) — same component, isOwn gating. ──
   if (isDesktop) {
+    // ARR-7 — the Arrival landing note on desktop too (it only rendered in the mobile tree).
     return profile?.user_id && targetPrivyId
-      ? <DesktopProfile userId={profile.user_id} privyId={targetPrivyId} isOwn={!!isOwnProfile} />
+      ? <><DesktopProfile userId={profile.user_id} privyId={targetPrivyId} isOwn={!!isOwnProfile} />{username && <ArrivedNote username={username} />}</>
       : <div className="bg-canvas" style={{ position: 'fixed', inset: 0 }} />;
   }
 

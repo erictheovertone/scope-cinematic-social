@@ -10,6 +10,7 @@ import { cookies } from 'next/headers';
 import Arrival from '@/components/arrival/Arrival';
 import { getPublicProfile } from '@/lib/arrival/publicProfile';
 import { getArrivalLoginMethods } from '@/lib/arrival/loginMethods';
+import { ARRIVAL_COOKIE } from '@/lib/arrival/intent';
 
 export const dynamic = 'force-dynamic';
 
@@ -39,8 +40,13 @@ export default async function ArrivalPage({ searchParams }: Props) {
   const jar = await cookies();
   const [profile, loginMethods] = await Promise.all([username ? getPublicProfile(username) : Promise.resolve(null), getArrivalLoginMethods()]);
 
-  // A logged-in visitor goes to the normal profile.
-  if (jar.get('privy-session') || jar.get('privy-token')) redirect(`/profile/${encodeURIComponent(profile?.username ?? username)}`);
+  // A logged-in visitor goes to the normal profile — unless they're mid sign-up from an Arrival
+  // (ARR-7: Google OAuth returns here with Privy's cookies set). Then /auth/callback runs
+  // onboarding + the follow first.
+  if (jar.get('privy-session') || jar.get('privy-token')) {
+    if (jar.get(ARRIVAL_COOKIE)?.value) redirect('/auth/callback');
+    redirect(`/profile/${encodeURIComponent(profile?.username ?? username)}`);
+  }
 
   // A genuinely-missing (but allowlisted) user — rare; the proxy already gated flag + allowlist.
   if (!profile) {

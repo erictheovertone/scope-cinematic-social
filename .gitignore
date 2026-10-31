@@ -62,3 +62,4 @@ test/shots-mx/
 test/shots-mus2/
 # ARR-6 — Arrival closed-state shots (not source)
 test/shots-arr6/
+test/shots-arr7/

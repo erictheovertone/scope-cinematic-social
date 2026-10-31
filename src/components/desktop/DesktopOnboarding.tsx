@@ -21,6 +21,7 @@ import ScopeLoader from '@/components/ScopeLoader';
 import WelcomeExplainer from '@/components/desktop/WelcomeExplainer';
 import DesktopProfileSetup from '@/components/desktop/DesktopProfileSetup';
 import DesktopGridPicker from '@/components/desktop/DesktopGridPicker';
+import { readArrivalIntent, clearArrivalIntent, arrivalDestination } from '@/lib/arrival/intent';
 
 type Phase = 'resolving' | 'explainer' | 'setup' | 'picker' | 'done';
 
@@ -77,12 +78,18 @@ export default function DesktopOnboarding() {
     return <DesktopProfileSetup onComplete={(uid) => { setUserId(uid); setPhase('picker'); }} />;
   }
   if (phase === 'picker' && userId) {
+    // ARR-7 — a sign-up that started on someone's Arrival lands back on that profile (same as the
+    // mobile grid-layout exit); everyone else lands on their own profile, as before.
+    const arrival = readArrivalIntent();
+    const exitTo = arrival ? arrivalDestination(arrival) : '/profile';
+    const leave = () => { if (arrival) clearArrivalIntent(); };
     return (
       <DesktopGridPicker
         initial={gridInitial}
         userId={userId}
-        onApplied={async () => { await markDesktopExplainerSeen(userId); }}
-        onClose={() => { /* the picker's CONFIRM auto-pushes to /profile; a bare close (Esc) still lands the app */ router.replace('/profile'); }}
+        exitTo={exitTo}
+        onApplied={async () => { leave(); await markDesktopExplainerSeen(userId); }}
+        onClose={() => { /* the picker's CONFIRM auto-pushes to exitTo; a bare close (Esc) still lands the app */ leave(); router.replace(exitTo); }}
       />
     );
   }
