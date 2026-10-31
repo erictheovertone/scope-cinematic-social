@@ -36,6 +36,7 @@ import { useEconomy } from "@/components/EconomyProvider";
 import CollectedGrid from "@/components/economy/CollectedGrid";
 import ProfileTabRow from "@/components/profile/ProfileTabRow";
 import ArrivedNote from "@/components/arrival/ArrivedNote";
+import OnboardingModal from "@/components/OnboardingModal";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -54,6 +55,10 @@ export default function PublicProfilePage() {
   const [viewerIndex, setViewerIndex] = useState(0);
   const [activeTab, setActiveTab] = useState<"main" | "decks" | "collected">("main");
   const [profileDataOpen, setProfileDataOpen] = useState(false);
+  // ARR-7a — a new member arriving from Arrival lands here with ?new=1: the intro opens over the
+  // creator's profile (phone tree), and the "You're following" note waits until it closes.
+  // Read once from the URL (the modal strips the param on mount; nothing renders from this on the server).
+  const [introOpen, setIntroOpen] = useState(() => typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('new') === '1');
   const [showDecks, setShowDecks] = useState(false);
   const [publicDecks, setPublicDecks] = useState<(Deck & { item_count: number; thumbnail_urls: string[] })[]>([]);
   const [decksLoading, setDecksLoading] = useState(false);
@@ -519,7 +524,8 @@ export default function PublicProfilePage() {
         )}
       </div>
 
-      {username && <ArrivedNote username={username} />}
+      {username && <ArrivedNote username={username} hold={introOpen} />}
+      <OnboardingModal onComplete={() => setIntroOpen(false)} />
       {showViewer && <ProfilePostViewer posts={posts} initialIndex={viewerIndex} ownerUsername={username} ownerAvatarUrl={profile?.profile_image_url} onClose={() => setShowViewer(false)} />}
       {showFollowersModal && targetPrivyId && <FollowListModal type="followers" privyUserId={targetPrivyId} onClose={() => setShowFollowersModal(false)} />}
       {showFollowingModal && targetPrivyId && <FollowListModal type="following" privyUserId={targetPrivyId} onClose={() => setShowFollowingModal(false)} />}

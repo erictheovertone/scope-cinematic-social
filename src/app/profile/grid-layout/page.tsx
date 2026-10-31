@@ -408,7 +408,9 @@ export default function GridLayoutPage() {
     return <WelcomeTransition onComplete={() => {
       // Brief ARR-1 — a sign-up that started on someone's public profile lands back there.
       const arrival = readArrivalIntent();
-      if (arrival) { clearArrivalIntent(); router.push(arrivalDestination(arrival)); return; }
+      // ARR-7a — a NEW member gets the intro (OnboardingModal, ?new=1) over the creator's profile,
+      // the same intro a /welcome sign-up gets on their own /profile.
+      if (arrival) { clearArrivalIntent(); router.push(arrivalDestination(arrival) + (isNewUser ? '&new=1' : '')); return; }
       router.push(isNewUser ? "/profile?new=1" : "/profile");
     }} />;
   }

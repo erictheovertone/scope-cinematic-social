@@ -150,6 +150,9 @@ async function runOnboarding(page: Page, desktop: boolean, handle: string, opts:
       await page.keyboard.press('Escape');
       await expect(page.getByText('SET UP YOUR PROFILE')).toBeVisible({ timeout: 15_000 });
       expect(new URL(page.url()).pathname).toBe('/onboarding');
+    } else {
+      // The intro (4 slides, same copy as the phone OnboardingModal) is shown before setup.
+      await expect(page.getByText(/CINEMA/).first()).toBeVisible({ timeout: 15_000 });
     }
     for (let i = 0; i < 8 && !(await page.getByText('SET UP YOUR PROFILE').isVisible().catch(() => false)); i++) {
       await page.keyboard.press('ArrowRight');
@@ -220,7 +223,20 @@ test.describe('B · fresh sign-up', () => {
     console.log(`[arr-7] ${info.project.name} hops:`, hops.join(' → '));
     expect(hops).toContain('/auth/callback');
     expect(hops.some((h) => /\/profile\/setup|\/onboarding/.test(h))).toBeTruthy();
-    await expect(page.getByText(new RegExp(`following ${CREATOR}`, 'i'))).toBeVisible({ timeout: 15_000 });
+    const note = page.getByText(new RegExp(`following ${CREATOR}`, 'i'));
+    if (!desktop) {
+      // ARR-7a (option A) — phone matches desktop: the new-member intro opens over the creator's
+      // profile, the "following" note waits behind it, and the URL keeps the creator's page.
+      await expect(page.getByText(/CINEMA/).first()).toBeVisible({ timeout: 20_000 });
+      expect(new URL(page.url()).pathname.toLowerCase()).toBe(`/profile/${CREATOR}`);
+      await page.screenshot({ path: `test/shots-arr7/${info.project.name}-intro-over-creator.png` });
+      await expect(note).toHaveCount(0);
+      for (let i = 0; i < 3; i++) await page.getByRole('button', { name: 'NEXT', exact: true }).click();
+      await page.getByRole('button', { name: 'START CREATING' }).click();
+      await expect(page.getByText(/CINEMA/)).toHaveCount(0, { timeout: 5000 });
+      expect(new URL(page.url()).pathname.toLowerCase()).toBe(`/profile/${CREATOR}`);
+    }
+    await expect(note).toBeVisible({ timeout: 15_000 });
 
     // "Not frozen": no Privy overlay left, the grid loaded real images, it scrolls, a tap responds,
     // and the header shows the follower count INCLUDING this new follow (fresh data, not a snapshot).

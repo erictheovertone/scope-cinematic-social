@@ -50,7 +50,11 @@ export default function OnboardingModal({ onComplete }: Props) {
     console.log('[onboarding] mount — isNew:', isNew);
     if (isNew) {
       setShouldShow(true);
-      window.history.replaceState({}, '', '/profile');
+      // ARR-7a — strip only ?new, keep the page: it also opens over the arrived-at creator's
+      // profile (/profile/<name>?arrived=1&new=1), not just the member's own /profile.
+      const url = new URL(window.location.href);
+      url.searchParams.delete('new');
+      window.history.replaceState(window.history.state, '', url.pathname + url.search + url.hash);
     }
   }, []);
 

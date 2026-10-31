@@ -2,19 +2,26 @@
 // ── "You're following <name>" — the landing note after an Arrival sign-up (Brief ARR-1) ───────
 // Shown on /profile/[username] when the URL carries ?arrived=1 (set by the arrival intent's
 // destination); fades after 4s and strips the param so a reload doesn't replay it.
+// ARR-7a — `hold`: while the new-member intro is open over the page, the note waits; its 4s
+// start when the intro closes (it used to run out behind the modal).
 import { useEffect, useState } from 'react';
 
-export default function ArrivedNote({ username }: { username: string }) {
+export default function ArrivedNote({ username, hold = false }: { username: string; hold?: boolean }) {
+  const [arrived, setArrived] = useState(false);
   const [show, setShow] = useState(false);
   useEffect(() => {
     const url = new URL(window.location.href);
     if (url.searchParams.get('arrived') !== '1') return;
-    setShow(true);
+    setArrived(true);
     url.searchParams.delete('arrived');
     window.history.replaceState(window.history.state, '', url.pathname + url.search + url.hash);
+  }, []);
+  useEffect(() => {
+    if (!arrived || hold) return;
+    setShow(true);
     const id = setTimeout(() => setShow(false), 4000);
     return () => clearTimeout(id);
-  }, []);
+  }, [arrived, hold]);
   if (!show) return null;
   return (
     <div role="status" style={{ position: 'fixed', top: 'calc(var(--safe-top, 0px) + 64px)', left: 20, right: 20, zIndex: 60, border: '1px solid var(--ink-100)', background: 'var(--canvas)', color: 'var(--ink-100)', padding: '10px 14px', fontSize: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontFamily: 'var(--font-display)' }}>
