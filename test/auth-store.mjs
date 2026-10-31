@@ -32,6 +32,27 @@ export function readState(path) {
 // carry only the DID). No env override: a refusal means log in as the test account instead.
 export const FORBIDDEN_DIDS = ['did:privy:cmhjqhry90120kz0ddgzkir25'];
 export const FORBIDDEN_EMAILS = ['eric@muon.film'];
+
+/** A key from process.env, else .env.local (Playwright doesn't load it). ARR-7 — PRIVY_TEST_EMAIL/OTP. */
+export function localEnv(key) {
+  if (process.env[key]) return process.env[key];
+  for (const f of ['.env.local', '.env']) {
+    if (!existsSync(f)) continue;
+    const m = readFileSync(f, 'utf8').match(new RegExp(`^${key}=(.*)$`, 'm'));
+    if (m) return m[1].replace(/^"|"$/g, '').trim();
+  }
+  return '';
+}
+
+/** ARR-7 — the fresh-signup Privy test account: refuse Eric's address; must be a Privy test account. */
+export function assertTestAccountEmail() {
+  const email = localEnv('PRIVY_TEST_EMAIL').toLowerCase();
+  if (!email) return 'fresh-signup account: not configured (ARR-7 group B will skip)';
+  if (FORBIDDEN_EMAILS.includes(email)) throw new Error(`[auth] REFUSED — PRIVY_TEST_EMAIL is a forbidden identity (${email})`);
+  if (!/^test-\d+@privy\.io$/.test(email)) throw new Error(`[auth] REFUSED — PRIVY_TEST_EMAIL ${email} is not a Privy test account`);
+  if (!localEnv('PRIVY_TEST_OTP')) throw new Error('[auth] PRIVY_TEST_EMAIL set without PRIVY_TEST_OTP');
+  return `fresh-signup account: ${email.replace(/^(.{6}).*(@.*)$/, '$1***$2')}`;
+}
 const PRIVY_APP_ID = process.env.NEXT_PUBLIC_PRIVY_APP_ID || 'cmfggbvdy013fl50ba827mw47';
 
 const jwtSub = (v) => { try { return JSON.parse(Buffer.from(String(v).replace(/^"|"$/g, '').split('.')[1], 'base64url').toString()).sub ?? null; } catch { return null; } };
