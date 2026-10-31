@@ -1,5 +1,5 @@
 import { existsSync } from 'fs';
-import { ensureFresh, DEFAULT_STATE, readState, assertNotForbiddenDid, assertHarnessIdentity } from './auth-store.mjs';
+import { ensureFresh, DEFAULT_STATE, readState, assertNotForbiddenDid, assertHarnessIdentity, assertTestAccountEmail } from './auth-store.mjs';
 
 // Brief C3 → V1c §4 → U2 — auth preflight + shared-session refresh. ONE test/.auth/throwaway.json
 // serves every CC window and every localhost port (test/auth-store.mjs): under a file lock, a token
@@ -57,6 +57,9 @@ export default async function globalSetup() {
   // HARD RULE — never Eric. Offline DID check BEFORE the refresh (never rotate his tokens), full
   // DID+email check after. Outside the SKIP_AUTH_PREFLIGHT catch: nothing downgrades a refusal.
   if (existsSync(STATE)) assertNotForbiddenDid(readState(STATE), STATE);
+  // ARR-7 — the fresh-signup test account (PRIVY_TEST_EMAIL/OTP from .env.local): same refusal.
+  // eslint-disable-next-line no-console
+  console.log(`[auth] ${assertTestAccountEmail()}`);
   try {
     const line = await ensureFresh(STATE, BASE, refreshViaPrivy);
     // eslint-disable-next-line no-console
