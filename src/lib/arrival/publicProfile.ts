@@ -94,15 +94,21 @@ export async function getPublicProfile(rawUsername: string): Promise<PublicProfi
   if (!p?.username || !p.user_id) return null;
   const uid = String(p.user_id);
 
-  const [postsRes, framesCountRes, decksRes, userRes, tracksRes, tierRes] = await Promise.all([
+  // ARR-7 — decks.user_id holds the owner's Privy DID (posts.user_id is the Supabase UUID), so the
+  // decks count keys on the DID read here. The DID, like the wallet, never leaves this file.
+  const userRes = await db.from('users').select('wallet_address, privy_id').eq('id', uid).maybeSingle();
+  const did = (userRes.data?.privy_id as string | null) ?? null;
+
+  const [postsRes, framesCountRes, decksRes, tracksRes, tierRes] = await Promise.all([
     db.from('posts')
       .select('media_urls, media_type, layout_id, thumbnail_url, poster_url, stream_poster_url, stream_playback_url, video_status, media_has_renditions')
       .eq('user_id', uid).eq('is_deleted', false)
       .order('is_pinned', { ascending: false }).order('created_at', { ascending: false })
       .limit(MAX_FRAMES),
     db.from('posts').select('id', { count: 'exact', head: true }).eq('user_id', uid).eq('is_deleted', false),
-    db.from('decks').select('id', { count: 'exact', head: true }).eq('user_id', uid).neq('is_public', false),
-    db.from('users').select('wallet_address').eq('id', uid).maybeSingle(),
+    did
+      ? db.from('decks').select('id', { count: 'exact', head: true }).eq('user_id', did).neq('is_public', false)
+      : Promise.resolve({ count: 0 }),
     db.from('tracks').select('id', { count: 'exact', head: true }).eq('composer_user_id', uid).eq('status', 'approved'),
     // AUG-1 — membership_tier in its OWN query: pre-migration the column doesn't exist, and adding
     // it to the main select above would null the whole profile (→ 404). Here an error → not augmented.

@@ -16,7 +16,7 @@ import { useRouter } from 'next/navigation';
 import { useLogin, usePrivy } from '@privy-io/react-auth';
 import type { PublicProfile, PublicFrame } from '@/lib/arrival/publicProfile';
 import { BLADE_PATHS, BLADE_CX } from '@/lib/arrival/blades';
-import { saveArrivalIntent } from '@/lib/arrival/intent';
+import { saveArrivalIntent, readArrivalIntent } from '@/lib/arrival/intent';
 import type { ArrivalLoginMethod } from '@/lib/arrival/loginMethods';
 import { getAspectRatio } from '@/lib/aspectRatio';
 import { feedImage } from '@/lib/mediaUrl';
@@ -131,8 +131,14 @@ export default function Arrival({ profile, refTag, loginMethods }: { profile: Pu
   }, [t.start, t.range]);
 
   const { ready, authenticated } = usePrivy();
+  // ARR-7 — Privy reports `authenticated` BEFORE it calls onComplete (the embedded wallet is still
+  // being made), so this effect used to win the race, unmount Arrival (dropping onComplete) and land
+  // a brand-new member on the profile with no onboarding and no follow. A sign-up in flight (intent
+  // saved) now goes to /auth/callback — the one place onboarding + the follow are run. Only a visitor
+  // who was already signed in, with no intent, goes straight to the profile.
   useEffect(() => {
-    if (ready && authenticated) router.replace(`/profile/${encodeURIComponent(profile.username)}`);
+    if (!ready || !authenticated) return;
+    router.replace(readArrivalIntent() ? '/auth/callback' : `/profile/${encodeURIComponent(profile.username)}`);
   }, [ready, authenticated, router, profile.username]);
 
   const { login } = useLogin({

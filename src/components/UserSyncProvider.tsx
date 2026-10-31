@@ -9,7 +9,11 @@ import { clearDraft } from '@/lib/createDraft';
 
 // Only attempt routing on post-login transition pages.
 // On all other paths we sync silently and let the page handle itself.
-const AUTH_FLOW_PATHS = ['/auth/callback', '/transition'];
+// ARR-7 — NOT /auth/callback: that page owns its own routing (Arrival intent → follow + the
+// arrived-at profile; desktop → /onboarding; mobile → /profile/setup or the feed). This provider
+// routing there too raced it — its '/' or '/profile/setup' could land first, dropping the Arrival
+// landing and (on desktop) the /onboarding flow. It still SYNCS the user row on every path.
+const AUTH_FLOW_PATHS = ['/transition'];
 
 export function UserSyncProvider({ children }: { children: React.ReactNode }) {
   const { user, authenticated } = usePrivy();

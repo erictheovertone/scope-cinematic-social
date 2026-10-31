@@ -37,12 +37,14 @@ function CornerBrackets({ children }: { children: React.ReactNode }) {
 }
 
 export default function DesktopGridPicker({
-  initial, userId, onApplied, onClose,
+  initial, userId, onApplied, onClose, exitTo = '/profile',
 }: {
   initial: DesktopLayout;
   userId: string;
   onApplied: (layout: DesktopLayout) => void;
   onClose: () => void;
+  /** Where CONFIRM lands. ARR-7 — an Arrival sign-up's onboarding lands on the arrived-at profile. */
+  exitTo?: string;
 }) {
   const [step, setStep] = useState<Step>('aspect');
   const [aspect, setAspect] = useState<DesktopAspect>(initial.aspect);
@@ -83,7 +85,7 @@ export default function DesktopGridPicker({
     if (okAC) {
       onApplied(layout);
       onClose();
-      router.push('/profile'); // one flow — settings AND the future onboarding entry land here
+      router.push(exitTo); // one flow — settings AND onboarding land here (/profile unless told otherwise)
     } else {
       setSaveError(true);
     }
@@ -117,6 +119,7 @@ export default function DesktopGridPicker({
             {DESKTOP_ASPECTS.map((c) => (
               <button
                 key={c.id}
+                data-testid={`picker-aspect-${c.id}`}
                 onClick={() => { setAspect(c.id as DesktopAspect); setStep('count'); }}
                 style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, opacity: reduced ? 1 : undefined }}
               >
@@ -135,6 +138,7 @@ export default function DesktopGridPicker({
             {DESKTOP_COUNTS.map((n) => (
               <button
                 key={n}
+                data-testid={`picker-count-${n}`}
                 onClick={() => { setCount(n); setStep('commit'); }}
                 style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, width: 620 }}
               >
@@ -168,6 +172,7 @@ export default function DesktopGridPicker({
               </p>
             )}
             <button
+              data-testid="picker-confirm"
               onClick={confirm}
               disabled={saving}
               style={{ ...SKB, fontSize: 13, color: 'var(--black)', textTransform: 'uppercase', letterSpacing: '0.12em', background: 'var(--ink-100)', border: 'none', cursor: 'pointer', padding: '14px 54px', marginTop: 22, opacity: saving ? 0.6 : 1 }}
