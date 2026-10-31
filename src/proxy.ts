@@ -10,7 +10,7 @@
 //     the curated allowlist, so this is safe even before the single-segment check);
 //   • a disallowed username (/anyotheruser) → /[username] → notFound()/baked 404 (today's behaviour).
 import { NextResponse, type NextRequest } from 'next/server';
-import { publicProfilesEnabled, publicProfileAllowed } from '@/lib/arrival/flag';
+import { publicProfilesEnabled, publicProfileAllowed, isReservedRoute } from '@/lib/arrival/flag';
 
 export const config = {
   // Skip Next internals, API routes, the /arrival target itself, and any path with a file extension.
@@ -21,6 +21,8 @@ export default function proxy(req: NextRequest) {
   const seg = req.nextUrl.pathname.match(/^\/([^/]+)\/?$/)?.[1]; // single segment only
   if (!seg) return NextResponse.next();
   const username = decodeURIComponent(seg);
+  // ARR-7 — an app route is never a username, independent of the flag and the allowlist.
+  if (isReservedRoute(username)) return NextResponse.next();
   if (!publicProfilesEnabled() || !publicProfileAllowed(username)) return NextResponse.next();
   const url = req.nextUrl.clone(); // keeps ?ref= for sign-up attribution
   url.pathname = '/arrival';

@@ -68,7 +68,9 @@ export default function DesktopOnboarding() {
     if (needsSetup) { setPhase('setup'); return; }
     router.replace('/'); // mobile-onboarded path lands here; new-user path lands via the picker's own push('/profile')
   };
-  const skip = async () => { await markSeen(); router.replace('/'); };
+  // ARR-7 — Skip (or Esc) skips the EXPLAINER, never setup: a member with no username goes on to
+  // setup (it used to land them on / with no profile). Members who already have one → app, as before.
+  const skip = async () => { await markSeen(); if (needsSetup) { setPhase('setup'); return; } router.replace('/'); };
 
   if (phase === 'resolving') {
     return <div className="bg-canvas" style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><ScopeLoader size="lg" label="Loading" /></div>;

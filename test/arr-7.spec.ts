@@ -20,6 +20,10 @@
 import { test, expect, type Page } from '@playwright/test';
 import { db, me, E } from './mus-aug-harness';
 import { testCredentials, testAccountRowCount, cleanupTestAccount } from './arr7-guard';
+import { readdirSync } from 'fs';
+import { NextRequest } from 'next/server';
+import proxy from '../src/proxy';
+import { RESERVED_ROUTES } from '../src/lib/arrival/flag';
 
 const CREATOR = 'overtone';
 const HAS_TEST_ACCOUNT = !!(E('PRIVY_TEST_EMAIL') && E('PRIVY_TEST_OTP'));
@@ -137,9 +141,16 @@ const didFromPage = (page: Page) => page.evaluate(() => {
 });
 
 /** Mobile: /profile/setup → grid-layout → CONFIRM → WelcomeTransition. Desktop: explainer → setup → picker. */
-async function runOnboarding(page: Page, desktop: boolean, handle: string) {
+async function runOnboarding(page: Page, desktop: boolean, handle: string, opts: { skip?: boolean } = {}) {
   if (desktop) {
     await expect(page).toHaveURL(/\/onboarding/, { timeout: 30_000 });
+    if (opts.skip) {
+      // ARR-7 §5 — Skip (Esc) on the explainer must lead to setup, never strand the member on / .
+      await page.waitForTimeout(1500); // explainer mounted (its key handler is on window)
+      await page.keyboard.press('Escape');
+      await expect(page.getByText('SET UP YOUR PROFILE')).toBeVisible({ timeout: 15_000 });
+      expect(new URL(page.url()).pathname).toBe('/onboarding');
+    }
     for (let i = 0; i < 8 && !(await page.getByText('SET UP YOUR PROFILE').isVisible().catch(() => false)); i++) {
       await page.keyboard.press('ArrowRight');
       await page.waitForTimeout(500);
@@ -182,8 +193,9 @@ test.describe('B · fresh sign-up', () => {
     return did!;
   }
 
-  test('Arrival /overtone + Follow → onboarding → LIVE creator profile → Following = 1', async ({ page }, info) => {
+  for (const skip of [false, true]) test(`Arrival /overtone + Follow → onboarding${skip ? ' (desktop SKIP explainer)' : ''} → LIVE creator profile → Following = 1`, async ({ page }, info) => {
     const desktop = isDesktop(info.project.name);
+    test.skip(skip && !desktop, 'the explainer Skip is desktop-only');
     const c = await creator();
     const before = await followerCount(c.did);
     const handle = `ARR7${desktop ? 'D' : 'M'}${Date.now().toString(36).slice(-5)}`.toUpperCase();
@@ -201,7 +213,7 @@ test.describe('B · fresh sign-up', () => {
     freshDid = await signedInAs(page);
 
     // Onboarding RAN (the bug: it never did).
-    await runOnboarding(page, desktop, handle);
+    await runOnboarding(page, desktop, handle, { skip });
 
     // Landed on the creator's LIVE profile.
     await expect(page).toHaveURL(new RegExp(`/profile/${c.username}`, 'i'), { timeout: 30_000 });
@@ -226,7 +238,7 @@ test.describe('B · fresh sign-up', () => {
     expect(['ok', 'no-scroller']).toContain(scrolled);
     await page.getByRole('button', { name: /profile info/i }).first().click();
     await expect(page.getByRole('button', { name: /profile info/i }).first()).toBeVisible();
-    await page.screenshot({ path: `test/shots-arr7/${info.project.name}-landed.png` });
+    await page.screenshot({ path: `test/shots-arr7/${info.project.name}${skip ? '-skip' : ''}-landed.png` });
 
     // The new member's own profile: Following = 1. Attribution row written.
     const { data: u } = await db.from('users').select('id, signup_ref, signup_profile').eq('privy_id', freshDid!).single();
@@ -241,11 +253,12 @@ test.describe('B · fresh sign-up', () => {
       if (v === null && !desktop) await page.getByRole('button', { name: /view profile info/i }).click({ timeout: 5000 }).catch(() => {});
       return v;
     }, { timeout: 30_000, intervals: [1000, 2000, 3000] }).toBe('1');
-    await page.screenshot({ path: `test/shots-arr7/${info.project.name}-own-following.png` });
+    await page.screenshot({ path: `test/shots-arr7/${info.project.name}${skip ? '-skip' : ''}-own-following.png` });
   });
 
-  test('plain /welcome sign-up (no Arrival intent) → onboarding → lands where it always did', async ({ page }, info) => {
+  for (const skip of [false, true]) test(`plain /welcome sign-up (no Arrival intent) → onboarding${skip ? ' (desktop SKIP explainer)' : ''} → lands where it always did`, async ({ page }, info) => {
     const desktop = isDesktop(info.project.name);
+    test.skip(skip && !desktop, 'the explainer Skip is desktop-only');
     const handle = `ARR7W${desktop ? 'D' : 'M'}${Date.now().toString(36).slice(-5)}`.toUpperCase();
     const hops: string[] = [];
     page.on('framenavigated', (f) => { if (f === page.mainFrame()) { const u = new URL(f.url()); hops.push(u.pathname + u.search); } });
@@ -256,7 +269,7 @@ test.describe('B · fresh sign-up', () => {
     if (await emailBtn.first().isVisible({ timeout: 5000 }).catch(() => false)) await emailBtn.first().click();
     await privyEmailLogin(page);
     freshDid = await signedInAs(page);
-    await runOnboarding(page, desktop, handle);
+    await runOnboarding(page, desktop, handle, { skip });
     // Same landings as before ARR-7: desktop → /profile; phone → /profile?new=1, which OnboardingModal
     // consumes (replaceState → /profile) to show the new-member intro. Assert both the hop and the modal.
     await expect(page).toHaveURL(/\/profile$/, { timeout: 30_000 });
@@ -268,5 +281,35 @@ test.describe('B · fresh sign-up', () => {
     expect(hops.some((h) => /\/profile\/setup|\/onboarding/.test(h))).toBeTruthy();
     const { count } = await db.from('follows').select('id', { count: 'exact', head: true }).eq('follower_id', freshDid!);
     expect(count).toBe(0);
+    // Never stranded without a username (the old Skip landed on / with no profile).
+    const { data: u } = await db.from('users').select('id').eq('privy_id', freshDid!).single();
+    const { data: prof } = await db.from('profiles').select('username').eq('user_id', u!.id).single();
+    expect(prof?.username?.toUpperCase()).toBe(handle);
+  });
+});
+
+// ═══ C. RESERVED ROUTES — app routes are never usernames, whatever the allowlist says ═══════════
+test.describe('C · reserved routes', () => {
+  test('every top-level src/app route is reserved', async ({}, info) => {
+    test.skip(info.project.name !== 'desktop-chromium', 'node-only check — run once');
+    const dirs = readdirSync('src/app', { withFileTypes: true })
+      .filter((d) => d.isDirectory() && !/^[[(_]/.test(d.name)).map((d) => d.name);
+    const missing = dirs.filter((d) => !RESERVED_ROUTES.has(d));
+    expect(missing, `add to RESERVED_ROUTES in src/lib/arrival/flag.ts`).toEqual([]);
+  });
+
+  test('with the flag ON and an EMPTY allowlist, the proxy never rewrites an app route', async ({}, info) => {
+    test.skip(info.project.name !== 'desktop-chromium', 'node-only check — run once');
+    const saved = { on: process.env.PUBLIC_PROFILES_ENABLED, list: process.env.PUBLIC_PROFILES_ALLOWLIST };
+    process.env.PUBLIC_PROFILES_ENABLED = '1';
+    process.env.PUBLIC_PROFILES_ALLOWLIST = '';
+    try {
+      const rewritten = (path: string) => !!proxy(new NextRequest(`http://localhost:3000${path}`)).headers.get('x-middleware-rewrite');
+      for (const r of ['/library', '/welcome', '/onboarding', '/profile', '/api', '/wallet', '/LIBRARY', '/settings']) expect(rewritten(r), r).toBe(false);
+      expect(rewritten(`/${CREATOR}`), 'a real username still renders Arrival').toBe(true);
+    } finally {
+      process.env.PUBLIC_PROFILES_ENABLED = saved.on;
+      process.env.PUBLIC_PROFILES_ALLOWLIST = saved.list;
+    }
   });
 });
