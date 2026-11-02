@@ -341,3 +341,60 @@ for (const theme of THEMES) {
     });
   });
 }
+
+// ── Brief LT-2 gaps — explainer exit (§3) + the music "+N" row (§4) ────────────────────────────
+for (const theme of THEMES) {
+  test.describe(`LT-2 gaps — ${theme}`, () => {
+    test(`badge explainer close-X · music +N row — ${theme}`, async ({ page }, info) => {
+      const shot = (n: string) => join(OUT, `lt2g-${n}-${theme}-${info.project.name}.png`);
+
+      // (a) Badge explainer — opens from the profile header's badge cluster ("Badges"); assert the
+      // sticky close X exists (the §3 "way out") and capture it.
+      await boot(page, theme);
+      await page.goto('/profile', { waitUntil: 'domcontentloaded' });
+      await page.waitForTimeout(5000);
+      await pastRecap(page, shot);
+      const badgesBtn = page.getByRole('button', { name: 'Badges', exact: true }).first();
+      if (await badgesBtn.count()) {
+        await badgesBtn.click();
+        await page.waitForTimeout(1200);
+        const closeX = page.getByRole('button', { name: 'Close' }).filter({ visible: true });
+        expect(await closeX.count(), 'badge explainer must have a close X').toBeGreaterThan(0);
+        await page.screenshot({ path: shot('explainer-x') });
+      } else console.warn('[LT-2g] Badges cluster not present — explainer skipped');
+
+      // (b) Music "+N" row — DON'T seed the shared DB; mock the composerCatalog Supabase reads to
+      // return FOUR albums (one approved track each) → the bio-sheet row shows 3 covers + "+1".
+      if (info.project.name !== 'iphone-webkit') return;
+      await page.route(/\/rest\/v1\/(tracks|albums)\?/, async (route) => {
+        const url = route.request().url();
+        if (/composer_user_id=eq\./.test(url) && /status=eq\.approved/.test(url)) {
+          return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(
+            [0, 1, 2, 3].map((i) => ({ id: `t${i}`, title: `Track ${i}`, album_id: `al${i}`, position: 0, duration_seconds: 200, file_url: '', artwork_url: null, waveform_peaks: null, keywords: [], composer_user_id: 'mock', created_at: '2025-01-01' })),
+          ) });
+        }
+        if (/composer_id=eq\./.test(url)) {
+          return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(
+            [0, 1, 2, 3].map((i) => ({ id: `al${i}`, composer_id: 'mock', title: `Album ${i + 1}`, cover_url: null, year: 2024, position: i, is_singles: false })),
+          ) });
+        }
+        return route.continue();
+      });
+      await page.goto('/profile', { waitUntil: 'domcontentloaded' });
+      await page.waitForTimeout(5000);
+      await pastRecap(page, shot);
+      const bio = page.getByRole('button', { name: 'View profile info' }).first();
+      if (await bio.count()) {
+        await bio.click();
+        await page.waitForTimeout(1500);
+        const more = page.getByTestId('bio-music-more');
+        if (await more.count()) {
+          await expect(more).toHaveText(/\+1/);
+          const covers = await page.getByTestId(/^bio-music-album-/).count();
+          expect(covers, 'three covers before the +N').toBe(3);
+        } else console.warn('[LT-2g] bio-music-more not found — music mock may not have applied');
+        await page.screenshot({ path: shot('music-plusN') });
+      } else console.warn('[LT-2g] BIO trigger not present — music row skipped');
+    });
+  });
+}

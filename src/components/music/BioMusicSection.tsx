@@ -92,12 +92,12 @@ export default function BioMusicSection({ userId, handle, variant, onNavigate, r
   // ── Mobile sheet (LT-2 §4) — ONE horizontal row of covers, THREE max. Stacked 112px covers read
   // too large; a compact row is the fix. With >3 albums the third tile collapses to "+N" (the rest)
   // and opens the composer page — the one door to the full catalog. Covers still live ONLY here.
-  const COVER = 100;
+  const COVER = 78;
   const albums = data.albums;
-  const overflow = albums.length > 3;
-  const shown = overflow ? albums.slice(0, 2) : albums.slice(0, 3);
-  const moreCount = albums.length - shown.length; // overflow → albums.length - 2
-  const openComposer = () => { if (!handle) { if (albums[2]) open(albums[2]); return; } onNavigate?.(); router.push(`/composer/${handle}`); };
+  const overflow = albums.length > 3;        // >3 → three covers + a "+N" door
+  const shown = albums.slice(0, 3);          // up to THREE covers
+  const moreCount = albums.length - 3;       // the rest live behind "+N" → composer page
+  const openComposer = () => { if (!handle) { if (albums[3]) open(albums[3]); return; } onNavigate?.(); router.push(`/composer/${handle}`); };
 
   const coverTile = (al: CatalogAlbum) => {
     const cover = albumCover(al, data.tracks);
