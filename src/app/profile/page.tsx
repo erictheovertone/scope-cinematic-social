@@ -24,7 +24,6 @@ import MembershipSheet from "@/components/MembershipSheet";
 import BottomToolbar from "@/components/BottomToolbar";
 import MediaRenderer from "@/components/MediaRenderer";
 import TheatreMode from "@/components/TheatreMode";
-import OnboardingModal from "@/components/OnboardingModal";
 import AddToHomeScreenSheet from "@/components/AddToHomeScreenSheet";
 import { shouldShowA2HS } from "@/lib/pwaUtils";
 import PostCell from "@/components/PostCell";
@@ -124,6 +123,9 @@ const userLayoutId = stableLayoutId;
   const [paidMemberUntil, setPaidMemberUntil] = useState<Date | null>(null);
   const [showMembershipSheet, setShowMembershipSheet] = useState(false);
   const [showA2HS, setShowA2HS] = useState(false);
+  // ARR-8 §2 — the add-to-home-screen nudge used to fire from the intro's onComplete; the intro now
+  // lives in /profile/setup, so trigger A2HS here on landing (its own once-gate is in shouldShowA2HS).
+  useEffect(() => { if (user?.id && shouldShowA2HS(user.id)) setShowA2HS(true); }, [user?.id]);
   // First Cut count drives the pfp stack's First Cut coin. Read ONLY through the
   // economy boundary, and ONLY when the preview flag is on — so nothing implies
   // founding positions that aren't real yet. Off-flag it stays 0 (coin absent).
@@ -432,13 +434,9 @@ const userLayoutId = stableLayoutId;
   return (
     <div className="relative">{/* Non-scrolling viewport root — fixed chrome (footer + snapped frame) is lifted OUT below as SIBLINGS of the scroller, so on iOS standalone it anchors to the VIEWPORT, not the .screen-min scroll container (which floated the footer above the screen bottom). */}
     <div className="bg-canvas relative w-full app-shell screen-min mx-auto" style={{ background: 'var(--canvas)', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>{/* Brief 2.2c note 1 — page canvas var(--canvas). Brief W2 §3 — was pb-[60px] pill-clearance → safe-bottom only, so grid content scrolls under the pill glass. */}
-      <OnboardingModal
-        onComplete={() => {
-          if (user?.id && shouldShowA2HS(user.id)) {
-            setShowA2HS(true);
-          }
-        }}
-      />
+      {/* ARR-8 §2 — the 4-screen intro moved to the FIRST step of /profile/setup (so Arrival signups
+          see it too, not only plain signups who landed on their own profile). This page keeps only
+          the add-to-home-screen nudge, now fired from a mount effect instead of the intro's onComplete. */}
       <AddToHomeScreenSheet
         isOpen={showA2HS}
         onClose={() => setShowA2HS(false)}

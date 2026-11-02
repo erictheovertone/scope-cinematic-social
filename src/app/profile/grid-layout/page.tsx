@@ -2,7 +2,7 @@
 
 import ThemedImg from "@/components/ThemedImg";
 import { useState, useEffect, useRef } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
 import { setUserGridLayout, getUserGridLayout } from "@/lib/gridLayoutService";
 import { getUserByPrivyId, getProfile } from "@/lib/userService";
@@ -325,8 +325,6 @@ function ConfirmationView({
 
 export default function GridLayoutPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const isNewUser = searchParams?.get('from') === 'setup';
   const { user } = usePrivy();
   const [selectedLayout, setSelectedLayout] = useState<string>("");
   // U2 — once the user taps a tile, the async seed below must never overwrite their pick: a slow
@@ -409,7 +407,7 @@ export default function GridLayoutPage() {
       // Brief ARR-1 — a sign-up that started on someone's public profile lands back there.
       const arrival = readArrivalIntent();
       if (arrival) { clearArrivalIntent(); router.push(arrivalDestination(arrival)); return; }
-      router.push(isNewUser ? "/profile?new=1" : "/profile");
+      router.push("/profile"); // ARR-8 §2 — intro already ran at setup entry, so no ?new=1 here
     }} />;
   }
 

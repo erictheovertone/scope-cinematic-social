@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { usePrivy } from "@privy-io/react-auth";
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
@@ -34,34 +35,38 @@ const SCREENS = [
 
 interface Props {
   onComplete?: () => void;
+  /** ARR-8 §2 — CONTROLLED mode. When provided, the host decides when the 4-screen intro runs (now
+      the FIRST step of /profile/setup, so BOTH plain and Arrival phone signups see it before setup →
+      grid → land). Omit it for the legacy ?new=1 self-trigger. */
+  active?: boolean;
 }
 
-export default function OnboardingModal({ onComplete }: Props) {
+export default function OnboardingModal({ onComplete, active }: Props) {
+  const controlled = active !== undefined;
   const { user } = usePrivy();
   const [visible, setVisible] = useState(false);
   const [screen, setScreen] = useState(0);
   const [exiting, setExiting] = useState(false);
   const [shouldShow, setShouldShow] = useState(false);
 
-  // Step 1: Capture ?new=1 immediately on mount before anything clears it
+  // Legacy ?new=1 self-trigger — ONLY when uncontrolled (the host isn't driving `active`).
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const isNew = params.get('new') === '1';
-    console.log('[onboarding] mount — isNew:', isNew);
+    if (controlled) return;
+    const isNew = new URLSearchParams(window.location.search).get('new') === '1';
     if (isNew) {
       setShouldShow(true);
       window.history.replaceState({}, '', '/profile');
     }
-  }, []);
+  }, [controlled]);
 
-  // Step 2: Once user ID resolves and we know we should show, show modal directly
+  // Show once the user resolves and the trigger says so (controlled `active`, else the ?new=1 flag);
+  // mark onboarded so it never replays.
   useEffect(() => {
-    console.log('[onboarding] user/shouldShow — user:', user?.id, 'shouldShow:', shouldShow);
-    if (!shouldShow || !user?.id) return;
+    const want = controlled ? active : shouldShow;
+    if (!want || !user?.id) return;
     localStorage.setItem(`scope_onboarded_${user.id}`, 'true');
-    console.log('[onboarding] SHOWING MODAL');
     setVisible(true);
-  }, [user?.id, shouldShow]);
+  }, [user?.id, shouldShow, active, controlled]);
 
   const handleNext = () => {
     if (screen < SCREENS.length - 1) {
@@ -79,12 +84,14 @@ export default function OnboardingModal({ onComplete }: Props) {
     }, 400);
   };
 
-  if (!visible) return null;
+  if (!visible || typeof document === 'undefined') return null;
 
   const current = SCREENS[screen];
 
-  return (
-    <div style={{
+  // ARR-8 §2 — portal to document.body so the intro overlays its host (e.g. the /profile/setup form)
+  // regardless of the host's own stacking context, the way the app's other full-screen sheets do.
+  return createPortal(
+    <div data-testid="onboarding-intro" style={{
       position: 'fixed', inset: 0, zIndex: 900,
       backgroundColor: 'var(--surface-1)',
       display: 'flex', flexDirection: 'column',
@@ -147,6 +154,7 @@ export default function OnboardingModal({ onComplete }: Props) {
           </button>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

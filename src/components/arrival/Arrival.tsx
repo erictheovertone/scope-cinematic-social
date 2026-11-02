@@ -246,6 +246,9 @@ export default function Arrival({ profile, refTag, loginMethods }: { profile: Pu
               <div>
                 <h1 style={{ margin: 0, fontFamily: UI, fontSize: desktop ? 26 : 21, fontWeight: 700, letterSpacing: '0.01em', lineHeight: 1 }}>{NAME}</h1>
                 {profile.displayName && <div style={{ fontFamily: UI, color: 'rgb(var(--ink-rgb) / 0.5)', fontSize: 13, marginTop: 5 }}>{profile.displayName}</div>}
+                {/* ARR-8 §5 — the Augmented brass tag belongs on the profile HEADER too, not only the
+                    CTA card. The tier is already in the public payload (profile.augmented). */}
+                {profile.augmented && <div style={{ marginTop: 7 }}><AugmentedTag /></div>}
               </div>
             </div>
             <div style={{ display: 'grid', gap: desktop ? 10 : 12 }}>

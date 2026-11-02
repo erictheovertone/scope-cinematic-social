@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
 import { saveProfile, uploadImage, getUserByPrivyId, getProfileByUsername, syncUserWithSupabase } from "@/lib/userService";
 import ScopeLoader from "@/components/ScopeLoader";
+import OnboardingModal from "@/components/OnboardingModal";
 
 async function compressImage(file: File): Promise<File> {
   return new Promise((resolve) => {
@@ -54,6 +55,19 @@ export default function ProfileSetup() {
   const [imageUploading, setImageUploading] = useState(false);
   const [imageUploadError, setImageUploadError] = useState<string | null>(null);
   const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
+  // ARR-8 §2 — the 4-screen intro is now the FIRST step of setup on phone, so BOTH plain and Arrival
+  // signups see it (Arrival lands on the creator's profile, which never rendered the old intro).
+  // Order: intro → setup → grid → land. Desktop keeps its own /onboarding explainer → setup flow.
+  const [showIntro, setShowIntro] = useState(false);
+  const [introDone, setIntroDone] = useState(false);
+  useEffect(() => {
+    if (!user?.id) return;
+    try {
+      const isDesktop = window.matchMedia('(min-width: 1024px)').matches;
+      const onboarded = localStorage.getItem(`scope_onboarded_${user.id}`);
+      if (!isDesktop && !onboarded) setShowIntro(true);
+    } catch { /* storage off → skip the intro gate, never block setup */ }
+  }, [user?.id]);
 
   useEffect(() => {
     const syncUser = async () => {
@@ -171,6 +185,8 @@ export default function ProfileSetup() {
   // Brief S3 — presentation rebuilt to frame 93:708; upload/validation/submit untouched.
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'var(--canvas)', boxSizing: 'border-box', overflowY: 'auto', WebkitOverflowScrolling: 'touch', display: 'flex', flexDirection: 'column', padding: 'calc(8px + var(--safe-top)) 13px calc(24px + var(--safe-bottom))' }}>
+      {/* ARR-8 §2 — the intro overlays the setup form until the member clicks through it, then setup. */}
+      <OnboardingModal active={showIntro && !introDone} onComplete={() => setIntroDone(true)} />
       {/* Placeholder labels = small tracked dim caps (Haas). ::placeholder carries its OWN
           font-size, so the INPUT text can stay ≥16px (iOS zoom trap) while labels read tiny. */}
       <style>{`

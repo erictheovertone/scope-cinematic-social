@@ -50,6 +50,13 @@ export default function CollectSheetGate(props: CollectSheetProps) {
           poster_url: (p.poster_url as string | null) ?? null,
           thumbnail_url: (p.thumbnail_url as string | null) ?? null,
           layout_id: (p.layout_id as string | undefined),
+          // ARR-8 §4 — a coined VIDEO post has null media_urls (the video lives on Cloudflare
+          // Stream); without these three fields GradedVideo gets no HLS source + no poster and the
+          // collect sheet shows no media. streamGradedProps reads video_status + stream_playback_url;
+          // the poster chain reads stream_poster_url. (The image path uses media_urls[0], unaffected.)
+          video_status: (p.video_status as string | undefined),
+          stream_playback_url: (p.stream_playback_url as string | null) ?? null,
+          stream_poster_url: (p.stream_poster_url as string | null) ?? null,
           // Forwarded so the sheet plays GRADED video (same params as the feed).
           edit_params: p.edit_params,
           autoplay_clip_url: (p.autoplay_clip_url as string | null) ?? null,

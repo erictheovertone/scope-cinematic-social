@@ -163,6 +163,12 @@ async function runOnboarding(page: Page, desktop: boolean, handle: string, opts:
     await page.getByTestId('picker-confirm').click();
   } else {
     await expect(page).toHaveURL(/\/profile\/setup/, { timeout: 30_000 });
+    // ARR-8 §2 — the 4-screen intro is now the FIRST step at setup entry on PHONE, for BOTH entry
+    // points (plain /welcome and Arrival route a fresh signup through /profile/setup). Assert it ran,
+    // then SKIP past it to the setup form. (Arrival sign-ups used to skip the intro entirely.)
+    await expect(page.getByTestId('onboarding-intro'), 'the 4-screen intro must run before setup on phone').toBeVisible({ timeout: 15_000 });
+    await page.getByRole('button', { name: 'SKIP', exact: true }).first().click();
+    await expect(page.getByTestId('onboarding-intro')).toBeHidden({ timeout: 8_000 });
     await page.getByPlaceholder('@ USERNAME').fill(handle);
     await page.getByRole('button', { name: 'Continue' }).click();
     await expect(page).toHaveURL(/\/profile\/grid-layout/, { timeout: 20_000 });

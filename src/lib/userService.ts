@@ -459,41 +459,10 @@ export const followUser = async (followerPrivyId: string, followingPrivyId: stri
     .from('follows')
     .insert({ follower_id: followerPrivyId, following_id: followingPrivyId })
   if (error) throw error
-
-  // Fire-and-forget follow notification
-  if (followerPrivyId === followingPrivyId) return
-  ;(async () => {
-    try {
-      const { data: senderUser } = await supabase
-        .from('users').select('id').eq('privy_id', followerPrivyId).single()
-      if (!senderUser) {
-        console.warn('Follow notification: sender user not found for privy_id:', followerPrivyId)
-        return
-      }
-      const { data: senderProfile } = await supabase
-        .from('profiles').select('username, profile_image_url').eq('user_id', senderUser.id).single()
-      console.log('Creating follow notification — recipient:', followingPrivyId, ', sender:', followerPrivyId)
-      const { data: notif, error: notifError } = await supabase
-        .from('notifications')
-        .insert({
-          recipient_id: followingPrivyId,
-          sender_id: followerPrivyId,
-          sender_username: senderProfile?.username ?? null,
-          sender_avatar: senderProfile?.profile_image_url ?? null,
-          type: 'follow',
-          post_id: null,
-          post_image_url: null,
-          message: `@${senderProfile?.username ?? 'someone'} started following you`,
-          is_read: false,
-        })
-        .select('id')
-        .single()
-      if (notifError) console.error('Follow notification insert error:', notifError)
-      else console.log('Follow notification created:', notif?.id)
-    } catch (e) {
-      console.error('Follow notification exception:', e)
-    }
-  })()
+  // ARR-8 §3 — the "started following you" notification is now a DB trigger on follows INSERT
+  // (migrations/2026-11-02_follow_notification_trigger.sql), so it fires for BOTH this app path and
+  // the Arrival sign-up follow (/api/arrival/follow, which inserts into follows directly). The old
+  // app-side insert here was removed to avoid a double notification once the trigger is applied.
 }
 
 export const unfollowUser = async (followerPrivyId: string, followingPrivyId: string): Promise<void> => {
