@@ -18,6 +18,8 @@ export interface TrackRow {
   composer_user_id: string;
   composer_handle: string | null;
   composer_avatar: string | null;
+  /** MUS-3 §1 — the track's DISPLAY cover: own art, else the album cover. */
+  cover: string | null;
 }
 
 const cache = new Map<string, TrackRow | null>();
@@ -29,12 +31,24 @@ async function fetchTrack(trackId: string): Promise<TrackRow | null> {
   const p = (async () => {
     const { data } = await supabase
       .from("tracks")
-      .select("id, title, file_url, duration_seconds, artwork_url, waveform_peaks, keywords, composer_user_id")
+      .select("id, title, file_url, duration_seconds, artwork_url, album_id, waveform_peaks, keywords, composer_user_id")
       .eq("id", trackId).eq("status", "approved").maybeSingle();
     let row: TrackRow | null = null;
     if (data) {
       const { data: prof } = await supabase.from("profiles").select("username, profile_image_url").eq("user_id", data.composer_user_id).maybeSingle();
-      row = { ...(data as Omit<TrackRow, "composer_handle" | "composer_avatar">), composer_handle: prof?.username ?? null, composer_avatar: prof?.profile_image_url ?? null };
+      // MUS-3 §1 — fall the cover back to the album's when the track has no own art.
+      let albumCov: string | null = null;
+      const albumId = (data as { album_id?: string | null }).album_id ?? null;
+      if (!data.artwork_url && albumId) {
+        const { data: alb } = await supabase.from("albums").select("cover_url").eq("id", albumId).maybeSingle();
+        albumCov = (alb?.cover_url as string | null) ?? null;
+      }
+      row = {
+        ...(data as Omit<TrackRow, "composer_handle" | "composer_avatar" | "cover">),
+        composer_handle: prof?.username ?? null,
+        composer_avatar: prof?.profile_image_url ?? null,
+        cover: data.artwork_url ?? albumCov,
+      };
     }
     cache.set(trackId, row);
     inflight.delete(trackId);

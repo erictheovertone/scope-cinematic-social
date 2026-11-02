@@ -60,7 +60,7 @@ export default function TrackSheet({ trackId, onClose }: { trackId: string; onCl
 
       {/* art anchor + title/composer */}
       <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
-        <TrackArt url={track?.artwork_url} title={track?.title} id={trackId} size={84} />
+        <TrackArt url={track?.cover} title={track?.title} id={trackId} size={84} />
         <div style={{ minWidth: 0, flex: 1 }}>
           <p style={{ ...SKB, fontSize: 17, color: "var(--ink-100)", margin: "2px 0 8px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{track?.title ?? "…"}</p>
           {track?.composer_handle && (

@@ -50,6 +50,17 @@ export function albumCover(a: CatalogAlbum, tracks: CatalogTrack[]): string | nu
   return a.cover_url ?? tracks.find((t) => t.album_id === a.id && t.artwork_url)?.artwork_url ?? null;
 }
 
+/** A track's DISPLAY cover (Brief MUS-3 §1): its own artwork if it has one, else the album's cover.
+ *  Tracks submitted without per-track art carry the album cover on every live surface — matching the
+ *  contribute flow (which always had album context). Album null → the track's own art or nothing. */
+export function trackCover(
+  track: { artwork_url: string | null },
+  album: CatalogAlbum | null,
+  tracks: CatalogTrack[],
+): string | null {
+  return track.artwork_url ?? (album ? albumCover(album, tracks) : null);
+}
+
 /** Albums in page order: real albums by position, Singles last. */
 const order = (a: CatalogAlbum, b: CatalogAlbum) => Number(a.is_singles) - Number(b.is_singles) || a.position - b.position;
 

@@ -14,7 +14,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useIsDesktop } from "@/lib/useIsDesktop";
 import { useDownload } from "@/lib/useDownload";
-import { trackView, fmtDur, albumCover, type CatalogTrack, type CatalogAlbum, type Composer } from "@/lib/musicCatalog";
+import { trackView, fmtDur, albumCover, trackCover, type CatalogTrack, type CatalogAlbum, type Composer } from "@/lib/musicCatalog";
 import { backfillPeaks } from "@/lib/waveform";
 import Waveform from "@/components/Waveform";
 import TrackArt from "@/components/TrackArt";
@@ -160,10 +160,12 @@ export default function TrackView({ trackId, onNavigateTrack, onUse, onClose, em
   const toComposer = !embedded && composer?.username ? () => { try { audioRef.current?.pause(); } catch {} router.push(`/composer/${composer.username}`); } : undefined;
 
   // ── pieces ───────────────────────────────────────────────────────────────────
+  // MUS-3 §1 — the track's own art, else the album cover (never a bare placeholder when the album has one).
+  const heroCover = track ? trackCover(track, album, view?.allTracks ?? []) : null;
   const hero = track && (
     <div style={{ width: "100%", aspectRatio: "1 / 1", background: "var(--surface-2)", overflow: "hidden" }}>
-      {track.artwork_url
-        ? <img src={track.artwork_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+      {heroCover
+        ? <img src={heroCover} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
         : <ArtFill track={track} />}
     </div>
   );
@@ -227,7 +229,7 @@ export default function TrackView({ trackId, onNavigateTrack, onUse, onClose, em
       <div>
         {view.albumTracks.map((t, i) => (
           <TrackRow key={t.id} index={i} title={t.title} dur={fmtDur(t.duration_seconds)}
-            current={t.id === track?.id} playing={t.id === track?.id && playing}
+            current={t.id === track?.id} playing={t.id === track?.id && playing} testId={`album-track-${t.id}`}
             last={i === view.albumTracks.length - 1}
             onClick={() => (t.id === track?.id ? togglePlay() : go(t.id))} />
         ))}
@@ -254,12 +256,23 @@ export default function TrackView({ trackId, onNavigateTrack, onUse, onClose, em
       ? <p style={{ ...SKR, fontSize: 13, color: MUTE, padding: "20px 0" }}>This track isn&apos;t available.</p>
       : null;
 
+  // MUS-3 §3 — the NEXT track in album order, prefetched (preload="auto") so a switch is instant.
+  // Only current (the element below) + next are "auto"; every other track stays metadata-only.
+  const nextUrl = (() => {
+    const list = view?.albumTracks ?? [];
+    const idx = list.findIndex((t) => t.id === curId);
+    return idx >= 0 && idx + 1 < list.length ? list[idx + 1].file_url : null;
+  })();
+
   return (
     <div ref={rootRef} data-testid="track-view" data-track-id={track?.id ?? curId} style={{ color: INK }}>
-      <audio ref={audioRef} preload="none"
+      {/* MUS-3 §3 — current track = auto (was "none", the 3–5s cold-start on press). */}
+      <audio ref={audioRef} preload="auto"
         onEnded={() => { setPlaying(false); setTime(0); }}
         onPause={() => setPlaying(false)}
         onTimeUpdate={() => { const a = audioRef.current; if (a) setTime(a.currentTime); }} />
+      {/* MUS-3 §3 — warm the NEXT album track only; muted, never played, display:none. */}
+      {nextUrl && <audio key={nextUrl} src={nextUrl} preload="auto" muted style={{ display: "none" }} />}
 
       {wide ? (
         <div style={{ maxWidth: 1200, margin: "0 auto", padding: "20px 32px 48px" }}>

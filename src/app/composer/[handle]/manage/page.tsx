@@ -161,6 +161,20 @@ export default function ManageMusicPage() {
     await api({ action: "replace_audio", trackId, ...up });
     patchCat((c) => ({ ...c, pendingVersions: [...c.pendingVersions.filter((v) => v.track_id !== trackId), { track_id: trackId }] }));
   };
+  // MUS-3 §2 — replace a track's own artwork (downscale → bake). Optimistic: the new art shows at once.
+  const replaceTrackArt = async (trackId: string, file: File) => {
+    setErr(null);
+    try {
+      const blob = await downscaleCover(file);
+      const token = await getAccessToken();
+      const res = await fetch(`/api/music/manage/track-cover?trackId=${encodeURIComponent(trackId)}`, {
+        method: "POST", headers: { "content-type": blob.type || "image/jpeg", ...(token ? { Authorization: `Bearer ${token}` } : {}) }, body: blob,
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok || !j.artwork_url) throw new Error(j.error || "Art upload failed");
+      patchCat((c) => ({ ...c, tracks: c.tracks.map((t) => (t.id === trackId ? { ...t, artwork_url: j.artwork_url } : t)) }));
+    } catch (e) { setErr((e as Error).message || "Art upload failed — try again."); }
+  };
 
   // ── render ──────────────────────────────────────────────────────────────────
   const gate = (msg: string, action?: React.ReactNode) => (
@@ -214,7 +228,7 @@ export default function ManageMusicPage() {
               ? <p style={{ ...SKR, fontSize: 13, color: MUTE, margin: "6px 0" }}>No tracks in this album yet.</p>
               : <DragList key={selAlbum.id} tracks={albumTracks} pending={pending}
                   albums={albums} albumId={selAlbum.id} picked={picked} onPick={togglePick} onMoveTrack={moveTrack}
-                  onOrder={(ids) => commitOrder(ids, selAlbum.id)} onRename={renameTrack} onReplace={replaceAudio} />}
+                  onOrder={(ids) => commitOrder(ids, selAlbum.id)} onRename={renameTrack} onReplace={replaceAudio} onReplaceArt={replaceTrackArt} />}
             {picked.length > 0 && <FromPicked n={picked.length} onCreate={albumFromPicked} onClear={() => setPicked([])} />}
           </>
         ) : albums.length === 0 ? (
@@ -425,10 +439,11 @@ function NewAlbum({ onCreate }: { onCreate: (title: string, year: string) => Pro
 // Dragging from the ⋮⋮ handle live-reorders rows as the pointer crosses neighbours' midpoints; the
 // handle is touch-action:none so it never fights the page scroller. On drop, if the order changed,
 // the FULL order is POSTed (reorder) — reverted by the parent on failure.
-function DragList({ tracks, pending, albums, albumId, picked, onPick, onMoveTrack, onOrder, onRename, onReplace }: {
+function DragList({ tracks, pending, albums, albumId, picked, onPick, onMoveTrack, onOrder, onRename, onReplace, onReplaceArt }: {
   tracks: MTrack[]; pending: Set<string>;
   albums: MAlbum[]; albumId: string; picked: string[]; onPick: (id: string) => void; onMoveTrack: (trackId: string, albumId: string) => Promise<void>;
   onOrder: (ids: string[]) => void; onRename: (id: string, title: string) => Promise<void>; onReplace: (id: string, f: File) => Promise<void>;
+  onReplaceArt: (id: string, f: File) => Promise<void>;
 }) {
   const [order, setOrder] = useState(() => tracks.map((t) => t.id));
   const [dragId, setDragId] = useState<string | null>(null);
@@ -476,7 +491,7 @@ function DragList({ tracks, pending, albums, albumId, picked, onPick, onMoveTrac
           <div key={id} ref={(el) => { if (el) rows.current.set(id, el); else rows.current.delete(id); }}
             style={{ borderTop: `1px solid ${HAIR}`, borderBottom: i === order.length - 1 ? `1px solid ${HAIR}` : "none", background: dragId === id ? "rgb(var(--ink-rgb) / 0.06)" : "transparent" }}>
             <ManageTrackRow track={t} index={i} pending={pending.has(id)} dragging={dragId === id}
-              handleProps={{ onPointerDown: onDown(id) }} onRename={(v) => onRename(id, v)} onReplace={(f) => onReplace(id, f)}
+              handleProps={{ onPointerDown: onDown(id) }} onRename={(v) => onRename(id, v)} onReplace={(f) => onReplace(id, f)} onReplaceArt={(f) => onReplaceArt(id, f)}
               picked={picked.includes(id)} onPick={() => onPick(id)}
               moveTo={<MoveTo albums={albums} current={albumId} onMove={(a) => onMoveTrack(id, a)} />} />
           </div>
@@ -486,18 +501,20 @@ function DragList({ tracks, pending, albums, albumId, picked, onPick, onMoveTrac
   );
 }
 
-function ManageTrackRow({ track, index, pending, dragging, handleProps, onRename, onReplace, picked, onPick, moveTo }: {
+function ManageTrackRow({ track, index, pending, dragging, handleProps, onRename, onReplace, onReplaceArt, picked, onPick, moveTo }: {
   track: MTrack; index: number; pending: boolean; dragging: boolean;
   handleProps: { onPointerDown: (e: React.PointerEvent) => void };
-  onRename: (v: string) => Promise<void>; onReplace: (f: File) => Promise<void>;
+  onRename: (v: string) => Promise<void>; onReplace: (f: File) => Promise<void>; onReplaceArt: (f: File) => Promise<void>;
   picked: boolean; onPick: () => void; moveTo: React.ReactNode;
 }) {
   const [edit, setEdit] = useState(false);
   const [draft, setDraft] = useState(track.title);
   const [busy, setBusy] = useState(false);
   const [audioBusy, setAudioBusy] = useState(false);
+  const [artBusy, setArtBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const artRef = useRef<HTMLInputElement>(null);
   const saving = useRef(false); // Enter + blur both commit — one write
   const save = async () => {
     if (saving.current) return;
@@ -535,11 +552,21 @@ function ManageTrackRow({ track, index, pending, dragging, handleProps, onRename
           style={{ ...SKB, fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", color: MUTE, background: "none", border: "none", padding: "4px 0", cursor: "pointer" }}>
           {audioBusy ? "Uploading…" : pending ? "Replace again" : "Replace audio"}
         </button>
+        {/* MUS-3 §2 — per-track artwork. Own art overrides the album-cover fallback (trackCover). */}
+        <button type="button" onClick={() => artRef.current?.click()} disabled={artBusy} data-testid="manage-replace-art"
+          style={{ ...SKB, fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", color: MUTE, background: "none", border: "none", padding: "4px 0", cursor: "pointer" }}>
+          {artBusy ? "Uploading…" : track.artwork_url ? "Replace art" : "Add art"}
+        </button>
         {moveTo}
         <input ref={fileRef} type="file" accept="audio/mpeg,audio/mp3,audio/aac,audio/mp4,audio/x-m4a,audio/wav,audio/x-wav,audio/wave" hidden onChange={async (e) => {
           const f = e.target.files?.[0]; e.target.value = "";
           if (!f) return; setAudioBusy(true); setErr(null);
           try { await onReplace(f); } catch (er) { setErr((er as Error).message || "Upload failed — try again."); } finally { setAudioBusy(false); }
+        }} />
+        <input ref={artRef} type="file" accept="image/*" hidden onChange={async (e) => {
+          const f = e.target.files?.[0]; e.target.value = "";
+          if (!f) return; setArtBusy(true); setErr(null);
+          try { await onReplaceArt(f); } catch (er) { setErr((er as Error).message || "Art upload failed — try again."); } finally { setArtBusy(false); }
         }} />
       </div>
       <ErrLine msg={err} />

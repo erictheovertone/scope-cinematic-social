@@ -12,6 +12,7 @@ import PostLightboxHost from '@/components/PostLightboxHost';
 import SlideShell from '@/components/SlideShell';
 import SwipeNav from '@/components/SwipeNav';
 import RecapHost from '@/components/RecapHost';
+import MusicLiveNoticeHost from '@/components/MusicLiveNoticeHost';
 import CoinCreatedSheet from '@/components/coin/CoinCreatedSheet';
 import ImageRenditionFallback from '@/components/ImageRenditionFallback';
 import ViewportDebug from '@/components/ViewportDebug';
@@ -36,6 +37,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
             <SwipeNav />
             <PostLightboxHost />
             <RecapHost />
+            <MusicLiveNoticeHost />
             <CoinCreatedSheet />{/* CEL-1 — app-root coin-created celebration (store-driven) */}
             <ViewportDebug />{/* Brief W2-1b — inert unless ?debug=viewport */}
             <CropDebugOverlay />{/* Brief C1a — inert unless ?debug=crop */}

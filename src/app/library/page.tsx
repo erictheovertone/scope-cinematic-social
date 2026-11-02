@@ -21,7 +21,7 @@ const HAIR = "rgb(var(--ink-rgb) / 0.12)";
 interface Row {
   id: string; title: string; composer_user_id: string; composer_handle: string | null;
   keywords: string[]; duration_seconds: number | null; file_url: string;
-  artwork_url: string | null; waveform_peaks: number[] | null;
+  artwork_url: string | null; album_id: string | null; cover: string | null; waveform_peaks: number[] | null;
 }
 function fmt(s: number | null): string { if (!s || !isFinite(s)) return ""; const m = Math.floor(s / 60); return `${m}:${String(Math.round(s % 60)).padStart(2, "0")}`; }
 
@@ -37,13 +37,22 @@ export default function LibraryPage() {
     let dead = false;
     (async () => {
       const { data } = await supabase.from("tracks")
-        .select("id, title, composer_user_id, keywords, duration_seconds, file_url, artwork_url, waveform_peaks")
+        .select("id, title, composer_user_id, keywords, duration_seconds, file_url, artwork_url, album_id, waveform_peaks")
         .eq("status", "approved").order("created_at", { ascending: false }).limit(400);
       const rows = (data ?? []) as Row[];
       const ids = [...new Set(rows.map((r) => r.composer_user_id))];
       const { data: profs } = ids.length ? await supabase.from("profiles").select("user_id, username").in("user_id", ids) : { data: [] as { user_id: string; username: string }[] };
       const handle = new Map((profs ?? []).map((p) => [p.user_id, p.username]));
-      if (!dead) setTracks(rows.map((r) => ({ ...r, composer_handle: handle.get(r.composer_user_id) ?? null })));
+      // MUS-3 §1 — resolve each track's display cover: own art → album cover → any album track's art.
+      const albumIds = [...new Set(rows.map((r) => r.album_id).filter(Boolean))] as string[];
+      const { data: albs } = albumIds.length ? await supabase.from("albums").select("id, cover_url").in("id", albumIds) : { data: [] as { id: string; cover_url: string | null }[] };
+      const albumCov = new Map((albs ?? []).map((a) => [a.id, a.cover_url as string | null]));
+      const firstArt = (aid: string | null) => (aid ? rows.find((r) => r.album_id === aid && r.artwork_url)?.artwork_url ?? null : null);
+      if (!dead) setTracks(rows.map((r) => ({
+        ...r,
+        composer_handle: handle.get(r.composer_user_id) ?? null,
+        cover: r.artwork_url ?? (r.album_id ? albumCov.get(r.album_id) ?? firstArt(r.album_id) : null) ?? null,
+      })));
     })();
     return () => { dead = true; };
   }, []);
@@ -69,17 +78,25 @@ export default function LibraryPage() {
     });
   }, [tracks, q, chips]);
 
+  // MUS-3 §3 — warm the tapped track on POINTERDOWN (before the click): set src so the fetch starts
+  // ~100ms earlier. Idempotent (skips if already the loaded src), so the click's play() finds it ready.
+  // NB: compare a.src (the resolved absolute URL the element holds) — NOT getAttribute("src"), which
+  // stays null when src is set via the property, so the guard would always re-assign and re-fetch.
+  const warm = (t: Row) => {
+    const a = audioRef.current; if (!a) return;
+    if (a.src !== t.file_url) { a.src = t.file_url; try { a.load(); } catch { /* not ready */ } }
+  };
   const togglePlay = (t: Row) => {
     const a = audioRef.current; if (!a) return;
     if (playing === t.id) { a.pause(); setPlaying(null); return; }
-    a.src = t.file_url;
+    if (a.src !== t.file_url) a.src = t.file_url; // already warmed on pointerdown → no re-fetch
     a.play().then(() => setPlaying(t.id)).catch(() => setPlaying(null));
   };
   const seekTrack = (t: Row, pct: number) => {
     const a = audioRef.current; if (!a) return;
     const apply = () => { if (a.duration && isFinite(a.duration)) a.currentTime = pct * a.duration; };
     if (playing === t.id) { apply(); return; }
-    a.src = t.file_url;
+    if (a.src !== t.file_url) a.src = t.file_url;
     a.play().then(() => { setPlaying(t.id); a.addEventListener("loadedmetadata", apply, { once: true }); apply(); }).catch(() => {});
   };
 
@@ -87,7 +104,9 @@ export default function LibraryPage() {
     // Brief M17 → M22 — the page's ONE scroll container, now the shared <PageScroller> (fixed-inset,
     // overflow-y auto, --safe-bottom inside, pill hide/return). See the scroll-trap rule in CLAUDE.md.
     <PageScroller safeTop maxWidth={720}>
-      <audio ref={audioRef} onEnded={() => setPlaying(null)} />
+      {/* MUS-3 §3 — one shared element, holds only the CURRENT track, so preload="auto" buffers just
+          the one tapped (never the whole library). The warm()-on-pointerdown head-start rides this. */}
+      <audio ref={audioRef} preload="auto" onEnded={() => setPlaying(null)} />
 
       <div style={{ padding: "34px 20px 12px", borderBottom: `1px solid ${HAIR}` }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
@@ -113,10 +132,15 @@ export default function LibraryPage() {
               {/* Brief MUS-1 — artwork + title open the track view */}
               <button type="button" onClick={() => { try { audioRef.current?.pause(); } catch {} router.push(`/track/${t.id}`); }} aria-label={`Open ${t.title}`} data-testid={`library-art-${t.id}`}
                 style={{ flexShrink: 0, background: "none", border: "none", padding: 0, cursor: "pointer", display: "block" }}>
-                <TrackArt url={t.artwork_url} title={t.title} id={t.id} size={44} />
+                <TrackArt url={t.cover} title={t.title} id={t.id} size={44} />
               </button>
-              <button onClick={() => togglePlay(t)} aria-label={isPlaying ? "Pause" : "Play"} style={{ flexShrink: 0, width: 32, height: 32, borderRadius: "50%", border: `1px solid ${HAIR}`, background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>
-                {isPlaying ? <svg width="11" height="11" viewBox="0 0 24 24" fill="var(--ink-100)"><rect x="6" y="5" width="4" height="14" /><rect x="14" y="5" width="4" height="14" /></svg> : <svg width="11" height="11" viewBox="0 0 24 24" fill="var(--ink-100)"><path d="M7 5v14l12-7z" /></svg>}
+              {/* MUS-3 §5 — 44×44 hit target (was a 32px button, under the touch minimum); the visual
+                  circle stays 32. MUS-3 §3 — start the fetch on pointerdown (before click) for ~100ms. */}
+              <button onClick={() => togglePlay(t)} onPointerDown={() => warm(t)} aria-label={isPlaying ? "Pause" : "Play"}
+                style={{ flexShrink: 0, width: 44, height: 44, borderRadius: "50%", border: "none", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>
+                <span style={{ width: 32, height: 32, borderRadius: "50%", border: `1px solid ${HAIR}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  {isPlaying ? <svg width="11" height="11" viewBox="0 0 24 24" fill="var(--ink-100)"><rect x="6" y="5" width="4" height="14" /><rect x="14" y="5" width="4" height="14" /></svg> : <svg width="11" height="11" viewBox="0 0 24 24" fill="var(--ink-100)"><path d="M7 5v14l12-7z" /></svg>}
+                </span>
               </button>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
