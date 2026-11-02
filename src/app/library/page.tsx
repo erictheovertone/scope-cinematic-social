@@ -86,7 +86,7 @@ export default function LibraryPage() {
   return (
     // Brief M17 → M22 — the page's ONE scroll container, now the shared <PageScroller> (fixed-inset,
     // overflow-y auto, --safe-bottom inside, pill hide/return). See the scroll-trap rule in CLAUDE.md.
-    <PageScroller maxWidth={720}>
+    <PageScroller safeTop maxWidth={720}>
       <audio ref={audioRef} onEnded={() => setPlaying(null)} />
 
       <div style={{ padding: "34px 20px 12px", borderBottom: `1px solid ${HAIR}` }}>

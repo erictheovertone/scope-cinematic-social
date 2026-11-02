@@ -55,7 +55,7 @@ export default function EarningsPage() {
   ];
 
   return (
-    <div style={{ minHeight: '100dvh', background: 'var(--canvas)', maxWidth: '30rem', margin: '0 auto', padding: '24px 20px 60px' }}>
+    <div style={{ minHeight: '100dvh', background: 'var(--canvas)', maxWidth: '30rem', margin: '0 auto', padding: 'calc(24px + var(--safe-top)) 20px 60px' }}>
       <div style={{ ...SKB, fontSize: 'var(--fs-7)', letterSpacing: '0.2em', color: 'var(--ink-100)', textTransform: 'uppercase', marginBottom: 18 }}>
         ECONOMY PREVIEW · MOCK DATA
       </div>

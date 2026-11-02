@@ -1,6 +1,7 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
+import BadgeArt from "@/components/BadgeArt";
 
 const BOLD: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const REG: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -205,7 +206,7 @@ export default function BadgeDetailPage() {
   return (
     <div style={{ backgroundColor: 'var(--canvas)', minHeight: '100dvh', padding: '0 0 80px' }}>
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '24px 20px 0' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 'calc(24px + var(--safe-top)) 20px 0' }}>
         <button
           onClick={() => router.back()}
           style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}
@@ -235,15 +236,14 @@ export default function BadgeDetailPage() {
           {/* FOCUS PULL — flat min-design logo racks from blurred + enlarged into
               sharp focus at full size. Plays ONCE on open; filter/transform/opacity
               only (GPU). prefers-reduced-motion → simple fade (in <style>). */}
-          <img
+          <BadgeArt
             className="badge-hero-logo"
             src={detail.img}
+            size={detail.size}
             alt={detail.label}
             style={{
               width: '100%',
               height: '100%',
-              objectFit: 'contain',
-              display: 'block',
               position: 'relative',
               animation: 'focusPull 2s cubic-bezier(0.16, 0.84, 0.3, 1) both',
             }}

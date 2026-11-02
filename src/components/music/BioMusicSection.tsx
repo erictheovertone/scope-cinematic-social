@@ -21,6 +21,8 @@ import { CoverPlaceholder, albumMeta } from "@/components/music/musicUi";
 export interface BioMusicSectionProps {
   /** profiles.user_id / users.id of the profile being viewed. */
   userId: string | null | undefined;
+  /** profiles.username — the composer page door ("+N" overflow tile → /composer/<handle>). */
+  handle?: string | null;
   variant?: "sheet" | "desktop";
   /** Called before navigating (e.g. close the sheet). */
   onNavigate?: () => void;
@@ -32,7 +34,7 @@ export interface BioMusicSectionProps {
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 
-export default function BioMusicSection({ userId, variant, onNavigate, renderFrame, style }: BioMusicSectionProps) {
+export default function BioMusicSection({ userId, handle, variant, onNavigate, renderFrame, style }: BioMusicSectionProps) {
   const router = useRouter();
   const isDesktop = useIsDesktop();
   const [data, setData] = useState<{ albums: CatalogAlbum[]; tracks: CatalogTrack[] } | null>(null);
@@ -87,13 +89,50 @@ export default function BioMusicSection({ userId, variant, onNavigate, renderFra
     </div>
   );
 
+  // ── Mobile sheet (LT-2 §4) — ONE horizontal row of covers, THREE max. Stacked 112px covers read
+  // too large; a compact row is the fix. With >3 albums the third tile collapses to "+N" (the rest)
+  // and opens the composer page — the one door to the full catalog. Covers still live ONLY here.
+  const COVER = 100;
+  const albums = data.albums;
+  const overflow = albums.length > 3;
+  const shown = overflow ? albums.slice(0, 2) : albums.slice(0, 3);
+  const moreCount = albums.length - shown.length; // overflow → albums.length - 2
+  const openComposer = () => { if (!handle) { if (albums[2]) open(albums[2]); return; } onNavigate?.(); router.push(`/composer/${handle}`); };
+
+  const coverTile = (al: CatalogAlbum) => {
+    const cover = albumCover(al, data.tracks);
+    return (
+      <button key={al.id} type="button" onClick={(e) => { e.stopPropagation(); open(al); }} aria-label={`${al.title} — open album`}
+        data-testid={`bio-music-album-${al.id}`}
+        style={{ width: COVER, flex: "none", background: "none", border: "none", padding: 0, cursor: "pointer", textAlign: "left" }}>
+        <div style={{ width: COVER, height: COVER, overflow: "hidden", background: "var(--surface-2)" }}>
+          {cover ? <img src={cover} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} /> : <CoverPlaceholder title={al.title} />}
+        </div>
+        <div style={{ fontFamily: "var(--font-medium)", fontWeight: 500, fontSize: 10, color: "rgb(var(--ink-rgb) / 0.79)", letterSpacing: "var(--track-body)", marginTop: 6, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{al.title}</div>
+        <div style={{ fontFamily: "var(--font-body)", fontWeight: 400, fontSize: 9, color: "rgb(var(--ink-rgb) / 0.4)", letterSpacing: "var(--track-body)", marginTop: 2 }}>{albumMeta(al.year, al.trackCount)}</div>
+      </button>
+    );
+  };
+
   return (
-    <div data-testid="bio-music" style={{ display: "flex", boxSizing: "border-box", padding: "16px 8px 18px", ...style }}>
+    <div data-testid="bio-music" style={{ boxSizing: "border-box", padding: "16px 8px 18px", ...style }}>
       <div style={{
-        width: 168, flexShrink: 0, paddingLeft: 6, fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 24,
-        letterSpacing: "var(--track-display)", color: "var(--ink-100)", lineHeight: 1.05,
+        paddingLeft: 6, fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 24,
+        letterSpacing: "var(--track-display)", color: "var(--ink-100)", lineHeight: 1.05, marginBottom: 12,
       }}>Music</div>
-      {tiles}
+      <div style={{ display: "flex", gap: 10, paddingLeft: 6, overflow: "hidden" }}>
+        {shown.map(coverTile)}
+        {overflow && (
+          <button type="button" onClick={(e) => { e.stopPropagation(); openComposer(); }} aria-label={`${moreCount} more — open composer page`}
+            data-testid="bio-music-more"
+            style={{ width: COVER, flex: "none", background: "none", border: "none", padding: 0, cursor: "pointer" }}>
+            <div style={{ width: COVER, height: COVER, display: "grid", placeItems: "center", background: "var(--surface-2)", border: "1px solid rgb(var(--ink-rgb) / 0.14)" }}>
+              <span style={{ ...SKB, fontSize: 20, color: "var(--ink-100)", letterSpacing: "0.02em" }}>+{moreCount}</span>
+            </div>
+            <div style={{ fontFamily: "var(--font-medium)", fontWeight: 500, fontSize: 10, color: "rgb(var(--ink-rgb) / 0.79)", letterSpacing: "var(--track-body)", marginTop: 6 }}>More</div>
+          </button>
+        )}
+      </div>
     </div>
   );
 }

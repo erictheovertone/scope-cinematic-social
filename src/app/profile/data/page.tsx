@@ -81,7 +81,7 @@ export default function DataPage() {
   return (
     // Brief M22 — was a fixed 430×932 frame (taller than the viewport, clipped by the locked body;
     // its flex-1 overflow child never scrolled — no flex parent). The shared page scroller.
-    <PageScroller maxWidth={430}>
+    <PageScroller safeTop maxWidth={430}>
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-6 border-b border-[var(--mute-1)]">
         <button 

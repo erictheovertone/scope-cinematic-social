@@ -134,7 +134,7 @@ export default function ManageMembershipPage() {
   return (
     // Scroll-trap rule: body is locked, so the page scrolls inside PageScroller (the plan details +
     // cancel confirm run past the fold on a 375 phone, more so with the Augmented benefits).
-    <PageScroller className="bg-canvas" style={{ backgroundColor: 'var(--canvas)' }}>
+    <PageScroller safeTop className="bg-canvas" style={{ backgroundColor: 'var(--canvas)' }}>
     <div style={{ backgroundColor: 'var(--canvas)', minHeight: '100dvh', padding: '0 0 80px', ...railPad }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', padding: '16px', borderBottom: '1px solid rgb(var(--ink-rgb) / 0.08)' }}>

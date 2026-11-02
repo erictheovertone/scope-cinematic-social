@@ -1,6 +1,7 @@
 "use client";
 
-import ThemedImg from "@/components/ThemedImg";
+import BadgeArt from "@/components/BadgeArt";
+import { createPortal } from "react-dom";
 import {useEffect, useState, useRef} from 'react';
 import { useRouter } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
@@ -173,6 +174,11 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
   // in place) — its scrollTop persisted across the swap, so details opened
   // half-scrolled. Reset on every switch, both directions, every tier.
   const scrollerRef = useRef<HTMLDivElement>(null);
+  // LT-2 §3 — portal-after-mount. A `typeof document` guard before createPortal mismatches
+  // hydration app-wide (React #418, drops <html data-theme> → theme flip); the mounted-state
+  // pattern (AugmentedSheet) renders nothing on the server AND the client's first render, then portals.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
   useEffect(() => { scrollerRef.current?.scrollTo(0, 0); }, [detailKey]);
   useEffect(() => {
     if (visible) document.body.style.overflow = 'hidden';
@@ -261,7 +267,10 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
   // caller didn't pass onManageMembership.
   const handleManage = onManageMembership ?? (() => { onClose(); router.push('/membership/manage'); });
 
-  return (
+  // LT-2 §3 — portal to document.body so the sheet escapes any transformed/content-visibility
+  // ancestor (a content-visibility trap could hide it), consistent with the app's other sheets.
+  if (!mounted) return null;
+  return createPortal(
     <>
       <div
         onClick={onClose}
@@ -286,6 +295,14 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
         maxHeight: detailKey ? '100dvh' : '85vh',
         overflowY: 'auto',
       }}>
+        {/* LT-2 §3 — a way OUT. The sheet had only a backdrop tap (easy to miss); add a close X
+            pinned to the sheet's top-right (sticky, so it survives scroll). ← BACK on the detail
+            level steps up one; this X dismisses the whole sheet. */}
+        <div style={{ position: 'sticky', top: 0, zIndex: 6, height: 0 }}>
+          <button onClick={onClose} aria-label="Close" style={{ position: 'absolute', top: -16, right: -8, background: 'transparent', border: 'none', cursor: 'pointer', padding: 10, lineHeight: 0 }}>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--ink-100)" strokeWidth="1.8" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
         {/* ── LEVEL 2 — in-sheet TIER DETAIL. Back returns to the list (this sheet
             stays open); the list's CLOSE returns to the profile. ── */}
         {detailKey && (() => {
@@ -305,7 +322,7 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '36px 0 32px' }}>
                 <div style={{ width: d.size, height: d.size, marginBottom: 20, position: 'relative' }}>
                   <div className="badge-hero-glow" style={{ position: 'absolute', inset: -24, borderRadius: '50%', background: `radial-gradient(circle, ${d.color}55 0%, transparent 65%)`, animation: 'glowIn 2s ease 0.3s both', pointerEvents: 'none' }} />
-                  <ThemedImg className="badge-hero-logo" src={d.img} alt={d.label} style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block', position: 'relative', animation: 'focusPull 2s cubic-bezier(0.16, 0.84, 0.3, 1) both' }} />
+                  <BadgeArt className="badge-hero-logo" src={d.img} size={d.size} alt={d.label} style={{ width: '100%', height: '100%', position: 'relative', animation: 'focusPull 2s cubic-bezier(0.16, 0.84, 0.3, 1) both' }} />
                 </div>
                 <p style={{ ...BOLD, fontSize: 'var(--fs-18)', color: d.color, textTransform: 'uppercase', letterSpacing: '-0.02em', margin: '0 0 12px', textAlign: 'center' }}>{d.label}</p>
                 <p style={{ ...REG, fontSize: 'var(--fs-13)', color: 'rgb(var(--ink-rgb) / 0.6)', textAlign: 'center', lineHeight: 1.6, margin: 0, maxWidth: 280 }}>{d.tagline}</p>
@@ -340,7 +357,7 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
             Scope Pro badge when Pro, the Free mark otherwise (CHANGE 3). */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid rgb(var(--ink-rgb) / 0.08)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <ThemedImg src={vIsPaid ? '/design-updates-071526/new-badges/scope-pro.png' : '/free-tier-aperture-logo-red.png'} alt="" style={{ width: 16, height: 16, objectFit: 'contain' }} />
+            <BadgeArt src={vIsPaid ? '/design-updates-071526/new-badges/scope-pro.png' : '/free-tier-aperture-logo-red.png'} size={16} alt="" />
             <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               <span style={{ ...BOLD, fontSize: 'var(--fs-7)', color: 'rgb(var(--ink-rgb) / 0.4)', textTransform: 'uppercase', letterSpacing: '0.15em' }}>MY MEMBERSHIP</span>
               <span style={{ ...BOLD, fontSize: 'var(--fs-9)', color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
@@ -388,12 +405,13 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
                     {b.brass ? (
                       <span key={`${b.key}-${visible ? 'open' : 'shut'}`} className="focus-pull" style={{ display: 'block', lineHeight: 0, animation: 'focusPull 2s cubic-bezier(0.16,0.84,0.3,1) both', animationDelay: `${i * 100}ms` }}><BrassAperture size={42.5} /></span>
                     ) : (
-                    <img
+                    <BadgeArt
                       key={`${b.key}-${visible ? 'open' : 'shut'}`}
                       className="focus-pull"
                       src={b.framedSrc ?? b.bannerSrc ?? b.src}
+                      size={42.5}
                       alt={b.title}
-                      style={{ width: 42.5, height: b.framedSrc ? 'auto' : 42.5, objectFit: 'contain', display: 'block', animation: 'focusPull 2s cubic-bezier(0.16,0.84,0.3,1) both', animationDelay: `${i * 100}ms` }} /* 34 × 1.25 — Eric's +25% */
+                      style={{ aspectRatio: '1', animation: 'focusPull 2s cubic-bezier(0.16,0.84,0.3,1) both', animationDelay: `${i * 100}ms` }} /* 34 × 1.25 — Eric's +25% */
                     />
                     )}
                     <span style={{ ...BOLD, fontSize: 'var(--fs-8)', letterSpacing: '0.04em', color: 'var(--ink-100)', textTransform: 'uppercase', lineHeight: 1.1, textAlign: 'center' }}>{b.title}</span>
@@ -409,10 +427,11 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
             Wrapped in <h2> so the sheet keeps heading semantics; the img alt is the heading's
             accessible name (single announcement). The tier ripple entrance below is untouched. */}
         <h2 style={{ margin: 0, lineHeight: 0 }}>
-          <img
+          <BadgeArt
             src="/basdges-on-scope-title.png"
+            size={200}
             alt="Badges on Scope"
-            style={{ width: 200, height: 'auto', display: 'block', margin: '0 auto 55px' }}
+            style={{ width: 200, height: 112, display: 'block', margin: '0 auto 55px' }}
           />
         </h2>
 
@@ -430,7 +449,7 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
                 {tier.key === 'augmented' ? (
                   <span style={{ display: 'block', lineHeight: 0, animation: visible ? `badgeGlowPulse 400ms ease-out ${i * 45 + 150}ms both` : undefined }}><BrassAperture size={tier.size} /></span>
                 ) : (
-                <ThemedImg src={tier.img} alt={tier.label} style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block', animation: visible ? `badgeGlowPulse 400ms ease-out ${i * 45 + 150}ms both` : undefined }} />
+                <BadgeArt src={tier.img} size={tier.size} alt={tier.label} style={{ width: '100%', height: '100%', animation: visible ? `badgeGlowPulse 400ms ease-out ${i * 45 + 150}ms both` : undefined }} />
                 )}
                 {tierEarned(tier.key, vTiers, vIsPaid, vComposerTrackCount) && (
                   <div style={{ position: 'absolute', top: -3, right: -3, width: 6, height: 6, borderRadius: '50%', backgroundColor: 'var(--ink-100)', zIndex: 2 }} />
@@ -519,6 +538,7 @@ export default function BadgeExplainerSheet({ visible, onClose, onJoinPress, use
           .badge-hero-logo, .badge-hero-glow { animation: glowIn 0.6s ease both !important; }
         }
       `}</style>
-    </>
+    </>,
+    document.body
   );
 }

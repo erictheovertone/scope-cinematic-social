@@ -6,9 +6,13 @@
 // the root layout flagged a COLD standalone launch (html.launching — once per page session, so
 // warm foreground returns and in-app navigations never see it). The HomeLogomarkCue sweep + grow
 // runs ONCE (≤1.1s, CSS), then the overlay cross-fades to the shell as the first data lands.
-// Reduced motion: the mark stays static, then fades. Dark by design in either theme.
+// Reduced motion: the mark stays static, then fades. LT-2 §5 — the cue FOLLOWS THE THEME: its
+// ground (.launch-cue → var(--canvas)) and mark (.launch-base → var(--ink)) are driven by CSS off
+// the pre-paint data-theme stamp (layout NO_FOUC), so a light-theme cold launch opens on ivory, a
+// dark one on near-black — no white/dark flash either way. (The static iOS startup PNG is dark-only;
+// iOS picks it by device size, not theme, so a light PWA may still see the OS splash for a frame.)
 import { useEffect } from 'react';
-import { SPLASH_GROUND, SPLASH_INK, SPLASH_MARK_W, MARK_ASPECT } from '@/lib/splash';
+import { SPLASH_MARK_W, MARK_ASPECT } from '@/lib/splash';
 
 const CUE_MS = 1100;      // the sweep + grow, once
 const MAX_WAIT_MS = 6000; // never hold the app behind the cue longer than this
@@ -36,9 +40,9 @@ export default function LaunchCue() {
   }, []);
 
   return (
-    <div className="launch-cue" aria-hidden style={{ background: SPLASH_GROUND, ['--launch-fade' as string]: `${FADE_MS}ms` }}>
+    <div className="launch-cue" aria-hidden style={{ ['--launch-fade' as string]: `${FADE_MS}ms` }}>
       <span className="launch-mark" style={{ width: SPLASH_MARK_W, height: SPLASH_MARK_W * MARK_ASPECT }}>
-        <span className="launch-base" style={{ background: SPLASH_INK }} />
+        <span className="launch-base" />
         <span className="launch-sweep" />
       </span>
     </div>

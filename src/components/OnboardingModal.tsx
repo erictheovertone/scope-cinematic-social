@@ -89,7 +89,7 @@ export default function OnboardingModal({ onComplete }: Props) {
       backgroundColor: 'var(--surface-1)',
       display: 'flex', flexDirection: 'column',
       justifyContent: 'space-between',
-      padding: '48px 28px 56px',
+      padding: 'max(48px, calc(var(--safe-top) + 20px)) 28px calc(56px + var(--safe-bottom))',
       opacity: exiting ? 0 : 1,
       transition: 'opacity 0.4s ease',
     }}>

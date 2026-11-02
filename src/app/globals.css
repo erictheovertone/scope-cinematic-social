@@ -1081,6 +1081,9 @@ html[data-chrome-hidden] [data-chrome-top] { translate: 0 calc(-100% - var(--saf
 .launch-cue { display: none; }
 html.launching .launch-cue {
   display: block; position: fixed; inset: 0; z-index: 2147483647;
+  /* LT-2 §5 — the cue follows the theme: --canvas is the resolved ground (ivory in light, near-black
+     in dark), flipped by the pre-paint data-theme stamp (layout NO_FOUC), so no white/dark flash. */
+  background: var(--canvas);
   transition: opacity var(--launch-fade) ease;
 }
 html.launch-out .launch-cue { opacity: 0; pointer-events: none; }
@@ -1090,7 +1093,7 @@ html.launch-out .launch-cue { opacity: 0; pointer-events: none; }
   -webkit-mask: url(/splash/mark-mask.png) center / contain no-repeat;
   mask: url(/splash/mark-mask.png) center / contain no-repeat;
 }
-.launch-base { transform-origin: center; animation: launchGrow 1100ms ease-in-out 1 both; }
+.launch-base { background: var(--ink); transform-origin: center; animation: launchGrow 1100ms ease-in-out 1 both; }
 .launch-sweep {
   background: linear-gradient(100deg, transparent 0 30%, rgba(255,255,255,.98) 48% 52%, transparent 70% 100%);
   background-size: 220% 100%; background-position: 130% 0;

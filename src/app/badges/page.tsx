@@ -17,7 +17,7 @@ export default function BadgesStubPage() {
   const router = useRouter();
   return (
     <div className="bg-canvas" style={{ position: 'fixed', inset: 0, overflowY: 'auto' }}>
-      <div style={{ maxWidth: '30rem', margin: '0 auto', padding: '16px 20px 60px' }}>
+      <div style={{ maxWidth: '30rem', margin: '0 auto', padding: 'calc(16px + var(--safe-top)) 20px 60px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '4px 0 20px' }}>
           <button onClick={() => router.back()} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
             <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'var(--ink-100)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>← BACK</span>

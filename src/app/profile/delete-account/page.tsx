@@ -29,7 +29,7 @@ export default function DeleteAccount() {
   return (
     <div className="bg-canvas relative w-[375px] h-[812px] mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between p-6 border-b border-[var(--mute-1)]">
+      <div className="flex items-center justify-between p-6 border-b border-[var(--mute-1)]" style={{ paddingTop: "calc(1.5rem + var(--safe-top))" }}>
         <button 
           onClick={() => router.back()} 
           className="text-[var(--ink-100)] text-lg"

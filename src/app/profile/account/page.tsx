@@ -85,7 +85,7 @@ export default function AccountSettings() {
       `}</style>
 
       {/* Header */}
-      <div style={{ position: 'relative', display: 'flex', alignItems: 'center', padding: '14px 16px' }}>
+      <div style={{ position: 'relative', display: 'flex', alignItems: 'center', padding: 'calc(14px + var(--safe-top)) 16px 14px' }}>
         <div style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: 'var(--ink-100)', flexShrink: 0, marginRight: 10 }} />
         <button
           onClick={() => router.back()}

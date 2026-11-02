@@ -23,10 +23,14 @@ type Props = {
   style?: React.CSSProperties;
   /** Hide/return the footer pill with scroll direction (default on). */
   chrome?: boolean;
+  /** LT-2 §1 — pad the content top by --safe-top so a page's FIRST element (a header bar / back row)
+      clears the notch. Opt-in: a page whose own top chrome already pads --safe-top leaves this off.
+      This is the shared fix for the top-inset class (the mirror of the built-in --safe-bottom pad). */
+  safeTop?: boolean;
 } & Omit<React.HTMLAttributes<HTMLDivElement>, 'style' | 'className' | 'children'>;
 
 const PageScroller = forwardRef<HTMLDivElement, Props>(function PageScroller(
-  { children, maxWidth, className = 'bg-canvas', style, chrome = true, ...rest }, ref,
+  { children, maxWidth, className = 'bg-canvas', style, chrome = true, safeTop = false, ...rest }, ref,
 ) {
   const el = useRef<HTMLDivElement>(null);
   useImperativeHandle(ref, () => el.current as HTMLDivElement);
@@ -44,7 +48,7 @@ const PageScroller = forwardRef<HTMLDivElement, Props>(function PageScroller(
         color: 'var(--ink-100)', ...style,
       }}
     >
-      <div style={{ maxWidth, margin: maxWidth ? '0 auto' : undefined, paddingBottom: 'var(--safe-bottom)' }}>
+      <div style={{ maxWidth, margin: maxWidth ? '0 auto' : undefined, paddingTop: safeTop ? 'var(--safe-top)' : undefined, paddingBottom: 'var(--safe-bottom)' }}>
         {children}
       </div>
     </div>

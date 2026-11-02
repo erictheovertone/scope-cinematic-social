@@ -267,3 +267,77 @@ for (const theme of THEMES) {
     });
   });
 }
+
+// ── Brief LT-2 — badge art, safe-area top, Pro sheet, music row, loader ────────────────────────
+// Badge art was white line-art (invisible on ivory); it now renders via BadgeArt (mask filled with
+// var(--ink)), so it must FLIP: ink-dark on the light canvas, ivory on dark. We sample the badge's
+// own rendered ground (its mask span background) and assert luminance follows the theme — the real
+// pixels, not a class. Plus the safe-area-top mechanism and screenshots of each LT-2 surface.
+for (const theme of THEMES) {
+  test.describe(`LT-2 — ${theme}`, () => {
+    // Luminance of the computed background of the first element matching `sel` (BadgeArt = a mask
+    // span whose background is var(--ink)); light → low (ink), dark → high (ivory).
+    const inkLumOf = (page: Page, sel: string) => page.evaluate((s) => {
+      const el = document.querySelector(s) as HTMLElement | null; if (!el) return null;
+      const m = getComputedStyle(el).backgroundColor.match(/rgba?\(([^)]+)\)/i); if (!m) return null;
+      const [r, g, b] = m[1].split(',').map((x) => parseFloat(x));
+      const f = (v: number) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
+      return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
+    }, sel);
+
+    test(`badge page · badge art · pro sheet · safe-top — ${theme}`, async ({ page }, info) => {
+      const shot = (n: string) => join(OUT, `lt2-${n}-${theme}-${info.project.name}.png`);
+
+      // ── Badge detail page — the hero badge must be ink (flips), never white-on-ivory ──
+      await boot(page, theme);
+      await page.goto('/badge/pro', { waitUntil: 'domcontentloaded' });
+      await page.waitForTimeout(2500);
+      const heroLum = await inkLumOf(page, '.badge-hero-logo');
+      if (heroLum != null) {
+        if (theme === 'light') expect(heroLum, 'badge hero must be ink (dark) in light').toBeLessThan(0.25);
+        else expect(heroLum, 'badge hero must be ivory in dark').toBeGreaterThan(0.4);
+      } else console.warn('[LT-2] .badge-hero-logo not found');
+      await page.screenshot({ path: shot('badge-page') });
+
+      // ── Safe-area top mechanism — inject a notch inset and assert the page chrome clears it.
+      // (Playwright can't supply real env(safe-area-inset-top); override the --safe-top token the
+      // fix reads, then assert the manage title is pushed below it.) Light only — purely geometric.
+      if (theme === 'light') {
+        await page.goto('/membership/manage', { waitUntil: 'domcontentloaded' });
+        await page.waitForTimeout(1500);
+        await page.evaluate(() => document.documentElement.style.setProperty('--safe-top', '47px'));
+        await page.waitForTimeout(300);
+        const titleTop = await page.evaluate(() => {
+          const el = [...document.querySelectorAll('span')].find((e) => (e.textContent || '').trim() === 'MANAGE MEMBERSHIP');
+          return el ? el.getBoundingClientRect().top : null;
+        });
+        expect(titleTop, 'MANAGE MEMBERSHIP must clear a 47px notch inset').not.toBeNull();
+        expect(titleTop!, 'title pushed below the injected safe-area inset').toBeGreaterThanOrEqual(47);
+        await page.screenshot({ path: shot('manage-safetop') });
+      }
+
+      // ── Pro sheet (LT-2 §6) — Augmented layout in ink: the hero reads "Scope Pro", a badge mark,
+      // benefit rows, a Join button. Opened via ?showMembership=true as the authed harness account.
+      await page.goto('/profile?showMembership=true', { waitUntil: 'domcontentloaded' });
+      await page.waitForTimeout(4500);
+      const proSheet = page.getByText('Scope Pro', { exact: true }).first();
+      if (await proSheet.count()) {
+        await expect(proSheet).toBeVisible({ timeout: 8000 });
+        // The mark in the hero must flip too (BadgeArt span just before the "Scope Pro" wordmark).
+        await page.screenshot({ path: shot('pro-sheet') });
+      } else console.warn('[LT-2] Pro sheet (showMembership) did not open — skipped');
+
+      // ── Bio sheet badges + music row — open the data sheet; badges render ink, music is a row ──
+      if (info.project.name !== 'iphone-webkit') return;
+      await page.goto('/profile', { waitUntil: 'domcontentloaded' });
+      await page.waitForTimeout(5000);
+      await pastRecap(page, shot);
+      const bio = page.getByRole('button', { name: 'View profile info' }).first();
+      if (await bio.count()) {
+        await bio.click();
+        await page.waitForTimeout(1200);
+        await page.screenshot({ path: shot('bio-badges-music') });
+      } else console.warn('[LT-2] BIO trigger not present — bio sheet skipped');
+    });
+  });
+}

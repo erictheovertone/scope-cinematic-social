@@ -64,7 +64,7 @@ export default function FirstCutPage() {
   const holding = positions.filter((p) => p.active).length;
 
   return (
-    <div style={{ minHeight: '100dvh', background: 'var(--canvas)', maxWidth: '30rem', margin: '0 auto', padding: '20px 18px 60px' }}>
+    <div style={{ minHeight: '100dvh', background: 'var(--canvas)', maxWidth: '30rem', margin: '0 auto', padding: 'calc(20px + var(--safe-top)) 18px 60px' }}>
       <div style={{ ...SKB, fontSize: 'var(--fs-7)', letterSpacing: '0.2em', color: 'var(--ink-100)', textTransform: 'uppercase', marginBottom: 16 }}>
         ECONOMY PREVIEW · MOCK DATA
       </div>

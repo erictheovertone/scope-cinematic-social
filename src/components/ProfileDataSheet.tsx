@@ -1,6 +1,7 @@
 "use client";
 
 import ThemedImg from "@/components/ThemedImg";
+import BadgeArt from "@/components/BadgeArt";
 import { useState, useEffect, Fragment } from "react";
 import { createPortal } from "react-dom";
 import type { ProfileLink } from "@/lib/userService";
@@ -210,7 +211,7 @@ export default function ProfileDataSheet({
                 rounded frame in the art. Render the image + label, nothing else. */}
             {b.brass
               ? <span style={{ width: '100%', aspectRatio: '1', display: 'grid', placeItems: 'center' }}><BrassAperture size={34} /></span>
-              : <ThemedImg src={(b.framedSrc ?? b.bannerSrc ?? b.src) as string} alt={BADGE_DISPLAY_NAME[b.key]} style={{ width: '100%', height: 'auto', objectFit: 'contain', display: 'block' }} />}
+              : <BadgeArt src={(b.framedSrc ?? b.bannerSrc ?? b.src) as string} size={34} alt={BADGE_DISPLAY_NAME[b.key]} style={{ width: '100%', height: 'auto', aspectRatio: '1' }} />}
             <span style={{ fontFamily: 'var(--font-body)', fontWeight: 400, fontSize: 7.5, letterSpacing: '0.12em', color: b.brass ? 'var(--brass)' : 'rgb(var(--ink-rgb) / 0.46)', textTransform: 'uppercase', textAlign: 'center', lineHeight: 1.1 }}>{BADGE_DISPLAY_NAME[b.key]}</span>
           </button>
         ))}
@@ -226,7 +227,7 @@ export default function ProfileDataSheet({
   const musicIdx = profile?.user_id ? sectionNodes.length : -1;
   if (profile?.user_id) sectionNodes.push(
     <div key="music" className={musicIdx > 0 ? 'bio-music-slot ruled' : 'bio-music-slot'} style={sec(180)} onClick={(e) => e.stopPropagation()}>
-      <BioMusicSection userId={String(profile.user_id)} />
+      <BioMusicSection userId={String(profile.user_id)} handle={profile?.username} onNavigate={onClose} />
     </div>
   );
 
@@ -400,13 +401,16 @@ export default function ProfileDataSheet({
         <div onClick={(e) => e.stopPropagation()} style={{ position: 'relative', width: '100%', maxWidth: 340, background: 'var(--surface-1)', border: '1px solid var(--ink-100)', padding: '18px 18px', animation: 'blurbIn 240ms cubic-bezier(0.16,0.84,0.3,1)' }}>
           <button onClick={(e) => { e.stopPropagation(); setActiveBlurb(null); }} aria-label="Close" style={{ position: 'absolute', top: 8, right: 10, ...SKB, fontSize: 'var(--fs-15)', lineHeight: 1, color: 'rgb(var(--ink-rgb) / 0.55)', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>×</button>
           <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
-            <img
-              key={activeBlurb}
-              className="focus-pull"
-              src={BADGES[activeBlurb].bannerSrc ?? BADGES[activeBlurb].src}
-              alt={BADGES[activeBlurb].title}
-              style={{ width: 60, height: 60, objectFit: 'contain', flexShrink: 0, animation: 'focusPull 1.2s cubic-bezier(0.16,0.84,0.3,1) both' }}
-            />
+            {BADGES[activeBlurb].brass
+              ? <span className="focus-pull" style={{ flexShrink: 0, animation: 'focusPull 1.2s cubic-bezier(0.16,0.84,0.3,1) both' }}><BrassAperture size={60} /></span>
+              : <BadgeArt
+                  key={activeBlurb}
+                  className="focus-pull"
+                  src={BADGES[activeBlurb].bannerSrc ?? BADGES[activeBlurb].src}
+                  size={60}
+                  alt={BADGES[activeBlurb].title}
+                  style={{ flexShrink: 0, animation: 'focusPull 1.2s cubic-bezier(0.16,0.84,0.3,1) both' }}
+                />}
             <div style={{ flex: 1, minWidth: 0, paddingRight: 12 }}>
               <p style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.16em', margin: '0 0 6px' }}>{BADGE_DISPLAY_NAME[activeBlurb]}</p>
               <p style={{ ...SKR, fontSize: 'var(--fs-11)', color: 'rgb(var(--ink-rgb) / 0.70)', lineHeight: 1.45, margin: 0 }}>{BADGE_SHORT_BLURB[activeBlurb]}</p>

@@ -6,6 +6,7 @@ import { usePrivy, useWallets } from "@privy-io/react-auth";
 import { invalidateMembership } from "@/lib/userService";
 import { createPublicClient, http, parseUnits } from "viem";
 import { base } from "viem/chains";
+import BadgeArt from "@/components/BadgeArt";
 
 const BOLD: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const REG: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -290,40 +291,6 @@ export default function MembershipSheet({ visible, onClose, onSuccess, isPaidMem
         }}
       />
 
-      {/* Floating badge above sheet */}
-      <div data-swipe-exclude style={{
-        position: 'fixed',
-        // C3-3 — the sheet is 90vh, so the badge floats in the ~10vh above it; on a notched
-        // phone that put the 80px badge's top under the status bar (clipped). Clamp so the top
-        // always clears the safe area (badge 80 + glow headroom 24).
-        bottom: 'min(calc(90vh - 48px), calc(100dvh - env(safe-area-inset-top, 0px) - 104px))',
-        left: '50%',
-        transform: visible ? 'translateX(-50%) translateY(0)' : 'translateX(-50%) translateY(100px)',
-        transition: 'transform 0.4s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.35s ease',
-        zIndex: 502,
-        opacity: visible ? 1 : 0,
-        pointerEvents: visible ? 'auto' : 'none',
-      }}>
-        <div style={{
-          perspective: 600,
-          perspectiveOrigin: "center center",
-          width: 80,
-          height: 80,
-          position: "relative",
-        }}>
-          {/* Option C — the Pro badge in a 7s 3D spin with a STRONG glow
-              breath (3.6s, offset phase — non-integer ratio to the spin so the
-              loop never visibly repeats). GPU only; reduced-motion → static. */}
-          <style>{`
-            @keyframes pro-spin{from{transform:rotateY(0)}to{transform:rotateY(360deg)}}
-            @keyframes pro-glow{0%,100%{filter:drop-shadow(0 0 3px rgba(242,237,228,.25))}50%{filter:drop-shadow(0 0 16px rgba(242,237,228,.75))}}
-            .ms-pro-badge{width:100%;height:100%;display:block;object-fit:contain;transform-style:preserve-3d;animation:pro-spin 7s linear infinite,pro-glow 3.6s ease-in-out -0.9s infinite}
-            @media (prefers-reduced-motion: reduce){.ms-pro-badge{animation:none;filter:drop-shadow(0 0 3px rgba(242,237,228,.25))}}
-          `}</style>
-          <img src="/design-updates-071526/new-badges/scope-pro.png" alt="Scope Pro" className="ms-pro-badge" />
-        </div>
-      </div>
-
       {/* Sheet */}
       <div data-swipe-exclude style={{
         position: "fixed", bottom: 0, left: 0, right: 0,
@@ -364,56 +331,40 @@ export default function MembershipSheet({ visible, onClose, onSuccess, isPaidMem
           </div>
         )}
 
-        {/* Header */}
-        <div style={{ marginBottom: 28 }}>
-          <p style={{ ...BOLD, fontSize: 'var(--fs-18)', color: "var(--ink-100)", textTransform: "uppercase", letterSpacing: "-0.02em", margin: "0 0 8px" }}>
-            BECOME A SCOPE MEMBER
-          </p>
-          <p style={{ ...REG, fontSize: 'var(--fs-11)', color: "rgb(var(--ink-rgb) / 0.5)", lineHeight: 1.6, margin: 0 }}>
-            Unlock unlimited posts, unlimited decks, more links, and the full cinematic editing suite. Membership is debited directly from your wallet.
-          </p>
+        {/* ── LT-2 §6 — Pro adopts the Augmented sheet's STRUCTURE, in Pro's INK treatment (no brass):
+            mark + wordmark + tagline hero, checkbox benefit rows, plan radios, ink Join, fine print.
+            Same components as AugmentedSheet; the Pro mark renders through BadgeArt so it inverts
+            with the theme (brass is reserved for Augmented). All payment logic is unchanged. ── */}
+        <div style={{ display: "grid", justifyItems: "center", gap: 10, padding: "6px 0 20px", borderBottom: "1px solid rgb(var(--ink-rgb) / 0.16)", marginBottom: 16 }}>
+          <BadgeArt src="/design-updates-071526/new-badges/scope-pro.png" size={72} alt="Scope Pro" />
+          <div style={{ ...BOLD, fontSize: 30, letterSpacing: "0.1em", textTransform: "uppercase", lineHeight: 1, color: "var(--ink-100)" }}>Scope Pro</div>
+          <div style={{ ...REG, color: "rgb(var(--ink-rgb) / 0.5)", fontSize: 13 }}>Your membership on Scope</div>
         </div>
 
-        {/* What you get */}
-        <div style={{ marginBottom: 28, borderTop: "1px solid rgb(var(--ink-rgb) / 0.06)", paddingTop: 20 }}>
-          {[
-            "UNLIMITED POSTS",
-            "UNLIMITED DECKS",
-            "UP TO 5 LINKS",
-            "FULL EDITING SUITE",
-          ].map(benefit => (
-            <div key={benefit} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-              <div style={{ width: 4, height: 4, borderRadius: "50%", backgroundColor: "var(--ink-100)", flexShrink: 0 }} />
-              <p style={{ ...BOLD, fontSize: 'var(--fs-9)', color: "var(--ink-100)", textTransform: "uppercase", letterSpacing: "0.06em", margin: 0 }}>{benefit}</p>
+        {/* Benefits — Augmented's checkbox-square rows, in ink. */}
+        <div style={{ marginBottom: 2 }}>
+          {["Unlimited posts", "Unlimited decks", "Up to 5 profile links", "The full cinematic editing suite"].map((b, i, arr) => (
+            <div key={b} style={{ ...REG, display: "flex", alignItems: "center", gap: 10, padding: "9px 0", borderTop: "1px solid rgb(var(--ink-rgb) / 0.16)", borderBottom: i === arr.length - 1 ? "1px solid rgb(var(--ink-rgb) / 0.16)" : undefined, fontSize: 13, color: "var(--ink-100)" }}>
+              <i style={{ width: 14, height: 14, border: "1px solid var(--ink-100)", display: "inline-grid", placeItems: "center", flex: "none" }}>
+                <span style={{ width: 7, height: 7, background: "var(--ink-100)" }} />
+              </i>{b}
             </div>
           ))}
         </div>
 
-        {/* Plan selector — 2x2 grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 20 }}>
-          {plans.map(plan => (
-            <button
-              key={plan.id}
-              onClick={() => setSelectedPlan(plan.id)}
-              style={{
-                background: 'transparent',
-                border: `1px solid ${selectedPlan === plan.id ? 'var(--ink-100)' : 'rgb(var(--ink-rgb) / 0.15)'}`,
-                padding: '10px 8px',
-                cursor: 'pointer',
-                textAlign: 'center',
-              }}
-            >
-              <p style={{ ...BOLD, fontSize: 'var(--fs-8)', color: selectedPlan === plan.id ? 'var(--ink-100)' : 'rgb(var(--ink-rgb) / 0.4)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 4px' }}>
-                {plan.label}
-              </p>
-              <p style={{ ...BOLD, fontSize: 'var(--fs-13)', color: selectedPlan === plan.id ? 'var(--ink-100)' : 'rgb(var(--ink-rgb) / 0.4)', margin: '0 0 4px' }}>
-                {plan.price}
-              </p>
-              <p style={{ ...REG, fontSize: 'var(--fs-7)', color: 'rgb(var(--ink-rgb) / 0.35)', textTransform: 'uppercase', letterSpacing: '0.04em', margin: 0 }}>
-                {plan.sub}
-              </p>
-            </button>
-          ))}
+        {/* Plan selector — Augmented's button style, in ink. Pro keeps all four plans (crypto + card). */}
+        <div role="radiogroup" aria-label="Plan" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, margin: "16px 0 14px" }}>
+          {plans.map(plan => {
+            const on = selectedPlan === plan.id;
+            return (
+              <button key={plan.id} role="radio" aria-checked={on} onClick={() => setSelectedPlan(plan.id)}
+                style={{ textAlign: "left", background: "transparent", cursor: "pointer", border: `1px solid ${on ? "var(--ink-100)" : "rgb(var(--ink-rgb) / 0.16)"}`, padding: "10px 12px", display: "grid", gap: 3, color: "var(--ink-100)" }}>
+                <span style={{ ...BOLD, color: "rgb(var(--ink-rgb) / 0.5)", fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase" }}>{plan.label}</span>
+                <b style={{ ...REG, fontWeight: 500, fontSize: 20, letterSpacing: "-0.01em" }}>{plan.price}</b>
+                <span style={{ ...REG, fontSize: 8, color: "rgb(var(--ink-rgb) / 0.4)", textTransform: "uppercase", letterSpacing: "0.04em" }}>{plan.sub}</span>
+              </button>
+            );
+          })}
         </div>
 
         {/* Error */}
@@ -423,25 +374,17 @@ export default function MembershipSheet({ visible, onClose, onSuccess, isPaidMem
           </p>
         )}
 
-        {/* CTA */}
+        {/* CTA — the Augmented Join button, in ink. */}
         <button
           onClick={handleSubscribe}
           disabled={working || txStatus === "success" || isPaidMember}
-          style={{
-            width: "100%",
-            background: working ? "rgb(var(--ink-rgb) / 0.4)" : "var(--ink-100)",
-            border: "none",
-            padding: "16px 0",
-            cursor: working ? "default" : "pointer",
-          }}
+          style={{ ...BOLD, width: "100%", marginTop: 4, padding: "13px 16px", background: working ? "rgb(var(--ink-rgb) / 0.4)" : "var(--ink-100)", color: working ? "var(--ink-100)" : "var(--on-ink)", border: "1px solid var(--ink-100)", fontSize: 12, letterSpacing: "0.08em", textTransform: "uppercase", cursor: working ? "default" : "pointer" }}
         >
-          <span style={{ ...BOLD, fontSize: 'var(--fs-12)', color: working ? "var(--ink-100)" : "var(--on-ink)", textTransform: "uppercase", letterSpacing: "0.06em" }/* X2c — idle state fills solid ivory → --on-ink; working state is translucent-grey so ivory stays legible */}>
-            {working ? "PROCESSING..." : txStatus === "confirming" ? "CONFIRMING..." : "JOIN SCOPE · " + plans.find(p => p.id === selectedPlan)?.price}
-          </span>
+          {working ? "PROCESSING…" : txStatus === "confirming" ? "CONFIRMING…" : "JOIN SCOPE PRO · " + plans.find(p => p.id === selectedPlan)?.price}
         </button>
 
-        <p style={{ ...REG, fontSize: 'var(--fs-8)', color: "rgb(var(--ink-rgb) / 0.25)", textAlign: "center", margin: "12px 0 0", lineHeight: 1.5 }}>
-          CRYPTO PAYMENTS SENT TO SCOPE TREASURY ON BASE. CARD PAYMENTS PROCESSED BY STRIPE.
+        <p style={{ ...REG, fontSize: 'var(--fs-8)', color: "rgb(var(--ink-rgb) / 0.4)", textAlign: "center", margin: "12px 0 0", lineHeight: 1.5 }}>
+          Crypto payments sent to Scope Treasury on Base. Card payments processed by Stripe.
         </p>
       </div>
 
