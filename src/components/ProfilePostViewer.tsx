@@ -1,6 +1,5 @@
 "use client";
 
-import ThemedImg from "@/components/ThemedImg";
 import { useState, useEffect, useRef } from "react";
 import { feedImage } from "@/lib/mediaUrl";
 import { useRouter } from "next/navigation";
@@ -32,6 +31,7 @@ import GradedVideo from "@/components/finishing/GradedVideo";
 import { pushVideoOverlay } from "@/lib/videoAttachBudget";
 import TheatreMode from "@/components/TheatreMode";
 import { useRotateToTheatre } from "@/lib/useRotateToTheatre";
+import PinnedMark from "@/components/nav/PinnedMark";
 import { supabase } from "@/lib/supabase/client";
 import { getAspectRatio } from "@/lib/aspectRatio";
 import PillarboxFrame from "@/components/PillarboxFrame";
@@ -594,10 +594,16 @@ interface ProfilePostViewerProps {
   onClose: () => void;
   isOwnProfile?: boolean;
   onDeleted?: (postId: string) => void;
+  // NAV-1 — the Stem menu on the post scroll (counts from the profile; taps close the viewer + switch tab).
+  collectedCount?: number;
+  decksCount?: number;
+  onCollected?: () => void;
+  onDecks?: () => void;
 }
 
 export default function ProfilePostViewer({
   posts: initialPosts, initialIndex = 0, ownerUsername, ownerAvatarUrl, onClose, isOwnProfile, onDeleted,
+  collectedCount = 0, decksCount = 0, onCollected, onDecks,
 }: ProfilePostViewerProps) {
   const router = useRouter();
   const { user } = usePrivy();
@@ -723,21 +729,27 @@ export default function ProfilePostViewer({
       {/* Scoped placeholder style */}
       <style>{`.pm-input::placeholder { color: rgb(var(--ink-rgb) / 0.35); }`}</style>
 
-      {/* Back bar — BACK (left) · Scope logomark (center, static, never scrolls with
-          content) · THEATRE eye (right, enters theatre for this profile's posts).
-          Brief X3 §1 — this fixed-overlay's own header was un-inset; pad the top by
-          --safe-top (F1 page-chrome rule) so BACK/logomark/eye clear the notch /
-          Dynamic Island. Black paints edge-to-edge behind (root inset:0); only the
-          control row insets. */}
-      <div style={{ flexShrink: 0, height: "calc(44px + var(--safe-top))", paddingTop: "var(--safe-top)", display: "flex", alignItems: "center", justifyContent: "space-between", paddingLeft: 14, paddingRight: 14, borderBottom: "1px solid rgb(var(--ink-rgb) / 0.06)" }}>
-        <button onClick={handleClose} style={{ background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 7, padding: 0 }}>
+      {/* NAV-1 §5 — the pinned logomark (top-left, replacing the removed top-left + centre logos) with
+          the Stem menu. It sits over this fixed overlay. */}
+      <PinnedMark
+        visible
+        rows={[
+          { label: 'Collected', count: collectedCount, onClick: () => onCollected?.() },
+          { label: 'Decks', count: decksCount, onClick: () => onDecks?.() },
+        ]}
+      />
+
+      {/* NAV-1 §5 — Back bar: BACK (left, indented past the 44px pinned mark) · Theatre eye (right).
+          Both are 44px targets; the two logo instances are gone (the pinned mark replaces them), so
+          nothing bunches/overlaps at 320–375px. --safe-top keeps the row clear of the notch. */}
+      <div style={{ flexShrink: 0, height: "calc(44px + var(--safe-top))", paddingTop: "var(--safe-top)", display: "flex", alignItems: "center", justifyContent: "space-between", paddingLeft: 68, paddingRight: 8, borderBottom: "1px solid rgb(var(--ink-rgb) / 0.06)" }}>
+        <button onClick={handleClose} aria-label="Back" style={{ background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 7, minWidth: 44, height: 44, padding: 0 }}>
           <svg width="16.5" height="16.5" viewBox="0 0 13 13" fill="none">
             <path d="M8.5 1.5L3.5 6.5l5 5" stroke="var(--ink-100)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
           <span style={{ ...SKB, fontSize: 'var(--fs-9)', color: "var(--ink-100)", letterSpacing: "-0.1px", textTransform: "uppercase" }}>BACK</span>
         </button>
-        <ThemedImg src="/logomark-plain-white.png" alt="Scope" style={{ height: 14, width: "auto", objectFit: "contain", display: "block", opacity: 0.9 }} />
-        <button onClick={() => { enteredViaRotation.current = false; openTheatre(); }} aria-label="Theatre" style={{ background: "transparent", border: "none", cursor: "pointer", padding: 0, display: "flex", alignItems: "center" }}>
+        <button onClick={() => { enteredViaRotation.current = false; openTheatre(); }} aria-label="Theatre" style={{ background: "transparent", border: "none", cursor: "pointer", width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>
           <img src="/theatre-mode-eye-solo.png" alt="" style={{ height: 17, width: "auto", display: "block", opacity: 0.85 }} />
         </button>
       </div>

@@ -1,10 +1,9 @@
 "use client";
 
-import ThemedImg from "@/components/ThemedImg";
 import { useState, useEffect, useRef } from "react";
 import DesktopProfile from '@/components/desktop/DesktopProfile';
 import { useIsDesktop } from '@/lib/useIsDesktop';
-import { useScrollChrome, CHROME_TOP_TRANSITION } from '@/lib/useScrollChrome';
+import { useScrollChrome } from '@/lib/useScrollChrome';
 import { useTabTop } from '@/lib/tabNav';
 import { feedImage, THUMB_WIDTH } from "@/lib/mediaUrl";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -40,6 +39,7 @@ import { tierOf } from "@/lib/tier";
 import { dividerBackground } from "@/lib/economy/dividerLines";
 import { useEconomy } from "@/components/EconomyProvider";
 import CollectedGrid from "@/components/economy/CollectedGrid";
+import PinnedMark from "@/components/nav/PinnedMark";
 
 function getGridCols(layoutId: string): string {
   if (layoutId.startsWith('2x-')) return 'grid-cols-2';
@@ -107,6 +107,8 @@ const userLayoutId = stableLayoutId;
   const [showFollowingModal, setShowFollowingModal] = useState(false);
   const [showDecks, setShowDecks] = useState(false);
   const [userDecks, setUserDecks] = useState<(Deck & { item_count: number; thumbnail_urls: string[] })[]>([]);
+  // NAV-1 — the Stem menu's COLLECTED count (DECKS reads userDecks.length). Same source CollectedGrid uses.
+  const [collectedCount, setCollectedCount] = useState(0);
   const [decksLoading, setDecksLoading] = useState(false);
   const [showNewDeckForm, setShowNewDeckForm] = useState(false);
   const [newDeckTitle, setNewDeckTitle] = useState('');
@@ -158,6 +160,10 @@ const userLayoutId = stableLayoutId;
     economy.getBadges(supabaseUserId)
       .then((b) => { if (!cancelled) { setFirstCutCount(b.firstCutCount ?? 0); setComposerTrackCount(b.composerTrackCount ?? 0); setBadgesLoaded(true); } })
       .catch(() => { if (!cancelled) setBadgesLoaded(true); });
+    // NAV-1 — the collected count for the Stem menu (same economy read as CollectedGrid).
+    economy.getCollected(supabaseUserId)
+      .then((h) => { if (!cancelled) setCollectedCount(Array.isArray(h) ? h.length : 0); })
+      .catch(() => { /* leave at 0 — never block the header */ });
     return () => { cancelled = true; };
   }, [economy, supabaseUserId, badgeTick]);
 
@@ -219,7 +225,7 @@ const userLayoutId = stableLayoutId;
   useEffect(() => { setGridScrollY(0); }, [activeTab]);
   const [headerSnapped, setHeaderSnapped] = useState(false);
   const [headerUnsnapping, setHeaderUnsnapping] = useState(false);
-  const [snapAnimKey, setSnapAnimKey] = useState(0);
+  const snapAnimKey = 0; // NAV-1 — the header pop-out bar is gone (nothing sets headerSnapped), so the snap anim is inert.
   const snapScrollYRef = useRef(0);
   const dismissSnapMenu = () => {
     setHeaderUnsnapping(true);
@@ -617,6 +623,7 @@ const userLayoutId = stableLayoutId;
           ) : (
             <div
               ref={gridScrollRef}
+              data-testid="grid-scroll"
               className="overflow-y-auto h-full px-[1px]"
               onScroll={(e) => {
                 if (rafPendingRef.current) return;
@@ -697,6 +704,10 @@ const userLayoutId = stableLayoutId;
             onClose={() => setShowViewer(false)}
             isOwnProfile={true}
             onDeleted={(deletedPostId) => setUserPosts(prev => prev.filter(p => p.id !== deletedPostId))}
+            collectedCount={collectedCount}
+            decksCount={userDecks.length}
+            onCollected={() => { setShowViewer(false); setActiveTab('collected'); }}
+            onDecks={() => { setShowViewer(false); setActiveTab('decks'); setShowDecks(true); }}
           />
         </>
       )}
@@ -918,24 +929,17 @@ const userLayoutId = stableLayoutId;
           standalone they anchor to the VIEWPORT, not the .screen-min scroll container
           (which floated the footer above the screen bottom). State (gridScrollY,
           headerSnapped, …) is component-level, so it's in scope here unchanged. ── */}
-      {!headerSnapped && gridScrollY > 20 && (
-        <div
-          data-chrome-top
-          onClick={(e) => { e.stopPropagation(); e.preventDefault(); snapScrollYRef.current = gridScrollY; setHeaderSnapped(true); setSnapAnimKey(k => k + 1); }}
-          style={{
-            position: 'fixed',
-            top: 'calc(8px + env(safe-area-inset-top, 0px))',
-            left: 8,
-            zIndex: 50,
-            cursor: 'pointer',
-            pointerEvents: 'auto',
-            opacity: Math.min(1, (gridScrollY - 20) / 20),
-            transition: `opacity 0.2s ease, ${CHROME_TOP_TRANSITION}`,
-            filter: 'drop-shadow(0 0 8px rgb(var(--black-rgb) / 0.9)) drop-shadow(0 2px 12px rgb(var(--black-rgb) / 0.75))',
-          }}
-        >
-          <ThemedImg src="/logomark-plain-white.png" alt="" style={{ width: 32, height: 20, objectFit: 'contain', display: 'block' }} />
-        </div>
+      {/* NAV-1 — the pinned logomark + Stem menu. Stays visible the WHOLE grid scroll (the old snap
+          mark buried itself on tap and hid on scroll-down); tapping grows the COLLECTED/DECKS menu.
+          The old tap-to-snap header pop-out bar is gone (nothing sets headerSnapped any more). */}
+      {!isDesktop && !showViewer && (
+        <PinnedMark
+          visible={gridScrollY > 20}
+          rows={[
+            { label: 'Collected', count: collectedCount, onClick: () => setActiveTab('collected') },
+            { label: 'Decks', count: userDecks.length, onClick: () => { setActiveTab('decks'); setShowDecks(true); } },
+          ]}
+        />
       )}
 
       <BottomToolbar
