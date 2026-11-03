@@ -119,8 +119,10 @@ interface Diag {
   paused: boolean | null;
   currentTime: number;
   readyState: number;
-  // VID-2 §0 — a 10s sustained measurement: min/avg decode + upload FPS.
-  sustained: string | null;
+  // VID-2 §0 patch — the rolling last-10s window (min/avg/max up+decode, frames, seconds playing)
+  // and the on-page verdict, both always present in the report so a paste can't be ambiguous.
+  windowLine: string;
+  verdict: string;
 }
 
 export default function HlsWebglDecisionPage() {
@@ -134,15 +136,16 @@ export default function HlsWebglDecisionPage() {
   const [diag, setDiag] = useState<Diag>({
     texImage2D: "waiting for playback…", drawImage: "waiting for playback…",
     decodeFps: null, glFps: null, videoDims: "—", engine: "—", glErrors: [], consoleErrors: [],
-    paused: null, currentTime: 0, readyState: 0, sustained: null,
+    paused: null, currentTime: 0, readyState: 0, windowLine: "—", verdict: "—",
   });
-  const [measuring, setMeasuring] = useState(0); // seconds remaining in a sustained run (0 = idle)
+  const [measuring, setMeasuring] = useState(0); // seconds of VALID playback still needed to fill a fresh window
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const boxRef = useRef<HTMLDivElement>(null);
   const consoleErrsRef = useRef<string[]>([]);
-  // VID-2 §0 — sustained-measurement control, read inside the per-second tick.
-  const measureRef = useRef<{ left: number; gl: number[]; dec: number[] } | null>(null);
+  // VID-2 §0 patch — the rolling window: last 10 per-second samples, maintained continuously from PLAY.
+  // `fill` counts down VALID (advancing) seconds after a MEASURE reset — it stalls while paused.
+  const windowRef = useRef<{ samples: { gl: number; dec: number; playing: boolean; h: number }[]; prevTime: number; fill: number }>({ samples: [], prevTime: -1, fill: 0 });
 
   // ── gate (client-only; ?debug=video) ──
   useEffect(() => {
@@ -304,27 +307,43 @@ export default function HlsWebglDecisionPage() {
       if (cancelled) return;
       const gf = glFrames, df = decodeFrames;
       glFrames = 0; decodeFrames = 0;
-      // VID-2 §0 — sustained run: collect per-second samples, finalise min/avg after 10s.
-      let sustained: string | null | undefined; // undefined = unchanged
-      const m = measureRef.current;
-      if (m) {
-        m.gl.push(gf); m.dec.push(df); m.left -= 1;
-        setMeasuring(m.left);
-        if (m.left <= 0) {
-          const min = (a: number[]) => (a.length ? Math.min(...a) : 0);
-          const avg = (a: number[]) => (a.length ? Math.round(a.reduce((s, x) => s + x, 0) / a.length) : 0);
-          const dims = v.videoWidth ? `${v.videoWidth}×${v.videoHeight}` : "?";
-          sustained = `10s @ ${dims}: upload min ${min(m.gl)} / avg ${avg(m.gl)} fps · decode min ${min(m.dec)} / avg ${avg(m.dec)} fps`;
-          measureRef.current = null;
-        }
-      }
+
+      // VID-2 §0 patch — CONTINUOUS rolling window (last 10s). A second counts as "playing" only when
+      // the video is advancing AND decode-ready (readyState ≥ 3) — so a paused/stalled measurement can
+      // never read as sustained. MEASURE resets fill; it only ticks down on VALID seconds.
+      const w = windowRef.current;
+      const advancing = w.prevTime >= 0 && v.currentTime > w.prevTime + 0.05 && v.readyState >= 3;
+      w.prevTime = v.currentTime;
+      w.samples.push({ gl: gf, dec: df, playing: advancing, h: v.videoHeight || 0 });
+      if (w.samples.length > 10) w.samples.shift();
+      if (w.fill > 0 && advancing) { w.fill -= 1; setMeasuring(w.fill); }
+
+      const S = w.samples;
+      const playing = S.filter((s) => s.playing);
+      const min = (a: number[]) => (a.length ? Math.min(...a) : 0);
+      const max = (a: number[]) => (a.length ? Math.max(...a) : 0);
+      const avg = (a: number[]) => (a.length ? Math.round(a.reduce((x, y) => x + y, 0) / a.length) : 0);
+      // Rates are measured over the SECONDS THE VIDEO ACTUALLY PLAYED (paused seconds would dilute them).
+      const up = playing.map((s) => s.gl), dec = playing.map((s) => s.dec);
+      const framesUp = up.reduce((x, y) => x + y, 0);
+      const secPlay = playing.length;
+      const hNow = v.videoHeight || max(S.map((s) => s.h));
+      const uploadAvg = avg(up), decodeAvg = avg(dec);
+      const windowLine = `last ${S.length}s @ ${v.videoWidth || "?"}×${hNow || "?"}: upload ${min(up)}/${uploadAvg}/${max(up)} (min/avg/max) · decode ${min(dec)}/${decodeAvg}/${max(dec)} fps · ${framesUp} frames · playing ${secPlay}/${S.length}s`;
+      // On-page verdict — unambiguous. Needs enough real playback, then upload ≥20 at ≥480p.
+      let verdict: string;
+      if (secPlay < 5) verdict = `NOT OK: video only played ${secPlay}/${S.length}s in the window (press PLAY/MEASURE; iOS needs the gesture)`;
+      else if (hNow < 480) verdict = `NOT OK: rendition ${hNow || "?"}p < 480p`;
+      else if (uploadAvg < 20) verdict = `NOT OK: upload avg ${uploadAvg} < 20 fps @ ${hNow}p`;
+      else verdict = `SUSTAINED OK (upload ${uploadAvg} ≥20 @ ${hNow}p ≥480p · decode avg ${decodeAvg})`;
+
       setDiag((d) => ({
         ...d,
         glFps: gf, decodeFps: typeof rvfc.requestVideoFrameCallback === "function" ? df : null,
         paused: v.paused, currentTime: Math.round(v.currentTime * 10) / 10, readyState: v.readyState,
         videoDims: v.videoWidth ? `${v.videoWidth}×${v.videoHeight}` : d.videoDims, // live — catches HLS rendition switches
         consoleErrors: consoleErrsRef.current,
-        ...(sustained !== undefined ? { sustained } : {}),
+        windowLine, verdict,
       }));
     }, 1000);
 
@@ -355,7 +374,8 @@ export default function HlsWebglDecisionPage() {
       `drawImage(video):  ${diag.drawImage}`,
       `decode FPS (rVFC): ${diag.decodeFps ?? "n/a"}`,
       `GL upload FPS:     ${diag.glFps ?? "—"}`,
-      `sustained:         ${diag.sustained ?? "(run the 10s measurement)"}`,
+      `window:            ${diag.windowLine}`,
+      `VERDICT:           ${diag.verdict}`,
       "",
       `console/GL errors:`,
       ...(diag.consoleErrors.length ? diag.consoleErrors.map((e) => "  · " + e) : ["  (none)"]),
@@ -369,13 +389,15 @@ export default function HlsWebglDecisionPage() {
   }, [report]);
 
   // VID-2 §0 — iOS needs a user gesture to start playback (the FPS=0 cause). This button provides it.
-  const playVideo = useCallback(() => { const v = videoRef.current; if (v) { v.muted = true; v.play().catch(() => {}); } }, []);
-  // VID-2 §0 — start a 10-second sustained min/avg measurement (plays first so it isn't measuring a paused video).
+  const playVideo = useCallback(() => { const v = videoRef.current; if (v) { v.muted = true; v.loop = true; v.play().catch(() => {}); } }, []);
+  // VID-2 §0 patch — MEASURE: force play()+loop, then reset the rolling window to a FRESH 10s. The
+  // window only fills on VALID (advancing, readyState ≥ 3) seconds (see the tick), so it "refuses to
+  // start" while paused/stalled — the countdown stalls until the video is genuinely advancing.
   const startMeasure = useCallback(() => {
     playVideo();
-    measureRef.current = { left: 10, gl: [], dec: [] };
+    const w = windowRef.current;
+    w.samples = []; w.prevTime = -1; w.fill = 10;
     setMeasuring(10);
-    setDiag((d) => ({ ...d, sustained: "measuring…" }));
   }, [playVideo]);
 
   if (!mounted) return <div style={{ minHeight: "100dvh", background: "#000" }} />;
@@ -436,7 +458,8 @@ export default function HlsWebglDecisionPage() {
         <div>texImage2D(video): {chip(verdict(diag.texImage2D), diag.texImage2D)}</div>
         <div>drawImage(video):&nbsp; {chip(verdict(diag.drawImage), diag.drawImage)}</div>
         <div>GL upload FPS: <b style={{ color: "#3f8" }}>{diag.glFps ?? "—"}</b> &nbsp;·&nbsp; decode FPS: <b>{diag.decodeFps ?? "n/a"}</b></div>
-        <div style={{ color: "#4af" }}>sustained: <b>{diag.sustained ?? "(tap MEASURE 10s)"}</b></div>
+        <div style={{ color: "#aaa", fontSize: 14 }}>{diag.windowLine}</div>
+        <div style={{ marginTop: 6, padding: "8px 10px", borderRadius: 4, fontSize: 15, fontWeight: 700, background: /^SUSTAINED OK/.test(diag.verdict) ? "#06351f" : "#3a1414", color: /^SUSTAINED OK/.test(diag.verdict) ? "#3f8" : "#f77" }}>{diag.verdict}</div>
         <div style={{ opacity: 0.85 }}>engine: {diag.engine} · iOS {ios}</div>
         <div style={{ opacity: 0.6, fontSize: 12, wordBreak: "break-all", marginTop: 4 }}>UA: {ua}</div>
         {diag.consoleErrors.length > 0 && (
