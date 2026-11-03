@@ -115,6 +115,12 @@ interface Diag {
   engine: string;
   glErrors: string[];
   consoleErrors: string[];
+  // VID-2 §0 — live playback readout (the FPS=0 on device was a paused video).
+  paused: boolean | null;
+  currentTime: number;
+  readyState: number;
+  // VID-2 §0 — a 10s sustained measurement: min/avg decode + upload FPS.
+  sustained: string | null;
 }
 
 export default function HlsWebglDecisionPage() {
@@ -128,11 +134,15 @@ export default function HlsWebglDecisionPage() {
   const [diag, setDiag] = useState<Diag>({
     texImage2D: "waiting for playback…", drawImage: "waiting for playback…",
     decodeFps: null, glFps: null, videoDims: "—", engine: "—", glErrors: [], consoleErrors: [],
+    paused: null, currentTime: 0, readyState: 0, sustained: null,
   });
+  const [measuring, setMeasuring] = useState(0); // seconds remaining in a sustained run (0 = idle)
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const boxRef = useRef<HTMLDivElement>(null);
   const consoleErrsRef = useRef<string[]>([]);
+  // VID-2 §0 — sustained-measurement control, read inside the per-second tick.
+  const measureRef = useRef<{ left: number; gl: number[]; dec: number[] } | null>(null);
 
   // ── gate (client-only; ?debug=video) ──
   useEffect(() => {
@@ -171,9 +181,9 @@ export default function HlsWebglDecisionPage() {
           if (!posts.length) break;
           const match = wantId
             ? posts.find((p) => String((p as { id?: string }).id) === wantId)
-            : posts.find((p) => streamGradedProps(p as Record<string, unknown>).hlsUrl);
+            : posts.find((p) => streamGradedProps(p as unknown as Record<string, unknown>).hlsUrl);
           if (match) {
-            const { hlsUrl: u } = streamGradedProps(match as Record<string, unknown>);
+            const { hlsUrl: u } = streamGradedProps(match as unknown as Record<string, unknown>);
             if (u && !cancelled) {
               setHlsUrl(u);
               setPostLabel(`${(match as { username?: string }).username ?? "post"} · ${(match as { id?: string }).id ?? ""}`);
@@ -292,13 +302,30 @@ export default function HlsWebglDecisionPage() {
 
     const tick = window.setInterval(() => {
       if (cancelled) return;
+      const gf = glFrames, df = decodeFrames;
+      glFrames = 0; decodeFrames = 0;
+      // VID-2 §0 — sustained run: collect per-second samples, finalise min/avg after 10s.
+      let sustained: string | null | undefined; // undefined = unchanged
+      const m = measureRef.current;
+      if (m) {
+        m.gl.push(gf); m.dec.push(df); m.left -= 1;
+        setMeasuring(m.left);
+        if (m.left <= 0) {
+          const min = (a: number[]) => (a.length ? Math.min(...a) : 0);
+          const avg = (a: number[]) => (a.length ? Math.round(a.reduce((s, x) => s + x, 0) / a.length) : 0);
+          const dims = v.videoWidth ? `${v.videoWidth}×${v.videoHeight}` : "?";
+          sustained = `10s @ ${dims}: upload min ${min(m.gl)} / avg ${avg(m.gl)} fps · decode min ${min(m.dec)} / avg ${avg(m.dec)} fps`;
+          measureRef.current = null;
+        }
+      }
       setDiag((d) => ({
         ...d,
-        glFps: glFrames, decodeFps: typeof rvfc.requestVideoFrameCallback === "function" ? decodeFrames : null,
-        glErrors: gl && gl.getError ? d.glErrors : d.glErrors,
+        glFps: gf, decodeFps: typeof rvfc.requestVideoFrameCallback === "function" ? df : null,
+        paused: v.paused, currentTime: Math.round(v.currentTime * 10) / 10, readyState: v.readyState,
+        videoDims: v.videoWidth ? `${v.videoWidth}×${v.videoHeight}` : d.videoDims, // live — catches HLS rendition switches
         consoleErrors: consoleErrsRef.current,
+        ...(sustained !== undefined ? { sustained } : {}),
       }));
-      glFrames = 0; decodeFrames = 0;
     }, 1000);
 
     return () => {
@@ -314,7 +341,7 @@ export default function HlsWebglDecisionPage() {
 
   const report = useMemo(() => {
     const lines = [
-      "=== VID-2a · HLS→WebGL decision ===",
+      "=== VID-2 §0 · HLS→WebGL decision (device) ===",
       `when: ${new Date().toISOString()}`,
       `source: ${postLabel || "—"}`,
       `hls: ${hlsUrl ?? "—"}`,
@@ -323,10 +350,12 @@ export default function HlsWebglDecisionPage() {
       `iOS: ${ios}`,
       `UA: ${ua}`,
       "",
+      `playback: paused=${diag.paused == null ? "?" : diag.paused} · t=${diag.currentTime}s · readyState=${diag.readyState} · rendition=${diag.videoDims}`,
       `texImage2D(video): ${diag.texImage2D}`,
       `drawImage(video):  ${diag.drawImage}`,
       `decode FPS (rVFC): ${diag.decodeFps ?? "n/a"}`,
       `GL upload FPS:     ${diag.glFps ?? "—"}`,
+      `sustained:         ${diag.sustained ?? "(run the 10s measurement)"}`,
       "",
       `console/GL errors:`,
       ...(diag.consoleErrors.length ? diag.consoleErrors.map((e) => "  · " + e) : ["  (none)"]),
@@ -338,6 +367,16 @@ export default function HlsWebglDecisionPage() {
   const copy = useCallback(() => {
     navigator.clipboard?.writeText(report).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1500); }).catch(() => {});
   }, [report]);
+
+  // VID-2 §0 — iOS needs a user gesture to start playback (the FPS=0 cause). This button provides it.
+  const playVideo = useCallback(() => { const v = videoRef.current; if (v) { v.muted = true; v.play().catch(() => {}); } }, []);
+  // VID-2 §0 — start a 10-second sustained min/avg measurement (plays first so it isn't measuring a paused video).
+  const startMeasure = useCallback(() => {
+    playVideo();
+    measureRef.current = { left: 10, gl: [], dec: [] };
+    setMeasuring(10);
+    setDiag((d) => ({ ...d, sustained: "measuring…" }));
+  }, [playVideo]);
 
   if (!mounted) return <div style={{ minHeight: "100dvh", background: "#000" }} />;
   if (!gated) {
@@ -359,7 +398,7 @@ export default function HlsWebglDecisionPage() {
 
   return (
     <div style={{ minHeight: "100dvh", background: "#000", padding: 12, boxSizing: "border-box", ...L }}>
-      <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 8 }}>VID-2a · HLS→WebGL decision — {status}</div>
+      <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 8 }}>VID-2 §0 · HLS→WebGL decision — {status}</div>
 
       {/* Side by side: raw <video> vs the REAL finishing Pipeline */}
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-start", marginBottom: 12 }}>
@@ -383,12 +422,22 @@ export default function HlsWebglDecisionPage() {
         </div>
       </div>
 
+      {/* VID-2 §0 — PLAY (iOS needs the gesture) + the 10s sustained measurement */}
+      <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+        <button onClick={playVideo} style={{ flex: 1, padding: "16px 0", background: "#fff", color: "#000", border: "none", borderRadius: 4, fontSize: 18, fontWeight: 700, fontFamily: "monospace", cursor: "pointer" }}>▶ PLAY</button>
+        <button onClick={startMeasure} disabled={measuring > 0} style={{ flex: 1, padding: "16px 0", background: measuring > 0 ? "#333" : "#4af", color: measuring > 0 ? "#fff" : "#000", border: "none", borderRadius: 4, fontSize: 16, fontWeight: 700, fontFamily: "monospace", cursor: measuring > 0 ? "default" : "pointer" }}>
+          {measuring > 0 ? `MEASURING ${measuring}s…` : "MEASURE 10s"}
+        </button>
+      </div>
+
       {/* Diagnostics — large text */}
       <div style={{ fontSize: 16, lineHeight: 1.7, background: "#0a0a0a", border: "1px solid #222", padding: 14, borderRadius: 4 }}>
+        <div>playback: <b style={{ color: diag.paused === false ? "#3f8" : "#f55" }}>{diag.paused == null ? "—" : diag.paused ? "PAUSED" : "playing"}</b> · t={diag.currentTime}s · readyState={diag.readyState} · rendition={diag.videoDims}</div>
         <div>texImage2D(video): {chip(verdict(diag.texImage2D), diag.texImage2D)}</div>
         <div>drawImage(video):&nbsp; {chip(verdict(diag.drawImage), diag.drawImage)}</div>
         <div>GL upload FPS: <b style={{ color: "#3f8" }}>{diag.glFps ?? "—"}</b> &nbsp;·&nbsp; decode FPS: <b>{diag.decodeFps ?? "n/a"}</b></div>
-        <div style={{ opacity: 0.85 }}>engine: {diag.engine} · video {diag.videoDims} · iOS {ios}</div>
+        <div style={{ color: "#4af" }}>sustained: <b>{diag.sustained ?? "(tap MEASURE 10s)"}</b></div>
+        <div style={{ opacity: 0.85 }}>engine: {diag.engine} · iOS {ios}</div>
         <div style={{ opacity: 0.6, fontSize: 12, wordBreak: "break-all", marginTop: 4 }}>UA: {ua}</div>
         {diag.consoleErrors.length > 0 && (
           <div style={{ marginTop: 8, color: "#f77", fontSize: 13 }}>
