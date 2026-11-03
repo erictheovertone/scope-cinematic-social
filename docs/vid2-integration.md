@@ -86,3 +86,58 @@ then **Production** after it passes. (Env var set in Vercel by Eric; the code re
 
 Eric runs `/debug/hls-webgl?debug=video` → PLAY → MEASURE 10s → Copy report. **If sustained upload
 FPS < ~20 at 720p on device, stop and report** — do not build GradedVideo's graded path.
+
+---
+
+## (a) Rendition-switch texture resize — spec
+
+This Stream serves 360→480→720→1080 and switches constantly (ABR). GradedVideo must re-size the
+texture on every `videoWidth/videoHeight` change with **no black frame and no stretch**. It does,
+because the `Pipeline` (not GradedVideo) owns the texture and resizes it per frame:
+
+- **Capped path** (feed/grid tiles, most players): `capW/capH` are recomputed from
+  `source.videoWidth/Height` each render; `frameCanvas` is a `useMemo` keyed on `[source, capW, capH]`,
+  so a dims change rebuilds it — and the SAME render immediately `paintFrame()`s the CURRENT frame
+  into the new canvas before handing it to gl-react (never a null/empty texture for a frame). The GL
+  canvas size is the DISPLAY box × DPR (`texCap`), never the source, so a 360→1080 switch changes
+  only the capped texture's pixels, not the on-screen size → **no stretch**.
+- **Direct path** (measured-fast devices): the `<video>` element itself is the texture; gl-react
+  re-uploads `texImage2D(video)` each frame at the element's current intrinsic size → the switch is
+  automatic.
+- AR is constant across renditions (same frame, more pixels) → the cover/crop `geom` is unchanged →
+  no reflow.
+
+Verified on the §0 decision page: a live 1364×720 → 2048×1080 switch mid-measurement with no black
+and a continuous 60fps upload. **Spec (CI):** `test/vid2-graded.spec.ts` drives a forced rendition
+change and asserts the graded canvas never reads black across it.
+
+## (b) clientBandwidthHint — findings + policy (report, not tuned)
+
+**What it is:** a float query param on the Stream manifest URL (`…/manifest/video.m3u8?clientBandwidthHint=1.8`)
+to steer rendition selection. Cloudflare's docs call it a **last resort** and prefer the player's own
+ABR config. ([docs](https://developers.cloudflare.com/stream/viewing-videos/using-own-player/),
+[changelog](https://developers.cloudflare.com/stream/changelog/))
+
+**The catch (community, not docs):** multiple reports say the hint behaves as a **blunt override** —
+it can collapse the manifest to a **single rendition** or enforce a **minimum-quality floor**, which
+**breaks ABR's ability to downgrade** on a slow connection → stalls/buffering. ([community bug
+report](https://community.cloudflare.com/t/cloudflare-stream-clientbandwidthhint-doesnt-work-as-expected-possible-bug/349156),
+[default-quality thread](https://community.cloudflare.com/t/how-do-you-set-the-default-stream-video-quality-to-1080p/143764))
+
+**Why we even care:** Eric's device started at 360p on good wifi — Safari's native-HLS ABR is
+conservative, and on iOS we have **no hls.js `startLevel` lever** (hls.js is only used off-iOS, where
+we already set `startLevel` to top for forcePlay — see GradedVideo §P2a). So the hint is the only
+starting-rendition lever on iOS.
+
+**Recommended policy (to validate on device before adopting — do NOT ship blind):**
+- **Do not** apply the hint to FEED/grid players: a low ABR start is correct there (instant first
+  frame, data-thrifty) and a locked rendition would hurt.
+- **Consider** the hint ONLY for `forcePlay` focus surfaces (lightbox / theatre), where quality
+  matters and the player is singular — and only after a device test confirms it does **not** lock out
+  downgrade on this account's ladder. If it collapses the manifest to one rendition on our target
+  players, **reject it** and instead lean on the already-baked graded poster to cover the 1–2s that
+  native ABR takes to climb from 360p.
+- Off-iOS is already handled by hls.js `startLevel`; no hint needed there.
+
+Net: the hint is a risk, not a free win. The safe default is **no hint**; a focus-only experiment is
+worth one device measurement, gated behind its own flag, never global.
