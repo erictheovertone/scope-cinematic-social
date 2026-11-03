@@ -37,6 +37,11 @@ export default function MusicLiveNoticeHost() {
   const router = useRouter();
   const [uuid, setUuid] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
+  // UI-1 — render/exit-delay gate: mounted ONLY while opening, open, or animating out, so the common
+  // "no approved music" case keeps nothing in the DOM — while the slide in/out is preserved.
+  // `render` = in the DOM; `visible` = at the resting position (drives transform/opacity).
+  const [render, setRender] = useState(false);
+  const [visible, setVisible] = useState(false);
   const startedRef = useRef(false);
 
   useEffect(() => {
@@ -63,16 +68,32 @@ export default function MusicLiveNoticeHost() {
     if (go) router.push('/library');
   }, [uuid, router]);
 
+  // Open → mount, then (after the first paint) animate to the resting position. Close → animate out,
+  // then unmount once the 0.4s transform has finished. Not in the DOM at rest.
+  useEffect(() => {
+    if (open) {
+      setRender(true);
+      // Two frames: the browser paints the translateY(100%) start before we flip to 0 → real slide-in.
+      const id = requestAnimationFrame(() => requestAnimationFrame(() => setVisible(true)));
+      return () => cancelAnimationFrame(id);
+    }
+    setVisible(false);
+    const t = setTimeout(() => setRender(false), 450); // > the 0.4s transform → unmount after exit
+    return () => clearTimeout(t);
+  }, [open]);
+
+  if (!render) return null;
+
   return (
     <>
       <div onClick={() => dismiss(false)} style={{
         position: 'fixed', inset: 0, zIndex: 560, backgroundColor: 'rgb(var(--canvas-rgb) / 0.85)',
-        opacity: open ? 1 : 0, pointerEvents: open ? 'auto' : 'none', transition: 'opacity 0.3s ease',
+        opacity: visible ? 1 : 0, pointerEvents: visible ? 'auto' : 'none', transition: 'opacity 0.3s ease',
       }} />
       <div data-testid="music-live-notice" style={{
         position: 'fixed', bottom: 0, left: 0, right: 0, margin: '0 auto', maxWidth: '30rem', zIndex: 561,
         backgroundColor: 'var(--surface-08)', borderTop: '1px solid rgb(var(--ink-rgb) / 0.08)',
-        transform: open ? 'translateY(0)' : 'translateY(100%)', transition: 'transform 0.4s cubic-bezier(0.32, 0.72, 0, 1)',
+        transform: visible ? 'translateY(0)' : 'translateY(100%)', transition: 'transform 0.4s cubic-bezier(0.32, 0.72, 0, 1)',
         padding: '28px 24px calc(40px + var(--safe-bottom))',
       }}>
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>

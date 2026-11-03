@@ -430,6 +430,7 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
       <div
         className="bg-canvas"
         data-swipe-exclude
+        data-testid="post-modal"
         style={{
           position: "fixed",
           inset: 0,
@@ -519,22 +520,20 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
               normal spacing, never pinned to the screen bottom). Brief M1 §2:
               translateX follows the swipe pan. */}
           <div style={{ minHeight: "calc(100vh - 44px)", display: "flex", flexDirection: "column", justifyContent: "center", position: "relative", paddingBottom: onScrollDown ? 72 : 0, transform: `translateX(${dragX}px)`, transition: dragTransition, willChange: dragX !== 0 ? "transform" : "auto" }}>
-            {/* ── Program nav — a slim row DIRECTLY ABOVE the media frame, in the
-                black: ‹ left · counter center · › right (one line, never over
-                the media). An arrow vanishes at its end — the rubber-band. ── */}
+            {/* ── Program nav — a slim row DIRECTLY ABOVE the media frame: ‹ left · › right.
+                UI-1 §1 — the numbering indicator (index / total) is removed. UI-1 §2 — the arrow
+                drop-shadows are removed. UI-1 §5 — 44×44 hit targets (visual glyph unchanged).
+                An arrow vanishes at its end — the rubber-band. ── */}
             {nav && (
               <div style={{ width: "92%", margin: "0 auto 6px", display: "flex", alignItems: "center", justifyContent: "space-between", minHeight: 26 }}>
-                <button onClick={() => nav.onStep(-1)} disabled={nav.index === 0} aria-label="Previous" style={{ background: "transparent", border: "none", cursor: nav.index === 0 ? "default" : "pointer", padding: 4, lineHeight: 0, visibility: nav.index === 0 ? "hidden" : "visible" }}>
+                <button onClick={() => nav.onStep(-1)} disabled={nav.index === 0} aria-label="Previous" style={{ background: "transparent", border: "none", cursor: nav.index === 0 ? "default" : "pointer", minWidth: 44, minHeight: 44, display: "flex", alignItems: "center", justifyContent: "flex-start", padding: 4, lineHeight: 0, visibility: nav.index === 0 ? "hidden" : "visible" }}>
                   {/* Inline SVG — the PNG asset's hairline stroke collapsed to ~0.2px at
                       this size and antialiased to grey-53 (measured); a vector stroke
                       rasterizes at native size = true white. */}
-                  <svg width="13" height="19" viewBox="0 0 11 17" fill="none" style={{ display: "block", filter: "drop-shadow(0 0 2px rgb(var(--ink-rgb) / 0.6))" }}><path d="M8.5 2.5l-6 6 6 6" stroke="var(--ink-100)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                  <svg width="13" height="19" viewBox="0 0 11 17" fill="none" style={{ display: "block" }}><path d="M8.5 2.5l-6 6 6 6" stroke="var(--ink-100)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
                 </button>
-                <span style={{ ...SKR, fontSize: 'var(--fs-8)', color: "rgb(var(--ink-rgb) / 0.5)", letterSpacing: "0.18em", fontVariantNumeric: "tabular-nums" }}>
-                  {nav.index + 1} / {nav.total}
-                </span>
-                <button onClick={() => nav.onStep(1)} disabled={nav.index === nav.total - 1} aria-label="Next" style={{ background: "transparent", border: "none", cursor: nav.index === nav.total - 1 ? "default" : "pointer", padding: 4, lineHeight: 0, visibility: nav.index === nav.total - 1 ? "hidden" : "visible" }}>
-                  <svg width="13" height="19" viewBox="0 0 11 17" fill="none" style={{ display: "block", filter: "drop-shadow(0 0 2px rgb(var(--ink-rgb) / 0.6))" }}><path d="M2.5 2.5l6 6-6 6" stroke="var(--ink-100)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                <button onClick={() => nav.onStep(1)} disabled={nav.index === nav.total - 1} aria-label="Next" style={{ background: "transparent", border: "none", cursor: nav.index === nav.total - 1 ? "default" : "pointer", minWidth: 44, minHeight: 44, display: "flex", alignItems: "center", justifyContent: "flex-end", padding: 4, lineHeight: 0, visibility: nav.index === nav.total - 1 ? "hidden" : "visible" }}>
+                  <svg width="13" height="19" viewBox="0 0 11 17" fill="none" style={{ display: "block" }}><path d="M2.5 2.5l6 6-6 6" stroke="var(--ink-100)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
                 </button>
               </div>
             )}
@@ -666,13 +665,17 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
             {/* Like + comment — the SAME arrangement as the home feed card (heart+count,
                 comment+count) so the card and its lightbox read as one. NO share (not an
                 offered feature — no false affordances). No bookmark/save (ratified: the
-                heart is feeling, COLLECT is conviction). */}
-            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
+                heart is feeling, COLLECT is conviction).
+                UI-1 §5 — the row's controls were ~19px-tall hit targets (icon height only);
+                each now carries minHeight:44 with the glyph vertically centred (visual glyph
+                unchanged — same pattern as the §5 nav arrows). The row itself is 44 tall so the
+                whole cluster, FC/Download chips included, lifts to a thumb-sized target. */}
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14, minHeight: 44 }}>
               {/* Like — pop the inner content, not the button (house rule). */}
               <button
                 onClick={handleLike}
                 disabled={loading || !user}
-                style={{ background: "transparent", border: "none", cursor: user ? "pointer" : "default", display: "flex", alignItems: "center", gap: 4, padding: 0, color: isLiked ? "var(--ink-100)" : "rgb(var(--ink-rgb) / 0.6)" }}
+                style={{ background: "transparent", border: "none", cursor: user ? "pointer" : "default", display: "flex", alignItems: "center", gap: 4, padding: 0, minHeight: 44, color: isLiked ? "var(--ink-100)" : "rgb(var(--ink-rgb) / 0.6)" }}
               >
                 <PressPop><span style={{ display: "flex", alignItems: "center", gap: 4 }}>
                 <svg width="18.7" height="18.7" viewBox="0 0 24 24" fill={isLiked ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
@@ -685,7 +688,7 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
               {/* Comment — icon + count (toggles the comments), matching the feed card. */}
               <button
                 onClick={() => setShowComments((v) => !v)}
-                style={{ background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 4, padding: 0, color: "rgb(var(--ink-rgb) / 0.6)" }}
+                style={{ background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 4, padding: 0, minHeight: 44, color: "rgb(var(--ink-rgb) / 0.6)" }}
               >
                 <PressPop><span style={{ display: "flex", alignItems: "center", gap: 4 }}>
                 <svg width="18.7" height="18.7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -709,7 +712,7 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
               {ownerView && (
                 <button
                   onClick={(e) => { e.stopPropagation(); setOwnerMenuOpen((v) => !v); }}
-                  style={{ background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", padding: 0, marginLeft: "auto" }}
+                  style={{ background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "flex-end", padding: 0, minWidth: 44, minHeight: 44, marginLeft: "auto" }}
                 >
                   <svg width="19.5" height="19.5" viewBox="0 0 24 24" fill="none">
                     <circle cx="5" cy="12" r="1.4" fill={ownerMenuOpen ? "var(--ink-100)" : "rgb(var(--ink-rgb) / 0.6)"} />

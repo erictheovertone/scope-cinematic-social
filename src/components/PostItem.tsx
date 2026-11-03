@@ -307,8 +307,8 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
               handle button so the brass reads at full strength. */}
           <span style={{ display: 'inline-flex', alignItems: 'center', minWidth: 0, maxWidth: '100%' }}>
           <button className="tappable" onClick={(e) => { e.stopPropagation(); router.push('/profile/' + post.username); }} style={{ display: 'inline-flex', alignItems: 'baseline', gap: 4, opacity: 0.66, background: 'none', border: 'none', padding: 0, cursor: 'pointer', minWidth: 0, maxWidth: '100%' }}>
-            <span style={{ fontFamily: 'var(--font-light)', fontWeight: 400, fontSize: 10, color: 'var(--ink-100)', letterSpacing: 'var(--track-wide)', flexShrink: 0 }}>[ at ]</span>
-            <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 12, color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: 'var(--track-body)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{post.username}</span>
+            {/* UI-1 §4 — plain @handle (the "[ at ]" treatment read as confusing); same Haas label. */}
+            <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 12, color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: 'var(--track-body)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>@{post.username}</span>
           </button>
           {authorAug && <AugmentedChip size={12} />}
           </span>
