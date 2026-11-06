@@ -19,11 +19,20 @@ export const maxDuration = 15;
 // create-flow UI enforces a tighter limit; this is only an abuse ceiling.
 const MAX_DURATION_CAP = 300; // 5 min
 
+// VID-2b §3 — the one-time upload URL's lifetime. A 4K/40s clip on a bad connection, with iOS
+// backgrounding and auto-resume, can take well over an hour; Cloudflare's default is far shorter.
+// `expiry` is passed in Upload-Metadata on the CREATE request (RFC3339, base64) — the brief's ≥1h.
+const UPLOAD_URL_TTL_MS = 2 * 60 * 60_000; // 2h
+
 // Upload-Metadata is comma-separated `key <base64(value)>` pairs (lowercase keys).
 // `requiresignedurls` is intentionally OMITTED → posts are PUBLIC today (Brief V1).
 function uploadMetadata(maxDurationSeconds: number, name?: string): string {
   const b64 = (s: string) => Buffer.from(s, 'utf8').toString('base64');
-  const parts = [`maxdurationseconds ${b64(String(maxDurationSeconds))}`];
+  const expiry = new Date(Date.now() + UPLOAD_URL_TTL_MS).toISOString();
+  const parts = [
+    `maxdurationseconds ${b64(String(maxDurationSeconds))}`,
+    `expiry ${b64(expiry)}`, // VID-2b §3 — keep the resumable URL alive long enough for a bad-connection 4K clip
+  ];
   if (name) parts.push(`name ${b64(name)}`);
   return parts.join(',');
 }

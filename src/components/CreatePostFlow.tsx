@@ -401,6 +401,8 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
   const [isUploading, setIsUploading] = useState(false);
   // Brief V2 — Stream TUS upload progress (0–100). Set during the video upload.
   const [uploadPct, setUploadPct] = useState(0);
+  // VID-2b — true while a dropped/backgrounded upload is auto-resuming (flips back on the next byte).
+  const [uploadResuming, setUploadResuming] = useState(false);
   // Brief V2c — the SHOWN value: interpolated toward uploadPct so the big counter ticks
   // 1-by-1 instead of jumping in 5 MiB chunk steps. Never exceeds the real value.
   const [displayPct, setDisplayPct] = useState(0);
@@ -1121,6 +1123,9 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
           streamUid = await uploadVideoToStream(media.file, (frac) => {
             setUploadPct(Math.round(frac * 100));
             if (frac >= 1) setPreparing(true);
+          }, (s) => {
+            // VID-2b — surface "Resuming…" after a backgrounding/network drop (flips back on next byte).
+            setUploadResuming(s.phase === 'resuming');
           });
           vdbg('upload-done', streamUid); // V1e
           console.log('[handlePost] stream upload complete, uid:', streamUid);
@@ -2202,6 +2207,12 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
             ) : (
               <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700, fontSize: 'var(--fs-12)', color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.15em', margin: 0 }}>
                 POSTING...
+              </p>
+            )}
+            {/* VID-2b §4 — reassure the user they can background the app; the upload resumes. */}
+            {!preparing && uploadPct > 0 && (
+              <p style={{ fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400, fontSize: 'var(--fs-10)', color: uploadResuming ? 'var(--ink-100)' : 'rgb(var(--ink-rgb) / 0.5)', margin: 0, textAlign: 'center', maxWidth: 232 }}>
+                {uploadResuming ? 'Resuming…' : 'You can switch apps — it will continue.'}
               </p>
             )}
             <style>{`@keyframes prepIndeterminate { 0% { transform: translateX(-120%); } 100% { transform: translateX(320%); } }`}</style>
