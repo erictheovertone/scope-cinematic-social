@@ -27,6 +27,8 @@ export function UpsellProvider({ children }: { children: ReactNode }) {
   const [celebrate, setCelebrate] = useState(false);
   const [showAug, setShowAug] = useState(false);
   const showAugmented = useCallback(() => { setLimit(null); setShowMembership(false); setShowAug(true); }, []);
+  // Programmatic opener (AUG-2 spec + any non-React caller): `window.dispatchEvent(new Event('scope:open-augmented'))`.
+  useEffect(() => { const h = () => showAugmented(); window.addEventListener('scope:open-augmented', h); return () => window.removeEventListener('scope:open-augmented', h); }, [showAugmented]);
   // CEL-2 — the Augmented welcome film. Raised by an in-app Augmented checkout (AugmentedSheet
   // onJoined, tier from the completed Price) and by a Pro → Augmented upgrade that landed some
   // other way (portal plan change → webhook): membership_tier flipping pro → augmented.

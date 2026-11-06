@@ -10,11 +10,10 @@
 // Completion mirrors MembershipSheet's embedded path: onComplete → confirm-stripe (server writes
 // tier + period) → invalidateMembership → 'scope:pro-activated' (+ 'scope:tier-changed').
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePrivy } from "@privy-io/react-auth";
-import { invalidateMembership } from "@/lib/userService";
 import { forgetTier } from "@/lib/tier";
 import { useIsDesktop } from "@/lib/useIsDesktop";
 import { AugmentedMark } from "@/components/brand/AugmentedMark";
@@ -37,74 +36,33 @@ const BENEFITS = [
   "The Augmented badge on your profile and posts",
 ];
 
-interface EmbeddedCheckoutHandle { mount: (el: string | HTMLElement) => void; destroy: () => void }
-
 export default function AugmentedSheet({ visible, onClose, onJoined }: { visible: boolean; onClose: () => void; onJoined: (tier: "pro" | "augmented") => void }) {
   const { user, login } = usePrivy();
   const isDesktop = useIsDesktop();
   const [plan, setPlan] = useState<Plan>("augmented_annual");
   const [working, setWorking] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [embeddedOpen, setEmbeddedOpen] = useState(false);
-  const embeddedRef = useRef<HTMLDivElement>(null);
-  const checkoutRef = useRef<EmbeddedCheckoutHandle | null>(null);
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => { if (visible) { setPlan("augmented_annual"); setError(null); } }, [visible]);
-  useEffect(() => {
-    if (embeddedOpen && checkoutRef.current && embeddedRef.current) checkoutRef.current.mount(embeddedRef.current);
-  }, [embeddedOpen]);
 
-  const closeEmbedded = () => {
-    try { checkoutRef.current?.destroy(); } catch { /* noop */ }
-    checkoutRef.current = null;
-    setEmbeddedOpen(false);
-    setWorking(false);
-  };
-
+  // AUG-2 — Augmented uses the SAME hosted create-checkout as Pro's non-suite path (window.location):
+  // Apple Pay on checkout.stripe.com + success_url → /membership/success?plan=augmented_<tier>, whose
+  // page confirms → the CEL-2 brass welcome → /profile?upgraded=true. It is never raised fromFinishing,
+  // so there is no embedded path; cancel returns to wherever the sheet was opened. (onJoined is no
+  // longer the celebration trigger — the hosted success page is, like Pro.)
   const join = async () => {
     if (!user) { login(); return; }
     setWorking(true); setError(null);
     try {
-      const res = await fetch("/api/stripe/create-embedded-checkout", {
+      const res = await fetch("/api/stripe/create-checkout", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan, privyUserId: user.id }),
+        body: JSON.stringify({ plan, privyUserId: user.id, cancelPath: window.location.pathname + window.location.search }),
       });
-      const { clientSecret, sessionId, error: err } = await res.json();
-      if (err || !clientSecret) throw new Error(err || "Checkout unavailable");
-      const { loadStripe } = await import("@stripe/stripe-js");
-      const stripe = await loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
-      if (!stripe) throw new Error("Stripe failed to load");
-      const checkout = await stripe.createEmbeddedCheckoutPage({
-        clientSecret,
-        onComplete: () => {
-          try { checkout.destroy(); } catch { /* noop */ }
-          checkoutRef.current = null;
-          setEmbeddedOpen(false);
-          (async () => {
-            try {
-              const r = await fetch("/api/membership/confirm-stripe", {
-                method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sessionId }),
-              });
-              if (!r.ok) throw new Error(`confirm-stripe ${r.status}`);
-              // CEL-2 — the tier the completed Price granted (server-resolved from the price ID).
-              const { tier } = await r.json().catch(() => ({ tier: null }));
-              await invalidateMembership(user.id);
-              window.dispatchEvent(new CustomEvent("scope:pro-activated"));
-              window.dispatchEvent(new CustomEvent("scope:tier-changed"));
-              setWorking(false);
-              onJoined(tier === "pro" ? "pro" : "augmented");
-            } catch (e) {
-              console.error("[augmented] confirm failed:", e);
-              setWorking(false);
-              setError("Payment went through but activation is still pending — refresh in a moment; you won't be charged twice.");
-            }
-          })();
-        },
-      });
-      checkoutRef.current = checkout as unknown as EmbeddedCheckoutHandle;
-      setEmbeddedOpen(true);
+      const { url, error: err } = await res.json();
+      if (err || !url) throw new Error(err || "Checkout unavailable");
+      window.location.href = url;
     } catch (e) {
       setWorking(false);
       setError((e as Error).message || "Checkout failed");
@@ -171,20 +129,6 @@ export default function AugmentedSheet({ visible, onClose, onJoined }: { visible
 
   return createPortal(
     <>
-      {embeddedOpen && (
-        <div data-swipe-exclude style={{ position: "fixed", inset: 0, zIndex: 620, backgroundColor: "var(--surface-1)", display: "flex", flexDirection: "column", overflow: "hidden", paddingTop: "env(safe-area-inset-top, 0px)" }}>
-          <div style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 18px", borderBottom: "1px solid rgb(var(--ink-rgb) / 0.08)" }}>
-            <span style={{ ...BOLD, fontSize: "var(--fs-12)", color: "var(--brass)", textTransform: "uppercase", letterSpacing: "0.06em", display: "inline-flex", gap: 8, alignItems: "center" }}><AugmentedMark width={20} />Augmented Pro</span>
-            <button onClick={closeEmbedded} aria-label="Cancel" style={{ background: "transparent", border: "none", cursor: "pointer", padding: 6, lineHeight: 0 }}>
-              <svg width="19.5" height="19.5" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="var(--ink-100)" strokeWidth="1.5" strokeLinecap="round" /></svg>
-            </button>
-          </div>
-          {/* The fixed outer never scrolls (WebKit iframe hit-target rule) — this child does. */}
-          <div style={{ flex: 1, minHeight: 0, overflowY: "auto", WebkitOverflowScrolling: "touch" }}>
-            <div ref={embeddedRef} style={{ width: "100%", minHeight: "75dvh" }} />
-          </div>
-        </div>
-      )}
       <div data-swipe-exclude onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 600, backgroundColor: "rgb(var(--black-rgb) / 0.85)", opacity: visible ? 1 : 0, pointerEvents: visible ? "auto" : "none", transition: "opacity 0.3s ease" }} />
       {isDesktop ? (
         <div data-swipe-exclude role="dialog" aria-modal="true" aria-label="Augmented Pro" aria-hidden={!visible} {...(visible ? {} : { inert: true })} style={{ position: "fixed", left: "50%", top: "50%", zIndex: 601, width: 420, maxHeight: "90vh", overflowY: "auto", background: "var(--surface-1)", border: `1px solid ${HAIR}`, padding: "28px 24px", color: "var(--ink-100)", opacity: visible ? 1 : 0, pointerEvents: visible ? "auto" : "none", transform: `translate(-50%, ${visible ? "-50%" : "-46%"})`, transition: "opacity 0.25s ease, transform 0.25s ease" }}>{body}</div>
