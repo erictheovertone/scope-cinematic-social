@@ -1,41 +1,26 @@
 'use client';
 
-// ── MusicLiveNoticeHost — the one-time "your music is live" notice (Brief MUS-3 §4) ──────────────
-// Mirrors RecapHost / desktopOnboarding: on the first authenticated load, resolve the viewer's uuid
-// and show a one-time sheet IF the composer has an approved track whose approval is NEWER than the
-// last time we notified them. A TIMESTAMP (profiles.music_live_notified_at), not a boolean, so a
-// composer who ships a SECOND album next year is notified again (its approval post-dates the stamp).
-// Dismiss stamps now(). Shows once per app launch (sessionStorage). Migration-safe: if the column
-// isn't there yet (not run), the read errors → we simply never show (feature off until the column).
+// ── MusicLiveNoticeHost — the one-time "your music is live" notice (Brief MUS-3 §4 / MUS-3a) ──────
+// On the first authenticated load, ask the SERVER whether to show the one-time sheet. The decision
+// AND the stamp live in /api/music/live-notice: the composer has an approved track whose approval is
+// NEWER than profiles.music_live_notified_at → it stamps now() (service role) and returns show:true
+// exactly once. A TIMESTAMP not a boolean, so a second album next year notifies again. Shows once per
+// app launch (sessionStorage).
+//   MUS-3a — the stamp used to be a CLIENT-side supabase.update() under the anon key, which RLS
+//   silently rejected (Privy auth ≠ a Supabase session) while the public read still fired the sheet —
+//   so it showed on every login. The write is now server-side by the resolved uuid, read back + logged.
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { usePrivy } from '@privy-io/react-auth';
-import { getUserByPrivyId } from '@/lib/userService';
-import { supabase } from '@/lib/supabase/client';
 
 const SESSION_KEY = 'scope:music-live-shown'; // evaluate once per app launch
 
 const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
 
-/** The composer has an approved track whose approval post-dates the last notice (or no notice yet). */
-async function shouldShow(userId: string): Promise<boolean> {
-  const { data: t } = await supabase
-    .from('tracks').select('approved_at')
-    .eq('composer_user_id', userId).eq('status', 'approved').not('approved_at', 'is', null)
-    .order('approved_at', { ascending: false }).limit(1).maybeSingle();
-  const approvedAt = (t as { approved_at?: string | null } | null)?.approved_at;
-  if (!approvedAt) return false;
-  const { data: p, error } = await supabase.from('profiles').select('music_live_notified_at').eq('user_id', userId).maybeSingle();
-  if (error) return false; // column not migrated yet → feature off (never fires on a pre-migration DB)
-  const stamp = (p as { music_live_notified_at?: string | null } | null)?.music_live_notified_at;
-  return Date.parse(approvedAt) > (stamp ? Date.parse(stamp) : 0);
-}
-
 export default function MusicLiveNoticeHost() {
-  const { user, authenticated } = usePrivy();
+  const { authenticated, getAccessToken } = usePrivy();
   const router = useRouter();
-  const [uuid, setUuid] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   // UI-1 — render/exit-delay gate: mounted ONLY while opening, open, or animating out, so the common
   // "no approved music" case keeps nothing in the DOM — while the slide in/out is preserved.
@@ -45,28 +30,32 @@ export default function MusicLiveNoticeHost() {
   const startedRef = useRef(false);
 
   useEffect(() => {
-    if (!authenticated || !user || startedRef.current) return;
+    if (!authenticated || startedRef.current) return;
+    startedRef.current = true; // once per app launch, even across auth re-renders
     let alive = true;
     (async () => {
-      const u = await getUserByPrivyId(user.id);
-      if (!alive || !u) return;
-      setUuid(u.id);
-      if (startedRef.current) return;
-      startedRef.current = true;
       // Evaluate once per app launch (a mid-session approval shouldn't pop mid-browse).
       const shown = typeof sessionStorage !== 'undefined' && sessionStorage.getItem(SESSION_KEY) === '1';
       if (shown) return;
       try { sessionStorage.setItem(SESSION_KEY, '1'); } catch { /* private mode */ }
-      if (await shouldShow(u.id)) { if (alive) setOpen(true); }
+      try {
+        const token = await getAccessToken();
+        if (!token || !alive) return;
+        // The server decides AND stamps on show (MUS-3a) — the client only renders the result.
+        const res = await fetch('/api/music/live-notice', { method: 'POST', headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' });
+        if (!res.ok) return;
+        const j = (await res.json()) as { show?: boolean };
+        if (alive && j?.show) setOpen(true);
+      } catch { /* network / private mode → simply don't show this launch */ }
     })();
     return () => { alive = false; };
-  }, [authenticated, user]);
+  }, [authenticated, getAccessToken]);
 
+  // The stamp is written server-side on SHOW (MUS-3a), so closing just dismisses + optionally routes.
   const dismiss = useCallback((go?: boolean) => {
     setOpen(false);
-    if (uuid) void supabase.from('profiles').update({ music_live_notified_at: new Date().toISOString() }).eq('user_id', uuid);
     if (go) router.push('/library');
-  }, [uuid, router]);
+  }, [router]);
 
   // Open → mount, then (after the first paint) animate to the resting position. Close → animate out,
   // then unmount once the 0.4s transform has finished. Not in the DOM at rest.
