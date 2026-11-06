@@ -7,6 +7,7 @@ import { useTheme } from '@/lib/useTheme';
 import AppShell from '@/components/AppShell';
 import { UpsellProvider } from '@/components/UpsellProvider';
 import { EconomyProvider } from '@/components/EconomyProvider';
+import { GradedPlaybackProvider } from '@/components/GradedPlaybackProvider';
 import { TxNarratorProvider } from '@/components/TxNarrator';
 import PostLightboxHost from '@/components/PostLightboxHost';
 import SlideShell from '@/components/SlideShell';
@@ -28,6 +29,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
   return (
     <PrivyProvider appId={PRIVY_APP_ID} config={privyConfig}>
       <EconomyProvider>
+       <GradedPlaybackProvider>
         <TxNarratorProvider>
           <UpsellProvider>
             <Suspense fallback={<div style={{backgroundColor:'var(--canvas)',minHeight:'100dvh'}}/>}>
@@ -46,6 +48,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
             <VideoDebugOverlay />{/* Brief V1e — inert unless ?debug=video or the 5-tap toggle */}
           </UpsellProvider>
         </TxNarratorProvider>
+       </GradedPlaybackProvider>
       </EconomyProvider>
     </PrivyProvider>
   );

@@ -32,7 +32,8 @@ import { feedImage } from "@/lib/mediaUrl";
 import { videoCssFilter, videoOverlays } from "@/lib/editor/videoGrade";
 import { acquireAttach, releaseAttach, onAttachSlotFree, isVideoOverlayActive, onVideoOverlayChange } from "@/lib/videoAttachBudget";
 import { isVideoDebug } from "@/lib/debugFlags";
-import { shouldAttemptGraded } from "@/lib/gradedPlayback"; // VID-2 — the flag gate
+import { shouldAttemptGraded } from "@/lib/gradedPlayback"; // VID-2 — the gate (resolved per viewer)
+import { useGradedPlayback } from "@/components/GradedPlaybackProvider"; // VID-2c — allowlist boolean
 import { setGfx, clearGfx, type GfxMode } from "@/lib/videoGfx"; // VID-2 §3 — the gfx: crumb
 import type HlsType from "hls.js"; // TYPE ONLY (erased) — the runtime import is dynamic (§2)
 
@@ -63,21 +64,22 @@ class PipelineBoundary extends Component<{ onError: () => void; children: React.
 // texture with readable pixels? texImage2D(video) → 1px passthrough draw → readback. Returns true to
 // FALL BACK (GL unavailable, upload errored, or the frame came back BLACK — the protected/unreadable
 // iOS-HLS signature). Cheaper + more reliable than reading the live gl-react canvas (no
-// preserveDrawingBuffer there). Run once per graded player when the first frame is ready.
-function gradedFrameUnreadable(video: HTMLVideoElement): boolean {
+// preserveDrawingBuffer there). Run once per graded player when the first frame is ready. Returns a
+// REASON to fall back ('no-webgl' | 'upload-error' | 'tainted' | 'black-frame') or null (viable).
+function gradedFrameUnreadable(video: HTMLVideoElement): string | null {
   let gl: WebGLRenderingContext | null = null;
   try {
-    if (video.readyState < 2 || !video.videoWidth) return false; // not ready yet — don't decide
+    if (video.readyState < 2 || !video.videoWidth) return null; // not ready yet — don't decide
     const c = document.createElement("canvas"); c.width = 16; c.height = 16;
     gl = (c.getContext("webgl") || c.getContext("experimental-webgl")) as WebGLRenderingContext | null;
-    if (!gl) return true; // no GL → fall back
+    if (!gl) return "no-webgl"; // no GL → fall back
     const tex = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, tex);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, video);
-    if (gl.getError() !== gl.NO_ERROR) return true;
+    if (gl.getError() !== gl.NO_ERROR) return "upload-error";
     const vs = gl.createShader(gl.VERTEX_SHADER)!; gl.shaderSource(vs, "attribute vec2 p;varying vec2 u;void main(){u=p*0.5+0.5;gl_Position=vec4(p,0.,1.);}"); gl.compileShader(vs);
     const fs = gl.createShader(gl.FRAGMENT_SHADER)!; gl.shaderSource(fs, "precision mediump float;varying vec2 u;uniform sampler2D t;void main(){gl_FragColor=texture2D(t,u);}"); gl.compileShader(fs);
     const p = gl.createProgram()!; gl.attachShader(p, vs); gl.attachShader(p, fs); gl.linkProgram(p); gl.useProgram(p);
@@ -85,9 +87,9 @@ function gradedFrameUnreadable(video: HTMLVideoElement): boolean {
     const loc = gl.getAttribLocation(p, "p"); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
     gl.viewport(0, 0, 16, 16); gl.drawArrays(gl.TRIANGLES, 0, 3);
     const px = new Uint8Array(4); gl.readPixels(8, 8, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px);
-    return px[0] + px[1] + px[2] <= 8; // black → unreadable → fall back
+    return px[0] + px[1] + px[2] <= 8 ? "black-frame" : null; // black → unreadable → fall back
   } catch {
-    return true; // any throw (SecurityError on a tainted frame, etc.) → fall back
+    return "tainted"; // any throw (SecurityError on a tainted frame, etc.) → fall back
   } finally {
     gl?.getExtension("WEBGL_lose_context")?.loseContext();
   }
@@ -167,13 +169,16 @@ interface Props {
    *  surfaces should also pass windowStart/windowLength from the post's snippet_start/
    *  snippet_length; when absent, SNIPPET defaults to 0..SNIPPET_WINDOW_LEN. */
   context?: VideoContext;
+  /** VID-2c — force the graded WebGL path regardless of the per-viewer allowlist (debug harness only,
+   *  e.g. /debug/graded?force=1). Production grading is gated by useGradedPlayback(). */
+  forceGraded?: boolean;
 }
 
 export default function GradedVideo({
   url, posterUrl, posterWidth, clipUrl, editParams, cropX = 0, cropY = 0, cropWidth = 1, cropHeight = 1,
   autoplayFlag = false, gridMode = false, forcePlay = false, fullPlayback = false, style, onClick, showSoundToggle = false,
   processing = false, hlsUrl = null, priority = false, minPlayRatio = 0,
-  windowStart = null, windowLength = null, context = 'full', onVideoEl, userPaused = false, inOverlay = false,
+  windowStart = null, windowLength = null, context = 'full', onVideoEl, userPaused = false, inOverlay = false, forceGraded = false,
 }: Props) {
   const isHls = !!hlsUrl; // Brief V3 — the dual-path branch: Stream HLS vs legacy source.
   const id = useId();
@@ -185,6 +190,8 @@ export default function GradedVideo({
   const [playing, setPlaying] = useState(false);         // ACTUAL play state (drives visible output)
   const [failed, setFailed] = useState(false);           // pipeline failure → plain playback
   const [gfxFallback, setGfxFallback] = useState(false);  // VID-2 §3 — GL unviable (no ctx / lost / black frame) → CSS approximation, never a black player
+  const [gfxReason, setGfxReason] = useState<string | null>(null); // VID-2c §4 — why it fell back (crumb)
+  const gradedEnabled = useGradedPlayback();               // VID-2c — this viewer's allowlist boolean
   const [errored, setErrored] = useState(false);         // video element error → poster (contain to this tile)
   const [muted, setMuted] = useState(true);
   const [manualPlay, setManualPlay] = useState(false); // non-autoplay video: user tapped the play affordance
@@ -259,7 +266,7 @@ export default function GradedVideo({
   // CSS approximation — in EVERY play context (feed/grid/scroll/forcePlay), gated the same way by
   // the attach budget (one GL per ACTIVE player, window ±1). OFF (flag off / no look / fallen back)
   // → the exact legacy behaviour: HLS keeps its CSS filter, legacy forcePlay keeps its pipeline.
-  const graded = shouldAttemptGraded(isHls, looked) && !gfxFallback && !failed;
+  const graded = shouldAttemptGraded(isHls, looked, gradedEnabled || forceGraded) && !gfxFallback && !failed;
   const usePipeline = playing && !failed && (graded || (!isHls && effectiveForcePlay && looked));
 
   // Brief V3a §2 — GRADE via the shared video kit (CSS filter + overlay layers), HLS path only AND
@@ -564,17 +571,18 @@ export default function GradedVideo({
   useEffect(() => {
     if (!isHls || !shouldAttach) { clearGfx(id); return; }
     const mode: GfxMode = usePipeline && graded ? 'graded' : 'fallback';
+    const reason = mode === 'fallback' ? (gfxReason ?? undefined) : undefined;
     let raf = 0, frames = 0, last = performance.now();
     const loop = () => {
       frames++;
       const now = performance.now();
-      if (now - last >= 1000) { setGfx(id, mode, (frames * 1000) / (now - last)); frames = 0; last = now; }
+      if (now - last >= 1000) { setGfx(id, mode, (frames * 1000) / (now - last), reason); frames = 0; last = now; }
       raf = requestAnimationFrame(loop);
     };
-    setGfx(id, mode, 0);
+    setGfx(id, mode, 0, reason);
     raf = requestAnimationFrame(loop);
     return () => { cancelAnimationFrame(raf); clearGfx(id); };
-  }, [isHls, shouldAttach, usePipeline, graded, id]);
+  }, [isHls, shouldAttach, usePipeline, graded, gfxReason, id]);
 
   // VID-2 §3 — one-shot viability probe: once a graded player is playing and the first frame is
   // ready, confirm texImage2D(video) yields readable (non-black) pixels; if not, latch gfxFallback so
@@ -588,8 +596,10 @@ export default function GradedVideo({
       if (cancelled || !videoEl) return;
       if (videoEl.readyState < 2 || !videoEl.videoWidth) { window.setTimeout(check, 200); return; } // wait for a frame
       probedSrcRef.current = playbackUrl;
-      if (gradedFrameUnreadable(videoEl)) {
-        if (isVideoDebug()) console.log(`[gfx ${tagRef.current}] graded frame unreadable → CSS fallback`);
+      const reason = gradedFrameUnreadable(videoEl);
+      if (reason) {
+        if (isVideoDebug()) console.log(`[gfx ${tagRef.current}] graded frame unreadable (${reason}) → CSS fallback`);
+        setGfxReason(reason);
         setGfxFallback(true);
       }
     };
@@ -598,7 +608,7 @@ export default function GradedVideo({
   }, [graded, shouldAttach, playing, videoEl, playbackUrl]);
   // Reset the fallback latch on a NEW source (a different post / rendition family), so a fresh player
   // gets a fresh chance (a transient GL hiccup on one post never poisons the next).
-  useEffect(() => { setGfxFallback(false); probedSrcRef.current = null; }, [playbackUrl]);
+  useEffect(() => { setGfxFallback(false); setGfxReason(null); probedSrcRef.current = null; }, [playbackUrl]);
 
   // Measure the container for the cover/crop pipeline geometry.
   useEffect(() => {
@@ -687,7 +697,7 @@ export default function GradedVideo({
         <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
           <div style={{ position: "absolute", left: geom.left, top: geom.top, width: geom.fullW, height: geom.fullH }}>
             <div style={{ width: geom.renderW, height: geom.renderH, transform: geom.upscale !== 1 ? `scale(${geom.upscale})` : undefined, transformOrigin: "top left" }}>
-              <PipelineBoundary onError={() => setFailed(true)}>
+              <PipelineBoundary onError={() => { setGfxReason("pipeline-error"); setFailed(true); }}>
                 <Pipeline source={videoEl} params={params!} width={geom.renderW} height={geom.renderH} activeLut={activeLut} />
               </PipelineBoundary>
             </div>

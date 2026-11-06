@@ -1,21 +1,29 @@
-// ── gradedPlayback — the VID-2 flag (NEXT_PUBLIC_GRADED_PLAYBACK) ────────────────────────────────
-// Option A (finishing shaders at playback) ships behind this flag: OFF everywhere until it's set in
-// Preview, then Production after Eric's on-device FPS pass. OFF → every HLS player keeps today's CSS
-// approximation (the fallback path), byte-for-byte. The gate is intentionally static (flag + "the
-// post actually has a look"): the RUNTIME viability (GL context creation, context-loss, a black first
-// frame) is decided inside GradedVideo, which falls back to CSS and writes a `fallback` gfx crumb —
-// never a black player (Brief VID-2 §3).
+// ── gradedPlayback — the VID-2c allowlist gate (GRADED_PLAYBACK_ALLOWLIST) ───────────────────────
+// Graded WebGL playback (Option A) is gated per ACCOUNT on production by a RUNTIME, SERVER-SIDE env
+// var — NOT a NEXT_PUBLIC_ build-time flag — so Eric can flip who gets it without a redeploy:
 //
-// Read per call (never cached): a NEXT_PUBLIC_ var is inlined at build, so this is a literal compare.
+//   GRADED_PLAYBACK_ALLOWLIST = "overtone"            → just that user
+//   GRADED_PLAYBACK_ALLOWLIST = "overtone,ebert,ava"  → those users
+//   GRADED_PLAYBACK_ALLOWLIST = "*"                    → everyone
+//   (unset / empty)                                    → off for everyone
+//
+// The var is read only in /api/graded-playback (server). The route resolves the signed-in user's
+// username against it and returns a plain boolean; the client caches that boolean (GradedPlaybackProvider)
+// and GradedVideo reads it. Matching is case-insensitive and trims whitespace around each entry.
 
-/** True when graded WebGL playback is enabled for this deploy (NEXT_PUBLIC_GRADED_PLAYBACK=1|true). */
-export function gradedPlaybackEnabled(): boolean {
-  const v = process.env.NEXT_PUBLIC_GRADED_PLAYBACK;
-  return v === '1' || v === 'true';
+/** Pure allowlist check — does `list` admit `username`? Used server-side and unit-tested directly. */
+export function gradedAllowlistAllows(username: string | null | undefined, list: string | null | undefined): boolean {
+  const l = (list ?? "").trim();
+  if (!l) return false;          // unset / empty → off
+  if (l === "*") return true;    // everyone
+  if (!username) return false;   // a named list but no signed-in username → off
+  const u = username.trim().toLowerCase();
+  if (!u) return false;
+  return l.split(",").map((s) => s.trim().toLowerCase()).filter(Boolean).includes(u);
 }
 
-/** Static gate: should this player ATTEMPT graded WebGL playback? (flag ON, it's an HLS source, and
- *  the post carries a real look to apply). Runtime GL success/fallback is decided by GradedVideo. */
-export function shouldAttemptGraded(isHls: boolean, hasLook: boolean): boolean {
-  return gradedPlaybackEnabled() && isHls && hasLook;
+/** The gate GradedVideo uses: attempt graded when enabled for this user, the source is HLS, and the
+ *  post carries a real look. `enabled` is the resolved per-user boolean (allowlist OR a debug force). */
+export function shouldAttemptGraded(isHls: boolean, hasLook: boolean, enabled: boolean): boolean {
+  return enabled && isHls && hasLook;
 }

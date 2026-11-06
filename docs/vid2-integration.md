@@ -68,19 +68,26 @@ or the first drawn frame reads black → drop to the plain `<video>` + today's C
 report `fallback`. The existing `PipelineBoundary` ErrorBoundary already catches a thrown pipeline
 and sets `failed → plain playback`; VID-2 adds the **black-first-frame** probe and the crumb.
 
-## Scaffolded now (survives either gate outcome)
+## The gate (VID-2c — runtime allowlist, per viewer)
 
-- `src/lib/gradedPlayback.ts` — `gradedPlaybackEnabled()` (reads `NEXT_PUBLIC_GRADED_PLAYBACK`) +
-  `shouldAttemptGraded(isHls, hasLook)` (the static gate).
-- `src/lib/videoGfx.ts` — the `gfx:` crumb store: `setGfx(id, 'graded'|'fallback', fps)` /
-  `clearGfx(id)` / `gfxSummary()`. GradedVideo wires it in §1.
-- `VideoDebugOverlay.tsx` — a `gfx:` header line: `<on|off> · <summary>` (flag state + per-player
-  graded/fallback + fps range).
+- `src/lib/gradedPlayback.ts` — `gradedAllowlistAllows(username, list)` (pure, server + unit-tested) +
+  `shouldAttemptGraded(isHls, hasLook, enabled)` (takes the resolved per-viewer boolean).
+- `GET /api/playback/flags` → `{ graded: boolean }` — reads `GRADED_PLAYBACK_ALLOWLIST` at runtime,
+  server-side; resolves the viewer via Privy token → DID → `users.privy_id` → `users.id` →
+  `profiles.username` → allowlist. `*` admits everyone incl. signed-out; unset = off. The list never
+  reaches the client.
+- `src/components/GradedPlaybackProvider.tsx` — fetches that once per viewer into context
+  (`useGradedPlayback()`); defaults OFF until it answers, so no graded→off flash. `GradedVideo` reads it.
+- `src/lib/videoGfx.ts` — the crumb store: `setGfx(id, 'graded'|'fallback', fps, reason?)` /
+  `clearGfx(id)` / `gfxCrumb(allowEnabled)`.
+- `VideoDebugOverlay.tsx` — one phone-readable `gfx:` line:
+  `graded | off (allowlist) | off (no-webgl) | off (fallback: <reason>) | off`.
 
-## Flag rollout (§4)
+## Rollout (§4) — per account on Production
 
-`NEXT_PUBLIC_GRADED_PLAYBACK` — set to `1` in **Preview** first (Eric's device pass on Preview),
-then **Production** after it passes. (Env var set in Vercel by Eric; the code reads it.)
+`GRADED_PLAYBACK_ALLOWLIST` (Vercel → Production): set to `overtone` for Eric's device pass, then `*`
+for everyone. **Env changes need a Redeploy** (no code change). There is NO `NEXT_PUBLIC_` build-time
+flag — exactly one switch, server-read.
 
 ## The gate (§0) decides item 1
 

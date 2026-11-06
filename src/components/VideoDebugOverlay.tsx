@@ -20,8 +20,8 @@ import {
   readLastError,
   type LastError,
 } from '@/lib/videoDebug';
-import { gfxSummary } from '@/lib/videoGfx';
-import { gradedPlaybackEnabled } from '@/lib/gradedPlayback';
+import { gfxCrumb } from '@/lib/videoGfx';
+import { useGradedPlayback } from '@/components/GradedPlaybackProvider';
 
 const BUILD_SHA = process.env.NEXT_PUBLIC_BUILD_SHA || 'dev';
 
@@ -34,6 +34,7 @@ export default function VideoDebugOverlay() {
   const trailRef = useRef<HTMLDivElement>(null);
 
   const snap = useSyncExternalStore(subscribeVideoDebug, getVideoDebugState, getVideoDebugState);
+  const gradedAllowed = useGradedPlayback(); // VID-2c — this viewer's allowlist boolean (for the gfx crumb)
 
   // Brief P0 — ALWAYS-ON (even with the overlay off): record the last crash so it
   // survives the reload and names itself. Must run regardless of `on`.
@@ -121,7 +122,7 @@ export default function VideoDebugOverlay() {
   header.push(`file ${f.sizeMB ?? '–'}MB ${f.container ?? '–'} ${f.res ?? '–'} ${f.durationS ?? '–'}s  fps${f.fps ?? 'n/a'}`);
   header.push(`vid ${r.videosLive} live/${r.videosTotal}  gl ${r.glLive} live/${r.glTotal}  url ${r.urlsLive}/${r.urlsTotal}  cvs ${r.canvasesLive}/${r.canvasesTotal} ${r.canvasMP.toFixed(1)}MP  copy ${r.bigBlobCount}×(${r.bigBlobMB.toFixed(0)}MB)`);
   // Brief VID-2 §3 — graded|fallback per active HLS player + fps (flag state, then the live summary).
-  header.push(`gfx: ${gradedPlaybackEnabled() ? 'on' : 'off'} · ${gfxSummary()}`);
+  header.push(`gfx: ${gfxCrumb(gradedAllowed)}`);
   for (const e of snap.errors) header.push(`err ${e}`);
 
   const crumbLines = snap.crumbs.map((c) => `${c.step}+${c.elapsed.toFixed(1)}·v${c.v} gl:${c.g}${c.detail ? `(${c.detail})` : ''}`);

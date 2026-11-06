@@ -1,16 +1,16 @@
 // ── videoGfx — the VID-2 `gfx:` crumb store ─────────────────────────────────────────────────────
-// Each active HLS player reports how it is rendering: 'graded' (the finishing shaders drive a WebGL
-// canvas) or 'fallback' (today's CSS approximation on the plain <video>), plus its live fps. The
-// ?debug=video overlay reads gfxSummary() so Eric's device trace shows, at a glance, graded|fallback
-// per player + fps — the Brief VID-2 §3 crumb. Byte-inert until a player registers (GradedVideo wires
-// this in §1); until then the overlay shows "gfx: none". Module-level, like vdbgLiveCounts.
+// Each active HLS player reports how it renders: 'graded' (finishing shaders → WebGL canvas) or
+// 'fallback' (CSS approximation on the plain <video>) with a reason. The ?debug=video overlay reads
+// gfxCrumb(allowEnabled) for ONE phone-readable line (VID-2c §4):
+//   gfx: graded | off (allowlist) | off (no-webgl) | off (fallback: <reason>) | off
+// Byte-inert until a player registers (GradedVideo wires this). Module-level, like vdbgLiveCounts.
 export type GfxMode = 'graded' | 'fallback';
 
-const players = new Map<string, { mode: GfxMode; fps: number }>();
+const players = new Map<string, { mode: GfxMode; fps: number; reason?: string }>();
 
-/** A player (by stable id) reports its current render mode + fps. Call on mount and on fps ticks. */
-export function setGfx(id: string, mode: GfxMode, fps: number): void {
-  players.set(id, { mode, fps: Math.round(fps) });
+/** A player (by stable id) reports its render mode + fps, and a reason when it fell back. */
+export function setGfx(id: string, mode: GfxMode, fps: number, reason?: string): void {
+  players.set(id, { mode, fps: Math.round(fps), reason });
 }
 
 /** A player unmounts / releases — drop it from the summary. */
@@ -18,13 +18,14 @@ export function clearGfx(id: string): void {
   players.delete(id);
 }
 
-/** One-line summary for the ?debug=video overlay: counts per mode + fps range. */
-export function gfxSummary(): string {
-  if (players.size === 0) return 'none';
-  const graded: number[] = [];
-  const fallback: number[] = [];
-  for (const { mode, fps } of players.values()) (mode === 'graded' ? graded : fallback).push(fps);
-  const part = (label: string, a: number[]) =>
-    a.length ? `${a.length} ${label} (${Math.min(...a)}–${Math.max(...a)}fps)` : '';
-  return [part('graded', graded), part('fallback', fallback)].filter(Boolean).join(' · ') || 'none';
+/** The single overlay crumb. `allowEnabled` = this viewer's resolved allowlist boolean. A live graded
+ *  player wins; otherwise allowlist-off is the headline; otherwise the first fallback reason. */
+export function gfxCrumb(allowEnabled: boolean): string {
+  const vals = [...players.values()];
+  if (vals.some((v) => v.mode === 'graded')) return 'graded';
+  if (!allowEnabled) return 'off (allowlist)';
+  const fb = vals.find((v) => v.mode === 'fallback' && v.reason);
+  if (fb?.reason === 'no-webgl') return 'off (no-webgl)';
+  if (fb?.reason) return `off (fallback: ${fb.reason})`;
+  return 'off';
 }
