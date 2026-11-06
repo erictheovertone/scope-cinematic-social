@@ -63,3 +63,6 @@ test/shots-mus2/
 # ARR-6 — Arrival closed-state shots (not source)
 test/shots-arr6/
 test/shots-arr7/
+
+# MUS-3b guard self-test fixtures (never committed)
+.guardtest.*

@@ -12,7 +12,7 @@
     "create:matrix": "playwright test test/create-matrix.spec.ts",
     "check:canvas": "node scripts/check-canvas-tokens.mjs",
     "check:theme-black": "node scripts/check-theme-invariant-black.mjs",
-    "check:void-supabase": "node scripts/check-void-supabase.mjs",
+    "check:void-supabase": "node scripts/check-void-supabase.mjs && node scripts/check-void-supabase.mjs --selftest",
     "create:login:test": "AUTH_STATE=${AUTH_STATE:-test/.auth/throwaway.json} node test/create-login.mjs",
     "create:matrix:test": "AUTH_STATE=${AUTH_STATE:-test/.auth/throwaway.json} playwright test test/create-matrix.spec.ts --workers=1",
     "create:restore": "node test/restore-layout.mjs",
