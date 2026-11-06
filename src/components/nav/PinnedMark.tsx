@@ -43,9 +43,30 @@ function Blades({ open, fill, clip, throwX }: { open: boolean; fill: string; cli
 export default function PinnedMark({ visible, rows }: { visible: boolean; rows: PinnedMarkRow[] }) {
   const [open, setOpen] = useState(false);
   const [glitch, setGlitch] = useState(0); // bump to replay the press glitch
+  // NAV-1b — explicit CLOSING state so the menu plays an exit (scale→.55 + fade, 160ms CLOSE_CURVE,
+  // stem retracts) instead of vanishing. `menuRender` = in the DOM; `menuVisible` = at rest (scale 1).
+  // Closing unmounts on the panel's transitionend (with a timeout safety net for reduced-motion).
+  const [menuRender, setMenuRender] = useState(false);
+  const [menuVisible, setMenuVisible] = useState(false);
+  const closeTimer = useRef<number | undefined>(undefined);
   const press = () => setGlitch((g) => g + 1);
   const toggle = useCallback(() => { press(); setOpen((o) => !o); }, []);
   const close = useCallback(() => { setOpen((o) => { if (o) press(); return false; }); }, []);
+
+  // Drive render/visible off `open`: open → mount then (after a paint) grow; close → shrink, then
+  // unmount once the exit transition ends.
+  useEffect(() => {
+    if (open) {
+      if (closeTimer.current) { clearTimeout(closeTimer.current); closeTimer.current = undefined; }
+      setMenuRender(true);
+      const id = requestAnimationFrame(() => requestAnimationFrame(() => setMenuVisible(true)));
+      return () => cancelAnimationFrame(id);
+    }
+    setMenuVisible(false);
+    // Fallback unmount if transitionend never fires (reduced-motion / no transition).
+    closeTimer.current = window.setTimeout(() => setMenuRender(false), 240);
+    return () => { if (closeTimer.current) clearTimeout(closeTimer.current); };
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -66,13 +87,18 @@ export default function PinnedMark({ visible, rows }: { visible: boolean; rows: 
         @keyframes nav-ring-flash { 0% { border-color:${BRASS} } 60% { border-color:${BRASS} } 100% { border-color:rgb(var(--ink-rgb) / 0.18) } }
         @media (prefers-reduced-motion: reduce) {
           .nav-ghost, .nav-main-sk { animation: none !important; }
+          .nav-menu-anim { transition: none !important; } /* NAV-1b — swap instantly (the 240ms fallback unmounts) */
         }
       `}</style>
 
-      {/* Scrim — canvas at 38%, taps close. Below the mark/menu, above page content. */}
-      {open && (
-        <div onClick={close} aria-hidden
-          style={{ position: "fixed", inset: 0, zIndex: 118, background: "rgb(var(--canvas-rgb) / 0.38)", animation: `fadeIn 160ms ${OPEN_CURVE} both` }} />
+      {/* Scrim — canvas at 38%, taps close. Fades in/out with the menu (NAV-1b: no hard cut). */}
+      {menuRender && (
+        <div onClick={close} aria-hidden className="nav-menu-anim"
+          style={{
+            position: "fixed", inset: 0, zIndex: 118, background: "rgb(var(--canvas-rgb) / 0.38)",
+            opacity: menuVisible ? 1 : 0,
+            transition: `opacity ${menuVisible ? "160ms " + OPEN_CURVE : "160ms " + CLOSE_CURVE}`,
+          }} />
       )}
 
       {/* The pinned mark + stem + menu. Fixed top-left, 16px in, below the safe-area inset. */}
@@ -113,18 +139,32 @@ export default function PinnedMark({ visible, rows }: { visible: boolean; rows: 
           </span>
         </button>
 
-        {/* Stem — a 1px hairline (ink 35%) dropping 12px from the mark's bottom-left, then the menu. */}
-        {open && (
+        {/* Stem — a 1px hairline (ink 35%) dropping 12px from the mark's bottom-left, then the menu.
+            NAV-1b: the stem RETRACTS (scaleY→0 from the top) and the menu scales to .55 + fades on the
+            160ms CLOSE_CURVE; the panel's transitionend unmounts the block (transitionend precedes removal). */}
+        {menuRender && (
           <>
-            <div aria-hidden style={{ position: "absolute", left: 21, top: 44, width: 1, height: 12, background: "rgb(var(--ink-rgb) / 0.35)" }} />
-            <div role="menu" data-testid="stem-menu"
+            <div aria-hidden className="nav-menu-anim" style={{
+              position: "absolute", left: 21, top: 44, width: 1, height: 12, background: "rgb(var(--ink-rgb) / 0.35)",
+              transformOrigin: "top", transform: `scaleY(${menuVisible ? 1 : 0})`,
+              transition: `transform ${menuVisible ? "200ms " + OPEN_CURVE : "160ms " + CLOSE_CURVE}`,
+            }} />
+            <div role="menu" data-testid="stem-menu" className="nav-menu-anim"
+              data-menu-state={menuVisible ? "open" : "closing"}
+              onTransitionEnd={(e) => {
+                if (!menuVisible && e.propertyName === "transform") {
+                  if (closeTimer.current) { clearTimeout(closeTimer.current); closeTimer.current = undefined; }
+                  setMenuRender(false);
+                }
+              }}
               style={{
                 position: "absolute", left: 0, top: 56, minWidth: 164,
-                transformOrigin: "top left", animation: `nav-stem-grow 260ms ${OPEN_CURVE} both`,
+                transformOrigin: "top left",
+                transform: `scale(${menuVisible ? 1 : 0.55})`, opacity: menuVisible ? 1 : 0,
+                transition: `transform ${menuVisible ? "260ms " + OPEN_CURVE : "160ms " + CLOSE_CURVE}, opacity ${menuVisible ? "260ms " + OPEN_CURVE : "160ms " + CLOSE_CURVE}`,
                 background: "rgb(var(--canvas-rgb) / 0.78)", WebkitBackdropFilter: "blur(14px)", backdropFilter: "blur(14px)",
                 border: "1px solid rgb(var(--ink-rgb) / 0.18)",
               }}>
-              <style>{`@keyframes nav-stem-grow { from { transform:scale(.55); opacity:0 } to { transform:scale(1); opacity:1 } }`}</style>
               {rows.map((r, i) => (
                 <button key={r.label} type="button" role="menuitem"
                   onClick={() => { press(); setOpen(false); r.onClick(); }}

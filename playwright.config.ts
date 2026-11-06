@@ -11,7 +11,7 @@ const STATE = process.env.AUTH_STATE || 'test/.auth/throwaway.json'; // MX-1 §2
 export default defineConfig({
   testDir: 'test',
   globalSetup: './test/global-setup.ts', // C3 — fail loud on a stale/wrong-origin AUTH_STATE
-  testMatch: /(create-(matrix|perf|shots|color|seam|video|v3|v3-perf)|u2-(shots|light)|profile-post-scroll|arrival|upload-state|mus-aug|mus-aug-shots|mus-2|arr6-shots|aug-welcome|wallet-onramp|arr-7|mus3|arr8-update-prompt|arr8-follow-notif|arr8-receipts|arr8-intro|nav1|ui1|vid2-graded|mus3a)\.spec\.ts/,
+  testMatch: /(create-(matrix|perf|shots|color|seam|video|v3|v3-perf)|u2-(shots|light)|profile-post-scroll|arrival|upload-state|mus-aug|mus-aug-shots|mus-2|arr6-shots|aug-welcome|wallet-onramp|arr-7|mus3|arr8-update-prompt|arr8-follow-notif|arr8-receipts|arr8-intro|nav1|ui1|vid2-graded|mus3a|nav1b)\.spec\.ts/,
   timeout: 120_000,
   retries: 0,
   reporter: [['list'], ['html', { outputFolder: 'test/.report', open: 'never' }]],
