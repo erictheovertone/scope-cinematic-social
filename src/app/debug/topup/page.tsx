@@ -38,6 +38,7 @@ export default function TopupDebug() {
   const [balance, setBalance] = useState<string | null>(null);
   const [working, setWorking] = useState(false);
   const [log, setLog] = useState<string[]>([]);
+  const [logOpen, setLogOpen] = useState(false); // collapsed by default so it never competes for height
   const mountRef = useRef<HTMLDivElement>(null);
   const startBalRef = useRef<number>(0);
   const say = useCallback((m: string) => setLog((l) => [`${new Date().toLocaleTimeString()}  ${m}`, ...l].slice(0, 50)), []);
@@ -105,12 +106,20 @@ export default function TopupDebug() {
     }
   };
 
+  // Reset — unmount the Stripe widget (removes the iframe) so a fresh amount can remount it.
+  const reset = () => { if (mountRef.current) mountRef.current.innerHTML = ""; setStatus(null); setWorking(false); say("reset — widget unmounted"); };
+
   if (!mounted) return <div style={{ minHeight: "100dvh", background: "#050505" }} />;
   if (!gated) return <div style={{ minHeight: "100dvh", background: "#050505", color: "#E5E1DB", fontFamily: "monospace", padding: 24 }}>Append <b>?debug=topup</b> to run /debug/topup.</div>;
 
   const L: React.CSSProperties = { fontFamily: "monospace", color: "#E5E1DB" };
+  const mountedWidget = status != null;
   return (
-    <div style={{ minHeight: "100dvh", background: "#050505", padding: 16, boxSizing: "border-box", ...L }}>
+    // BAL-1e.1 — OWN fixed-inset scroller: html/body are locked (scroll-trap rule), so a plain block
+    // never scrolls and the tall Stripe iframe's accept/continue button sits below the fold. This
+    // height-bounded scroller scrolls on phone + desktop; generous safe-area bottom padding lets the
+    // widget's last button rise above the nav/pill.
+    <div style={{ position: "fixed", inset: 0, overflowY: "auto", WebkitOverflowScrolling: "touch", background: "#050505", boxSizing: "border-box", padding: "16px 16px calc(140px + env(safe-area-inset-bottom, 0px))", ...L }}>
       <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 10 }}>BAL-1e · Stripe EMBEDDED onramp — /debug/topup</div>
       <div style={{ fontSize: 13, lineHeight: 1.7, background: "#0d0d0d", border: "1px solid #222", padding: 12, borderRadius: 4, marginBottom: 12 }}>
         <div>authed: <b style={{ color: authenticated ? "#3f8" : "#f55" }}>{String(authenticated)}</b></div>
@@ -125,11 +134,19 @@ export default function TopupDebug() {
             ${a}
           </button>
         ))}
+        <button onClick={reset} disabled={!mountedWidget}
+          style={{ padding: "16px 14px", background: "transparent", color: mountedWidget ? "#E5E1DB" : "#555", border: "1px solid #444", borderRadius: 4, fontSize: 13, fontWeight: 700, fontFamily: "monospace", cursor: mountedWidget ? "pointer" : "default" }}>
+          RESET
+        </button>
       </div>
-      {/* Stripe injects the onramp iframe here — the entire flow renders inside our page. */}
-      <div ref={mountRef} id="onramp-element" style={{ minHeight: status ? 480 : 0, marginBottom: 12 }} />
-      <div style={{ fontSize: 12, color: "#888", marginBottom: 4 }}>events / log:</div>
-      <pre style={{ fontSize: 11, color: "#aaa", whiteSpace: "pre-wrap", wordBreak: "break-all", margin: 0, maxHeight: "32dvh", overflowY: "auto" }}>{log.join("\n")}</pre>
+      {/* Stripe injects the onramp iframe here — the whole flow renders inside our page. Tall min-height
+          so its own accept/continue buttons have room; no overflow clipping; the page scrolls past it. */}
+      <div ref={mountRef} id="onramp-element" style={{ minHeight: mountedWidget ? 720 : 0, width: "100%", overflow: "visible", marginBottom: 16 }} />
+      {/* Log BELOW the widget + collapsed by default so it never competes for the widget's height. */}
+      <button onClick={() => setLogOpen((v) => !v)} style={{ background: "transparent", border: "none", color: "#888", fontFamily: "monospace", fontSize: 12, cursor: "pointer", padding: 0, marginBottom: 4 }}>
+        {logOpen ? "▾" : "▸"} events / log ({log.length})
+      </button>
+      {logOpen && <pre style={{ fontSize: 11, color: "#aaa", whiteSpace: "pre-wrap", wordBreak: "break-all", margin: 0, maxHeight: "40dvh", overflowY: "auto" }}>{log.join("\n")}</pre>}
     </div>
   );
 }
