@@ -241,7 +241,7 @@ function PostViewerItem({
             // onClick opens the standalone view (taps bubble).
             <GradedVideo
               url={post.media_urls?.[0] ?? ''}
-              posterUrl={(post as any).stream_poster_url ?? (post as any).poster_url ?? (post as any).thumbnail_url}
+              posterUrl={(post as any).poster_url ?? (post as any).stream_poster_url ?? (post as any).thumbnail_url}
               clipUrl={(post as any).autoplay_clip_url}
               editParams={(post as any).edit_params}
               autoplayFlag={(post as any).autoplay !== false}
