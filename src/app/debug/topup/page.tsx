@@ -1,22 +1,30 @@
 "use client";
 
-// ── /debug/topup — Stripe hosted onramp plumbing test (BAL-1h #3) ─────────────────────────────────
-// Debug-gated (?debug=topup). Three amounts → POST /api/onramp/stripe/session → redirect to Stripe's
-// hosted page. On return, poll the embedded wallet's USDC balance via the Alchemy Base RPC every 5s,
-// stop when it increases (deposit landed) or after 10 min. Funnel: topup_opened on mount, topup_started
-// before redirect; topup_completed/failed arrive via the webhook. No product UI.
+// ── /debug/topup — Stripe EMBEDDED Crypto Onramp (BAL-1e) ─────────────────────────────────────────
+// Everything happens on scopeapp.world — NO redirect to crypto.link.com. One mounted widget
+// (@stripe/crypto → createSession(clientSecret).mount()) handles OTP → KYC → payment → delivery inside
+// a Stripe iframe; we only create the locked session (amount/email/wallet prefilled) and read its
+// status events. The "server sequence" (Link auth / OAuth / wallet registration / payment token) in the
+// brief is NOT a real Stripe API — the widget does all of it internally. Appearance supports only
+// { theme } — brand colour/logo/font are Stripe Dashboard branding settings (see the report).
+// Debug-gated (?debug=topup). No product UI.
 import { useEffect, useRef, useState, useCallback } from "react";
 import { usePrivy, useWallets } from "@privy-io/react-auth";
+import { loadStripeOnramp } from "@stripe/crypto";
 import { getEmbeddedAddress } from "@/lib/embeddedWallet";
 import { getUsdcBalance } from "@/lib/wallet";
 import { track } from "@/lib/funnel";
 
-const PENDING_KEY = "scope:topup-pending";
+// Load once outside render (per Stripe's guidance) — the script comes from Stripe's own domains.
+const onrampPromise = loadStripeOnramp(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 const AMOUNTS = [10, 25, 50] as const;
-const POLL_MS = 5000;
-const MAX_MS = 10 * 60 * 1000;
 
-type Pending = { amount: number; startBalance: string; startAt: number };
+// @stripe/crypto's session is loosely typed across versions — the minimal surface we use.
+type OnrampEvt = { payload: { session: { status: string } } };
+type OnrampSession = {
+  mount: (el: HTMLElement | string) => void;
+  addEventListener: (type: string, cb: (e: OnrampEvt) => void) => OnrampSession;
+};
 
 export default function TopupDebug() {
   const { user, authenticated, login } = usePrivy();
@@ -26,22 +34,19 @@ export default function TopupDebug() {
 
   const [mounted, setMounted] = useState(false);
   const [gated, setGated] = useState(false);
+  const [status, setStatus] = useState<string | null>(null);
   const [balance, setBalance] = useState<string | null>(null);
-  const [log, setLog] = useState<string[]>([]);
   const [working, setWorking] = useState(false);
-  const pollRef = useRef<number | undefined>(undefined);
-  const say = useCallback((m: string) => setLog((l) => [`${new Date().toLocaleTimeString()}  ${m}`, ...l].slice(0, 40)), []);
+  const [log, setLog] = useState<string[]>([]);
+  const mountRef = useRef<HTMLDivElement>(null);
+  const startBalRef = useRef<number>(0);
+  const say = useCallback((m: string) => setLog((l) => [`${new Date().toLocaleTimeString()}  ${m}`, ...l].slice(0, 50)), []);
 
   useEffect(() => { setMounted(true); }, []);
-  useEffect(() => {
-    if (!mounted) return;
-    const on = new URLSearchParams(window.location.search).get("debug") === "topup";
-    setGated(on);
-  }, [mounted]);
+  useEffect(() => { if (mounted) setGated(new URLSearchParams(window.location.search).get("debug") === "topup"); }, [mounted]);
 
-  // Balance read + poll-on-return.
   const readBalance = useCallback(async (addr: string) => {
-    try { const b = await getUsdcBalance(addr); setBalance(b); return b; } catch (e) { say(`balance read error: ${(e as Error).message}`); return null; }
+    try { const b = await getUsdcBalance(addr); setBalance(b); return Number(b); } catch (e) { say(`balance error: ${(e as Error).message}`); return null; }
   }, [say]);
 
   useEffect(() => {
@@ -49,37 +54,14 @@ export default function TopupDebug() {
     void readBalance(address);
     track("topup_opened", { address });
     say(`topup_opened · wallet ${address.slice(0, 10)}… · email ${email ?? "(none)"}`);
-
-    // Returning from Stripe with a pending top-up → poll until the balance rises or 10 min.
-    let pending: Pending | null = null;
-    try { const raw = sessionStorage.getItem(PENDING_KEY); if (raw) pending = JSON.parse(raw); } catch { /* */ }
-    if (pending) {
-      say(`returned from Stripe — polling USDC every 5s (expect +${pending.amount}); start ${pending.startBalance}`);
-      const start = Number(pending.startBalance);
-      pollRef.current = window.setInterval(async () => {
-        const b = await readBalance(address);
-        const now = Date.now();
-        if (b != null && Number(b) > start) {
-          const delta = (Number(b) - start).toFixed(2);
-          say(`✓ USDC arrived: +${delta} (balance ${b}) after ${Math.round((now - (pending as Pending).startAt) / 1000)}s`);
-          try { sessionStorage.removeItem(PENDING_KEY); } catch { /* */ }
-          if (pollRef.current) clearInterval(pollRef.current);
-        } else if (now - (pending as Pending).startAt > MAX_MS) {
-          say(`⏱ stopped polling after 10 min — no increase (balance ${b})`);
-          try { sessionStorage.removeItem(PENDING_KEY); } catch { /* */ }
-          if (pollRef.current) clearInterval(pollRef.current);
-        }
-      }, POLL_MS);
-    }
-    return () => { if (pollRef.current) clearInterval(pollRef.current); };
   }, [gated, address, email, readBalance, say]);
 
   const start = async (amount: number) => {
     if (!authenticated) { login(); return; }
     if (!address) { say("no embedded wallet address yet"); return; }
-    setWorking(true);
+    setWorking(true); setStatus(null);
     try {
-      const startBalance = (await readBalance(address)) ?? "0";
+      startBalRef.current = (await readBalance(address)) ?? 0;
       await track("topup_started", { amount, address });
       say(`topup_started $${amount} → creating session…`);
       const { getAccessToken } = await import("@privy-io/react-auth");
@@ -89,40 +71,65 @@ export default function TopupDebug() {
         headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: JSON.stringify({ amount, walletAddress: address, email }),
       });
-      const j = (await res.json()) as { url?: string; error?: string };
-      if (!res.ok || !j.url) { say(`session error: ${j.error ?? res.status}`); setWorking(false); return; }
-      try { sessionStorage.setItem(PENDING_KEY, JSON.stringify({ amount, startBalance, startAt: Date.now() } satisfies Pending)); } catch { /* */ }
-      say(`session created → redirecting to ${j.url.slice(0, 48)}…`);
-      window.location.href = j.url; // same-tab redirect to Stripe's hosted page
+      const j = (await res.json()) as { clientSecret?: string; error?: string };
+      if (!res.ok || !j.clientSecret) { say(`session error: ${j.error ?? res.status}`); setWorking(false); return; }
+
+      const onramp = await onrampPromise;
+      if (!onramp || !mountRef.current) { say("stripe onramp failed to load"); setWorking(false); return; }
+      mountRef.current.innerHTML = ""; // clear any prior mount
+      say("session created → mounting embedded onramp (theme: dark)…");
+      const session = (onramp as unknown as { createSession: (o: unknown) => OnrampSession })
+        .createSession({ clientSecret: j.clientSecret, appearance: { theme: "dark" } });
+      session.addEventListener("onramp_ui_loaded", () => say("onramp_ui_loaded — Stripe widget rendered"));
+      session.addEventListener("onramp_session_updated", (e: OnrampEvt) => {
+        const st = e.payload.session.status;
+        setStatus(st);
+        say(`onramp_session_updated: ${st}`);
+        if (st === "fulfillment_complete") {
+          // the webhook fires topup_completed; here we confirm USDC landed on-chain + time it.
+          const started = Date.now();
+          const poll = window.setInterval(async () => {
+            const b = await readBalance(address);
+            if (b != null && b > startBalRef.current) {
+              say(`✓ USDC landed: +${(b - startBalRef.current).toFixed(2)} after ${Math.round((Date.now() - started) / 1000)}s from fulfillment`);
+              clearInterval(poll);
+            } else if (Date.now() - started > 10 * 60 * 1000) { say("⏱ 10 min, no on-chain increase"); clearInterval(poll); }
+          }, 5000);
+        }
+      });
+      session.mount(mountRef.current);
+      setWorking(false);
     } catch (e) {
       say(`error: ${(e as Error).message}`);
       setWorking(false);
     }
   };
 
-  if (!mounted) return <div style={{ minHeight: "100dvh", background: "#000" }} />;
-  if (!gated) return <div style={{ minHeight: "100dvh", background: "#000", color: "#fff", fontFamily: "monospace", padding: 24 }}>Append <b>?debug=topup</b> to run /debug/topup.</div>;
+  if (!mounted) return <div style={{ minHeight: "100dvh", background: "#050505" }} />;
+  if (!gated) return <div style={{ minHeight: "100dvh", background: "#050505", color: "#E5E1DB", fontFamily: "monospace", padding: 24 }}>Append <b>?debug=topup</b> to run /debug/topup.</div>;
 
-  const L: React.CSSProperties = { fontFamily: "monospace", color: "#fff" };
+  const L: React.CSSProperties = { fontFamily: "monospace", color: "#E5E1DB" };
   return (
-    <div style={{ minHeight: "100dvh", background: "#000", padding: 16, boxSizing: "border-box", ...L }}>
-      <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 10 }}>BAL-1h · Stripe onramp — /debug/topup</div>
-      <div style={{ fontSize: 13, lineHeight: 1.7, background: "#0a0a0a", border: "1px solid #222", padding: 12, borderRadius: 4, marginBottom: 12 }}>
+    <div style={{ minHeight: "100dvh", background: "#050505", padding: 16, boxSizing: "border-box", ...L }}>
+      <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 10 }}>BAL-1e · Stripe EMBEDDED onramp — /debug/topup</div>
+      <div style={{ fontSize: 13, lineHeight: 1.7, background: "#0d0d0d", border: "1px solid #222", padding: 12, borderRadius: 4, marginBottom: 12 }}>
         <div>authed: <b style={{ color: authenticated ? "#3f8" : "#f55" }}>{String(authenticated)}</b></div>
         <div>embedded wallet: <b style={{ color: "#4af", wordBreak: "break-all" }}>{address ?? "—"}</b></div>
         <div>email: <b>{email ?? "—"}</b></div>
-        <div>USDC balance: <b style={{ color: "#3f8" }}>{balance ?? "…"}</b></div>
+        <div>USDC balance: <b style={{ color: "#3f8" }}>{balance ?? "…"}</b> · status: <b style={{ color: "#4af" }}>{status ?? "—"}</b></div>
       </div>
       <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
         {AMOUNTS.map((a) => (
           <button key={a} onClick={() => start(a)} disabled={working || !authenticated}
-            style={{ flex: 1, padding: "16px 0", background: working ? "#333" : "#fff", color: working ? "#fff" : "#000", border: "none", borderRadius: 4, fontSize: 18, fontWeight: 700, fontFamily: "monospace", cursor: working ? "default" : "pointer" }}>
+            style={{ flex: 1, padding: "16px 0", background: working ? "#333" : "#E5E1DB", color: working ? "#fff" : "#050505", border: "none", borderRadius: 4, fontSize: 18, fontWeight: 700, fontFamily: "monospace", cursor: working ? "default" : "pointer" }}>
             ${a}
           </button>
         ))}
       </div>
+      {/* Stripe injects the onramp iframe here — the entire flow renders inside our page. */}
+      <div ref={mountRef} id="onramp-element" style={{ minHeight: status ? 480 : 0, marginBottom: 12 }} />
       <div style={{ fontSize: 12, color: "#888", marginBottom: 4 }}>events / log:</div>
-      <pre style={{ fontSize: 11, color: "#aaa", whiteSpace: "pre-wrap", wordBreak: "break-all", margin: 0, maxHeight: "40dvh", overflowY: "auto" }}>{log.join("\n")}</pre>
+      <pre style={{ fontSize: 11, color: "#aaa", whiteSpace: "pre-wrap", wordBreak: "break-all", margin: 0, maxHeight: "32dvh", overflowY: "auto" }}>{log.join("\n")}</pre>
     </div>
   );
 }

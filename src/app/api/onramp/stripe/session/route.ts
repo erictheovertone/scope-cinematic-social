@@ -51,10 +51,12 @@ export async function POST(req: Request) {
     headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/x-www-form-urlencoded' },
     body: form.toString(),
   });
-  const data = (await res.json()) as { redirect_url?: string; id?: string; error?: { message?: string; code?: string } };
-  if (!res.ok || !data.redirect_url) {
+  const data = (await res.json()) as { redirect_url?: string; client_secret?: string; id?: string; error?: { message?: string; code?: string } };
+  if (!res.ok || !data.client_secret) {
     console.error('[onramp/stripe/session] create failed', { code: data.error?.code, msg: data.error?.message, status: res.status });
     return NextResponse.json({ error: data.error?.message || 'onramp session failed' }, { status: 502 });
   }
-  return NextResponse.json({ url: data.redirect_url, id: data.id });
+  // BAL-1e — EMBEDDED uses client_secret (mounted on our domain, no redirect). The same session object
+  // also carries redirect_url (hosted, BAL-1h); the client picks the embedded path.
+  return NextResponse.json({ clientSecret: data.client_secret, url: data.redirect_url, id: data.id });
 }
