@@ -17,6 +17,7 @@ import { useEconomy } from "@/components/EconomyProvider";
 import TickerMark from "@/components/economy/TickerMark";
 import ScopeLoader from "@/components/ScopeLoader";
 import CollectSheetGate from "@/components/economy/CollectSheetGate";
+import TopUpSheet from "@/components/economy/TopUpSheet";
 import type { Holding } from "@/lib/economy/types";
 import { onTradeSettled } from "@/lib/economy/tradeEvents";
 import { useCountUp } from "@/lib/economy/useCountUp";
@@ -62,6 +63,7 @@ export default function WalletPage() {
   const [funding, setFunding] = useState(false);
   const [fundError, setFundError] = useState<string | null>(null);
   const [fundedNotice, setFundedNotice] = useState(false);
+  const [showTopup, setShowTopup] = useState(false); // BAL-1b top-up sheet
   const buyWithCoinbase = async () => {
     if (funding) return;
     setFunding(true); setFundError(null);
@@ -810,18 +812,21 @@ export default function WalletPage() {
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
             <span style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 12, letterSpacing: "0.04em", textTransform: "uppercase", color: "rgb(var(--ink-rgb) / 0.67)" }}>Add funds</span>
             <button
-              onClick={buyWithCoinbase}
-              disabled={funding}
+              onClick={() => setShowTopup(true)}
               style={{
                 fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 12, letterSpacing: "0.04em", textTransform: "uppercase",
-                padding: "10px 16px", cursor: funding ? "default" : "pointer", border: "none",
+                padding: "10px 22px", cursor: "pointer", border: "none",
                 background: isAugmented ? "var(--brass)" : "var(--ink-100)",
                 color: isAugmented ? "#0A0A0A" : "var(--on-ink)",
               }}
             >
-              {funding ? "Starting…" : "Buy with Coinbase"}
+              Add
             </button>
           </div>
+          {/* BAL-1b — Coinbase is now a quiet secondary; the primary path is the top-up sheet. */}
+          <button onClick={buyWithCoinbase} disabled={funding} style={{ alignSelf: "flex-start", background: "transparent", border: "none", cursor: funding ? "default" : "pointer", padding: 0, fontFamily: "var(--font-medium)", fontWeight: 500, fontSize: 11, color: "rgb(var(--ink-rgb) / 0.5)", textDecoration: "underline" }}>
+            {funding ? "Starting…" : "Other ways to add"}
+          </button>
           {fundError && <span role="alert" style={{ fontFamily: "var(--font-medium)", fontWeight: 500, fontSize: 11, color: "var(--danger)" }}>{fundError}</span>}
           {fundedNotice && <span style={{ fontFamily: "var(--font-medium)", fontWeight: 500, fontSize: 11, color: "rgb(var(--ink-rgb) / 0.6)" }}>Funds on the way — your balance will update shortly.</span>}
         </LedgerCard>
@@ -833,7 +838,7 @@ export default function WalletPage() {
           lives in the header, so the old DIRECT DEPOSIT bar is retired. */}
       <div style={{ display: "flex", gap: 10, margin: "18px 10px 0" }}>
         {([
-          { label: "DEPOSIT", sub: "Add funds to your wallet", onClick: () => walletAddress && fundWallet(walletAddress, { chain: base }) },
+          { label: "DEPOSIT", sub: "Add to your balance", onClick: () => setShowTopup(true) },
           { label: "SWAP", sub: "Convert money on scope", onClick: () => setShowSwap(true) },
           { label: "SEND", sub: "Send to any address", onClick: () => setShowSend(true) },
         ] as const).map((card) => (
@@ -1075,6 +1080,9 @@ export default function WalletPage() {
             showToast(`${a.symbol} added`);
           }}
         />
+
+        {/* BAL-1b — the top-up sheet (dollars only; no collect counts from the wallet). */}
+        <TopUpSheet open={showTopup} onClose={() => setShowTopup(false)} source="wallet" onOtherWays={() => { setShowTopup(false); void buyWithCoinbase(); }} />
 
         {/* SWAP — ETH ⇄ USDC (receipt-true engine; wallet re-reads balances
             through refreshAvailable's floor discipline after a landed swap). */}

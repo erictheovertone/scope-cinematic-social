@@ -10,6 +10,7 @@
 //   both, source_amount is a default the user may still edit, customer_information[email] prefills.
 import { NextResponse } from 'next/server';
 import { callerOf, serviceClient } from '@/lib/serverAuth';
+import { onrampModeFor, secretKeyFor } from '@/lib/onramp/sandbox';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,8 +29,14 @@ export async function POST(req: Request) {
   if (!isAddr(b.walletAddress)) return NextResponse.json({ error: 'valid wallet address required' }, { status: 400 });
   const email = typeof b.email === 'string' && b.email.includes('@') ? b.email : null;
 
-  const key = process.env.STRIPE_SECRET_KEY;
-  if (!key) return NextResponse.json({ error: 'stripe not configured' }, { status: 500 });
+  // BAL-1b §3 — SERVER-decided sandbox switch. Resolve the verified caller's username (never read the
+  // mode from the request); a username in ONRAMP_SANDBOX_USERS → Stripe TEST, else LIVE. A sandbox user
+  // with no test key is a hard error, never a fall-through to the live key.
+  const { data: prof } = await supabase.from('profiles').select('username').eq('user_id', caller.userId).maybeSingle();
+  const mode = onrampModeFor((prof as { username?: string } | null)?.username ?? null, process.env.ONRAMP_SANDBOX_USERS);
+  const resolved = secretKeyFor(mode, process.env);
+  if ('error' in resolved) return NextResponse.json({ error: resolved.error, mode }, { status: mode === 'test' ? 503 : 500 });
+  const key = resolved.key;
 
   // Locked to USDC-on-Base; amount + email prefilled; wallet address locked. metadata carries the
   // uuid so the webhook can attribute topup_started/completed/failed without a token.
@@ -53,10 +60,11 @@ export async function POST(req: Request) {
   });
   const data = (await res.json()) as { redirect_url?: string; client_secret?: string; id?: string; error?: { message?: string; code?: string } };
   if (!res.ok || !data.client_secret) {
-    console.error('[onramp/stripe/session] create failed', { code: data.error?.code, msg: data.error?.message, status: res.status });
-    return NextResponse.json({ error: data.error?.message || 'onramp session failed' }, { status: 502 });
+    console.error(`[onramp/stripe/session] create failed (${mode})`, { code: data.error?.code, msg: data.error?.message, status: res.status });
+    return NextResponse.json({ error: data.error?.message || 'onramp session failed', mode }, { status: 502 });
   }
   // BAL-1e — EMBEDDED uses client_secret (mounted on our domain, no redirect). The same session object
-  // also carries redirect_url (hosted, BAL-1h); the client picks the embedded path.
-  return NextResponse.json({ clientSecret: data.client_secret, url: data.redirect_url, id: data.id });
+  // also carries redirect_url (hosted, BAL-1h); the client picks the embedded path. BAL-1b: `mode` tells
+  // the client which publishable key to load Stripe with (test vs live) — decided here, never trusted from input.
+  return NextResponse.json({ clientSecret: data.client_secret, url: data.redirect_url, id: data.id, mode });
 }

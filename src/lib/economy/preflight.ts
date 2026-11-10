@@ -72,7 +72,7 @@ export async function preflightTrade(args: {
     funds". Inline copy for the sheets' existing red error slots. */
 export function preflightMessage(
   r: Preflight,
-  ctx?: { action?: "back" | "buy" | "sell" | "swap"; ticker?: string | null },
+  ctx?: { action?: "back" | "buy" | "sell" | "swap"; ticker?: string | null; plain?: boolean },
 ): string | null {
   if (r.ok) return null;
   const doing =
@@ -82,6 +82,9 @@ export function preflightMessage(
     : "for this buy";
   switch (r.reason) {
     case "insufficient_usdc":
+      // BAL-1b — `plain` is member-facing copy with no wallet/crypto words (no USDC/fund/wallet):
+      // it is a balance in dollars. Used by the collect sheet.
+      if (ctx?.plain) return `You need ~$${Math.max(0.01, r.shortfallUsd).toFixed(2)} more to collect — add to your balance.`;
       return `You need ~$${Math.max(0.01, r.shortfallUsd).toFixed(2)} more USDC ${doing} — fund your wallet.`;
     case "insufficient_eth":
       return `You need ~${r.shortfallEth.toFixed(5)} more ETH ${doing} — fund your wallet, or pay with USDC.`;

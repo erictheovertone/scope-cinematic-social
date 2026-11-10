@@ -31,6 +31,7 @@ import { streamGradedProps } from "@/lib/editor/videoGrade";
 import type { PostMarket, BuyQuote, SellQuote, TradeCurrency } from '@/lib/economy/types';
 import ApertureMark from '@/components/economy/ApertureMark';
 import TickerMark from '@/components/economy/TickerMark';
+import TopUpSheet from '@/components/economy/TopUpSheet';
 import ScopeLoader from '@/components/ScopeLoader';
 import { getAspectRatio } from '@/lib/aspectRatio';
 import { notifyTradeSettled } from '@/lib/economy/tradeEvents';
@@ -106,6 +107,7 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState<string | null>(null);
   const [tradeError, setTradeError] = useState<string | null>(null);
+  const [showTopup, setShowTopup] = useState(false); // BAL-1b top-up sheet (from a collect)
   // THE CEREMONY — on confirmed collect the red corner brackets SNAP onto the
   // media (the frame motif's third verb: it loads pages, it captures looks —
   // now it claims pieces), the terminal holds a beat, then the sheet returns
@@ -308,7 +310,7 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
             ? { wallet: viewerWallet, requireUsdc: buyQuote?.usdAmount ?? v }
             : { wallet: viewerWallet, requireEth: buyQuote?.ethAmount ?? 0 },
         );
-        if (!pf.ok) { setTradeError(preflightMessage(pf, { action: 'buy' })); return; }
+        if (!pf.ok) { setTradeError(preflightMessage(pf, { action: 'buy', plain: true })); return; }
       }
       const r = await economy.buy(post.id, v, buyCurrency);
       if (r.ok) {
@@ -390,6 +392,11 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
 
   return (
     <>
+      {/* BAL-1b — top-up sheet opened from the collect; amounts labelled in collects at this post's
+          live price (market.priceUsd), preselecting the smallest that covers the collect. */}
+      <TopUpSheet open={showTopup} onClose={() => setShowTopup(false)} source="collect"
+        shortfallUsd={buyQuote?.usdAmount ?? null} pricePerCollect={market?.priceUsd ?? null}
+        onOtherWays={() => { setShowTopup(false); if (viewerWallet) fundWallet(viewerWallet, { chain: base, asset: 'USDC' }); }} />
       <div
         onClick={onClose}
         data-swipe-exclude
@@ -651,10 +658,10 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
                   </button>
                 )}
                 <button
-                  onClick={() => { if (viewerWallet) fundWallet(viewerWallet, { chain: base, asset: 'USDC' }); }}
+                  onClick={() => setShowTopup(true)}
                   style={{ width: '100%', background: 'transparent', border: '1px solid rgb(var(--ink-rgb) / 0.15)', cursor: 'pointer', padding: '11px 0' }}
                 >
-                  <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'rgb(var(--ink-rgb) / 0.6)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>FUND WALLET</span>
+                  <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'rgb(var(--ink-rgb) / 0.6)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Add to balance</span>
                 </button>
               </>
             ) : (

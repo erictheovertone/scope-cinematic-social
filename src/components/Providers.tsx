@@ -15,6 +15,7 @@ import SwipeNav from '@/components/SwipeNav';
 import RecapHost from '@/components/RecapHost';
 import MusicLiveNoticeHost from '@/components/MusicLiveNoticeHost';
 import CoinCreatedSheet from '@/components/coin/CoinCreatedSheet';
+import TopUpPendingHost from '@/components/economy/TopUpPendingHost';
 import ImageRenditionFallback from '@/components/ImageRenditionFallback';
 import UpdatePrompt from '@/components/UpdatePrompt';
 import ViewportDebug from '@/components/ViewportDebug';
@@ -43,6 +44,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
             <RecapHost />
             <MusicLiveNoticeHost />
             <CoinCreatedSheet />{/* CEL-1 — app-root coin-created celebration (store-driven) */}
+            <TopUpPendingHost />{/* BAL-1b — docked top-up wait pill + Slate landing (survives nav) */}
             <ViewportDebug />{/* Brief W2-1b — inert unless ?debug=viewport */}
             <CropDebugOverlay />{/* Brief C1a — inert unless ?debug=crop */}
             <VideoDebugOverlay />{/* Brief V1e — inert unless ?debug=video or the 5-tap toggle */}

@@ -24,17 +24,21 @@ const STATUS_EVENT: Record<string, 'topup_started' | 'topup_completed' | 'topup_
 
 export async function POST(req: Request) {
   const sig = req.headers.get('stripe-signature');
-  const secret = process.env.STRIPE_ONRAMP_WEBHOOK_SECRET;
-  if (!sig || !secret) return NextResponse.json({ error: 'webhook not configured' }, { status: 400 });
+  // BAL-1b §3 — the same endpoint receives both live and TEST onramp webhooks. Accept a signature from
+  // either secret (try each); the event's own `livemode` tells us the mode for the funnel props.
+  const secrets = [process.env.STRIPE_ONRAMP_WEBHOOK_SECRET, process.env.STRIPE_ONRAMP_WEBHOOK_SECRET_TEST].filter(Boolean) as string[];
+  if (!sig || !secrets.length) return NextResponse.json({ error: 'webhook not configured' }, { status: 400 });
   const body = await req.text();
 
-  let event: Stripe.Event;
-  try {
-    event = stripe.webhooks.constructEvent(body, sig, secret);
-  } catch (e) {
-    console.error('[onramp/stripe/webhook] bad signature', (e as Error).message);
+  let event: Stripe.Event | undefined;
+  for (const secret of secrets) {
+    try { event = stripe.webhooks.constructEvent(body, sig, secret); break; } catch { /* try the next secret */ }
+  }
+  if (!event) {
+    console.error('[onramp/stripe/webhook] bad signature (tried live + test secrets)');
     return NextResponse.json({ error: 'bad signature' }, { status: 400 });
   }
+  const mode: 'live' | 'test' = event.livemode ? 'live' : 'test';
 
   // `crypto.onramp_session.updated` is a preview event not in the SDK's typed union — compare as string.
   if ((event.type as string) === 'crypto.onramp_session.updated') {
@@ -45,6 +49,7 @@ export async function POST(req: Request) {
       await serverTrack(serviceClient(), userId, mapped, {
         session: session.id ?? null,
         status: session.status,
+        mode,
         amount: session.metadata?.amount ? Number(session.metadata.amount) : null,
         ...(mapped === 'topup_failed' ? { reason: session.status } : {}),
       });
