@@ -25,10 +25,13 @@ const BASE = {
   // Configure login methods
   loginMethods: ['email', 'google', 'farcaster', 'twitter'] as ('email' | 'google' | 'farcaster' | 'twitter')[],
 
-  // Wallet configuration - auto-create wallets
+  // Wallet configuration - auto-create wallets.
+  // PRIVY-3 (v3 migration): createOnLogin moved under embeddedWallets.ethereum; the deprecated
+  // requireUserPasswordOnCreate was removed. showWalletUIs stays at the embeddedWallets level.
   embeddedWallets: {
-    createOnLogin: 'users-without-wallets' as const,
-    requireUserPasswordOnCreate: false,
+    ethereum: {
+      createOnLogin: 'users-without-wallets' as const,
+    },
     // SIGNING CLARITY (consent without fatigue): Privy's generic confirmation
     // sheets are suppressed for embedded-wallet signing. Consent is collected
     // ONCE by the labeled Scope action the user already took ("CREATE COIN ·

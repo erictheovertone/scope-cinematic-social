@@ -651,7 +651,7 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
                   </button>
                 )}
                 <button
-                  onClick={() => { if (viewerWallet) fundWallet(viewerWallet, { chain: base, asset: 'USDC' }); }}
+                  onClick={() => { if (viewerWallet) fundWallet({ address: viewerWallet, options: { chain: base, asset: 'USDC' } }); }}
                   style={{ width: '100%', background: 'transparent', border: '1px solid rgb(var(--ink-rgb) / 0.15)', cursor: 'pointer', padding: '11px 0' }}
                 >
                   <span style={{ ...SKB, fontSize: 'var(--fs-10)', color: 'rgb(var(--ink-rgb) / 0.6)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>FUND WALLET</span>

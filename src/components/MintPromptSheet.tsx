@@ -210,7 +210,7 @@ export default function MintPromptSheet({ visible, onMint, onSkip, onCoinSkipped
               onClick={() => {
                 // Onramp ETH (native currency) — the reliable fix for a zero-gas
                 // wallet. asset native-currency = ETH on Base (not USDC).
-                if (embeddedWallet) fundWallet(embeddedWallet.address, { chain: base, asset: 'native-currency' });
+                if (embeddedWallet) fundWallet({ address: embeddedWallet.address, options: { chain: base, asset: 'native-currency' } });
               }}
               style={{ width: '100%', background: 'var(--ink-100)', border: 'none', cursor: 'pointer', padding: '14px 0', marginTop: 24, marginBottom: 10 }}
             >
@@ -364,7 +364,7 @@ export default function MintPromptSheet({ visible, onMint, onSkip, onCoinSkipped
                     after funding. */}
                 {sequencePhase === 'backing-failed' && backingFundsLine && (
                   <button
-                    onClick={() => { if (embeddedWallet) fundWallet(embeddedWallet.address, { chain: base, asset: 'USDC' }); }}
+                    onClick={() => { if (embeddedWallet) fundWallet({ address: embeddedWallet.address, options: { chain: base, asset: 'USDC' } }); }}
                     style={{ width: '100%', background: 'transparent', border: '1px solid var(--ink-100)', cursor: 'pointer', padding: '13px 0', marginBottom: 8 }}
                   >
                     <span style={{ ...SKB, fontSize: 'var(--fs-11)', color: 'var(--ink-100)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>FUND WALLET · USDC</span>

@@ -220,7 +220,7 @@ export default function DesktopWallet() {
             {/* Brief D17 — action cards (gradient variant), inline-SVG arrows centered (W2 §4). */}
             <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
               {([
-                { label: 'DEPOSIT', sub: 'Add funds to your wallet', onClick: () => walletAddress && fundWallet(walletAddress, { chain: base }) },
+                { label: 'DEPOSIT', sub: 'Add funds to your wallet', onClick: () => walletAddress && fundWallet({ address: walletAddress, options: { chain: base } }) },
                 { label: 'SWAP', sub: 'Convert money on scope', onClick: () => { setSwapInitial(null); setShowSwap(true); } },
                 { label: 'SEND', sub: 'Send to any address', onClick: () => setSendOpen(true) },
               ] as const).map((card) => (

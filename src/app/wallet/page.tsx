@@ -833,7 +833,7 @@ export default function WalletPage() {
           lives in the header, so the old DIRECT DEPOSIT bar is retired. */}
       <div style={{ display: "flex", gap: 10, margin: "18px 10px 0" }}>
         {([
-          { label: "DEPOSIT", sub: "Add funds to your wallet", onClick: () => walletAddress && fundWallet(walletAddress, { chain: base }) },
+          { label: "DEPOSIT", sub: "Add funds to your wallet", onClick: () => walletAddress && fundWallet({ address: walletAddress, options: { chain: base } }) },
           { label: "SWAP", sub: "Convert money on scope", onClick: () => setShowSwap(true) },
           { label: "SEND", sub: "Send to any address", onClick: () => setShowSend(true) },
         ] as const).map((card) => (
