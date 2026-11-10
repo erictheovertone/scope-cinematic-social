@@ -35,6 +35,7 @@ import { isVideoDebug } from "@/lib/debugFlags";
 import { shouldAttemptGraded } from "@/lib/gradedPlayback"; // VID-2 — the gate (resolved per viewer)
 import { useGradedPlayback } from "@/components/GradedPlaybackProvider"; // VID-2c — allowlist boolean
 import { setGfx, clearGfx, type GfxMode } from "@/lib/videoGfx"; // VID-2 §3 — the gfx: crumb
+import { setPlayState, clearPlayState } from "@/lib/videoPlayState"; // HOME-2 §5 — play-health overlay
 import type HlsType from "hls.js"; // TYPE ONLY (erased) — the runtime import is dynamic (§2)
 
 // Brief V3d — the NEAR window. A card WITHIN ~1.5 viewports (this rootMargin) may attach +
@@ -47,6 +48,12 @@ const NEAR_DWELL_MS = 200;
 // never reaches metadata (a stuck manifest / a silent decode failure). Healthy prebuffers
 // reach metadata well inside it, so it never yanks a working player.
 const ATTACH_VALVE_MS = 1500;
+// HOME-2 — an IN-VIEW card is the one the user is looking at: it keeps its slot through a real cold
+// HLS load (first-metadata measured 1497-1709ms, i.e. OVER the 1500ms prebuffer valve). Only after
+// this long dead-man with still no metadata do we treat it as stuck and release+retry with backoff.
+// The 1500ms valve now applies ONLY to off-screen prebuffer holders.
+const IN_VIEW_LOAD_MS = 12000;
+const RETRY_BASE_MS = 2000, RETRY_MAX_MS = 15000;
 
 const Pipeline = dynamic(() => import("./Pipeline"), { ssr: false });
 
@@ -358,27 +365,49 @@ export default function GradedVideo({
     if (forcePlay || !autoplayFlag || !playbackUrl || errored || (gridMode && !inOverlay && overlayActive) || !(nearStable || inView || coordActive)) { setBufferSlot(false); return; }
     let held = false;
     let valve: number | null = null;
+    let retry: number | null = null;
+    let backoff = RETRY_BASE_MS;
+    let grabbedAt = 0;
     let off: (() => void) | null = null;
-    const grab = () => {
-      if (held || !acquireAttach()) return held;
-      held = true; dlog("slot-acquired"); setBufferSlot(true);
-      // Brief P1e §0 — ATTACH-OR-RELEASE VALVE. A slot must convert to a LOADING source: if the
-      // element hasn't reached metadata (readyState ≥ HAVE_METADATA) within ATTACH_VALVE_MS, the
-      // source is stuck → recycle the slot to a waiter. Keyed on readyState (not `playing`) so a
-      // healthy NEAR-prebuffer — which attaches+buffers WITHOUT playing by design — keeps its slot.
+    // HOME-2 §2 — re-queue on ANY loss of slot while near/in view: no dead ends.
+    const queueWaiter = () => { if (!off) off = onAttachSlotFree(() => { if (grab()) { off?.(); off = null; } }); };
+    // Visibility read from the DOM at FIRE time (not React `inView`, which lags behind a slow IO/render
+    // under load — the lag was making an in-view card's valve arm as a prebuffer and loop every 1500ms).
+    const onScreen = () => { const r = boxRef.current?.getBoundingClientRect(); return !!r && r.top < window.innerHeight && r.bottom > 0; };
+    // Brief P1e §0 + HOME-2 §1 — ATTACH-OR-RELEASE VALVE. A slot must convert to a LOADING source.
+    //  · OFF-SCREEN prebuffer, no metadata in 1500ms → recycle (a stuck background holder can't starve
+    //    the budget) + re-queue.
+    //  · ON-SCREEN (the card the user is looking at) → KEEP the slot through the whole cold load
+    //    (re-arm every 1500ms); only after IN_VIEW_LOAD_MS total with still no metadata is it stuck →
+    //    release + retry with growing backoff. Keyed on readyState ≥ HAVE_METADATA so a healthy
+    //    prebuffer keeps its slot.
+    const armValve = () => {
       valve = window.setTimeout(() => {
         valve = null;
         const v = videoRef.current;
-        if (!held || (v && v.readyState >= 1)) return;
-        dlog("valve-release (no metadata in 1500ms)");
-        releaseAttach(); held = false; setBufferSlot(false);
+        if (!held || (v && v.readyState >= 1)) return; // reached metadata → healthy, keep it
+        if (onScreen()) {
+          if (Date.now() - grabbedAt < IN_VIEW_LOAD_MS) { armValve(); return; } // still loading in view — hold the slot
+          dlog("in-view load stalled → release+retry");
+          releaseAttach(); held = false; setBufferSlot(false);
+          retry = window.setTimeout(() => { backoff = Math.min(backoff * 2, RETRY_MAX_MS); grab(); }, backoff);
+        } else {
+          dlog("valve-release (prebuffer, no metadata in 1500ms)");
+          releaseAttach(); held = false; setBufferSlot(false); queueWaiter();
+        }
       }, ATTACH_VALVE_MS);
+    };
+    const grab = () => {
+      if (held) return true;
+      if (!acquireAttach()) { queueWaiter(); return false; }
+      held = true; grabbedAt = Date.now(); dlog("slot-acquired"); setBufferSlot(true); armValve();
       return true;
     };
-    if (!grab()) off = onAttachSlotFree(() => { if (grab()) off?.(); });
+    grab();
     return () => {
       if (valve) clearTimeout(valve);
-      if (off) off();
+      if (retry) clearTimeout(retry);
+      if (off) { off(); off = null; }
       if (held) { dlog("slot-released"); releaseAttach(); }
     };
   }, [forcePlay, autoplayFlag, playbackUrl, errored, nearStable, inView, coordActive, gridMode, inOverlay, overlayActive]);
@@ -564,6 +593,13 @@ export default function GradedVideo({
       .catch(() => { if (!cancelled) setActiveLut(null); });
     return () => { cancelled = true; };
   }, [effectiveForcePlay, graded, shouldAttach, looked, params?.lutId]);
+
+  // HOME-2 §5 — report play health for the ?debug=video overlay (autoplay feed/grid cards only).
+  useEffect(() => {
+    if (forcePlay || !autoplayFlag) return;
+    setPlayState(id, { inView, playing, errored });
+    return () => clearPlayState(id);
+  }, [id, forcePlay, autoplayFlag, inView, playing, errored]);
 
   // VID-2 §3 — the gfx: crumb (graded|fallback + a coarse fps), for the ?debug=video overlay. Runs
   // only while a graded player is actually displaying the pipeline; cleared on teardown. A light rAF

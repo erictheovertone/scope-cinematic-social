@@ -11,18 +11,22 @@
 // holder because callers release from a React effect CLEANUP (runs on unmount + dep
 // change). The count can never go negative.
 
-const MAX_ATTACHED = 3;
+// HOME-2 §4 — cap by surface, set in ONE place. Phone keeps 3 (one-decoder discipline); desktop
+// covers every video on a 1440/2560 masonry screen (ceiling 8) so in-view players aren't starved at 3.
+function maxAttached(): number {
+  return typeof window !== "undefined" && window.innerWidth >= 1024 ? 8 : 3;
+}
 
 let attached = 0;
 const waiters = new Set<() => void>();
 
 // Brief P1a — dev-only paired-count trace (strip-safe): confirm acquire/release stay
 // symmetric across N attach→destroy cycles (the count must return to 0, never leak/negative).
-const budgetLog = (op: string) => { if (process.env.NODE_ENV !== "production") console.log(`[attach-budget] ${op} → ${attached}/${MAX_ATTACHED}`); };
+const budgetLog = (op: string) => { if (process.env.NODE_ENV !== "production") console.log(`[attach-budget] ${op} → ${attached}/${maxAttached()}`); };
 
 /** Try to take an attach slot. Returns true if granted. */
 export function acquireAttach(): boolean {
-  if (attached >= MAX_ATTACHED) {
+  if (attached >= maxAttached()) {
     // Brief M10c — log DENIALS (not just grants): a starved surface (e.g. Mirage cells
     // blocked by a still-mounted feed holding all slots) is invisible without this.
     budgetLog("DENIED (full)");

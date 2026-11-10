@@ -21,6 +21,7 @@ import {
   type LastError,
 } from '@/lib/videoDebug';
 import { gfxCrumb } from '@/lib/videoGfx';
+import { playSummary } from '@/lib/videoPlayState';
 import { useGradedPlayback } from '@/components/GradedPlaybackProvider';
 
 const BUILD_SHA = process.env.NEXT_PUBLIC_BUILD_SHA || 'dev';
@@ -123,6 +124,8 @@ export default function VideoDebugOverlay() {
   header.push(`vid ${r.videosLive} live/${r.videosTotal}  gl ${r.glLive} live/${r.glTotal}  url ${r.urlsLive}/${r.urlsTotal}  cvs ${r.canvasesLive}/${r.canvasesTotal} ${r.canvasMP.toFixed(1)}MP  copy ${r.bigBlobCount}×(${r.bigBlobMB.toFixed(0)}MB)`);
   // Brief VID-2 §3 — graded|fallback per active HLS player + fps (flag state, then the live summary).
   header.push(`gfx: ${gfxCrumb(gradedAllowed)}`);
+  // HOME-2 §5 — autoplay play-health: in view / playing / waiting / gave-up.
+  header.push(`play: ${playSummary()}`);
   for (const e of snap.errors) header.push(`err ${e}`);
 
   const crumbLines = snap.crumbs.map((c) => `${c.step}+${c.elapsed.toFixed(1)}·v${c.v} gl:${c.g}${c.detail ? `(${c.detail})` : ''}`);
