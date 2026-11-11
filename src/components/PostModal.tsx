@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { feedImage } from "@/lib/mediaUrl";
+import { videoPosterSources } from "@/lib/editor/videoGrade";
 import { useRouter } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
 import {
@@ -564,7 +565,7 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
                   <GradedVideo
                     postId={(post as { id?: string }).id}
                     url={post.media_urls?.[0] ?? ''}
-                    posterUrl={(post as { stream_poster_url?: string | null }).stream_poster_url ?? post.poster_url ?? post.thumbnail_url}
+                    {...videoPosterSources(post as unknown as Record<string, unknown>)}
                     editParams={post.edit_params}
                     cropX={post.crop_x ?? 0} cropY={post.crop_y ?? 0} cropWidth={post.crop_width ?? 1} cropHeight={post.crop_height ?? 1}
                     forcePlay

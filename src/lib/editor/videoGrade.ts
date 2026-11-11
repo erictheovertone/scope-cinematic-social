@@ -44,9 +44,28 @@ export const VIDEO_GRADE = {
 
 const num = (v: unknown, d = 0): number => (typeof v === "number" && isFinite(v) ? v : d);
 
+// HOME-3 §C.2 + addendum — the resting/cover still sources every video surface hands GradedVideo.
+// Spread it: `<GradedVideo {...videoPosterSources(post)} {...streamGradedProps(post)} ... />`.
+// GradedVideo owns the per-context choice (autoplay → start frame; else → hero poster) and the raw
+// Stream fallback (crop geometry + grade approximation + frame time). So NO surface composes a poster
+// precedence any more — the single landmine that let a raw/ungraded frame onto the feed is gone.
+export function videoPosterSources(post: Record<string, unknown> | null | undefined): {
+  posterUrl: string | null; startPosterUrl: string | null; streamPosterUrl: string | null; thumbnailUrl: string | null;
+} {
+  const s = (k: string): string | null => {
+    const v = post?.[k];
+    return typeof v === "string" && v ? v : null;
+  };
+  return {
+    posterUrl: s("poster_url"),           // baked HERO frame — graded + cropped
+    startPosterUrl: s("start_poster_url"), // baked START frame — graded + cropped (addendum; may be absent pre-migration)
+    streamPosterUrl: s("stream_poster_url"), // raw Stream thumbnail — fallback
+    thumbnailUrl: s("thumbnail_url"),      // custom/auto thumbnail — last resort
+  };
+}
+
 // Brief V3a §1 — the Stream props every video surface passes to GradedVideo. Spread it:
-// `<GradedVideo {...streamGradedProps(post)} ... />`. Poster fallback still done per-site
-// (it composes with the surface's own poster chain): stream_poster_url ?? poster_url ?? thumbnail_url.
+// `<GradedVideo {...streamGradedProps(post)} ... />`.
 export function streamGradedProps(post: Record<string, unknown> | null | undefined): { processing: boolean; hlsUrl: string | null } {
   const status = post?.video_status as string | undefined;
   return {

@@ -10,7 +10,7 @@ import PostModal from "@/components/PostModal";
 import PillarboxFrame from "@/components/PillarboxFrame";
 import ScopeLoader from "@/components/ScopeLoader";
 import GradedVideo from "@/components/finishing/GradedVideo";
-import { streamGradedProps } from "@/lib/editor/videoGrade";
+import { streamGradedProps, videoPosterSources } from "@/lib/editor/videoGrade";
 import { getAspectRatio } from "@/lib/aspectRatio";
 
 const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
@@ -129,7 +129,7 @@ function MirageLightbox({
               <PillarboxFrame onClick={onOpenModal} cursor="pointer">
                 <GradedVideo
                   url={post.media_urls?.[0] ?? ""}
-                  posterUrl={(post as { stream_poster_url?: string | null }).stream_poster_url ?? post.poster_url ?? post.thumbnail_url}
+                  {...videoPosterSources(post as unknown as Record<string, unknown>)}
                   posterWidth={1200}
                   clipUrl={post.autoplay_clip_url}
                   editParams={post.edit_params}
@@ -144,7 +144,7 @@ function MirageLightbox({
             ) : (
               <GradedVideo
                 url={post.media_urls?.[0] ?? ""}
-                posterUrl={(post as { stream_poster_url?: string | null }).stream_poster_url ?? post.poster_url ?? post.thumbnail_url}
+                {...videoPosterSources(post as unknown as Record<string, unknown>)}
                 posterWidth={1200}
                 clipUrl={post.autoplay_clip_url}
                 editParams={post.edit_params}
@@ -391,7 +391,7 @@ export default function MirageView({ onClose, desktop = false }: { onClose: () =
                     <PillarboxFrame>
                       <GradedVideo
                         url={post.media_urls?.[0] ?? ""}
-                        posterUrl={(post as { stream_poster_url?: string | null }).stream_poster_url ?? post.poster_url ?? post.thumbnail_url}
+                        {...videoPosterSources(post as unknown as Record<string, unknown>)}
                         posterWidth={600}
                         postId={post.id}
                         clipUrl={post.autoplay_clip_url}
@@ -409,7 +409,7 @@ export default function MirageView({ onClose, desktop = false }: { onClose: () =
                   ) : (
                     <GradedVideo
                       url={post.media_urls?.[0] ?? ""}
-                      posterUrl={(post as { stream_poster_url?: string | null }).stream_poster_url ?? post.poster_url ?? post.thumbnail_url}
+                      {...videoPosterSources(post as unknown as Record<string, unknown>)}
                       posterWidth={600}
                         postId={post.id}
                       clipUrl={post.autoplay_clip_url}

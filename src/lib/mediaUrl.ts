@@ -59,13 +59,17 @@ function renditionFor(width: number): number {
 // (never through here), so minted-forever metadata stays untransformed.
 const STREAM_THUMB = /\.cloudflarestream\.com\/[^/]+\/thumbnails\/thumbnail\.(?:jpg|gif)/i;
 
-export function feedImage(url: string | null | undefined, width: number, _quality = 78): string {
+export function feedImage(url: string | null | undefined, width: number, _quality = 78, timeSec?: number): string {
   if (!url) return url ?? '';
   if (STREAM_THUMB.test(url)) {
     // Cloudflare Stream thumbnails 400 above ~2000px on a side — cap app-wide here (feedImage is
     // the single source of Stream-thumbnail sizing) so no caller can request a 400'd width.
     const w = Math.min(Math.round(width), 2000);
-    return `${url.split('?')[0]}?width=${w}&height=${w}&fit=clip`;
+    // HOME-3 §C.3 — a video surface may request a specific FRAME (time=): the START frame (0 /
+    // snippet_start) where the video autoplays, the hero time elsewhere. Default (unset) keeps
+    // Stream's own default thumbnail time.
+    const t = timeSec != null && timeSec > 0 ? `&time=${timeSec}s` : '';
+    return `${url.split('?')[0]}?width=${w}&height=${w}&fit=clip${t}`;
   }
   // Foreign hosts / already-transformed URLs lack the object marker → untouched.
   if (!url.includes(PUBLIC_OBJECT)) return url;

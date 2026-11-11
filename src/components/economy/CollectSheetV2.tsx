@@ -26,7 +26,7 @@ import { sanitizeDecimalInput } from '@/lib/amountInput'; // C3-15: comma/period
 import { economyPreviewEnabled } from '@/lib/economy/flag';
 import FirstCutFlourish from '@/components/economy/FirstCutFlourish';
 import GradedVideo from '@/components/finishing/GradedVideo';
-import { streamGradedProps } from "@/lib/editor/videoGrade";
+import { streamGradedProps, videoPosterSources } from "@/lib/editor/videoGrade";
 import type { PostMarket, BuyQuote, SellQuote, TradeCurrency } from '@/lib/economy/types';
 import ApertureMark from '@/components/economy/ApertureMark';
 import TickerMark from '@/components/economy/TickerMark';
@@ -463,7 +463,8 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
           const mediaSrc = isVideo
             ? (post.poster_url || post.thumbnail_url || null)
             : (post.media_urls?.[0] || null);
-          const videoPoster = (post as { stream_poster_url?: string | null }).stream_poster_url ?? post.poster_url ?? post.thumbnail_url ?? null;
+          // HOME-3 §C.2 — hero-first for the CLOSED-sheet cover (a non-autoplay context).
+          const videoPoster = post.poster_url ?? (post as { stream_poster_url?: string | null }).stream_poster_url ?? post.thumbnail_url ?? null;
           const arCss = getAspectRatio(post.layout_id ?? '');
           const arNum = (() => {
             const [w, h] = String(arCss).split('/').map((x) => parseFloat(x));
@@ -493,7 +494,7 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
                 visible ? (
                   <GradedVideo
                     url={post.media_urls?.[0] ?? ''}
-                    posterUrl={videoPoster}
+                    {...videoPosterSources(post as unknown as Record<string, unknown>)}
                     clipUrl={post.autoplay_clip_url ?? null}
                     editParams={post.edit_params}
                     cropX={post.crop_x ?? 0}

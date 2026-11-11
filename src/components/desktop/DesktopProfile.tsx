@@ -31,7 +31,7 @@ import DesktopBadgesSheet from '@/components/desktop/DesktopBadgesSheet';
 import CollectedGrid from '@/components/economy/CollectedGrid';
 import TheatreMode from '@/components/TheatreMode';
 import GradedVideo from '@/components/finishing/GradedVideo';
-import { streamGradedProps } from "@/lib/editor/videoGrade";
+import { streamGradedProps, videoPosterSources } from "@/lib/editor/videoGrade";
 import DesktopPostView from '@/components/desktop/DesktopPostView';
 import FilmstripIndicator from '@/components/FilmstripIndicator';
 import { resolveLayout, ratioForAspect, DESKTOP_COUNTS, type AspectId } from '@/lib/layoutModel';
@@ -586,7 +586,7 @@ export default function DesktopProfile({ userId, privyId, isOwn }: Props) {
                        gridMode = 0-bytes off-screen. */
                     <GradedVideo
                       url={(p.media_urls as string[])?.[0] ?? ''}
-                      posterUrl={((p as { stream_poster_url?: string | null }).stream_poster_url ?? src) || null}
+                      {...videoPosterSources(p as unknown as Record<string, unknown>)}
                       clipUrl={(p.autoplay_clip_url as string) ?? null}
                       editParams={p.edit_params}
                       autoplayFlag={p.autoplay !== false}

@@ -17,6 +17,7 @@ import { feedImage } from '@/lib/mediaUrl';
 import { getAspectRatio, ratioPadding } from '@/lib/aspectRatio';
 import PillarboxFrame from '@/components/PillarboxFrame';
 import GradedVideo from '@/components/finishing/GradedVideo';
+import { videoPosterSources } from '@/lib/editor/videoGrade';
 import { useIsDesktop } from '@/lib/useIsDesktop';
 import DesktopScreeningRoom from '@/components/desktop/DesktopScreeningRoom';
 import TheatreMode from '@/components/TheatreMode';
@@ -227,7 +228,7 @@ function MobileScreeningRoom() {
               // ~4s clips. Reduced-motion still falls through to the static poster below.
               <GradedVideo
                 url={p.media_urls?.[0] ?? ''}
-                posterUrl={(p as { stream_poster_url?: string | null }).stream_poster_url ?? p.poster_url ?? p.thumbnail_url}
+                {...videoPosterSources(p as unknown as Record<string, unknown>)}
                 posterWidth={750}
                 clipUrl={p.autoplay_clip_url}
                 cropX={p.crop_x ?? 0} cropY={p.crop_y ?? 0} cropWidth={p.crop_width ?? 1} cropHeight={p.crop_height ?? 1}

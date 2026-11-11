@@ -17,7 +17,7 @@ import { getAspectRatio } from '@/lib/aspectRatio';
 import { feedImage } from '@/lib/mediaUrl';
 import { getPostLikes, getPostComments } from '@/lib/postsService';
 import GradedVideo from '@/components/finishing/GradedVideo';
-import { streamGradedProps } from "@/lib/editor/videoGrade";
+import { streamGradedProps, videoPosterSources } from "@/lib/editor/videoGrade";
 import FirstCutChip from '@/components/economy/FirstCutChip';
 import CollectSheetGate from '@/components/economy/CollectSheetGate';
 import TheatreMode from '@/components/TheatreMode';
@@ -121,7 +121,7 @@ export default function DesktopScreeningRoom() {
   // Stage media (image → feedImage 1600; video → graded muted autoplay), letterboxed.
   const stageMedia = (p: NonNullable<RoomRow['post']>) => {
     if (p.media_type === 'video') {
-      return <GradedVideo url={p.media_urls?.[0] ?? ''} posterUrl={(p as { stream_poster_url?: string | null }).stream_poster_url ?? p.poster_url ?? p.thumbnail_url} posterWidth={1600} clipUrl={p.autoplay_clip_url}
+      return <GradedVideo url={p.media_urls?.[0] ?? ''} {...videoPosterSources(p as unknown as Record<string, unknown>)} posterWidth={1600} clipUrl={p.autoplay_clip_url}
         cropX={p.crop_x ?? 0} cropY={p.crop_y ?? 0} cropWidth={p.crop_width ?? 1} cropHeight={p.crop_height ?? 1}
         autoplayFlag={p.autoplay !== false} forcePlay {...streamGradedProps(p as unknown as Record<string, unknown>)} style={{ width: '100%', height: '100%' }} />;
     }

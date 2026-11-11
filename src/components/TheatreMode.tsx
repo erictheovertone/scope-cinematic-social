@@ -34,6 +34,7 @@ import CollectSheetGate from '@/components/economy/CollectSheetGate';
 import FirstCutLedger from '@/components/economy/FirstCutLedger';
 import DownloadAction from '@/components/DownloadAction';
 import GradedVideo from '@/components/finishing/GradedVideo';
+import { videoPosterSources } from '@/lib/editor/videoGrade';
 import { feedImage } from '@/lib/mediaUrl';
 import MusicWaveButton from '@/components/music/MusicWaveButton';
 import MediaRenderer from '@/components/MediaRenderer';
@@ -454,7 +455,7 @@ export default function TheatreMode({
           {vid ? (
             <GradedVideo
               url={url ?? ''}
-              posterUrl={(f(p, 'stream_poster_url') || pstr) ?? null}
+              {...videoPosterSources(p as unknown as Record<string, unknown>)}
               posterWidth={THEATRE_IMG_WIDTH}
               clipUrl={f(p, 'autoplay_clip_url') ?? null}
               editParams={p['edit_params']}

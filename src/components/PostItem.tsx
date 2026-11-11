@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, memo } from "react";
 import { feedImage } from "@/lib/mediaUrl";
+import { videoPosterSources } from "@/lib/editor/videoGrade";
 import { useRouter } from "next/navigation";
 import FirstCutChip from "@/components/economy/FirstCutChip";
 import PressPop from "@/components/PressPop";
@@ -339,7 +340,7 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
     <GradedVideo
       postId={post.id}
       url={post.media_urls?.[0]}
-      posterUrl={post.poster_url ?? (post as { stream_poster_url?: string | null }).stream_poster_url ?? post.thumbnail_url}
+      {...videoPosterSources(post as unknown as Record<string, unknown>)}
       posterWidth={750}
       clipUrl={post.autoplay_clip_url}
       editParams={post.edit_params}

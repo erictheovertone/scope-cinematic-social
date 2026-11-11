@@ -20,35 +20,44 @@ function maxAttached(): number {
 
 let attached = 0;
 const waiters = new Set<() => void>();
-// HOME-5 §4 — each slot holder reports whether it is ON SCREEN and how to EVICT it. An on-screen
-// requester that hits a full budget preempts an off-screen holder: on-screen always beats prebuffer,
-// so a hidden/background player can never starve a card the member is looking at.
-export type AttachHolder = { onScreen: () => boolean; evict: () => void };
+// HOME-5 §4 / HOME-3 §E — each slot holder reports a VISIBILITY SCORE (fraction of the card on
+// screen now, 0 = off-screen) and how to EVICT it. A requester that hits a full budget preempts the
+// LEAST-visible current holder when the requester beats it by a clear margin: a card the member is
+// looking at always beats a prebuffer (score 0), AND a more-visible on-screen card beats a
+// less-visible on-screen holder (the phone-cap-3 case — a 4th fully-visible card was denied behind
+// three others, one of them scrolling off). The margin stops two similarly-visible cards trading
+// the slot back and forth.
+export type AttachHolder = { score: () => number; evict: () => void };
 const holders = new Set<AttachHolder>();
+const PREEMPT_MARGIN = 0.15; // requester must beat the weakest holder by this visible-fraction
 
 // Brief P1a — dev-only paired-count trace (strip-safe): confirm acquire/release stay
 // symmetric across N attach→destroy cycles (the count must return to 0, never leak/negative).
 const budgetLog = (op: string) => { if (process.env.NODE_ENV !== "production") console.log(`[attach-budget] ${op} → ${attached}/${maxAttached()}`); };
 
-/** Try to take an attach slot for `holder`. Grants if room; else an ON-SCREEN holder preempts an
- *  OFF-SCREEN one (HOME-5 §4); else denies. */
+/** Try to take an attach slot for `holder`. Grants if room; else the requester preempts the
+ *  LEAST-visible current holder when it beats that holder's score by PREEMPT_MARGIN (HOME-5 §4 +
+ *  HOME-3 §E — generalised from off-screen-only to least-visible); else denies. */
 export function acquireAttach(holder: AttachHolder): boolean {
   if (attached < maxAttached()) {
     attached += 1; holders.add(holder);
     budgetLog("acquire"); pushTrace(`budget acquire ${attached}/${maxAttached()}`); // HOME-4
     return true;
   }
-  // Full. An on-screen requester preempts the first off-screen holder it finds.
-  if (holder.onScreen()) {
-    let victim: AttachHolder | undefined;
-    for (const h of holders) { if (!h.onScreen()) { victim = h; break; } }
-    if (victim) {
-      holders.delete(victim); attached -= 1; // free the victim's slot…
-      victim.evict();                        // …and tell it to tear down (idempotent vs its own release)
-      attached += 1; holders.add(holder);
-      budgetLog("preempt"); pushTrace(`budget preempt ${attached}/${maxAttached()}`); // HOME-5
-      return true;
-    }
+  // Full. Find the weakest (least-visible) current holder; the requester preempts it if it is
+  // clearly more visible. Off-screen holders score 0, so an on-screen requester still evicts a
+  // prebuffer exactly as before — and a more-visible on-screen card now also evicts a less-visible
+  // on-screen holder (the phone-cap-3 denial).
+  const my = holder.score();
+  let victim: AttachHolder | undefined;
+  let min = Infinity;
+  for (const h of holders) { const s = h.score(); if (s < min) { min = s; victim = h; } }
+  if (victim && my > min + PREEMPT_MARGIN) {
+    holders.delete(victim); attached -= 1; // free the victim's slot…
+    victim.evict();                        // …and tell it to tear down (idempotent vs its own release)
+    attached += 1; holders.add(holder);
+    budgetLog("preempt"); pushTrace(`budget preempt ${attached}/${maxAttached()} (${my.toFixed(2)}>${min.toFixed(2)})`); // HOME-5/HOME-3
+    return true;
   }
   budgetLog("DENIED (full)"); pushTrace(`budget deny ${attached}/${maxAttached()}`); // HOME-4
   return false;

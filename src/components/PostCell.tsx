@@ -4,6 +4,7 @@ import ThemedImg from "@/components/ThemedImg";
 import { getAspectRatio, ratioPadding } from "@/lib/aspectRatio";
 import MediaRenderer from "@/components/MediaRenderer";
 import GradedVideo from "@/components/finishing/GradedVideo";
+import { videoPosterSources } from "@/lib/editor/videoGrade";
 import { useTxNarrator } from "@/components/TxNarrator";
 import { isUntradeableCoin } from "@/lib/economy/pairing";
 
@@ -92,7 +93,7 @@ export default function PostCell({ post, layoutId, index, onClick, showSoundTogg
             <GradedVideo
               postId={post.id}
               url={post.media_urls?.[0] ?? ''}
-              posterUrl={(post as { stream_poster_url?: string | null }).stream_poster_url ?? post.poster_url ?? post.thumbnail_url}
+              {...videoPosterSources(post as unknown as Record<string, unknown>)}
               posterWidth={600}
               clipUrl={post.autoplay_clip_url}
               editParams={post.edit_params}

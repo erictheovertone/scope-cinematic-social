@@ -116,7 +116,21 @@ export const SNIPPET_WINDOW_LEN = 4; // seconds — default snippet length when 
 
 interface Props {
   url: string;
+  /** The at-rest / cover still. HOME-3 — the HERO-frame baked poster (poster_url): graded + cropped
+   *  at publish. Used as the cover where the video does NOT autoplay (non-autoplay posts), and as the
+   *  reveal cover during pipeline warm-up. Autoplay surfaces prefer `startPosterUrl` (the frame
+   *  playback begins on). Both baked stills are already graded+cropped → shown as-is. */
   posterUrl?: string | null;
+  /** HOME-3 (addendum) — the START-frame baked still (start_poster_url): the exact frame autoplay
+   *  begins on (time 0), graded + cropped. Preferred resting still wherever the video autoplays. */
+  startPosterUrl?: string | null;
+  /** HOME-3 §C.3 — the RAW Cloudflare Stream thumbnail (stream_poster_url). Not graded, not cropped.
+   *  Fallback when neither baked still exists (e.g. existing posts): GradedVideo lays it out with the
+   *  video's crop geometry, requests the right frame time, and applies the CSS grade approximation —
+   *  so even a fallback never shows the raw picture or the wrong crop. */
+  streamPosterUrl?: string | null;
+  /** HOME-3 — the post's custom/auto thumbnail (thumbnail_url): last resort, shown as-is. */
+  thumbnailUrl?: string | null;
   /** Resize the at-rest poster IMAGE to this display width via feedImage (loading-only;
    *  video element + crop render untouched). Unset → full-res poster. */
   posterWidth?: number;
@@ -185,7 +199,7 @@ interface Props {
 }
 
 export default function GradedVideo({
-  url, posterUrl, posterWidth, clipUrl, editParams, cropX = 0, cropY = 0, cropWidth = 1, cropHeight = 1,
+  url, posterUrl, startPosterUrl = null, streamPosterUrl = null, thumbnailUrl = null, posterWidth, clipUrl, editParams, cropX = 0, cropY = 0, cropWidth = 1, cropHeight = 1,
   autoplayFlag = false, gridMode = false, forcePlay = false, fullPlayback = false, style, onClick, showSoundToggle = false,
   processing = false, hlsUrl = null, priority = false, minPlayRatio = 0,
   windowStart = null, windowLength = null, context = 'full', onVideoEl, userPaused = false, inOverlay = false, forceGraded = false,
@@ -300,9 +314,26 @@ export default function GradedVideo({
   // the attach budget (one GL per ACTIVE player, window ±1). OFF (flag off / no look / fallen back)
   // → the exact legacy behaviour: HLS keeps its CSS filter, legacy forcePlay keeps its pipeline.
   const graded = shouldAttemptGraded(isHls, looked, gradedEnabled || forceGraded) && !gfxFallback && !failed;
-  const usePipeline = playing && !failed && (graded || (!isHls && effectiveForcePlay && looked));
+  // HOME-3 §A — LOOP WITHOUT TEARDOWN. The pipeline is WANTED whenever the player is attached and
+  // graded (or a legacy forcePlay look) — gated on `shouldAttach`, NOT the instantaneous `playing`.
+  // `playing` blips false for a moment at every loop boundary (ended → pause → play); tying the mount
+  // to it destroyed + rebuilt the WebGL pipeline each loop, flashing the raw frame. We instead LATCH:
+  // once the pipeline has gone live (first `playing`), keep it mounted until the player truly detaches
+  // (shouldAttach false), the source changes, or it fails / falls back to CSS.
+  const pipelineWanted = shouldAttach && !failed && (graded || (!isHls && effectiveForcePlay && looked));
+  const [pipelineLatched, setPipelineLatched] = useState(false);
+  // HOME-3 §B — the pipeline has drawn its first graded frame (gl-react onLoad). Until then the graded
+  // resting still stays ON TOP so no raw/blank frame shows during warm-up.
+  const [pipelineDrawn, setPipelineDrawn] = useState(false);
+  useEffect(() => {
+    if (!pipelineWanted) { setPipelineLatched(false); setPipelineDrawn(false); return; }
+    if (playing) setPipelineLatched(true);
+  }, [pipelineWanted, playing]);
+  const usePipeline = pipelineWanted && (playing || pipelineLatched);
   // HOME-4 — current state the pause/playing crumb closures read (refs so the handlers see live values).
-  const ourPauseRef = useRef<string | null>(null);
+  // HOME-3 §E — timestamped so a STALE reason (set at an earlier view-exit) can't mislabel a later
+  // BROWSER-caused pause (a loop-boundary pause) as OURS. Only a reason set within the last 400ms counts.
+  const ourPauseRef = useRef<{ reason: string; at: number } | null>(null);
   const dbgRef = useRef({ shouldPlay: false, graded: false, usePipeline: false, inView: false });
   dbgRef.current = { shouldPlay, graded, usePipeline, inView };
 
@@ -311,6 +342,21 @@ export default function GradedVideo({
   // would double-grade). When graded falls back (§3), the CSS filter returns automatically.
   const cssFilter = useMemo(() => (isHls && !graded ? videoCssFilter(params) : undefined), [isHls, graded, params]);
   const overlays = useMemo(() => (isHls && !graded ? videoOverlays(params) : []), [isHls, graded, params]);
+
+  // HOME-3 §C.2/§C.3 + addendum — THE RESTING / COVER STILL. Where the video AUTOPLAYS, the still is
+  // the exact frame playback begins on — the START frame (time 0, or snippet_start in snippet
+  // contexts). Where it does NOT autoplay (the manual-play affordance), the still is the HERO poster.
+  // Baked stills (poster_url / start_poster_url) are already graded + cropped → shown as-is. When
+  // neither is baked (existing posts) we fall back to the RAW Stream thumbnail, laid out with the
+  // video's crop geometry + the right frame time + the CSS grade approximation — so a fallback still
+  // never shows the raw picture or the wrong crop.
+  const willAutoPlay = autoplayFlag || forcePlay || fullPlayback;
+  const restBaked = willAutoPlay ? (startPosterUrl ?? posterUrl ?? null) : (posterUrl ?? startPosterUrl ?? null);
+  const restRaw = !restBaked && !!streamPosterUrl;              // raw Stream frame → crop + approx + time
+  const restUrl = restBaked ?? streamPosterUrl ?? thumbnailUrl ?? null;
+  const heroTime = (() => { const h = (editParams as { heroFrameTime?: number } | null | undefined)?.heroFrameTime; return typeof h === "number" && isFinite(h) ? h : 0; })();
+  const restTimeSec = willAutoPlay ? (context === "snippet" ? Math.max(0, windowStart ?? 0) : 0) : heroTime;
+  const restApproxFilter = useMemo(() => (restRaw && looked ? videoCssFilter(params) : undefined), [restRaw, looked, params]);
 
   // ── Visibility ──
   useEffect(() => {
@@ -404,8 +450,18 @@ export default function GradedVideo({
     // Visibility read from the DOM at FIRE time (not React `inView`, which lags behind a slow IO/render
     // under load — the lag was making an in-view card's valve arm as a prebuffer and loop every 1500ms).
     const onScreen = () => { const r = boxRef.current?.getBoundingClientRect(); return !!r && r.top < window.innerHeight && r.bottom > 0; };
-    // HOME-5 §4 — the budget holder: on-screen state + how to yield when an on-screen card preempts us.
-    const holder = { onScreen, evict: () => { if (!held) return; held = false; dlog("preempted→yield (off-screen)"); setBufferSlot(false); queueWaiter(); } };
+    // HOME-3 §E — the budget holder reports a VISIBILITY SCORE (fraction of the card on screen now,
+    // 0 = off-screen) so the budget can preempt the LEAST-visible holder for a more-visible requester
+    // (the phone-cap-3 denial), not just an off-screen one.
+    const score = () => {
+      const r = boxRef.current?.getBoundingClientRect();
+      if (!r || r.height <= 0) return 0;
+      const vh = (typeof window !== "undefined" ? window.innerHeight : 0) || 1;
+      const vis = (Math.min(r.bottom, vh) - Math.max(r.top, 0)) / r.height;
+      return Math.max(0, Math.min(1, vis));
+    };
+    // HOME-5 §4 — the budget holder: visibility score + how to yield when a more-visible card preempts us.
+    const holder = { score, evict: () => { if (!held) return; held = false; dlog("preempted→yield (less-visible)"); setBufferSlot(false); queueWaiter(); } };
     // Brief P1e §0 + HOME-2 §1 — ATTACH-OR-RELEASE VALVE. A slot must convert to a LOADING source.
     //  · OFF-SCREEN prebuffer, no metadata in 1500ms → recycle (a stuck background holder can't starve
     //    the budget) + re-queue.
@@ -475,7 +531,9 @@ export default function GradedVideo({
       if (cancelled) return;
       setPlaying(false);
       // HOME-4 — who paused us? OURS (we called v.pause) names the reason; otherwise the browser did.
-      const cause = ourPauseRef.current; ourPauseRef.current = null;
+      // HOME-3 §E — only honour a reason set within the last 400ms; a stale one means the browser paused.
+      const r = ourPauseRef.current; ourPauseRef.current = null;
+      const cause = r && Date.now() - r.at < 400 ? r.reason : null;
       const s = dbgRef.current;
       dlog(`pause ${cause ? "OURS:" + cause : "NOT-OURS"} ct=${v.currentTime.toFixed(1)} dur=${isFinite(v.duration) ? v.duration.toFixed(1) : "?"} rs=${v.readyState} net=${v.networkState} vis=${typeof document !== "undefined" ? document.visibilityState : "?"} inView=${s.inView} shouldPlay=${s.shouldPlay} graded=${s.graded} pipe=${s.usePipeline}`);
     };
@@ -629,7 +687,7 @@ export default function GradedVideo({
       return () => { cancelled = true; if (retryRef.current) { clearTimeout(retryRef.current); retryRef.current = null; } };
     }
     dlog("view-exit→pause");
-    ourPauseRef.current = userPaused ? "userPaused" : "view-exit"; // HOME-4 — tag the next pause as OURS
+    ourPauseRef.current = { reason: userPaused ? "userPaused" : "view-exit", at: Date.now() }; // HOME-4/HOME-3 — tag the next pause as OURS (timestamped)
     try { v.pause(); } catch { /* not ready */ }
   }, [shouldPlay, shouldAttach, videoEl, errored]);
 
@@ -707,7 +765,7 @@ export default function GradedVideo({
   }, [graded, shouldAttach, playing, videoEl, playbackUrl]);
   // Reset the fallback latch on a NEW source (a different post / rendition family), so a fresh player
   // gets a fresh chance (a transient GL hiccup on one post never poisons the next).
-  useEffect(() => { setGfxFallback(false); setGfxReason(null); probedSrcRef.current = null; }, [playbackUrl]);
+  useEffect(() => { setGfxFallback(false); setGfxReason(null); probedSrcRef.current = null; setPipelineDrawn(false); }, [playbackUrl]);
 
   // Measure the container for the cover/crop pipeline geometry.
   useEffect(() => {
@@ -746,8 +804,20 @@ export default function GradedVideo({
           legacy, so the old "uploaded direct" path (which loaded the multi-MB master into every
           scroll tile) is gone. Cloudflare Stream thumbnails still size live via ?width; an uploaded
           post-media poster resolves to its `.{w}.webp`. Cap at 1600 so no scroll tile exceeds it. */}
-      {posterUrl && (
-        <img src={feedImage(posterUrl, Math.min(posterWidth ?? 750, 1600))} alt="" draggable={false} loading={priority ? "eager" : "lazy"} fetchPriority={priority ? "high" : "auto"} decoding="async" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", display: "block", filter: isHls ? cssFilter : undefined }} />
+      {restUrl && (
+        <img
+          src={feedImage(restUrl, Math.min(posterWidth ?? 750, 1600), 78, restRaw ? restTimeSec : undefined)}
+          alt="" draggable={false}
+          loading={priority ? "eager" : "lazy"} fetchPriority={priority ? "high" : "auto"} decoding="async"
+          // HOME-3 §B — while the pipeline is warming up (mounted but not yet drawn) the still sits ON
+          // TOP (zIndex 2, under the overlays/controls) so a raw/blank canvas never shows; once drawn
+          // it drops below and the pipeline covers it. HOME-3 §C.3 — a RAW Stream fallback is laid out
+          // with the video's crop geometry + the CSS grade approximation (baked stills are already
+          // graded+cropped → shown as-is, no filter).
+          style={restRaw && geom
+            ? { position: "absolute", left: geom.left, top: geom.top, width: geom.fullW, height: geom.fullH, objectFit: "cover", display: "block", filter: restApproxFilter, zIndex: usePipeline && !pipelineDrawn ? 2 : undefined }
+            : { position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", display: "block", filter: restRaw ? restApproxFilter : undefined, zIndex: usePipeline && !pipelineDrawn ? 2 : undefined }}
+        />
       )}
 
       {/* Brief V2 — Stream still encoding: poster (above) or the var(--surface-1) placeholder (the
@@ -797,7 +867,7 @@ export default function GradedVideo({
           <div style={{ position: "absolute", left: geom.left, top: geom.top, width: geom.fullW, height: geom.fullH }}>
             <div style={{ width: geom.renderW, height: geom.renderH, transform: geom.upscale !== 1 ? `scale(${geom.upscale})` : undefined, transformOrigin: "top left" }}>
               <PipelineBoundary onError={() => { setGfxReason("pipeline-error"); setFailed(true); }}>
-                <Pipeline source={videoEl} params={params!} width={geom.renderW} height={geom.renderH} activeLut={activeLut} />
+                <Pipeline source={videoEl} params={params!} width={geom.renderW} height={geom.renderH} activeLut={activeLut} onFirstDraw={() => { dlog("pipeline first-draw"); setPipelineDrawn(true); }} />
               </PipelineBoundary>
             </div>
           </div>

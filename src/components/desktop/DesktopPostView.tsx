@@ -22,7 +22,7 @@ import SnippetSelector from '@/components/finishing/SnippetSelector';
 import { updateSnippetWindow } from '@/lib/postsService';
 import { neutralGeometry } from '@/lib/editGeometry';
 import { DEFAULT_PARAMS, type EditParams } from '@/lib/editor/params';
-import { streamGradedProps } from "@/lib/editor/videoGrade";
+import { streamGradedProps, videoPosterSources } from "@/lib/editor/videoGrade";
 import CollectSheetGate from '@/components/economy/CollectSheetGate';
 import CommentList, { useCommentLikes, ReplyComposer, type UIComment } from '@/components/CommentList';
 import { replyToComment } from '@/lib/commentInteractions';
@@ -297,7 +297,7 @@ export default function DesktopPostView({
                 <GradedVideo
                   key={postId}
                   url={mediaUrl}
-                  posterUrl={((post?.stream_poster_url as string) ?? poster)}
+                  {...videoPosterSources(post as unknown as Record<string, unknown>)}
                   posterWidth={1600}
                   clipUrl={(post?.autoplay_clip_url as string) ?? null}
                   editParams={post?.edit_params}

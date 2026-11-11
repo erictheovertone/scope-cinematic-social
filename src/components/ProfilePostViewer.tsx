@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { feedImage } from "@/lib/mediaUrl";
+import { videoPosterSources } from "@/lib/editor/videoGrade";
 import { useRouter } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
 import PressPop from "@/components/PressPop";
@@ -241,7 +242,7 @@ function PostViewerItem({
             <GradedVideo
               postId={(post as any).id}
               url={post.media_urls?.[0] ?? ''}
-              posterUrl={(post as any).poster_url ?? (post as any).stream_poster_url ?? (post as any).thumbnail_url}
+              {...videoPosterSources(post as unknown as Record<string, unknown>)}
               clipUrl={(post as any).autoplay_clip_url}
               editParams={(post as any).edit_params}
               autoplayFlag={(post as any).autoplay !== false}
