@@ -28,9 +28,10 @@ import { usePrivy, useWallets, getAccessToken } from '@privy-io/react-auth';
 import { getEmbeddedAddress } from '@/lib/embeddedWallet';
 import { getUsdcBalance } from '@/lib/wallet';
 import { SLATE_BLADES } from '@/components/economy/slateBlades';
+import { liveLandingStep } from '@/lib/onramp/topupMath';
 
 type Mode = 'test' | 'live';
-type Pending = { amount: number; mode: Mode; sessionId?: string; startBal: number; startedAt: number };
+type Pending = { amount: number; mode: Mode; sessionId?: string; startBal: number | null; startedAt: number };
 type Land = { from: number; to: number; mode: Mode };
 
 const DISP: React.CSSProperties = { fontFamily: 'var(--font-display)', fontWeight: 700 };
@@ -63,7 +64,11 @@ export default function TopUpPendingHost() {
   }, []);
 
   const clearPending = useCallback(() => { try { sessionStorage.removeItem(KEY); } catch { /* */ } setPending(null); }, []);
-  const readBal = useCallback(async () => { if (!address) return 0; try { return Number(await getUsdcBalance(address)) || 0; } catch { return 0; } }, [address]);
+  // null = the read FAILED (not zero) — the detection must not treat a failure as a $0 balance (§6 bug).
+  const readBal = useCallback(async (): Promise<number | null> => {
+    if (!address) return null;
+    try { const n = Number(await getUsdcBalance(address)); return Number.isFinite(n) ? n : null; } catch { return null; }
+  }, [address]);
 
   // §6 — a non-landing ending: a plain line, briefly, then gone.
   const endWith = useCallback((msg: string) => { clearPending(); setNotice(msg); window.setTimeout(() => setNotice(null), 4200); }, [clearPending]);
@@ -88,14 +93,16 @@ export default function TopUpPendingHost() {
     timers.current.push(window.setTimeout(() => setLand(null), 1500));
   }, [clearPending]);
 
-  // detection — one poller owns every ending (§5/§6)
+  // detection — one poller owns every ending (§5/§6). `baseline` is NULLABLE: no landing until a balance
+  // has been read successfully; if none was captured at Continue, the first good poll read becomes it.
   useEffect(() => {
     if (!pending) return;
     let alive = true;
-    const from = pending.startBal ?? 0;
+    let baseline: number | null = pending.startBal ?? null;
     const startedAt = pending.startedAt ?? Date.now();
     const sid = pending.sessionId;
     const everyMs = pending.mode === 'test' ? 3000 : 5000;
+    const persistBaseline = (b: number) => { try { sessionStorage.setItem(KEY, JSON.stringify({ ...pending, startBal: b })); } catch { /* */ } };
     const poll = window.setInterval(async () => {
       if (!alive) { clearInterval(poll); return; }
       // authed status read — terminal states for BOTH modes, test completion
@@ -108,15 +115,19 @@ export default function TopUpPendingHost() {
             const s = j.status;
             if (s === 'rejected' || s === 'expired') { clearInterval(poll); endWith('That top-up didn’t go through.'); return; }
             if (pending.mode === 'test' && s === 'fulfillment_complete') {
-              clearInterval(poll); const b = await readBal(); fireLand(from, b, 'test'); return; // real + unchanged
+              clearInterval(poll); const b = await readBal(); const base = baseline ?? b ?? 0; fireLand(base, b ?? base, 'test'); return; // real + unchanged
             }
           }
         } catch { /* keep polling */ }
       }
-      // LIVE lands on the real on-chain rise
+      // LIVE lands on the real on-chain rise — but only once a baseline has been established.
       if (pending.mode === 'live') {
         const b = await readBal();
-        if (b > from) { clearInterval(poll); fireLand(from, b, 'live'); return; }
+        if (b != null) {
+          const step = liveLandingStep(baseline, b);
+          if (baseline == null) { baseline = step.baseline; persistBaseline(step.baseline); } // first good read = baseline, never lands
+          else if (step.land) { clearInterval(poll); fireLand(baseline, b, 'live'); return; }
+        }
       }
       if (Date.now() - startedAt > 10 * 60_000) { clearInterval(poll); endWith('Taking longer than usual. Check your balance in a bit.'); }
     }, everyMs);
@@ -148,12 +159,12 @@ export default function TopUpPendingHost() {
               {notice}
             </div>
           ) : pending && (
-            // Compact docked pill, sentence case, one line — as the mock draws it (lab 10px / mono 11px).
+            // Compact docked pill, CAPS one line — per the landing mock ("ADDING $25.00 · USUALLY UNDER A MINUTE").
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap', maxWidth: 'calc(100vw - 32px)', background: 'var(--surface-08)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', border: '1px solid rgb(var(--ink-rgb) / 0.14)', borderRadius: 999, padding: '8px 14px', color: 'var(--ink-100)', boxShadow: '0 6px 24px rgb(var(--canvas-rgb) / 0.4)' }}>
               <span style={{ width: 6, height: 6, borderRadius: 999, flexShrink: 0, background: 'var(--brass)', animation: 'topupPulse 1.4s ease-in-out infinite' }} />
-              <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 10, letterSpacing: '0.12em', color: 'rgb(var(--ink-rgb) / 0.75)' }}>Adding</span>
+              <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgb(var(--ink-rgb) / 0.8)' }}>Adding</span>
               <span style={{ ...NUM, fontSize: 11 }}>{usd(pending.amount)}</span>
-              <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 10, letterSpacing: '0.12em', color: 'rgb(var(--ink-rgb) / 0.45)' }}>· usually under a minute</span>
+              <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgb(var(--ink-rgb) / 0.5)' }}>· usually under a minute</span>
               {pending.mode === 'test' && <span style={{ fontFamily: 'var(--font-medium)', fontSize: 8, flexShrink: 0, color: 'var(--brass)', border: '1px solid var(--brass)', padding: '1px 4px', borderRadius: 3 }}>TEST</span>}
             </div>
           )}

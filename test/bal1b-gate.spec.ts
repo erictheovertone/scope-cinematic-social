@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { isSandboxUser, onrampModeFor, secretKeyFor } from '../src/lib/onramp/sandbox';
-import { collectsFor, preselectAmount } from '../src/lib/onramp/topupMath';
+import { collectsFor, preselectAmount, liveLandingStep } from '../src/lib/onramp/topupMath';
 
 // ── BAL-1b §3 — the server-decided sandbox gate (pure logic) ──────────────────────────────────────
 test('listed username → test (case/space-insensitive)', () => {
@@ -34,6 +34,25 @@ test('preselect covers the shortfall; over $50 → $50; none → $25', () => {
   expect(preselectAmount(73)).toBe(50);      // shortfall over $50 → $50
   expect(preselectAmount(null)).toBe(25);    // no shortfall → default
   expect(preselectAmount(0)).toBe(25);
+});
+
+// ── BAL-1b.2 §6 — nullable baseline: never land before a baseline is read ─────────────────────────
+test('liveLandingStep: first successful read becomes the baseline and never lands', () => {
+  // Continue read failed → baseline null, and the wallet ALREADY holds funds. The first poll read must
+  // NOT be read as "balance > 0 → land"; it only establishes the baseline.
+  expect(liveLandingStep(null, 50)).toEqual({ baseline: 50, land: false });
+  expect(liveLandingStep(null, 0)).toEqual({ baseline: 0, land: false });
+});
+
+test('liveLandingStep: with a baseline, lands only on a strict rise', () => {
+  expect(liveLandingStep(100, 100)).toEqual({ baseline: 100, land: false });
+  expect(liveLandingStep(100, 99)).toEqual({ baseline: 100, land: false });
+  expect(liveLandingStep(100, 125)).toEqual({ baseline: 100, land: true });
+  // the bug sequence end-to-end: null → 50 (baseline, no land) → 50 (no land) → 75 (land)
+  const s1 = liveLandingStep(null, 50);        // baseline set, no land
+  expect(s1.land).toBe(false);
+  expect(liveLandingStep(s1.baseline, 50).land).toBe(false);
+  expect(liveLandingStep(s1.baseline, 75).land).toBe(true);
 });
 
 test('missing test key → error, NEVER a live fall-through', () => {

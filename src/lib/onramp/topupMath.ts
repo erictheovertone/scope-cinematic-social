@@ -16,3 +16,13 @@ export function preselectAmount(shortfallUsd: number | null | undefined): number
   if (shortfallUsd && shortfallUsd > 0) return TOPUP_AMOUNTS.find((a) => a >= shortfallUsd) ?? 50;
   return 25;
 }
+
+/** LIVE landing step (BAL-1b.2 §6 bug fix). Given the current baseline (nullable — no successful read
+    yet) and a FRESH SUCCESSFUL balance read, decide the next baseline and whether to land.
+    • No baseline yet → the first successful read BECOMES the baseline; never land on it (so a failed /
+      late Continue read can't make the host see balance > 0 and land before any money arrives).
+    • Baseline set → land only when the read is strictly above it. */
+export function liveLandingStep(baseline: number | null, read: number): { baseline: number; land: boolean } {
+  if (baseline == null) return { baseline: read, land: false };
+  return { baseline, land: read > baseline };
+}

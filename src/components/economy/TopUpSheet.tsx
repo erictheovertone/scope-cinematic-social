@@ -56,7 +56,7 @@ export default function TopUpSheet({ open, onClose, source, shortfallUsd, priceP
   const widgetRef = useRef<HTMLDivElement>(null);
   // BAL-1b.1 §6 — start balance + time, captured when Continue is pressed, travel WITH the pending
   // record so a reload after the money lands still detects the rise. sessionId drives the §5 status read.
-  const startRef = useRef<{ startBal: number; startedAt: number; sessionId?: string }>({ startBal: 0, startedAt: 0 });
+  const startRef = useRef<{ startBal: number | null; startedAt: number; sessionId?: string }>({ startBal: null, startedAt: 0 });
 
   useEffect(() => { setMounted(true); }, []);
   // Preselect the smallest amount that covers the REAL shortfall (collect), else $25; over $50 → $50.
@@ -77,9 +77,10 @@ export default function TopUpSheet({ open, onClose, source, shortfallUsd, priceP
     if (!address) { setErr('One moment — your balance isn’t ready yet.'); return; }
     setWorking(true); setErr(null);
     // Capture the start the moment Continue is pressed (§6): time now, and the real balance before any
-    // funds land, so the landing's count-up and the reload-survival both read from a true baseline.
-    startRef.current = { startBal: 0, startedAt: Date.now() };
-    void getUsdcBalance(address).then((b) => { startRef.current.startBal = Number(b) || 0; }).catch(() => {});
+    // funds land. The baseline is NULLABLE — it stays null if this read fails or is slow, so the host
+    // never treats a missing baseline as $0 and lands the instant it sees balance > 0 (BAL-1b.2 bug).
+    startRef.current = { startBal: null, startedAt: Date.now(), sessionId: undefined };
+    void getUsdcBalance(address).then((b) => { const n = Number(b); if (Number.isFinite(n)) startRef.current.startBal = n; }).catch(() => {});
     try {
       const token = await getAccessToken();
       await track('topup_started', { amount, source });
@@ -127,36 +128,45 @@ export default function TopUpSheet({ open, onClose, source, shortfallUsd, priceP
           display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         <div style={{ flexShrink: 0, padding: '16px 20px 10px' }}>
           <div style={{ width: 36, height: 3, borderRadius: 2, background: 'rgb(var(--ink-rgb) / 0.2)', margin: '0 auto 14px' }} />
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ ...SKB, fontSize: 'var(--fs-18)', color: 'var(--ink-100)' }}>Add to your balance</span>
-            {mode === 'test' && <span style={{ ...SKB, fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--brass)', border: '1px solid var(--brass)', padding: '2px 6px' }}>TEST MODE · no money moves</span>}
+          {/* Header per the mock: small uppercase tracked title + a close x on the right. */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: 24 }}>
+            <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 12, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-100)' }}>Add to your balance</span>
+            <button onClick={onClose} aria-label="Close" style={{ appearance: 'none', background: 'none', border: 0, color: 'rgb(var(--ink-rgb) / 0.55)', width: 44, height: 44, margin: '-10px -14px -10px 0', cursor: 'pointer', fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 20, lineHeight: 1 }}>×</button>
           </div>
+          {mode === 'test' && <span style={{ display: 'inline-block', marginTop: 8, fontFamily: 'var(--font-medium)', fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--brass)', border: '1px solid var(--brass)', padding: '2px 6px' }}>TEST MODE · no money moves</span>}
         </div>
 
         {/* OWN scroller — every Stripe button must be reachable at 375x667. */}
         <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', WebkitOverflowScrolling: 'touch', padding: '0 20px calc(28px + var(--safe-bottom))' }}>
           {!widgetUp && (
             <>
-              <div role="radiogroup" aria-label="Amount" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, margin: '6px 0 14px' }}>
+              {/* One line under the title — collect vs wallet (per the mock), "one tap" emphasised. */}
+              <p style={{ ...SKR, fontSize: 14, lineHeight: 1.45, color: 'rgb(var(--ink-rgb) / 0.8)', margin: '4px 0 14px' }}>
+                {source === 'collect'
+                  ? <>Collecting takes a balance. Add once, then every collect is <b style={{ fontWeight: 500, color: 'var(--ink-100)' }}>one tap</b>.</>
+                  : <>Add once, then every collect is <b style={{ fontWeight: 500, color: 'var(--ink-100)' }}>one tap</b>.</>}
+              </p>
+              <div role="radiogroup" aria-label="Amount" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, margin: '0 0 14px' }}>
                 {AMOUNTS.map((a) => {
                   const on = amount === a; const n = source === 'collect' ? collectsFor(a, pricePerCollect) : null;
                   return (
                     <button key={a} role="radio" aria-checked={on} onClick={() => setAmount(a)}
-                      style={{ background: 'transparent', cursor: 'pointer', border: `1px solid ${on ? 'var(--ink-100)' : 'rgb(var(--ink-rgb) / 0.16)'}`, padding: '14px 8px', display: 'grid', gap: 3, justifyItems: 'center', color: 'var(--ink-100)' }}>
-                      <b style={{ ...NUM, fontSize: 20 }}>${a}</b>
-                      {n != null && <span style={{ ...SKR, fontSize: 10, color: 'rgb(var(--ink-rgb) / 0.5)' }}>{n} collect{n === 1 ? '' : 's'}</span>}
+                      style={{ background: on ? 'rgb(var(--ink-rgb) / 0.06)' : 'transparent', cursor: 'pointer', border: `1px solid ${on ? 'var(--ink-100)' : 'rgb(var(--ink-rgb) / 0.22)'}`, padding: '12px 8px 10px', display: 'grid', gap: 6, justifyItems: 'center', color: 'var(--ink-100)' }}>
+                      <b style={{ ...NUM, fontSize: 22, letterSpacing: '-0.01em' }}>${a}</b>
+                      {n != null && <span style={{ fontFamily: 'var(--font-medium)', fontWeight: 500, fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: `rgb(var(--ink-rgb) / ${on ? 0.8 : 0.5})` }}>{n} collect{n === 1 ? '' : 's'}</span>}
                     </button>
                   );
                 })}
               </div>
-              <p style={{ ...SKR, fontSize: 'var(--fs-11)', color: 'rgb(var(--ink-rgb) / 0.5)', lineHeight: 1.6, margin: '0 0 16px' }}>
-                The total, including the card fee, is shown before you pay. Your balance is yours and never expires.
-              </p>
               <button onClick={start} disabled={working} style={{ ...SKB, width: '100%', padding: '14px 0', background: 'var(--ink-100)', color: 'var(--on-ink)', border: 'none', cursor: working ? 'default' : 'pointer', fontSize: 'var(--fs-12)', letterSpacing: '0.06em', textTransform: 'uppercase', opacity: working ? 0.6 : 1 }}>
                 {working ? 'Opening…' : 'Continue'}
               </button>
               {err && <p role="alert" style={{ ...SKR, fontSize: 'var(--fs-11)', color: 'var(--danger)', margin: '10px 0 0' }}>{err}</p>}
-              {onOtherWays && <button onClick={onOtherWays} style={{ ...SKR, display: 'block', margin: '14px auto 0', background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 'var(--fs-11)', color: 'rgb(var(--ink-rgb) / 0.5)', textDecoration: 'underline' }}>Other ways to add</button>}
+              {/* Fine print at the bottom, under the button, with "Other ways to add" inline at its end. */}
+              <p style={{ ...SKR, fontSize: 11.5, lineHeight: 1.5, color: 'rgb(var(--ink-rgb) / 0.5)', margin: '14px 0 0' }}>
+                The total, including the card fee, is shown before you pay. Your balance is yours and never expires.
+                {onOtherWays && <> <button onClick={onOtherWays} style={{ ...SKR, fontSize: 11.5, background: 'none', border: 0, padding: 0, cursor: 'pointer', color: 'rgb(var(--ink-rgb) / 0.7)', borderBottom: '1px solid rgb(var(--ink-rgb) / 0.3)' }}>Other ways to add</button></>}
+              </p>
             </>
           )}
           {/* Stripe mounts here — tall so its own buttons have room; the scroller reaches them. */}
