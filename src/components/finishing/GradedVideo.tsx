@@ -247,6 +247,15 @@ export default function GradedVideo({
     console.log(line);
     pushTrace(`${surfaceRef.current} ${postIdRef.current} ${line}`); // → ring buffer → server
   }, []);
+  // HOME-5 §6 — loud guard: an AUTOPLAY player with no postId is a surface we forgot to label (a
+  // phantom-starvation risk, like the hidden collect sheet). Debug-only, once per mount.
+  useEffect(() => {
+    if (isVideoDebug() && autoplayFlag && !postId) {
+      const m = `⚠ AUTOPLAY player with NO postId (surface=${surfaceRef.current} tag=${tagRef.current}) — HOME-5 phantom risk`;
+      console.warn(`[vid] ${m}`);
+      pushTrace(`${surfaceRef.current}  ${m}`);
+    }
+  }, []);
 
   const params = useMemo<EditParams | null>(() => {
     if (!editParams || typeof editParams !== "object") return null;
@@ -395,6 +404,8 @@ export default function GradedVideo({
     // Visibility read from the DOM at FIRE time (not React `inView`, which lags behind a slow IO/render
     // under load — the lag was making an in-view card's valve arm as a prebuffer and loop every 1500ms).
     const onScreen = () => { const r = boxRef.current?.getBoundingClientRect(); return !!r && r.top < window.innerHeight && r.bottom > 0; };
+    // HOME-5 §4 — the budget holder: on-screen state + how to yield when an on-screen card preempts us.
+    const holder = { onScreen, evict: () => { if (!held) return; held = false; dlog("preempted→yield (off-screen)"); setBufferSlot(false); queueWaiter(); } };
     // Brief P1e §0 + HOME-2 §1 — ATTACH-OR-RELEASE VALVE. A slot must convert to a LOADING source.
     //  · OFF-SCREEN prebuffer, no metadata in 1500ms → recycle (a stuck background holder can't starve
     //    the budget) + re-queue.
@@ -410,17 +421,17 @@ export default function GradedVideo({
         if (onScreen()) {
           if (Date.now() - grabbedAt < IN_VIEW_LOAD_MS) { armValve(); return; } // still loading in view — hold the slot
           dlog("in-view load stalled → release+retry");
-          releaseAttach(); held = false; setBufferSlot(false);
+          releaseAttach(holder); held = false; setBufferSlot(false);
           retry = window.setTimeout(() => { backoff = Math.min(backoff * 2, RETRY_MAX_MS); grab(); }, backoff);
         } else {
           dlog("valve-release (prebuffer, no metadata in 1500ms)");
-          releaseAttach(); held = false; setBufferSlot(false); queueWaiter();
+          releaseAttach(holder); held = false; setBufferSlot(false); queueWaiter();
         }
       }, ATTACH_VALVE_MS);
     };
     const grab = () => {
       if (held) return true;
-      if (!acquireAttach()) { queueWaiter(); return false; }
+      if (!acquireAttach(holder)) { queueWaiter(); return false; }
       held = true; grabbedAt = Date.now(); dlog("slot-acquired"); setBufferSlot(true); armValve();
       return true;
     };
@@ -429,7 +440,7 @@ export default function GradedVideo({
       if (valve) clearTimeout(valve);
       if (retry) clearTimeout(retry);
       if (off) { off(); off = null; }
-      if (held) { dlog("slot-released"); releaseAttach(); }
+      if (held) { dlog("slot-released"); releaseAttach(holder); }
     };
   }, [forcePlay, autoplayFlag, playbackUrl, errored, nearStable, inView, coordActive, gridMode, inOverlay, overlayActive]);
 

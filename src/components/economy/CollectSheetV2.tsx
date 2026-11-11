@@ -463,6 +463,7 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
           const mediaSrc = isVideo
             ? (post.poster_url || post.thumbnail_url || null)
             : (post.media_urls?.[0] || null);
+          const videoPoster = (post as { stream_poster_url?: string | null }).stream_poster_url ?? post.poster_url ?? post.thumbnail_url ?? null;
           const arCss = getAspectRatio(post.layout_id ?? '');
           const arNum = (() => {
             const [w, h] = String(arCss).split('/').map((x) => parseFloat(x));
@@ -484,21 +485,30 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
               style={{ position: 'relative', width: stacked ? '100%' : '55%', aspectRatio: String(arCss), background: 'var(--surface-2)', overflow: 'hidden', flexShrink: 0, cursor: 'pointer' }}
             >
               {isVideo ? (
-                <GradedVideo
-                  url={post.media_urls?.[0] ?? ''}
-                  posterUrl={(post as { stream_poster_url?: string | null }).stream_poster_url ?? post.poster_url ?? post.thumbnail_url ?? null}
-                  clipUrl={post.autoplay_clip_url ?? null}
-                  editParams={post.edit_params}
-                  cropX={post.crop_x ?? 0}
-                  cropY={post.crop_y ?? 0}
-                  cropWidth={post.crop_width ?? 1}
-                  cropHeight={post.crop_height ?? 1}
-                  autoplayFlag
-                  gridMode
-                  {...streamGradedProps(post as unknown as Record<string, unknown>)}
-                  style={{ width: '100%', height: '100%' }}
-                  onClick={() => openPostLightbox(post.id)}
-                />
+                // HOME-5 — mount the player ONLY while the sheet is OPEN. A hidden sheet (parked at
+                // translateY(100%)) used to run a fully-playable autoplay player inside the feed's NEAR
+                // margin, take a budget slot and starve the on-screen feed cards. Closed → the graded
+                // poster, no <video>, no slot. Open → forcePlay (single-focus, budget-EXEMPT) so the
+                // feed behind can't starve it. postId labels the trace (HOME-4).
+                visible ? (
+                  <GradedVideo
+                    url={post.media_urls?.[0] ?? ''}
+                    posterUrl={videoPoster}
+                    clipUrl={post.autoplay_clip_url ?? null}
+                    editParams={post.edit_params}
+                    cropX={post.crop_x ?? 0}
+                    cropY={post.crop_y ?? 0}
+                    cropWidth={post.crop_width ?? 1}
+                    cropHeight={post.crop_height ?? 1}
+                    forcePlay
+                    postId={post.id}
+                    {...streamGradedProps(post as unknown as Record<string, unknown>)}
+                    style={{ width: '100%', height: '100%' }}
+                    onClick={() => openPostLightbox(post.id)}
+                  />
+                ) : (
+                  videoPoster && <img src={videoPoster} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                )
               ) : (
                 mediaSrc && <img src={mediaSrc} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
               )}

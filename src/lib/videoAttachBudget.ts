@@ -20,31 +20,45 @@ function maxAttached(): number {
 
 let attached = 0;
 const waiters = new Set<() => void>();
+// HOME-5 §4 — each slot holder reports whether it is ON SCREEN and how to EVICT it. An on-screen
+// requester that hits a full budget preempts an off-screen holder: on-screen always beats prebuffer,
+// so a hidden/background player can never starve a card the member is looking at.
+export type AttachHolder = { onScreen: () => boolean; evict: () => void };
+const holders = new Set<AttachHolder>();
 
 // Brief P1a — dev-only paired-count trace (strip-safe): confirm acquire/release stay
 // symmetric across N attach→destroy cycles (the count must return to 0, never leak/negative).
 const budgetLog = (op: string) => { if (process.env.NODE_ENV !== "production") console.log(`[attach-budget] ${op} → ${attached}/${maxAttached()}`); };
 
-/** Try to take an attach slot. Returns true if granted. */
-export function acquireAttach(): boolean {
-  if (attached >= maxAttached()) {
-    // Brief M10c — log DENIALS (not just grants): a starved surface (e.g. Mirage cells
-    // blocked by a still-mounted feed holding all slots) is invisible without this.
-    budgetLog("DENIED (full)");
-    pushTrace(`budget deny ${attached}/${maxAttached()}`); // HOME-4
-    return false;
+/** Try to take an attach slot for `holder`. Grants if room; else an ON-SCREEN holder preempts an
+ *  OFF-SCREEN one (HOME-5 §4); else denies. */
+export function acquireAttach(holder: AttachHolder): boolean {
+  if (attached < maxAttached()) {
+    attached += 1; holders.add(holder);
+    budgetLog("acquire"); pushTrace(`budget acquire ${attached}/${maxAttached()}`); // HOME-4
+    return true;
   }
-  attached += 1;
-  budgetLog("acquire");
-  pushTrace(`budget acquire ${attached}/${maxAttached()}`); // HOME-4
-  return true;
+  // Full. An on-screen requester preempts the first off-screen holder it finds.
+  if (holder.onScreen()) {
+    let victim: AttachHolder | undefined;
+    for (const h of holders) { if (!h.onScreen()) { victim = h; break; } }
+    if (victim) {
+      holders.delete(victim); attached -= 1; // free the victim's slot…
+      victim.evict();                        // …and tell it to tear down (idempotent vs its own release)
+      attached += 1; holders.add(holder);
+      budgetLog("preempt"); pushTrace(`budget preempt ${attached}/${maxAttached()}`); // HOME-5
+      return true;
+    }
+  }
+  budgetLog("DENIED (full)"); pushTrace(`budget deny ${attached}/${maxAttached()}`); // HOME-4
+  return false;
 }
 
-/** Give a slot back and ping waiters that one freed. */
-export function releaseAttach(): void {
-  if (attached > 0) attached -= 1;
-  budgetLog("release");
-  pushTrace(`budget release ${attached}/${maxAttached()}`); // HOME-4
+/** Give `holder`'s slot back and ping waiters (idempotent — a preempted holder is already out). */
+export function releaseAttach(holder: AttachHolder): void {
+  if (!holders.has(holder)) return;
+  holders.delete(holder); if (attached > 0) attached -= 1;
+  budgetLog("release"); pushTrace(`budget release ${attached}/${maxAttached()}`); // HOME-4
   for (const w of Array.from(waiters)) w();
 }
 

@@ -393,6 +393,7 @@ export default function MirageView({ onClose, desktop = false }: { onClose: () =
                         url={post.media_urls?.[0] ?? ""}
                         posterUrl={(post as { stream_poster_url?: string | null }).stream_poster_url ?? post.poster_url ?? post.thumbnail_url}
                         posterWidth={600}
+                        postId={post.id}
                         clipUrl={post.autoplay_clip_url}
                         editParams={post.edit_params}
                         autoplayFlag={post.autoplay !== false}
@@ -410,6 +411,7 @@ export default function MirageView({ onClose, desktop = false }: { onClose: () =
                       url={post.media_urls?.[0] ?? ""}
                       posterUrl={(post as { stream_poster_url?: string | null }).stream_poster_url ?? post.poster_url ?? post.thumbnail_url}
                       posterWidth={600}
+                        postId={post.id}
                       clipUrl={post.autoplay_clip_url}
                       editParams={post.edit_params}
                       autoplayFlag={post.autoplay !== false}
