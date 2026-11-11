@@ -31,7 +31,6 @@ import GradedVideo from "@/components/finishing/GradedVideo";
 import { pushVideoOverlay } from "@/lib/videoAttachBudget";
 import TheatreMode from "@/components/TheatreMode";
 import { useRotateToTheatre } from "@/lib/useRotateToTheatre";
-import PinnedMark from "@/components/nav/PinnedMark";
 import { supabase } from "@/lib/supabase/client";
 import { getAspectRatio } from "@/lib/aspectRatio";
 import PillarboxFrame from "@/components/PillarboxFrame";
@@ -527,7 +526,7 @@ function PostViewerItem({
       {/* ── CAPTION — marginTop: 3, marginBottom: 16 (separator) ── */}
       <div style={{ padding: "0 4px", marginTop: 2, marginBottom: 51 /* 31 + 20 air — tune with FEED_POST_GAP_PX */ }}>
         {post.caption ? (
-          <p style={{ ...SKR, fontSize: 'var(--fs-10)', color: "var(--ink-100)", margin: 0, lineHeight: 1.4 }}>
+          <p style={{ ...SKR, fontSize: 'var(--fs-10)', color: "var(--ink-100)", margin: 0, lineHeight: 1.4, letterSpacing: 'calc(var(--track-body) * 1.15)' }}>
             {post.caption}
           </p>
         ) : null}
@@ -729,20 +728,10 @@ export default function ProfilePostViewer({
       {/* Scoped placeholder style */}
       <style>{`.pm-input::placeholder { color: rgb(var(--ink-rgb) / 0.35); }`}</style>
 
-      {/* NAV-1 §5 — the pinned logomark (top-left, replacing the removed top-left + centre logos) with
-          the Stem menu. It sits over this fixed overlay. */}
-      <PinnedMark
-        visible
-        rows={[
-          { label: 'Collected', count: collectedCount, onClick: () => onCollected?.() },
-          { label: 'Decks', count: decksCount, onClick: () => onDecks?.() },
-        ]}
-      />
-
-      {/* NAV-1 §5 — Back bar: BACK (left, indented past the 44px pinned mark) · Theatre eye (right).
-          Both are 44px targets; the two logo instances are gone (the pinned mark replaces them), so
-          nothing bunches/overlaps at 320–375px. --safe-top keeps the row clear of the notch. */}
-      <div style={{ flexShrink: 0, height: "calc(44px + var(--safe-top))", paddingTop: "var(--safe-top)", display: "flex", alignItems: "center", justifyContent: "space-between", paddingLeft: 68, paddingRight: 8, borderBottom: "1px solid rgb(var(--ink-rgb) / 0.06)" }}>
+      {/* Back bar: BACK (left) · Theatre eye (right). The pinned Collected/Decks mark is NOT shown here
+          — it belongs to the profile GRID only — so the BACK button reclaims the left edge it used to
+          indent past. Both are 44px targets; --safe-top keeps the row clear of the notch. */}
+      <div style={{ flexShrink: 0, height: "calc(44px + var(--safe-top))", paddingTop: "var(--safe-top)", display: "flex", alignItems: "center", justifyContent: "space-between", paddingLeft: 8, paddingRight: 8, borderBottom: "1px solid rgb(var(--ink-rgb) / 0.06)" }}>
         <button onClick={handleClose} aria-label="Back" style={{ background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 7, minWidth: 44, height: 44, padding: 0 }}>
           <svg width="16.5" height="16.5" viewBox="0 0 13 13" fill="none">
             <path d="M8.5 1.5L3.5 6.5l5 5" stroke="var(--ink-100)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
