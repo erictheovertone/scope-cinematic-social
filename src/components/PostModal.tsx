@@ -612,7 +612,7 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
 
             {/* Caption */}
             {post.caption ? (
-              <p style={{ ...SKR, fontSize: 'var(--fs-12)', color: "var(--ink-100)", letterSpacing: "-0.1px", lineHeight: 1.55, margin: "0 0 14px" }}>
+              <p style={{ ...SKR, fontSize: 'calc(var(--fs-12) - 1px)', color: "rgb(var(--ink-rgb) / 0.8)", letterSpacing: "-0.1px", lineHeight: 1.55, margin: "0 0 14px" }}>
                 {post.caption}
               </p>
             ) : null}
