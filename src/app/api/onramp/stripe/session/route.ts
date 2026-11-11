@@ -68,3 +68,29 @@ export async function POST(req: Request) {
   // the client which publishable key to load Stripe with (test vs live) — decided here, never trusted from input.
   return NextResponse.json({ clientSecret: data.client_secret, url: data.redirect_url, id: data.id, mode });
 }
+
+// ── GET /api/onramp/stripe/session?id=cos_… — authed status read (BAL-1b.1 §5) ────────────────────
+// The pending host polls this so the TEST landing fires on the REAL fulfillment event, never a timer.
+// The session is fetched server-side with the caller's own resolved key (same gate as create), and we
+// confirm metadata.userId is the caller before returning its status — a member can only read their own.
+export async function GET(req: Request) {
+  const supabase = serviceClient();
+  const caller = await callerOf(req, supabase);
+  if (!caller) return NextResponse.json({ error: 'sign in required' }, { status: 401 });
+
+  const id = new URL(req.url).searchParams.get('id');
+  if (!id || !/^cos_[A-Za-z0-9_]+$/.test(id)) return NextResponse.json({ error: 'valid session id required' }, { status: 400 });
+
+  const { data: prof } = await supabase.from('profiles').select('username').eq('user_id', caller.userId).maybeSingle();
+  const mode = onrampModeFor((prof as { username?: string } | null)?.username ?? null, process.env.ONRAMP_SANDBOX_USERS);
+  const resolved = secretKeyFor(mode, process.env);
+  if ('error' in resolved) return NextResponse.json({ error: resolved.error, mode }, { status: mode === 'test' ? 503 : 500 });
+
+  const res = await fetch(`https://api.stripe.com/v1/crypto/onramp_sessions/${id}`, {
+    headers: { Authorization: `Bearer ${resolved.key}` },
+  });
+  const data = (await res.json()) as { status?: string; metadata?: { userId?: string }; error?: { message?: string } };
+  if (!res.ok) return NextResponse.json({ error: data.error?.message || 'status read failed', mode }, { status: 502 });
+  if (data.metadata?.userId !== caller.userId) return NextResponse.json({ error: 'not your session' }, { status: 403 });
+  return NextResponse.json({ status: data.status ?? null, mode });
+}

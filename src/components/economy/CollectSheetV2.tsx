@@ -19,8 +19,7 @@
 import ThemedImg from "@/components/ThemedImg";
 import { useEffect, useState, useRef } from 'react';
 import { feedImage } from "@/lib/mediaUrl";
-import { usePrivy, useFundWallet } from '@privy-io/react-auth';
-import { base } from 'viem/chains';
+import { usePrivy, getAccessToken } from '@privy-io/react-auth';
 import { useEconomy } from '@/components/EconomyProvider';
 import { preflightTrade, preflightMessage } from '@/lib/economy/preflight';
 import { sanitizeDecimalInput } from '@/lib/amountInput'; // C3-15: comma/period decimal entry (iOS)
@@ -66,8 +65,20 @@ const SELL_PCTS = [25, 50, 100];
 export default function CollectSheetV2({ post, visible, onClose, tradeable = true }: Props) {
   const economy = useEconomy();
   const { user } = usePrivy();
-  const { fundWallet } = useFundWallet();
   const viewerWallet = user?.wallet?.address ?? null;
+  // BAL-1b.1 §3 — "Other ways to add" reuses the WALLET's Coinbase onramp (/api/onramp/session). No
+  // Privy funding window anywhere (it resolves the address server-side from the token).
+  const otherWaysCoinbase = async () => {
+    setShowTopup(false);
+    try {
+      const token = await getAccessToken();
+      const res = await fetch('/api/onramp/session', { method: 'POST', headers: token ? { Authorization: `Bearer ${token}` } : {} });
+      const j = (await res.json()) as { url?: string };
+      if (!res.ok || !j?.url) return;
+      const desktop = typeof window !== 'undefined' && window.matchMedia('(min-width: 768px)').matches;
+      if (desktop) window.open(j.url, '_blank', 'noopener'); else window.location.href = j.url;
+    } catch { /* quiet — the sheet is the primary path */ }
+  };
   // Moment 1 (First Cut flourish) — set only when the in-flow check verifies
   // THIS buy newly earned First Cut. Additive over the buy's success state.
   const [firstCut, setFirstCut] = useState<{ rank: number | null } | null>(null);
@@ -108,6 +119,7 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
   const [done, setDone] = useState<string | null>(null);
   const [tradeError, setTradeError] = useState<string | null>(null);
   const [showTopup, setShowTopup] = useState(false); // BAL-1b top-up sheet (from a collect)
+  const [shortfall, setShortfall] = useState<number | null>(null); // BAL-1b.1 §2 — the REAL $ still needed (from preflight), not the whole buy
   // THE CEREMONY — on confirmed collect the red corner brackets SNAP onto the
   // media (the frame motif's third verb: it loads pages, it captures looks —
   // now it claims pieces), the terminal holds a beat, then the sheet returns
@@ -310,7 +322,11 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
             ? { wallet: viewerWallet, requireUsdc: buyQuote?.usdAmount ?? v }
             : { wallet: viewerWallet, requireEth: buyQuote?.ethAmount ?? 0 },
         );
-        if (!pf.ok) { setTradeError(preflightMessage(pf, { action: 'buy', plain: true })); return; }
+        if (!pf.ok) {
+          // §2 — capture the REAL shortfall so the top-up sheet preselects against it (not the whole buy).
+          if (pf.reason === 'insufficient_usdc') setShortfall(pf.shortfallUsd);
+          setTradeError(preflightMessage(pf, { action: 'buy', plain: true })); return;
+        }
       }
       const r = await economy.buy(post.id, v, buyCurrency);
       if (r.ok) {
@@ -392,11 +408,12 @@ export default function CollectSheetV2({ post, visible, onClose, tradeable = tru
 
   return (
     <>
-      {/* BAL-1b — top-up sheet opened from the collect; amounts labelled in collects at this post's
-          live price (market.priceUsd), preselecting the smallest that covers the collect. */}
+      {/* BAL-1b.1 — top-up sheet from the collect. A "collect" here = THIS buy, so amounts are labelled
+          in collects at buyQuote.usdAmount (the dollar cost of this buy), and the preselect covers the
+          REAL preflight shortfall. No quote yet → no counts. "Other ways" = the wallet's Coinbase path. */}
       <TopUpSheet open={showTopup} onClose={() => setShowTopup(false)} source="collect"
-        shortfallUsd={buyQuote?.usdAmount ?? null} pricePerCollect={market?.priceUsd ?? null}
-        onOtherWays={() => { setShowTopup(false); if (viewerWallet) fundWallet(viewerWallet, { chain: base, asset: 'USDC' }); }} />
+        shortfallUsd={shortfall} pricePerCollect={buyQuote?.usdAmount ?? null}
+        onOtherWays={otherWaysCoinbase} />
       <div
         onClick={onClose}
         data-swipe-exclude

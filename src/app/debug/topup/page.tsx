@@ -14,6 +14,7 @@ import { loadStripeOnramp } from "@stripe/crypto";
 import { getEmbeddedAddress } from "@/lib/embeddedWallet";
 import { getUsdcBalance } from "@/lib/wallet";
 import { track } from "@/lib/funnel";
+import TopUpSheet from "@/components/economy/TopUpSheet";
 
 // Load once outside render (per Stripe's guidance) — the script comes from Stripe's own domains.
 const onrampPromise = loadStripeOnramp(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
@@ -34,6 +35,8 @@ export default function TopupDebug() {
 
   const [mounted, setMounted] = useState(false);
   const [gated, setGated] = useState(false);
+  const [shots, setShots] = useState(false);                 // BAL-1b.1 — ?debug=topup&shots=1: render the real components for review shots
+  const [sheet, setSheet] = useState<null | "wallet" | "collect">(null);
   const [status, setStatus] = useState<string | null>(null);
   const [balance, setBalance] = useState<string | null>(null);
   const [working, setWorking] = useState(false);
@@ -44,7 +47,7 @@ export default function TopupDebug() {
   const say = useCallback((m: string) => setLog((l) => [`${new Date().toLocaleTimeString()}  ${m}`, ...l].slice(0, 50)), []);
 
   useEffect(() => { setMounted(true); }, []);
-  useEffect(() => { if (mounted) setGated(new URLSearchParams(window.location.search).get("debug") === "topup"); }, [mounted]);
+  useEffect(() => { if (mounted) { const q = new URLSearchParams(window.location.search); setGated(q.get("debug") === "topup"); setShots(q.get("shots") === "1"); } }, [mounted]);
 
   const readBalance = useCallback(async (addr: string) => {
     try { const b = await getUsdcBalance(addr); setBalance(b); return Number(b); } catch (e) { say(`balance error: ${(e as Error).message}`); return null; }
@@ -111,6 +114,28 @@ export default function TopupDebug() {
 
   if (!mounted) return <div style={{ minHeight: "100dvh", background: "#050505" }} />;
   if (!gated) return <div style={{ minHeight: "100dvh", background: "#050505", color: "#E5E1DB", fontFamily: "monospace", padding: 24 }}>Append <b>?debug=topup</b> to run /debug/topup.</div>;
+
+  // ── BAL-1b.1 shots harness (?debug=topup&shots=1) — renders the REAL TopUpSheet + drives the pill /
+  // Slate (TopUpPendingHost, mounted at app root) via the gated demo events. The page ground is a
+  // theme token so light/dark both read right; no auth needed for the layout. ──────────────────────
+  if (shots) {
+    const demoPill = () => window.dispatchEvent(new CustomEvent("scope:topup-pending", { detail: { amount: 25, mode: "test", startBal: 128.4, startedAt: Date.now() } }));
+    const demoLand = () => window.dispatchEvent(new CustomEvent("scope:topup-demo-land", { detail: { from: 128.4, to: 153.4, mode: "live" } }));
+    const bbtn: React.CSSProperties = { padding: "10px 14px", background: "transparent", color: "var(--ink-100)", border: "1px solid rgb(var(--ink-rgb) / 0.3)", borderRadius: 4, fontFamily: "var(--font-medium)", fontSize: 12, cursor: "pointer" };
+    return (
+      <div style={{ position: "fixed", inset: 0, overflowY: "auto", background: "var(--canvas)", boxSizing: "border-box", padding: "16px 16px calc(120px + var(--safe-bottom, 0px))" }} data-topup-shots>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+          <button data-shot="open-wallet" onClick={() => setSheet("wallet")} style={bbtn}>sheet · wallet</button>
+          <button data-shot="open-collect" onClick={() => setSheet("collect")} style={bbtn}>sheet · collect</button>
+          <button data-shot="pill" onClick={demoPill} style={bbtn}>pill</button>
+          <button data-shot="slate" onClick={demoLand} style={bbtn}>Slate</button>
+        </div>
+        {/* wallet: dollars only, no counts. collect: counts at $3/collect, $4 shortfall → preselect $10, 3/8/16. */}
+        <TopUpSheet open={sheet === "wallet"} onClose={() => setSheet(null)} source="wallet" onOtherWays={() => {}} />
+        <TopUpSheet open={sheet === "collect"} onClose={() => setSheet(null)} source="collect" shortfallUsd={4} pricePerCollect={3} onOtherWays={() => {}} />
+      </div>
+    );
+  }
 
   const L: React.CSSProperties = { fontFamily: "monospace", color: "#E5E1DB" };
   const mountedWidget = status != null;

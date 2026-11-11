@@ -12,11 +12,14 @@ import { createPortal } from 'react-dom';
 import { usePrivy, useWallets, getAccessToken } from '@privy-io/react-auth';
 import { loadStripeOnramp } from '@stripe/crypto';
 import { getEmbeddedAddress } from '@/lib/embeddedWallet';
+import { getUsdcBalance } from '@/lib/wallet';
 import { track } from '@/lib/funnel';
-
-const AMOUNTS = [10, 25, 50] as const;
-const SKB: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 700 };
-const SKR: React.CSSProperties = { fontFamily: "'SK-Modernist', sans-serif", fontWeight: 400 };
+import { TOPUP_AMOUNTS as AMOUNTS, collectsFor, preselectAmount } from '@/lib/onramp/topupMath';
+// BAL-1b.1 §7 — the wallet's type tokens, not 'SK-Modernist'. Dollar FIGURES get tabular ("mono")
+// numerals, matching the wallet balance readout (--font-medium + tabular-nums).
+const SKB: React.CSSProperties = { fontFamily: 'var(--font-display)', fontWeight: 700 };
+const SKR: React.CSSProperties = { fontFamily: 'var(--font-medium)', fontWeight: 500 };
+const NUM: React.CSSProperties = { fontFamily: 'var(--font-medium)', fontWeight: 500, fontVariantNumeric: 'tabular-nums' };
 
 type OnrampEvt = { payload: { session: { status: string } } };
 type OnrampSession = { mount: (el: HTMLElement | string) => void; addEventListener: (t: string, cb: (e: OnrampEvt) => void) => OnrampSession };
@@ -51,13 +54,15 @@ export default function TopUpSheet({ open, onClose, source, shortfallUsd, priceP
   const [mode, setMode] = useState<'test' | 'live' | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const widgetRef = useRef<HTMLDivElement>(null);
+  // BAL-1b.1 §6 — start balance + time, captured when Continue is pressed, travel WITH the pending
+  // record so a reload after the money lands still detects the rise. sessionId drives the §5 status read.
+  const startRef = useRef<{ startBal: number; startedAt: number; sessionId?: string }>({ startBal: 0, startedAt: 0 });
 
   useEffect(() => { setMounted(true); }, []);
-  // Preselect the smallest amount that covers the shortfall (collect), else $25.
+  // Preselect the smallest amount that covers the REAL shortfall (collect), else $25; over $50 → $50.
   useEffect(() => {
     if (!open) return;
-    if (source === 'collect' && shortfallUsd && shortfallUsd > 0) setAmount(AMOUNTS.find((a) => a >= shortfallUsd) ?? 50);
-    else setAmount(25);
+    setAmount(source === 'collect' ? preselectAmount(shortfallUsd) : 25);
     setErr(null); setWidgetUp(false); setMode(null);
   }, [open, source, shortfallUsd]);
   // slide in/out
@@ -67,12 +72,14 @@ export default function TopUpSheet({ open, onClose, source, shortfallUsd, priceP
   }, [open]);
   useEffect(() => { if (open) void track('topup_opened', { source }); }, [open, source]);
 
-  const collectsFor = useCallback((a: number) => (pricePerCollect && pricePerCollect > 0 ? Math.floor(a / pricePerCollect) : null), [pricePerCollect]);
-
   const start = useCallback(async () => {
     if (!authenticated) { login(); return; }
     if (!address) { setErr('One moment — your balance isn’t ready yet.'); return; }
     setWorking(true); setErr(null);
+    // Capture the start the moment Continue is pressed (§6): time now, and the real balance before any
+    // funds land, so the landing's count-up and the reload-survival both read from a true baseline.
+    startRef.current = { startBal: 0, startedAt: Date.now() };
+    void getUsdcBalance(address).then((b) => { startRef.current.startBal = Number(b) || 0; }).catch(() => {});
     try {
       const token = await getAccessToken();
       await track('topup_started', { amount, source });
@@ -80,9 +87,9 @@ export default function TopUpSheet({ open, onClose, source, shortfallUsd, priceP
         method: 'POST', headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: JSON.stringify({ amount, walletAddress: address, email }),
       });
-      const j = (await res.json()) as { clientSecret?: string; mode?: 'test' | 'live'; error?: string };
+      const j = (await res.json()) as { clientSecret?: string; mode?: 'test' | 'live'; id?: string; error?: string };
       if (!res.ok || !j.clientSecret) { setErr(j.error ?? 'Could not start — try again.'); setWorking(false); return; }
-      const m = j.mode ?? 'live'; setMode(m);
+      const m = j.mode ?? 'live'; setMode(m); startRef.current.sessionId = j.id;
       const pubKey = m === 'test' ? process.env.NEXT_PUBLIC_STRIPE_TEST_PUBLISHABLE_KEY : process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
       if (!pubKey) { setErr(m === 'test' ? 'Sandbox isn’t fully configured. No charge was attempted.' : 'Payments aren’t configured.'); setWorking(false); return; }
       const onramp = await loadStripeOnramp(pubKey);
@@ -92,10 +99,15 @@ export default function TopUpSheet({ open, onClose, source, shortfallUsd, priceP
       session.addEventListener('onramp_session_updated', (e: OnrampEvt) => {
         const st = e.payload.session.status;
         // Payment submitted → hand off to the docked pill and close. fulfillment_processing = paid &
-        // delivering (LIVE); fulfillment_complete also covers the TEST path (no on-chain move).
+        // delivering (LIVE); fulfillment_complete also covers the TEST path (no on-chain move). The pill
+        // then owns every ending (land / didn't go through / taking longer) — §5/§6.
         if (st === 'fulfillment_processing' || st === 'fulfillment_complete') {
-          window.dispatchEvent(new CustomEvent('scope:topup-pending', { detail: { amount, mode: m, sessionId: undefined } }));
+          const { startBal, startedAt, sessionId } = startRef.current;
+          window.dispatchEvent(new CustomEvent('scope:topup-pending', { detail: { amount, mode: m, sessionId, startBal, startedAt } }));
           onClose();
+        } else if (st === 'rejected') {
+          // §6 — Stripe rejected the payment: a plain message, in the sheet, no wallet/crypto words.
+          setErr('That top-up didn’t go through.'); setWorking(false);
         }
       });
       session.mount(widgetRef.current);
@@ -127,11 +139,11 @@ export default function TopUpSheet({ open, onClose, source, shortfallUsd, priceP
             <>
               <div role="radiogroup" aria-label="Amount" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, margin: '6px 0 14px' }}>
                 {AMOUNTS.map((a) => {
-                  const on = amount === a; const n = source === 'collect' ? collectsFor(a) : null;
+                  const on = amount === a; const n = source === 'collect' ? collectsFor(a, pricePerCollect) : null;
                   return (
                     <button key={a} role="radio" aria-checked={on} onClick={() => setAmount(a)}
                       style={{ background: 'transparent', cursor: 'pointer', border: `1px solid ${on ? 'var(--ink-100)' : 'rgb(var(--ink-rgb) / 0.16)'}`, padding: '14px 8px', display: 'grid', gap: 3, justifyItems: 'center', color: 'var(--ink-100)' }}>
-                      <b style={{ ...SKR, fontWeight: 500, fontSize: 20 }}>${a}</b>
+                      <b style={{ ...NUM, fontSize: 20 }}>${a}</b>
                       {n != null && <span style={{ ...SKR, fontSize: 10, color: 'rgb(var(--ink-rgb) / 0.5)' }}>{n} collect{n === 1 ? '' : 's'}</span>}
                     </button>
                   );
