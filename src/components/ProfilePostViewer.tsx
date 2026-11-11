@@ -526,7 +526,7 @@ function PostViewerItem({
       {/* ── CAPTION — marginTop: 3, marginBottom: 16 (separator) ── */}
       <div style={{ padding: "0 4px", marginTop: 2, marginBottom: 51 /* 31 + 20 air — tune with FEED_POST_GAP_PX */ }}>
         {post.caption ? (
-          <p style={{ ...SKR, fontSize: 'var(--fs-10)', color: "var(--ink-100)", margin: 0, lineHeight: 1.4, letterSpacing: 'calc(var(--track-body) * 1.15)' }}>
+          <p style={{ ...SKR, fontSize: 'var(--fs-10)', color: "var(--ink-100)", margin: 0, lineHeight: 1.4, letterSpacing: '0.01em' }}>
             {post.caption}
           </p>
         ) : null}
