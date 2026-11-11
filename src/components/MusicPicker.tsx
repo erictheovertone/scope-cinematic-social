@@ -69,17 +69,28 @@ export default function MusicPicker({
     (async () => {
       const { data } = await supabase
         .from("tracks")
-        .select("id, title, composer_user_id, keywords, duration_seconds, file_url, artwork_url, waveform_peaks")
+        .select("id, title, composer_user_id, keywords, duration_seconds, file_url, artwork_url, waveform_peaks, album_id")
         .eq("status", "approved")
         .order("created_at", { ascending: false })
         .limit(300);
-      const rows = (data ?? []) as LibraryTrack[];
+      const rows = (data ?? []) as (LibraryTrack & { album_id: string | null })[];
+      // A track's face is its ALBUM cover (tracks.artwork_url is unset for library tracks) — resolve the
+      // album's cover_url and use it when the track has no own artwork, so the picker shows real art.
+      const albumIds = [...new Set(rows.map((r) => r.album_id).filter(Boolean))] as string[];
+      const { data: albums } = albumIds.length
+        ? await supabase.from("albums").select("id, cover_url").in("id", albumIds)
+        : { data: [] as { id: string; cover_url: string | null }[] };
+      const cover = new Map((albums ?? []).map((a) => [a.id, a.cover_url]));
       const ids = [...new Set(rows.map((r) => r.composer_user_id))];
       const { data: profs } = ids.length
         ? await supabase.from("profiles").select("user_id, username").in("user_id", ids)
         : { data: [] as { user_id: string; username: string }[] };
       const handle = new Map((profs ?? []).map((p) => [p.user_id, p.username]));
-      if (!dead) setTracks(rows.map((r) => ({ ...r, composer_handle: handle.get(r.composer_user_id) ?? null })));
+      if (!dead) setTracks(rows.map((r) => ({
+        ...r,
+        artwork_url: r.artwork_url ?? (r.album_id ? cover.get(r.album_id) ?? null : null),
+        composer_handle: handle.get(r.composer_user_id) ?? null,
+      })));
     })();
     return () => { dead = true; };
   }, []);
