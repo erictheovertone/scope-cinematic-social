@@ -1,4 +1,5 @@
 // ── videoAttachBudget (Brief V3d) ────────────────────────────────────────────
+import { pushTrace } from "@/lib/videoTrace"; // HOME-4 — budget crumbs (debug only)
 //
 // Caps the number of AUTOPLAY video players that may be ATTACHED (buffering an HLS/
 // progressive source) at once, so a long fast scroll can't accumulate unbounded
@@ -30,10 +31,12 @@ export function acquireAttach(): boolean {
     // Brief M10c — log DENIALS (not just grants): a starved surface (e.g. Mirage cells
     // blocked by a still-mounted feed holding all slots) is invisible without this.
     budgetLog("DENIED (full)");
+    pushTrace(`budget deny ${attached}/${maxAttached()}`); // HOME-4
     return false;
   }
   attached += 1;
   budgetLog("acquire");
+  pushTrace(`budget acquire ${attached}/${maxAttached()}`); // HOME-4
   return true;
 }
 
@@ -41,6 +44,7 @@ export function acquireAttach(): boolean {
 export function releaseAttach(): void {
   if (attached > 0) attached -= 1;
   budgetLog("release");
+  pushTrace(`budget release ${attached}/${maxAttached()}`); // HOME-4
   for (const w of Array.from(waiters)) w();
 }
 

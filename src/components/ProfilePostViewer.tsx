@@ -239,6 +239,7 @@ function PostViewerItem({
             // trigger (one snapped post in view → it plays graded). The wrapper's
             // onClick opens the standalone view (taps bubble).
             <GradedVideo
+              postId={(post as any).id}
               url={post.media_urls?.[0] ?? ''}
               posterUrl={(post as any).poster_url ?? (post as any).stream_poster_url ?? (post as any).thumbnail_url}
               clipUrl={(post as any).autoplay_clip_url}

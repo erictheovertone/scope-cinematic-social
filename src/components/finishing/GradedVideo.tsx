@@ -36,6 +36,7 @@ import { shouldAttemptGraded } from "@/lib/gradedPlayback"; // VID-2 — the gat
 import { useGradedPlayback } from "@/components/GradedPlaybackProvider"; // VID-2c — allowlist boolean
 import { setGfx, clearGfx, type GfxMode } from "@/lib/videoGfx"; // VID-2 §3 — the gfx: crumb
 import { setPlayState, clearPlayState } from "@/lib/videoPlayState"; // HOME-2 §5 — play-health overlay
+import { pushTrace } from "@/lib/videoTrace"; // HOME-4 — ship the phone's trace to the server
 import type HlsType from "hls.js"; // TYPE ONLY (erased) — the runtime import is dynamic (§2)
 
 // Brief V3d — the NEAR window. A card WITHIN ~1.5 viewports (this rootMargin) may attach +
@@ -179,6 +180,8 @@ interface Props {
   /** VID-2c — force the graded WebGL path regardless of the per-viewer allowlist (debug harness only,
    *  e.g. /debug/graded?force=1). Production grading is gated by useGradedPlayback(). */
   forceGraded?: boolean;
+  /** HOME-4 — debug-only: the post id (first 8 used) to label trace crumbs. No behaviour. */
+  postId?: string;
 }
 
 export default function GradedVideo({
@@ -186,6 +189,7 @@ export default function GradedVideo({
   autoplayFlag = false, gridMode = false, forcePlay = false, fullPlayback = false, style, onClick, showSoundToggle = false,
   processing = false, hlsUrl = null, priority = false, minPlayRatio = 0,
   windowStart = null, windowLength = null, context = 'full', onVideoEl, userPaused = false, inOverlay = false, forceGraded = false,
+  postId = '',
 }: Props) {
   const isHls = !!hlsUrl; // Brief V3 — the dual-path branch: Stream HLS vs legacy source.
   const id = useId();
@@ -227,8 +231,21 @@ export default function GradedVideo({
   // break in the attach→teardown→re-attach cycle per card.
   const tagRef = useRef("");
   tagRef.current = ((hlsUrl || url || id) as string).slice(-10);
+  // HOME-4 — the surface (home / profile-grid / profile-scroll / focus) + post id label each crumb.
+  const surfaceRef = useRef("");
+  surfaceRef.current = inOverlay ? "profile-scroll" : forcePlay ? "focus" : (() => {
+    const p = typeof location !== "undefined" ? location.pathname : "";
+    if (p === "/") return "home";
+    if (p.startsWith("/profile")) return "profile-grid";
+    return p.slice(0, 12) || "feed";
+  })();
+  const postIdRef = useRef("");
+  postIdRef.current = (postId || "").slice(0, 8);
   const dlog = useCallback((ev: string) => {
-    if (isVideoDebug()) console.log(`[vid ${tagRef.current}] ${ev}`);
+    if (!isVideoDebug()) return;
+    const line = `[vid ${tagRef.current}] ${ev}`;
+    console.log(line);
+    pushTrace(`${surfaceRef.current} ${postIdRef.current} ${line}`); // → ring buffer → server
   }, []);
 
   const params = useMemo<EditParams | null>(() => {
@@ -275,6 +292,10 @@ export default function GradedVideo({
   // → the exact legacy behaviour: HLS keeps its CSS filter, legacy forcePlay keeps its pipeline.
   const graded = shouldAttemptGraded(isHls, looked, gradedEnabled || forceGraded) && !gfxFallback && !failed;
   const usePipeline = playing && !failed && (graded || (!isHls && effectiveForcePlay && looked));
+  // HOME-4 — current state the pause/playing crumb closures read (refs so the handlers see live values).
+  const ourPauseRef = useRef<string | null>(null);
+  const dbgRef = useRef({ shouldPlay: false, graded: false, usePipeline: false, inView: false });
+  dbgRef.current = { shouldPlay, graded, usePipeline, inView };
 
   // Brief V3a §2 — GRADE via the shared video kit (CSS filter + overlay layers), HLS path only AND
   // only when NOT graded by the pipeline (graded → the pipeline applies the look; a CSS filter on top
@@ -292,7 +313,7 @@ export default function GradedVideo({
       ([e]) => {
         if (gridMode) {
           // Brief P1c §2 — PLAY when ≥ minPlayRatio visible (feed 0.5; grid/profile 0 = any).
-          setInView(e.isIntersecting && e.intersectionRatio >= minPlayRatio);
+          { const iv = e.isIntersecting && e.intersectionRatio >= minPlayRatio; setInView((prev) => { if (prev !== iv) dlog(`inView ${iv} ratio=${e.intersectionRatio.toFixed(2)}`); return iv; }); }
         } else if (e.isIntersecting) {
           // ANY visibility makes it ELIGIBLE; the cap + this score (distance of the
           // tile centre from the viewport centre) admit the most-visible. The old
@@ -430,7 +451,7 @@ export default function GradedVideo({
     const onPlaying = () => {
       if (cancelled) return;
       setPlaying(true);
-      dlog("playing");
+      dlog(`playing graded=${dbgRef.current.graded} pipe=${dbgRef.current.usePipeline}`);
       if (!ttffLogged) {
         ttffLogged = true;
         if (isVideoDebug() && attachAt) {
@@ -439,14 +460,25 @@ export default function GradedVideo({
         }
       }
     };
-    const onPause = () => { if (!cancelled) setPlaying(false); };
+    const onPause = () => {
+      if (cancelled) return;
+      setPlaying(false);
+      // HOME-4 — who paused us? OURS (we called v.pause) names the reason; otherwise the browser did.
+      const cause = ourPauseRef.current; ourPauseRef.current = null;
+      const s = dbgRef.current;
+      dlog(`pause ${cause ? "OURS:" + cause : "NOT-OURS"} ct=${v.currentTime.toFixed(1)} dur=${isFinite(v.duration) ? v.duration.toFixed(1) : "?"} rs=${v.readyState} net=${v.networkState} vis=${typeof document !== "undefined" ? document.visibilityState : "?"} inView=${s.inView} shouldPlay=${s.shouldPlay} graded=${s.graded} pipe=${s.usePipeline}`);
+    };
+    const onWaiting = () => dlog(`waiting rs=${v.readyState} net=${v.networkState}`);
+    const onStalled = () => dlog(`stalled net=${v.networkState}`);
+    const onSuspend = () => dlog("suspend");
+    const onError = () => dlog(`error code=${v.error?.code ?? "?"}`);
     // Brief P1c §1b/§2 — LOOP EXPLICITLY. The `loop` attribute is unreliable with hls.js on
     // iOS → the video stops at 'ended' → frozen mid-view (the ~75% loop freeze). Seek 0 +
     // play() on 'ended'. The budget slot is NOT touched (it's keyed on visibility/NEAR, not
     // playback), so an ended-then-looped card keeps its slot and never dies in view.
     // Brief M10 §3 — loop back to the WINDOW start (Mirage), else to 0 (every full-video
     // surface, unchanged). w is null for all non-Mirage consumers → identical to before.
-    const onEnded = () => { if (cancelled) return; const w = windowRef.current; try { v.currentTime = w ? w.start : 0; const p = v.play(); if (p) p.catch(() => {}); } catch { /* not ready */ } };
+    const onEnded = () => { if (cancelled) return; dlog("ended"); const w = windowRef.current; try { v.currentTime = w ? w.start : 0; const p = v.play(); if (p) p.then(() => dlog("loop-restart resolved")).catch((e) => dlog(`loop-restart rejected:${(e as Error)?.name}`)); } catch (e) { dlog(`loop-restart threw:${(e as Error)?.name}`); } };
     // Brief M10 §3 — MIRAGE WINDOW LOOP. Seek into the window once metadata is ready, and
     // snap back to start whenever playback crosses the window end. timeupdate fires ~4×/s,
     // so the loop-back lands within ~250ms of the boundary — imperceptible for a muted
@@ -458,6 +490,10 @@ export default function GradedVideo({
     v.addEventListener("ended", onEnded);
     v.addEventListener("loadedmetadata", onLoadedMeta);
     v.addEventListener("timeupdate", onTimeUpdate);
+    v.addEventListener("waiting", onWaiting);
+    v.addEventListener("stalled", onStalled);
+    v.addEventListener("suspend", onSuspend);
+    v.addEventListener("error", onError);
     // Brief P2d — ENGINE BY PLATFORM, not by canPlayType. macOS/Windows Chrome return a
     // truthy "maybe" for the HLS MIME yet CANNOT truly play it natively — that "maybe" sent
     // Chrome down the native branch and BYPASSED all the hls.js config (P2/P2a). Native HLS
@@ -548,6 +584,10 @@ export default function GradedVideo({
       v.removeEventListener("ended", onEnded);
       v.removeEventListener("loadedmetadata", onLoadedMeta);
       v.removeEventListener("timeupdate", onTimeUpdate);
+      v.removeEventListener("waiting", onWaiting);
+      v.removeEventListener("stalled", onStalled);
+      v.removeEventListener("suspend", onSuspend);
+      v.removeEventListener("error", onError);
       // hls.destroy() detaches the MediaSource. The <video> itself UNMOUNTS (shouldAttach
       // gate) → a FRESH element mounts on re-entry, so we never re-use a dead MediaSource
       // and never force-clear the native src (which would fire onError → re-latch errored).
@@ -565,8 +605,10 @@ export default function GradedVideo({
       let cancelled = false;
       const tryPlay = () => {
         if (cancelled || !v) return;
-        v.play().then(() => { if (!cancelled) setPlaying(true); }).catch(() => {
+        dlog("play() called");
+        v.play().then(() => { if (!cancelled) { dlog("play() resolved"); setPlaying(true); } }).catch((e) => {
           if (cancelled) return;
+          dlog(`play() rejected:${(e as Error)?.name}`);
           setPlaying(false);
           if (retryRef.current) clearTimeout(retryRef.current);
           retryRef.current = window.setTimeout(tryPlay, 1200);
@@ -576,6 +618,7 @@ export default function GradedVideo({
       return () => { cancelled = true; if (retryRef.current) { clearTimeout(retryRef.current); retryRef.current = null; } };
     }
     dlog("view-exit→pause");
+    ourPauseRef.current = userPaused ? "userPaused" : "view-exit"; // HOME-4 — tag the next pause as OURS
     try { v.pause(); } catch { /* not ready */ }
   }, [shouldPlay, shouldAttach, videoEl, errored]);
 
@@ -589,7 +632,7 @@ export default function GradedVideo({
     const look = lookById(params?.lutId ?? null);
     if (!look) { setActiveLut(null); return; }
     ensureLut(look.id, look.file)
-      .then((e) => { if (!cancelled) setActiveLut({ canvas: e.canvas, size: e.parsed.size }); })
+      .then((e) => { if (!cancelled) { dlog("LUT ready"); setActiveLut({ canvas: e.canvas, size: e.parsed.size }); } })
       .catch(() => { if (!cancelled) setActiveLut(null); });
     return () => { cancelled = true; };
   }, [effectiveForcePlay, graded, shouldAttach, looked, params?.lutId]);
@@ -600,6 +643,14 @@ export default function GradedVideo({
     setPlayState(id, { inView, playing, errored });
     return () => clearPlayState(id);
   }, [id, forcePlay, autoplayFlag, inView, playing, errored]);
+
+  // HOME-4 — pipeline mount/unmount crumb (the graded WebGL canvas comes up AFTER playing starts, so a
+  // few raw frames can show first — this times that gap).
+  useEffect(() => {
+    if (!usePipeline) return;
+    dlog("pipeline mount");
+    return () => dlog("pipeline unmount");
+  }, [usePipeline, dlog]);
 
   // VID-2 §3 — the gfx: crumb (graded|fallback + a coarse fps), for the ?debug=video overlay. Runs
   // only while a graded player is actually displaying the pipeline; cleared on teardown. A light rAF
@@ -633,6 +684,7 @@ export default function GradedVideo({
       if (videoEl.readyState < 2 || !videoEl.videoWidth) { window.setTimeout(check, 200); return; } // wait for a frame
       probedSrcRef.current = playbackUrl;
       const reason = gradedFrameUnreadable(videoEl);
+      dlog(`probe ${reason ? "fail:" + reason : "ok"}`); // HOME-4
       if (reason) {
         if (isVideoDebug()) console.log(`[gfx ${tagRef.current}] graded frame unreadable (${reason}) → CSS fallback`);
         setGfxReason(reason);

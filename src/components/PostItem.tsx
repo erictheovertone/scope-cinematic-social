@@ -337,6 +337,7 @@ function PostItem({ post, onImageClick, commentsOpen, onToggleComments, card, cl
     // only 1–2 large posts at once, so attempt-all-in-view naturally caps it; the
     // device's decoder limit caps any overflow. Tap opens the standalone view.
     <GradedVideo
+      postId={post.id}
       url={post.media_urls?.[0]}
       posterUrl={post.poster_url ?? (post as { stream_poster_url?: string | null }).stream_poster_url ?? post.thumbnail_url}
       posterWidth={750}

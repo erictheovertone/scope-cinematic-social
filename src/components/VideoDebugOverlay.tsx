@@ -22,6 +22,7 @@ import {
 } from '@/lib/videoDebug';
 import { gfxCrumb } from '@/lib/videoGfx';
 import { playSummary } from '@/lib/videoPlayState';
+import { startTrace, traceSentCount } from '@/lib/videoTrace';
 import { useGradedPlayback } from '@/components/GradedPlaybackProvider';
 
 const BUILD_SHA = process.env.NEXT_PUBLIC_BUILD_SHA || 'dev';
@@ -40,6 +41,7 @@ export default function VideoDebugOverlay() {
   // Brief P0 — ALWAYS-ON (even with the overlay off): record the last crash so it
   // survives the reload and names itself. Must run regardless of `on`.
   useEffect(() => { installCrashBreadcrumb(); }, []);
+  useEffect(() => { if (on) startTrace(); }, [on]); // HOME-4 — ship the phone's trace while debug is on
 
   // On/off sync — the 5-tap toggle fires VIDEO_DEBUG_CHANGE_EVT; ?debug=video is read
   // on mount. Re-check on the toggle event + cross-tab storage changes.
@@ -126,6 +128,7 @@ export default function VideoDebugOverlay() {
   header.push(`gfx: ${gfxCrumb(gradedAllowed)}`);
   // HOME-2 §5 — autoplay play-health: in view / playing / waiting / gave-up.
   header.push(`play: ${playSummary()}`);
+  header.push(`trace: ${traceSentCount()} lines sent`); // HOME-4
   for (const e of snap.errors) header.push(`err ${e}`);
 
   const crumbLines = snap.crumbs.map((c) => `${c.step}+${c.elapsed.toFixed(1)}·v${c.v} gl:${c.g}${c.detail ? `(${c.detail})` : ''}`);

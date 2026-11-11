@@ -90,6 +90,7 @@ export default function PostCell({ post, layoutId, index, onClick, showSoundTogg
           // post). Photos → MediaRenderer.
           post.media_type === 'video' ? (
             <GradedVideo
+              postId={post.id}
               url={post.media_urls?.[0] ?? ''}
               posterUrl={(post as { stream_poster_url?: string | null }).stream_poster_url ?? post.poster_url ?? post.thumbnail_url}
               posterWidth={600}

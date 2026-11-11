@@ -562,6 +562,7 @@ export default function PostModal({ post, onClose, isOwner, supabaseUserId, onDe
                   legacy (media_urls, no stream_uid) → the untouched forcePlay path. */}
               {isVideoPost && (post.media_urls?.[0] || (post as { stream_uid?: string | null }).stream_uid) ? (
                   <GradedVideo
+                    postId={(post as { id?: string }).id}
                     url={post.media_urls?.[0] ?? ''}
                     posterUrl={(post as { stream_poster_url?: string | null }).stream_poster_url ?? post.poster_url ?? post.thumbnail_url}
                     editParams={post.edit_params}
