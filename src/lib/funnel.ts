@@ -5,7 +5,7 @@
 import { getAccessToken } from '@privy-io/react-auth';
 
 export type FunnelEvent =
-  | 'topup_opened' | 'topup_started' | 'topup_completed' | 'topup_failed'
+  | 'topup_opened' | 'topup_started' | 'topup_status' | 'topup_completed' | 'topup_failed'
   | 'collect_attempted' | 'collect_blocked_no_balance' | 'collect_completed' | 'mint_blocked_no_balance';
 
 export async function track(event: FunnelEvent, props: Record<string, unknown> = {}): Promise<void> {

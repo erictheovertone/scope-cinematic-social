@@ -81,16 +81,18 @@ export default function TopUpSheet({ open, onClose, source, shortfallUsd, priceP
     // never treats a missing baseline as $0 and lands the instant it sees balance > 0 (BAL-1b.2 bug).
     startRef.current = { startBal: null, startedAt: Date.now(), sessionId: undefined };
     void getUsdcBalance(address).then((b) => { const n = Number(b); if (Number.isFinite(n)) startRef.current.startBal = n; }).catch(() => {});
+    let resolvedMode: 'test' | 'live' = 'live'; // for the catch — the mode, once the session resolved it
     try {
       const token = await getAccessToken();
-      await track('topup_started', { amount, source });
       const res = await fetch('/api/onramp/stripe/session', {
         method: 'POST', headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: JSON.stringify({ amount, walletAddress: address, email }),
       });
       const j = (await res.json()) as { clientSecret?: string; mode?: 'test' | 'live'; id?: string; error?: string };
       if (!res.ok || !j.clientSecret) { setErr(j.error ?? 'Could not start — try again.'); setWorking(false); return; }
-      const m = j.mode ?? 'live'; setMode(m); startRef.current.sessionId = j.id;
+      const m = j.mode ?? 'live'; resolvedMode = m; setMode(m); startRef.current.sessionId = j.id;
+      // BAL-1d §5 — mode is known now, so topup_started carries it (BAL-1b asked for this).
+      void track('topup_started', { amount, source, mode: m });
       const pubKey = m === 'test' ? process.env.NEXT_PUBLIC_STRIPE_TEST_PUBLISHABLE_KEY : process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
       if (!pubKey) { setErr(m === 'test' ? 'Sandbox isn’t fully configured. No charge was attempted.' : 'Payments aren’t configured.'); setWorking(false); return; }
       const onramp = await loadStripeOnramp(pubKey);
@@ -99,6 +101,9 @@ export default function TopUpSheet({ open, onClose, source, shortfallUsd, priceP
       const session = (onramp as unknown as { createSession: (o: unknown) => OnrampSession }).createSession({ clientSecret: j.clientSecret, appearance: { theme: appTheme() } });
       session.addEventListener('onramp_session_updated', (e: OnrampEvt) => {
         const st = e.payload.session.status;
+        // BAL-1d §5 — every status to the funnel, so each human attempt leaves a trail (the payment
+        // screen can freeze without a payment ever registering — this is how we see where it stalls).
+        void track('topup_status', { status: st, mode: m });
         // Payment submitted → hand off to the docked pill and close. fulfillment_processing = paid &
         // delivering (LIVE); fulfillment_complete also covers the TEST path (no on-chain move). The pill
         // then owns every ending (land / didn't go through / taking longer) — §5/§6.
@@ -111,9 +116,14 @@ export default function TopUpSheet({ open, onClose, source, shortfallUsd, priceP
           setErr('That top-up didn’t go through.'); setWorking(false);
         }
       });
+      // Widget mounted / first paint — the UI-loaded milestone, so a stall BEFORE any status update is visible.
+      session.addEventListener('onramp_ui_loaded', () => { void track('topup_status', { status: 'ui_loaded', mode: m }); });
       session.mount(widgetRef.current);
       setWidgetUp(true); setWorking(false);
-    } catch (e) { setErr((e as Error).message || 'Something went wrong — try again.'); setWorking(false); }
+    } catch (e) {
+      void track('topup_status', { status: 'widget_error', mode: resolvedMode, message: (e as Error).message?.slice(0, 120) });
+      setErr((e as Error).message || 'Something went wrong — try again.'); setWorking(false);
+    }
   }, [authenticated, login, address, amount, email, source, onClose]);
 
   if (!mounted || !open) return null;
