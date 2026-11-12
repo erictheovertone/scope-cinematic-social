@@ -20,6 +20,7 @@
 
 import type { EditParams } from "./params";
 import type { CSSProperties } from "react";
+import { lookById } from "@/components/finishing/looksCatalog";
 
 // The EXACT param set the video finishing suite exposes (everything else is tier-3,
 // hidden for video — see FinishingShell gating). Photos are unaffected.
@@ -74,11 +75,26 @@ export function streamGradedProps(post: Record<string, unknown> | null | undefin
   };
 }
 
-/** CSS `filter` string for the mappable params, or undefined when neutral. */
+/** CSS `filter` string for the mappable params, or undefined when neutral.
+ *
+ *  HOME-3.1 — the look's LUT now contributes too. Before, this mapped only
+ *  exposure/contrast/saturation/blur/wb and IGNORED lutId, so a LUT-ONLY look (e.g. Soot/Obsidian,
+ *  the whole B&W bucket) returned undefined — and the §C.3 graded-fallback still then showed the RAW
+ *  COLOUR frame, and the CSS-fallback playback path (graded=false) played in colour until the WebGL
+ *  pipeline took over 1–2 s later. For a B&W-bucket LUT we prepend grayscale(lutIntensity/12), the
+ *  honest approximation of a monochrome look, so a B&W post never rests on — or briefly plays — the
+ *  colour picture. Other buckets still map only the numeric params for now (no colour LUT has a
+ *  single-filter stand-in; proposal in the brief). */
 export function videoCssFilter(params: EditParams | null | undefined): string | undefined {
   if (!params) return undefined;
-  const p = params as unknown as { exposure?: number; contrast?: number; saturation?: number; blur?: number; whiteBalance?: { t?: number } };
+  const p = params as unknown as { exposure?: number; contrast?: number; saturation?: number; blur?: number; whiteBalance?: { t?: number }; lutId?: string | null; lutIntensity?: number };
   const parts: string[] = [];
+  // B&W LUT look → grayscale, FIRST so it reads as the base of the look (desaturate, then shape).
+  const look = p.lutId ? lookById(p.lutId) : undefined;
+  if (look?.bucket === "B&W") {
+    const g = Math.max(0, Math.min(1, num(p.lutIntensity, 12) / 12));
+    if (g > 0) parts.push(`grayscale(${g.toFixed(3)})`);
+  }
   const exp = num(p.exposure), con = num(p.contrast), sat = num(p.saturation), bl = num(p.blur), wbT = num(p.whiteBalance?.t);
   if (exp) parts.push(`brightness(${(1 + exp * VIDEO_GRADE.exposurePerStop).toFixed(3)})`);
   if (con) parts.push(`contrast(${(1 + con * VIDEO_GRADE.contrastPerStop).toFixed(3)})`);
