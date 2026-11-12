@@ -73,6 +73,7 @@ export const createPost = async (postData: {
   mediaType?: string;
   thumbnailUrl?: string | null;
   posterUrl?: string | null;
+  startPosterUrl?: string | null;
   autoplayClipUrl?: string | null;
   autoplay?: boolean;
   // Brief M10 — Mirage snippet window (seconds). Optional creative control; null → Mirage
@@ -110,6 +111,8 @@ export const createPost = async (postData: {
         // Graded poster frame (video) — geometry + look baked at publish. Shown
         // wherever the video is NOT actively playing (grid/feed/thumbnails).
         ...(postData.posterUrl !== undefined ? { poster_url: postData.posterUrl } : {}),
+        // HOME-3 — the START frame (time 0), graded + cropped: the resting still on autoplay surfaces.
+        ...(postData.startPosterUrl !== undefined ? { start_poster_url: postData.startPosterUrl } : {}),
         // Baked 3–5s graded MUTED clip — the autoplay material (looped as a plain
         // <video> on grid/feed/scroll; no live pipeline).
         ...(postData.autoplayClipUrl !== undefined ? { autoplay_clip_url: postData.autoplayClipUrl } : {}),

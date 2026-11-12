@@ -29,7 +29,7 @@ import {
 } from '@/lib/userService';
 import FinishingStep from '@/components/finishing/FinishingStep';
 import { DEFAULT_PARAMS, type EditParams } from '@/lib/editor/params';
-import { bakeLook, hasLookEdits, decodeImageFile } from '@/lib/editor/bakeLook';
+import { bakeLook, hasLookEdits, decodeImageFile, bakeGradedVideoFrame } from '@/lib/editor/bakeLook';
 import { createLook, getLooks, uploadLookThumb, setLookThumb, type SavedLook } from '@/lib/looksService';
 import { getScopeLimitType } from '@/lib/limits';
 import { useUpsell } from '@/components/UpsellProvider';
@@ -146,36 +146,10 @@ async function uploadAutoThumbnail(dataUrl: string, userId: string): Promise<str
   }
 }
 
-/** Grab a single frame of a video (at `time` seconds, default 0) as a JPEG File —
- *  the raw still that the poster bake (geometry + look) then renders from. */
-function captureVideoFrameFile(url: string, time = 0): Promise<File> {
-  return new Promise((resolve, reject) => {
-    const v = document.createElement('video');
-    claimVideo(v, 'posting'); // V3 §2 — one-shot; released on every exit below
-    v.crossOrigin = 'anonymous'; v.muted = true; v.playsInline = true; v.preload = 'auto';
-    const fail = (e: Error) => { releaseVideo(v); reject(e); };
-    const grab = () => {
-      try {
-        const cv = document.createElement('canvas');
-        cv.width = v.videoWidth; cv.height = v.videoHeight;
-        const ctx = cv.getContext('2d');
-        if (!ctx || !cv.width || !cv.height) { fail(new Error('captureVideoFrameFile: no frame')); return; }
-        ctx.drawImage(v, 0, 0);
-        releaseVideo(v); // the frame is on the canvas — free the decoder before the encode
-        cv.toBlob((b) => {
-          b ? resolve(new File([b], 'poster-frame.jpg', { type: 'image/jpeg' })) : reject(new Error('captureVideoFrameFile: toBlob failed'));
-        }, 'image/jpeg', 0.92);
-      } catch (e) { fail(e as Error); }
-    };
-    v.onloadeddata = () => {
-      const dur = isFinite(v.duration) ? v.duration : 0;
-      const t = Math.min(Math.max(time, 0), dur || 0);
-      if (t > 0) { v.onseeked = grab; v.currentTime = t; } else grab();
-    };
-    v.onerror = () => fail(new Error('captureVideoFrameFile: video load failed'));
-    v.src = url;
-  });
-}
+// HOME-3 — the old `captureVideoFrameFile` (a SECOND <video> decode of the raw clip for the poster
+// bake) was removed: that second decode, under WebKit's one-hardware-decoder limit, was what stalled
+// the bake on iPhone → null poster_url. The poster + start stills are now captured from the already-
+// decoded EDIT & POST preview element via bakeGradedVideoFrame (no re-decode).
 
 // ── Client-side image compression via Canvas API ──────────────────
 // Max 1920px longest side, JPEG 0.82 quality, all formats → JPEG.
@@ -1160,33 +1134,42 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
         console.log('[handlePost] uploaded (+renditions):', url);
       }
 
-      // ── Poster bake (VIDEO) — ONE frame (hero frame if graded, else first),
-      //    geometry + look applied, same captureAsBlob machinery as the photo bake.
-      //    Cheap (one frame, no transcode). Shown wherever the video isn't playing
-      //    (grid/feed/thumbnails) so the graded look is visible at zero playback
-      //    cost. Best-effort: a failure never blocks publishing.
+      // ── Poster bake (VIDEO) — HOME-3. TWO graded, cropped stills, captured from the LIVE EDIT & POST
+      //    preview element (already decoded): poster_url = the HERO frame (the cover where the video
+      //    does NOT autoplay), start_poster_url = the START frame (time 0, the frame autoplay begins
+      //    on — the resting still on every autoplay surface). We reuse the decoded `editVideo` and
+      //    read the graded frame back through the finishing pipeline — NO second decode of the raw clip
+      //    (that second decode, under WebKit's one-hardware-decoder limit, was what stalled the old
+      //    bake on iPhone → null poster). grade-then-crop (bakeImageGeometry on the full graded frame)
+      //    matches exactly what the preview showed. Best-effort: a failure NEVER blocks publishing.
       let posterUrl: string | null = null;
+      let startPosterUrl: string | null = null;
       if (selectedMedia[0]?.type === 'video') {
         setStage('Baking poster');
-        try {
-          // Brief V2a — ONE frame (image work, NOT a re-encode → E1-compliant). Wrapped in a
-          // timeout so a gl-react readback stall can't freeze POSTING: on stall it throws, is
-          // caught here, and the post still publishes (poster is best-effort; the Stream
-          // webhook backfills stream_poster_url anyway).
-          posterUrl = await withTimeout((async () => {
-            const heroT = editParams.heroFrameTime ?? 0;
-            const frameFile = await captureVideoFrameFile(selectedMedia[0].url, heroT);
-            let posterFile = await bakeImageGeometry(frameFile, geometry, exportChip.exportW, exportChip.exportH);
-            if (hasLookEdits(editParams)) {
-              const posterImg = await decodeImageFile(posterFile);
-              const posterBlob = await bakeLook(posterImg, editParams, exportChip.exportW, exportChip.exportH);
-              posterFile = new File([posterBlob], 'poster.jpg', { type: 'image/jpeg' });
-            }
-            return uploadImageWithRenditions(posterFile, 'post-media', user.id);
-          })(), 25_000, 'Poster bake');
-          console.log('[handlePost] poster baked (+renditions):', posterUrl);
-        } catch (e) {
-          console.warn('[handlePost] poster bake failed/stalled (publishing without graded poster):', e);
+        const ev = editVideo;
+        if (!ev) {
+          console.warn('[handlePost] no live EDIT preview element — publishing without baked stills (Stream webhook backfills stream_poster_url)');
+        } else {
+          const wasPaused = ev.paused;
+          try {
+            await withTimeout((async () => {
+              ev.dataset.scopeCtl = 'capture'; // stand the preview's window loop down while we seek/capture
+              try { ev.pause(); } catch { /* fine */ }
+              const bakeStill = async (timeSec: number): Promise<string> => {
+                const fullBlob = await bakeGradedVideoFrame(ev, editParams, timeSec);
+                const framed = await bakeImageGeometry(new File([fullBlob], 'frame.jpg', { type: 'image/jpeg' }), geometry, exportChip.exportW, exportChip.exportH);
+                return uploadImageWithRenditions(framed, 'post-media', user.id);
+              };
+              const heroT = editParams.heroFrameTime ?? 0;
+              posterUrl = await bakeStill(heroT);                 // hero frame → poster_url
+              startPosterUrl = heroT === 0 ? posterUrl : await bakeStill(0); // start frame → start_poster_url (== hero when heroTime is 0)
+              console.log('[handlePost] stills baked — poster(hero):', posterUrl, '| start(0):', startPosterUrl);
+            })(), 25_000, 'Poster capture');
+          } catch (e) {
+            console.warn('[handlePost] poster capture failed/stalled (publishing without baked stills):', e);
+          } finally {
+            try { delete ev.dataset.scopeCtl; if (!wasPaused) ev.play().catch(() => {}); } catch { /* preview teardown */ }
+          }
         }
       }
 
@@ -1224,6 +1207,7 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
         mediaType: selectedMedia[0]?.type || 'image',
         thumbnailUrl,
         posterUrl,
+        startPosterUrl,
         autoplayClipUrl,
         autoplay: isVideo ? videoAutoplay : true,
         editGeometry: geometry,

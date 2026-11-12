@@ -164,7 +164,12 @@ export default function Pipeline({ source, params, width, height, surfaceRef, pr
   // V3 §4 — the capped preview texture (video + live preview only; see texCap above).
   const isVideoSource = typeof HTMLVideoElement !== 'undefined' && source instanceof HTMLVideoElement;
   const [mode, setMode] = useState(texMode);
-  const capVideo = isVideoSource && !captureRef && !preserve && mode !== 'direct';
+  // HOME-3 — the capped-source texture must also apply when CAPTURING a video frame (captureRef set):
+  // the publish capture reuses the already-decoded preview element at export dims, and a full 4K texture
+  // would re-breach the iOS GPU budget the cap exists to avoid. The captureRef child-FBO reads the
+  // graded OUTPUT regardless of whether the SOURCE texture was capped. (bakeLook is image-only →
+  // isVideoSource false → unaffected.)
+  const capVideo = isVideoSource && !preserve && mode !== 'direct';
   const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
   const vw = isVideoSource ? (source as HTMLVideoElement).videoWidth : 0;
   const vh = isVideoSource ? (source as HTMLVideoElement).videoHeight : 0;

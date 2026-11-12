@@ -191,6 +191,104 @@ export async function bakeLook(image: HTMLImageElement, params: EditParams, w: n
   }
 }
 
+/** Seek a video element to `t` seconds and resolve once the frame is ready (or a 1.5s safety). */
+function seekVideo(v: HTMLVideoElement, t: number): Promise<void> {
+  return new Promise((resolve) => {
+    const target = Math.max(0, t);
+    if (v.readyState >= 2 && Math.abs(v.currentTime - target) < 0.05) { resolve(); return; }
+    let done = false;
+    const finish = () => { if (done) return; done = true; v.removeEventListener('seeked', finish); resolve(); };
+    v.addEventListener('seeked', finish, { once: true });
+    try { v.currentTime = target; } catch { finish(); }
+    setTimeout(finish, 1500); // never hang publish on a seek that doesn't fire 'seeked'
+  });
+}
+
+/**
+ * bakeGradedVideoFrame — HOME-3. The FULL graded frame of an ALREADY-DECODED video element at
+ * `timeSec`, read back as a JPEG. Same offscreen pipeline + readback as bakeLook (iOS-proven for
+ * photos), but the SOURCE is the live EDIT & POST preview element — so there is NO second decode of the
+ * raw clip (the second decode, under WebKit's one-hardware-decoder limit, was what stalled the old video
+ * poster bake on iPhone → null poster_url). The crop is NOT applied here; the caller runs
+ * bakeImageGeometry on the returned full frame (grade-then-crop matches what the live preview showed).
+ * Returns the full graded frame; the caller must have seeked/paused discipline (we seek here too).
+ */
+export async function bakeGradedVideoFrame(video: HTMLVideoElement, params: EditParams, timeSec: number): Promise<Blob> {
+  if (typeof document === 'undefined') throw new Error('bakeGradedVideoFrame: not in a browser');
+  await seekVideo(video, timeSec);
+  if (!video.videoWidth || !video.videoHeight) throw new Error('bakeGradedVideoFrame: video has no frame');
+
+  // Pre-warm grain + load the LUT so the capture includes the full look (same as bakeLook).
+  if (params.grainStock) {
+    const stock = grainStockByKey(params.grainStock);
+    if (stock) { const gi = new Image(); gi.crossOrigin = 'anonymous'; gi.src = stock.file; await gi.decode().catch(() => {}); }
+  }
+  let activeLut: { canvas: HTMLCanvasElement; size: number } | null = null;
+  if (params.lutId) {
+    const look = lookById(params.lutId);
+    if (look) {
+      try { const entry = await ensureLut(look.id, look.file); activeLut = { canvas: entry.canvas, size: entry.parsed.size }; }
+      catch (e) { throw new Error(`bakeGradedVideoFrame: LUT load failed for ${params.lutId}: ${(e as Error).message}`); }
+    }
+  }
+
+  // Render the FULL frame at the video's intrinsic size, capped for the iOS GPU budget (AR exact).
+  const maxW = getMaxBakeWidth();
+  let renderW = video.videoWidth, renderH = video.videoHeight;
+  if (renderW > maxW) { const s = maxW / renderW; renderW = Math.round(renderW * s); renderH = Math.round(renderH * s); }
+
+  const container = document.createElement('div');
+  container.style.cssText = 'position:absolute;left:-99999px;top:0;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none;';
+  document.body.appendChild(container);
+  const root = createRoot(container);
+  const captureRef = createRef<CaptureNode>();
+
+  try {
+    root.render(
+      React.createElement(Pipeline, {
+        source: video,
+        params,
+        width: renderW,
+        height: renderH,
+        captureRef: captureRef as unknown as React.Ref<unknown>,
+        preserve: false,
+        activeLut,
+      }),
+    );
+    // Mount + first draw + the video texture upload of the seeked frame.
+    await raf(); await raf(); await raf();
+    await delay(160);
+
+    const node = captureRef.current;
+    if (!node || typeof node.capture !== 'function') throw new Error('bakeGradedVideoFrame: capture node unavailable (pipeline did not mount)');
+    const captured = node.capture();
+    const cw = captured.shape[0], ch = captured.shape[1];
+    const raw = captured.data;
+
+    const full = document.createElement('canvas');
+    full.width = cw; full.height = ch;
+    const fctx = full.getContext('2d');
+    if (!fctx) throw new Error('bakeGradedVideoFrame: 2D context unavailable');
+    const fImg = fctx.createImageData(cw, ch);
+    const rowBytes = cw * 4;
+    for (let y = 0; y < ch; y++) {
+      const srcStart = (ch - 1 - y) * rowBytes; // GL bottom-up → top-down
+      fImg.data.set(raw.subarray(srcStart, srcStart + rowBytes), y * rowBytes);
+    }
+    fctx.putImageData(fImg, 0, 0);
+    const blob = await new Promise<Blob | null>((resolve) => full.toBlob(resolve, 'image/jpeg', 0.92));
+    if (!blob) throw new Error('bakeGradedVideoFrame: readback produced no image');
+    return blob;
+  } finally {
+    try {
+      const canvas = container.querySelector('canvas') as HTMLCanvasElement | null;
+      const gl = (canvas && (canvas.getContext('webgl') || canvas.getContext('webgl2') || canvas.getContext('experimental-webgl'))) as WebGLRenderingContext | null;
+      gl?.getExtension('WEBGL_lose_context')?.loseContext();
+    } catch { /* teardown must never mask the result */ }
+    setTimeout(() => { try { root.unmount(); } catch { /* noop */ } container.remove(); }, 0);
+  }
+}
+
 /**
  * captureLookThumb — a small JPEG of the CURRENT source frame with `params`
  * applied, for the PALETTE tile (memory anchor). Reuses bakeLook (same pipeline +
