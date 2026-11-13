@@ -10,6 +10,8 @@ import { saveDraft, loadDraft, clearDraft, markCreateLive, markCreateClean, peek
 import { claimVideo, releaseVideo, assertStepBoundary } from '@/lib/mediaOwnership';
 import { uploadVideoToStream } from '@/lib/streamUpload';
 import { vdbg, vdbgFile, vdbgReset, vdbgMarkNav } from '@/lib/videoDebug'; // V1e — ?debug=video trace (no-op unless on)
+import { isVideoDebug } from '@/lib/debugFlags'; // HOME-3.1 Part B — gate the dry-run bake
+import { bakeStillsInstrumented } from '@/lib/stillBake'; // HOME-3.1 Part B — instrumented still bake + still_bake event
 import { markFeedDirty, POST_PUBLISHED_EVT } from '@/lib/feedCache'; // V1e §6 — Home shows a fresh post without refresh
 import MediaRenderer from '@/components/MediaRenderer';
 // NOTE: the 1155 path (mintNewPost) is DORMANT — intact in src/lib/zora.ts as the
@@ -29,7 +31,7 @@ import {
 } from '@/lib/userService';
 import FinishingStep from '@/components/finishing/FinishingStep';
 import { DEFAULT_PARAMS, type EditParams } from '@/lib/editor/params';
-import { bakeLook, hasLookEdits, decodeImageFile, bakeGradedVideoFrame } from '@/lib/editor/bakeLook';
+import { bakeLook, hasLookEdits, decodeImageFile } from '@/lib/editor/bakeLook';
 import { createLook, getLooks, uploadLookThumb, setLookThumb, type SavedLook } from '@/lib/looksService';
 import { getScopeLimitType } from '@/lib/limits';
 import { useUpsell } from '@/components/UpsellProvider';
@@ -121,14 +123,9 @@ async function cropImageToAspect(file: File, cropXFrac: number, cropYFrac: numbe
   });
 }
 
-// Brief V2a — a bake/decode that never settles = a silently FROZEN "POSTING…". Wrap any
-// awaited stage that could hang so a stall becomes a NAMED, caught error instead of a freeze.
-function withTimeout<T>(p: Promise<T>, ms: number, stage: string): Promise<T> {
-  return Promise.race([
-    p,
-    new Promise<T>((_, rej) => setTimeout(() => rej(new Error(`${stage} timed out after ${Math.round(ms / 1000)}s`)), ms)),
-  ]);
-}
+// HOME-3.1 Part B — the still bake's timeout now lives in src/lib/stillBake.ts (bakeStillsInstrumented),
+// which wraps the bake and ships the still_bake funnel event. The old local withTimeout had no other
+// caller, so it moved there with the bake orchestration.
 
 // Brief V1b — captureVideoThumbnail (a SECOND lingering <video>) was removed. The
 // auto-thumbnail is now grabbed by the single one-shot <video> in the duration effect,
@@ -1147,30 +1144,19 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
       if (selectedMedia[0]?.type === 'video') {
         setStage('Baking poster');
         const ev = editVideo;
-        if (!ev) {
-          console.warn('[handlePost] no live EDIT preview element — publishing without baked stills (Stream webhook backfills stream_poster_url)');
-        } else {
-          const wasPaused = ev.paused;
-          try {
-            await withTimeout((async () => {
-              ev.dataset.scopeCtl = 'capture'; // stand the preview's window loop down while we seek/capture
-              try { ev.pause(); } catch { /* fine */ }
-              const bakeStill = async (timeSec: number): Promise<string> => {
-                const fullBlob = await bakeGradedVideoFrame(ev, editParams, timeSec);
-                const framed = await bakeImageGeometry(new File([fullBlob], 'frame.jpg', { type: 'image/jpeg' }), geometry, exportChip.exportW, exportChip.exportH);
-                return uploadImageWithRenditions(framed, 'post-media', user.id);
-              };
-              const heroT = editParams.heroFrameTime ?? 0;
-              posterUrl = await bakeStill(heroT);                 // hero frame → poster_url
-              startPosterUrl = heroT === 0 ? posterUrl : await bakeStill(0); // start frame → start_poster_url (== hero when heroTime is 0)
-              console.log('[handlePost] stills baked — poster(hero):', posterUrl, '| start(0):', startPosterUrl);
-            })(), 25_000, 'Poster capture');
-          } catch (e) {
-            console.warn('[handlePost] poster capture failed/stalled (publishing without baked stills):', e);
-          } finally {
-            try { delete ev.dataset.scopeCtl; if (!wasPaused) ev.play().catch(() => {}); } catch { /* preview teardown */ }
-          }
-        }
+        const wasPaused = ev?.paused ?? true;
+        // Stand the preview's window loop down while we seek/capture; restore after (best-effort).
+        if (ev) { try { ev.dataset.scopeCtl = 'capture'; ev.pause(); } catch { /* fine */ } }
+        // HOME-3.1 Part B — the bake now runs through the instrumented wrapper, which records the last
+        // stage and ships ONE still_bake funnel event (always on) so a phone that saves nothing is no
+        // longer silent. The bake MECHANISM is unchanged; publishing never blocks (the wrapper never throws).
+        const r = await bakeStillsInstrumented({
+          ev, params: editParams, geometry, exportW: exportChip.exportW, exportH: exportChip.exportH, userId: user.id,
+        });
+        posterUrl = r.posterUrl;
+        startPosterUrl = r.startPosterUrl;
+        if (ev) { try { delete ev.dataset.scopeCtl; if (!wasPaused) ev.play().catch(() => {}); } catch { /* preview teardown */ } }
+        console.log('[handlePost] stills:', r.ok ? 'ok' : 'failed', '| poster(hero):', posterUrl, '| start(0):', startPosterUrl);
       }
 
       // ── Brief V2a — the autoplay-clip bake is REMOVED for the Stream path. It re-encoded
@@ -1726,6 +1712,32 @@ export default function CreatePostFlow({ isOpen, onClose, userLayoutId = 'scope'
     () => editGeometry ?? neutralGeometry(chipForLayout(chosenLayoutId || userLayoutId).id),
     [editGeometry, chosenLayoutId, userLayoutId],
   );
+
+  // HOME-3.1 Part B — DRY RUN. Under video debug (5 taps on Discover / ?debug=video), arriving at EDIT &
+  // POST with a video runs the SAME still bake ONCE — no upload, no publish — and ships a
+  // still_bake{dryRun:true} funnel event, so Eric can see why the bake does/doesn't save on his phone
+  // WITHOUT minting a post. Once per media. The bake mechanism is untouched.
+  const dryBakeRanRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (step !== 'edit' || !isVideoDebug()) return;
+    if (selectedMedia[0]?.type !== 'video') return;
+    const ev = editVideo;
+    if (!ev || ev.readyState < 2 || !ev.videoWidth) return;
+    const key = selectedMedia[0]?.url ?? '';
+    if (dryBakeRanRef.current === key) return;
+    dryBakeRanRef.current = key;
+    const wasPaused = ev.paused;
+    void (async () => {
+      try {
+        ev.dataset.scopeCtl = 'capture';
+        try { ev.pause(); } catch { /* fine */ }
+        const chip = chipForLayout(chosenLayoutId || userLayoutId);
+        await bakeStillsInstrumented({ ev, params: editParams, geometry: editPreviewGeometry, exportW: chip.exportW, exportH: chip.exportH, userId: null, dryRun: true });
+      } finally {
+        try { delete ev.dataset.scopeCtl; if (!wasPaused) ev.play().catch(() => {}); } catch { /* preview teardown */ }
+      }
+    })();
+  }, [step, editVideo, selectedMedia, chosenLayoutId, userLayoutId, editPreviewGeometry, editParams]);
 
   const renderEditStep = () => {
     const isVid = selectedMedia[0]?.type === 'video';

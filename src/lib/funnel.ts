@@ -6,7 +6,8 @@ import { getAccessToken } from '@privy-io/react-auth';
 
 export type FunnelEvent =
   | 'topup_opened' | 'topup_started' | 'topup_status' | 'topup_completed' | 'topup_failed'
-  | 'collect_attempted' | 'collect_blocked_no_balance' | 'collect_completed' | 'mint_blocked_no_balance';
+  | 'collect_attempted' | 'collect_blocked_no_balance' | 'collect_completed' | 'mint_blocked_no_balance'
+  | 'still_bake'; // HOME-3.1 Part B — one per video publish (+ a dry run under video debug): why the poster bake did/didn't save.
 
 export async function track(event: FunnelEvent, props: Record<string, unknown> = {}): Promise<void> {
   try {
